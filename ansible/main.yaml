@@ -1,0 +1,122 @@
+---
+- hosts: all
+  vars:
+    app_path: /home/ubuntu/ResonantGeoData
+    venv: "{{ app_path }}/venv"
+  tasks:
+  - name: checkout code
+    git:
+      repo: "https://github.com/ResonantGeoData/RD-WATCH.git"
+      dest: "{{ app_path }}"
+      version: production
+      force: yes
+
+  - name: install pip, python headers, and postgres headers 
+    apt: 
+      pkg:
+        - python3-pip
+        - python3-dev
+        - libpq-dev
+      update_cache: yes
+      state: present
+    become: yes
+
+  - name: install virtualenv
+    pip:
+      name: 
+        - virtualenv
+    become: yes
+
+  - name: create virtualenv
+    shell:
+      cmd: /usr/local/bin/virtualenv {{ app_path }}/venv -p python3.8 
+
+      
+  - name: install pip requirements
+    pip:
+      requirements: "{{ app_path }}/requirements.txt"
+      extra_args: -e .[dev,worker]
+      chdir: "{{ app_path }}"
+      virtualenv: "{{ venv }}"
+
+  
+  - name: run django migrations
+    django_manage:
+      command: migrate
+      app_path: "{{ app_path }}"
+      virtualenv: "{{ venv }}"
+    environment:
+      DJANGO_CONFIGURATION: DevelopmentConfiguration
+      DJANGO_DATABASE_URL: postgres://postgres:postgres@localhost:5432/django
+      DJANGO_CELERY_BROKER_URL: amqp://localhost:5672/
+      DJANGO_MINIO_STORAGE_ENDPOINT: localhost:9000
+      DJANGO_MINIO_STORAGE_ACCESS_KEY: minioAccessKey
+      DJANGO_MINIO_STORAGE_SECRET_KEY: minioSecretKey
+      DJANGO_STORAGE_BUCKET_NAME: django-storage
+
+  - name: create conf.d directory
+    file:
+      path: /etc/conf.d
+      state: directory
+    become: yes
+
+  - name: create celery config
+    template:
+      src: "./celery/celery.j2"
+      dest: /etc/conf.d/celery
+    become: yes
+
+  - name: create celery service
+    template:
+      src: "./celery/celery.service.j2"
+      dest: /etc/systemd/system/celery.service
+    become: yes
+
+  - ansible.builtin.debug:
+      var: output
+
+  - name: create celery directories
+    file:
+      path: "{{ item }}"
+      state: directory
+      mode: 0777
+    loop:
+      - /var/log/celery
+      - /var/run/celery
+    become: yes
+
+  - name: start celery service
+    systemd:
+      name: celery.service
+      enabled: yes
+      state: started
+      daemon_reload: yes
+    register: output
+    become: yes
+
+  - ansible.builtin.debug:
+      var: output
+
+  - name: create gunicorn config
+    template:
+      src: "./gunicorn/gunicorn.j2"
+      dest: /etc/conf.d/gunicorn
+    become: yes
+
+  - name: create gunicorn service
+    template:
+      src: "./gunicorn/gunicorn.service.j2"
+      dest: /etc/systemd/system/gunicorn.service
+    become: yes
+
+  - name: start gunicorn service
+    systemd:
+      name: gunicorn.service
+      enabled: yes
+      state: started
+      daemon_reload: yes
+    register: output
+    become: yes
+    
+  - ansible.builtin.debug:
+      var: output

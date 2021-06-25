@@ -37,6 +37,8 @@ class GeoDjangoMixin(ConfigMixin):
             # TODO: Log that we aren't using the expected GDAL wheel?
             pass
 
+        configuration.ALLOWED_HOSTS = ['watch-test.resonantgeodata.com']
+
 
 class SwaggerMixin(ConfigMixin):
     REFETCH_SCHEMA_WITH_AUTH = True

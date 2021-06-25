@@ -1,0 +1,6 @@
+[aws]
+watch-test.resonantgeodata.com
+
+[aws:vars]
+ansible_user=ubuntu
+ansible_python_interpreter=/usr/bin/python3

@@ -1,17 +1,16 @@
 ---
 - hosts: all
   vars:
-    app_path: /home/ubuntu/ResonantGeoData
+    app_path: /home/ubuntu/RD-WATCH
     venv: "{{ app_path }}/venv"
   tasks:
   - name: checkout code
     git:
       repo: "https://github.com/ResonantGeoData/RD-WATCH.git"
       dest: "{{ app_path }}"
-      version: production
       force: yes
 
-  - name: install pip, python headers, and postgres headers 
+  - name: install pip + python, postgres, and gdal headers 
     apt: 
       pkg:
         - python3-pip
@@ -29,16 +28,12 @@
 
   - name: create virtualenv
     shell:
-      cmd: /usr/local/bin/virtualenv {{ app_path }}/venv -p python3.8 
+      cmd: /usr/local/bin/virtualenv {{ app_path }}/venv -p python3.8
 
-      
   - name: install pip requirements
-    pip:
-      requirements: "{{ app_path }}/requirements.txt"
-      extra_args: -e .[dev,worker]
+    shell: 
+      cmd: "{{ venv }}/bin/pip install -e .[dev] --find-links=https://girder.github.io/large_image_wheels"
       chdir: "{{ app_path }}"
-      virtualenv: "{{ venv }}"
-
   
   - name: run django migrations
     django_manage:
@@ -72,9 +67,6 @@
       dest: /etc/systemd/system/celery.service
     become: yes
 
-  - ansible.builtin.debug:
-      var: output
-
   - name: create celery directories
     file:
       path: "{{ item }}"
@@ -91,11 +83,7 @@
       enabled: yes
       state: started
       daemon_reload: yes
-    register: output
     become: yes
-
-  - ansible.builtin.debug:
-      var: output
 
   - name: create gunicorn config
     template:
@@ -115,8 +103,4 @@
       enabled: yes
       state: started
       daemon_reload: yes
-    register: output
     become: yes
-    
-  - ansible.builtin.debug:
-      var: output

@@ -1,13 +1,12 @@
 ---
 - hosts: all
   vars:
-    app_path: /home/ubuntu/ResonantGeoData
+    app_path: /home/ubuntu/RD-WATCH
   tasks:
   - name: checkout code
     git:
-      repo: "https://github.com/ResonantGeoData/ResonantGeoData.git"
+      repo: "https://github.com/ResonantGeoData/RD-WATCH.git"
       dest: "{{ app_path }}"
-      version: production
       force: yes
 
   - name: install pip
@@ -35,11 +34,7 @@
     community.docker.docker_compose:
       project_src: "{{ app_path }}"
       state: absent
-    register: output
     become: yes
-
-  - ansible.builtin.debug:
-      var: output
 
   - name: pull docker images
     community.docker.docker_compose:
@@ -47,12 +42,7 @@
       pull: yes
       files:
         - docker-compose.yml
-    register: output
     become: yes
-
-
-  - ansible.builtin.debug:
-      var: output
 
   - name: build docker images
     community.docker.docker_compose:
@@ -60,16 +50,11 @@
       build: yes
       files:
         - docker-compose.yml
-    register: output
     become: yes
-
-  - ansible.builtin.debug:
-      var: output
 
   - name: start docker services
     community.docker.docker_compose:
       project_src: "{{ app_path }}"
       files:
         - docker-compose.yml
-    register: output
     become: yes

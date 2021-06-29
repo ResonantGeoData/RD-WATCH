@@ -3,7 +3,7 @@ Description=gunicorn daemon
 After=network.target
 
 [Service]
-Type=notify
+Type=exec
 User=ubuntu
 Group=ubuntu
 EnvironmentFile=/etc/conf.d/gunicorn

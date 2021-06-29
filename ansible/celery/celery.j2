@@ -1,11 +1,9 @@
+# {{ ansible_managed }}
+
 # django
-DJANGO_CONFIGURATION=DevelopmentConfiguration
-DJANGO_DATABASE_URL=postgres://postgres:postgres@localhost:5432/django
-DJANGO_CELERY_BROKER_URL=amqp://localhost:5672/
-DJANGO_MINIO_STORAGE_ENDPOINT=localhost:9000
-DJANGO_MINIO_STORAGE_ACCESS_KEY=minioAccessKey
-DJANGO_MINIO_STORAGE_SECRET_KEY=minioSecretKey
-DJANGO_STORAGE_BUCKET_NAME=django-storage
+{% for environment_key, environment_value in watch_environment.items() %}
+{{ environment_key }}={{ environment_value }}
+{% endfor %}
 
 # valid
 CELERY_BIN="{{ venv }}/bin/celery"

@@ -10,7 +10,18 @@
       dest: "{{ app_path }}"
       force: yes
 
-  - name: install pip + python, postgres, and gdal headers 
+  - name: Set environment variables
+    set_fact:
+      watch_environment:
+        DJANGO_CONFIGURATION:  "{{ lookup('env', 'DJANGO_CONFIGURATION') }}"
+        DJANGO_DATABASE_URL: "{{ lookup('env', 'DJANGO_DATABASE_URL') }}"
+        DJANGO_CELERY_BROKER_URL: "{{ lookup('env', 'DJANGO_CELERY_BROKER_URL') }}"
+        DJANGO_MINIO_STORAGE_ENDPOINT: "{{ lookup('env', 'DJANGO_MINIO_STORAGE_ENDPOINT') }}"
+        DJANGO_MINIO_STORAGE_ACCESS_KEY: "{{ lookup('env', 'DJANGO_MINIO_STORAGE_ACCESS_KEY') }}"
+        DJANGO_MINIO_STORAGE_SECRET_KEY: "{{ lookup('env', 'DJANGO_MINIO_STORAGE_SECRET_KEY') }}"
+        DJANGO_STORAGE_BUCKET_NAME: "{{ lookup('env', 'DJANGO_STORAGE_BUCKET_NAME') }}"
+
+  - name: install pip + python, postgres headers 
     apt: 
       pkg:
         - python3-pip
@@ -34,20 +45,13 @@
     shell: 
       cmd: "{{ venv }}/bin/pip install -e .[dev] --find-links=https://girder.github.io/large_image_wheels"
       chdir: "{{ app_path }}"
-  
+
   - name: run django migrations
     django_manage:
       command: migrate
       app_path: "{{ app_path }}"
       virtualenv: "{{ venv }}"
-    environment:
-      DJANGO_CONFIGURATION: DevelopmentConfiguration
-      DJANGO_DATABASE_URL: postgres://postgres:postgres@localhost:5432/django
-      DJANGO_CELERY_BROKER_URL: amqp://localhost:5672/
-      DJANGO_MINIO_STORAGE_ENDPOINT: localhost:9000
-      DJANGO_MINIO_STORAGE_ACCESS_KEY: minioAccessKey
-      DJANGO_MINIO_STORAGE_SECRET_KEY: minioSecretKey
-      DJANGO_STORAGE_BUCKET_NAME: django-storage
+    environment: "{{ watch_environment }}"
 
   - name: create conf.d directory
     file:

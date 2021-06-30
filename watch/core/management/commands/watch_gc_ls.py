@@ -17,11 +17,17 @@ SUCCESS_MSG = 'Finished loading all {} data.'
 
 
 def _fetch_landsat_index_table():
+    datastore.datastore.registry[
+        'landsat_all.csv'
+    ] = 'sha512:3daaa5270f86791cc72423d5d7aa2071265bf7b7ac073c6c36e6f950dacb256737aa2b08fba59f35857b63c77af7e09a554e9b5c15308ab90fae56a71427bfa5'
     path = datastore.datastore.fetch('landsat_all.csv')
     return pd.read_csv(path)
 
 
 def _fetch_sentinel_index_table():
+    datastore.datastore.registry[
+        'sentinel_all.csv'
+    ] = 'sha512:514da526b523f54f2a8b2135569cf384597d62ee868591a9d336222a5d49397b8e3ae21257c68b1e79c5c13c5d75fe802f931f530f602936d82e2c61b87ec749'
     path = datastore.datastore.fetch('sentinel_all.csv')
     df = pd.read_csv(path)
     # Handle issue where tiles for a given date were processed multiple times
@@ -36,7 +42,7 @@ def _format_gs_base_url(base_url):
     return 'http://storage.googleapis.com/' + base_url.replace('gs://', '')
 
 
-def _get_landsat_urls(base_url, name, sensor='TM'):
+def _get_landsat_urls(base_url, name, sensor):
     if sensor == 'OLI_TIRS':  # Landsat 8
         possible_bands = [
             'B1.TIF',
@@ -162,13 +168,12 @@ class GCLoader:
 
     def _load_raster(self, index):
         row = self.index.iloc[index]
-        try:
-            if self.satellite == 'landsat':
-                rd = _load_landsat(row)
-            elif self.satellite == 'sentinel':
-                rd = _load_sentinel(row)
-        except ValueError:
-            return None
+        if self.satellite == 'landsat':
+            rd = _load_landsat(row)
+        elif self.satellite == 'sentinel':
+            rd = _load_sentinel(row)
+        else:
+            raise ValueError(f'Unknown satellite: {self.satellite}')
         imentries = helper.load_images(rd.get('images'))
         helper.load_raster(imentries, rd, footprint=self.footprint)
 

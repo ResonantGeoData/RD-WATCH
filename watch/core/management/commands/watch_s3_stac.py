@@ -53,7 +53,7 @@ class STACLoader:
         with download_object(self.client, self.bucket, obj) as data:
             meta = STACRasterSerializer().create(data)
         collection, _ = Collection.objects.get_or_create(name='WorldView')
-        images = meta.parent_raster.images.all()
+        images = meta.parent_raster.image_set.images.all()
         for image in images:
             image.file.collection = collection
             image.file.save(

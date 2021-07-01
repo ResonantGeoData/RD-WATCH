@@ -193,7 +193,7 @@ class GCLoader:
                     'collection',
                 ]
             )
-        for afile in raster.ancillary_files:
+        for afile in raster.ancillary_files.all():
             afile.collection = collection
             afile.save(
                 update_fields=[

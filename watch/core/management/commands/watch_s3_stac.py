@@ -61,7 +61,7 @@ class STACLoader:
                     'collection',
                 ]
             )
-        for afile in meta.parent_raster.ancillary_files:
+        for afile in meta.parent_raster.ancillary_files.all():
             afile.collection = collection
             afile.save(
                 update_fields=[

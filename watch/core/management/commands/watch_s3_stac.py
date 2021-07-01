@@ -61,6 +61,13 @@ class STACLoader:
                     'collection',
                 ]
             )
+        for afile in meta.parent_raster.ancillary_files:
+            afile.collection = collection
+            afile.save(
+                update_fields=[
+                    'collection',
+                ]
+            )
 
 
 @click.command()

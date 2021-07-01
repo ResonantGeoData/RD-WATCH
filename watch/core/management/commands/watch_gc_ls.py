@@ -177,18 +177,25 @@ class GCLoader:
             collection, _ = Collection.objects.get_or_create(name='Landsat')
             rd = _load_landsat(row)
         elif self.satellite == 'sentinel':
-            rd = _load_sentinel(row)
             collection, _ = Collection.objects.get_or_create(name='Sentinel')
+            rd = _load_sentinel(row)
         else:
             raise ValueError(f'Unknown satellite: {self.satellite}')
         if rd is None:
             return
         imentries = helper.load_images(rd.get('images'))
-        helper.load_raster(imentries, rd, footprint=self.footprint)
+        raster = helper.load_raster(imentries, rd, footprint=self.footprint)
         for im in imentries:
             image = Image.objects.get(pk=im)
             image.file.collection = collection
             image.file.save(
+                update_fields=[
+                    'collection',
+                ]
+            )
+        for afile in raster.ancillary_files:
+            afile.collection = collection
+            afile.save(
                 update_fields=[
                     'collection',
                 ]

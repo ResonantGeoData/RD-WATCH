@@ -9,6 +9,7 @@ from typing import Generator, Optional
 import boto3
 from django.conf import settings
 import djclick as click
+from rgd.models import Collection
 from rgd_imagery.serializers import STACRasterSerializer
 
 
@@ -50,7 +51,16 @@ class STACLoader:
 
     def load_object(self, obj: dict) -> None:
         with download_object(self.client, self.bucket, obj) as data:
-            STACRasterSerializer().create(data)
+            meta = STACRasterSerializer().create(data)
+        collection, _ = Collection.objects.get_or_create(name='WorldView')
+        images = meta.parent_raster.images.all()
+        for image in images:
+            image.file.collection = collection
+            image.file.save(
+                update_fields=[
+                    'collection',
+                ]
+            )
 
 
 @click.command()

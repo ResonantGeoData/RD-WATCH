@@ -8,8 +8,10 @@ import xml.etree.ElementTree as ElementTree
 import pandas as pd
 from rgd import datastore
 from rgd.management.commands._data_helper import SynchronousTasksCommand
+from rgd.models import Collection
 from rgd.utility import safe_urlopen
 from rgd_imagery.management.commands import _data_helper as helper
+from rgd_imagery.models import Image
 
 logger = logging.getLogger(__name__)
 
@@ -141,7 +143,10 @@ def _get_sentinel_urls(base_url):
 
 
 def _load_sentinel(row):
-    urls, ancillary = _get_sentinel_urls(row['BASE_URL'])
+    try:
+        urls, ancillary = _get_sentinel_urls(row['BASE_URL'])
+    except ValueError:
+        return None
     rd = helper.make_raster_dict(
         urls,
         date=row['SENSING_TIME'],
@@ -169,13 +174,25 @@ class GCLoader:
     def _load_raster(self, index):
         row = self.index.iloc[index]
         if self.satellite == 'landsat':
+            collection, _ = Collection.objects.get_or_create(name='Landsat')
             rd = _load_landsat(row)
         elif self.satellite == 'sentinel':
             rd = _load_sentinel(row)
+            collection, _ = Collection.objects.get_or_create(name='Sentinel')
         else:
             raise ValueError(f'Unknown satellite: {self.satellite}')
+        if rd is None:
+            return
         imentries = helper.load_images(rd.get('images'))
         helper.load_raster(imentries, rd, footprint=self.footprint)
+        for im in imentries:
+            image = Image.objects.get(pk=im)
+            image.file.collection = collection
+            image.file.save(
+                update_fields=[
+                    'collection',
+                ]
+            )
 
     def load_rasters(self, count=None):
         if not count:

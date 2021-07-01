@@ -91,6 +91,7 @@ class WatchMixin(CrispyFormsMixin, GeoDjangoMixin, SwaggerMixin, ConfigMixin):
     CELERY_WORKER_SEND_TASK_EVENTS = True
 
     RGD_FILE_FIELD_PREFIX = values.Value(default=None)
+    RGD_GLOBAL_READ_ACCESS = values.Value(default=True)
 
 
 class DevelopmentConfiguration(WatchMixin, DevelopmentBaseConfiguration):

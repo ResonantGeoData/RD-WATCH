@@ -10,7 +10,7 @@
       repo: "{{ repo }}"
       dest: "{{ app_path }}"
       force: yes
-      version: "prodiction" # TODO: remove
+      version: "production" # TODO: remove
 
   - name: Set environment variables
     set_fact:

@@ -16,12 +16,14 @@
     set_fact:
       watch_environment:
         DJANGO_CONFIGURATION:  AWSProductionConfiguration
-        DJANGO_ALLOWED_HOSTS: "{{ lookup('env', 'DJANGO_ALLOWED_HOSTS')}}"
-        DJANGO_DEFAULT_FROM_EMAIL: "admin@{{ lookup('env', 'DJANGO_ALLOWED_HOSTS')}}"
+        DJANGO_ALLOWED_HOSTS: "{{ lookup('env', 'DJANGO_ALLOWED_HOSTS') }}"
+        DJANGO_EMAIL_URL: "{{ lookup('env', 'DJANGO_EMAIL_URL') }}"
+        DJANGO_DEFAULT_FROM_EMAIL: admin@{{ lookup('env', 'DJANGO_ALLOWED_HOSTS') }}
         DJANGO_DATABASE_URL: "{{ lookup('env', 'DJANGO_DATABASE_URL') }}"
         DJANGO_CELERY_BROKER_URL: "{{ lookup('env', 'DJANGO_CELERY_BROKER_URL') }}"
         DJANGO_STORAGE_BUCKET_NAME: "{{ lookup('env', 'DJANGO_STORAGE_BUCKET_NAME') }}"
-
+        DJANGO_SECRET_KEY: "{{ lookup('env', 'DJANGO_SECRET_KEY') }}"
+  
   - name: install pip + python, postgres headers 
     apt: 
       pkg:
@@ -48,6 +50,7 @@
     pip:
       requirements: "{{ app_path }}/requirements.txt"
       virtualenv: "{{ venv }}"
+      chdir: "{{ app_path }}"
     become: true
 
   - name: run django migrations
@@ -78,6 +81,7 @@
       celery_app: watch.celery
       celery_repository_url: "{{ repo }}"
       celery_environment: "{{ watch_environment }}"
+      celery_repository_ref: production # TODO: remove
 
   - name: create gunicorn config
     template:

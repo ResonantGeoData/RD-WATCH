@@ -1,0 +1,38 @@
+name: deploy
+on:
+  pull_request:
+  push:
+    branches:
+      - master
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+      - name: Set up Python
+        uses: actions/setup-python@v2
+        with:
+          python-version: "3.8"
+      - name: Install Ansible
+        run: |
+          pip install --upgrade pip
+          pip install ansible
+      - name: Configure AWS Credentials
+        uses: aws-actions/configure-aws-credentials@v1
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+      - name: Run playbook
+        env: # TODO: Hard code, "non-secret" values
+          INSTANCE_ID: ${{ secrets.INSTANCE_ID }}
+          DJANGO_DATABASE_URL: ${{ secrets.DJANGO_DATABASE_URL }}
+          DJANGO_SECRET_KEY: ${{ secrets.DJANGO_SECRET_KEY }}
+          DJANGO_EMAIL_URL: ${{ secrets.DJANGO_EMAIL_URL }}
+          DJANGO_STORAGE_BUCKET_NAME: ${{ secrets.DJANGO_STORAGE_BUCKET_NAME }}
+          DJANGO_CELERY_BROKER_URL: ${{ secrets.DJANGO_CELERY_BROKER_URL }}
+          DJANGO_ALLOWED_HOSTS: ${{ secrets.DJANGO_ALLOWED_HOSTS }}
+        run: |
+          aws ssm create-association --name "AWS-ApplyAnsiblePlaybooks" \
+          --targets Key=InstanceIds,Values=$INSTANCE_ID \
+          --parameters '{"SourceType":["GitHub"],"SourceInfo":["{\"owner\":\"ResonantGeoData\", \"repository\": \"RD-WATCH\", \"getOptions\": \"branch:master\"}"],"InstallDependencies":["True"],"PlaybookFile":["ansible/main.yml"],"ExtraVariables":["DJANGO_DATABASE_URL=$DJANGO_DATABASE_URL DJANGO_SECRET_KEY=$DJANGO_SECRET_KEY DJANGO_EMAIL_URL=$DJANGO_EMAIL_URL DJANGO_STORAGE_BUCKET_NAME=$DJANGO_STORAGE_BUCKET_NAME DJANGO_CELERY_BROKER_URL=$DJANGO_CELERY_BROKER_URL DJANGO_ALLOWED_HOSTS=$DJANGO_ALLOWED_HOSTS"],"Verbose":["-vvv"]}' \
+          --association-name "RD-WATCH_Ansible_Deployment"

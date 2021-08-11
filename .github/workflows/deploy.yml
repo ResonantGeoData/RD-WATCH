@@ -28,7 +28,7 @@ jobs:
           ansible-galaxy install \
             --force \
             --role-file=./ansible/requirements.yml \
-            --roles_path=./ansible/roles
+            --roles-path=./ansible/roles
       - name: Run playbook
         env:
           DJANGO_DATABASE_URL: ${{ secrets.WATCH_DATABASE_URL }}

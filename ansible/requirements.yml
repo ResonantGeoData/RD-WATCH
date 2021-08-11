@@ -1,0 +1,9 @@
+---
+roles:
+- src: girder.celery
+  version: master
+
+collections:
+- name: community.docker
+- name: community.general
+- name: geerlingguy.docker

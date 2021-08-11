@@ -1,0 +1,6 @@
+# {{ ansible_managed }}
+
+# django
+{% for environment_key, environment_value in watch_environment.items() %}
+{{ environment_key }}={{ environment_value }}
+{% endfor %}

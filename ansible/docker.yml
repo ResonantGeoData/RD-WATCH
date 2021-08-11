@@ -1,0 +1,60 @@
+---
+- hosts: all
+  vars:
+    app_path: /home/ubuntu/RD-WATCH
+  tasks:
+  - name: checkout code
+    git:
+      repo: "https://github.com/ResonantGeoData/RD-WATCH.git"
+      dest: "{{ app_path }}"
+      force: yes
+
+  - name: install pip
+    apt: 
+      pkg:
+        - python3-pip
+      update_cache: yes
+      state: present
+    become: yes
+
+  - name: pip docker + docker-compose
+    pip:
+      name: 
+        - docker
+        - docker-compose
+    become: yes
+
+  - name: start docker daemon
+    include_role:
+      name: geerlingguy.docker
+    vars:
+      ansible_become: yes
+      
+  - name: tear down existing services
+    community.docker.docker_compose:
+      project_src: "{{ app_path }}"
+      state: absent
+    become: yes
+
+  - name: pull docker images
+    community.docker.docker_compose:
+      project_src: "{{ app_path }}"
+      pull: yes
+      files:
+        - docker-compose.yml
+    become: yes
+
+  - name: build docker images
+    community.docker.docker_compose:
+      project_src: "{{ app_path }}"
+      build: yes
+      files:
+        - docker-compose.yml
+    become: yes
+
+  - name: start docker services
+    community.docker.docker_compose:
+      project_src: "{{ app_path }}"
+      files:
+        - docker-compose.yml
+    become: yes

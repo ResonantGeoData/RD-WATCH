@@ -1,0 +1,43 @@
+name: deploy
+on:
+  push:
+    branches:
+      - main
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+      - name: Set up Python
+        uses: actions/setup-python@v2
+        with:
+          python-version: "3.8"
+      - name: Install Ansible
+        run: |
+          pip install --upgrade pip
+          pip install ansible
+      - name: Install ssh key
+        env:
+          WATCH_SSH_PRIVATE_KEY: ${{ secrets.WATCH_SSH_PRIVATE_KEY }}
+        run: |
+          mkdir -p ~/.ssh/
+          echo "$WATCH_SSH_PRIVATE_KEY" > ~/.ssh/rd-watch-ci.key
+          sudo chmod 600 ~/.ssh/rd-watch-ci.key
+      - name: Install Ansible dependencies
+        run: |
+          ansible-galaxy install \
+            --force \
+            --role-file=./ansible/requirements.yml \
+            --roles_path=./ansible/roles
+      - name: Run playbook
+        env:
+          DJANGO_DATABASE_URL: ${{ secrets.WATCH_DATABASE_URL }}
+          DJANGO_EMAIL_URL: ${{ secrets.WATCH_EMAIL_URL }}
+          DJANGO_CELERY_BROKER_URL: ${{ secrets.WATCH_CELERY_BROKER_URL }}
+          DJANGO_SECRET_KEY: ${{ secrets.WATCH_SECRET_KEY }}
+          ANSIBLE_HOST_KEY_CHECKING: False
+        run: |
+          ansible-playbook \
+            ansible/main.yml \
+            --inventory=./ansible/inventory \
+            --private-key=~/.ssh/rd-watch-ci.key

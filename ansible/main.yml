@@ -1,0 +1,107 @@
+---
+- hosts: all
+  vars:
+    ansible_python_interpreter: auto
+    app_path: "{{ ansible_facts['user_dir'] }}/RD-WATCH"
+    venv: "{{ ansible_facts['user_dir'] }}/venv"
+    repo: "https://github.com/ResonantGeoData/RD-WATCH.git"
+  tasks:
+  - name: checkout code
+    git:
+      repo: "{{ repo }}"
+      dest: "{{ app_path }}"
+      force: yes
+
+  - name: Set environment variables
+    set_fact:
+      watch_environment:
+        DJANGO_CELERY_BROKER_URL: "{{ lookup('env', 'DJANGO_CELERY_BROKER_URL') }}"
+        DJANGO_DATABASE_URL: "{{ lookup('env', 'DJANGO_DATABASE_URL') }}"
+        DJANGO_EMAIL_URL: "{{ lookup('env', 'DJANGO_EMAIL_URL') }}"
+        DJANGO_SECRET_KEY: "{{ lookup('env', 'DJANGO_SECRET_KEY') }}"
+        DJANGO_CONFIGURATION:  AWSProductionConfiguration
+        DJANGO_ALLOWED_HOSTS: "'127.0.0.1','localhost','0.0.0.0','watch.resonantgeodata.com'"
+        DJANGO_DEFAULT_FROM_EMAIL: admin@watch.resonantgeodata.com
+        DJANGO_STORAGE_BUCKET_NAME: kitware-smart-watch-data
+        DJANGO_RGD_FILE_FIELD_PREFIX: resonant-geodata
+        DJANGO_RGD_GLOBAL_READ_ACCESS: true
+        DJANGO_SECURE_PROXY_SSL_HEADER: HTTP_X_FORWARDED_PROTO,http
+        DJANGO_SENTRY_DSN: https://b3dac135af6c42fea439998200656ca3@o267860.ingest.sentry.io/5458973
+        DJANGO_SENTRY_ENVIRONMENT: watch-aws
+  - name: install pip + python, postgres headers 
+    apt: 
+      pkg:
+        - python3-pip
+        - python3-dev
+        - python3-setuptools
+        - python3-venv
+        - libpq-dev
+      update_cache: yes
+      state: present
+    become: yes
+
+  - name: Ensure virtualenv is using a recent pip version
+    pip:
+      name: "pip"
+      # This is the first version with the new resolver
+      version: ">=20.3"
+      virtualenv: "{{ venv }}"
+      # This implicitly creates a virtualenv, so do so using the Python 3 syntax
+      virtualenv_command: "python3 -m venv"
+    become: true
+
+  - name: install pip requirements
+    pip:
+      requirements: "{{ app_path }}/requirements.txt"
+      virtualenv: "{{ venv }}"
+      chdir: "{{ app_path }}"
+    become: true
+
+  - name: run django migrations
+    django_manage:
+      command: migrate
+      app_path: "{{ app_path }}"
+      virtualenv: "{{ venv }}"
+    environment: "{{ watch_environment }}"
+
+  - name: collect static files
+    django_manage:
+      command: collectstatic
+      clear: yes
+      app_path: "{{ app_path }}"
+      virtualenv: "{{ venv }}"
+    environment: "{{ watch_environment }}"
+
+  - name: create conf.d directory
+    file:
+      path: /etc/conf.d
+      state: directory
+    become: yes
+
+  - name: Run celery role
+    include_role:
+      name: girder.celery
+    vars:
+      celery_app: watch.celery
+      celery_repository_url: "{{ repo }}"
+      celery_environment: "{{ watch_environment }}"
+
+  - name: create gunicorn config
+    template:
+      src: "./gunicorn/gunicorn.j2"
+      dest: /etc/conf.d/gunicorn
+    become: yes
+
+  - name: create gunicorn service
+    template:
+      src: "./gunicorn/gunicorn.service.j2"
+      dest: /etc/systemd/system/gunicorn.service
+    become: yes
+
+  - name: start gunicorn service
+    systemd:
+      name: gunicorn.service
+      enabled: yes
+      state: restarted
+      daemon_reload: yes
+    become: yes

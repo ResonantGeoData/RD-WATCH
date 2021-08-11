@@ -1,9 +1,8 @@
 name: deploy
 on:
-  pull_request:
   push:
     branches:
-      - master
+      - main
 jobs:
   deploy:
     runs-on: ubuntu-latest
@@ -17,22 +16,28 @@ jobs:
         run: |
           pip install --upgrade pip
           pip install ansible
-      - name: Configure AWS Credentials
-        uses: aws-actions/configure-aws-credentials@v1
-        with:
-          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
-          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
-      - name: Run playbook
-        env: # TODO: Hard code, "non-secret" values
-          INSTANCE_ID: ${{ secrets.INSTANCE_ID }}
-          DJANGO_DATABASE_URL: ${{ secrets.DJANGO_DATABASE_URL }}
-          DJANGO_SECRET_KEY: ${{ secrets.DJANGO_SECRET_KEY }}
-          DJANGO_EMAIL_URL: ${{ secrets.DJANGO_EMAIL_URL }}
-          DJANGO_STORAGE_BUCKET_NAME: ${{ secrets.DJANGO_STORAGE_BUCKET_NAME }}
-          DJANGO_CELERY_BROKER_URL: ${{ secrets.DJANGO_CELERY_BROKER_URL }}
-          DJANGO_ALLOWED_HOSTS: ${{ secrets.DJANGO_ALLOWED_HOSTS }}
+      - name: Install ssh key
+        env:
+          WATCH_SSH_PRIVATE_KEY: ${{ secrets.WATCH_SSH_PRIVATE_KEY }}
         run: |
-          aws ssm create-association --name "AWS-ApplyAnsiblePlaybooks" \
-          --targets Key=InstanceIds,Values=$INSTANCE_ID \
-          --parameters '{"SourceType":["GitHub"],"SourceInfo":["{\"owner\":\"ResonantGeoData\", \"repository\": \"RD-WATCH\", \"getOptions\": \"branch:master\"}"],"InstallDependencies":["True"],"PlaybookFile":["ansible/main.yml"],"ExtraVariables":["DJANGO_DATABASE_URL=$DJANGO_DATABASE_URL DJANGO_SECRET_KEY=$DJANGO_SECRET_KEY DJANGO_EMAIL_URL=$DJANGO_EMAIL_URL DJANGO_STORAGE_BUCKET_NAME=$DJANGO_STORAGE_BUCKET_NAME DJANGO_CELERY_BROKER_URL=$DJANGO_CELERY_BROKER_URL DJANGO_ALLOWED_HOSTS=$DJANGO_ALLOWED_HOSTS"],"Verbose":["-vvv"]}' \
-          --association-name "RD-WATCH_Ansible_Deployment"
+          mkdir -p ~/.ssh/
+          echo "$WATCH_SSH_PRIVATE_KEY" > ~/.ssh/rd-watch-ci.key
+          sudo chmod 600 ~/.ssh/rd-watch-ci.key
+      - name: Install Ansible dependencies
+        run: |
+          ansible-galaxy install \
+            --force \
+            --role-file=./ansible/requirements.yml \
+            --roles_path=./ansible/roles
+      - name: Run playbook
+        env:
+          DJANGO_DATABASE_URL: ${{ secrets.WATCH_DATABASE_URL }}
+          DJANGO_EMAIL_URL: ${{ secrets.WATCH_EMAIL_URL }}
+          DJANGO_CELERY_BROKER_URL: ${{ secrets.WATCH_CELERY_BROKER_URL }}
+          DJANGO_SECRET_KEY: ${{ secrets.WATCH_SECRET_KEY }}
+          ANSIBLE_HOST_KEY_CHECKING: False
+        run: |
+          ansible-playbook \
+            ansible/main.yml \
+            --inventory=./ansible/inventory \
+            --private-key=~/.ssh/rd-watch-ci.key

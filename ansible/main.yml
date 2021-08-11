@@ -1,6 +1,7 @@
 ---
 - hosts: all
   vars:
+    ansible_python_interpreter: auto
     app_path: "{{ ansible_facts['user_dir'] }}/RD-WATCH"
     venv: "{{ ansible_facts['user_dir'] }}/venv"
     repo: "https://github.com/ResonantGeoData/RD-WATCH.git"
@@ -10,20 +11,23 @@
       repo: "{{ repo }}"
       dest: "{{ app_path }}"
       force: yes
-      version: "production" # TODO: remove
 
   - name: Set environment variables
     set_fact:
       watch_environment:
-        DJANGO_CONFIGURATION:  AWSProductionConfiguration
-        DJANGO_ALLOWED_HOSTS: "{{ lookup('env', 'DJANGO_ALLOWED_HOSTS') }}"
-        DJANGO_EMAIL_URL: "{{ lookup('env', 'DJANGO_EMAIL_URL') }}"
-        DJANGO_DEFAULT_FROM_EMAIL: admin@{{ lookup('env', 'DJANGO_ALLOWED_HOSTS') }}
-        DJANGO_DATABASE_URL: "{{ lookup('env', 'DJANGO_DATABASE_URL') }}"
         DJANGO_CELERY_BROKER_URL: "{{ lookup('env', 'DJANGO_CELERY_BROKER_URL') }}"
-        DJANGO_STORAGE_BUCKET_NAME: "{{ lookup('env', 'DJANGO_STORAGE_BUCKET_NAME') }}"
+        DJANGO_DATABASE_URL: "{{ lookup('env', 'DJANGO_DATABASE_URL') }}"
+        DJANGO_EMAIL_URL: "{{ lookup('env', 'DJANGO_EMAIL_URL') }}"
         DJANGO_SECRET_KEY: "{{ lookup('env', 'DJANGO_SECRET_KEY') }}"
-  
+        DJANGO_CONFIGURATION:  AWSProductionConfiguration
+        DJANGO_ALLOWED_HOSTS: "'127.0.0.1','localhost','0.0.0.0','watch.resonantgeodata.com'"
+        DJANGO_DEFAULT_FROM_EMAIL: admin@watch.resonantgeodata.com
+        DJANGO_STORAGE_BUCKET_NAME: kitware-smart-watch-data
+        DJANGO_RGD_FILE_FIELD_PREFIX: resonant-geodata
+        DJANGO_RGD_GLOBAL_READ_ACCESS: true
+        DJANGO_SECURE_PROXY_SSL_HEADER: HTTP_X_FORWARDED_PROTO,http
+        DJANGO_SENTRY_DSN: https://b3dac135af6c42fea439998200656ca3@o267860.ingest.sentry.io/5458973
+        DJANGO_SENTRY_ENVIRONMENT: watch-aws
   - name: install pip + python, postgres headers 
     apt: 
       pkg:
@@ -81,7 +85,6 @@
       celery_app: watch.celery
       celery_repository_url: "{{ repo }}"
       celery_environment: "{{ watch_environment }}"
-      celery_repository_ref: production # TODO: remove
 
   - name: create gunicorn config
     template:

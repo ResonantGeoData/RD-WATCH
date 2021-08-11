@@ -1,6 +1,4 @@
 [aws]
-watch-test.resonantgeodata.com
-
-[aws:vars]
+ansible_host=i-0e3777724198d81d1    
 ansible_user=ubuntu
-ansible_python_interpreter=/usr/bin/python3
+ansible_ssh_common_args='-o ProxyCommand sh -c "aws ssm start-session --target %h --document-name AWS-StartSSHSession --parameters 'portNumber=%p'"'

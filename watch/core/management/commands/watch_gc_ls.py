@@ -19,17 +19,19 @@ SUCCESS_MSG = 'Finished loading all {} data.'
 
 
 def _fetch_landsat_index_table():
-    datastore.datastore.registry[
-        'landsat_all.csv'
-    ] = 'sha512:3daaa5270f86791cc72423d5d7aa2071265bf7b7ac073c6c36e6f950dacb256737aa2b08fba59f35857b63c77af7e09a554e9b5c15308ab90fae56a71427bfa5'
+    datastore.datastore.registry['landsat_all.csv'] = (
+        'sha512:3daaa5270f86791cc72423d5d7aa2071265bf7b7ac073c6c36e6f950dacb2'
+        '56737aa2b08fba59f35857b63c77af7e09a554e9b5c15308ab90fae56a71427bfa5'
+    )
     path = datastore.datastore.fetch('landsat_all.csv')
     return pd.read_csv(path)
 
 
 def _fetch_sentinel_index_table():
-    datastore.datastore.registry[
-        'sentinel_all.csv'
-    ] = 'sha512:514da526b523f54f2a8b2135569cf384597d62ee868591a9d336222a5d49397b8e3ae21257c68b1e79c5c13c5d75fe802f931f530f602936d82e2c61b87ec749'
+    datastore.datastore.registry['sentinel_all.csv'] = (
+        'sha512:514da526b523f54f2a8b2135569cf384597d62ee868591a9d336222a5d493'
+        '97b8e3ae21257c68b1e79c5c13c5d75fe802f931f530f602936d82e2c61b87ec749'
+    )
     path = datastore.datastore.fetch('sentinel_all.csv')
     df = pd.read_csv(path)
     # Handle issue where tiles for a given date were processed multiple times

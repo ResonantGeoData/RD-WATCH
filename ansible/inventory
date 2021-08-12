@@ -1,4 +1,5 @@
-[aws]
-ansible_host=i-0e3777724198d81d1    
+aws ansible_host=i-0e3777724198d81d1
+
+[aws:vars]
 ansible_user=ubuntu
 ansible_ssh_common_args='-o ProxyCommand sh -c "aws ssm start-session --target %h --document-name AWS-StartSSHSession --parameters 'portNumber=%p'"'

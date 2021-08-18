@@ -4,4 +4,4 @@ all:
     watch:
       ansible_host: i-0e3777724198d81d1
       ansible_user: ubuntu
-      ansible_ssh_common_args: -o ProxyCommand sh -c "aws ssm start-session --target %h --document-name AWS-StartSSHSession --parameters 'portNumber=%p'"
+      ansible_ssh_common_args: -o ProxyCommand sh -c "aws ssm start-session --target %h --document-name RGD_SSHDocument --parameters 'portNumber=%p'"

@@ -24,6 +24,7 @@ urlpatterns = [
     path('api/docs/swagger/', schema_view.with_ui('swagger'), name='docs-swagger'),
     path('', include('rgd.urls')),
     path('', include('rgd_imagery.urls')),
+    path('', include('watch.core.urls')),
     # Redirect homepage to RGD core app homepage
     path(r'', RedirectView.as_view(url='rgd', permanent=False), name='index'),
 ]

@@ -49,6 +49,7 @@ setup(
         'django-oauth-toolkit',
         'djangorestframework',
         'drf-yasg',
+        'semantic_version',
         'rules',
         # Production-only
         'django-composed-configuration[prod]',

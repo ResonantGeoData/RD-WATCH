@@ -39,6 +39,13 @@ class RegionSerializer(serializers.BaseSerializer):
         instance.save()
         for i, json_feature in enumerate(data.get('features', [])):
             properties = json_feature['properties']
+            if properties['type'] == 'region':
+                instance.version = properties['version']
+                instance.save(
+                    update_fields=[
+                        'version',
+                    ]
+                )
             feature = models.Feature()
             feature.parent_region = instance
             feature.properties = properties

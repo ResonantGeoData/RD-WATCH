@@ -5,6 +5,7 @@ from rgd.admin.mixins import (
     SPATIAL_ENTRY_FILTERS,
     TASK_EVENT_FILTERS,
     TASK_EVENT_READONLY,
+    GeoAdminInline,
     _FileGetNameMixin,
     reprocess,
 )
@@ -12,10 +13,10 @@ from rgd.admin.mixins import (
 from .models import Feature, Region
 
 
-# TODO: use inline patch from https://github.com/ResonantGeoData/ResonantGeoData/pull/489
-class FeatureInline(admin.StackedInline):
+class FeatureInline(GeoAdminInline):
     model = Feature
     fk_name = 'parent_region'
+    extra = 0
     list_display = (
         'pk',
         'modified',

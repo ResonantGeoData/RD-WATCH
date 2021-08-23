@@ -3,6 +3,7 @@ from django.contrib.gis.db import models
 from django_extensions.db.models import TimeStampedModel
 from rgd.models import SpatialEntry
 from rgd.models.mixins import TaskEventMixin
+from semantic_version.django_fields import VersionField
 
 
 class Region(TimeStampedModel, SpatialEntry, TaskEventMixin):
@@ -14,6 +15,7 @@ class Region(TimeStampedModel, SpatialEntry, TaskEventMixin):
     """
 
     properties = models.JSONField(null=True, blank=True)
+    version = VersionField(null=True, blank=True)
 
 
 class Feature(TimeStampedModel, SpatialEntry):

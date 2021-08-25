@@ -5,6 +5,8 @@ from rgd.models import SpatialEntry
 from rgd.models.mixins import TaskEventMixin
 from semantic_version.django_fields import VersionField
 
+from .tasks import jobs
+
 
 class Region(TimeStampedModel, SpatialEntry, TaskEventMixin):
     """Basically a FeatureCollection GeoJSON object.
@@ -13,6 +15,8 @@ class Region(TimeStampedModel, SpatialEntry, TaskEventMixin):
 
     We will use this to track what areas of Landsat/Sentinel imagery are ingested.
     """
+
+    task_funcs = (jobs.task_load_region_landsat,)
 
     properties = models.JSONField(null=True, blank=True)
     version = VersionField(null=True, blank=True)

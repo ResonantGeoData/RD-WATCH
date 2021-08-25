@@ -1,13 +1,13 @@
 from datetime import datetime
 import logging
-import multiprocessing
 import os
 import tempfile
 import xml.etree.ElementTree as ElementTree
 
+from django.core.management.base import BaseCommand
 import pandas as pd
-from rgd import datastore
-from rgd.management.commands._data_helper import SynchronousTasksCommand
+import pooch
+from pooch import Decompress
 from rgd.models import Collection
 from rgd.utility import safe_urlopen
 from rgd_imagery.management.commands import _data_helper as helper
@@ -15,35 +15,44 @@ from rgd_imagery.models import Image
 
 logger = logging.getLogger(__name__)
 
-SUCCESS_MSG = 'Finished loading all {} data.'
+SUCCESS_MSG = 'Raster records created. Please monitor celery worker for ingestion status.'
+
+DATA_DIR = os.path.join(os.path.dirname(__file__), 'data')
+
+if not os.path.exists(DATA_DIR):
+    os.mkdir(DATA_DIR)
 
 
-def _fetch_landsat_index_table():
-    datastore.datastore.registry['landsat_all.csv'] = (
-        'sha512:3daaa5270f86791cc72423d5d7aa2071265bf7b7ac073c6c36e6f950dacb2'
-        '56737aa2b08fba59f35857b63c77af7e09a554e9b5c15308ab90fae56a71427bfa5'
+def _format_gs_base_url(base_url):
+    return 'http://storage.googleapis.com/' + base_url.replace('gs://', '')
+
+
+def _fetch_landsat_index_table(count=None):
+    file_path = pooch.retrieve(
+        url=_format_gs_base_url('gs://gcp-public-data-landsat/index.csv.gz'),
+        known_hash=None,  # 7ccce260df5f7ad77a24f8f24acd944bee210ee5c44b3dcdd37e14f98a6876af
+        processor=Decompress(),
+        path=DATA_DIR,
     )
-    path = datastore.datastore.fetch('landsat_all.csv')
-    return pd.read_csv(path)
+    index = pd.read_csv(file_path, nrows=count)
+    index = index[index['SENSOR_ID'].isin(['OLI_TIRS', 'ETM'])]
+    return index
 
 
-def _fetch_sentinel_index_table():
-    datastore.datastore.registry['sentinel_all.csv'] = (
-        'sha512:514da526b523f54f2a8b2135569cf384597d62ee868591a9d336222a5d493'
-        '97b8e3ae21257c68b1e79c5c13c5d75fe802f931f530f602936d82e2c61b87ec749'
+def _fetch_sentinel_index_table(count=None):
+    file_path = pooch.retrieve(
+        url=_format_gs_base_url('gs://gcp-public-data-sentinel-2/index.csv.gz'),
+        known_hash=None,
+        processor=Decompress(),
+        path=DATA_DIR,
     )
-    path = datastore.datastore.fetch('sentinel_all.csv')
-    df = pd.read_csv(path)
+    df = pd.read_csv(file_path, nrows=count)
     # Handle issue where tiles for a given date were processed multiple times
     #   to avoid ingesting duplicate data.
     clean = df.sort_values('PRODUCT_ID').drop_duplicates(
         ['MGRS_TILE', 'SENSING_TIME'], keep='first'
     )
     return clean.sort_index()
-
-
-def _format_gs_base_url(base_url):
-    return 'http://storage.googleapis.com/' + base_url.replace('gs://', '')
 
 
 def _get_landsat_urls(base_url, name, sensor):
@@ -161,86 +170,82 @@ def _load_sentinel(row):
 
 
 class GCLoader:
-    def __init__(self, satellite, footprint=False):
+    def __init__(self, satellite):
         if satellite not in ['landsat', 'sentinel']:
             raise ValueError(f'Unknown satellite {satellite}.')
         self.satellite = satellite
 
         if self.satellite == 'landsat':
-            self.index = _fetch_landsat_index_table()
+            self.collection, _ = Collection.objects.get_or_create(name='GC Landsat')
         elif self.satellite == 'sentinel':
-            self.index = _fetch_sentinel_index_table()
+            self.collection, _ = Collection.objects.get_or_create(name='GC Sentinel')
 
-        self.footprint = footprint
-
-    def _load_raster(self, index):
-        row = self.index.iloc[index]
+    def _load_raster(self, idx, row):
         if self.satellite == 'landsat':
-            collection, _ = Collection.objects.get_or_create(name='Landsat')
             rd = _load_landsat(row)
         elif self.satellite == 'sentinel':
-            collection, _ = Collection.objects.get_or_create(name='Sentinel')
             rd = _load_sentinel(row)
         else:
             raise ValueError(f'Unknown satellite: {self.satellite}')
         if rd is None:
             return
         imentries = helper.load_images(rd.get('images'))
-        raster = helper.load_raster(imentries, rd, footprint=self.footprint)
+        raster = helper.load_raster(imentries, rd)
         for im in imentries:
             image = Image.objects.get(pk=im)
-            image.file.collection = collection
+            image.file.collection = self.collection
             image.file.save(
                 update_fields=[
                     'collection',
                 ]
             )
         for afile in raster.ancillary_files.all():
-            afile.collection = collection
+            afile.collection = self.collection
             afile.save(
                 update_fields=[
                     'collection',
                 ]
             )
 
-    def load_rasters(self, count=None):
-        if not count:
-            count = len(self.index)
-        logger.info(f'Processing {count} rasters...')
-        pool = multiprocessing.Pool(multiprocessing.cpu_count())
-        pool.map(self._load_raster, range(count))
+    def load_rasters(self, index):
+        iterable = index.iterrows()
+        logger.info(f'Processing {len(index)} rasters...')
+        for i, (a, b) in enumerate(iterable):
+            logger.info(f'Creating records for raster {i+1}/{len(index)}')
+            self._load_raster(a, b)
 
 
-class Command(SynchronousTasksCommand):
+class Command(BaseCommand):
     help = 'Populate database with demo landsat data from S3.'
 
     def add_arguments(self, parser):
         parser.add_argument('satellite', type=str, help='landsat or sentinel')
         parser.add_argument(
-            '-c', '--count', type=int, help='Indicates the number scenes to fetch.', default=None
-        )
-        parser.add_argument(
-            '-f',
-            '--footprint',
-            action='store_true',
-            default=False,
-            help='Compute the valid data footprints',
+            '-c',
+            '--count',
+            type=int,
+            help='Indicates the number scenes to fetch. The actual number of '
+            'rasters ingested will be less than this as this is the number '
+            'that are taken off the top of the catalog and '
+            'duplicates/irrelevant data are dropped.',
+            default=None,
         )
 
     def handle(self, *args, **options):
-        self.set_synchronous()
-
         count = options.get('count', None)
         satellite = options.get('satellite')
-        footprint = options.get('footprint')
 
         start_time = datetime.now()
 
-        loader = GCLoader(satellite, footprint=footprint)
-        loader.load_rasters(count)
+        loader = GCLoader(satellite)
+
+        if satellite == 'landsat':
+            index = _fetch_landsat_index_table(count)
+        elif satellite == 'sentinel':
+            index = _fetch_sentinel_index_table(count)
+        loader.load_rasters(index)
 
         self.stdout.write(
             self.style.SUCCESS('--- Completed in: {} ---'.format(datetime.now() - start_time))
         )
-        self.stdout.write(self.style.SUCCESS(SUCCESS_MSG.format(satellite)))
-        self.reset_celery()
+        self.stdout.write(self.style.SUCCESS(SUCCESS_MSG))

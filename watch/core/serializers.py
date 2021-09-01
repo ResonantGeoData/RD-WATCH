@@ -1,6 +1,7 @@
 from django.contrib.gis.geos import GeometryCollection, GEOSGeometry
 from django.db import transaction
 from rest_framework import serializers
+from rgd.serializers import MODIFIABLE_READ_ONLY_FIELDS, TASK_EVENT_READ_ONLY_FIELDS
 from shapely.geometry import shape
 from shapely.wkb import dumps
 
@@ -55,3 +56,10 @@ class RegionSerializer(serializers.BaseSerializer):
             feature.end_date = properties['end_date']
             feature.save()
         return instance
+
+
+class GoogleCloudRecordSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = models.GoogleCloudRecord
+        fields = '__all__'
+        read_only_fields = MODIFIABLE_READ_ONLY_FIELDS + TASK_EVENT_READ_ONLY_FIELDS

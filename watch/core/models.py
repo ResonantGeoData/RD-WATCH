@@ -1,7 +1,8 @@
 """Base classes for raster dataset entries."""
 from django.contrib.gis.db import models
+from django.core.validators import MaxValueValidator, MinValueValidator
 from django_extensions.db.models import TimeStampedModel
-from rgd.models import SpatialEntry
+from rgd.models import ChecksumFile, SpatialEntry
 from rgd.models.mixins import TaskEventMixin
 from semantic_version.django_fields import VersionField
 
@@ -24,3 +25,17 @@ class Feature(TimeStampedModel, SpatialEntry):
     properties = models.JSONField()
     start_date = models.DateField()
     end_date = models.DateField()
+
+
+class GoogleCloudCatalog(TimeStampedModel):
+    index = models.ForeignKey(ChecksumFile, on_delete=models.CASCADE, related_name='+')
+
+
+class GoogleCloudRecord(TimeStampedModel, TaskEventMixin):
+    catalog = models.ForeignKey(GoogleCloudCatalog, on_delete=models.CASCADE)
+    base_url = models.TextField(unique=True)
+    cloud_cover = models.FloatField(validators=[MinValueValidator(0), MaxValueValidator(100)])
+    product_id = models.TextField()
+    sensor_id = models.TextField()
+    sensing_time = models.DateTimeField()
+    bbox = models.PolygonField()

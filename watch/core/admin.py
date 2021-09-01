@@ -10,7 +10,7 @@ from rgd.admin.mixins import (
     reprocess,
 )
 
-from .models import Feature, Region
+from .models import Feature, GoogleCloudRecord, Region
 
 
 class FeatureInline(GeoAdminInline):
@@ -45,3 +45,20 @@ class RegionAdmin(OSMGeoAdmin, _FileGetNameMixin):
     inlines = (FeatureInline,)
     actions = (reprocess,)
     list_filter = MODIFIABLE_FILTERS + TASK_EVENT_FILTERS
+
+
+@admin.register(GoogleCloudRecord)
+class GoogleCloudRecordAdmin(OSMGeoAdmin):
+    list_display = (
+        'pk',
+        'catalog',
+        'status',
+        'modified',
+        'created',
+    )
+    readonly_fields = (
+        'modified',
+        'created',
+    ) + TASK_EVENT_READONLY
+    list_filter = MODIFIABLE_FILTERS + TASK_EVENT_FILTERS
+    actions = (reprocess,)

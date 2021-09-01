@@ -24,7 +24,7 @@ urlpatterns = [
         name='region-create',
     ),
     path(
-        'api/watch/gc_record/search-post',
+        'api/watch/gc_record/search_post',
         rest.post.SearchCreateGoogleCloudRecord.as_view(),
         name='gc-record-search-create',
     ),

@@ -1,5 +1,5 @@
-import os
 import logging
+import os
 import tempfile
 import xml.etree.ElementTree as ElementTree
 

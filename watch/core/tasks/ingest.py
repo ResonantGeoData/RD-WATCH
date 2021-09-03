@@ -118,8 +118,7 @@ def _load_sentinel(record):
     try:
         urls, ancillary = _get_sentinel_urls(record.base_url)
     except ValueError:
-        logger.error(f'Failed to ingest Sentinel record: {record}')
-        return None
+        raise RuntimeError(f'Failed to ingest Sentinel record: {record}')
     return _make_record_dict(record, urls, ancillary)
 
 

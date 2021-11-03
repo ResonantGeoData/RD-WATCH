@@ -10,7 +10,7 @@ import boto3
 from django.conf import settings
 import djclick as click
 from rgd.models import Collection
-from rgd_imagery.serializers import STACRasterSerializer
+from rgd_imagery.serializers.stac import ItemSerializer
 
 
 def _iter_matching_objects(
@@ -40,9 +40,10 @@ def download_object(s3_client, bucket, obj):
 
 
 class STACLoader:
-    def __init__(self, boto3_params, bucket: str):
+    def __init__(self, boto3_params, bucket: str, collection='WorldView'):
         self.boto3_params = boto3_params
         self.bucket = bucket
+        self.collection, _ = Collection.objects.get_or_create(name=collection)
 
     @property
     def client(self):
@@ -51,11 +52,10 @@ class STACLoader:
 
     def load_object(self, obj: dict) -> None:
         with download_object(self.client, self.bucket, obj) as data:
-            meta = STACRasterSerializer().create(data)
-        collection, _ = Collection.objects.get_or_create(name='WorldView')
+            meta = ItemSerializer().create(data)
         images = meta.parent_raster.image_set.images.all()
         for image in images:
-            image.file.collection = collection
+            image.file.collection = self.collection
             image.file.save(
                 update_fields=[
                     'collection',
@@ -95,10 +95,10 @@ def ingest_s3(
     session = boto3.Session(**boto3_params)
     s3_client = session.client('s3')
 
-    _eager = getattr(settings, 'CELERY_TASK_ALWAYS_EAGER', False)
-    _prop = getattr(settings, 'CELERY_TASK_EAGER_PROPAGATES', False)
-    settings.CELERY_TASK_ALWAYS_EAGER = True
-    settings.CELERY_TASK_EAGER_PROPAGATES = True
+    # _eager = getattr(settings, 'CELERY_TASK_ALWAYS_EAGER', False)
+    # _prop = getattr(settings, 'CELERY_TASK_EAGER_PROPAGATES', False)
+    # settings.CELERY_TASK_ALWAYS_EAGER = True
+    # settings.CELERY_TASK_EAGER_PROPAGATES = True
 
     loader = STACLoader(boto3_params, bucket)
     pool = multiprocessing.Pool(multiprocessing.cpu_count())
@@ -107,6 +107,6 @@ def ingest_s3(
         _iter_matching_objects(s3_client, bucket, prefix, include_regex),
     )
 
-    # Reset celery to previous settings
-    settings.CELERY_TASK_ALWAYS_EAGER = _eager
-    settings.CELERY_TASK_EAGER_PROPAGATES = _prop
+    # # Reset celery to previous settings
+    # settings.CELERY_TASK_ALWAYS_EAGER = _eager
+    # settings.CELERY_TASK_EAGER_PROPAGATES = _prop

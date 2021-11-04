@@ -39,7 +39,9 @@ class STACItem(TimeStampedModel, TaskEventMixin, PermissionPathMixin):
     server_modified = models.DateTimeField(null=True, default=None, blank=True)
     processed = models.DateTimeField(null=True, default=None, blank=True)
 
-    raster = models.ForeignKey(Raster, null=True, blank=True, on_delete=models.SET_NULL)
+    raster = models.ForeignKey(
+        Raster, null=True, blank=True, on_delete=models.SET_NULL, related_name='+'
+    )
 
     task_funcs = (tasks.task_ingest_stac_item,)
     permissions_paths = [('item', ChecksumFile)]

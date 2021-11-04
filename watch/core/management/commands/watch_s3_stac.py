@@ -1,16 +1,17 @@
-from contextlib import contextmanager
-import json
-import multiprocessing
-import os
+import logging
 import re
-import tempfile
 from typing import Generator, Optional
 
 import boto3
-from django.conf import settings
 import djclick as click
 from rgd.models import Collection
-from rgd_imagery.serializers import STACRasterSerializer
+from rgd.models.mixins import Status
+from rgd.models.utils import get_or_create_checksum_file_url
+from rgd.utility import get_or_create_no_commit
+
+from watch.core.models import STACItem
+
+logger = logging.getLogger(__name__)
 
 
 def _iter_matching_objects(
@@ -29,52 +30,12 @@ def _iter_matching_objects(
                 yield obj
 
 
-@contextmanager
-def download_object(s3_client, bucket, obj):
-    with tempfile.TemporaryDirectory() as tmpdir:
-        path = os.path.join(tmpdir, 'stac.json')
-        with open(path, 'wb') as f:
-            s3_client.download_fileobj(bucket, obj['Key'], f)
-        with open(path, 'r') as f:
-            yield json.loads(f.read())
-
-
-class STACLoader:
-    def __init__(self, boto3_params, bucket: str):
-        self.boto3_params = boto3_params
-        self.bucket = bucket
-
-    @property
-    def client(self):
-        session = boto3.Session(**self.boto3_params)
-        return session.client('s3')
-
-    def load_object(self, obj: dict) -> None:
-        with download_object(self.client, self.bucket, obj) as data:
-            meta = STACRasterSerializer().create(data)
-        collection, _ = Collection.objects.get_or_create(name='WorldView')
-        images = meta.parent_raster.image_set.images.all()
-        for image in images:
-            image.file.collection = collection
-            image.file.save(
-                update_fields=[
-                    'collection',
-                ]
-            )
-        for afile in meta.parent_raster.ancillary_files.all():
-            afile.collection = collection
-            afile.save(
-                update_fields=[
-                    'collection',
-                ]
-            )
-
-
 @click.command()
 @click.argument('bucket')
 @click.option('--include-regex', default=r'^.*\.json')
 @click.option('--prefix', default='')
 @click.option('--region', default='us-west-2')
+@click.option('--collection', default=None)
 @click.option('--access-key-id')
 @click.option('--secret-access-key')
 def ingest_s3(
@@ -82,6 +43,7 @@ def ingest_s3(
     include_regex: str,
     prefix: str,
     region: str,
+    collection: str,
     access_key_id: Optional[str],
     secret_access_key: Optional[str],
 ) -> None:
@@ -95,18 +57,20 @@ def ingest_s3(
     session = boto3.Session(**boto3_params)
     s3_client = session.client('s3')
 
-    _eager = getattr(settings, 'CELERY_TASK_ALWAYS_EAGER', False)
-    _prop = getattr(settings, 'CELERY_TASK_EAGER_PROPAGATES', False)
-    settings.CELERY_TASK_ALWAYS_EAGER = True
-    settings.CELERY_TASK_EAGER_PROPAGATES = True
+    if collection:
+        collection, _ = Collection.objects.get_or_create(name=collection)
+    else:
+        # In case of empty strings
+        collection = None
 
-    loader = STACLoader(boto3_params, bucket)
-    pool = multiprocessing.Pool(multiprocessing.cpu_count())
-    pool.map(
-        loader.load_object,
-        _iter_matching_objects(s3_client, bucket, prefix, include_regex),
-    )
-
-    # Reset celery to previous settings
-    settings.CELERY_TASK_ALWAYS_EAGER = _eager
-    settings.CELERY_TASK_EAGER_PROPAGATES = _prop
+    for obj in _iter_matching_objects(s3_client, bucket, prefix, include_regex):
+        url = f's3://{bucket}/{obj["Key"]}'
+        file, fcreated = get_or_create_checksum_file_url(url, collection=collection, defaults={})
+        item, screated = get_or_create_no_commit(STACItem, item=file)
+        item.skip_signal = True  # Do not ingest yet
+        if screated:
+            item.status = Status.SKIPPED
+        item.server_modified = obj['LastModified']
+        item.save()
+        logger.info(f'{"Created" if screated else "Already Present"}: {url}')
+        break

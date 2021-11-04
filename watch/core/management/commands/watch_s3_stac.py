@@ -73,4 +73,3 @@ def ingest_s3(
         item.server_modified = obj['LastModified']
         item.save()
         logger.info(f'{"Created" if screated else "Already Present"}: {url}')
-        break

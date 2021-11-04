@@ -57,4 +57,7 @@ class STACItem(TimeStampedModel, TaskEventMixin, PermissionPathMixin):
             # Now delete the empty image set
             self.raster.image_set.delete()
         # Additionally, delete the JSON file
-        self.item.delete()
+        try:
+            self.item.delete()
+        except ChecksumFile.DoesNotExist:
+            pass

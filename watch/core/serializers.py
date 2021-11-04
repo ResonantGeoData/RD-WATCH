@@ -67,8 +67,12 @@ class RegionSerializer(serializers.BaseSerializer):
 
 
 class STACItemSerializer(serializers.ModelSerializer):
-    item = RelatedField(queryset=ChecksumFile.objects.all(), serializer=ChecksumFileSerializer)
-    raster = RelatedField(queryset=Raster.objects.all(), serializer=RasterSerializer)
+    # TODO: can this writable?
+    item = RelatedField(
+        queryset=ChecksumFile.objects.all(), serializer=ChecksumFileSerializer, required=True
+    )
+    # TODO: make sure this is not a required field
+    RelatedField(queryset=Raster.objects.all(), serializer=RasterSerializer, required=False)
 
     class Meta:
         model = models.STACItem

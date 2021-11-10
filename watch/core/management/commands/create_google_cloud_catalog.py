@@ -133,10 +133,13 @@ def make_records(df):
 
 def _create_records_for_catalog(catalog, index, chunksize=1000):
 
-    logger.info(f'Launching processes for index size of {len(index)} in chunks of {chunksize}. {len(index)//chunksize + 1} number of chunks.')
+    logger.info(
+        f'Launching processes for index size of {len(index)} in chunks of {chunksize}. {len(index)//chunksize + 1} number of chunks.'
+    )
 
     # HACK:
     from django import db
+
     db.connections.close_all()
 
     pool = multiprocessing.Pool(multiprocessing.cpu_count())
@@ -164,7 +167,7 @@ class Command(BaseCommand):
             '--size',
             type=int,
             default=1000,
-            help='Chunk size for splitting up the index during multiprocessing.'
+            help='Chunk size for splitting up the index during multiprocessing.',
         )
 
     def handle(self, *args, **options):

@@ -1,7 +1,6 @@
 __all__ = [
-    'get',
-    'post',
     'stac_item',
+    'viewsets'
 ]
 
-from . import get, post, stac_item
+from . import stac_item, viewsets

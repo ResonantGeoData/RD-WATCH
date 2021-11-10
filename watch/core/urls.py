@@ -5,32 +5,14 @@ from . import rest
 
 router = SimpleRouter(trailing_slash=False)
 router.register(r'api/watch/stac_item', rest.stac_item.STACItemViewSet)
+router.register(r'api/watch/region', rest.viewsets.RegionViewset)
+router.register(r'api/watch/gc_record', rest.viewsets.GoogleCloudRecordViewset)
 
 
 urlpatterns = [
-    path(
-        'api/watch/region/<int:pk>',
-        rest.get.GetRegion.as_view(),
-        name='region',
-    ),
-    path(
-        'api/watch/gc_record/<int:pk>',
-        rest.get.GetGoogleCloudRecord.as_view(),
-        name='gc-record',
-    ),
-    path(
-        'api/watch/gc_record/search',
-        rest.get.SearchGoogleCloudRecord.as_view(),
-        name='gc-record-search',
-    ),
-    path(
-        'api/watch/region',
-        rest.post.CreateRegion.as_view(),
-        name='region-create',
-    ),
-    path(
-        'api/watch/gc_record/search_post',
-        rest.post.SearchCreateGoogleCloudRecord.as_view(),
-        name='gc-record-search-create',
-    ),
+    # path(
+    #     'api/watch/gc_record/search_post',
+    #     rest.post.SearchCreateGoogleCloudRecord.as_view(),
+    #     name='gc-record-search-create',
+    # ),
 ] + router.urls

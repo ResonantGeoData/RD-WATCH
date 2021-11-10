@@ -56,8 +56,8 @@ setup(
         'django-s3-file-field[boto3]',
         'gunicorn',
         # RGD
-        'django-rgd==0.2.6.dev8',
-        'django-rgd-imagery==0.2.6.dev8',
+        'django-rgd==0.2.6.dev10',
+        'django-rgd-imagery==0.2.6.dev10',
         'pandas',
     ],
     extras_require={
@@ -69,10 +69,10 @@ setup(
             'tox',
         ],
         'worker': [
-            'django-rgd-imagery[worker]==0.2.6.dev8',
+            'django-rgd-imagery[worker]==0.2.6.dev10',
         ],
         'fuse': [
-            'django-rgd[fuse]==0.2.6.dev8',
+            'django-rgd[fuse]==0.2.6.dev10',
         ],
     },
 )

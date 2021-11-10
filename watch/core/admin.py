@@ -10,7 +10,7 @@ from rgd.admin.mixins import (
     reprocess,
 )
 
-from .models import Feature, GoogleCloudRecord, Region
+from .models import Feature, GoogleCloudRecord, Region, STACItem
 
 
 class FeatureInline(GeoAdminInline):
@@ -44,6 +44,34 @@ class RegionAdmin(OSMGeoAdmin, _FileGetNameMixin):
     ) + TASK_EVENT_READONLY
     inlines = (FeatureInline,)
     actions = (reprocess,)
+    list_filter = MODIFIABLE_FILTERS + TASK_EVENT_FILTERS
+
+
+def update_outdated(modeladmin, request, queryset):
+    """Update any entries whose `server_modified` date is after `processed` date."""
+    for item in queryset.all():
+        if item.server_modified > item.processed:
+            item.save()
+
+
+@admin.register(STACItem)
+class STACItemAdmin(OSMGeoAdmin):
+    list_display = (
+        'pk',
+        'status',
+        'server_modified',
+        'processed',
+        'modified',
+        'created',
+    )
+    readonly_fields = (
+        'modified',
+        'created',
+    ) + TASK_EVENT_READONLY
+    actions = (
+        reprocess,
+        update_outdated,
+    )
     list_filter = MODIFIABLE_FILTERS + TASK_EVENT_FILTERS
 
 

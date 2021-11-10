@@ -1,6 +1,11 @@
 from django.urls import path
+from rest_framework.routers import SimpleRouter
 
 from . import rest
+
+router = SimpleRouter(trailing_slash=False)
+router.register(r'api/watch/stac_item', rest.stac_item.STACItemViewSet)
+
 
 urlpatterns = [
     path(
@@ -28,4 +33,4 @@ urlpatterns = [
         rest.post.SearchCreateGoogleCloudRecord.as_view(),
         name='gc-record-search-create',
     ),
-]
+] + router.urls

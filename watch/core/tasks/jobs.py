@@ -5,12 +5,11 @@ from celery import shared_task
 from django.db import transaction
 from rgd.tasks.helpers import _run_with_failure_reason
 
-from ..serializers import ItemSerializer
-
 
 @transaction.atomic
 def _process_stac_file(pk):
     from watch.core.models import STACFile
+    from watch.core.serializers import ItemSerializer
 
     stac_file = STACFile.objects.get(pk=pk)
 

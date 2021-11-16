@@ -8,7 +8,7 @@ class WATCHPlugin:
     def __init__(self, session: RgdClientSession):
         self.session = session
 
-    def post_stac_item(
+    def post_stac_file(
         self,
         url: str,
         name: Optional[str] = None,
@@ -45,5 +45,5 @@ class WATCHPlugin:
         #     url=url, name=name, collection=collection, description=description
         # )
 
-        payload = {'item': resp['id']}
-        return self.session.post('watch/stac_item', json=payload).json()
+        payload = {'stac_file': resp['id']}
+        return self.session.post('watch/stac_file', json=payload).json()

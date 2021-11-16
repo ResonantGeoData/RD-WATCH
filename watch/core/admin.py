@@ -10,7 +10,7 @@ from rgd.admin.mixins import (
     reprocess,
 )
 
-from .models import Feature, Region, STACItem
+from .models import Feature, Region, STACFile
 
 
 class FeatureInline(GeoAdminInline):
@@ -54,8 +54,8 @@ def update_outdated(modeladmin, request, queryset):
             item.save()
 
 
-@admin.register(STACItem)
-class STACItemAdmin(OSMGeoAdmin):
+@admin.register(STACFile)
+class STACFileAdmin(OSMGeoAdmin):
     list_display = (
         'pk',
         'status',

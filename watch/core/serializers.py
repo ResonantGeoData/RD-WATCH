@@ -66,16 +66,16 @@ class RegionSerializer(serializers.BaseSerializer):
         return instance
 
 
-class STACItemSerializer(serializers.ModelSerializer):
+class STACFileSerializer(serializers.ModelSerializer):
     # TODO: can this writable?
-    item = RelatedField(
+    checksumfile = RelatedField(
         queryset=ChecksumFile.objects.all(), serializer=ChecksumFileSerializer, required=True
     )
     # TODO: make sure this is not a required field
     RelatedField(queryset=Raster.objects.all(), serializer=RasterSerializer, required=False)
 
     class Meta:
-        model = models.STACItem
+        model = models.STACFile
         fields = '__all__'
         read_only_fields = (
             MODIFIABLE_READ_ONLY_FIELDS

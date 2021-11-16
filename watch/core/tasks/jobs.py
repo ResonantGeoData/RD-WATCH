@@ -4,7 +4,8 @@ import json
 from celery import shared_task
 from django.db import transaction
 from rgd.tasks.helpers import _run_with_failure_reason
-from rgd_imagery.stac.serializers import ItemSerializer
+
+from ..serializers import ItemSerializer
 
 
 @transaction.atomic

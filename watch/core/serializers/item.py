@@ -125,7 +125,7 @@ class ItemSerializer(ReadOnlyItemSerializer):
             footprint=json.dumps(item.geometry),
             crs=f'+init=epsg:{proj_ext.epsg}',
             cloud_cover=item_eo_ext.cloud_cover,
-            transform=proj_ext.transform,
+            transform=(proj_ext.transform or [0.0] * 6),  # TODO: fix default
             extent=item.bbox,
             origin=(item.bbox[0], item.bbox[1]),
             resolution=(0, 0),  # TODO: fix

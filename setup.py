@@ -39,6 +39,7 @@ setup(
         'https://girder.github.io/large_image_wheels',
     ],
     install_requires=[
+        'bidict',
         'celery',
         'django>=3.2',
         'django-allauth',
@@ -49,6 +50,7 @@ setup(
         'django-oauth-toolkit',
         'djangorestframework',
         'drf-yasg',
+        'pystac',
         'semantic_version',
         'rules',
         # Production-only

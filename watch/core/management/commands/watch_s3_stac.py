@@ -9,7 +9,8 @@ from rgd.models.mixins import Status
 from rgd.models.utils import get_or_create_checksum_file_url
 from rgd.utility import get_or_create_no_commit
 
-from watch.core.models import STACItem
+from watch.core.models import STACFile
+from watch.core.tasks.jobs import populate_stac_file_outline
 
 logger = logging.getLogger(__name__)
 
@@ -38,6 +39,7 @@ def _iter_matching_objects(
 @click.option('--collection', default=None)
 @click.option('--access-key-id')
 @click.option('--secret-access-key')
+@click.option('--outline', default=False)
 def ingest_s3(
     bucket: str,
     include_regex: str,
@@ -46,6 +48,7 @@ def ingest_s3(
     collection: str,
     access_key_id: Optional[str],
     secret_access_key: Optional[str],
+    outline: Optional[bool] = False,
 ) -> None:
     boto3_params = {
         'region_name': region,
@@ -66,10 +69,12 @@ def ingest_s3(
     for obj in _iter_matching_objects(s3_client, bucket, prefix, include_regex):
         url = f's3://{bucket}/{obj["Key"]}'
         file, fcreated = get_or_create_checksum_file_url(url, collection=collection, defaults={})
-        item, screated = get_or_create_no_commit(STACItem, item=file)
-        item.skip_signal = True  # Do not ingest yet
+        stacfile, screated = get_or_create_no_commit(STACFile, file=file)
+        stacfile.skip_signal = True  # Do not ingest yet
         if screated:
-            item.status = Status.SKIPPED
-        item.server_modified = obj['LastModified']
-        item.save()
+            stacfile.status = Status.SKIPPED
+        stacfile.server_modified = obj['LastModified']
+        stacfile.save()
+        if outline:
+            populate_stac_file_outline(stacfile.pk)
         logger.info(f'{"Created" if screated else "Already Present"}: {url}')

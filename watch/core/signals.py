@@ -6,13 +6,13 @@ from rgd.utility import skip_signal
 from . import models
 
 
-@receiver(post_save, sender=models.STACItem)
+@receiver(post_save, sender=models.STACFile)
 @skip_signal()
-def _post_save_stac_item(sender, instance, *args, **kwargs):
+def _post_save_stac_file(sender, instance, *args, **kwargs):
     transaction.on_commit(lambda: instance._post_save_event_task(*args, **kwargs))
 
 
-@receiver(post_delete, sender=models.STACItem)
+@receiver(post_delete, sender=models.STACFile)
 @skip_signal()
-def _post_delete_stac_item(sender, instance, *args, **kwargs):
+def _post_delete_stac_file(sender, instance, *args, **kwargs):
     transaction.on_commit(lambda: instance._post_delete(*args, **kwargs))

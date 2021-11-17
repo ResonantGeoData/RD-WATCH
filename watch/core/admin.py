@@ -1,3 +1,4 @@
+from django.conf import settings
 from django.contrib import admin
 from django.contrib.gis.admin import OSMGeoAdmin
 from rgd.admin.mixins import (
@@ -10,7 +11,8 @@ from rgd.admin.mixins import (
     reprocess,
 )
 
-from .models import Feature, GoogleCloudRecord, Region, STACItem
+from .models import Feature, GoogleCloudRecord, Region, STACFile
+from .tasks.jobs import task_populate_stac_file_outline
 
 
 class FeatureInline(GeoAdminInline):
@@ -50,12 +52,23 @@ class RegionAdmin(OSMGeoAdmin, _FileGetNameMixin):
 def update_outdated(modeladmin, request, queryset):
     """Update any entries whose `server_modified` date is after `processed` date."""
     for item in queryset.all():
-        if item.server_modified > item.processed:
+        if item.server_modified and (
+            item.processed is None or item.server_modified > item.processed
+        ):
             item.save()
 
 
-@admin.register(STACItem)
-class STACItemAdmin(OSMGeoAdmin):
+def populate_outline(modeladmin, request, queryset):
+    for item in queryset.all():
+        if getattr(settings, 'CELERY_TASK_ALWAYS_EAGER', None):
+            # HACK: for some reason this is necessary
+            task_populate_stac_file_outline(item.pk)
+        else:
+            task_populate_stac_file_outline.delay(item.pk)
+
+
+@admin.register(STACFile)
+class STACFileAdmin(OSMGeoAdmin):
     list_display = (
         'pk',
         'status',
@@ -71,8 +84,9 @@ class STACItemAdmin(OSMGeoAdmin):
     actions = (
         reprocess,
         update_outdated,
+        populate_outline,
     )
-    list_filter = MODIFIABLE_FILTERS + TASK_EVENT_FILTERS
+    list_filter = ('file__collection',) + MODIFIABLE_FILTERS + TASK_EVENT_FILTERS
 
 
 @admin.register(GoogleCloudRecord)
@@ -90,3 +104,4 @@ class GoogleCloudRecordAdmin(OSMGeoAdmin):
     ) + TASK_EVENT_READONLY
     list_filter = MODIFIABLE_FILTERS + TASK_EVENT_FILTERS
     actions = (reprocess,)
+    list_filter = MODIFIABLE_FILTERS + TASK_EVENT_FILTERS

@@ -4,10 +4,10 @@ from django.db.models import F
 from django_filters import rest_framework as filters
 from rgd.filters import GeometryFilter
 
-from .models import GoogleCloudRecord
+from .models import GoogleCloudRecord, STACFile
 
 
-class GoogleCloudRecordFilter(filters.FilterSet):
+class BaseOutlineFieldFilter(filters.FilterSet):
 
     q = GeometryFilter(
         help_text='A Well-known text (WKT) representation of a geometry or a GeoJSON.',
@@ -37,16 +37,6 @@ class GoogleCloudRecordFilter(filters.FilterSet):
         label='Distance',
         method='filter_distance',
     )
-    acquired = filters.IsoDateTimeFromToRangeFilter(
-        field_name='sensing_time',
-        help_text='The ISO 8601 formatted date and time when data was acquired.',
-        label='Acquired',
-    )
-    time_of_day = filters.TimeRangeFilter(
-        help_text='The minimum/maximum times during the day the records were acquired.',
-        label='Time of Day',
-        method='filter_time_of_day',
-    )
 
     @property
     def _geometry(self):
@@ -58,14 +48,13 @@ class GoogleCloudRecordFilter(filters.FilterSet):
 
     def filter_q(self, queryset, name, value):
         """Sort the queryset by distance to queried geometry.
-
         Annotates the queryset with `distance`.
-
         This uses the efficient KNN operation:
         https://postgis.net/docs/geometry_distance_knn.html
         """
+        queryset = queryset.filter(outline__isnull=False)
         if value:
-            queryset = queryset.annotate(distance=GeometryDistance('bbox', value)).order_by(
+            queryset = queryset.annotate(distance=GeometryDistance('outline', value)).order_by(
                 'distance'
             )
         return queryset
@@ -73,12 +62,11 @@ class GoogleCloudRecordFilter(filters.FilterSet):
     def filter_predicate(self, queryset, name, value):
         """Filter the polygon by the chosen predicate."""
         if value and self._has_geom:
-            queryset = queryset.filter(**{f'bbox__{value}': self._geometry})
+            queryset = queryset.filter(**{f'outline__{value}': self._geometry})
         return queryset
 
     def filter_distance(self, queryset, name, value):
         """Filter the queryset by distance to the queried geometry.
-
         We may wish to use the distance in degrees later on. This is
         very taxing on the DBMS right now. The distance in degrees
         can be provided by the initial geometry query.
@@ -86,14 +74,57 @@ class GoogleCloudRecordFilter(filters.FilterSet):
         if value and self._has_geom:
             geom = self._geometry
             if value.start is not None:
-                queryset = queryset.filter(bbox__distance_gte=(geom, D(m=value.start)))
+                queryset = queryset.filter(outline__distance_gte=(geom, D(m=value.start)))
             if value.stop is not None:
-                queryset = queryset.filter(bbox__distance_lte=(geom, D(m=value.stop)))
+                queryset = queryset.filter(outline__distance_lte=(geom, D(m=value.stop)))
         return queryset
+
+    class Meta:
+        fields = [
+            'q',
+            'predicate',
+            'distance',
+        ]
+
+
+class STACFileFilter(BaseOutlineFieldFilter):
+    server_modified = filters.IsoDateTimeFromToRangeFilter(
+        field_name='server_modified',
+        help_text='The ISO 8601 formatted date and time when data was modified on the server.',
+        label='Acquired',
+    )
+    processed = filters.IsoDateTimeFromToRangeFilter(
+        field_name='processed',
+        help_text='The ISO 8601 formatted date and time when data was processed.',
+        label='Acquired',
+    )
+
+    class Meta:
+        model = STACFile
+        fields = [
+            'q',
+            'predicate',
+            'distance',
+            'server_modified',
+            'processed',
+        ]
+
+
+class GoogleCloudRecordFilter(BaseOutlineFieldFilter):
+
+    acquired = filters.IsoDateTimeFromToRangeFilter(
+        field_name='sensing_time',
+        help_text='The ISO 8601 formatted date and time when data was acquired.',
+        label='Acquired',
+    )
+    time_of_day = filters.TimeRangeFilter(
+        help_text='The minimum/maximum times during the day the records were acquired.',
+        label='Time of Day',
+        method='filter_time_of_day',
+    )
 
     def filter_time_of_day(self, queryset, name, value):
         """Filter the queryset by time of day acquired.
-
         Use case: find all rasters acquired between 8am and 4pm
         for all days in the acquired date range (i.e. only daytime imagery)
         """

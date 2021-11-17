@@ -1,3 +1,3 @@
-__all__ = ['stac_item', 'viewsets']
+__all__ = ['stac_file', 'viewsets']
 
-from . import stac_item, viewsets
+from . import stac_file, viewsets

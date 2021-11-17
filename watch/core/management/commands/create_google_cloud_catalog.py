@@ -123,7 +123,9 @@ def make_records(df):
             product_id=row['PRODUCT_ID'],
             sensing_time=handle_date(row['SENSING_TIME']),
             sensor_id=row['SENSOR_ID'],
-            bbox=bounds_to_polygon(*row[['NORTH_LAT', 'SOUTH_LAT', 'WEST_LON', 'EAST_LON']].values),
+            outline=bounds_to_polygon(
+                *row[['NORTH_LAT', 'SOUTH_LAT', 'WEST_LON', 'EAST_LON']].values
+            ),
         )
         for _, row in df.iterrows()
     ]

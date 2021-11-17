@@ -2,7 +2,7 @@
 from django.contrib.gis.db import models
 from django.core.validators import MaxValueValidator, MinValueValidator
 from django_extensions.db.models import TimeStampedModel
-from rgd.models import ChecksumFile, SpatialEntry
+from rgd.models import DB_SRID, ChecksumFile, SpatialEntry
 from rgd.models.mixins import PermissionPathMixin, TaskEventMixin
 from rgd_imagery.models import Raster
 from semantic_version.django_fields import VersionField
@@ -30,22 +30,23 @@ class Feature(TimeStampedModel, SpatialEntry):
     end_date = models.DateField()
 
 
-class STACItem(TimeStampedModel, TaskEventMixin, PermissionPathMixin):
+class STACFile(TimeStampedModel, TaskEventMixin, PermissionPathMixin):
     """Catalog STAC Items as files.
 
     This has an associated task that will ingest the STAC Item.
     """
 
-    item = models.ForeignKey(ChecksumFile, on_delete=models.CASCADE, related_name='+')
+    file = models.ForeignKey(ChecksumFile, on_delete=models.CASCADE, related_name='+')
     server_modified = models.DateTimeField(null=True, default=None, blank=True)
     processed = models.DateTimeField(null=True, default=None, blank=True)
+    outline = models.GeometryField(srid=DB_SRID, null=True, blank=True)
 
     raster = models.ForeignKey(
         Raster, null=True, blank=True, on_delete=models.SET_NULL, related_name='+'
     )
 
-    task_funcs = (tasks.task_ingest_stac_item,)
-    permissions_paths = [('item', ChecksumFile)]
+    task_funcs = (tasks.task_ingest_stac_file,)
+    permissions_paths = [('file', ChecksumFile)]
 
     def _post_delete(self, *args, **kwargs):
         # First delete all the images in the image set
@@ -59,7 +60,7 @@ class STACItem(TimeStampedModel, TaskEventMixin, PermissionPathMixin):
             self.raster.image_set.delete()
         # Additionally, delete the JSON file
         try:
-            self.item.delete()
+            self.file.delete()
         except ChecksumFile.DoesNotExist:
             pass
 
@@ -75,4 +76,4 @@ class GoogleCloudRecord(TimeStampedModel, TaskEventMixin):
     product_id = models.TextField()
     sensor_id = models.TextField()
     sensing_time = models.DateTimeField()
-    bbox = models.PolygonField()
+    outline = models.PolygonField()

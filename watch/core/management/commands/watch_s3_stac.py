@@ -9,7 +9,7 @@ from rgd.models.mixins import Status
 from rgd.models.utils import get_or_create_checksum_file_url
 from rgd.utility import get_or_create_no_commit
 
-from watch.core.models import STACItem
+from watch.core.models import STACFile
 
 logger = logging.getLogger(__name__)
 
@@ -66,10 +66,10 @@ def ingest_s3(
     for obj in _iter_matching_objects(s3_client, bucket, prefix, include_regex):
         url = f's3://{bucket}/{obj["Key"]}'
         file, fcreated = get_or_create_checksum_file_url(url, collection=collection, defaults={})
-        item, screated = get_or_create_no_commit(STACItem, item=file)
-        item.skip_signal = True  # Do not ingest yet
+        stacfile, screated = get_or_create_no_commit(STACFile, file=file)
+        stacfile.skip_signal = True  # Do not ingest yet
         if screated:
-            item.status = Status.SKIPPED
-        item.server_modified = obj['LastModified']
-        item.save()
+            stacfile.status = Status.SKIPPED
+        stacfile.server_modified = obj['LastModified']
+        stacfile.save()
         logger.info(f'{"Created" if screated else "Already Present"}: {url}')

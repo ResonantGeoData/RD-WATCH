@@ -4,16 +4,16 @@ import json
 from celery import shared_task
 from django.db import transaction
 from rgd.tasks.helpers import _run_with_failure_reason
-from rgd_imagery.serializers.stac import ItemSerializer
 
 
 @transaction.atomic
-def _process_stac_item(pk):
-    from watch.core.models import STACItem
+def _process_stac_file(pk):
+    from watch.core.models import STACFile
+    from watch.core.serializers import ItemSerializer
 
-    stac_item = STACItem.objects.get(pk=pk)
+    stac_file = STACFile.objects.get(pk=pk)
 
-    with stac_item.item.yield_local_path() as path:
+    with stac_file.file.yield_local_path() as path:
         with open(path, 'r') as f:
             data = json.loads(f.read())
 
@@ -22,23 +22,23 @@ def _process_stac_item(pk):
     # Make sure the file collections match
     images = raster_meta.parent_raster.image_set.images.all()
     for image in images:
-        image.file.collection = stac_item.item.collection
+        image.file.collection = stac_file.file.collection
         image.file.save(
             update_fields=[
                 'collection',
             ]
         )
     for afile in raster_meta.parent_raster.ancillary_files.all():
-        afile.collection = stac_item.item.collection
+        afile.collection = stac_file.file.collection
         afile.save(
             update_fields=[
                 'collection',
             ]
         )
 
-    stac_item.raster = raster_meta.parent_raster
-    stac_item.processed = datetime.now()
-    stac_item.save(
+    stac_file.raster = raster_meta.parent_raster
+    stac_file.processed = datetime.now()
+    stac_file.save(
         update_fields=[
             'processed',
             'raster',
@@ -47,8 +47,8 @@ def _process_stac_item(pk):
 
 
 @shared_task(time_limit=86400)
-def task_ingest_stac_item(pk):
-    from watch.core.models import STACItem
+def task_ingest_stac_file(pk):
+    from watch.core.models import STACFile
 
-    stac_item = STACItem.objects.get(pk=pk)
-    _run_with_failure_reason(stac_item, _process_stac_item, pk)
+    stac_file = STACFile.objects.get(pk=pk)
+    _run_with_failure_reason(stac_file, _process_stac_file, pk)

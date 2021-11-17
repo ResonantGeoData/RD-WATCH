@@ -1,7 +1,7 @@
 """Base classes for raster dataset entries."""
 from django.contrib.gis.db import models
 from django_extensions.db.models import TimeStampedModel
-from rgd.models import ChecksumFile, SpatialEntry
+from rgd.models import DB_SRID, ChecksumFile, SpatialEntry
 from rgd.models.mixins import PermissionPathMixin, TaskEventMixin
 from rgd_imagery.models import Raster
 from semantic_version.django_fields import VersionField
@@ -38,6 +38,7 @@ class STACFile(TimeStampedModel, TaskEventMixin, PermissionPathMixin):
     file = models.ForeignKey(ChecksumFile, on_delete=models.CASCADE, related_name='+')
     server_modified = models.DateTimeField(null=True, default=None, blank=True)
     processed = models.DateTimeField(null=True, default=None, blank=True)
+    outline = models.GeometryField(srid=DB_SRID, null=True, blank=True)
 
     raster = models.ForeignKey(
         Raster, null=True, blank=True, on_delete=models.SET_NULL, related_name='+'

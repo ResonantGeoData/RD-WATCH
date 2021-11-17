@@ -1,3 +1,4 @@
+from django.conf import settings
 from django.contrib import admin
 from django.contrib.gis.admin import OSMGeoAdmin
 from rgd.admin.mixins import (
@@ -11,6 +12,7 @@ from rgd.admin.mixins import (
 )
 
 from .models import Feature, Region, STACFile
+from .tasks.jobs import task_populate_stac_file_outline
 
 
 class FeatureInline(GeoAdminInline):
@@ -56,6 +58,15 @@ def update_outdated(modeladmin, request, queryset):
             item.save()
 
 
+def populate_outline(modeladmin, request, queryset):
+    for item in queryset.all():
+        if getattr(settings, 'CELERY_TASK_ALWAYS_EAGER', None):
+            # HACK: for some reason this is necessary
+            task_populate_stac_file_outline(item.pk)
+        else:
+            task_populate_stac_file_outline.delay(item.pk)
+
+
 @admin.register(STACFile)
 class STACFileAdmin(OSMGeoAdmin):
     list_display = (
@@ -73,5 +84,6 @@ class STACFileAdmin(OSMGeoAdmin):
     actions = (
         reprocess,
         update_outdated,
+        populate_outline,
     )
-    list_filter = ('file__collection', ) + MODIFIABLE_FILTERS + TASK_EVENT_FILTERS
+    list_filter = ('file__collection',) + MODIFIABLE_FILTERS + TASK_EVENT_FILTERS

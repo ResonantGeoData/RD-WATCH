@@ -2,7 +2,9 @@ from datetime import datetime
 import json
 
 from celery import shared_task
+from django.contrib.gis.geos import Polygon
 from django.db import transaction
+import pystac
 from rgd.tasks.helpers import _run_with_failure_reason
 
 
@@ -52,3 +54,37 @@ def task_ingest_stac_file(pk):
 
     stac_file = STACFile.objects.get(pk=pk)
     _run_with_failure_reason(stac_file, _process_stac_file, pk)
+
+
+@transaction.atomic
+def populate_stac_file_outline(pk):
+    from watch.core.models import STACFile
+
+    stac_file = STACFile.objects.get(pk=pk)
+
+    with stac_file.file.yield_local_path() as path:
+        with open(path, 'r') as f:
+            data = json.loads(f.read())
+
+    # Load with pystac
+    item = pystac.Item.from_dict(data)
+
+    # Get bounds
+    outline = Polygon(
+        (
+            [item.bbox[0], item.bbox[1]],
+            [item.bbox[0], item.bbox[3]],
+            [item.bbox[2], item.bbox[3]],
+            [item.bbox[2], item.bbox[1]],
+            [item.bbox[0], item.bbox[1]],
+        )
+    )
+
+    # Populate
+    stac_file.outline = outline
+    stac_file.save(update_fields=['outline'])
+
+
+@shared_task(time_limit=86400)
+def task_populate_stac_file_outline(pk):
+    populate_stac_file_outline(pk)

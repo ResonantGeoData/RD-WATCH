@@ -10,6 +10,7 @@ from rgd.models.utils import get_or_create_checksum_file_url
 from rgd.utility import get_or_create_no_commit
 
 from watch.core.models import STACFile
+from watch.core.tasks.jobs import populate_stac_file_outline
 
 logger = logging.getLogger(__name__)
 
@@ -72,4 +73,5 @@ def ingest_s3(
             stacfile.status = Status.SKIPPED
         stacfile.server_modified = obj['LastModified']
         stacfile.save()
+        populate_stac_file_outline(stacfile.pk)
         logger.info(f'{"Created" if screated else "Already Present"}: {url}')

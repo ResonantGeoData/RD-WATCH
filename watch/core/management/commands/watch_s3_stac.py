@@ -39,6 +39,7 @@ def _iter_matching_objects(
 @click.option('--collection', default=None)
 @click.option('--access-key-id')
 @click.option('--secret-access-key')
+@click.option('--outline', default=False)
 def ingest_s3(
     bucket: str,
     include_regex: str,
@@ -47,6 +48,7 @@ def ingest_s3(
     collection: str,
     access_key_id: Optional[str],
     secret_access_key: Optional[str],
+    outline: Optional[bool] = False,
 ) -> None:
     boto3_params = {
         'region_name': region,
@@ -73,5 +75,6 @@ def ingest_s3(
             stacfile.status = Status.SKIPPED
         stacfile.server_modified = obj['LastModified']
         stacfile.save()
-        populate_stac_file_outline(stacfile.pk)
+        if outline:
+            populate_stac_file_outline(stacfile.pk)
         logger.info(f'{"Created" if screated else "Already Present"}: {url}')

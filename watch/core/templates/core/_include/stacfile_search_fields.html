@@ -1,0 +1,36 @@
+{% block stacfile_search_fields %}
+
+
+  <div class="column is-full field mb-0">
+    <div class="field-label is-normal">
+      <label class="label">Server Modified</label>
+    </div>
+    <div class="field-body">
+      <div class="field">
+        <div class="control">
+          <input type="datetime-local" name="server_modified_after" value="{{ request.GET.server_modified_after }}">
+          <button onclick="javascript:server_modified_after.value=''" type="button">X</button>
+          <input type="datetime-local" name="server_modified_before" value="{{ request.GET.server_modified_before }}">
+          <button onclick="javascript:server_modified_before.value=''" type="button">X</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="column is-full field mb-0">
+    <div class="field-label is-normal">
+      <label class="label">Processed</label>
+    </div>
+    <div class="field-body">
+      <div class="field">
+        <div class="control">
+          <input type="datetime-local" name="processed_after" value="{{ request.GET.processed_after }}">
+          <button onclick="javascript:processed_after.value=''" type="button">X</button>
+          <input type="datetime-local" name="processed_before" value="{{ request.GET.processed_before }}">
+          <button onclick="javascript:processed_before.value=''" type="button">X</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+{% endblock %}

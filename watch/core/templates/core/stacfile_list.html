@@ -1,0 +1,36 @@
+{% extends "rgd/_base/search_view.html" %}
+{% block title %}
+  STAC Files
+{% endblock title %}
+
+{% block search_fields %}
+  {% include 'core/_include/outline_search_fields.html' %}
+  {% include 'core/_include/stacfile_search_fields.html' %}
+{% endblock search_fields %}
+
+{% block list_view %}
+
+  <div style="overflow-x:auto;">
+    <table class="table">
+      <thead class="thead-dark">
+        <tr>
+          <th><span class="text">Name</span></th>
+          <th><span class="text">Collection</span></th>
+          <th><span class="text">Server Modified</span></th>
+          <th><span class="text">Processed</span></th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for entry in objects %}
+          <tr>
+            <td>{{ entry.file.name | truncatechars:12 }}</td>
+            <td>{{ entry.file.collection | truncatechars:12 }}</td>
+            <td>{{ entry.server_modified }}</td>
+            <td>{{ entry.processed }}</td>
+          </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+
+{% endblock list_view %}

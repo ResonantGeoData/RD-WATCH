@@ -66,7 +66,7 @@ def ingest_s3(
     for obj in _iter_matching_objects(s3_client, bucket, prefix, include_regex):
         url = f's3://{bucket}/{obj["Key"]}'
         file, fcreated = get_or_create_checksum_file_url(url, collection=collection, defaults={})
-        stacfile, screated = get_or_create_no_commit(STACFile, checksumfile=file)
+        stacfile, screated = get_or_create_no_commit(STACFile, file=file)
         stacfile.skip_signal = True  # Do not ingest yet
         if screated:
             stacfile.status = Status.SKIPPED

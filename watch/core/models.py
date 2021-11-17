@@ -35,7 +35,7 @@ class STACFile(TimeStampedModel, TaskEventMixin, PermissionPathMixin):
     This has an associated task that will ingest the STAC Item.
     """
 
-    checksumfile = models.ForeignKey(ChecksumFile, on_delete=models.CASCADE, related_name='+')
+    file = models.ForeignKey(ChecksumFile, on_delete=models.CASCADE, related_name='+')
     server_modified = models.DateTimeField(null=True, default=None, blank=True)
     processed = models.DateTimeField(null=True, default=None, blank=True)
 
@@ -44,7 +44,7 @@ class STACFile(TimeStampedModel, TaskEventMixin, PermissionPathMixin):
     )
 
     task_funcs = (tasks.task_ingest_stac_file,)
-    permissions_paths = [('checksumfile', ChecksumFile)]
+    permissions_paths = [('file', ChecksumFile)]
 
     def _post_delete(self, *args, **kwargs):
         # First delete all the images in the image set
@@ -58,6 +58,6 @@ class STACFile(TimeStampedModel, TaskEventMixin, PermissionPathMixin):
             self.raster.image_set.delete()
         # Additionally, delete the JSON file
         try:
-            self.checksumfile.delete()
+            self.file.delete()
         except ChecksumFile.DoesNotExist:
             pass

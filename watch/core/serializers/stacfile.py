@@ -14,7 +14,7 @@ from .. import models
 
 class STACFileSerializer(serializers.ModelSerializer):
     # TODO: can this writable?
-    checksumfile = RelatedField(
+    file = RelatedField(
         queryset=ChecksumFile.objects.all(), serializer=ChecksumFileSerializer, required=True
     )
     # TODO: make sure this is not a required field

@@ -13,7 +13,7 @@ def _process_stac_file(pk):
 
     stac_file = STACFile.objects.get(pk=pk)
 
-    with stac_file.checksumfile.yield_local_path() as path:
+    with stac_file.file.yield_local_path() as path:
         with open(path, 'r') as f:
             data = json.loads(f.read())
 
@@ -22,14 +22,14 @@ def _process_stac_file(pk):
     # Make sure the file collections match
     images = raster_meta.parent_raster.image_set.images.all()
     for image in images:
-        image.file.collection = stac_file.checksumfile.collection
+        image.file.collection = stac_file.file.collection
         image.file.save(
             update_fields=[
                 'collection',
             ]
         )
     for afile in raster_meta.parent_raster.ancillary_files.all():
-        afile.collection = stac_file.checksumfile.collection
+        afile.collection = stac_file.file.collection
         afile.save(
             update_fields=[
                 'collection',

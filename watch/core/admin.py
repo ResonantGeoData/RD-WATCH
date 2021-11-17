@@ -50,7 +50,9 @@ class RegionAdmin(OSMGeoAdmin, _FileGetNameMixin):
 def update_outdated(modeladmin, request, queryset):
     """Update any entries whose `server_modified` date is after `processed` date."""
     for item in queryset.all():
-        if item.server_modified > item.processed:
+        if item.server_modified and (
+            item.processed is None or item.server_modified > item.processed
+        ):
             item.save()
 
 

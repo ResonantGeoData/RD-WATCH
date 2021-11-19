@@ -85,13 +85,17 @@ class ItemSerializer(ReadOnlyItemSerializer):
         item_eo_ext = EOExtension.ext(item, add_if_missing=True)
         proj_ext = ProjectionExtension.ext(item, add_if_missing=True)
         image_ids, ancillary = [], []
-        for asset in item.assets.values():
+        for key, asset in item.assets.items():
             checksum_file = non_unique_get_or_create(
                 ChecksumFile,
                 type=FileSourceType.URL,
                 url=asset.href,
             )
-            if len(item.assets) == 1 or (asset.roles and 'data' in asset.roles):
+            if (
+                len(item.assets) == 1
+                or (asset.roles and 'data' in asset.roles)
+                or key.startswith('data')
+            ):
                 image = non_unique_get_or_create(Image, file=checksum_file)
                 image_ids.append(image.pk)
                 if item_eo_ext.bands:

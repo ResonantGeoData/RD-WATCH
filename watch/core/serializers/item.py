@@ -1,5 +1,6 @@
 from decimal import Decimal
 import json
+from typing import Any
 
 from bidict import bidict
 import dateutil.parser
@@ -8,7 +9,7 @@ from django.db import transaction
 import pystac
 from pystac.extensions.eo import Band, EOExtension
 from pystac.extensions.projection import ProjectionExtension
-from rgd.models import ChecksumFile, FileSourceType
+from rgd.models import ChecksumFile, FileSourceType, Status
 from rgd.utility import get_or_create_no_commit
 from rgd_imagery import models
 from rgd_imagery.models.base import Image
@@ -36,12 +37,14 @@ BAND_RANGE_BY_COMMON_NAMES = bidict(
 )
 
 
-def non_unique_get_or_create(model, **kwargs):
+def non_unique_get_or_create(model: Any, skip_signal: bool = False, **kwargs):
     # We are assuming these are unique, but this isn't enforced
     query = model.objects.filter(**kwargs)
     if query.exists():
         return query.first()
     instance = model(**kwargs)
+    if skip_signal:
+        instance.skip_signal = skip_signal
     instance.save()
     return instance
 
@@ -96,12 +99,14 @@ class ItemSerializer(ReadOnlyItemSerializer):
                 or (asset.roles and 'data' in asset.roles)
                 or key.startswith('data')
             ):
-                image = non_unique_get_or_create(Image, file=checksum_file)
+                image = non_unique_get_or_create(Image, skip_signal=True, file=checksum_file)
                 image_ids.append(image.pk)
                 if item_eo_ext.bands:
                     for eo_band in item_eo_ext.bands:
                         bandmeta = make_band_meta(eo_band, image)
                         bandmeta.save()
+                image.status = Status.SUCCEEDED
+                image.save()
             else:
                 ancillary.append(checksum_file)
 

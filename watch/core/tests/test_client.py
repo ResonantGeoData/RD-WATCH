@@ -1,14 +1,13 @@
 from typing import Dict
+
 from django.contrib.auth.models import User
 from django.core.files.uploadedfile import SimpleUploadedFile
 import pytest
-from rgd.models.mixins import Status
-from rgd_client import create_rgd_client
+from rest_framework.authtoken.models import Token
 from rgd.datastore import datastore
 from rgd.models import ChecksumFile
-from rest_framework.authtoken.models import Token
-
-
+from rgd.models.mixins import Status
+from rgd_client import create_rgd_client
 from rgd_watch_client import WATCHClient
 
 from watch.core.models import STACFile

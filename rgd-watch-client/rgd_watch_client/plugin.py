@@ -56,6 +56,5 @@ class WATCHPlugin(RgdPlugin):
 
     def reprocess_stac_file(self, id: Union[int, str]):
         """Reprocess a stac file."""
-
         # Submit empty patch, forcing a save
         return self.session.patch(f'watch/stac_file/{id}', data={}).json()

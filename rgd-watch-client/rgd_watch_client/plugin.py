@@ -1,10 +1,23 @@
-from typing import Optional
+from typing import Optional, Union
 
 from rgd_client.plugin import RgdPlugin
 import validators
 
 
 class WATCHPlugin(RgdPlugin):
+    def get_stac_file(self, id: Union[int, str]):
+        """
+        Retrieve a stac file by its ID.
+
+        Args:
+            id: The ID of the stac file
+        """
+        return self.session.get(f'watch/stac_file/{id}').json()
+
+    def list_stac_file(self):
+        """List stac files."""
+        return self.session.get('watch/stac_file').json()
+
     def post_stac_file(
         self,
         url: str,

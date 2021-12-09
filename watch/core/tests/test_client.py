@@ -1,10 +1,12 @@
 from typing import Dict
 from django.contrib.auth.models import User
+from django.core.files.uploadedfile import SimpleUploadedFile
 import pytest
 from rgd_client import create_rgd_client
 from rgd.datastore import datastore
 from rgd.models import ChecksumFile
 from rest_framework.authtoken.models import Token
+
 
 from rgd_watch_client import WATCHClient
 
@@ -25,6 +27,30 @@ def py_client(live_server):
     )
 
     return client
+
+
+@pytest.fixture
+def stac_file():
+    file_path = datastore.fetch('astro.png')
+    with open(file_path, 'rb') as file_contents:
+        return STACFile.objects.create(
+            file=ChecksumFile.objects.create(
+                name='astro.png',
+                file=SimpleUploadedFile(name='astro.png', content=file_contents.read()),
+            )
+        )
+
+
+def test_get_stac_file(py_client: WATCHClient, stac_file: STACFile):
+    res: Dict = py_client.watch.get_stac_file(id=stac_file.id)
+    assert res['id'] == stac_file.id
+
+
+def test_list_stac_file(py_client: WATCHClient, stac_file: STACFile):
+    res: Dict = py_client.watch.list_stac_file()
+
+    # Assert that stac file is returned
+    assert next((f for f in res['results'] if f['id'] == stac_file.id), None)
 
 
 def test_post_stac_file(py_client: WATCHClient):

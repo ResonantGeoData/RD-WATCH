@@ -41,7 +41,7 @@ setup(
     install_requires=[
         'bidict',
         'celery',
-        'django>=3.2',
+        'django>=3.2,<4',
         'django-allauth',
         'django-configurations[database,email]',
         'django-crispy-forms',
@@ -58,8 +58,8 @@ setup(
         'django-s3-file-field[boto3]',
         'gunicorn',
         # RGD
-        'django-rgd==0.2.7',
-        'django-rgd-imagery==0.2.7',
+        'django-rgd==0.2.8',
+        'django-rgd-imagery==0.2.8',
         'pandas',
     ],
     extras_require={
@@ -71,10 +71,10 @@ setup(
             'tox',
         ],
         'worker': [
-            'django-rgd-imagery[worker]==0.2.7',
+            'django-rgd-imagery[worker]==0.2.8',
         ],
         'fuse': [
-            'django-rgd[fuse]==0.2.7',
+            'django-rgd[fuse]==0.2.8',
         ],
     },
 )

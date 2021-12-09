@@ -1,13 +1,10 @@
 from typing import Optional
 
-from rgd_client.session import RgdClientSession
+from rgd_client.plugin import RgdPlugin
 import validators
 
 
-class WATCHPlugin:
-    def __init__(self, session: RgdClientSession):
-        self.session = session
-
+class WATCHPlugin(RgdPlugin):
     def post_stac_file(
         self,
         url: str,

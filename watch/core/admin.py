@@ -86,4 +86,8 @@ class STACFileAdmin(OSMGeoAdmin):
         update_outdated,
         populate_outline,
     )
-    list_filter = ('file__collection',) + MODIFIABLE_FILTERS + TASK_EVENT_FILTERS
+    list_filter = (
+        ('file__collection', 'processed', 'server_modified')
+        + MODIFIABLE_FILTERS
+        + TASK_EVENT_FILTERS
+    )

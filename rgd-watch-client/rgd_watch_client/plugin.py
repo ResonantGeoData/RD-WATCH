@@ -51,9 +51,11 @@ class WATCHPlugin(RgdPlugin):
         r.raise_for_status()
         resp = r.json()
 
-        # resp = self.rgd.create_file_from_url(
-        #     url=url, name=name, collection=collection, description=description
-        # )
-
         payload = {'file': resp['id']}
         return self.session.post('watch/stac_file', json=payload).json()
+
+    def reprocess_stac_file(self, id: Union[int, str]):
+        """Reprocess a stac file."""
+
+        # Submit empty patch, forcing a save
+        return self.session.patch(f'watch/stac_file/{id}', data={}).json()

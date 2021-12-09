@@ -2,6 +2,7 @@ from typing import Dict
 from django.contrib.auth.models import User
 from django.core.files.uploadedfile import SimpleUploadedFile
 import pytest
+from rgd.models.mixins import Status
 from rgd_client import create_rgd_client
 from rgd.datastore import datastore
 from rgd.models import ChecksumFile
@@ -33,12 +34,18 @@ def py_client(live_server):
 def stac_file():
     file_path = datastore.fetch('astro.png')
     with open(file_path, 'rb') as file_contents:
-        return STACFile.objects.create(
+        stac_file: STACFile = STACFile.objects.create(
             file=ChecksumFile.objects.create(
                 name='astro.png',
                 file=SimpleUploadedFile(name='astro.png', content=file_contents.read()),
-            )
+            ),
         )
+
+    # Manually update status, so it isn't automatically set to QUEUED
+    stac_file.status = Status.SKIPPED
+    stac_file.save(update_fields=['status'])
+
+    return stac_file
 
 
 def test_get_stac_file(py_client: WATCHClient, stac_file: STACFile):
@@ -63,3 +70,14 @@ def test_post_stac_file(py_client: WATCHClient):
 
     # Assert stack file created
     assert STACFile.objects.filter(id=res['id']).exists()
+
+
+def test_reprocess_stac_file(py_client: WATCHClient, stac_file: STACFile):
+    before_modified = stac_file.modified.isoformat().replace('+00:00', 'Z')
+    before_status = stac_file.status
+
+    res: Dict = py_client.watch.reprocess_stac_file(id=stac_file.id)
+
+    # Assert status and last modified date have changed, signaling a save
+    assert res['status'] != before_status
+    assert res['modified'] != before_modified

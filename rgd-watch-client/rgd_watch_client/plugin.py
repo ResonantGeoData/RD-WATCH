@@ -42,5 +42,5 @@ class WATCHPlugin(RgdPlugin):
         #     url=url, name=name, collection=collection, description=description
         # )
 
-        payload = {'stac_file': resp['id']}
+        payload = {'file': resp['id']}
         return self.session.post('watch/stac_file', json=payload).json()

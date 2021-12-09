@@ -1,7 +1,9 @@
+from contextlib import suppress
 import logging
 from typing import Generator, Optional
 
 import djclick as click
+import requests
 from rgd.models import Collection
 from rgd.models.mixins import Status
 from rgd.models.utils import get_or_create_checksum_file_url
@@ -13,8 +15,20 @@ from watch.core.tasks.jobs import populate_stac_file_outline
 logger = logging.getLogger(__name__)
 
 
-def iterator():
-    return ...
+def _iter_items(url: str):
+    stack = [url]
+    while stack:
+        url = stack.pop()
+        collection = requests.get(url).json()
+        # see if there's pages
+        with suppress(KeyError):
+            for link in collection['links']:
+                if link['rel'] == 'next':
+                    stack.append(link['href'])
+                    break
+        # iterate through items
+        for item in collection['features']:
+            yield item
 
 
 @click.command()
@@ -22,7 +36,7 @@ def iterator():
 @click.option('--region', default='us-west-2')
 @click.option('--collection', default=None)
 @click.option('--outline', default=False)
-def ingest_s3(
+def ingest_feature_collection(
     host_url: str,
     region: str,
     collection: str,
@@ -35,7 +49,7 @@ def ingest_s3(
         # In case of empty strings
         collection = None
 
-    for item in iterator(host_url):
+    for item in _iter_items(host_url):
         url = item['links']['self']
         file, fcreated = get_or_create_checksum_file_url(url, collection=collection, defaults={})
         stacfile, screated = get_or_create_no_commit(STACFile, file=file)
@@ -43,7 +57,7 @@ def ingest_s3(
         if screated:
             stacfile.status = Status.SKIPPED
 
-        # stacfile.server_modified = "updated"  # get from STAC Item
+        # stacfile.server_modified = 'updated'  # get from STAC Item
         stacfile.save()
         if outline:
             populate_stac_file_outline(stacfile.pk)

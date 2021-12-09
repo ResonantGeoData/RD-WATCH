@@ -33,7 +33,7 @@ class FeatureInline(GeoAdminInline):
 
 
 @admin.register(Region)
-class RegionAdmin(OSMGeoAdmin, _FileGetNameMixin):
+class RegionAdmin(OSMGeoAdmin):
     list_display = (
         'pk',
         'status',
@@ -68,9 +68,17 @@ def populate_outline(modeladmin, request, queryset):
 
 
 @admin.register(STACFile)
-class STACFileAdmin(OSMGeoAdmin):
+class STACFileAdmin(OSMGeoAdmin, _FileGetNameMixin):
+    def get_collection(self, obj):
+        return obj.file.collection
+
+    get_collection.short_description = 'Collection'
+    get_collection.admin_order_field = 'file__collection'
+
     list_display = (
         'pk',
+        'get_name',
+        'get_collection',
         'status',
         'server_modified',
         'processed',

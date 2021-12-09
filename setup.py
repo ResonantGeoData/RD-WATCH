@@ -60,7 +60,6 @@ setup(
         # RGD
         'django-rgd==0.2.9',
         'django-rgd-imagery==0.2.9',
-        'pandas',
     ],
     extras_require={
         'dev': [

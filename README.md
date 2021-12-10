@@ -1,6 +1,7 @@
 # ResonantGeoData WATCH Deployment
 
 [![ci](https://github.com/ResonantGeoData/RD-WATCH/actions/workflows/ci.yml/badge.svg)](https://github.com/ResonantGeoData/RD-WATCH/actions/workflows/ci.yml)
+[![codecov](https://codecov.io/gh/ResonantGeoData/RD-WATCH/branch/main/graph/badge.svg?token=IVYUDM3FPV)](https://codecov.io/gh/ResonantGeoData/RD-WATCH)
 
 *Porject-specific deployment of ResonantGeoData for WATCH*
 

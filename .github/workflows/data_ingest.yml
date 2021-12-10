@@ -1,0 +1,32 @@
+name: STAC Data Ingest
+on:
+  schedule:
+    # Run every wednesday morning
+    - cron: "0 0 * * WED"
+jobs:
+  lint:
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        script: ['drop1', 'landsat', 'sentinel', 'worldview']
+    steps:
+      - uses: actions/checkout@v2
+      - name: Set up Python
+        uses: actions/setup-python@v2
+        with:
+          python-version: "3.8"
+      - name: Install Python Client
+        run: |
+          pip install --upgrade pip
+          cd rgd-watch-client
+          pip install -e .
+          cd ..
+      - name: Run STAC Ingest
+        run: |
+          python scripts/${{ matrix.script }}
+        env:
+          AWS_ACCESS_KEY_ID: ${{ secrets.WATCH_AWS_ACCESS_KEY_ID }}
+          AWS_SECRET_ACCESS_KEY: ${{ secrets.WATCH_AWS_SECRET_ACCESS_KEY }}
+          SMART_STAC_API_KEY: ${{ secrets.SMART_STAC_API_KEY }}
+          RGD_API_TOKEN: ${{ secrets.RGD_API_TOKEN }}

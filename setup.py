@@ -10,9 +10,11 @@ else:
     # When this is first installed in development Docker, README.md is not available
     long_description = ''
 
+__version__ = '0.0.1'
+
 setup(
     name='watch',
-    version='0.0.1',
+    version=__version__,
     description='',
     long_description=long_description,
     long_description_content_type='text/markdown',
@@ -58,8 +60,8 @@ setup(
         'django-s3-file-field[boto3]',
         'gunicorn',
         # RGD
-        'django-rgd==0.2.9',
-        'django-rgd-imagery==0.2.9',
+        'django-rgd>=0.2.10',
+        'django-rgd-imagery>=0.2.10',
     ],
     extras_require={
         'dev': [
@@ -70,10 +72,10 @@ setup(
             'tox',
         ],
         'worker': [
-            'django-rgd-imagery[worker]==0.2.9',
+            'django-rgd-imagery[worker]>=0.2.10',
         ],
         'fuse': [
-            'django-rgd[fuse]==0.2.9',
+            'django-rgd[fuse]>=0.2.10',
         ],
     },
 )

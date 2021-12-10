@@ -89,10 +89,16 @@ class ItemSerializer(ReadOnlyItemSerializer):
         proj_ext = ProjectionExtension.ext(item, add_if_missing=True)
         image_ids, ancillary = [], []
         for key, asset in item.assets.items():
+            # NOTE: `extra_fields` or `properties`? Diff versions of pystac have different fields?
+            if 'alternate' in asset.extra_fields and 's3' in asset.extra_fields['alternate']:
+                url = asset.extra_fields['alternate']['s3']['href']
+            else:
+                url = asset.href
+
             checksum_file = non_unique_get_or_create(
                 ChecksumFile,
                 type=FileSourceType.URL,
-                url=asset.href,
+                url=url,
             )
             if (
                 len(item.assets) == 1

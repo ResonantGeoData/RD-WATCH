@@ -11,7 +11,7 @@ else:
     # When this is first installed in development Docker, README.md is not available
     long_description = ''
 
-__version__ = '0.0.0'
+__version__ = '0.0.1'
 
 setup(
     name='rgd-watch-client',

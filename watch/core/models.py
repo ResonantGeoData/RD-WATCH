@@ -35,7 +35,7 @@ class STACFile(TimeStampedModel, TaskEventMixin, PermissionPathMixin):
     This has an associated task that will ingest the STAC Item.
     """
 
-    file = models.ForeignKey(ChecksumFile, on_delete=models.CASCADE, related_name='+')
+    file = models.ForeignKey(ChecksumFile, unique=True, on_delete=models.CASCADE, related_name='+')
     server_modified = models.DateTimeField(null=True, default=None, blank=True)
     processed = models.DateTimeField(null=True, default=None, blank=True)
     outline = models.GeometryField(srid=DB_SRID, null=True, blank=True)

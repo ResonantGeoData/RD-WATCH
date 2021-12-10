@@ -4,6 +4,7 @@ import json
 from celery import shared_task
 from django.contrib.gis.geos import Polygon
 from django.db import transaction
+from django.utils.timezone import make_aware
 import pystac
 from rgd.tasks.helpers import _run_with_failure_reason
 
@@ -39,7 +40,7 @@ def _process_stac_file(pk):
         )
 
     stac_file.raster = raster_meta.parent_raster
-    stac_file.processed = datetime.now()
+    stac_file.processed = make_aware(datetime.now())
     stac_file.save(
         update_fields=[
             'processed',

@@ -1,5 +1,3 @@
-from io import open as io_open
-import os
 from pathlib import Path
 
 from setuptools import find_packages, setup
@@ -13,11 +11,7 @@ else:
     # When this is first installed in development Docker, README.md is not available
     long_description = ''
 
-__version__ = None
-filepath = os.path.dirname(__file__)
-version_file = os.path.join(filepath, '..', 'version.py')
-with io_open(version_file, mode='r') as fd:
-    exec(fd.read())
+__version__ = '0.0.1'
 
 setup(
     name='rgd-watch-client',

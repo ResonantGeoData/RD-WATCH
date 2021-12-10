@@ -48,3 +48,28 @@ def test_sentinel_stac_support(sample_file):
     image = stac_file.raster.image_set.images.first()
     with yeild_tilesource_from_image(image) as src:
         assert src.getMetadata()
+
+
+@pytest.mark.django_db(transaction=True)
+def test_stac_rest_list(authenticated_api_client, stac_file_factory):
+    # Create 3 stac files
+    stac_file_factory()
+    stac_file_factory()
+    stac_file = stac_file_factory()
+    checksum_file = stac_file.file
+
+    # Baseline
+    r = authenticated_api_client.get('/api/watch/stac_file')
+    assert r.json()['count'] == 3
+    assert len(r.json()['results']) == 3
+
+    # Assert filtering by checksum file gives one result
+    r = authenticated_api_client.get('/api/watch/stac_file', {'file': checksum_file.id})
+    assert r.json()['count'] == 1
+    assert r.json()['results'][0]['id'] == stac_file.id
+    assert r.json()['results'][0]['file']['id'] == checksum_file.id
+
+    # Assert nothing returned for non-existant checksum file
+    r = authenticated_api_client.get('/api/watch/stac_file', {'file': -1})
+    assert r.json()['count'] == 0
+    assert not r.json()['results']

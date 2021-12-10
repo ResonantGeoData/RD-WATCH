@@ -2,7 +2,7 @@ import pytest
 from pytest_factoryboy import register
 from rest_framework.test import APIClient
 
-from .factories import ChecksumFileFactory, CollectionFactory, STACFileFactory
+from .factories import ChecksumFileFactory, CollectionFactory, STACFileFactory, UserFactory
 
 
 @pytest.fixture
@@ -20,3 +20,4 @@ def authenticated_api_client(user) -> APIClient:
 register(CollectionFactory)
 register(ChecksumFileFactory)
 register(STACFileFactory)
+register(UserFactory)

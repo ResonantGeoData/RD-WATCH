@@ -76,6 +76,11 @@ def test_post_stac_file(py_client: WATCHClient):
     with yeild_tilesource_from_image(image) as src:
         assert src.getMetadata()
 
+    # Make sure client treats POST as "get or create"
+    res: Dict = py_client.watch.post_stac_file(url=file_url)
+    assert res['file']['id'] == checksum_file_dict['id']
+    assert STACFile.objects.count() == 1
+
 
 def test_reprocess_stac_file(py_client: WATCHClient, stac_file: STACFile):
     before_modified = stac_file.modified.isoformat().replace('+00:00', 'Z')

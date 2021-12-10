@@ -3,7 +3,6 @@ import os
 from typing import Optional
 
 import djclick as click
-from rgd.models import Collection
 
 from watch.core.utilities import get_or_create_stac_file, get_stac_item_self_link, iter_stac_items
 
@@ -23,12 +22,6 @@ def ingest_feature_collection(
     api_key: str = None,
     outline: Optional[bool] = False,
 ) -> None:
-
-    if collection:
-        collection, _ = Collection.objects.get_or_create(name=collection)
-    else:
-        # In case of empty strings
-        collection = None
 
     if api_key is None:
         api_key = os.environ.get('SMART_STAC_API_KEY', None)

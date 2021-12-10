@@ -1,5 +1,6 @@
 from contextlib import suppress
 import logging
+import os
 from typing import Generator, Optional
 
 import djclick as click
@@ -15,11 +16,17 @@ from watch.core.tasks.jobs import populate_stac_file_outline
 logger = logging.getLogger(__name__)
 
 
-def _iter_items(url: str) -> Generator[dict, None, None]:
+def _iter_items(url: str, api_key: str = None) -> Generator[dict, None, None]:
     stack = [url]
+
+    headers = {}
+    if api_key:
+        # Specific to SMART catalogs
+        headers['x-api-key'] = api_key
+
     while stack:
         url = stack.pop()
-        collection = requests.get(url).json()
+        collection = requests.get(url, headers=headers).json()
         # see if there's pages
         with suppress(KeyError):
             for link in collection['links']:
@@ -42,11 +49,13 @@ def _get_self_link(links):
 @click.argument('host_url')  # Catalog URL
 @click.option('--region', default='us-west-2')
 @click.option('--collection', default=None)
+@click.option('--api-key', default=None)
 @click.option('--outline', default=False)
 def ingest_feature_collection(
     host_url: str,
     region: str,
     collection: str,
+    api_key: str = None,
     outline: Optional[bool] = False,
 ) -> None:
 
@@ -56,7 +65,10 @@ def ingest_feature_collection(
         # In case of empty strings
         collection = None
 
-    for item in _iter_items(host_url):
+    if api_key is None:
+        api_key = os.environ.get('SMART_STAC_API_KEY', None)
+
+    for item in _iter_items(host_url, api_key=api_key):
         url = _get_self_link(item['links'])
         file, fcreated = get_or_create_checksum_file_url(url, collection=collection, defaults={})
         stacfile, screated = get_or_create_no_commit(STACFile, file=file)

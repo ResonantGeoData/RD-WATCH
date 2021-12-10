@@ -1,15 +1,14 @@
 from contextlib import suppress
+import os
 import re
 from typing import Generator
 
+import boto3
 import requests
-from rgd.models import Collection
-from rgd.models.mixins import Status
-from rgd.models.utils import get_or_create_checksum_file_url
-from rgd.utility import get_or_create_no_commit
+from rgd_client import create_rgd_client
 
-from watch.core.models import STACFile
-from watch.core.tasks.jobs import populate_stac_file_outline
+# API_URL = 'https://watch.resonantgeodata.com/api'
+API_URL = 'http://localhost:8000/api'
 
 
 def iter_matching_objects(
@@ -57,20 +56,34 @@ def get_stac_item_self_link(links):
     raise ValueError('No self link found')
 
 
-def get_or_create_stac_file(url, collection, outline=False, server_modified=None):
-    if collection:
-        collection, _ = Collection.objects.get_or_create(name=collection)
-    else:
-        # In case of empty strings
-        collection = None
-    file, fcreated = get_or_create_checksum_file_url(url, collection=collection, defaults={})
-    stacfile, screated = get_or_create_no_commit(STACFile, file=file)
-    stacfile.skip_signal = True  # Do not ingest yet
-    if screated:
-        stacfile.status = Status.SKIPPED
-    if server_modified:
-        stacfile.server_modified = server_modified
-    stacfile.save()
-    if outline:
-        populate_stac_file_outline(stacfile.pk)
-    return stacfile, screated
+def post_stac_items_from_s3_iter(
+    bucket: str,
+    prefix: str,
+    collection: str,
+    region: str = 'us-west-2',
+    include_regex: str = r'^.*\.json',
+):
+    boto3_params = {
+        'region_name': region,
+    }
+    session = boto3.Session(**boto3_params)
+    s3_client = session.client('s3')
+
+    client = create_rgd_client(api_url=API_URL)
+    for obj in iter_matching_objects(s3_client, bucket, prefix, include_regex):
+        url = f's3://{bucket}/{obj["Key"]}'
+        client.watch.post_stac_file(url=url, collection=collection)
+
+
+def post_stac_items_from_server(
+    host_url: str,
+    collection: str,
+    api_key: str = None,
+):
+    if api_key is None:
+        api_key = os.environ.get('SMART_STAC_API_KEY', None)
+
+    client = create_rgd_client(api_url=API_URL)
+    for item in iter_stac_items(host_url, api_key=api_key):
+        url = get_stac_item_self_link(item['links'])
+        client.watch.post_stac_file(url=url, collection=collection)

@@ -15,7 +15,7 @@ def _process_stac_file(pk):
 
     stac_file = STACFile.objects.get(pk=pk)
 
-    with stac_file.file.yield_local_path() as path:
+    with stac_file.file.yield_local_path(try_fuse=False) as path:
         with open(path, 'r') as f:
             data = json.loads(f.read())
 

@@ -1,10 +1,11 @@
 from typing import Optional, Union
 
-from rgd_client.plugin import RgdPlugin
-import validators
+from rgd_client.plugin import CorePlugin, RgdPlugin
 
 
 class WATCHPlugin(RgdPlugin):
+    rgd: CorePlugin = CorePlugin
+
     def get_stac_file(self, id: Union[int, str]):
         """
         Retrieve a stac file by its ID.
@@ -26,7 +27,7 @@ class WATCHPlugin(RgdPlugin):
         description: Optional[str] = None,
     ):
         """
-        Create a ChecksumFile from a URL.
+        Create a Stac File from a URL ChecksumFile.
 
         Args:
             url: The URL to retrieve the file from
@@ -34,25 +35,14 @@ class WATCHPlugin(RgdPlugin):
             collection: The integer collection ID to associate this ChecksumFile with
             description: The description of the file
         """
-        # Verify that url is valid in shape, will raise error on failure
-        validators.url(url)
+        checksum_file = self.rgd.create_file_from_url(
+            url=url,
+            name=name,
+            collection=collection,
+            description=description,
+        )
 
-        # Construct payload, leaving out empty arguments
-        payload = {'url': url, 'type': 2}
-        if name is not None:
-            payload['name'] = name
-        if collection is not None:
-            payload['collection'] = collection
-        if description is not None:
-            payload['description'] = description
-
-        r = self.session.post('rgd/checksum_file', json=payload)
-
-        r.raise_for_status()
-        resp = r.json()
-
-        payload = {'file': resp['id']}
-        return self.session.post('watch/stac_file', json=payload).json()
+        return self.session.post('watch/stac_file', json={'file': checksum_file['id']}).json()
 
     def reprocess_stac_file(self, id: Union[int, str]):
         """Reprocess a stac file."""

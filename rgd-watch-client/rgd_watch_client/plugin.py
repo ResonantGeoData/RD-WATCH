@@ -1,12 +1,22 @@
-from typing import Optional
+from typing import Optional, Union
 
-from rgd_client.session import RgdClientSession
+from rgd_client.plugin import RgdPlugin
 import validators
 
 
-class WATCHPlugin:
-    def __init__(self, session: RgdClientSession):
-        self.session = session
+class WATCHPlugin(RgdPlugin):
+    def get_stac_file(self, id: Union[int, str]):
+        """
+        Retrieve a stac file by its ID.
+
+        Args:
+            id: The ID of the stac file
+        """
+        return self.session.get(f'watch/stac_file/{id}').json()
+
+    def list_stac_file(self):
+        """List stac files."""
+        return self.session.get('watch/stac_file').json()
 
     def post_stac_file(
         self,
@@ -41,9 +51,10 @@ class WATCHPlugin:
         r.raise_for_status()
         resp = r.json()
 
-        # resp = self.rgd.create_file_from_url(
-        #     url=url, name=name, collection=collection, description=description
-        # )
-
-        payload = {'stac_file': resp['id']}
+        payload = {'file': resp['id']}
         return self.session.post('watch/stac_file', json=payload).json()
+
+    def reprocess_stac_file(self, id: Union[int, str]):
+        """Reprocess a stac file."""
+        # Submit empty patch, forcing a save
+        return self.session.patch(f'watch/stac_file/{id}', data={}).json()

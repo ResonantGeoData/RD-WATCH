@@ -47,6 +47,7 @@ class BaseOutlineFieldFilter(filters.FilterSet):
 
     def filter_q(self, queryset, name, value):
         """Sort the queryset by distance to queried geometry.
+
         Annotates the queryset with `distance`.
         This uses the efficient KNN operation:
         https://postgis.net/docs/geometry_distance_knn.html
@@ -66,6 +67,7 @@ class BaseOutlineFieldFilter(filters.FilterSet):
 
     def filter_distance(self, queryset, name, value):
         """Filter the queryset by distance to the queried geometry.
+
         We may wish to use the distance in degrees later on. This is
         very taxing on the DBMS right now. The distance in degrees
         can be provided by the initial geometry query.

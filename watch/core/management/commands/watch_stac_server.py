@@ -15,7 +15,7 @@ from watch.core.tasks.jobs import populate_stac_file_outline
 logger = logging.getLogger(__name__)
 
 
-def _iter_items(url: str):
+def _iter_items(url: str) -> Generator[dict, None, None]:
     stack = [url]
     while stack:
         url = stack.pop()
@@ -29,6 +29,13 @@ def _iter_items(url: str):
         # iterate through items
         for item in collection['features']:
             yield item
+
+
+def _get_self_link(links):
+    for link in links:
+        if link['rel'] == 'self':
+            return link['href']
+    raise ValueError('No self link found')
 
 
 @click.command()
@@ -50,7 +57,7 @@ def ingest_feature_collection(
         collection = None
 
     for item in _iter_items(host_url):
-        url = item['links']['self']
+        url = _get_self_link(item['links'])
         file, fcreated = get_or_create_checksum_file_url(url, collection=collection, defaults={})
         stacfile, screated = get_or_create_no_commit(STACFile, file=file)
         stacfile.skip_signal = True  # Do not ingest yet

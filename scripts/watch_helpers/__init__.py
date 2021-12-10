@@ -1,4 +1,5 @@
 from contextlib import suppress
+import logging
 import os
 import re
 from typing import Generator
@@ -9,6 +10,8 @@ from rgd_client import create_rgd_client
 
 # API_URL = 'https://watch.resonantgeodata.com/api'
 API_URL = 'http://localhost:8000/api'
+
+logger = logging.getLogger(__name__)
 
 
 def iter_matching_objects(
@@ -62,6 +65,7 @@ def post_stac_items_from_s3_iter(
     collection: str,
     region: str = 'us-west-2',
     include_regex: str = r'^.*\.json',
+    dry_run: bool = True,  # TODO
 ):
     boto3_params = {
         'region_name': region,
@@ -69,21 +73,30 @@ def post_stac_items_from_s3_iter(
     session = boto3.Session(**boto3_params)
     s3_client = session.client('s3')
 
-    client = create_rgd_client(api_url=API_URL)
+    if not dry_run:
+        client = create_rgd_client(api_url=API_URL)
     for obj in iter_matching_objects(s3_client, bucket, prefix, include_regex):
         url = f's3://{bucket}/{obj["Key"]}'
-        client.watch.post_stac_file(url=url, collection=collection)
+        if not dry_run:
+            client.watch.post_stac_file(url=url, collection=collection)
+        else:
+            logger.info(url)
 
 
 def post_stac_items_from_server(
     host_url: str,
     collection: str,
     api_key: str = None,
+    dry_run: bool = True,  # TODO
 ):
     if api_key is None:
         api_key = os.environ.get('SMART_STAC_API_KEY', None)
 
-    client = create_rgd_client(api_url=API_URL)
+    if not dry_run:
+        client = create_rgd_client(api_url=API_URL)
     for item in iter_stac_items(host_url, api_key=api_key):
         url = get_stac_item_self_link(item['links'])
-        client.watch.post_stac_file(url=url, collection=collection)
+        if not dry_run:
+            client.watch.post_stac_file(url=url, collection=collection)
+        else:
+            logger.info(url)

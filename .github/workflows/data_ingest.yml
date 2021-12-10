@@ -1,8 +1,9 @@
 name: STAC Data Ingest
 on:
-  schedule:
-    # Run every wednesday morning
-    - cron: "0 0 * * WED"
+  # schedule:
+  #   # Run every wednesday morning
+  #   - cron: "0 0 * * WED"
+  pull_request:  # TODO: remove
 jobs:
   ingest:
     runs-on: ubuntu-latest
@@ -29,4 +30,4 @@ jobs:
           AWS_ACCESS_KEY_ID: ${{ secrets.WATCH_AWS_ACCESS_KEY_ID }}
           AWS_SECRET_ACCESS_KEY: ${{ secrets.WATCH_AWS_SECRET_ACCESS_KEY }}
           SMART_STAC_API_KEY: ${{ secrets.SMART_STAC_API_KEY }}
-          RGD_API_TOKEN: ${{ secrets.RGD_API_TOKEN }}
+          # RGD_API_TOKEN: ${{ secrets.RGD_API_TOKEN }}  # TODO: add back

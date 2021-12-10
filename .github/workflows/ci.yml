@@ -35,9 +35,9 @@ jobs:
           cd rgd-watch-client
           pip install -e .
           cd ..
-      - name: Run linting
+      - name: Attempt connection to production
         run: |
-          python -c "from rgd_client import create_rgd_client;client = create_rgd_client(api_url='https://watch.resonantgeodata.com/api');client.rgd.search()"
+          python -c "from rgd_client import create_rgd_client;client = create_rgd_client(api_url='https://watch.resonantgeodata.com/api');print(client.rgd.search())"
         env:
           RGD_API_TOKEN: ${{ secrets.RGD_API_TOKEN }}
   check-migrations:

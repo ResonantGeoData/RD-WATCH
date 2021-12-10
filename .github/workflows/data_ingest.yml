@@ -21,7 +21,7 @@ jobs:
         run: |
           pip install --upgrade pip
           cd rgd-watch-client
-          pip install -e .
+          pip install -e . boto3
           cd ..
       - name: Run STAC Ingest
         run: |

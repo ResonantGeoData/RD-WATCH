@@ -7,6 +7,20 @@ on:
   schedule:
     - cron: "0 0 * * *"
 jobs:
+  lint:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+      - name: Set up Python
+        uses: actions/setup-python@v2
+        with:
+          python-version: "3.8"
+      - name: Install tox
+        run: |
+          pip install --upgrade pip
+          pip install tox
+      - name: Run linting
+        run: tox -e lint
   test:
     runs-on: ubuntu-latest
     services:
@@ -41,7 +55,7 @@ jobs:
           pip install tox
       - name: Run tests
         run: |
-          tox
+          tox -e check-migrations -e test
         env:
           DJANGO_DATABASE_URL: postgres://postgres:postgres@localhost:5432/django
           DJANGO_MINIO_STORAGE_ENDPOINT: localhost:9000

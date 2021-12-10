@@ -15,9 +15,13 @@ class WATCHPlugin(RgdPlugin):
         """
         return self.session.get(f'watch/stac_file/{id}').json()
 
-    def list_stac_file(self):
+    def list_stac_file(self, file: Optional[Union[int, str]] = None):
         """List stac files."""
-        return self.session.get('watch/stac_file').json()
+        params = {}
+        if file:
+            params['file'] = file
+
+        return self.session.get('watch/stac_file', params=params).json()
 
     def post_stac_file(
         self,
@@ -41,6 +45,10 @@ class WATCHPlugin(RgdPlugin):
             collection=collection,
             description=description,
         )
+
+        files = self.list_stac_file(file=checksum_file['id'])
+        if files['results']:
+            return files['results'][0]
 
         return self.session.post('watch/stac_file', json={'file': checksum_file['id']}).json()
 

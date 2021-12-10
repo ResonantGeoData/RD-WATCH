@@ -31,3 +31,7 @@ class STACFileSerializer(serializers.ModelSerializer):
                 'raster',
             ]
         )
+
+
+class StacFileGetSerializer(serializers.Serializer):
+    file = serializers.IntegerField(required=False)

@@ -1,5 +1,4 @@
 import factory.django
-
 from rgd.models import ChecksumFile, Collection
 
 from watch.core import models

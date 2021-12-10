@@ -2,7 +2,7 @@ import pytest
 from pytest_factoryboy import register
 from rest_framework.test import APIClient
 
-from .factories import CollectionFactory, ChecksumFileFactory, STACFileFactory
+from .factories import ChecksumFileFactory, CollectionFactory, STACFileFactory
 
 
 @pytest.fixture

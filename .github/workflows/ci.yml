@@ -65,3 +65,8 @@ jobs:
           AWS_SECRET_ACCESS_KEY: ${{ secrets.WATCH_AWS_SECRET_ACCESS_KEY }}
           SMART_STAC_API_KEY: ${{ secrets.SMART_STAC_API_KEY }}
           RGD_API_TOKEN: ${{ secrets.RGD_API_TOKEN }}
+      - uses: codecov/codecov-action@v2
+        with:
+          token: ${{ secrets.CODECOV_TOKEN }}
+          files: coverage.xml
+          verbose: true

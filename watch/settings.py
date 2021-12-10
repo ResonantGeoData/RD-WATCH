@@ -11,10 +11,10 @@ from composed_configuration import (
     TestingBaseConfiguration,
 )
 from configurations import values
-from rgd.configuration import ResonantGeoDataBaseMixin
+from rgd.configuration import MemachedMixin, ResonantGeoDataBaseMixin
 
 
-class WatchMixin(ResonantGeoDataBaseMixin, ConfigMixin):
+class WatchMixin(ResonantGeoDataBaseMixin, MemachedMixin, ConfigMixin):
     WSGI_APPLICATION = 'watch.wsgi.application'
     ROOT_URLCONF = 'watch.urls'
 

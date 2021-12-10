@@ -30,7 +30,6 @@ class STACFileFactory(factory.django.DjangoModelFactory):
     class Meta:
         model = models.STACFile
 
-    collection = factory.SubFactory(CollectionFactory)
     file = factory.SubFactory(ChecksumFileFactory)
 
     # If we have an on_commit or post_save method that modifies the model, we

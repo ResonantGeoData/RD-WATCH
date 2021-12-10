@@ -1,5 +1,4 @@
 from contextlib import suppress
-import logging
 import os
 import re
 from typing import Generator
@@ -10,8 +9,6 @@ from rgd_client import create_rgd_client
 
 # API_URL = 'https://watch.resonantgeodata.com/api'
 API_URL = 'http://localhost:8000/api'
-
-logger = logging.getLogger(__name__)
 
 
 def iter_matching_objects(
@@ -80,7 +77,7 @@ def post_stac_items_from_s3_iter(
         if not dry_run:
             client.watch.post_stac_file(url=url, collection=collection)
         else:
-            logger.info(url)
+            print(url)
 
 
 def post_stac_items_from_server(
@@ -99,4 +96,4 @@ def post_stac_items_from_server(
         if not dry_run:
             client.watch.post_stac_file(url=url, collection=collection)
         else:
-            logger.info(url)
+            print(url)

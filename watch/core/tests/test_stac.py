@@ -19,7 +19,8 @@ def test_landsat_stac_support(sample_file):
         file__file__filename=sample_file,
         file__file__from_path=get_data_path(sample_file),
     )
-    assert stac_file
+    stac_file.refresh_from_db()
+    assert stac_file.raster
 
 
 @pytest.mark.parametrize(
@@ -32,4 +33,5 @@ def test_sentinel_stac_support(sample_file):
         file__file__filename=sample_file,
         file__file__from_path=get_data_path(sample_file),
     )
-    assert stac_file
+    stac_file.refresh_from_db()
+    assert stac_file.raster

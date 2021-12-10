@@ -29,6 +29,14 @@ services:
     volumes:
       - fsdata:/data
 
+  memcached:
+    image: bitnami/memcached:latest
+    environment:
+      - MEMCACHED_USERNAME=my_user
+      - MEMCACHED_PASSWORD=my_password
+      - MEMCACHED_CACHE_SIZE=512
+      - MEMCACHED_EXTRA_FLAGS="--max-item-size 8M"
+
   django:
     build:
       context: .
@@ -45,6 +53,7 @@ services:
       - postgres
       - rabbitmq
       - minio
+      - memcached
 
   celery:
     build:
@@ -67,6 +76,7 @@ services:
       - postgres
       - rabbitmq
       - minio
+      - memcached
 
   flower:
     image: mher/flower

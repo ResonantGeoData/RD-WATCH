@@ -99,3 +99,4 @@ class STACFileAdmin(OSMGeoAdmin, _FileGetNameMixin):
         + MODIFIABLE_FILTERS
         + TASK_EVENT_FILTERS
     )
+    raw_id_fields = ('file',)

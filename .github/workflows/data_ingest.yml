@@ -25,7 +25,7 @@ jobs:
           cd ..
       - name: Run STAC Ingest
         run: |
-          python scripts/${{ matrix.script }}
+          python scripts/${{ matrix.script }}.py
         env:
           AWS_ACCESS_KEY_ID: ${{ secrets.WATCH_AWS_ACCESS_KEY_ID }}
           AWS_SECRET_ACCESS_KEY: ${{ secrets.WATCH_AWS_SECRET_ACCESS_KEY }}

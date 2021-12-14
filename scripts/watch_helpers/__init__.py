@@ -56,13 +56,22 @@ def get_stac_item_self_link(links):
     raise ValueError('No self link found')
 
 
+def get_client(dry_run: bool = True):
+    class Dummy:
+        def __getattr__(self, *args, **kwargs):
+            return lambda *args, **kwargs: print(*args, **kwargs)
+    if dry_run:
+        return Dummy()
+    return create_rgd_client(api_url=API_URL)
+
+
 def post_stac_items_from_s3_iter(
     bucket: str,
     prefix: str,
     collection: str,
     region: str = 'us-west-2',
     include_regex: str = r'^.*\.json',
-    dry_run: bool = True,  # TODO
+    dry_run: bool = True,
 ):
     boto3_params = {
         'region_name': region,
@@ -70,30 +79,22 @@ def post_stac_items_from_s3_iter(
     session = boto3.Session(**boto3_params)
     s3_client = session.client('s3')
 
-    if not dry_run:
-        client = create_rgd_client(api_url=API_URL)
+    client = get_client(dry_run)
     for obj in iter_matching_objects(s3_client, bucket, prefix, include_regex):
         url = f's3://{bucket}/{obj["Key"]}'
-        if not dry_run:
-            client.watch.post_stac_file(url=url, collection=collection)
-        else:
-            print(url)
+        client.watch.post_stac_file(url=url, collection=collection)
 
 
 def post_stac_items_from_server(
     host_url: str,
     collection: str,
     api_key: str = None,
-    dry_run: bool = True,  # TODO
+    dry_run: bool = True,
 ):
     if api_key is None:
         api_key = os.environ.get('SMART_STAC_API_KEY', None)
 
-    if not dry_run:
-        client = create_rgd_client(api_url=API_URL)
+    client = get_client(dry_run)
     for item in iter_stac_items(host_url, api_key=api_key):
         url = get_stac_item_self_link(item['links'])
-        if not dry_run:
-            client.watch.post_stac_file(url=url, collection=collection)
-        else:
-            print(url)
+        client.watch.post_stac_file(url=url, collection=collection)

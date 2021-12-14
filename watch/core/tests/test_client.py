@@ -6,7 +6,7 @@ import pytest
 from rest_framework.authtoken.models import Token
 from rgd.models import ChecksumFile
 from rgd_client import create_rgd_client
-from rgd_imagery.large_image_utilities import yeild_tilesource_from_image
+# from rgd_imagery.large_image_utilities import yeild_tilesource_from_image
 from rgd_watch_client import WATCHClient
 
 from watch.core.models import STACFile

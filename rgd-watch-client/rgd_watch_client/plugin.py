@@ -26,8 +26,8 @@ class WATCHPlugin(RgdPlugin):
     def post_stac_file(
         self,
         url: str,
+        collection: Union[int, str],
         name: Optional[str] = None,
-        collection: Optional[int] = None,
         description: Optional[str] = None,
         debug: Optional[bool] = False,
     ):
@@ -36,8 +36,8 @@ class WATCHPlugin(RgdPlugin):
 
         Args:
             url: The URL to retrieve the file from
+            collection: The integer collection ID or string name to associate this ChecksumFile with. To put in your default collection, pass `None`
             name: The name of the file
-            collection: The integer collection ID to associate this ChecksumFile with
             description: The description of the file
         """
         checksum_file = self.rgd.create_file_from_url(

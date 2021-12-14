@@ -36,7 +36,8 @@ class WATCHPlugin(RgdPlugin):
 
         Args:
             url: The URL to retrieve the file from
-            collection: The integer collection ID or string name to associate this ChecksumFile with. To put in your default collection, pass `None`
+            collection: The integer collection ID or string name to associate
+                this ChecksumFile with. To put in your default collection, pass `None`
             name: The name of the file
             description: The description of the file
         """

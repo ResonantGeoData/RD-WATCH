@@ -57,7 +57,7 @@ def get_stac_item_self_link(links):
     raise ValueError('No self link found')
 
 
-def get_client(dry_run: bool = True):
+def get_client(dry_run: bool = False):
     if dry_run:
         return mock.Mock()
     return create_rgd_client(api_url=API_URL)
@@ -69,7 +69,7 @@ def post_stac_items_from_s3_iter(
     collection: str,
     region: str = 'us-west-2',
     include_regex: str = r'^.*\.json',
-    dry_run: bool = True,
+    dry_run: bool = False,
 ):
     boto3_params = {
         'region_name': region,
@@ -90,7 +90,7 @@ def post_stac_items_from_server(
     host_url: str,
     collection: str,
     api_key: str = None,
-    dry_run: bool = True,
+    dry_run: bool = False,
 ):
     if api_key is None:
         api_key = os.environ.get('SMART_STAC_API_KEY', None)

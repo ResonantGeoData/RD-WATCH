@@ -21,6 +21,7 @@ jobs:
         run: |
           pip install --upgrade pip
           pip install git+https://github.com/ResonantGeoData/ResonantGeoData.git#egg=rgd_client&subdirectory=django-rgd/client
+          python -c "import rgd_client; print(rgd_client.__version__)"
           cd rgd-watch-client
           pip install -e . boto3 mock
           cd ..

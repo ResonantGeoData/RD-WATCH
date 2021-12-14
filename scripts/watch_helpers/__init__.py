@@ -78,7 +78,7 @@ def post_stac_items_from_s3_iter(
     i = 0
     for obj in iter_matching_objects(s3_client, bucket, prefix, include_regex):
         url = f's3://{bucket}/{obj["Key"]}'
-        client.watch.post_stac_file(url=url, collection=collection)
+        client.watch.post_stac_file(url=url, collection=collection, debug=True)
         i += 1
     print(f'Handled {i} STACFile records.')
 
@@ -96,6 +96,6 @@ def post_stac_items_from_server(
     i = 0
     for item in iter_stac_items(host_url, api_key=api_key):
         url = get_stac_item_self_link(item['links'])
-        client.watch.post_stac_file(url=url, collection=collection)
+        client.watch.post_stac_file(url=url, collection=collection, debug=True)
         i += 1
     print(f'Handled {i} STACFile records.')

@@ -3,7 +3,6 @@ on:
   schedule:
     # Run every wednesday morning
     - cron: "0 0 * * WED"
-  pull_request:  # TODO: remove
 jobs:
   ingest:
     runs-on: ubuntu-latest

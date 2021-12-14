@@ -1,9 +1,10 @@
 from pathlib import Path
 
 import pytest
-# from rgd_imagery.large_image_utilities import yeild_tilesource_from_image
 
 from . import factories
+
+# from rgd_imagery.large_image_utilities import yeild_tilesource_from_image
 
 
 def get_data_path(name):

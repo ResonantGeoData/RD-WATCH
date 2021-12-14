@@ -12,7 +12,7 @@ except DistributionNotFound:
     __version__ = None
 
 
-PROD_WATCH_API = 'https://watch.resonantgeodata.com/api/'
+PROD_WATCH_API = 'https://watch.resonantgeodata.com/api'
 
 
 class WATCHClient(RgdClient):

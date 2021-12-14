@@ -81,10 +81,12 @@ def post_stac_items_from_s3_iter(
     s3_client = session.client('s3')
 
     client = get_client(dry_run)
-    for i, obj in enumerate(iter_matching_objects(s3_client, bucket, prefix, include_regex)):
+    i = 0
+    for obj in iter_matching_objects(s3_client, bucket, prefix, include_regex):
         url = f's3://{bucket}/{obj["Key"]}'
         client.watch.post_stac_file(url=url, collection=collection)
-    logger.info(f'Handled {i+1} STACFile records.')
+        i += 1
+    logger.info(f'Handled {i} STACFile records.')
 
 
 def post_stac_items_from_server(
@@ -97,7 +99,9 @@ def post_stac_items_from_server(
         api_key = os.environ.get('SMART_STAC_API_KEY', None)
 
     client = get_client(dry_run)
-    for i, item in enumerate(iter_stac_items(host_url, api_key=api_key)):
+    i = 0
+    for item in iter_stac_items(host_url, api_key=api_key):
         url = get_stac_item_self_link(item['links'])
         client.watch.post_stac_file(url=url, collection=collection)
-    logger.info(f'Handled {i+1} STACFile records.')
+        i += 1
+    logger.info(f'Handled {i} STACFile records.')

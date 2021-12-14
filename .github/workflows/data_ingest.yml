@@ -1,8 +1,11 @@
 name: STAC Data Ingest
 on:
-  schedule:
-    # Run every wednesday morning
-    - cron: "0 0 * * WED"
+  push:
+    branches:
+      - foo
+#   schedule:
+#     # Run every wednesday morning
+#     - cron: "0 0 * * WED"
 jobs:
   ingest:
     runs-on: ubuntu-latest

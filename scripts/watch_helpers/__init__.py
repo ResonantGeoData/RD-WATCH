@@ -4,6 +4,7 @@ import re
 from typing import Generator
 
 import boto3
+import mock
 import requests
 from rgd_client import create_rgd_client
 
@@ -57,11 +58,8 @@ def get_stac_item_self_link(links):
 
 
 def get_client(dry_run: bool = True):
-    class Dummy:
-        def __getattr__(self, *args, **kwargs):
-            return lambda *args, **kwargs: print(*args, **kwargs)
     if dry_run:
-        return Dummy()
+        return mock.Mock()
     return create_rgd_client(api_url=API_URL)
 
 

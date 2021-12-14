@@ -21,7 +21,7 @@ jobs:
         run: |
           pip install --upgrade pip
           cd rgd-watch-client
-          pip install -e . boto3
+          pip install -e . boto3 mock
           cd ..
       - name: Run STAC Ingest
         run: |
@@ -30,4 +30,4 @@ jobs:
           AWS_ACCESS_KEY_ID: ${{ secrets.WATCH_AWS_ACCESS_KEY_ID }}
           AWS_SECRET_ACCESS_KEY: ${{ secrets.WATCH_AWS_SECRET_ACCESS_KEY }}
           SMART_STAC_API_KEY: ${{ secrets.SMART_STAC_API_KEY }}
-          RGD_API_TOKEN: ${{ secrets.RGD_API_TOKEN }}  # TODO: add back
+          RGD_API_TOKEN: ${{ secrets.RGD_API_TOKEN }}

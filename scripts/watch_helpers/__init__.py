@@ -6,10 +6,7 @@ from typing import Generator
 import boto3
 import mock
 import requests
-from rgd_client import create_rgd_client
-
-# API_URL = 'https://watch.resonantgeodata.com/api'
-API_URL = 'http://localhost:8000/api'
+from rgd_watch_client import create_watch_client
 
 
 def iter_matching_objects(
@@ -60,7 +57,7 @@ def get_stac_item_self_link(links):
 def get_client(dry_run: bool = False):
     if dry_run:
         return mock.Mock()
-    return create_rgd_client(api_url=API_URL)
+    return create_watch_client()
 
 
 def post_stac_items_from_s3_iter(

@@ -20,6 +20,7 @@ jobs:
       - name: Install Python Client
         run: |
           pip install --upgrade pip
+          pip install git+https://github.com/ResonantGeoData/ResonantGeoData.git#egg=pkg&subdirectory=django-rgd/client
           cd rgd-watch-client
           pip install -e . boto3 mock
           cd ..

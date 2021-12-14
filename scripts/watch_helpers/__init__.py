@@ -4,11 +4,9 @@ import re
 from typing import Generator
 
 import boto3
+import mock
 import requests
-from rgd_client import create_rgd_client
-
-# API_URL = 'https://watch.resonantgeodata.com/api'
-API_URL = 'http://localhost:8000/api'
+from rgd_watch_client import create_watch_client
 
 
 def iter_matching_objects(
@@ -56,12 +54,19 @@ def get_stac_item_self_link(links):
     raise ValueError('No self link found')
 
 
+def get_client(dry_run: bool = False):
+    if dry_run:
+        return mock.Mock()
+    return create_watch_client()
+
+
 def post_stac_items_from_s3_iter(
     bucket: str,
     prefix: str,
     collection: str,
     region: str = 'us-west-2',
     include_regex: str = r'^.*\.json',
+    dry_run: bool = False,
 ):
     boto3_params = {
         'region_name': region,
@@ -69,21 +74,28 @@ def post_stac_items_from_s3_iter(
     session = boto3.Session(**boto3_params)
     s3_client = session.client('s3')
 
-    client = create_rgd_client(api_url=API_URL)
+    client = get_client(dry_run)
+    i = 0
     for obj in iter_matching_objects(s3_client, bucket, prefix, include_regex):
         url = f's3://{bucket}/{obj["Key"]}'
-        client.watch.post_stac_file(url=url, collection=collection)
+        client.watch.post_stac_file(url=url, collection=collection, debug=True)
+        i += 1
+    print(f'Handled {i} STACFile records.')
 
 
 def post_stac_items_from_server(
     host_url: str,
     collection: str,
     api_key: str = None,
+    dry_run: bool = False,
 ):
     if api_key is None:
         api_key = os.environ.get('SMART_STAC_API_KEY', None)
 
-    client = create_rgd_client(api_url=API_URL)
+    client = get_client(dry_run)
+    i = 0
     for item in iter_stac_items(host_url, api_key=api_key):
         url = get_stac_item_self_link(item['links'])
-        client.watch.post_stac_file(url=url, collection=collection)
+        client.watch.post_stac_file(url=url, collection=collection, debug=True)
+        i += 1
+    print(f'Handled {i} STACFile records.')

@@ -29,6 +29,7 @@ class WATCHPlugin(RgdPlugin):
         name: Optional[str] = None,
         collection: Optional[int] = None,
         description: Optional[str] = None,
+        debug: Optional[bool] = False,
     ):
         """
         Create a Stac File from a URL ChecksumFile.
@@ -48,7 +49,10 @@ class WATCHPlugin(RgdPlugin):
 
         files = self.list_stac_file(file=checksum_file['id'])
         if files['results']:
-            return files['results'][0]
+            f = files['results'][0]
+            if debug:
+                print(f'Record already exists with ID: {f["id"]}')
+            return f
 
         return self.session.post('watch/stac_file', json={'file': checksum_file['id']}).json()
 

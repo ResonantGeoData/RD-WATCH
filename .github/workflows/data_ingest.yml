@@ -9,7 +9,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        script: ['drop1', 'landsat', 'sentinel', 'worldview']
+        script: ['drop1', 'worldview']  # 'landsat', 'sentinel' TODO: add back when these servers are working
     steps:
       - uses: actions/checkout@v2
       - name: Set up Python
@@ -20,11 +20,11 @@ jobs:
         run: |
           pip install --upgrade pip
           cd rgd-watch-client
-          pip install -e .
+          pip install -e . boto3 mock
           cd ..
       - name: Run STAC Ingest
         run: |
-          python scripts/${{ matrix.script }}
+          python scripts/${{ matrix.script }}.py
         env:
           AWS_ACCESS_KEY_ID: ${{ secrets.WATCH_AWS_ACCESS_KEY_ID }}
           AWS_SECRET_ACCESS_KEY: ${{ secrets.WATCH_AWS_SECRET_ACCESS_KEY }}

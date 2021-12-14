@@ -33,7 +33,7 @@ setup(
     ],
     python_requires='>=3.8',
     packages=find_packages(),
-    install_requires=['rgd_client>=0.2.11'],
+    install_requires=['rgd_client>=0.2.12'],
     extras_require={'dev': ['ipython']},
     entry_points={'rgd_client.plugin': ['rgd_watch_client = rgd_watch_client:WATCHClient']},
 )

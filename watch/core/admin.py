@@ -95,7 +95,7 @@ class STACFileAdmin(OSMGeoAdmin, _FileGetNameMixin):
         populate_outline,
     )
     list_filter = (
-        ('file__collection', 'processed', 'server_modified')
+        ('file__collection', 'file__created_by', 'processed', 'server_modified')
         + MODIFIABLE_FILTERS
         + TASK_EVENT_FILTERS
     )

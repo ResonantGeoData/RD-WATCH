@@ -1,9 +1,6 @@
-import logging
 from typing import Optional, Union
 
 from rgd_client.plugin import CorePlugin, RgdPlugin
-
-logger = logging.getLogger(__name__)
 
 
 class WATCHPlugin(RgdPlugin):
@@ -54,7 +51,7 @@ class WATCHPlugin(RgdPlugin):
         if files['results']:
             f = files['results'][0]
             if debug:
-                logger.info(f'Record already exists with ID: {f["id"]}')
+                print(f'Record already exists with ID: {f["id"]}')
             return f
 
         return self.session.post('watch/stac_file', json={'file': checksum_file['id']}).json()

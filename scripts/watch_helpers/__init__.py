@@ -57,7 +57,7 @@ def get_stac_item_self_link(links):
 
 
 def get_client(dry_run: bool = False):
-    if True:  # dry_run:
+    if dry_run:
         return mock.Mock()
     return create_watch_client()
 

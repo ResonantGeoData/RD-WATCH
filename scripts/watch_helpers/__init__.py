@@ -67,7 +67,7 @@ def handle_posts(iter_func, collection, dry_run, *args, **kwargs):
     client = get_client(dry_run)
     with concurrent.futures.ThreadPoolExecutor(max_workers=n) as executor:
         future_to_url = {
-            executor.submit(client.watch.post_stac_file, client.watch.post_stac_file): url
+            executor.submit(client.watch.post_stac_file, url, collection): url
             for url in iter_func(*args, **kwargs)
         }
         for future in concurrent.futures.as_completed(future_to_url):

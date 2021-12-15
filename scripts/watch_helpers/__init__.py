@@ -1,3 +1,4 @@
+import concurrent.futures
 from contextlib import suppress
 import os
 import re
@@ -22,7 +23,7 @@ def iter_matching_object_urls(
     for page in page_iter:
         for obj in page['Contents']:
             if include_pattern.match(obj['Key']):
-                yield f's3://{bucket}/{obj["Key"]}'
+                yield f's3://{bucket}/{obj["Key"]}'  # TODO: modified date
 
 
 def iter_stac_item_urls(url: str, api_key: str = None) -> Generator[dict, None, None]:
@@ -63,11 +64,17 @@ def get_client(dry_run: bool = False):
 
 def handle_posts(iter_func, collection, dry_run, *args, **kwargs):
     client = get_client(dry_run)
-    i = 0
-    for url in iter_func(*args, **kwargs):
-        client.watch.post_stac_file(url=url, collection=collection, debug=True)
-        i += 1
-    print(f'Handled {i} STACFile records.')
+    with concurrent.futures.ThreadPoolExecutor(max_workers=5) as executor:
+        future_to_url = {
+            executor.submit(client.watch.post_stac_file, client.watch.post_stac_file): url
+            for url in iter_func(*args, **kwargs)
+        }
+        for future in concurrent.futures.as_completed(future_to_url):
+            url = future_to_url[future]
+            try:
+                _ = future.result()
+            except Exception as exc:
+                print('%r generated an exception: %s' % (url, exc))
 
 
 def post_stac_items_from_s3_iter(

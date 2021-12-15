@@ -43,7 +43,8 @@ apt-get install --no-install-recommends --yes \
     gettext-base \
     fuse \
     memcached \
-    rabbitmq-server
+    rabbitmq-server \
+    libtiff4-dev
 
 # Create virtualenv
 python3.8 -m venv --clear "/opt/RD-WATCH/$1/venv"

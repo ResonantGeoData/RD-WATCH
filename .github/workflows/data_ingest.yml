@@ -2,7 +2,7 @@ name: STAC Data Ingest
 on:
   push:
     branches:
-      - foo
+      - ingest-threaded-posts
 #   schedule:
 #     # Run every wednesday morning
 #     - cron: "0 0 * * WED"

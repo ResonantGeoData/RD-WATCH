@@ -9,7 +9,7 @@ import requests
 from rgd_watch_client import create_watch_client
 
 
-def iter_matching_objects(
+def iter_matching_object_urls(
     s3_client,
     bucket: str,
     prefix: str,
@@ -22,10 +22,10 @@ def iter_matching_objects(
     for page in page_iter:
         for obj in page['Contents']:
             if include_pattern.match(obj['Key']):
-                yield obj
+                yield f's3://{bucket}/{obj["Key"]}'
 
 
-def iter_stac_items(url: str, api_key: str = None) -> Generator[dict, None, None]:
+def iter_stac_item_urls(url: str, api_key: str = None) -> Generator[dict, None, None]:
     stack = [url]
 
     headers = {}
@@ -44,7 +44,8 @@ def iter_stac_items(url: str, api_key: str = None) -> Generator[dict, None, None
                     break
         # iterate through items
         for item in collection['features']:
-            yield item
+            # Yield URL to item
+            yield get_stac_item_self_link(item['links'])
 
 
 def get_stac_item_self_link(links):
@@ -55,9 +56,18 @@ def get_stac_item_self_link(links):
 
 
 def get_client(dry_run: bool = False):
-    if dry_run:
+    if True:  # dry_run:
         return mock.Mock()
     return create_watch_client()
+
+
+def handle_posts(iter_func, collection, dry_run, *args, **kwargs):
+    client = get_client(dry_run)
+    i = 0
+    for url in iter_func(*args, **kwargs):
+        client.watch.post_stac_file(url=url, collection=collection, debug=True)
+        i += 1
+    print(f'Handled {i} STACFile records.')
 
 
 def post_stac_items_from_s3_iter(
@@ -74,13 +84,9 @@ def post_stac_items_from_s3_iter(
     session = boto3.Session(**boto3_params)
     s3_client = session.client('s3')
 
-    client = get_client(dry_run)
-    i = 0
-    for obj in iter_matching_objects(s3_client, bucket, prefix, include_regex):
-        url = f's3://{bucket}/{obj["Key"]}'
-        client.watch.post_stac_file(url=url, collection=collection, debug=True)
-        i += 1
-    print(f'Handled {i} STACFile records.')
+    handle_posts(
+        iter_matching_object_urls, collection, dry_run, s3_client, bucket, prefix, include_regex
+    )
 
 
 def post_stac_items_from_server(
@@ -91,11 +97,4 @@ def post_stac_items_from_server(
 ):
     if api_key is None:
         api_key = os.environ.get('SMART_STAC_API_KEY', None)
-
-    client = get_client(dry_run)
-    i = 0
-    for item in iter_stac_items(host_url, api_key=api_key):
-        url = get_stac_item_self_link(item['links'])
-        client.watch.post_stac_file(url=url, collection=collection, debug=True)
-        i += 1
-    print(f'Handled {i} STACFile records.')
+    handle_posts(iter_stac_item_urls, collection, dry_run, host_url, api_key=api_key)

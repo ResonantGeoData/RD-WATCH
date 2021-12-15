@@ -48,11 +48,17 @@ apt-get install --no-install-recommends --yes \
 # Create virtualenv
 python3.8 -m venv --clear "/opt/RD-WATCH/$1/venv"
 (cd "/opt/RD-WATCH/$1"; "/opt/RD-WATCH/$1/venv/bin/pip" install wheel; "/opt/RD-WATCH/$1/venv/bin/pip" install -r "/opt/RD-WATCH/$1/requirements.txt")
+echo "making static files..."
+rm -rf "/opt/RD-WATCH/$1/staticfiles"
 "/opt/RD-WATCH/$1/venv/bin/python" "/opt/RD-WATCH/$1/manage.py" collectstatic
 "/opt/RD-WATCH/$1/venv/bin/python" "/opt/RD-WATCH/$1/manage.py" migrate
 
 set +e
-systemctl disable rd-watch.service
+systemctl stop rd-watch
+systemctl disable rd-watch
+rm /etc/systemd/system/rd-watch.service
 set -e
-cat "/opt/RD-WATCH/$1/deployment/rd-watch.service" | envsubst > "/etc/systemd/system/rd-watch.service"
-systemctl enable rd-watch.service
+cat "/opt/RD-WATCH/$1/deployment/rd-watch.service" | INSTALL_DIR="$1" envsubst > "/etc/systemd/system/rd-watch.service"
+systemctl daemon-reload
+systemctl enable rd-watch
+systemctl start rd-watch

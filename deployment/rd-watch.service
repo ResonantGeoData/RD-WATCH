@@ -1,25 +1,25 @@
 [Unit]
-Description=RD-WATCH Gunicorn daemon [${1}]
+Description=RD-WATCH Gunicorn daemon [${INSTALL_DIR}]
 After=network.target
-Requires=memcached.target
-Requires=rabbitmq-server.target
+Requires=memcached.service
+Requires=rabbitmq-server.service
 
 [Service]
 Environment=DJANGO_CONFIGURATION="ProductionConfiguration"
 Environment=GUNICORN_CMD_ARGS="--bind=0.0.0.0 --workers=3 --threads 32"
-Environment=DJANGO_SETTINGS_MODULE="/opt/RD-WATCH/${1}/watch/settings.py"
+Environment=DJANGO_SETTINGS_MODULE="/opt/RD-WATCH/${INSTALL_DIR}/watch/settings.py"
 EnvironmentFile=/opt/RD-WATCH/production.env
 Type=notify
 DynamicUser=yes
 RuntimeDirectory=rd-watch
-WorkingDirectory=/opt/RD-WATCH/${1}/
-ExecStart=/opt/RD-WATCH/${1}/venv/bin/gunicorn watch.wsgi
+WorkingDirectory=/opt/RD-WATCH/${INSTALL_DIR}/
+ExecStart=/opt/RD-WATCH/${INSTALL_DIR}/venv/bin/gunicorn watch.wsgi
 ExecReload=/bin/kill -s HUP $MAINPID
 KillMode=mixed
 TimeoutStopSec=5
 PrivateTmp=true
-ExecStartPre=/opt/RD-WATCH/${1}/venv/bin/python manage.py migrate --check
-ExecStartPre=/opt/RD-WATCH/${1}/venv/bin/gunicorn --check-config
+ExecStartPre=/opt/RD-WATCH/${INSTALL_DIR}/venv/bin/python manage.py migrate --check
+ExecStartPre=/opt/RD-WATCH/${INSTALL_DIR}/venv/bin/gunicorn watch.wsgi --check-config
 
 [Install]
 WantedBy=multi-user.target

@@ -63,9 +63,8 @@ def get_client(dry_run: bool = False):
 
 
 def handle_posts(iter_func, collection, dry_run, *args, **kwargs):
-    n = min(32, (os.cpu_count() or 1) + 4)
     client = get_client(dry_run)
-    with concurrent.futures.ThreadPoolExecutor(max_workers=n) as executor:
+    with concurrent.futures.ThreadPoolExecutor(max_workers=32) as executor:
         future_to_url = {
             executor.submit(client.watch.post_stac_file, url, collection): url
             for url in iter_func(*args, **kwargs)
@@ -76,6 +75,8 @@ def handle_posts(iter_func, collection, dry_run, *args, **kwargs):
                 _ = future.result()
             except Exception as exc:
                 print('%r generated an exception: %s' % (url, exc))
+            else:
+                print(f'Succeeded: {url}')
 
 
 def post_stac_items_from_s3_iter(

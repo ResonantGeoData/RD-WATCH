@@ -23,8 +23,9 @@ jobs:
         run: |
           pip install --upgrade pip
           cd rgd-watch-client
-          pip install -e . boto3 mock
+          pip install -e .
           cd ..
+          pip install -r ./scripts/requirements.txt
       - name: Run STAC Ingest
         run: |
           python scripts/${{ matrix.script }}.py

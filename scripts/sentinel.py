@@ -2,7 +2,7 @@ from datetime import datetime
 
 from watch_helpers import post_stac_items_from_server
 
-min_date = datetime(2013, 1, 1)  # Arbitrarily chosen
+min_date = datetime(2015, 12, 31)  # First available found
 max_date = datetime.today()
 host_url = 'https://earth-search.aws.element84.com/v0/'
 

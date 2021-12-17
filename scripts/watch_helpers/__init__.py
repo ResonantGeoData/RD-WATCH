@@ -41,7 +41,7 @@ def iter_stac_items(
     delta = timedelta(days=1)
     while date <= max_date:
         print(date)  # DEBUG
-        results = catalog.search(collections=['landsat-c2l1'], datetime=[date, date + delta])
+        results = catalog.search(collections=collections, datetime=[date, date + delta])
         for item in results.get_items():
             yield item.to_dict()
         date += delta

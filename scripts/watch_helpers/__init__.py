@@ -1,3 +1,4 @@
+import concurrent.futures
 from datetime import datetime, timedelta
 import os
 import re
@@ -54,6 +55,23 @@ def iter_stac_item_urls(
         date += delta
 
 
+def handle_posts(iter_func, collection, dry_run, *args, **kwargs):
+    client = get_client(dry_run)
+    with concurrent.futures.ThreadPoolExecutor(max_workers=32) as executor:
+        future_to_url = {
+            executor.submit(client.watch.post_stac_file, url, collection): url
+            for url in iter_func(*args, **kwargs)
+        }
+        for future in concurrent.futures.as_completed(future_to_url):
+            url = future_to_url[future]
+            try:
+                _ = future.result()
+            except Exception as exc:
+                print(f'{url} generated an exception: {exc}')
+            else:
+                print(f'Succeeded: {url}')
+
+
 def get_client(dry_run: bool = False):
     if True:  # dry_run: TODO
         return mock.Mock()
@@ -74,12 +92,8 @@ def post_stac_items_from_s3_iter(
     session = boto3.Session(**boto3_params)
     s3_client = session.client('s3')
 
-    client = get_client(dry_run)
-    i = 0
-    for url in iter_matching_object_urls(s3_client, bucket, prefix, include_regex):
-        client.watch.post_stac_file(url=url, collection=collection, debug=True)
-        i += 1
-    print(f'Handled {i} STACFile records.')
+    kwargs = dict(s3_client=s3_client, bucket=bucket, prefix=prefix, include_regex=include_regex)
+    return handle_posts(iter_matching_object_urls, collection, dry_run, **kwargs)
 
 
 def post_stac_items_from_server(
@@ -93,11 +107,11 @@ def post_stac_items_from_server(
     if api_key is None:
         api_key = os.environ.get('SMART_STAC_API_KEY', None)
 
-    client = get_client(dry_run)
-    i = 0
-    for url in iter_stac_item_urls(
-        host_url, collections=[collection], min_date=min_date, max_date=max_date, api_key=api_key
-    ):
-        client.watch.post_stac_file(url=url, collection=collection, debug=True)
-        i += 1
-    print(f'Handled {i} STACFile records.')
+    kwargs = dict(
+        url=host_url,
+        collections=[collection],
+        min_date=min_date,
+        max_date=max_date,
+        api_key=api_key,
+    )
+    return handle_posts(iter_stac_item_urls, collection, dry_run, **kwargs)

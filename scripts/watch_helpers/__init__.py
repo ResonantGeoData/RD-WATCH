@@ -9,7 +9,7 @@ from pystac_client import Client
 from rgd_watch_client import create_watch_client
 
 
-def iter_matching_objects(
+def iter_matching_object_urls(
     s3_client,
     bucket: str,
     prefix: str,
@@ -22,10 +22,17 @@ def iter_matching_objects(
     for page in page_iter:
         for obj in page['Contents']:
             if include_pattern.match(obj['Key']):
-                yield obj
+                yield f's3://{bucket}/{obj["Key"]}'  # TODO: modified date
 
 
-def iter_stac_items(
+def get_stac_item_self_link(links):
+    for link in links:
+        if link['rel'] == 'self':
+            return link['href']
+    raise ValueError('No self link found')
+
+
+def iter_stac_item_urls(
     url: str, collections: List[str], min_date: datetime, max_date: datetime, api_key: str = None
 ) -> Generator[dict, None, None]:
     if max_date <= min_date:
@@ -43,15 +50,8 @@ def iter_stac_items(
         print(date)  # DEBUG
         results = catalog.search(collections=collections, datetime=[date, date + delta])
         for item in results.get_items():
-            yield item.to_dict()
+            yield get_stac_item_self_link(item.to_dict()['links'])
         date += delta
-
-
-def get_stac_item_self_link(links):
-    for link in links:
-        if link['rel'] == 'self':
-            return link['href']
-    raise ValueError('No self link found')
 
 
 def get_client(dry_run: bool = False):
@@ -76,8 +76,7 @@ def post_stac_items_from_s3_iter(
 
     client = get_client(dry_run)
     i = 0
-    for obj in iter_matching_objects(s3_client, bucket, prefix, include_regex):
-        url = f's3://{bucket}/{obj["Key"]}'
+    for url in iter_matching_object_urls(s3_client, bucket, prefix, include_regex):
         client.watch.post_stac_file(url=url, collection=collection, debug=True)
         i += 1
     print(f'Handled {i} STACFile records.')
@@ -96,11 +95,9 @@ def post_stac_items_from_server(
 
     client = get_client(dry_run)
     i = 0
-    for item in iter_stac_items(
+    for url in iter_stac_item_urls(
         host_url, collections=[collection], min_date=min_date, max_date=max_date, api_key=api_key
     ):
-        url = get_stac_item_self_link(item['links'])
-        print(url)  # DEBUG
         client.watch.post_stac_file(url=url, collection=collection, debug=True)
         i += 1
     print(f'Handled {i} STACFile records.')

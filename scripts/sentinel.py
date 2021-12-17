@@ -1,9 +1,13 @@
+from datetime import datetime
+
 from watch_helpers import post_stac_items_from_server
 
-host_url = 'https://earth-search.aws.element84.com/v0/collections/sentinel-s2-l1c/items'
-collection = 'sentinel-s2-l1c'
-post_stac_items_from_server(host_url, collection)
+min_date = datetime(2013, 1, 1)  # Arbitrarily chosen
+max_date = datetime.today()
+host_url = 'https://earth-search.aws.element84.com/v0/'
 
-host_url = 'https://earth-search.aws.element84.com/v0/collections/sentinel-s2-l2a/items'
+collection = 'sentinel-s2-l1c'
+post_stac_items_from_server(host_url, collection, min_date=min_date, max_date=max_date)
+
 collection = 'sentinel-s2-l2a'
-post_stac_items_from_server(host_url, collection)
+post_stac_items_from_server(host_url, collection, min_date=min_date, max_date=max_date)

@@ -1,11 +1,11 @@
-from contextlib import suppress
+from datetime import datetime, timedelta
 import os
 import re
-from typing import Generator
+from typing import Generator, List
 
 import boto3
 import mock
-import requests
+from pystac_client import Client
 from rgd_watch_client import create_watch_client
 
 
@@ -25,26 +25,26 @@ def iter_matching_objects(
                 yield obj
 
 
-def iter_stac_items(url: str, api_key: str = None) -> Generator[dict, None, None]:
-    stack = [url]
+def iter_stac_items(
+    url: str, collections: List[str], min_date: datetime, max_date: datetime, api_key: str = None
+) -> Generator[dict, None, None]:
+    if max_date <= min_date:
+        raise ValueError('End date must be after start date.')
 
     headers = {}
     if api_key:
         # Specific to SMART catalogs
         headers['x-api-key'] = api_key
 
-    while stack:
-        url = stack.pop()
-        collection = requests.get(url, headers=headers).json()
-        # see if there's pages
-        with suppress(KeyError):
-            for link in collection['links']:
-                if link['rel'] == 'next':
-                    stack.append(link['href'])
-                    break
-        # iterate through items
-        for item in collection['features']:
-            yield item
+    date = min_date
+    catalog = Client.open(url, headers=headers)
+    delta = timedelta(days=1)
+    while date <= max_date:
+        print(date)  # DEBUG
+        results = catalog.search(collections=['landsat-c2l1'], datetime=[date, date + delta])
+        for item in results.get_items():
+            yield item.to_dict()
+        date += delta
 
 
 def get_stac_item_self_link(links):
@@ -86,6 +86,8 @@ def post_stac_items_from_s3_iter(
 def post_stac_items_from_server(
     host_url: str,
     collection: str,
+    min_date: datetime,
+    max_date: datetime,
     api_key: str = None,
     dry_run: bool = False,
 ):
@@ -94,8 +96,11 @@ def post_stac_items_from_server(
 
     client = get_client(dry_run)
     i = 0
-    for item in iter_stac_items(host_url, api_key=api_key):
+    for item in iter_stac_items(
+        host_url, collections=[collection], min_date=min_date, max_date=max_date, api_key=api_key
+    ):
         url = get_stac_item_self_link(item['links'])
+        print(url)  # DEBUG
         client.watch.post_stac_file(url=url, collection=collection, debug=True)
         i += 1
     print(f'Handled {i} STACFile records.')

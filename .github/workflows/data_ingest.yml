@@ -30,6 +30,7 @@ jobs:
         run: |
           python scripts/${{ matrix.script }}.py
         env:
+          AWS_REQUEST_PAYER: requester
           AWS_ACCESS_KEY_ID: ${{ secrets.WATCH_AWS_ACCESS_KEY_ID }}
           AWS_SECRET_ACCESS_KEY: ${{ secrets.WATCH_AWS_SECRET_ACCESS_KEY }}
           SMART_STAC_API_KEY: ${{ secrets.SMART_STAC_API_KEY }}

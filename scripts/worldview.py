@@ -6,4 +6,5 @@ if __name__ == '__main__':
     collection = 'WorldView'
     region = 'us-west-2'
 
+    print(collection)
     post_stac_items_from_s3_iter(bucket, prefix, collection, region=region)

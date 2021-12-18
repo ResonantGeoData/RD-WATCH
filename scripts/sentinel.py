@@ -8,7 +8,9 @@ if __name__ == '__main__':
     host_url = 'https://earth-search.aws.element84.com/v0/'
 
     collection = 'sentinel-s2-l1c'
+    print(collection)
     post_stac_items_from_server(host_url, collection, min_date=min_date, max_date=max_date)
 
     collection = 'sentinel-s2-l2a'
+    print(collection)
     post_stac_items_from_server(host_url, collection, min_date=min_date, max_date=max_date)

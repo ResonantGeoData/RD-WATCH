@@ -8,9 +8,11 @@ if __name__ == '__main__':
     host_url = 'https://landsatlook.usgs.gov/stac-server/'
 
     collection = 'landsat-c2l1'
+    print(collection)
     post_stac_items_from_server(host_url, collection, min_date=min_date, max_date=max_date)
 
     collection = 'landsat-c2l2-sr'
+    print(collection)
     post_stac_items_from_server(host_url, collection, min_date=min_date, max_date=max_date)
 
     # host_url = 'https://api.smart-stac.com/'

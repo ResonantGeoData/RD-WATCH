@@ -51,9 +51,11 @@ def iter_stac_item_urls(
     delta = timedelta(days=1)
     while date <= max_date:
         print(date)  # DEBUG
+        begin_time = datetime.now()
         results = catalog.search(collections=collections, datetime=[date, date + delta])
         for item in results.get_items():
             yield get_stac_item_self_link(item.to_dict()['links'])
+        print(f'\t{datetime.now() - begin_time}')
         date += delta
 
 

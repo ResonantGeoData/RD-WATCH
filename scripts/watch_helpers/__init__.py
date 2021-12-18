@@ -1,5 +1,7 @@
 import concurrent.futures
 from datetime import datetime, timedelta
+
+# import multiprocessing
 import os
 import re
 from typing import Generator, List
@@ -61,21 +63,24 @@ def get_client(dry_run: bool = False):
     return create_watch_client()
 
 
-def handle_posts(iter_func, collection, dry_run, *args, **kwargs):
-    client = get_client(dry_run)
+class Handler:
+    def __init__(self, collection: str, dry_run: bool = False):
+        self.collection = collection
+        self.dry_run = dry_run
+
+    def __call__(self, url: str):
+        client = get_client(self.dry_run)
+        client.watch.post_stac_file(url, self.collection)
+
+
+# def handle_posts(iter_func, collection, dry_run, **kwargs):
+#     pool = multiprocessing.Pool(multiprocessing.cpu_count())
+#     pool.map(Handler(collection), iter_func(**kwargs))
+
+
+def handle_posts(iter_func, collection, dry_run, **kwargs):
     with concurrent.futures.ThreadPoolExecutor(max_workers=32) as executor:
-        future_to_url = {
-            executor.submit(client.watch.post_stac_file, url, collection): url
-            for url in iter_func(*args, **kwargs)
-        }
-        for future in concurrent.futures.as_completed(future_to_url):
-            url = future_to_url[future]
-            try:
-                _ = future.result()
-            except Exception as exc:
-                print(f'{url} generated an exception: {exc}')
-            else:
-                print(f'Succeeded: {url}')
+        executor.map(Handler(collection), iter_func(**kwargs))
 
 
 def post_stac_items_from_s3_iter(

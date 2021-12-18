@@ -75,12 +75,12 @@ class Handler:
 
 # def handle_posts(iter_func, collection, dry_run, **kwargs):
 #     pool = multiprocessing.Pool(multiprocessing.cpu_count())
-#     pool.map(Handler(collection), iter_func(**kwargs))
+#     pool.map(Handler(collection, dry_run), iter_func(**kwargs))
 
 
 def handle_posts(iter_func, collection, dry_run, **kwargs):
     with concurrent.futures.ThreadPoolExecutor(max_workers=32) as executor:
-        executor.map(Handler(collection), iter_func(**kwargs))
+        executor.map(Handler(collection, dry_run), iter_func(**kwargs))
 
 
 def post_stac_items_from_s3_iter(

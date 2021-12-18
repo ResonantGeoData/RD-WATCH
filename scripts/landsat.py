@@ -27,9 +27,13 @@ if __name__ == '__main__':
     prefix = 'collection02/level-1/'
     collection = 'landsat-c2l1'
     print(collection)
-    post_stac_items_from_s3_iter(bucket, prefix, collection, include_regex=include_regex, region=region)
+    post_stac_items_from_s3_iter(
+        bucket, prefix, collection, include_regex=include_regex, region=region
+    )
 
     prefix = 'collection02/level-2/'
     collection = 'landsat-c2l2-sr'
     print(collection)
-    post_stac_items_from_s3_iter(bucket, prefix, collection, include_regex=include_regex, region=region)
+    post_stac_items_from_s3_iter(
+        bucket, prefix, collection, include_regex=include_regex, region=region
+    )

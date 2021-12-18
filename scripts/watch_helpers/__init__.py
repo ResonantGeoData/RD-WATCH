@@ -55,6 +55,12 @@ def iter_stac_item_urls(
         date += delta
 
 
+def get_client(dry_run: bool = False):
+    if True:  # dry_run: TODO
+        return mock.Mock()
+    return create_watch_client()
+
+
 def handle_posts(iter_func, collection, dry_run, *args, **kwargs):
     client = get_client(dry_run)
     with concurrent.futures.ThreadPoolExecutor(max_workers=32) as executor:
@@ -70,12 +76,6 @@ def handle_posts(iter_func, collection, dry_run, *args, **kwargs):
                 print(f'{url} generated an exception: {exc}')
             else:
                 print(f'Succeeded: {url}')
-
-
-def get_client(dry_run: bool = False):
-    if True:  # dry_run: TODO
-        return mock.Mock()
-    return create_watch_client()
 
 
 def post_stac_items_from_s3_iter(

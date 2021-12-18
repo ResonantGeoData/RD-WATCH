@@ -15,7 +15,7 @@ def iter_matching_object_urls(
     bucket: str,
     prefix: str,
     include_regex: str,
-) -> Generator[dict, None, None]:
+) -> Generator[str, None, None]:
     paginator = s3_client.get_paginator('list_objects_v2')
     page_iter = paginator.paginate(Bucket=bucket, Prefix=prefix, RequestPayer='requester')
     include_pattern = re.compile(include_regex)
@@ -35,7 +35,7 @@ def get_stac_item_self_link(links):
 
 def iter_stac_item_urls(
     url: str, collections: List[str], min_date: datetime, max_date: datetime, api_key: str = None
-) -> Generator[dict, None, None]:
+) -> Generator[str, None, None]:
     if max_date <= min_date:
         raise ValueError('End date must be after start date.')
 

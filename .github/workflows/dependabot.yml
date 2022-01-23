@@ -7,7 +7,7 @@ jobs:
   check-rgd:
     runs-on: ubuntu-latest
     steps:
-      - uses: banesullivan/dependabot-bump-together-action@main
+      - uses: marcoroth/dependabot-bump-together-action@main
         with:
           dependencies: django-rgd, django-rgd-3d, django-rgd-fmv, django-rgd-geometry, django-rgd-imagery
           package_managers: pip

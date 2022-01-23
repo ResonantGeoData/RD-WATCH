@@ -9,7 +9,7 @@ jobs:
     steps:
       - uses: marcoroth/dependabot-bump-together-action@main
         with:
-          dependencies: django-rgd, django-rgd-3d, django-rgd-fmv, django-rgd-geometry, django-rgd-imagery
+          dependencies: django-rgd, django-rgd-3d, django-rgd-fmv, django-rgd-geometry, django-rgd-imagery, rgd_client
           package_managers: pip
           directory: /
           branch: main

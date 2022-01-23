@@ -1,0 +1,31 @@
+name: Publish Python Client Wheel to GitHub Pages
+
+on:
+  workflow_dispatch:
+  push:
+    # branches:
+    #   - main
+
+jobs:
+  # Upload wheels to GH Pages package index
+  publish-wheels:
+    name: Publish Wheels
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+      - name: Set up Python
+        uses: actions/setup-python@v2
+        with:
+          python-version: "3.8"
+      - name: Build Weel
+        working-directory: rgd-watch-client
+        run: python setup.py sdist bdist_wheel
+      - name: Make index
+        uses: banesullivan/gh-pages-pip-index-action@main
+        with:
+          package_directory: rgd-watch-client/dist
+      - name: Deploy to GH Pages
+        uses: peaceiris/actions-gh-pages@v3
+        with:
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          publish_dir: ./gh-pages

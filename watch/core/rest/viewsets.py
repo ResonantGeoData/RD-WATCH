@@ -1,6 +1,6 @@
 from drf_yasg.utils import swagger_auto_schema
 from rest_framework.response import Response
-from rgd.rest.base import ModelViewSet
+from rgd.rest.base import ModelViewSet, ReadOnlyModelViewSet
 
 from watch.core import models, serializers
 
@@ -8,6 +8,26 @@ from watch.core import models, serializers
 class RegionViewSet(ModelViewSet):
     serializer_class = serializers.RegionSerializer
     queryset = models.Region.objects.all()
+
+
+class SiteViewSet(ModelViewSet):
+    serializer_class = serializers.SiteSerializer
+    queryset = models.Site.objects.all()
+
+
+class RegionViewSetBasic(ReadOnlyModelViewSet):
+    serializer_class = serializers.RegionSerializerBasic
+    queryset = models.Region.objects.all()
+
+
+class SiteViewSetBasic(ReadOnlyModelViewSet):
+    serializer_class = serializers.SiteSerializerBasic
+    queryset = models.Site.objects.all()
+
+
+class ObservationViewSetBasic(ReadOnlyModelViewSet):
+    serializer_class = serializers.ObservationSerializerBasic
+    queryset = models.Observation.objects.all()
 
 
 class STACFileViewSet(ModelViewSet):

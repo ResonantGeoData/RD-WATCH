@@ -3,7 +3,6 @@ from django.contrib import admin
 from django.contrib.gis.admin import OSMGeoAdmin
 from rgd.admin.mixins import (
     MODIFIABLE_FILTERS,
-    SPATIAL_ENTRY_FILTERS,
     TASK_EVENT_FILTERS,
     TASK_EVENT_READONLY,
     GeoAdminInline,
@@ -11,7 +10,7 @@ from rgd.admin.mixins import (
     reprocess,
 )
 
-from .models import Region, Site, STACFile
+from .models import Observation, Region, Site, STACFile
 from .tasks.jobs import task_populate_stac_file_outline
 
 
@@ -19,12 +18,6 @@ class SiteInline(GeoAdminInline):
     model = Site
     fk_name = 'parent_region'
     extra = 0
-    list_display = (
-        'pk',
-        'modified',
-        'created',
-    )
-    list_filter = MODIFIABLE_FILTERS + SPATIAL_ENTRY_FILTERS
     readonly_fields = (
         'modified',
         'created',
@@ -36,6 +29,7 @@ class SiteInline(GeoAdminInline):
 class RegionAdmin(OSMGeoAdmin):
     list_display = (
         'pk',
+        'region_id',
         'modified',
         'created',
     )
@@ -45,6 +39,54 @@ class RegionAdmin(OSMGeoAdmin):
     )
     inlines = (SiteInline,)
     list_filter = MODIFIABLE_FILTERS
+
+
+class ObservationInline(GeoAdminInline):
+    model = Observation
+    fk_name = 'parent_site'
+    extra = 0
+    readonly_fields = (
+        'modified',
+        'created',
+    )
+    modifiable = False  # To still show the footprint and outline
+
+
+def update_site_regions(modeladmin, request, queryset):
+    for site in queryset.all():
+        if not site.parent_region:
+            try:
+                site.parent_region = Region.objects.get(region_id=site.properties['region_id'])
+                site.save(
+                    update_fields=[
+                        'parent_region',
+                    ]
+                )
+            except Region.DoesNotExist:
+                pass
+
+
+@admin.register(Site)
+class SiteAdmin(OSMGeoAdmin):
+    list_display = (
+        'pk',
+        'site_id',
+        'parent_region',
+        'modified',
+        'created',
+    )
+    readonly_fields = (
+        'modified',
+        'created',
+    )
+    inlines = (ObservationInline,)
+    list_filter = (
+        'start_date',
+        'end_date',
+        'parent_region__region_id',
+    ) + MODIFIABLE_FILTERS
+    raw_id_fields = ('parent_region',)
+    actions = (update_site_regions,)
 
 
 def update_outdated(modeladmin, request, queryset):

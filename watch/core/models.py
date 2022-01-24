@@ -1,15 +1,22 @@
 """Base classes for raster dataset entries."""
 from django.contrib.gis.db import models
 from django_extensions.db.models import TimeStampedModel
-from rgd.models import DB_SRID, ChecksumFile, SpatialEntry
+from rgd.models import DB_SRID, ChecksumFile
 from rgd.models.mixins import PermissionPathMixin, TaskEventMixin
 from rgd_imagery.models import Raster
-from semantic_version.django_fields import VersionField
 
 from .tasks import jobs as tasks
 
 
-class Region(TimeStampedModel, SpatialEntry):
+class PolygonFeature(models.Model):
+    class Meta:
+        abstract = True
+
+    footprint = models.GeometryField(srid=DB_SRID)
+    outline = models.GeometryField(srid=DB_SRID)
+
+
+class Region(TimeStampedModel, PolygonFeature):
     """Basically a SiteCollection GeoJSON object.
 
     Reference: https://infrastructure.smartgitlab.com/docs/pages/api_documentation.html#region-model
@@ -17,16 +24,38 @@ class Region(TimeStampedModel, SpatialEntry):
     We will use this to track what areas of Landsat/Sentinel imagery are ingested.
     """
 
-    properties = models.JSONField(null=True, blank=True)
-    version = VersionField(null=True, blank=True)
-
-
-class Site(TimeStampedModel, SpatialEntry):
-    parent_region = models.ForeignKey(Region, on_delete=models.CASCADE)
-
+    region_id = models.CharField(max_length=1000, unique=True)
     properties = models.JSONField()
+
+
+class Site(TimeStampedModel, PolygonFeature):
+    """
+
+    Null Parent Region
+    ------------------
+
+    If a site has not been associated to a region, the reserved region ID <two-letter country code>_Rxxx may be used. That is, the site declares the country that it belongs to (with the location of the centroid determining country ownership in the case of a border ambiguity), and it uses the literal string Rxxx rather than R followed by three digits.
+    """
+
+    parent_region = models.ForeignKey(Region, null=True, blank=True, on_delete=models.CASCADE)
+    site_id = models.CharField(max_length=1000, unique=True)
     start_date = models.DateField(null=True, blank=True)
     end_date = models.DateField(null=True, blank=True)
+    properties = models.JSONField()
+
+
+class Observation(TimeStampedModel, PolygonFeature):
+    """
+
+    Color hueristics: https://gitlab.kitware.com/smart/watch/-/blob/master/watch/heuristics.py
+    https://gitlab.kitware.com/smart/watch/-/blob/master/watch/heuristics.py#L101
+    https://gitlab.kitware.com/smart/watch/-/blob/master/watch/cli/kwcoco_to_geojson.py#L139
+    https://docs.google.com/presentation/d/1UOK5QraI-HQE7tNEGUK2o6esaz-iWkiS/edit#slide=id.p9
+
+    """
+
+    parent_site = models.ForeignKey(Site, on_delete=models.CASCADE)
+    properties = models.JSONField()
 
 
 class STACFile(TimeStampedModel, TaskEventMixin, PermissionPathMixin):

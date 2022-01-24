@@ -23,7 +23,7 @@ jobs:
           pip install wheel
           python setup.py sdist bdist_wheel
       - name: Make index
-        uses: banesullivan/create-pip-index-action@main
+        uses: banesullivan/create-pip-index-action@tarball
         with:
           package_directory: rgd-watch-client/dist
       - name: Deploy to GH Pages

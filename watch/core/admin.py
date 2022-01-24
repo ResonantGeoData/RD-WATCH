@@ -36,17 +36,15 @@ class FeatureInline(GeoAdminInline):
 class RegionAdmin(OSMGeoAdmin):
     list_display = (
         'pk',
-        'status',
         'modified',
         'created',
     )
     readonly_fields = (
         'modified',
         'created',
-    ) + TASK_EVENT_READONLY
+    )
     inlines = (FeatureInline,)
-    actions = (reprocess,)
-    list_filter = MODIFIABLE_FILTERS + TASK_EVENT_FILTERS
+    list_filter = MODIFIABLE_FILTERS
 
 
 def update_outdated(modeladmin, request, queryset):

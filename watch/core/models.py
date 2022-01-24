@@ -9,7 +9,7 @@ from semantic_version.django_fields import VersionField
 from .tasks import jobs as tasks
 
 
-class Region(TimeStampedModel, SpatialEntry, TaskEventMixin):
+class Region(TimeStampedModel, SpatialEntry):
     """Basically a FeatureCollection GeoJSON object.
 
     Reference: https://infrastructure.smartgitlab.com/docs/pages/api_documentation.html#region-model
@@ -25,8 +25,8 @@ class Feature(TimeStampedModel, SpatialEntry):
     parent_region = models.ForeignKey(Region, on_delete=models.CASCADE)
 
     properties = models.JSONField()
-    start_date = models.DateField()
-    end_date = models.DateField()
+    start_date = models.DateField(null=True, blank=True)
+    end_date = models.DateField(null=True, blank=True)
 
 
 class STACFile(TimeStampedModel, TaskEventMixin, PermissionPathMixin):

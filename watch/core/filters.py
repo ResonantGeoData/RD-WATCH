@@ -146,6 +146,12 @@ class SiteFilter(BaseOutlineFieldFilter):
         label='Site ID',
         lookup_expr='icontains',
     )
+    region_id = filters.CharFilter(
+        field_name='parent_region__region_id',
+        help_text='The region_id.',
+        label='Region ID',
+        lookup_expr='icontains',
+    )
     start_date = filters.DateFromToRangeFilter(
         field_name='start_date',
         label='Start Date',
@@ -162,12 +168,25 @@ class SiteFilter(BaseOutlineFieldFilter):
             'predicate',
             'distance',
             'site_id',
+            'region_id',
             'start_date',
             'end_date',
         ]
 
 
 class ObservationFilter(BaseOutlineFieldFilter):
+    site_id = filters.CharFilter(
+        field_name='parent_site__site_id',
+        help_text='The site_id.',
+        label='Site ID',
+        lookup_expr='icontains',
+    )
+    region_id = filters.CharFilter(
+        field_name='parent_site__parent_region__region_id',
+        help_text='The region_id.',
+        label='Region ID',
+        lookup_expr='icontains',
+    )
     observation_date = filters.DateFromToRangeFilter(
         field_name='observation_date',
         label='Observation Date',
@@ -183,6 +202,8 @@ class ObservationFilter(BaseOutlineFieldFilter):
             'q',
             'predicate',
             'distance',
+            'site_id',
+            'region_id',
             'observation_date',
             'current_phase',
         ]

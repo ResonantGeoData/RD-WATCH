@@ -1,8 +1,13 @@
-from django.contrib.gis.geos import GeometryCollection, GEOSGeometry
+import json
+
+import dateutil.parser
+from django.contrib.gis.geos import GEOSGeometry
 from django.db import transaction
 from rest_framework import serializers
 from shapely.geometry import shape
 from shapely.wkb import dumps
+
+from watch.core.models import Feature, Region
 
 from .. import models
 
@@ -14,12 +19,19 @@ class RegionSerializer(serializers.BaseSerializer):
     def to_representation(self, instance: models.Region) -> dict:
         data = {
             'type': 'FeatureCollection',
-            'features': [],
+            'features': [
+                {
+                    'geometry': json.loads(instance.footprint.json),
+                    'properties': instance.properties,
+                    'type': 'Feature',
+                },
+            ],
         }
+
         features = models.Feature.objects.filter(parent_region=instance).all()
         for feature in features:
             subdata = {
-                'geometry': feature.footprint.json,
+                'geometry': json.loads(feature.footprint.json),
                 'properties': feature.properties,
                 'type': 'Feature',
             }
@@ -29,29 +41,42 @@ class RegionSerializer(serializers.BaseSerializer):
     @transaction.atomic
     def create(self, data):
         assert data['type'] == 'FeatureCollection'
-        geometries = []
-        for json_feature in data.get('features', []):
-            geometries.append(GEOSGeometry(memoryview(dumps(shape(json_feature['geometry'])))))
-        instance = models.Region()
-        instance.footprint = GeometryCollection(*geometries)
-        instance.outline = instance.footprint.convex_hull
-        instance.skip_signal = True
-        instance.save()
-        for i, json_feature in enumerate(data.get('features', [])):
-            properties = json_feature['properties']
-            if properties['type'] == 'region':
-                instance.version = properties['version']
-                instance.save(
-                    update_fields=[
-                        'version',
-                    ]
-                )
-            feature = models.Feature()
-            feature.parent_region = instance
-            feature.properties = properties
-            feature.footprint = geometries[i]
-            feature.outline = feature.footprint.convex_hull
-            feature.start_date = properties['start_date']
-            feature.end_date = properties['end_date']
-            feature.save()
-        return instance
+        feature_collection = data
+
+        def populate(record, feature):
+            record.properties = feature['properties']
+            geom = shape(feature['geometry'])
+            record.footprint = GEOSGeometry(memoryview(dumps(geom)))
+            record.outline = GEOSGeometry(memoryview(dumps(geom.envelope)))
+            record.save()
+
+        def add_dates(record, feature):
+            date = feature['properties']['start_date']
+            if date:
+                record.start_date = dateutil.parser.parse(date)
+            date = feature['properties']['end_date']
+            if date:
+                record.end_date = dateutil.parser.parse(date)
+
+        # find index of region
+        region_index = None
+        for i, feature in enumerate(feature_collection['features']):
+            if feature['properties']['type'] == 'region':
+                region_index = i
+                break
+        if region_index is None:
+            raise ValueError('No `region` type in FeatureCollection.')
+        feature = feature_collection['features'].pop(region_index)
+
+        region = Region()
+        populate(region, feature)
+
+        for feature in feature_collection['features']:
+            if feature['properties']['type'] == 'region':
+                raise ValueError('Multiple `region` types in FeatureCollection.')
+            else:
+                record = Feature()
+                record.parent_region = region
+                add_dates(record, feature)
+            populate(record, feature)
+        return region

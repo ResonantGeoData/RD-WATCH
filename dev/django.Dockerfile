@@ -20,7 +20,7 @@ ENV PYTHONUNBUFFERED 1
 COPY ./setup.py /opt/django-project/setup.py
 RUN pip install \
   --find-links https://girder.github.io/large_image_wheels \
-  --editable /opt/django-project[dev]
+  --editable /opt/django-project[dev,worker]
 
 # Use a directory name which will never be an import name, as isort considers this as first-party.
 WORKDIR /opt/django-project

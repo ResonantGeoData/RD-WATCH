@@ -2,17 +2,21 @@ from drf_yasg.utils import swagger_auto_schema
 from rest_framework.response import Response
 from rgd.rest.base import ModelViewSet
 
-from watch.core.models import STACFile
-from watch.core.serializers.stacfile import StacFileGetSerializer, STACFileSerializer
+from watch.core import models, serializers
+
+
+class RegionViewSet(ModelViewSet):
+    serializer_class = serializers.RegionSerializer
+    queryset = models.Region.objects.all()
 
 
 class STACFileViewSet(ModelViewSet):
-    serializer_class = STACFileSerializer
-    queryset = STACFile.objects.all()
+    serializer_class = serializers.STACFileSerializer
+    queryset = models.STACFile.objects.all()
 
-    @swagger_auto_schema(query_serialzer=StacFileGetSerializer())
+    @swagger_auto_schema(query_serialzer=serializers.StacFileGetSerializer())
     def list(self, request, *args, **kwargs):
-        serializer = StacFileGetSerializer(data=request.query_params)
+        serializer = serializers.StacFileGetSerializer(data=request.query_params)
         serializer.is_valid(raise_exception=True)
 
         file = serializer.validated_data.get('file', None)

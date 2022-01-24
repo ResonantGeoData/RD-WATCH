@@ -22,6 +22,15 @@
 This project is maintained by Kitware, Inc. for the WATCH project
 
 
+## ⬇️ Install Python Client
+
+The Python client can be installed from this repositories package index:
+
+```bash
+pip install --find-links https://resonantgeodata.github.io/RD-WATCH/ rgd-watch-client
+```
+
+
 ## 💭 Feedback
 
 For help with this deployment, please open a [Discussion](https://github.com/ResonantGeoData/RD-WATCH/discussions)

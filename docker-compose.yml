@@ -58,7 +58,7 @@ services:
   celery:
     build:
       context: .
-      dockerfile: ./dev/celery.Dockerfile
+      dockerfile: ./dev/django.Dockerfile
     command: [
       "celery",
       "--app", "watch.celery",

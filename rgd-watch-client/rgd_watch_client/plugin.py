@@ -55,6 +55,9 @@ class WATCHPlugin(RgdPlugin):
                 print(f'Record already exists with ID: {f["id"]}')
             return f
 
+        if debug:
+            print('Record being created...')
+
         return self.session.post('watch/stac_file', json={'file': checksum_file['id']}).json()
 
     def reprocess_stac_file(self, id: Union[int, str]):

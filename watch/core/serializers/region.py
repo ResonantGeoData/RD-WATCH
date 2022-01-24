@@ -13,8 +13,7 @@ from watch.core.models import Observation, Region, Site
 from .. import models
 
 
-def populate(record, feature):
-    record.properties = feature['properties']
+def populate_geometry(record, feature):
     geom = shape(feature['geometry'])
     record.footprint = GEOSGeometry(memoryview(dumps(geom)))
     record.outline = GEOSGeometry(memoryview(dumps(geom.envelope)))
@@ -71,20 +70,22 @@ class RegionSerializer(serializers.BaseSerializer):
             raise ValueError('No `region` type in FeatureCollection.')
         feature = feature_collection['features'].pop(region_index)
 
-        region = Region()
-        region.region_id = feature['properties']['region_id']
+        region, _ = get_or_create_no_commit(
+            Region, region_id=feature['properties']['region_id'], properties=feature['properties']
+        )
         add_dates(region, feature)
-        populate(region, feature)
+        populate_geometry(region, feature)
 
         for feature in feature_collection['features']:
             if feature['properties']['type'] == 'region':
                 raise ValueError('Multiple `region` types in FeatureCollection.')
             else:
-                record = Site()
+                record, _ = get_or_create_no_commit(
+                    Site, site_id=feature['properties']['site_id'], properties=feature['properties']
+                )
                 record.parent_region = region
-                record.site_id = feature['properties']['site_id']
             add_dates(record, feature)
-            populate(record, feature)
+            populate_geometry(record, feature)
         return region
 
 
@@ -129,7 +130,12 @@ class SiteSerializer(serializers.BaseSerializer):
             raise ValueError('No `site` type in FeatureCollection.')
         feature = feature_collection['features'].pop(site_index)
 
-        site, _ = get_or_create_no_commit(Site, site_id=feature['properties']['site_id'])
+        site, created = get_or_create_no_commit(
+            Site,
+            site_id=feature['properties']['site_id'],
+        )
+        if created or not site.properties:
+            site.properties = feature['properties']
         if not site.parent_region:
             try:
                 site.parent_region = Region.objects.get(
@@ -137,21 +143,23 @@ class SiteSerializer(serializers.BaseSerializer):
                 )
             except Region.DoesNotExist:
                 pass
-        populate(site, feature)
+        populate_geometry(site, feature)
 
         for feature in feature_collection['features']:
             if feature['properties']['type'] == 'site':
                 raise ValueError('Multiple `site` types in FeatureCollection.')
             else:
-                record = Observation()
-                record.parent_site = site
+                record, _ = get_or_create_no_commit(
+                    Observation, parent_site=site, properties=feature['properties']
+                )
                 date = feature['properties']['observation_date']
                 if date:
                     record.observation_date = dateutil.parser.parse(date)
-            populate(record, feature)
+            populate_geometry(record, feature)
         return site
 
 
+# 1133 sites, 13 regions
 class BasePolygonSerializer(serializers.ModelSerializer):
     outline = serializers.SerializerMethodField()
     footprint = serializers.SerializerMethodField()

@@ -1,18 +1,17 @@
 name: STAC Data Ingest
 on:
-  push:
-    branches:
-      - test-ls-s2
-#   schedule:
-#     # Run every wednesday morning
-#     - cron: "0 0 * * WED"
+  workflow_dispatch:
+  schedule:
+    # Run every wednesday morning
+    - cron: "0 0 * * WED"
 jobs:
   ingest:
     runs-on: ubuntu-latest
     strategy:
       fail-fast: false
       matrix:
-        script: ['drop1', 'worldview', 'landsat', 'sentinel']
+        # Landsat and Sentinel must be run on self hosted runner (i.e., locally on Bane's machine)
+        script: ['drop1', 'worldview', ] #'landsat', 'sentinel']
     steps:
       - uses: actions/checkout@v2
       - name: Set up Python

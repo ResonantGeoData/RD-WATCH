@@ -3,7 +3,7 @@ from django.contrib.gis.measure import D
 from django_filters import rest_framework as filters
 from rgd.filters import GeometryFilter
 
-from .models import STACFile
+from .models import Region, Site, STACFile
 
 
 class BaseOutlineFieldFilter(filters.FilterSet):
@@ -108,4 +108,50 @@ class STACFileFilter(BaseOutlineFieldFilter):
             'distance',
             'server_modified',
             'processed',
+        ]
+
+
+class RegionFilter(BaseOutlineFieldFilter):
+    region_id = filters.CharFilter(
+        field_name='region_id',
+        help_text='The region_id.',
+        label='Region ID',
+        lookup_expr='icontains',
+    )
+
+    class Meta:
+        model = Region
+        fields = [
+            'q',
+            'predicate',
+            'distance',
+            'region_id',
+        ]
+
+
+class SiteFilter(BaseOutlineFieldFilter):
+    site_id = filters.CharFilter(
+        field_name='site_id',
+        help_text='The site_id.',
+        label='Site ID',
+        lookup_expr='icontains',
+    )
+    start_date = filters.DateFromToRangeFilter(
+        field_name='start_date',
+        label='Start Date',
+    )
+    end_date = filters.DateFromToRangeFilter(
+        field_name='end_date',
+        label='End Data',
+    )
+
+    class Meta:
+        model = Site
+        fields = [
+            'q',
+            'predicate',
+            'distance',
+            'site_id',
+            'start_date',
+            'end_date',
         ]

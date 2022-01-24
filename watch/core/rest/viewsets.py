@@ -2,27 +2,31 @@ from drf_yasg.utils import swagger_auto_schema
 from rest_framework.response import Response
 from rgd.rest.base import ModelViewSet, ReadOnlyModelViewSet
 
-from watch.core import models, serializers
+from watch.core import filters, models, serializers
 
 
 class RegionViewSet(ModelViewSet):
     serializer_class = serializers.RegionSerializer
     queryset = models.Region.objects.all()
+    filterset_class = filters.RegionFilter
 
 
 class SiteViewSet(ModelViewSet):
     serializer_class = serializers.SiteSerializer
     queryset = models.Site.objects.all()
+    filterset_class = filters.SiteFilter
 
 
 class RegionViewSetBasic(ReadOnlyModelViewSet):
     serializer_class = serializers.RegionSerializerBasic
     queryset = models.Region.objects.all()
+    filterset_class = filters.RegionFilter
 
 
 class SiteViewSetBasic(ReadOnlyModelViewSet):
     serializer_class = serializers.SiteSerializerBasic
     queryset = models.Site.objects.all()
+    filterset_class = filters.SiteFilter
 
 
 class ObservationViewSetBasic(ReadOnlyModelViewSet):
@@ -33,6 +37,7 @@ class ObservationViewSetBasic(ReadOnlyModelViewSet):
 class STACFileViewSet(ModelViewSet):
     serializer_class = serializers.STACFileSerializer
     queryset = models.STACFile.objects.all()
+    filterset_class = filters.STACFileFilter
 
     @swagger_auto_schema(query_serialzer=serializers.StacFileGetSerializer())
     def list(self, request, *args, **kwargs):

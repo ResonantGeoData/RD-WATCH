@@ -3,7 +3,7 @@ from django.contrib.gis.measure import D
 from django_filters import rest_framework as filters
 from rgd.filters import GeometryFilter
 
-from .models import STACFile
+from .models import Observation, Region, Site, STACFile
 
 
 class BaseOutlineFieldFilter(filters.FilterSet):
@@ -108,4 +108,102 @@ class STACFileFilter(BaseOutlineFieldFilter):
             'distance',
             'server_modified',
             'processed',
+        ]
+
+
+class RegionFilter(BaseOutlineFieldFilter):
+    region_id = filters.CharFilter(
+        field_name='region_id',
+        help_text='The region_id.',
+        label='Region ID',
+        lookup_expr='icontains',
+    )
+    start_date = filters.DateFromToRangeFilter(
+        field_name='start_date',
+        label='Start Date',
+    )
+    end_date = filters.DateFromToRangeFilter(
+        field_name='end_date',
+        label='End Data',
+    )
+
+    class Meta:
+        model = Region
+        fields = [
+            'q',
+            'predicate',
+            'distance',
+            'region_id',
+            'start_date',
+            'end_date',
+        ]
+
+
+class SiteFilter(BaseOutlineFieldFilter):
+    site_id = filters.CharFilter(
+        field_name='site_id',
+        help_text='The site_id.',
+        label='Site ID',
+        lookup_expr='icontains',
+    )
+    region_id = filters.CharFilter(
+        field_name='parent_region__region_id',
+        help_text='The region_id.',
+        label='Region ID',
+        lookup_expr='icontains',
+    )
+    start_date = filters.DateFromToRangeFilter(
+        field_name='start_date',
+        label='Start Date',
+    )
+    end_date = filters.DateFromToRangeFilter(
+        field_name='end_date',
+        label='End Data',
+    )
+
+    class Meta:
+        model = Site
+        fields = [
+            'q',
+            'predicate',
+            'distance',
+            'site_id',
+            'region_id',
+            'start_date',
+            'end_date',
+        ]
+
+
+class ObservationFilter(BaseOutlineFieldFilter):
+    site_id = filters.CharFilter(
+        field_name='parent_site__site_id',
+        help_text='The site_id.',
+        label='Site ID',
+        lookup_expr='icontains',
+    )
+    region_id = filters.CharFilter(
+        field_name='parent_site__parent_region__region_id',
+        help_text='The region_id.',
+        label='Region ID',
+        lookup_expr='icontains',
+    )
+    observation_date = filters.DateFromToRangeFilter(
+        field_name='observation_date',
+        label='Observation Date',
+    )
+    current_phase = filters.CharFilter(method='current_phase_filter')
+
+    def current_phase_filter(self, queryset, name, value):
+        return queryset.filter(properties__current_phase__icontains=value.lower())
+
+    class Meta:
+        model = Observation
+        fields = [
+            'q',
+            'predicate',
+            'distance',
+            'site_id',
+            'region_id',
+            'observation_date',
+            'current_phase',
         ]

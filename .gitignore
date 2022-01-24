@@ -126,3 +126,5 @@ dmypy.json
 # Using override for AWS credentials in dev env
 docker-compose.override.yml
 watch-*/
+
+annotations*/

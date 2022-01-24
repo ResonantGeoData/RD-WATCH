@@ -118,6 +118,14 @@ class RegionFilter(BaseOutlineFieldFilter):
         label='Region ID',
         lookup_expr='icontains',
     )
+    start_date = filters.DateFromToRangeFilter(
+        field_name='start_date',
+        label='Start Date',
+    )
+    end_date = filters.DateFromToRangeFilter(
+        field_name='end_date',
+        label='End Data',
+    )
 
     class Meta:
         model = Region
@@ -126,6 +134,8 @@ class RegionFilter(BaseOutlineFieldFilter):
             'predicate',
             'distance',
             'region_id',
+            'start_date',
+            'end_date',
         ]
 
 

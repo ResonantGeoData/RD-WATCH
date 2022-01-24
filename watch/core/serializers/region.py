@@ -73,6 +73,7 @@ class RegionSerializer(serializers.BaseSerializer):
 
         region = Region()
         region.region_id = feature['properties']['region_id']
+        add_dates(region, feature)
         populate(region, feature)
 
         for feature in feature_collection['features']:
@@ -82,7 +83,7 @@ class RegionSerializer(serializers.BaseSerializer):
                 record = Site()
                 record.parent_region = region
                 record.site_id = feature['properties']['site_id']
-                add_dates(record, feature)
+            add_dates(record, feature)
             populate(record, feature)
         return region
 

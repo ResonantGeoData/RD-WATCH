@@ -30,6 +30,8 @@ class RegionAdmin(OSMGeoAdmin):
     list_display = (
         'pk',
         'region_id',
+        'start_date',
+        'end_date',
         'modified',
         'created',
     )
@@ -38,7 +40,10 @@ class RegionAdmin(OSMGeoAdmin):
         'created',
     )
     inlines = (SiteInline,)
-    list_filter = MODIFIABLE_FILTERS
+    list_filter = (
+        'start_date',
+        'end_date',
+    ) + MODIFIABLE_FILTERS
 
 
 class ObservationInline(GeoAdminInline):
@@ -72,6 +77,8 @@ class SiteAdmin(OSMGeoAdmin):
         'pk',
         'site_id',
         'parent_region',
+        'start_date',
+        'end_date',
         'modified',
         'created',
     )

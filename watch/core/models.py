@@ -25,6 +25,8 @@ class Region(TimeStampedModel, PolygonFeature):
     """
 
     region_id = models.CharField(max_length=1000, unique=True)
+    start_date = models.DateField(null=True, blank=True)
+    end_date = models.DateField(null=True, blank=True)
     properties = models.JSONField()
 
 

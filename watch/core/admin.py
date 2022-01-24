@@ -11,12 +11,12 @@ from rgd.admin.mixins import (
     reprocess,
 )
 
-from .models import Feature, Region, STACFile
+from .models import Region, Site, STACFile
 from .tasks.jobs import task_populate_stac_file_outline
 
 
-class FeatureInline(GeoAdminInline):
-    model = Feature
+class SiteInline(GeoAdminInline):
+    model = Site
     fk_name = 'parent_region'
     extra = 0
     list_display = (
@@ -43,7 +43,7 @@ class RegionAdmin(OSMGeoAdmin):
         'modified',
         'created',
     )
-    inlines = (FeatureInline,)
+    inlines = (SiteInline,)
     list_filter = MODIFIABLE_FILTERS
 
 

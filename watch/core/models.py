@@ -10,7 +10,7 @@ from .tasks import jobs as tasks
 
 
 class Region(TimeStampedModel, SpatialEntry):
-    """Basically a FeatureCollection GeoJSON object.
+    """Basically a SiteCollection GeoJSON object.
 
     Reference: https://infrastructure.smartgitlab.com/docs/pages/api_documentation.html#region-model
 
@@ -21,7 +21,7 @@ class Region(TimeStampedModel, SpatialEntry):
     version = VersionField(null=True, blank=True)
 
 
-class Feature(TimeStampedModel, SpatialEntry):
+class Site(TimeStampedModel, SpatialEntry):
     parent_region = models.ForeignKey(Region, on_delete=models.CASCADE)
 
     properties = models.JSONField()

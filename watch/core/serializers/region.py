@@ -7,7 +7,7 @@ from rest_framework import serializers
 from shapely.geometry import shape
 from shapely.wkb import dumps
 
-from watch.core.models import Feature, Region
+from watch.core.models import Region, Site
 
 from .. import models
 
@@ -28,7 +28,7 @@ class RegionSerializer(serializers.BaseSerializer):
             ],
         }
 
-        features = models.Feature.objects.filter(parent_region=instance).all()
+        features = models.Site.objects.filter(parent_region=instance).all()
         for feature in features:
             subdata = {
                 'geometry': json.loads(feature.footprint.json),
@@ -75,7 +75,7 @@ class RegionSerializer(serializers.BaseSerializer):
             if feature['properties']['type'] == 'region':
                 raise ValueError('Multiple `region` types in FeatureCollection.')
             else:
-                record = Feature()
+                record = Site()
                 record.parent_region = region
                 add_dates(record, feature)
             populate(record, feature)

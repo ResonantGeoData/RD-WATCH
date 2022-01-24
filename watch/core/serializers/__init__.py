@@ -1,5 +1,5 @@
 from .item import ItemSerializer
 from .region import RegionSerializer
-from .stacfile import STACFileSerializer
+from .stacfile import StacFileGetSerializer, STACFileSerializer
 
 __all__ = ['ItemSerializer', 'RegionSerializer', 'STACFileSerializer']

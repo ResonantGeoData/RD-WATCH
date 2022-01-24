@@ -32,6 +32,7 @@ class SiteViewSetBasic(ReadOnlyModelViewSet):
 class ObservationViewSetBasic(ReadOnlyModelViewSet):
     serializer_class = serializers.ObservationSerializerBasic
     queryset = models.Observation.objects.all()
+    filterset_class = filters.ObservationFilter
 
 
 class STACFileViewSet(ModelViewSet):

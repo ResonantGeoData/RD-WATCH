@@ -3,7 +3,7 @@ from django.contrib.gis.measure import D
 from django_filters import rest_framework as filters
 from rgd.filters import GeometryFilter
 
-from .models import Region, Site, STACFile
+from .models import Observation, Region, Site, STACFile
 
 
 class BaseOutlineFieldFilter(filters.FilterSet):
@@ -154,4 +154,20 @@ class SiteFilter(BaseOutlineFieldFilter):
             'site_id',
             'start_date',
             'end_date',
+        ]
+
+
+class ObservationFilter(BaseOutlineFieldFilter):
+    current_phase = filters.CharFilter(method='current_phase_filter')
+
+    def current_phase_filter(self, queryset, name, value):
+        return queryset.filter(properties__current_phase__icontains=value.lower())
+
+    class Meta:
+        model = Observation
+        fields = [
+            'q',
+            'predicate',
+            'distance',
+            'current_phase',
         ]

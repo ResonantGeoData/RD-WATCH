@@ -158,6 +158,10 @@ class SiteFilter(BaseOutlineFieldFilter):
 
 
 class ObservationFilter(BaseOutlineFieldFilter):
+    observation_date = filters.DateFromToRangeFilter(
+        field_name='observation_date',
+        label='Observation Date',
+    )
     current_phase = filters.CharFilter(method='current_phase_filter')
 
     def current_phase_filter(self, queryset, name, value):
@@ -169,5 +173,6 @@ class ObservationFilter(BaseOutlineFieldFilter):
             'q',
             'predicate',
             'distance',
+            'observation_date',
             'current_phase',
         ]

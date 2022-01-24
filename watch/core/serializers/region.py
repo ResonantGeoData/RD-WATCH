@@ -144,6 +144,9 @@ class SiteSerializer(serializers.BaseSerializer):
             else:
                 record = Observation()
                 record.parent_site = site
+                date = feature['properties']['observation_date']
+                if date:
+                    record.observation_date = dateutil.parser.parse(date)
             populate(record, feature)
         return site
 

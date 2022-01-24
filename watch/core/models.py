@@ -61,6 +61,7 @@ class Observation(TimeStampedModel, PolygonFeature):
 
     parent_site = models.ForeignKey(Site, on_delete=models.CASCADE)
     properties = models.JSONField()
+    observation_date = models.DateField(null=True, blank=True)
 
 
 class STACFile(TimeStampedModel, TaskEventMixin, PermissionPathMixin):

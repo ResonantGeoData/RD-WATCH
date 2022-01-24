@@ -29,12 +29,17 @@ class Region(TimeStampedModel, PolygonFeature):
 
 
 class Site(TimeStampedModel, PolygonFeature):
-    """
+    """Site model for Observations.
 
     Null Parent Region
     ------------------
 
-    If a site has not been associated to a region, the reserved region ID <two-letter country code>_Rxxx may be used. That is, the site declares the country that it belongs to (with the location of the centroid determining country ownership in the case of a border ambiguity), and it uses the literal string Rxxx rather than R followed by three digits.
+    If a site has not been associated to a region, the reserved region ID
+    <two-letter country code>_Rxxx may be used. That is, the site declares the
+    country that it belongs to (with the location of the centroid determining
+    country ownership in the case of a border ambiguity), and it uses the
+    literal string Rxxx rather than R followed by three digits.
+
     """
 
     parent_region = models.ForeignKey(Region, null=True, blank=True, on_delete=models.CASCADE)
@@ -45,7 +50,7 @@ class Site(TimeStampedModel, PolygonFeature):
 
 
 class Observation(TimeStampedModel, PolygonFeature):
-    """
+    """Observation annotation model.
 
     Color hueristics: https://gitlab.kitware.com/smart/watch/-/blob/master/watch/heuristics.py
     https://gitlab.kitware.com/smart/watch/-/blob/master/watch/heuristics.py#L101

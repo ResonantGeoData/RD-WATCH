@@ -14,7 +14,7 @@ logger = logging.getLogger(__name__)
 def ingest_s3(
     directory: str,
 ) -> None:
-    """Must ingest Regions first!!"""
+    """Must ingest Regions first."""
     # Glob all .geojson files under the directory - recursively
     files = glob(f'{directory}/**/*.geojson', recursive=True)
 

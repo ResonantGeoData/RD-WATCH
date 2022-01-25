@@ -46,7 +46,6 @@ setup(
         'django>=3.2,<4',
         'django-allauth',
         'django-configurations[database,email]',
-        'django-crispy-forms',
         'django-extensions',
         'django-filter',
         'django-oauth-toolkit',

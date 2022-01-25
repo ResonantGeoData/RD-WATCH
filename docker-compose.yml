@@ -79,10 +79,13 @@ services:
       - memcached
 
   flower:
-    image: mher/flower
-    command: ["--broker=amqp://rabbitmq:5672/", "--url_prefix=flower"]
+    image: mher/flower:0.9.5
+    command: ["--broker=amqp://rabbitmq:5672/"]
     ports:
       - 5555:5555
+    depends_on:
+      - rabbitmq
+      - celery
 
 
 volumes:

@@ -54,6 +54,10 @@ class DevelopmentConfiguration(WatchMixin, DevelopmentBaseConfiguration):
     pass
 
 
+class NonDebugDevConfiguration(DevelopmentConfiguration):
+    DEBUG = False
+
+
 class TestingConfiguration(WatchMixin, TestingBaseConfiguration):
     CELERY_TASK_ALWAYS_EAGER = True
     CELERY_TASK_EAGER_PROPAGATES = True

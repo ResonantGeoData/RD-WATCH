@@ -21,7 +21,7 @@ COPY ./setup.py /opt/django-project/setup.py
 RUN pip install \
   --find-links https://girder.github.io/large_image_wheels \
   # Install RGD from main
-  --find-links https://resonantgeodata.github.io/ResonantGeoData/
+  --find-links https://resonantgeodata.github.io/ResonantGeoData/ \
   --editable /opt/django-project[dev,worker]
 
 # Use a directory name which will never be an import name, as isort considers this as first-party.

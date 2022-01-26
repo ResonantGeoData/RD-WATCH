@@ -18,7 +18,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        docker-file: [django]
+        docker-file: [django, dev]
     steps:
       - uses: actions/checkout@v2
       - name: Log into the Container registry

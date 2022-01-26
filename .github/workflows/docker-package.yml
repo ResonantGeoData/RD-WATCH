@@ -37,6 +37,6 @@ jobs:
         with:
           context: .
           file: dev/${{ matrix.docker-file }}.Dockerfile
-          push: ${{ github.actor != dependabot[bot] }}
+          push: ${{ github.actor != 'dependabot[bot]' }}
           tags: ${{ steps.meta.outputs.tags }}
           labels: ${{ steps.meta.outputs.labels }}

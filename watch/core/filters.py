@@ -118,14 +118,13 @@ class RegionFilter(BaseOutlineFieldFilter):
         label='Region ID',
         lookup_expr='icontains',
     )
-    start_date = filters.DateFromToRangeFilter(
-        field_name='start_date',
-        label='Start Date',
-    )
-    end_date = filters.DateFromToRangeFilter(
-        field_name='end_date',
-        label='End Data',
-    )
+    date = filters.DateFilter(method='date_filter')
+
+    def date_filter(self, queryset, name, value):
+        if value:
+            queryset = queryset.filter(start_date__lte=value)
+            queryset = queryset.filter(end_date__gte=value)
+        return queryset
 
     class Meta:
         model = Region
@@ -134,8 +133,7 @@ class RegionFilter(BaseOutlineFieldFilter):
             'predicate',
             'distance',
             'region_id',
-            'start_date',
-            'end_date',
+            'date',
         ]
 
 
@@ -152,14 +150,17 @@ class SiteFilter(BaseOutlineFieldFilter):
         label='Region ID',
         lookup_expr='icontains',
     )
-    start_date = filters.DateFromToRangeFilter(
-        field_name='start_date',
-        label='Start Date',
-    )
-    end_date = filters.DateFromToRangeFilter(
-        field_name='end_date',
-        label='End Data',
-    )
+    date = filters.DateFilter(method='date_filter')
+    originator = filters.CharFilter(method='originator_filter')
+
+    def date_filter(self, queryset, name, value):
+        if value:
+            queryset = queryset.filter(start_date__lte=value)
+            queryset = queryset.filter(end_date__gte=value)
+        return queryset
+
+    def originator_filter(self, queryset, name, value):
+        return queryset.filter(properties__originator__iexact=value.lower())
 
     class Meta:
         model = Site
@@ -169,8 +170,8 @@ class SiteFilter(BaseOutlineFieldFilter):
             'distance',
             'site_id',
             'region_id',
-            'start_date',
-            'end_date',
+            'date',
+            'originator',
         ]
 
 

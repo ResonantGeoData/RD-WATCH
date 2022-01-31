@@ -1,4 +1,5 @@
 from drf_yasg.utils import swagger_auto_schema
+from rest_framework.decorators import action
 from rest_framework.response import Response
 from rgd.rest.base import ModelViewSet, ReadOnlyModelViewSet
 
@@ -9,6 +10,16 @@ class RegionViewSet(ModelViewSet):
     serializer_class = serializers.RegionSerializer
     queryset = models.Region.objects.all()
     filterset_class = filters.RegionFilter
+
+    @swagger_auto_schema(
+        method='GET',
+        operation_summary='Get only the Sites as a FeatureCollection.',
+    )
+    @action(detail=True)
+    def sites(self, request, pk=None):
+        obj = self.get_object()
+        data = serializers.RegionSerializer().to_representation(obj, include_region=False)
+        return Response(data)
 
 
 class SiteViewSet(ModelViewSet):

@@ -33,17 +33,19 @@ class RegionSerializer(serializers.BaseSerializer):
     def to_internal_value(self, data):
         return data
 
-    def to_representation(self, instance: models.Region) -> dict:
+    def to_representation(self, instance: models.Region, include_region: bool = True) -> dict:
         data = {
             'type': 'FeatureCollection',
-            'features': [
+            'features': [],
+        }
+        if include_region:
+            data['features'].append(
                 {
                     'geometry': json.loads(instance.footprint.json),
                     'properties': instance.properties,
                     'type': 'Feature',
-                },
-            ],
-        }
+                }
+            )
 
         features = models.Site.objects.filter(parent_region=instance).all()
         for feature in features:

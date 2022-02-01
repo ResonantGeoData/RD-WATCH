@@ -66,7 +66,7 @@ class WATCHPlugin(RgdPlugin):
         return self.session.patch(f'watch/stac_file/{id}', data={}).json()
 
     def post_region(self, data: dict):
-        return self.session.post(f'watch/region', json=data).json()
+        return self.session.post('watch/region', json=data).json()
 
     def post_site(self, data: dict):
-        return self.session.post(f'watch/site', json=data).json()
+        return self.session.post('watch/site', json=data).json()

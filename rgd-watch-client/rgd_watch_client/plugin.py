@@ -64,3 +64,9 @@ class WATCHPlugin(RgdPlugin):
         """Reprocess a stac file."""
         # Submit empty patch, forcing a save
         return self.session.patch(f'watch/stac_file/{id}', data={}).json()
+
+    def post_region(self, data: dict):
+        return self.session.post(f'watch/region', json=data).json()
+
+    def post_site(self, data: dict):
+        return self.session.post(f'watch/site', json=data).json()

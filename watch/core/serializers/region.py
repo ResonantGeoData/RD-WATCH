@@ -1,4 +1,5 @@
 import json
+import logging
 
 import dateutil.parser
 from django.contrib.gis.geos import GEOSGeometry
@@ -11,6 +12,8 @@ from shapely.wkb import dumps
 from watch.core.models import Observation, Region, Site
 
 from .. import models
+
+logger = logging.getLogger(__name__)
 
 
 def populate_geometry(record, feature):
@@ -71,12 +74,17 @@ class RegionSerializer(serializers.BaseSerializer):
         if region_index is None:
             raise ValueError('No `region` type in FeatureCollection.')
         feature = feature_collection['features'].pop(region_index)
+        geom = shape(feature['geometry'])
 
         region, _ = get_or_create_no_commit(
-            Region, region_id=feature['properties']['region_id'], properties=feature['properties']
+            Region,
+            region_id=feature['properties']['region_id'],
+            properties=feature['properties'],
+            footprint=GEOSGeometry(memoryview(dumps(geom))),
+            outline=GEOSGeometry(memoryview(dumps(geom.envelope))),
         )
         add_dates(region, feature)
-        populate_geometry(region, feature)
+        region.save()
 
         for feature in feature_collection['features']:
             if feature['properties']['type'] == 'region':
@@ -131,21 +139,25 @@ class SiteSerializer(serializers.BaseSerializer):
         if site_index is None:
             raise ValueError('No `site` type in FeatureCollection.')
         feature = feature_collection['features'].pop(site_index)
+        geom = shape(feature['geometry'])
 
         site, created = get_or_create_no_commit(
             Site,
             site_id=feature['properties']['site_id'],
+            footprint=GEOSGeometry(memoryview(dumps(geom))),
+            outline=GEOSGeometry(memoryview(dumps(geom.envelope))),
         )
         if created or not site.properties:
             site.properties = feature['properties']
         if not site.parent_region:
             try:
-                site.parent_region = Region.objects.get(
+                site.parent_region = Region.objects.filter(
                     region_id=feature['properties']['region_id']
-                )
+                ).first()
+                logger.error(f'Assuming related Region {site.parent_region} for Site {site}')
             except Region.DoesNotExist:
                 pass
-        populate_geometry(site, feature)
+        site.save()
 
         for feature in feature_collection['features']:
             if feature['properties']['type'] == 'site':

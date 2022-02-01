@@ -24,7 +24,7 @@ class Region(TimeStampedModel, PolygonFeature):
     We will use this to track what areas of Landsat/Sentinel imagery are ingested.
     """
 
-    region_id = models.CharField(max_length=1000, unique=True)
+    region_id = models.CharField(max_length=1000)
     start_date = models.DateField(null=True, blank=True)
     end_date = models.DateField(null=True, blank=True)
     properties = models.JSONField()
@@ -45,7 +45,7 @@ class Site(TimeStampedModel, PolygonFeature):
     """
 
     parent_region = models.ForeignKey(Region, null=True, blank=True, on_delete=models.CASCADE)
-    site_id = models.CharField(max_length=1000, unique=True)
+    site_id = models.CharField(max_length=1000)
     start_date = models.DateField(null=True, blank=True)
     end_date = models.DateField(null=True, blank=True)
     properties = models.JSONField()

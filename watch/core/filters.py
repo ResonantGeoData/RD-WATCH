@@ -111,20 +111,37 @@ class STACFileFilter(BaseOutlineFieldFilter):
         ]
 
 
-class RegionFilter(BaseOutlineFieldFilter):
-    region_id = filters.CharFilter(
-        field_name='region_id',
-        help_text='The region_id.',
-        label='Region ID',
-        lookup_expr='icontains',
-    )
+class BaseRegionFilter(BaseOutlineFieldFilter):
+
     date = filters.DateFilter(method='date_filter')
+    originator = filters.CharFilter(method='originator_filter')
 
     def date_filter(self, queryset, name, value):
         if value:
             queryset = queryset.filter(start_date__lte=value)
             queryset = queryset.filter(end_date__gte=value)
         return queryset
+
+    def originator_filter(self, queryset, name, value):
+        return queryset.filter(properties__originator__iexact=value.lower())
+
+    class Meta:
+        fields = [
+            'q',
+            'predicate',
+            'distance',
+            'date',
+            'originator',
+        ]
+
+
+class RegionFilter(BaseRegionFilter):
+    region_id = filters.CharFilter(
+        field_name='region_id',
+        help_text='The region_id.',
+        label='Region ID',
+        lookup_expr='icontains',
+    )
 
     class Meta:
         model = Region
@@ -134,10 +151,11 @@ class RegionFilter(BaseOutlineFieldFilter):
             'distance',
             'region_id',
             'date',
+            'originator',
         ]
 
 
-class SiteFilter(BaseOutlineFieldFilter):
+class SiteFilter(BaseRegionFilter):
     site_id = filters.CharFilter(
         field_name='site_id',
         help_text='The site_id.',
@@ -150,17 +168,6 @@ class SiteFilter(BaseOutlineFieldFilter):
         label='Region ID',
         lookup_expr='icontains',
     )
-    date = filters.DateFilter(method='date_filter')
-    originator = filters.CharFilter(method='originator_filter')
-
-    def date_filter(self, queryset, name, value):
-        if value:
-            queryset = queryset.filter(start_date__lte=value)
-            queryset = queryset.filter(end_date__gte=value)
-        return queryset
-
-    def originator_filter(self, queryset, name, value):
-        return queryset.filter(properties__originator__iexact=value.lower())
 
     class Meta:
         model = Site

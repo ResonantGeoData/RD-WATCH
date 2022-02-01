@@ -1,9 +1,11 @@
 import concurrent.futures
 from datetime import datetime, timedelta
+import json
 
 # import multiprocessing
 import os
 import re
+import tempfile
 from typing import Generator, List
 
 import boto3
@@ -26,6 +28,18 @@ def iter_matching_object_urls(
         for obj in page['Contents']:
             if include_pattern.match(obj['Key']):
                 yield f's3://{bucket}/{obj["Key"]}'  # TODO: modified date
+
+
+def download_s3_item(
+    s3_client,
+    url,
+):
+    bucket, path = url.replace('s3://', '').split('/', 1)
+    with tempfile.TemporaryFile() as f:
+        s3_client.download_fileobj(bucket, path, f)
+        f.seek(0)
+        data = f.read()
+    return data.decode('utf-8')
 
 
 def get_stac_item_self_link(links):
@@ -60,7 +74,7 @@ def iter_stac_item_urls(
 
 
 def get_client(dry_run: bool = False):
-    if True:  # dry_run: TODO
+    if dry_run:
         return mock.Mock()
     return create_watch_client()
 
@@ -122,3 +136,28 @@ def post_stac_items_from_server(
         api_key=api_key,
     )
     return handle_posts(iter_stac_item_urls, collection, dry_run, **kwargs)
+
+
+def post_region_items_from_s3_iter(
+    bucket: str,
+    prefix: str,
+    region: str = 'us-west-2',
+    include_regex: str = r'^.*\.geojson',
+    dry_run: bool = False,
+    sites: bool = False,
+):
+    boto3_params = {
+        'region_name': region,
+    }
+    session = boto3.Session(**boto3_params)
+    s3_client = session.client('s3')
+
+    kwargs = dict(s3_client=s3_client, bucket=bucket, prefix=prefix, include_regex=include_regex)
+
+    client = get_client(dry_run=dry_run)
+    for url in iter_matching_object_urls(**kwargs):
+        data = download_s3_item(s3_client, url)
+        if sites:
+            client.watch.post_site(json.loads(data))
+        else:
+            client.watch.post_region(json.loads(data))

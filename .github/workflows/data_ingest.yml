@@ -11,7 +11,7 @@ jobs:
       fail-fast: false
       matrix:
         # Landsat and Sentinel must be run on self hosted runner (i.e., locally on Bane's machine)
-        script: ['regions', 'drop1', 'worldview', ] #'landsat', 'sentinel']
+        script: ['regions', ] #'drop1', 'worldview', ] #'landsat', 'sentinel']
     steps:
       - uses: actions/checkout@v2
       - name: Set up Python

@@ -5,6 +5,7 @@ from pathlib import Path
 from composed_configuration import (
     ComposedConfiguration,
     ConfigMixin,
+    CorsMixin,
     DevelopmentBaseConfiguration,
     HerokuProductionBaseConfiguration,
     ProductionBaseConfiguration,
@@ -14,7 +15,7 @@ from configurations import values
 from rgd.configuration import MemachedMixin, ResonantGeoDataBaseMixin
 
 
-class WatchMixin(ResonantGeoDataBaseMixin, MemachedMixin, ConfigMixin):
+class WatchMixin(ResonantGeoDataBaseMixin, MemachedMixin, CorsMixin, ConfigMixin):
     WSGI_APPLICATION = 'watch.wsgi.application'
     ROOT_URLCONF = 'watch.urls'
 
@@ -48,6 +49,9 @@ class WatchMixin(ResonantGeoDataBaseMixin, MemachedMixin, ConfigMixin):
     CELERY_WORKER_SEND_TASK_EVENTS = True
 
     RGD_GLOBAL_READ_ACCESS = values.Value(default=True)
+
+    # To use endpoints from external origin
+    CORS_ORIGIN_ALLOW_ALL = True
 
 
 class DevelopmentConfiguration(WatchMixin, DevelopmentBaseConfiguration):

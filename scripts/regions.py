@@ -17,13 +17,13 @@ if __name__ == '__main__':
     # s3://smart-imagery/annotations/
     post_region_items_from_s3_iter(
         bucket='smart-imagery',
-        prefix='region_models',
+        prefix='annotations/region_models',
         dry_run=False,
         sites=False,
     )
     post_region_items_from_s3_iter(
         bucket='smart-imagery',
-        prefix='site_models/',
+        prefix='annotations/site_models',
         dry_run=False,
         sites=True,
     )

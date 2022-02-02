@@ -6,7 +6,7 @@ if __name__ == '__main__':
         bucket='kitware-smart-watch-data',
         prefix='scratch/kw/proposed_annotations_sample/regions',
         dry_run=False,
-        sites=False
+        sites=False,
     )
     post_region_items_from_s3_iter(
         bucket='kitware-smart-watch-data',

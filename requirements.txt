@@ -1,5 +1,4 @@
 --find-links https://girder.github.io/large_image_wheels
--e .
 amqp==5.0.7
 appdirs==1.4.4
 asgiref==3.4.1

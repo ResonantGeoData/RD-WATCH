@@ -18,10 +18,12 @@ ENV PYTHONUNBUFFERED 1
 # over top of this directory, the .egg-link in site-packages resolves to the mounted directory
 # and all package modules are importable.
 COPY ./setup.py /opt/django-project/setup.py
+COPY ./requirements.txt /opt/django-project/requirements.txt
 RUN pip install \
   --find-links https://girder.github.io/large_image_wheels \
   # Install RGD from main
   --find-links https://resonantgeodata.github.io/ResonantGeoData/ \
+  -r /opt/django-project/requirements.txt \
   --editable /opt/django-project[dev,worker]
 
 # Use a directory name which will never be an import name, as isort considers this as first-party.

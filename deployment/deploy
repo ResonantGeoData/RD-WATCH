@@ -1,0 +1,65 @@
+#!/usr/bin/env bash
+set -e
+
+mkdir -p "/opt/RD-WATCH/"
+
+if [ -f "/opt/RD-WATCH/production.env" ]; then
+  echo "/opt/RD-WATCH/production.env: Exists... OK!"
+else
+  echo "/opt/RD-WATCH/production.env: does not exist! Exiting...";
+  exit 1;
+fi
+
+unset -v DJANGO_SETTINGS_MODULE
+set -o allexport
+source "/opt/RD-WATCH/production.env"
+set +o allexport
+if [ -z "$DJANGO_SETTINGS_MODULE" ]; then
+  echo "/opt/RD-WATCH/production.env: does not contain 'DJANGO_SETTINGS_MODULE'... OK!"
+else
+  echo "/opt/RD-WATCH/production.env: contains 'DJANGO_SETTINGS_MODULE'. Remove it. Exiting..."
+  exit 1
+fi
+
+mkdir -p "/opt/RD-WATCH/$1"
+curl -sSL "https://github.com/ResonantGeoData/RD-WATCH/tarball/$1" | tar xfz - --strip-components=1 -C "/opt/RD-WATCH/$1"
+
+if cmp --silent -- "$0" "/opt/RD-WATCH/$1/deployment/deploy"; then
+  echo "deploy: Same as current... OK!"
+else
+  echo "deploy: New deploy script is different! Install or use /opt/RD-WATCH/$1/deployment/deploy. Exiting..."
+  exit 1
+fi
+
+# Install dependencies
+apt-get update --yes
+apt-get install --no-install-recommends --yes \
+    python3.8-venv \
+    python3.8-dev \
+    libpq-dev \
+    gcc \
+    libc6-dev \
+    libmagic1 \
+    gettext-base \
+    fuse \
+    memcached \
+    rabbitmq-server \
+    libtiff4-dev
+
+# Create virtualenv
+python3.8 -m venv --clear "/opt/RD-WATCH/$1/venv"
+(cd "/opt/RD-WATCH/$1"; "/opt/RD-WATCH/$1/venv/bin/pip" install wheel; "/opt/RD-WATCH/$1/venv/bin/pip" install -r "/opt/RD-WATCH/$1/requirements.txt")
+echo "making static files..."
+rm -rf "/opt/RD-WATCH/$1/staticfiles"
+"/opt/RD-WATCH/$1/venv/bin/python" "/opt/RD-WATCH/$1/manage.py" collectstatic
+"/opt/RD-WATCH/$1/venv/bin/python" "/opt/RD-WATCH/$1/manage.py" migrate
+
+set +e
+systemctl stop rd-watch
+systemctl disable rd-watch
+rm /etc/systemd/system/rd-watch.service
+set -e
+cat "/opt/RD-WATCH/$1/deployment/rd-watch.service" | INSTALL_DIR="$1" envsubst > "/etc/systemd/system/rd-watch.service"
+systemctl daemon-reload
+systemctl enable rd-watch
+systemctl start rd-watch

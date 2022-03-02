@@ -57,10 +57,10 @@ Jinja2==3.0.3
 jmespath==0.10.0
 jwcrypto==1.0
 kombu==5.2.2
-large-image==1.8.12.dev28
-large-image-source-gdal==1.8.12.dev28
-large-image-source-pil==1.8.12.dev28
-large-image-source-tiff==1.8.12.dev28
+large-image==1.11.1
+large-image-source-gdal==1.11.1
+large-image-source-pil==1.11.1
+large-image-source-tiff==1.11.1
 libtiff==0.5.0
 MarkupSafe==2.0.1
 numpy==1.21.4

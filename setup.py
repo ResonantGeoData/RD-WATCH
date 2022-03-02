@@ -46,7 +46,6 @@ setup(
         'django>=3.2,<4',
         'django-allauth',
         'django-configurations[database,email]',
-        'django-crispy-forms',
         'django-extensions',
         'django-filter',
         'django-oauth-toolkit',
@@ -60,8 +59,8 @@ setup(
         'django-s3-file-field[boto3]',
         'gunicorn',
         # RGD
-        'django-rgd>=0.2.12',
-        'django-rgd-imagery>=0.2.12',
+        'django-rgd==0.2.18',
+        'django-rgd-imagery==0.2.18',
     ],
     extras_require={
         'dev': [
@@ -72,10 +71,10 @@ setup(
             'tox',
         ],
         'worker': [
-            'django-rgd-imagery[worker]>=0.2.12',
+            'django-rgd-imagery[worker]==0.2.18',
         ],
         'fuse': [
-            'django-rgd[fuse]>=0.2.12',
+            'django-rgd[fuse]==0.2.18',
         ],
     },
 )

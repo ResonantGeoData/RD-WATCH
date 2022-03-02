@@ -1,25 +1,59 @@
-from django.contrib.gis.geos import GeometryCollection, GEOSGeometry
+import json
+import logging
+
+import dateutil.parser
+from django.contrib.gis.geos import GEOSGeometry
 from django.db import transaction
 from rest_framework import serializers
+from rgd.utility import get_or_create_no_commit
 from shapely.geometry import shape
 from shapely.wkb import dumps
 
+from watch.core.models import Observation, Region, Site
+
 from .. import models
+
+logger = logging.getLogger(__name__)
+
+
+def populate_geometry(record, feature):
+    geom = shape(feature['geometry'])
+    record.footprint = GEOSGeometry(memoryview(dumps(geom)))
+    record.outline = GEOSGeometry(memoryview(dumps(geom.envelope)))
+    record.save()
+
+
+def add_dates(record, feature):
+    date = feature['properties']['start_date']
+    if date:
+        record.start_date = dateutil.parser.parse(date)
+    date = feature['properties']['end_date']
+    if date:
+        record.end_date = dateutil.parser.parse(date)
 
 
 class RegionSerializer(serializers.BaseSerializer):
     def to_internal_value(self, data):
         return data
 
-    def to_representation(self, instance: models.Region) -> dict:
+    def to_representation(self, instance: models.Region, include_region: bool = True) -> dict:
         data = {
             'type': 'FeatureCollection',
             'features': [],
         }
-        features = models.Feature.objects.filter(parent_region=instance).all()
+        if include_region:
+            data['features'].append(
+                {
+                    'geometry': json.loads(instance.footprint.json),
+                    'properties': instance.properties,
+                    'type': 'Feature',
+                }
+            )
+
+        features = models.Site.objects.filter(parent_region=instance).all()
         for feature in features:
             subdata = {
-                'geometry': feature.footprint.json,
+                'geometry': json.loads(feature.footprint.json),
                 'properties': feature.properties,
                 'type': 'Feature',
             }
@@ -29,29 +63,141 @@ class RegionSerializer(serializers.BaseSerializer):
     @transaction.atomic
     def create(self, data):
         assert data['type'] == 'FeatureCollection'
-        geometries = []
-        for json_feature in data.get('features', []):
-            geometries.append(GEOSGeometry(memoryview(dumps(shape(json_feature['geometry'])))))
-        instance = models.Region()
-        instance.footprint = GeometryCollection(*geometries)
-        instance.outline = instance.footprint.convex_hull
-        instance.skip_signal = True
-        instance.save()
-        for i, json_feature in enumerate(data.get('features', [])):
-            properties = json_feature['properties']
-            if properties['type'] == 'region':
-                instance.version = properties['version']
-                instance.save(
-                    update_fields=[
-                        'version',
-                    ]
+        feature_collection = data
+
+        # find index of region
+        region_index = None
+        for i, feature in enumerate(feature_collection['features']):
+            if feature['properties']['type'] == 'region':
+                region_index = i
+                break
+        if region_index is None:
+            raise ValueError('No `region` type in FeatureCollection.')
+        feature = feature_collection['features'].pop(region_index)
+        geom = shape(feature['geometry'])
+
+        region, _ = get_or_create_no_commit(
+            Region,
+            region_id=feature['properties']['region_id'],
+            properties=feature['properties'],
+            footprint=GEOSGeometry(memoryview(dumps(geom))),
+            outline=GEOSGeometry(memoryview(dumps(geom.envelope))),
+        )
+        add_dates(region, feature)
+        region.save()
+
+        for feature in feature_collection['features']:
+            if feature['properties']['type'] == 'region':
+                raise ValueError('Multiple `region` types in FeatureCollection.')
+            else:
+                record, _ = get_or_create_no_commit(
+                    Site, site_id=feature['properties']['site_id'], properties=feature['properties']
                 )
-            feature = models.Feature()
-            feature.parent_region = instance
-            feature.properties = properties
-            feature.footprint = geometries[i]
-            feature.outline = feature.footprint.convex_hull
-            feature.start_date = properties['start_date']
-            feature.end_date = properties['end_date']
-            feature.save()
-        return instance
+                record.parent_region = region
+            add_dates(record, feature)
+            populate_geometry(record, feature)
+        return region
+
+
+class SiteSerializer(serializers.BaseSerializer):
+    def to_internal_value(self, data):
+        return data
+
+    def to_representation(self, instance: models.Site) -> dict:
+        data = {
+            'type': 'FeatureCollection',
+            'features': [
+                {
+                    'geometry': json.loads(instance.footprint.json),
+                    'properties': instance.properties,
+                    'type': 'Feature',
+                },
+            ],
+        }
+
+        features = models.Observation.objects.filter(parent_site=instance).all()
+        for feature in features:
+            subdata = {
+                'geometry': json.loads(feature.footprint.json),
+                'properties': feature.properties,
+                'type': 'Feature',
+            }
+            data['features'].append(subdata)
+        return data
+
+    @transaction.atomic
+    def create(self, data):
+        assert data['type'] == 'FeatureCollection'
+        feature_collection = data
+
+        # find index of site
+        site_index = None
+        for i, feature in enumerate(feature_collection['features']):
+            if feature['properties']['type'] == 'site':
+                site_index = i
+                break
+        if site_index is None:
+            raise ValueError('No `site` type in FeatureCollection.')
+        feature = feature_collection['features'].pop(site_index)
+        geom = shape(feature['geometry'])
+
+        site, created = get_or_create_no_commit(
+            Site,
+            site_id=feature['properties']['site_id'],
+            footprint=GEOSGeometry(memoryview(dumps(geom))),
+            outline=GEOSGeometry(memoryview(dumps(geom.envelope))),
+        )
+        if created or not site.properties:
+            site.properties = feature['properties']
+        if not site.parent_region:
+            try:
+                site.parent_region = Region.objects.filter(
+                    region_id=feature['properties']['region_id']
+                ).first()
+                logger.error(f'Assuming related Region {site.parent_region} for Site {site}')
+            except Region.DoesNotExist:
+                pass
+        site.save()
+
+        for feature in feature_collection['features']:
+            if feature['properties']['type'] == 'site':
+                raise ValueError('Multiple `site` types in FeatureCollection.')
+            else:
+                record, _ = get_or_create_no_commit(
+                    Observation, parent_site=site, properties=feature['properties']
+                )
+                date = feature['properties']['observation_date']
+                if date:
+                    record.observation_date = dateutil.parser.parse(date)
+            populate_geometry(record, feature)
+        return site
+
+
+# 1133 sites, 13 regions
+class BasePolygonSerializer(serializers.ModelSerializer):
+    outline = serializers.SerializerMethodField()
+    footprint = serializers.SerializerMethodField()
+
+    def get_outline(self, obj):
+        return json.loads(obj.outline.geojson)
+
+    def get_footprint(self, obj):
+        return json.loads(obj.footprint.geojson)
+
+
+class SiteSerializerBasic(BasePolygonSerializer):
+    class Meta:
+        model = models.Site
+        fields = '__all__'
+
+
+class RegionSerializerBasic(BasePolygonSerializer):
+    class Meta:
+        model = models.Region
+        fields = '__all__'
+
+
+class ObservationSerializerBasic(BasePolygonSerializer):
+    class Meta:
+        model = models.Observation
+        fields = '__all__'

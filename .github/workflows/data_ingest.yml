@@ -1,18 +1,17 @@
 name: STAC Data Ingest
 on:
-  push:
-    branches:
-      - foo
-#   schedule:
-#     # Run every wednesday morning
-#     - cron: "0 0 * * WED"
+  workflow_dispatch:
+  schedule:
+    # Run every wednesday morning
+    - cron: "0 0 * * WED"
 jobs:
   ingest:
     runs-on: ubuntu-latest
     strategy:
       fail-fast: false
       matrix:
-        script: ['drop1', 'worldview']  # 'landsat', 'sentinel' TODO: add back when these servers are working
+        # Landsat and Sentinel must be run on self hosted runner (i.e., locally on Bane's machine)
+        script: ['regions', ] #'drop1', 'worldview', ] #'landsat', 'sentinel']
     steps:
       - uses: actions/checkout@v2
       - name: Set up Python
@@ -23,12 +22,14 @@ jobs:
         run: |
           pip install --upgrade pip
           cd rgd-watch-client
-          pip install -e . boto3 mock
+          pip install -e .
           cd ..
+          pip install -r ./scripts/requirements.txt
       - name: Run STAC Ingest
         run: |
           python scripts/${{ matrix.script }}.py
         env:
+          AWS_REQUEST_PAYER: requester
           AWS_ACCESS_KEY_ID: ${{ secrets.WATCH_AWS_ACCESS_KEY_ID }}
           AWS_SECRET_ACCESS_KEY: ${{ secrets.WATCH_AWS_SECRET_ACCESS_KEY }}
           SMART_STAC_API_KEY: ${{ secrets.SMART_STAC_API_KEY }}

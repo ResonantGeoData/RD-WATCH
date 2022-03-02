@@ -55,9 +55,18 @@ class WATCHPlugin(RgdPlugin):
                 print(f'Record already exists with ID: {f["id"]}')
             return f
 
+        if debug:
+            print('Record being created...')
+
         return self.session.post('watch/stac_file', json={'file': checksum_file['id']}).json()
 
     def reprocess_stac_file(self, id: Union[int, str]):
         """Reprocess a stac file."""
         # Submit empty patch, forcing a save
         return self.session.patch(f'watch/stac_file/{id}', data={}).json()
+
+    def post_region(self, data: dict):
+        return self.session.post('watch/region', json=data).json()
+
+    def post_site(self, data: dict):
+        return self.session.post('watch/site', json=data).json()

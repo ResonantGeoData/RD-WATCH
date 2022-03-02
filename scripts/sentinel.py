@@ -1,9 +1,16 @@
+from datetime import datetime
+
 from watch_helpers import post_stac_items_from_server
 
-host_url = 'https://earth-search.aws.element84.com/v0/collections/sentinel-s2-l1c/items'
-collection = 'sentinel-s2-l1c'
-post_stac_items_from_server(host_url, collection)
+if __name__ == '__main__':
+    min_date = datetime(2015, 12, 31)  # First available found
+    max_date = datetime.today()
+    host_url = 'https://earth-search.aws.element84.com/v0/'
 
-host_url = 'https://earth-search.aws.element84.com/v0/collections/sentinel-s2-l2a/items'
-collection = 'sentinel-s2-l2a'
-post_stac_items_from_server(host_url, collection)
+    collection = 'sentinel-s2-l1c'
+    print(collection)
+    post_stac_items_from_server(host_url, collection, min_date=min_date, max_date=max_date)
+
+    collection = 'sentinel-s2-l2a'
+    print(collection)
+    post_stac_items_from_server(host_url, collection, min_date=min_date, max_date=max_date)

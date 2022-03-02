@@ -122,8 +122,9 @@ dmypy.json
 
 # End of https://www.gitignore.io/api/django
 .ipynb_checkpoints
-**/*.ipynb
 
 # Using override for AWS credentials in dev env
 docker-compose.override.yml
 watch-*/
+
+annotations*/

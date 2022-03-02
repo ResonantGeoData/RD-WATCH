@@ -40,7 +40,7 @@ services:
   django:
     build:
       context: .
-      dockerfile: ./dev/django.Dockerfile
+      dockerfile: ./dev/dev.Dockerfile
     command: ["./manage.py", "runserver", "0.0.0.0:8000"]
     # Log printing via Rich is enhanced by a TTY
     tty: true
@@ -58,7 +58,7 @@ services:
   celery:
     build:
       context: .
-      dockerfile: ./dev/celery.Dockerfile
+      dockerfile: ./dev/dev.Dockerfile
     command: [
       "celery",
       "--app", "watch.celery",
@@ -79,10 +79,13 @@ services:
       - memcached
 
   flower:
-    image: mher/flower
-    command: ["--broker=amqp://rabbitmq:5672/", "--url_prefix=flower"]
+    image: mher/flower:0.9.5
+    command: ["--broker=amqp://rabbitmq:5672/"]
     ports:
       - 5555:5555
+    depends_on:
+      - rabbitmq
+      - celery
 
 
 volumes:

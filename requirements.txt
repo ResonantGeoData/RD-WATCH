@@ -39,8 +39,8 @@ django-girder-style==0.6.0
 django-girder-utils==0.11.0
 django-model-utils==4.2.0
 django-oauth-toolkit==1.5.0
-django-rgd==0.2.18
-django-rgd-imagery==0.2.18
+django-rgd==0.2.19
+django-rgd-imagery==0.2.19
 django-s3-file-field==0.2.0
 django-storages==1.12.3
 djangorestframework==3.13.0

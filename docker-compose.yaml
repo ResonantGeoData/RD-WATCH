@@ -1,0 +1,168 @@
+services:
+  #######################
+  # production services #
+  #######################
+
+  # RD-WATCH
+  rdwatch:
+    image: ghcr.io/resonantgeodata/rd-watch/rdwatch:latest
+    depends_on:
+      - postgresql
+      - redis
+    environment:
+      RDWATCH_DJANGO_DEBUG: ${RDWATCH_DJANGO_DEBUG:?}
+      RDWATCH_SECRET_KEY: ${RDWATCH_SECRET_KEY:?}
+      RDWATCH_POSTGRESQL_URI: ${RDWATCH_POSTGRESQL_URI:?}
+      RDWATCH_REDIS_URI: ${RDWATCH_REDIS_URI:?}
+    ports:
+      - 8000:80
+
+  # PostgreSQL 14
+  postgresql:
+    image: ghcr.io/resonantgeodata/rd-watch/postgresql:latest
+    environment:
+      POSTGRES_PASSWORD: ${RDWATCH_SECRET_KEY:?}
+    volumes:
+      - postgresql-data:/var/lib/postgresql/data
+
+  # Redis 7
+  redis:
+    image: ghcr.io/resonantgeodata/rd-watch/redis:latest
+    environment:
+      RDWATCH_SECRET_KEY: ${RDWATCH_SECRET_KEY:?}
+    volumes:
+      - redis-data:/data
+
+  ###################
+  # debug services  #
+  # --profile debug #
+  ###################
+
+  # Serves frontend dev server with source files mounted in and proxies "django" server
+  vue:
+    image: ghcr.io/resonantgeodata/rd-watch/builder:latest
+    command: ["run", "dev"]
+    depends_on:
+      - django
+    entrypoint: npm
+    environment:
+      RDWATCH_FILE_POLLING: ${RDWATCH_FILE_POLLING:?}
+    ports:
+      - 9000:9000
+    profiles:
+      - debug
+      - tools
+      - vscode
+    user: ${UID-0}:${GID-0}
+    volumes:
+      - .:/app
+    working_dir: /app/vue
+
+  # Serves RD-WATCH API with source files mounted in
+  django:
+    image: ghcr.io/resonantgeodata/rd-watch/builder:latest
+    environment:
+      RDWATCH_DJANGO_DEBUG: ${RDWATCH_DJANGO_DEBUG:?}
+      RDWATCH_SECRET_KEY: ${RDWATCH_SECRET_KEY:?}
+      RDWATCH_POSTGRESQL_URI: ${RDWATCH_POSTGRESQL_URI:?}
+      RDWATCH_REDIS_URI: ${RDWATCH_REDIS_URI:?}
+    depends_on:
+      - postgresql
+      - redis
+    profiles:
+      - debug
+      - tools
+      - vscode
+    volumes:
+      - .:/app
+      - unit-socket:/run/unit
+
+  # Watches for file changes and restarts the "django" service
+  unit-reloader:
+    image: ghcr.io/resonantgeodata/rd-watch/unit-reloader:latest
+    depends_on:
+      - django
+    environment:
+      RDWATCH_FILE_POLLING: ${RDWATCH_FILE_POLLING:?}
+    init: true
+    profiles:
+      - debug
+      - tools
+      - vscode
+    volumes:
+      - .:/app
+      - unit-socket:/run/unit
+
+  ###################
+  # ad-hoc tools    #
+  # --profile tools #
+  ###################
+
+  # Run poetry commands
+  poetry:
+    image: ghcr.io/resonantgeodata/rd-watch/builder:latest
+    depends_on:
+      - django
+    entrypoint:
+      - /docker-entrypoint.sh
+      - poetry
+    environment:
+      POETRY_CACHE_DIR: /tmp/poetry-cache
+      POETRY_INSTALLER_PARALLEL: true
+      POETRY_VIRTUALENVS_IN_PROJECT: true
+      RDWATCH_DJANGO_DEBUG: ${RDWATCH_DJANGO_DEBUG:?}
+      RDWATCH_SECRET_KEY: ${RDWATCH_SECRET_KEY:?}
+      RDWATCH_POSTGRESQL_URI: ${RDWATCH_POSTGRESQL_URI:?}
+      RDWATCH_REDIS_URI: ${RDWATCH_REDIS_URI:?}
+    profiles:
+      - tools
+    user: ${UID-0}:${GID-0}
+    volumes:
+      - .:/app
+      - poetry-cache:/tmp/poetry-cache
+    working_dir: /app/django
+
+  # Run npm commands
+  npm:
+    image: ghcr.io/resonantgeodata/rd-watch/builder:latest
+    depends_on:
+      - vue
+    entrypoint: npm
+    profiles:
+      - tools
+    user: ${UID-0}:${GID-0}
+    volumes:
+      - .:/app
+    working_dir: /app/vue
+
+  ####################################
+  # VS Code Remote Container Service #
+  ####################################
+
+  vscode:
+    image: ghcr.io/resonantgeodata/rd-watch/builder:latest
+    command: /bin/sh -c "while sleep 1000; do :; done"
+    environment:
+      DJANGO_SETTINGS_MODULE: rdwatch.server.settings
+      POETRY_CACHE_DIR: /tmp/poetry-cache
+      POETRY_INSTALLER_PARALLEL: true
+      POETRY_VIRTUALENVS_IN_PROJECT: true
+      RDWATCH_DJANGO_DEBUG: ${RDWATCH_DJANGO_DEBUG:?}
+      RDWATCH_SECRET_KEY: ${RDWATCH_SECRET_KEY:?}
+      RDWATCH_POSTGRESQL_URI: ${RDWATCH_POSTGRESQL_URI:?}
+      RDWATCH_REDIS_URI: ${RDWATCH_REDIS_URI:?}
+    init: true
+    network_mode: service:vue
+    profiles:
+      - vscode
+    volumes:
+      - .:/app
+      - poetry-cache:/tmp/poetry-cache
+
+volumes:
+  pgadmin-data:
+  postgresql-data:
+  redis-data:
+  # debug volumes
+  unit-socket:
+  poetry-cache:

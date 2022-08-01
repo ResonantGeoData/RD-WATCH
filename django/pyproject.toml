@@ -1,0 +1,69 @@
+[build-system]
+requires = [ "poetry-core>=1.0.0" ]
+build-backend = "poetry.core.masonry.api"
+
+
+[tool.poetry]
+name = "rdwatch"
+version = "0.0.0dev0"
+description = "A Django-based web application to support the Kitware WATCH project."
+license = "Apache-2.0"
+authors = [ "Kitware, Inc. <kitware@kitware.com>" ]
+readme = "README.md"
+homepage = "https://watch.resonantgeodata.com"
+repository = "https://github.com/ResonantGeoData/RD-WATCH/django"
+keywords = [ "django", "geospatial", "machine learning" ]
+classifiers = [
+  "Development Status :: 3 - Alpha",
+  "Environment :: Web Environment",
+  "Framework :: Django :: 4.0",
+  "Framework :: Django",
+]
+packages = [ { include = "rdwatch", from = "src" } ]
+
+[tool.poetry.dependencies]
+python = "~3.10.0"
+django = "~4.0.6"
+djangorestframework = "~3.13.1"
+psycopg2 = "~2.9.3"
+redis = { version = "~4.3.4", extras = [ "hiredis" ] }
+uritemplate = "^4.1.1"
+
+[tool.poetry.dev-dependencies]
+black = "~22.6.0"
+django-stubs = { version = "~1.12.0", extras = [ "compatible-mypy" ] }
+djangorestframework-stubs = { version = "~1.7.0", extras = [ "compatible-mypy" ] }
+isort = "~5.10.1"
+mypy = "0.961"
+prospector = "~1.7.7"
+taskipy = "^1.10.2"
+
+
+[tool.taskipy.tasks]
+"build:openapi" = "DJANGO_SETTINGS_MODULE=rdwatch.server.settings django-admin generateschema --format openapi-json --file openapi.json"
+"lint" = "task lint:black; task lint:isort; task lint:mypy; task lint:prospector"
+"lint:fix" = "task lint:black:fix; task lint:isort:fix; task lint:mypy; task lint:prospector"
+"lint:black" = "black --check --diff --quiet src"
+"lint:black:fix" = "black  --quiet src"
+"lint:isort" = "isort --check --diff src"
+"lint:isort:fix" = "isort src"
+"lint:mypy" = "mypy src"
+"lint:prospector" = "prospector"
+
+
+[tool.pylint.format]
+max-line-length = "88"
+
+[tool.pylint."django foreign keys referenced by strings"]
+django-settings-module = "rdwatch.server.settings"
+
+[tool.isort]
+profile = "black"
+known_first_party = ["django", "rdwatch", "rest_framework"]
+
+[tool.mypy]
+plugins = ["mypy_django_plugin.main", "mypy_drf_plugin.main"]
+
+
+[tool.django-stubs]
+django_settings_module = "rdwatch.server.settings"

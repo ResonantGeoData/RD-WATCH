@@ -1,0 +1,28 @@
+.env
+
+# overrides for developers
+requirements.dev.txt
+docker-compose.override.yml
+docker-compose.override.yaml
+.vscode
+
+# system files
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
+
+# node files/folders
+node_modules
+dist
+
+# python files/folders
+__pycache__
+.dmypy.json
+.mypy_cache
+.venv
+*.pyc
+dmypy.json

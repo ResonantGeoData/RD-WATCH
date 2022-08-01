@@ -1,0 +1,42 @@
+{
+  "access_log": "/dev/stdout",
+  "listeners": {
+    "*:80": {
+      "pass": "routes"
+    }
+  },
+  "routes": [
+    {
+      "match": {
+        "uri": "/api"
+      },
+      "action": {
+        "return": 301,
+        "location": "/api/"
+      }
+    },
+    {
+      "match": {
+        "uri": "/api/*"
+      },
+      "action": {
+        "pass": "applications/rdwatch"
+      }
+    },
+    {
+      "action": {
+        "share": "/app/vue/dist/$uri"
+      }
+    }
+  ],
+  "applications": {
+    "rdwatch": {
+      "type": "python 3.10",
+      "user": "rdwatch",
+      "group": "rdwatch",
+      "home": "/app/django/.venv",
+      "module": "rdwatch.server",
+      "threads": 25
+    }
+  }
+}

@@ -1,0 +1,30 @@
+#!/bin/sh
+
+# https://github.com/eradman/entr/tree/5.1#docker-and-windows-subsystem-for-linux
+if [ "$RDWATCH_FILE_POLLING" = "1" ]; then
+    export ENTR_INOTIFY_WORKAROUND=1
+fi
+
+# wait for NGINX Unit to be ready
+while [ ! -S /run/unit/control.unit.sock ]; do sleep 0.1; done
+
+
+# http://eradman.com/entrproject/
+# section "Watching for New Files"
+while true; do
+  { \
+    rg \
+      --type py \
+      --files \
+      /app/django/src/rdwatch/; \
+    rg \
+      --type py \
+      --files \
+      --no-ignore-vcs \
+      /app/django/.venv/; \
+  } \
+  | entr -n -d -p curl -s -X GET \
+      --unix-socket /run/unit/control.unit.sock \
+      http://localhost/control/applications/rdwatch/restart \
+    > /dev/null
+done

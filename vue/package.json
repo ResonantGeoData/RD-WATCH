@@ -19,6 +19,8 @@
     "lint:typescript": "vue-tsc --noEmit"
   },
   "dependencies": {
+    "@heroicons/vue": "^1.0.6",
+    "maplibre-gl": "^2.1.9",
     "vue": "^3.2.37"
   },
   "devDependencies": {
@@ -60,6 +62,14 @@
     "plugins": [
       "@typescript-eslint"
     ],
+    "rules": {
+      "sort-imports": [
+        "error",
+        {
+          "ignoreDeclarationSort": true
+        }
+      ]
+    },
     "extends": [
       "plugin:@typescript-eslint/recommended",
       "plugin:vue/vue3-recommended",

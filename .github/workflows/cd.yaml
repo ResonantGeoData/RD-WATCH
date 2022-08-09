@@ -1,7 +1,5 @@
 name: CD
 on:
-  pull_request:
-    types: [opened, synchronize]
   push:
     branches:
       - "phase-ii"

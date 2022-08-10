@@ -217,15 +217,15 @@ class Migration(migrations.Migration):
                         django.contrib.postgres.indexes.OpClass(
                             rdwatch.db.functions.RasterEnvelope("raster"),
                             name="gist_geometry_ops_2d",
-                        ),  # type: ignore
+                        ),
                         "&&",
                     ),
                     ("saliency", "="),
                 ],
                 name="exclude_overlapping_raster",
                 violation_error_message=(
-                    "Tiles for the same raster cannot overlap",  # type: ignore
-                ),
+                    "Tiles for the same raster cannot overlap"
+                ),  # type: ignore
             ),
         ),
         migrations.AddConstraint(

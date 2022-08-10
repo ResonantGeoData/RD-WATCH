@@ -53,25 +53,25 @@ The key software used to build the application.
 
 ### Django
 
-A single Django application (`rdwatch`) for the backend. Source code is in the [`django`](https://github.com/ResonantGeoData/RD-WATCH/tree/phase-ii/django) folder.
+A single Django application (`rdwatch`) for the backend. Source code is in the ["django"](https://github.com/ResonantGeoData/RD-WATCH/tree/phase-ii/django) folder.
 
-- **[Django 4](https://docs.djangoproject.com/en/4.1/contents/)** with **[GeoDjango](https://docs.djangoproject.com/en/4.0/ref/contrib/gis/)**
-- **[Django REST Framework](https://www.django-rest-framework.org/)**
-- **[Poetry](https://python-poetry.org/docs/)** for dependency management
+- [Django 4](https://docs.djangoproject.com/en/4.1/contents/) with [GeoDjango](https://docs.djangoproject.com/en/4.0/ref/contrib/gis/)
+- [Django REST Framework](https://www.django-rest-framework.org/)
+- [Poetry](https://python-poetry.org/docs/) for dependency management
 
 ### Vue
 
-The Vue-based SPA frontend. Source code is in the [`vue`](https://github.com/ResonantGeoData/RD-WATCH/tree/phase-ii/vue) folder.
+The Vue-based SPA frontend. Source code is in the ["vue"](https://github.com/ResonantGeoData/RD-WATCH/tree/phase-ii/vue) folder.
 
-- **[Vue 3](https://vuejs.org/guide/introduction.html)**
-- **[TailwindCSS](https://tailwindcss.com/docs)**
-- **[MapLibre GL JS](https://maplibre.org/maplibre-gl-js-docs/api/)**
-- **[npm](https://docs.npmjs.com/)** for dependency management
+- [Vue 3](https://vuejs.org/guide/introduction.html)
+- [TailwindCSS](https://tailwindcss.com/docs)
+- [MapLibre GL JS](https://maplibre.org/maplibre-gl-js-docs/api/)
+- [npm](https://docs.npmjs.com/) for dependency management
 
 ### Services
 
 Services the application requires.
 
-- **[NGINX Unit](https://unit.nginx.org/)**: serves both the backend and the bundled static assets ([Dockerfile](https://github.com/ResonantGeoData/RD-WATCH/blob/phase-ii/Dockerfile))
-- **[PostgreSQL 14](https://www.postgresql.org/docs/14/index.html)** and **[PostGIS 3.2](http://www.postgis.net/documentation/)**: data warehouse ([Dockerfile](https://github.com/ResonantGeoData/RD-WATCH/blob/phase-ii/docker/services/postgresql/Dockerfile))
-- **[Redis 7](https://redis.io/docs/)**: caching (and maybe in the future as a job queue) ([Dockerfile](https://github.com/ResonantGeoData/RD-WATCH/blob/phase-ii/docker/services/redis/Dockerfile))
+- [NGINX Unit](https://unit.nginx.org/): serves both the backend and the bundled static assets ([Dockerfile](https://github.com/ResonantGeoData/RD-WATCH/blob/phase-ii/Dockerfile))
+- [PostgreSQL 14](https://www.postgresql.org/docs/14/index.html) and [PostGIS 3.2](http://www.postgis.net/documentation/): data warehouse ([Dockerfile](https://github.com/ResonantGeoData/RD-WATCH/blob/phase-ii/docker/services/postgresql/Dockerfile))
+- [Redis 7](https://redis.io/docs/): caching (and maybe in the future as a job queue) ([Dockerfile](https://github.com/ResonantGeoData/RD-WATCH/blob/phase-ii/docker/services/redis/Dockerfile))

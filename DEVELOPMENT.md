@@ -23,11 +23,11 @@ Two ports will be open:
 - [`django-admin`](https://docs.djangoproject.com/en/4.1/ref/django-admin/#migrate) commands:
   - e.g. run migrations: `docker compose run --rm poetry run django-admin migrate`
   - e.g. run tests: `docker compose run --rm poetry run django-admin test`
-- `npm` commands and scripts (see [`scripts` in `package.json`](https://github.com/ResonantGeoData/RD-WATCH/blob/phase-ii/vue/package.json#L5))
+- `npm` commands and scripts (see [`scripts` in `package.json`](https://github.com/ResonantGeoData/RD-WATCH/blob/phase-ii/vue/package.json#L5)):
   - e.g. lint and fix code: `docker compose run --rm npm run lint:fix`
   - e.g. run tests: `docker compose run --rm npm run test`
   - e.g. install a package: `docker compose run --rm npm install some-pacakge`
-- `poetry` commands and tasks (see [`tasks` in `pyproject.toml`](https://github.com/ResonantGeoData/RD-WATCH/blob/phase-ii/django/pyproject.toml#L42))
+- `poetry` commands and tasks (see [`tasks` in `pyproject.toml`](https://github.com/ResonantGeoData/RD-WATCH/blob/phase-ii/django/pyproject.toml#L42)):
   - e.g. lint and fix code: `docker compose run --rm poetry run task lint:fix`
   - e.g. build the OpenAPI spec: `docker compose run --rm poetry run task build:openapi`
   - e.g. install a package: `docker compose run --rm poetry add some-pacakge`

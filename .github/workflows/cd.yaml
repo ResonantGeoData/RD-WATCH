@@ -47,8 +47,8 @@ jobs:
       - name: Build and push Docker image
         uses: docker/build-push-action@v3
         with:
-          cache-from: type=registry,ref=${{ steps.repo-slug.outputs.result }}/${{ matrix.image-name }}:latest
-          cache-to: type=inline
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
           context: ${{ matrix.context }}
           platforms: linux/amd64,linux/arm64
           push: true

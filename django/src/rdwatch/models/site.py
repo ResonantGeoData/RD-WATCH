@@ -11,8 +11,40 @@ class Site(models.Model):
     configuration = models.ForeignKey(
         to="TrackingConfiguration",
         on_delete=models.CASCADE,
+        help_text="The tracking configuration this site was evaluated with",
     )
-    saliency = models.ForeignKey(to="Saliency", on_delete=models.CASCADE)
-    label = models.CharField(max_length=2, choices=LABEL_CHOICES)
-    score = models.FloatField()
-    geometry = models.MultiPolygonField()
+    saliency = models.ForeignKey(
+        to="Saliency",
+        on_delete=models.CASCADE,
+        help_text="The saliency raster that was used to classify this site",
+    )
+    label = models.CharField(
+        max_length=2,
+        choices=LABEL_CHOICES,
+        help_text="Site classification label",
+    )
+    score = models.FloatField(
+        help_text="Evaluation accuracy",
+    )
+    geometry = models.MultiPolygonField(
+        help_text="Footprint of site",
+        srid=3857,
+    )
+
+    class Meta:
+        indexes = [
+            models.Index(fields=["configuration"]),
+            models.Index(fields=["saliency"]),
+            models.Index(fields=["label"]),
+            models.Index(fields=["score"]),
+            models.Index(fields=["geometry"]),
+        ]
+        constraints = [
+            models.UniqueConstraint(
+                name="unique_configuration_saliency_label",
+                fields=["configuration", "saliency", "label"],
+                violation_error_message=(
+                    "Unique constraint invalid. Add polygons to existing site.",
+                ),  # type: ignore
+            ),
+        ]

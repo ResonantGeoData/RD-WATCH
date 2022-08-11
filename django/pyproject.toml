@@ -23,7 +23,7 @@ packages = [ { include = "rdwatch", from = "src" } ]
 
 [tool.poetry.dependencies]
 python = "~3.10.0"
-django = "~4.0.6"
+django = ">=4.1,<4.2"
 djangorestframework = "~3.13.1"
 psycopg2 = "~2.9.3"
 redis = { version = "~4.3.4", extras = [ "hiredis" ] }

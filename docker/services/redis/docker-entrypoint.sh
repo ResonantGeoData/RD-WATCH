@@ -10,7 +10,7 @@ echo "user default reset" >> /etc/redis.acl
 # change password of default user
 SHA256_SECRET_KEY_HEX=$(echo -n "${RDWATCH_SECRET_KEY}" | sha256sum | awk '{ print $1 }')
 unset RDWATCH_SECRET_KEY
-echo "user rdwatch on +@all #${SHA256_SECRET_KEY_HEX}" >> /etc/redis.acl
+echo "user rdwatch on allchannels allkeys allcommands #${SHA256_SECRET_KEY_HEX}" >> /etc/redis.acl
 unset SHA256_SECRET_KEY_HEX
 umask 0077
 exec gosu redis:redis "$@"

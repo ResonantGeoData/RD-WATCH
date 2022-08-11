@@ -20,5 +20,9 @@ urlpatterns = [
         name="openapi-schema",
     ),
     path("status", views.RetrieveServerStatus.as_view()),
+    path(
+        "site/<int:pk>/tiles/<int:z>/<int:x>/<int:y>",
+        views.RetrieveSiteTile.as_view(),
+    ),
     path("", include(router.urls)),
 ]

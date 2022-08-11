@@ -52,7 +52,7 @@ class Migration(migrations.Migration):
             name="raster",
             field=django.contrib.gis.db.models.fields.RasterField(
                 help_text="A 64x64 single-band tile from the full saliency map",
-                srid=4326,
+                srid=3857,
             ),
         ),
         migrations.AlterField(
@@ -93,7 +93,7 @@ class Migration(migrations.Migration):
             model_name="site",
             name="geometry",
             field=django.contrib.gis.db.models.fields.MultiPolygonField(
-                help_text="Footprint of site", srid=4326
+                help_text="Footprint of site", srid=3857
             ),
         ),
         migrations.AlterField(

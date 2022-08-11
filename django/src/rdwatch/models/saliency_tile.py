@@ -14,6 +14,7 @@ from rdwatch.db.functions import (
 class SaliencyTile(models.Model):
     raster = models.RasterField(
         help_text="A 64x64 single-band tile from the full saliency map",
+        srid=3857,
     )
     saliency = models.ForeignKey(
         to="Saliency",

@@ -28,6 +28,7 @@ class Site(models.Model):
     )
     geometry = models.MultiPolygonField(
         help_text="Footprint of site",
+        srid=3857,
     )
 
     class Meta:

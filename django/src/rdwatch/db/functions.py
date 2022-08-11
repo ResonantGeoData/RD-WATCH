@@ -1,5 +1,5 @@
 from django.contrib.gis.db.models import PolygonField
-from django.db.models import Func, IntegerField
+from django.db.models import Aggregate, BinaryField, Func, IntegerField
 
 
 class RasterHeight(Func):
@@ -28,3 +28,16 @@ class RasterNumBands(Func):
 
     function = "ST_NumBands"
     output_field: IntegerField = IntegerField()
+
+
+class VectorTile(Aggregate):
+    """Returns the vector tile at the specified ZXY."""
+
+    function = "ST_AsMVT"
+    output_field: BinaryField = BinaryField()
+
+    def __init__(self, field, z: int, x: int, y: int, **extra):
+        tile_envelope = Func(z, x, y, function="ST_TileEnvelope")
+        mvt_geom = Func(field, tile_envelope, function="ST_AsMVTGeom")
+        row = Func(mvt_geom, function="ROW")
+        super().__init__(row, **extra)

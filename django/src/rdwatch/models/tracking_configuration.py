@@ -9,6 +9,9 @@ class TrackingConfiguration(models.Model):
         help_text="Threshold for tracking site in time",
     )
 
+    def __str__(self):
+        return f"TrackingConfiguration:{self.pk}"
+
     class Meta:
         indexes = [
             models.Index(fields=["timestamp"]),

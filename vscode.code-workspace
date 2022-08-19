@@ -126,13 +126,13 @@
 
     "prettier.enable": true,
 
-    "python.analysis.typeCheckingMode": "off",
+    "python.analysis.typeCheckingMode": "basic",
     "python.defaultInterpreterPath": "${workspaceFolder:django}/.venv/bin/python",
     "python.formatting.provider": "black",
     "python.linting.banditEnabled": false,
-    "python.linting.flake8Enabled": false,
+    "python.linting.flake8Enabled": true,
     "python.linting.mypyEnabled": true,
-    "python.linting.prospectorEnabled": true,
+    "python.linting.prospectorEnabled": false,
     "python.linting.pycodestyleEnabled": false,
     "python.linting.pydocstyleEnabled": false,
     "python.linting.pylamaEnabled": false,

@@ -17,7 +17,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        linter: [black, isort, mypy, prospector]
+        linter: [black, flake8, isort, mypy]
     name: Lint [${{ matrix.linter }}]
     runs-on: ubuntu-22.04
     steps:

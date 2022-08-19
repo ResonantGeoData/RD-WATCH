@@ -35,31 +35,27 @@ django-stubs = { version = "~1.12.0", extras = [ "compatible-mypy" ] }
 djangorestframework-stubs = { version = "~1.7.0", extras = [ "compatible-mypy" ] }
 isort = "~5.10.1"
 mypy = "0.961"
-prospector = "~1.7.7"
 taskipy = "^1.10.2"
+flake8 = "^5.0.4"
+flake8-django = "^1.1.5"
 
 
 [tool.taskipy.tasks]
 "build:openapi" = "DJANGO_SETTINGS_MODULE=rdwatch.server.settings django-admin generateschema --format openapi-json --file openapi.json"
-"lint" = "task lint:black; task lint:isort; task lint:mypy; task lint:prospector"
-"lint:fix" = "task lint:black:fix; task lint:isort:fix; task lint:mypy; task lint:prospector"
+"lint" = "task lint:black; task lint:isort; task lint:flake8; task lint:mypy"
+"lint:fix" = "task lint:black:fix; task lint:isort:fix; task lint:flake8; task lint:mypy;"
+"lint:flake8" = "flake8 src"
 "lint:black" = "black --check --diff --quiet src"
 "lint:black:fix" = "black  --quiet src"
 "lint:isort" = "isort --check --diff src"
 "lint:isort:fix" = "isort src"
 "lint:mypy" = "mypy src"
-"lint:prospector" = "prospector"
 
-
-[tool.pylint.format]
-max-line-length = "88"
-
-[tool.pylint."django foreign keys referenced by strings"]
-django-settings-module = "rdwatch.server.settings"
 
 [tool.isort]
 profile = "black"
 known_first_party = ["django", "rdwatch", "rest_framework"]
+
 
 [tool.mypy]
 plugins = ["mypy_django_plugin.main", "mypy_drf_plugin.main"]
@@ -67,3 +63,12 @@ plugins = ["mypy_django_plugin.main", "mypy_drf_plugin.main"]
 
 [tool.django-stubs]
 django_settings_module = "rdwatch.server.settings"
+
+
+[tool.flake8]
+extend_exclude = [".venv"]
+extend_ignore = [
+  # https://black.readthedocs.io/en/stable/guides/using_black_with_other_tools.html?highlight=flake8#flake8
+  "E203",
+]
+max_line_length = 88

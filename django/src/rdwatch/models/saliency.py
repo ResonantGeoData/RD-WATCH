@@ -13,6 +13,9 @@ class Saliency(models.Model):
         help_text="The source satellite imagery this saliency map was evaluated on",
     )
 
+    def __str__(self):
+        return f"Saliency:{self.pk}"
+
     class Meta:
         indexes = [
             models.Index(fields=["configuration"]),

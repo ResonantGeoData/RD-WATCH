@@ -17,6 +17,9 @@ class SatelliteImage(models.Model):
         help_text="The time the source imagery was captured",
     )
 
+    def __str__(self):
+        return f"SatelliteImage:{self.pk}"
+
     class Meta:
         indexes = [models.Index(fields=["sensor"]), models.Index(fields=["timestamp"])]
         constraints = [

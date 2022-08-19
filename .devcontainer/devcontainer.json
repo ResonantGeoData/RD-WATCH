@@ -19,6 +19,7 @@
         "bungcip.better-toml",
         "dbaeumer.vscode-eslint",
         "esbenp.prettier-vscode",
+        "ms-python.vscode-pylance",
         "ms-python.python",
         "stylelint.vscode-stylelint",
         "Vue.volar"

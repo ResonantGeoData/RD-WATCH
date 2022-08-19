@@ -22,6 +22,9 @@ class SaliencyTile(models.Model):
         help_text="The saliency map this tile belongs to",
     )
 
+    def __str__(self):
+        return f"SaliencyTile:{self.pk}"
+
     class Meta:
         indexes = [models.Index(fields=["raster"]), models.Index(fields=["saliency"])]
         constraints = [

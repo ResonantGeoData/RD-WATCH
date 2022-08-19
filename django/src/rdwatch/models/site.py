@@ -31,6 +31,9 @@ class Site(models.Model):
         srid=3857,
     )
 
+    def __str__(self):
+        return f"Site:{self.pk}"
+
     class Meta:
         indexes = [
             models.Index(fields=["configuration"]),

@@ -46,8 +46,8 @@ class Site(models.Model):
             models.UniqueConstraint(
                 name="unique_configuration_saliency_label",
                 fields=["configuration", "saliency", "label"],
-                violation_error_message=(
-                    "Unique constraint invalid. Add polygons to existing site.",
-                ),  # type: ignore
+                violation_error_message=(  # type: ignore
+                    "Unique constraint invalid. Add polygons to existing site."
+                ),
             ),
         ]

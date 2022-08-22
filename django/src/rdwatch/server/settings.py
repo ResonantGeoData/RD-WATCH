@@ -33,6 +33,7 @@ INSTALLED_APPS = [
     "django.contrib.contenttypes",
     "django.contrib.gis",
     "django.contrib.postgres",
+    "django_extensions",
     "rest_framework",
     "rdwatch",
 ]

@@ -28,6 +28,7 @@ djangorestframework = "~3.13.1"
 psycopg2 = "~2.9.3"
 redis = { version = "~4.3.4", extras = [ "hiredis" ] }
 uritemplate = "^4.1.1"
+django-extensions = "^3.2.0"
 
 [tool.poetry.dev-dependencies]
 black = "~22.6.0"

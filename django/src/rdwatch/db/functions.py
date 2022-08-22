@@ -1,4 +1,5 @@
 from django.contrib.gis.db.models import PolygonField
+from django.contrib.postgres.fields import DecimalRangeField
 from django.db.models import Aggregate, BinaryField, Func, IntegerField
 
 
@@ -21,6 +22,36 @@ class RasterEnvelope(Func):
 
     function = "ST_Envelope"
     output_field: PolygonField = PolygonField()
+
+
+class RasterXRange(Func):
+    """Returns the range spanned by a raster in the X direction."""
+
+    function = "numrange"
+    template = "%(function)s(%(expressions)s::numeric, '()')"
+    arg_joiner = "::numeric, "
+    output_field: DecimalRangeField = DecimalRangeField()
+
+    def __init__(self, field, **extra):
+        box = Func(field, function="Box3D")
+        xmin = Func(box, function="ST_XMin")
+        xmax = Func(box, function="ST_XMax")
+        super().__init__(xmin, xmax, **extra)
+
+
+class RasterYRange(Func):
+    """Returns the range spanned by a raster in the Y direction."""
+
+    function = "numrange"
+    template = "%(function)s(%(expressions)s::numeric, '()')"
+    arg_joiner = "::numeric, "
+    output_field: DecimalRangeField = DecimalRangeField()
+
+    def __init__(self, field, **extra):
+        box = Func(field, function="Box3D")
+        ymin = Func(box, function="ST_YMin")
+        ymax = Func(box, function="ST_YMax")
+        super().__init__(ymin, ymax, **extra)
 
 
 class RasterNumBands(Func):

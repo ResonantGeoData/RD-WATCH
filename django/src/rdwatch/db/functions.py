@@ -118,8 +118,15 @@ class RasterTile(Func):
             **extra,
         )
         resampled = Func(union, empty_reference, function="ST_Resample")
-        tile = Func(resampled, reference, Value("[rast1]"), function="ST_MapAlgebra")
-        super().__init__(tile)
+        tile = Func(
+            resampled,
+            reference,
+            Value("[rast1]"),
+            Value("16BUI"),
+            Value("SECOND"),
+            function="ST_MapAlgebra",
+        )
+        super().__init__(Func(tile, None, function="ST_SetBandNoDataValue"))
 
 
 class VectorTile(Aggregate):

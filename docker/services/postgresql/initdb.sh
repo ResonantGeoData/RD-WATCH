@@ -13,4 +13,5 @@ psql -v ON_ERROR_STOP=1 --username rdwatch --dbname rdwatch <<-EOSQL
   CREATE EXTENSION address_standardizer;
   CREATE EXTENSION address_standardizer_data_us;
   CREATE EXTENSION postgis_tiger_geocoder;
+  ALTER DATABASE rdwatch SET postgis.gdal_enabled_drivers TO 'GTiff PNG JPEG';
 EOSQL

@@ -24,5 +24,9 @@ urlpatterns = [
         "site-observation/<int:pk>/tiles/<int:z>/<int:x>/<int:y>",
         views.RetrieveSiteObservationTile.as_view(),
     ),
+    path(
+        "saliency/<int:pk>/tiles/<int:z>/<int:x>/<int:y>",
+        views.RetrieveSaliencyTile.as_view(),
+    ),
     path("", include(router.urls)),
 ]

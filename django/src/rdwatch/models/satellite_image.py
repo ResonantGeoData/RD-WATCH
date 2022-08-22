@@ -26,8 +26,8 @@ class SatelliteImage(models.Model):
             models.UniqueConstraint(
                 name="unique_satelliteimage",
                 fields=["sensor", "timestamp"],
-                violation_error_message=(
-                    "Satellite image already exists.",
-                ),  # type: ignore
+                violation_error_message=(  # type: ignore
+                    "Satellite image already exists."
+                ),
             ),
         ]

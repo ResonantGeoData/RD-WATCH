@@ -1,13 +1,13 @@
 from django.contrib.gis.db import models
 from django.contrib.postgres.constraints import ExclusionConstraint
 from django.contrib.postgres.fields import RangeOperators
-from django.contrib.postgres.indexes import OpClass
 from django.db.models.lookups import Exact
 from rdwatch.db.functions import (
-    RasterEnvelope,
     RasterHeight,
     RasterNumBands,
     RasterWidth,
+    RasterXRange,
+    RasterYRange,
 )
 
 
@@ -30,30 +30,28 @@ class SaliencyTile(models.Model):
         constraints = [
             ExclusionConstraint(
                 name="exclude_overlapping_raster",
-                violation_error_message=(
+                violation_error_message=(  # type: ignore
                     "Tiles for the same raster cannot overlap"
-                ),  # type: ignore
+                ),
                 expressions=[
-                    (
-                        OpClass(RasterEnvelope("raster"), name="gist_geometry_ops_2d"),
-                        RangeOperators.OVERLAPS,
-                    ),
+                    (RasterXRange("raster"), RangeOperators.OVERLAPS),
+                    (RasterYRange("raster"), RangeOperators.OVERLAPS),
                     ("saliency", RangeOperators.EQUAL),
                 ],
             ),
             models.CheckConstraint(
                 name="check_64_height_raster",
-                violation_error_message="Tile must be 64 pixels high",
+                violation_error_message="Tile must be 64 pixels high",  # type: ignore
                 check=Exact(RasterHeight("raster"), 64),  # type: ignore
             ),
             models.CheckConstraint(
                 name="check_64_width_raster",
-                violation_error_message="Tile must be 64 pixels wide",
+                violation_error_message="Tile must be 64 pixels wide",  # type: ignore
                 check=Exact(RasterWidth("raster"), 64),  # type: ignore
             ),
             models.CheckConstraint(
                 name="check_1_band_raster",
-                violation_error_message="Tile must only have one band",
+                violation_error_message="Tile must only have one band",  # type: ignore
                 check=Exact(RasterNumBands("raster"), 1),  # type: ignore
             ),
         ]

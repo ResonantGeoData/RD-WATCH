@@ -223,9 +223,9 @@ class Migration(migrations.Migration):
                     ("saliency", "="),
                 ],
                 name="exclude_overlapping_raster",
-                violation_error_message=(
+                violation_error_message=(  # type: ignore
                     "Tiles for the same raster cannot overlap"
-                ),  # type: ignore
+                ),
             ),
         ),
         migrations.AddConstraint(
@@ -263,17 +263,19 @@ class Migration(migrations.Migration):
             constraint=models.UniqueConstraint(
                 fields=("sensor", "timestamp"),
                 name="unique_satelliteimage",
-                violation_error_message=("Satellite image already exists.",),
-            ),  # type: ignore
+                violation_error_message=(  # type: ignore
+                    "Satellite image already exists."
+                ),
+            ),
         ),
         migrations.AddConstraint(
             model_name="site",
             constraint=models.UniqueConstraint(
                 fields=("configuration", "saliency", "label"),
                 name="unique_configuration_saliency_label",
-                violation_error_message=(
-                    "Unique constraint invalid. Add polygons to existing site.",
-                ),  # type: ignore
+                violation_error_message=(  # type: ignore
+                    "Unique constraint invalid. Add polygons to existing site."
+                ),
             ),
         ),
     ]

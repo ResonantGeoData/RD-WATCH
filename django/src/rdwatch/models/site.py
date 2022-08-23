@@ -3,10 +3,12 @@ from django.contrib.gis.db import models
 
 class Site(models.Model):
     ACTIVE_CONSTRUCTION = "AC"
+    POST_CONSTRUCTION = "PC"
     SITE_PREPERATION = "SP"
     LABEL_CHOICES = [
         (ACTIVE_CONSTRUCTION, "Active Construction"),
         (SITE_PREPERATION, "Site Preperation"),
+        (POST_CONSTRUCTION, "Post Construction"),
     ]
     configuration = models.ForeignKey(
         to="TrackingConfiguration",

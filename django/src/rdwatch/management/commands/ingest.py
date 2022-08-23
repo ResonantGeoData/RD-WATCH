@@ -19,6 +19,7 @@ from rdwatch.models import (
 
 label_mapping = {
     "Active Construction": Site.ACTIVE_CONSTRUCTION,
+    "Post Construction": Site.POST_CONSTRUCTION,
     "Site Preparation": Site.SITE_PREPERATION,
 }
 

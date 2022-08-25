@@ -10,6 +10,12 @@ class Site(models.Model):
         (SITE_PREPARATION, "Site Preparation"),
         (POST_CONSTRUCTION, "Post Construction"),
     ]
+    ground_truth = models.ForeignKey(
+        "GroundTruth",
+        related_name="sites",
+        on_delete=models.CASCADE,
+        help_text="The ground truth associated with this site.",
+    )
     configuration = models.ForeignKey(
         to="TrackingConfiguration",
         on_delete=models.CASCADE,

@@ -138,9 +138,7 @@ def _ingest_geojson(
         crop_parse = CropParse.from_string(crop_string)
 
         sensor_name = crop_parse.sensor
-
         assert sensor_name
-        sensor_name = "L8" if sensor_name == "Landsat 8" else "S2"
 
         satellite_timestamp = crop_parse.timestamp
         assert satellite_timestamp is not None

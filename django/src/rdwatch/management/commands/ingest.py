@@ -9,6 +9,7 @@ from django.contrib.gis.gdal import GDALRaster
 from django.contrib.gis.geos import GEOSGeometry, MultiPolygon, Polygon
 from rdwatch.dataclasses import CropParse
 from rdwatch.models import (
+    GroundTruth,
     PredictionConfiguration,
     Saliency,
     SaliencyTile,
@@ -112,6 +113,18 @@ def _ingest_geojson(
     """
     site_geojson = json.loads(site_geojson_file.read_text())
 
+    # Assume the first object in the features array is the ground truth
+    ground_truth_json = site_geojson["features"][0]
+
+    # Assume ground truth should always have a score of 1.0.
+    # So instead of storing it in the DB, check it here.
+    assert ground_truth_json["properties"]["score"] == 1.0
+
+    ground_truth_geometry = GEOSGeometry(json.dumps(ground_truth_json["geometry"]))
+    assert isinstance(ground_truth_geometry, Polygon)
+
+    ground_truth = GroundTruth.objects.create(geometry=ground_truth_geometry)
+
     sites: list[Site] = []
 
     # Ingest each site in the geojson
@@ -123,12 +136,7 @@ def _ingest_geojson(
         score = properties["score"]
 
         geometry = GEOSGeometry(json.dumps(site["geometry"]))
-        assert isinstance(geometry, MultiPolygon | Polygon)
-
-        # Generate a MultiPolygon if the geometry is just a Polygon (this
-        # seems to be the case for all ground truth features).
-        if isinstance(geometry, Polygon):
-            geometry = MultiPolygon(geometry)
+        assert isinstance(geometry, MultiPolygon)
 
         # Parse the crop string "identifier" from the parent
         # directory of the source TIF given in the geojson.
@@ -190,6 +198,7 @@ def _ingest_geojson(
 
         sites.append(
             Site(
+                ground_truth=ground_truth,
                 configuration=tracking_configuration,
                 label=label,
                 score=score,

@@ -2,10 +2,10 @@
 
 import django.contrib.gis.db.models.fields
 import django.contrib.postgres.constraints
-from django.db import migrations, models
 import django.db.models.deletion
 import django.db.models.lookups
 import rdwatch.db.functions
+from django.db import migrations, models
 
 
 class Migration(migrations.Migration):
@@ -50,7 +50,10 @@ class Migration(migrations.Migration):
                 (
                     "timestamp",
                     models.DateTimeField(
-                        help_text="Time when evaluating this prediction configuration was finished"
+                        help_text=(
+                            "Time when evaluating this prediction "
+                            "configuration was finished"
+                        ),
                     ),
                 ),
             ],
@@ -166,7 +169,10 @@ class Migration(migrations.Migration):
                 (
                     "timestamp",
                     models.DateTimeField(
-                        help_text="Time when evaluating this tracking configuration was finished"
+                        help_text=(
+                            "Time when evaluating this tracking "
+                            "configuration was finished"
+                        ),
                     ),
                 ),
                 (
@@ -230,7 +236,9 @@ class Migration(migrations.Migration):
             constraint=models.UniqueConstraint(
                 fields=("sensor", "timestamp"),
                 name="unique_satelliteimage",
-                violation_error_message="Satellite image already exists.",
+                violation_error_message=(  # type: ignore
+                    "Satellite image already exists."
+                ),
             ),
         ),
         migrations.AddField(
@@ -246,7 +254,9 @@ class Migration(migrations.Migration):
             model_name="saliency",
             name="configuration",
             field=models.ForeignKey(
-                help_text="The configuration profile used to generate this saliency map",
+                help_text=(
+                    "The configuration profile used to generate this saliency map"
+                ),
                 on_delete=django.db.models.deletion.CASCADE,
                 to="rdwatch.predictionconfiguration",
             ),
@@ -255,7 +265,9 @@ class Migration(migrations.Migration):
             model_name="saliency",
             name="source",
             field=models.ForeignKey(
-                help_text="The source satellite imagery this saliency map was evaluated on",
+                help_text=(
+                    "The source satellite imagery this saliency map was evaluated on"
+                ),
                 on_delete=django.db.models.deletion.PROTECT,
                 to="rdwatch.satelliteimage",
             ),
@@ -303,7 +315,9 @@ class Migration(migrations.Migration):
             constraint=models.UniqueConstraint(
                 fields=("configuration", "saliency", "label"),
                 name="unique_configuration_saliency_label",
-                violation_error_message="Unique constraint invalid. Add polygons to existing site.",
+                violation_error_message=(  # type: ignore
+                    "Unique constraint invalid. Add polygons to existing site."
+                ),
             ),
         ),
         migrations.AddIndex(
@@ -325,37 +339,39 @@ class Migration(migrations.Migration):
                     ("saliency", "="),
                 ],
                 name="exclude_overlapping_raster",
-                violation_error_message="Tiles for the same raster cannot overlap",
+                violation_error_message=(  # type: ignore
+                    "Tiles for the same raster cannot overlap"
+                ),
             ),
         ),
         migrations.AddConstraint(
             model_name="saliencytile",
             constraint=models.CheckConstraint(
-                check=django.db.models.lookups.Exact(
+                check=django.db.models.lookups.Exact(  # type: ignore
                     rdwatch.db.functions.RasterHeight("raster"), 64
                 ),
                 name="check_64_height_raster",
-                violation_error_message="Tile must be 64 pixels high",
+                violation_error_message="Tile must be 64 pixels high",  # type: ignore
             ),
         ),
         migrations.AddConstraint(
             model_name="saliencytile",
-            constraint=models.CheckConstraint(
-                check=django.db.models.lookups.Exact(
+            constraint=models.CheckConstraint(  # type: ignore
+                check=django.db.models.lookups.Exact(  # type: ignore
                     rdwatch.db.functions.RasterWidth("raster"), 64
                 ),
                 name="check_64_width_raster",
-                violation_error_message="Tile must be 64 pixels wide",
+                violation_error_message="Tile must be 64 pixels wide",  # type: ignore
             ),
         ),
         migrations.AddConstraint(
             model_name="saliencytile",
-            constraint=models.CheckConstraint(
-                check=django.db.models.lookups.Exact(
+            constraint=models.CheckConstraint(  # type: ignore
+                check=django.db.models.lookups.Exact(  # type: ignore
                     rdwatch.db.functions.RasterNumBands("raster"), 1
                 ),
                 name="check_1_band_raster",
-                violation_error_message="Tile must only have one band",
+                violation_error_message="Tile must only have one band",  # type: ignore
             ),
         ),
         migrations.AddIndex(

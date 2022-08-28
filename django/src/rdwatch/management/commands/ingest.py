@@ -271,8 +271,7 @@ def _ingest_geojson(
 
         # Tile the saliency TIF into a series of smaller saliency tiles
         saliency_tiles: list[SaliencyTile] = [
-            SaliencyTile(raster=tile, saliency=saliency)
-            for tile in tile_raster(raster)
+            SaliencyTile(raster=tile, saliency=saliency) for tile in tile_raster(raster)
         ]
 
         SaliencyTile.objects.bulk_create(

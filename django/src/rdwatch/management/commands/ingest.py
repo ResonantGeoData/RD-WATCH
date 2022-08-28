@@ -1,4 +1,3 @@
-import json
 import re
 from dataclasses import dataclass
 from datetime import datetime
@@ -302,6 +301,19 @@ def ingest(directory: Path):
         if not pred.is_dir():
             continue
 
+        prediction_json = orjson.loads((pred / "pred.kwcoc.json").read_bytes())
+        prediction_process_info = prediction_json["info"][1]["properties"]
+        assert prediction_process_info["name"] == "watch.tasks.fusion.predict"
+        prediction_timestamp = datetime.strptime(
+            prediction_process_info["timestamp"][:-2],
+            "%Y-%m-%dT%H%M%S%z",
+        )
+        prediction_slug = pred.stem.split("_")[-1]
+        prediction_configuration = PredictionConfiguration.objects.create(
+            slug=prediction_slug,
+            timestamp=prediction_timestamp,
+        )
+
         for trackcfg in (pred / "tracking").iterdir():
             if not trackcfg.is_dir():
                 continue
@@ -310,15 +322,6 @@ def ingest(directory: Path):
             tracks_process_info = list(
                 filter(lambda t: t["type"] == "process", tracks_json["info"])
             )[0]
-
-            prediction_timestamp = datetime.strptime(
-                tracks_process_info["properties"]["timestamp"][:-2],
-                "%Y-%m-%dT%H%M%S",
-            )
-
-            prediction_configuration = PredictionConfiguration.objects.create(
-                timestamp=prediction_timestamp
-            )
 
             tracking_threshold = orjson.loads(
                 tracks_process_info["properties"]["args"]["track_kwargs"]

@@ -29,6 +29,7 @@ psycopg2 = "~2.9.3"
 redis = { version = "~4.3.4", extras = [ "hiredis" ] }
 uritemplate = "^4.1.1"
 django-click = "^2.3.0"
+numpy = "^1.23.2"
 
 [tool.poetry.dev-dependencies]
 black = "~22.6.0"

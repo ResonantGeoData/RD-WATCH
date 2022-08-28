@@ -1,21 +1,21 @@
 from django.contrib.gis.db.models.functions import AsGeoJSON, Envelope, Transform
 from django.http import HttpResponse
 from django.shortcuts import get_object_or_404
-from rdwatch.models import SiteCharacterization
-from rdwatch.serializers import SiteCharacterizationSerializer
+from rdwatch.models import SiteObservation
+from rdwatch.serializers import SiteObservationSerializer
 from rest_framework import permissions, viewsets
 from rest_framework.decorators import action
 
 
-class SiteCharacterizationViewSet(viewsets.ReadOnlyModelViewSet):
+class SiteObservationViewSet(viewsets.ReadOnlyModelViewSet):
     queryset = (
-        SiteCharacterization.objects.annotate(
+        SiteObservation.objects.annotate(
             boundingbox=Transform(Envelope("geometry"), 4326)
         )
         .defer("geometry")
         .all()
     )
-    serializer_class = SiteCharacterizationSerializer
+    serializer_class = SiteObservationSerializer
     permission_classes = [permissions.AllowAny]
 
     @action(detail=True)
@@ -24,7 +24,7 @@ class SiteCharacterizationViewSet(viewsets.ReadOnlyModelViewSet):
         Retrieve the GeoJSON.
         """
         obj = get_object_or_404(
-            SiteCharacterization.objects.values(
+            SiteObservation.objects.values(
                 geojson=AsGeoJSON(Transform("geometry", 4326))
             ),
             pk=pk,

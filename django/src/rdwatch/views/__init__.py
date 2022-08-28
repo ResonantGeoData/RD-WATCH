@@ -1,9 +1,9 @@
 from .server_status import RetrieveServerStatus
-from .site_characterization import SiteCharacterizationViewSet
-from .site_characterization_tile import RetrieveSiteCharacterizationTile
+from .site_observation import SiteObservationViewSet
+from .site_observation_tile import RetrieveSiteObservationTile
 
 __all__ = [
     "RetrieveServerStatus",
-    "SiteCharacterizationViewSet",
-    "RetrieveSiteCharacterizationTile",
+    "SiteObservationViewSet",
+    "RetrieveSiteObservationTile",
 ]

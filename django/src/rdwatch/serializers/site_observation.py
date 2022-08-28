@@ -1,8 +1,8 @@
-from rdwatch.models import SiteCharacterization
+from rdwatch.models import SiteObservation
 from rest_framework import serializers
 
 
-class SiteCharacterizationSerializer(serializers.ModelSerializer):
+class SiteObservationSerializer(serializers.ModelSerializer):
     bounds = serializers.ListField(
         child=serializers.FloatField(
             read_only=True,
@@ -19,5 +19,5 @@ class SiteCharacterizationSerializer(serializers.ModelSerializer):
     )
 
     class Meta:
-        model = SiteCharacterization
+        model = SiteObservation
         fields = ["id", "configuration", "label", "score", "bounds"]

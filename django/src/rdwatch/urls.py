@@ -6,7 +6,7 @@ from rest_framework.schemas import get_schema_view
 
 # Create a router and register our viewsets with it.
 router = DefaultRouter()
-router.register(r"site-characterization", views.SiteCharacterizationViewSet)
+router.register(r"site-observation", views.SiteObservationViewSet)
 
 urlpatterns = [
     path(
@@ -21,8 +21,8 @@ urlpatterns = [
     ),
     path("status", views.RetrieveServerStatus.as_view()),
     path(
-        "site-characterization/<int:pk>/tiles/<int:z>/<int:x>/<int:y>",
-        views.RetrieveSiteCharacterizationTile.as_view(),
+        "site-observation/<int:pk>/tiles/<int:z>/<int:x>/<int:y>",
+        views.RetrieveSiteObservationTile.as_view(),
     ),
     path("", include(router.urls)),
 ]

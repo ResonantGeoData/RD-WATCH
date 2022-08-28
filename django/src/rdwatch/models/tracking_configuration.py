@@ -2,10 +2,10 @@ from django.contrib.gis.db import models
 
 
 class TrackingConfiguration(models.Model):
-    slug = models.SlugField(max_length=8)
     timestamp = models.DateTimeField(
         help_text="Time when evaluating this tracking configuration was finished"
     )
+    slug = models.SlugField(max_length=8)
     threshold = models.FloatField(
         help_text="Threshold for tracking site in time",
     )

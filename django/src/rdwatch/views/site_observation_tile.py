@@ -4,16 +4,16 @@ from django.http import HttpResponse
 from django.utils.decorators import method_decorator
 from django.views.decorators.cache import cache_page
 from rdwatch.db.functions import VectorTile
-from rdwatch.models import SiteCharacterization
+from rdwatch.models import SiteObservation
 from rest_framework import permissions
 from rest_framework.exceptions import NotFound
 from rest_framework.schemas.openapi import AutoSchema
 from rest_framework.views import APIView
 
 
-class SiteCharacterizationTileSchema(AutoSchema):
+class SiteObservationTileSchema(AutoSchema):
     def get_operation_id(self, *args):
-        return "getSiteCharacterizationTile"
+        return "getSiteObservationTile"
 
     def get_responses(self, *args):
         return {
@@ -28,10 +28,10 @@ class SiteCharacterizationTileSchema(AutoSchema):
         }
 
 
-class RetrieveSiteCharacterizationTile(APIView):
+class RetrieveSiteObservationTile(APIView):
 
     permission_classes = [permissions.AllowAny]
-    schema = SiteCharacterizationTileSchema()
+    schema = SiteObservationTileSchema()
     action = "retrieve"
 
     @method_decorator(cache_page(60 * 60 * 24 * 365))
@@ -45,9 +45,9 @@ class RetrieveSiteCharacterizationTile(APIView):
     ):
         if pk is None or z is None or x is None or y is None:
             raise TypeError()
-        if not SiteCharacterization.objects.filter(pk=pk).exists():
+        if not SiteObservation.objects.filter(pk=pk).exists():
             raise NotFound()
-        agg = SiteCharacterization.objects.filter(pk=pk).aggregate(
+        agg = SiteObservation.objects.filter(pk=pk).aggregate(
             tile=VectorTile("geometry", z, x, y)
         )
         data = agg["tile"]

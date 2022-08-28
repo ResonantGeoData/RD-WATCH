@@ -326,7 +326,7 @@ def ingest(directory: Path):
 
             tracking_timestamp = datetime.strptime(
                 tracks_process_info["properties"]["timestamp"][:-2],
-                "%Y-%m-%dT%H%M%S",
+                "%Y-%m-%dT%H%M%S%z",
             )
 
             tracking_configuration = TrackingConfiguration.objects.create(

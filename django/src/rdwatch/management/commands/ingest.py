@@ -190,7 +190,7 @@ def _ingest_geojson(
     site_geojson_file: Path,
     prediction_configuration: PredictionConfiguration,
     tracking_configuration: TrackingConfiguration,
-) -> list[SiteCharacterization]:
+) -> Iterable[SiteCharacterization]:
     """
     Ingest the geojson file at the given path into the Site model,
     returning a list of SiteCharacterization instances.
@@ -208,8 +208,6 @@ def _ingest_geojson(
     assert isinstance(ground_truth_geometry, Polygon)
 
     ground_truth = GroundTruth.objects.create(geometry=ground_truth_geometry)
-
-    sites: list[Site] = []
 
     # Ingest each site in the geojson
     for site in site_geojson["features"][1:]:
@@ -270,26 +268,23 @@ def _ingest_geojson(
         raster = crop_parse.open_raster(tif_filepath)
 
         # Tile the saliency TIF into a series of smaller saliency tiles
-        saliency_tiles: list[SaliencyTile] = [
+        saliency_tiles: Iterable[SaliencyTile] = (
             SaliencyTile(raster=tile, saliency=saliency) for tile in tile_raster(raster)
-        ]
+        )
 
         SaliencyTile.objects.bulk_create(
             saliency_tiles,
             ignore_conflicts=True,
         )
 
-        sites.append(
-            SiteCharacterization(
-                ground_truth=ground_truth,
-                configuration=tracking_configuration,
-                label=label,
-                score=score,
-                geometry=geometry,
-                saliency=saliency,
-            )
+        yield SiteCharacterization(
+            ground_truth=ground_truth,
+            configuration=tracking_configuration,
+            label=label,
+            score=score,
+            geometry=geometry,
+            saliency=saliency,
         )
-    return sites
 
 
 @click.command()

@@ -6,6 +6,7 @@ from pathlib import Path
 from typing import Iterable
 
 import djclick as click  # type: ignore
+import orjson
 
 from django.contrib.gis.gdal import GDALRaster
 from django.contrib.gis.geos import GEOSGeometry, MultiPolygon, Polygon
@@ -195,7 +196,7 @@ def _ingest_geojson(
     Ingest the geojson file at the given path into the Site model,
     returning a list of SiteCharacterization instances.
     """
-    site_geojson = json.loads(site_geojson_file.read_text())
+    site_geojson = orjson.loads(site_geojson_file.read_bytes())
 
     # Assume the first object in the features array is the ground truth
     ground_truth_json = site_geojson["features"][0]
@@ -204,7 +205,7 @@ def _ingest_geojson(
     # So instead of storing it in the DB, check it here.
     assert ground_truth_json["properties"]["score"] == 1.0
 
-    ground_truth_geometry = GEOSGeometry(json.dumps(ground_truth_json["geometry"]))
+    ground_truth_geometry = GEOSGeometry(orjson.dumps(ground_truth_json["geometry"]))
     assert isinstance(ground_truth_geometry, Polygon)
 
     ground_truth = GroundTruth.objects.create(geometry=ground_truth_geometry)
@@ -217,7 +218,7 @@ def _ingest_geojson(
 
         score = properties["score"]
 
-        geometry = GEOSGeometry(json.dumps(site["geometry"]))
+        geometry = GEOSGeometry(orjson.dumps(site["geometry"]))
         assert isinstance(geometry, MultiPolygon)
 
         # Parse the crop string "identifier" from the parent
@@ -305,7 +306,7 @@ def ingest(directory: Path):
             if not trackcfg.is_dir():
                 continue
 
-            tracks_json = json.loads((trackcfg / "tracks.json").read_text())
+            tracks_json = orjson.loads((trackcfg / "tracks.json").read_bytes())
             tracks_process_info = list(
                 filter(lambda t: t["type"] == "process", tracks_json["info"])
             )[0]
@@ -319,7 +320,7 @@ def ingest(directory: Path):
                 timestamp=prediction_timestamp
             )
 
-            tracking_threshold = json.loads(
+            tracking_threshold = orjson.loads(
                 tracks_process_info["properties"]["args"]["track_kwargs"]
             )["thresh"]
 

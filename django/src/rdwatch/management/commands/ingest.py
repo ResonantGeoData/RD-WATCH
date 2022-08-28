@@ -15,14 +15,14 @@ from rdwatch.models import (
     Saliency,
     SaliencyTile,
     SatelliteImage,
-    Site,
+    SiteCharacterization,
     TrackingConfiguration,
 )
 
 label_mapping = {
-    "Active Construction": Site.ACTIVE_CONSTRUCTION,
-    "Post Construction": Site.POST_CONSTRUCTION,
-    "Site Preparation": Site.SITE_PREPARATION,
+    "Active Construction": SiteCharacterization.ACTIVE_CONSTRUCTION,
+    "Post Construction": SiteCharacterization.POST_CONSTRUCTION,
+    "Site Preparation": SiteCharacterization.SITE_PREPARATION,
 }
 
 
@@ -190,10 +190,10 @@ def _ingest_geojson(
     site_geojson_file: Path,
     prediction_configuration: PredictionConfiguration,
     tracking_configuration: TrackingConfiguration,
-) -> list[Site]:
+) -> list[SiteCharacterization]:
     """
     Ingest the geojson file at the given path into the Site model,
-    returning a list of Site instances.
+    returning a list of SiteCharacterization instances.
     """
     site_geojson = json.loads(site_geojson_file.read_text())
 
@@ -280,7 +280,7 @@ def _ingest_geojson(
         )
 
         sites.append(
-            Site(
+            SiteCharacterization(
                 ground_truth=ground_truth,
                 configuration=tracking_configuration,
                 label=label,
@@ -339,7 +339,7 @@ def ingest(directory: Path):
 
             for site_geojson_file in (trackcfg / "tracked_sites").iterdir():
                 assert site_geojson_file.suffix == ".geojson"
-                Site.objects.bulk_create(
+                SiteCharacterization.objects.bulk_create(
                     _ingest_geojson(
                         site_geojson_file,
                         prediction_configuration,

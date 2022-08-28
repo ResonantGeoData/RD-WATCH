@@ -1,4 +1,4 @@
 from .server_status import ServerStatusSerializer
-from .site import SiteSerializer
+from .site_characterization import SiteCharacterizationSerializer
 
-__all__ = ["ServerStatusSerializer", "SiteSerializer"]
+__all__ = ["ServerStatusSerializer", "SiteCharacterizationSerializer"]

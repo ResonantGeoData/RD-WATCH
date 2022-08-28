@@ -1,7 +1,7 @@
 from django.contrib.gis.db import models
 
 
-class Site(models.Model):
+class SiteCharacterization(models.Model):
     ACTIVE_CONSTRUCTION = "AC"
     POST_CONSTRUCTION = "PC"
     SITE_PREPARATION = "SP"
@@ -12,7 +12,7 @@ class Site(models.Model):
     ]
     ground_truth = models.ForeignKey(
         "GroundTruth",
-        related_name="sites",
+        related_name="site_characterizations",
         on_delete=models.CASCADE,
         help_text="The ground truth associated with this site.",
     )

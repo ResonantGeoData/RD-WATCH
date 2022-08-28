@@ -1,5 +1,9 @@
 from .server_status import RetrieveServerStatus
-from .site import SiteViewSet
-from .site_tile import RetrieveSiteTile
+from .site_characterization import SiteCharacterizationViewSet
+from .site_characterization_tile import RetrieveSiteCharacterizationTile
 
-__all__ = ["RetrieveServerStatus", "SiteViewSet", "RetrieveSiteTile"]
+__all__ = [
+    "RetrieveServerStatus",
+    "SiteCharacterizationViewSet",
+    "RetrieveSiteCharacterizationTile",
+]

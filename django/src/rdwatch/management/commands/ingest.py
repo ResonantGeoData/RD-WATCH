@@ -328,9 +328,12 @@ def ingest(directory: Path):
                 tracks_process_info["properties"]["timestamp"][:-2],
                 "%Y-%m-%dT%H%M%S%z",
             )
+            tracking_slug = trackcfg.stem.split("_")[-1]
 
             tracking_configuration = TrackingConfiguration.objects.create(
-                timestamp=tracking_timestamp, threshold=tracking_threshold
+                slug=tracking_slug,
+                timestamp=tracking_timestamp,
+                threshold=tracking_threshold,
             )
 
             for site_geojson_file in (trackcfg / "tracked_sites").iterdir():

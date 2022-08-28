@@ -2,6 +2,7 @@ from django.contrib.gis.db import models
 
 
 class TrackingConfiguration(models.Model):
+    slug = models.SlugField(max_length=8)
     timestamp = models.DateTimeField(
         help_text="Time when evaluating this tracking configuration was finished"
     )
@@ -14,6 +15,7 @@ class TrackingConfiguration(models.Model):
 
     class Meta:
         indexes = [
+            models.Index(fields=["slug"]),
             models.Index(fields=["timestamp"]),
             models.Index(fields=["threshold"]),
         ]

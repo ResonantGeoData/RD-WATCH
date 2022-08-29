@@ -54,6 +54,8 @@ class CropParse:
             }
         ).transform(3857)
 
+    # TODO: use PEP-673's typing.Self for return type annotation
+    # once mypy supports it https://github.com/python/mypy/issues/11871
     @classmethod
     def from_string(cls, crop_string: str) -> CropParse:
         pattern = re.compile(

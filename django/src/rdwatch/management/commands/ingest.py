@@ -1,12 +1,12 @@
 import json
+import sys
 from datetime import datetime
 from pathlib import Path
 from typing import Iterable
 
-import djclick as click
-
 from django.contrib.gis.gdal import GDALRaster
 from django.contrib.gis.geos import GEOSGeometry, MultiPolygon, Polygon
+from django.core.management.base import BaseCommand
 from rdwatch.dataclasses import CropParse
 from rdwatch.models import (
     GroundTruth,
@@ -176,9 +176,9 @@ def _ingest_geojson(
             relative_filepath = str(
                 tif_filepath.relative_to(site_geojson_file.parents[4])
             )
-            click.echo(
-                message=f"WARNING: {relative_filepath} doesn't exist.",
-                err=True,
+            print(
+                f"WARNING: {relative_filepath} doesn't exist.",
+                file=sys.stderr,
             )
             continue
 
@@ -187,8 +187,7 @@ def _ingest_geojson(
 
         # Tile the saliency TIF into a series of smaller saliency tiles
         saliency_tiles: list[SaliencyTile] = [
-            SaliencyTile(raster=tile, saliency=saliency)
-            for tile in tile_raster(raster)
+            SaliencyTile(raster=tile, saliency=saliency) for tile in tile_raster(raster)
         ]
 
         SaliencyTile.objects.bulk_create(
@@ -209,57 +208,60 @@ def _ingest_geojson(
     return sites
 
 
-@click.command()
-@click.argument(
-    "directory", required=True, type=click.Path(exists=True, path_type=Path)
-)
-def ingest(directory: Path):
-    """
-    Ingests the WATCH format files located in the given directory.
+class Command(BaseCommand):
+    help = "Ingest WATCH data"
 
-    NOTE: DIRECTORY must be a valid file path to a kwcoco directory.
-    """
-    for pred in directory.iterdir():
-        if not pred.is_dir():
-            continue
+    def add_arguments(self, parser):
+        parser.add_argument(
+            "directory",
+            type=Path,
+            help="A valid file path to a kwcoco directory "
+            "containing the files to ingest.",
+        )
 
-        for trackcfg in (pred / "tracking").iterdir():
-            if not trackcfg.is_dir():
+    def handle(self, *args, **kwargs):
+        directory: Path = kwargs["directory"]
+        for pred in directory.iterdir():
+            if not pred.is_dir():
                 continue
 
-            tracks_json = json.loads((trackcfg / "tracks.json").read_text())
-            tracks_process_info = list(
-                filter(lambda t: t["type"] == "process", tracks_json["info"])
-            )[0]
+            for trackcfg in (pred / "tracking").iterdir():
+                if not trackcfg.is_dir():
+                    continue
 
-            prediction_timestamp = datetime.strptime(
-                tracks_process_info["properties"]["timestamp"][:-2],
-                "%Y-%m-%dT%H%M%S",
-            )
+                tracks_json = json.loads((trackcfg / "tracks.json").read_text())
+                tracks_process_info = list(
+                    filter(lambda t: t["type"] == "process", tracks_json["info"])
+                )[0]
 
-            prediction_configuration = PredictionConfiguration.objects.create(
-                timestamp=prediction_timestamp
-            )
-
-            tracking_threshold = json.loads(
-                tracks_process_info["properties"]["args"]["track_kwargs"]
-            )["thresh"]
-
-            tracking_timestamp = datetime.strptime(
-                tracks_process_info["properties"]["timestamp"][:-2],
-                "%Y-%m-%dT%H%M%S",
-            )
-
-            tracking_configuration = TrackingConfiguration.objects.create(
-                timestamp=tracking_timestamp, threshold=tracking_threshold
-            )
-
-            for site_geojson_file in (trackcfg / "tracked_sites").iterdir():
-                assert site_geojson_file.suffix == ".geojson"
-                Site.objects.bulk_create(
-                    _ingest_geojson(
-                        site_geojson_file,
-                        prediction_configuration,
-                        tracking_configuration,
-                    )
+                prediction_timestamp = datetime.strptime(
+                    tracks_process_info["properties"]["timestamp"][:-2],
+                    "%Y-%m-%dT%H%M%S",
                 )
+
+                prediction_configuration = PredictionConfiguration.objects.create(
+                    timestamp=prediction_timestamp
+                )
+
+                tracking_threshold = json.loads(
+                    tracks_process_info["properties"]["args"]["track_kwargs"]
+                )["thresh"]
+
+                tracking_timestamp = datetime.strptime(
+                    tracks_process_info["properties"]["timestamp"][:-2],
+                    "%Y-%m-%dT%H%M%S",
+                )
+
+                tracking_configuration = TrackingConfiguration.objects.create(
+                    timestamp=tracking_timestamp, threshold=tracking_threshold
+                )
+
+                for site_geojson_file in (trackcfg / "tracked_sites").iterdir():
+                    assert site_geojson_file.suffix == ".geojson"
+                    Site.objects.bulk_create(
+                        _ingest_geojson(
+                            site_geojson_file,
+                            prediction_configuration,
+                            tracking_configuration,
+                        )
+                    )

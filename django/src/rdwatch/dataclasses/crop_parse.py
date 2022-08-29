@@ -19,8 +19,8 @@ class CropParse:
 
     def open_raster(self, filepath: str | Path) -> GDALRaster:
         """
-        Open the raster at the given file path using the metadata from this CropParse and
-        return it as a GDALRaster.
+        Open the raster at the given file path using the metadata from this CropParse
+        and return it as a GDALRaster.
         """
         if isinstance(filepath, str):
             filepath = Path(filepath)

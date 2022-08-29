@@ -1,6 +1,15 @@
 from django.contrib.gis.db.models import PolygonField
 from django.contrib.postgres.fields import DecimalRangeField
-from django.db.models import Aggregate, BinaryField, Func, IntegerField
+from django.db.models import (
+    Aggregate,
+    BinaryField,
+    BooleanField,
+    FloatField,
+    Func,
+    IntegerField,
+    Q,
+    Value,
+)
 
 
 class RasterHeight(Func):
@@ -59,6 +68,65 @@ class RasterNumBands(Func):
 
     function = "ST_NumBands"
     output_field: IntegerField = IntegerField()
+
+
+class RasterTile(Func):
+    """Returns the raster tile at the specified ZXY."""
+
+    function = "ST_AsPNG"
+    output_field: BinaryField = BinaryField()
+
+    def __init__(self, field, z: int, x: int, y: int, filter=Q(), **extra):
+        tilesize = 512
+        envelope = Func(z, x, y, function="ST_TileEnvelope")
+
+        box = Func(envelope, function="Box2D")
+        xmin = Func(box, function="ST_XMin", output_field=FloatField())
+        xmax = Func(box, function="ST_XMax", output_field=FloatField())
+        ymin = Func(box, function="ST_YMin", output_field=FloatField())
+        ymax = Func(box, function="ST_YMax", output_field=FloatField())
+        xscale = (xmax - xmin) / tilesize
+        yscale = (ymax - ymin) / tilesize
+        empty_reference = Func(
+            tilesize,
+            tilesize,
+            xmin,
+            ymin,
+            xscale,
+            yscale,
+            0,
+            0,
+            3857,
+            function="ST_MakeEmptyRaster",
+        )
+        reference = Func(empty_reference, Value("1BB"), function="ST_AddBand")
+
+        union = Aggregate(
+            field,
+            function="ST_Union",
+            filter=(
+                filter
+                & Q(
+                    Func(
+                        field,
+                        envelope,
+                        function="ST_Intersects",
+                        output_field=BooleanField(),
+                    )
+                )
+            ),
+            **extra,
+        )
+        resampled = Func(union, empty_reference, function="ST_Resample")
+        tile = Func(
+            resampled,
+            reference,
+            Value("[rast1]"),
+            Value("16BUI"),
+            Value("SECOND"),
+            function="ST_MapAlgebra",
+        )
+        super().__init__(Func(tile, None, function="ST_SetBandNoDataValue"))
 
 
 class VectorTile(Aggregate):

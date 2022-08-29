@@ -3,11 +3,19 @@ from django.contrib.gis.db import models
 
 class Site(models.Model):
     ACTIVE_CONSTRUCTION = "AC"
-    SITE_PREPERATION = "SP"
+    POST_CONSTRUCTION = "PC"
+    SITE_PREPARATION = "SP"
     LABEL_CHOICES = [
         (ACTIVE_CONSTRUCTION, "Active Construction"),
-        (SITE_PREPERATION, "Site Preperation"),
+        (SITE_PREPARATION, "Site Preparation"),
+        (POST_CONSTRUCTION, "Post Construction"),
     ]
+    ground_truth = models.ForeignKey(
+        "GroundTruth",
+        related_name="sites",
+        on_delete=models.CASCADE,
+        help_text="The ground truth associated with this site.",
+    )
     configuration = models.ForeignKey(
         to="TrackingConfiguration",
         on_delete=models.CASCADE,

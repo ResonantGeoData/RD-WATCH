@@ -41,6 +41,7 @@ RUN echo "deb [signed-by=/usr/share/keyrings/nodesource.gpg] http://deb.nodesour
  && apt-get install --no-install-recommends --yes \
       build-essential \
       git \
+      libgdal-dev \
       libpq-dev \
       nodejs \
       python3-cachecontrol \

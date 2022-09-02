@@ -20,6 +20,7 @@
   },
   "dependencies": {
     "@heroicons/vue": "^1.0.6",
+    "inter-ui": "^3.19.3",
     "maplibre-gl": "^2.1.9",
     "vue": "^3.2.37"
   },

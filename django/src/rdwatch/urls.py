@@ -1,12 +1,7 @@
-from django.urls import include, path
+from django.urls import path
 from rdwatch import views
 from rest_framework.renderers import CoreJSONRenderer
-from rest_framework.routers import DefaultRouter
 from rest_framework.schemas import get_schema_view
-
-# Create a router and register our viewsets with it.
-router = DefaultRouter()
-router.register(r"site-observation", views.SiteObservationViewSet)
 
 urlpatterns = [
     path(
@@ -19,14 +14,24 @@ urlpatterns = [
         ),
         name="openapi-schema",
     ),
-    path("status", views.RetrieveServerStatus.as_view()),
+    path("status/", views.RetrieveServerStatus.as_view()),  # type: ignore
+    path("site/", views.site_evaluations),
+    path("site/<int:pk>/", views.site_observations),
     path(
-        "site-observation/<int:pk>/tiles/<int:z>/<int:x>/<int:y>",
-        views.RetrieveSiteObservationTile.as_view(),
+        "site/tile/<int:z>/<int:x>/<int:y>.pbf",
+        views.site_evaluation_vector_tile,
     ),
     path(
-        "saliency/<int:pk>/tiles/<int:z>/<int:x>/<int:y>",
-        views.RetrieveSaliencyTile.as_view(),
+        "site/<int:pk>/tile/<int:z>/<int:x>/<int:y>.pbf",
+        views.site_observation_vector_tile,
     ),
-    path("", include(router.urls)),
+    path(
+        "satellite-image/tile/<int:z>/<int:x>/<int:y>.webp",
+        views.satelliteimage_raster_redirect,
+    ),
+    path(
+        "satellite-image/<int:pk>/tile/<int:z>/<int:x>/<int:y>.webp",
+        views.satelliteimage_raster_tile,
+        name="satellite-tiles",
+    ),
 ]

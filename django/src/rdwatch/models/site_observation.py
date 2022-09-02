@@ -1,65 +1,64 @@
-from django.contrib.gis.db import models
+from django.contrib.gis.db.models import MultiPolygonField
+from django.contrib.postgres.indexes import GistIndex
+from django.db import models
 
 
 class SiteObservation(models.Model):
-    ACTIVE_CONSTRUCTION = "AC"
-    POST_CONSTRUCTION = "PC"
-    SITE_PREPARATION = "SP"
-    LABEL_CHOICES = [
-        (ACTIVE_CONSTRUCTION, "Active Construction"),
-        (SITE_PREPARATION, "Site Preparation"),
-        (POST_CONSTRUCTION, "Post Construction"),
-    ]
-    site = models.ForeignKey(
-        to="Site",
-        related_name="observations",
+    siteeval = models.ForeignKey(
+        to="SiteEvaluation",
         on_delete=models.CASCADE,
-        help_text="The site associated with this observation.",
+        help_text="The site evaluation associated with this observation.",
+        db_index=True,
     )
-    configuration = models.ForeignKey(
-        to="TrackingConfiguration",
-        on_delete=models.CASCADE,
-        help_text="The tracking configuration this site was evaluated with",
-    )
-    saliency = models.ForeignKey(
-        to="Saliency",
-        on_delete=models.CASCADE,
-        help_text="The saliency raster that was used to classify this site observation",
-    )
-    label = models.CharField(
-        max_length=2,
-        choices=LABEL_CHOICES,
+    label = models.ForeignKey(
+        to="ObservationLabel",
+        on_delete=models.PROTECT,
         help_text="Site observation classification label",
+        db_index=True,
     )
     score = models.FloatField(
         help_text="Evaluation accuracy",
     )
-    geometry = models.MultiPolygonField(
+    geom = MultiPolygonField(
         help_text="Footprint of site observation",
         srid=3857,
+        spatial_index=True,
     )
-    band = models.CharField(
-        max_length=20,
-        help_text="The satellite imagery band used to refine this observation",
+    constellation = models.ForeignKey(
+        to="Constellation",
+        on_delete=models.PROTECT,
+        help_text="The source image's satellite constellation",
+        db_index=True,
+    )
+    spectrum = models.ForeignKey(
+        to="CommonBand",
+        on_delete=models.PROTECT,
+        help_text="The source image's satellite spectrum",
+        db_index=True,
+    )
+    timestamp = models.DateTimeField(
+        help_text="The source image's timestamp",
     )
 
     def __str__(self):
-        return f"Site:{self.pk}"
+        sit = str(self.siteeval)
+        lbl = str(self.label).upper()
+        tim = self.timestamp.isoformat()
+        return f"{sit}[{lbl}@{tim}]"
 
     class Meta:
-        indexes = [
-            models.Index(fields=["configuration"]),
-            models.Index(fields=["saliency"]),
-            models.Index(fields=["label"]),
-            models.Index(fields=["score"]),
-            models.Index(fields=["geometry"]),
-        ]
+        default_related_name = "observations"
+        indexes = [GistIndex(fields=["timestamp"]), GistIndex(fields=["score"])]
         constraints = [
             models.UniqueConstraint(
-                name="unique_configuration_saliency_label",
-                fields=["site", "configuration", "saliency", "label", "score", "band"],
+                name="uniq_siteobv",
+                fields=[
+                    "siteeval",
+                    "timestamp",
+                ],
                 violation_error_message=(  # type: ignore
-                    "Unique constraint invalid. Add polygons to existing site."
+                    "Unique constraint invalid. "
+                    "Add polygons to existing site observation."
                 ),
             ),
         ]

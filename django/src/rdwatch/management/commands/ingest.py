@@ -1,353 +1,313 @@
+import json
 import re
+from concurrent import futures
 from dataclasses import dataclass
 from datetime import datetime
+from functools import lru_cache
 from pathlib import Path
 from typing import Iterable
 
-import djclick as click  # type: ignore
-import orjson
+import iso3166
 
-from django.contrib.gis.gdal import GDALRaster
-from django.contrib.gis.geos import GEOSGeometry, MultiPolygon, Polygon
+from django.contrib.gis.geos import GEOSGeometry, Polygon
+from django.core.management.base import BaseCommand
 from rdwatch.models import (
-    PredictionConfiguration,
-    Saliency,
-    SaliencyTile,
+    HyperParameters,
+    Region,
     SatelliteImage,
-    Site,
+    SiteEvaluation,
     SiteObservation,
-    TrackingConfiguration,
+    lookups,
 )
-
-label_mapping = {
-    "Active Construction": SiteObservation.ACTIVE_CONSTRUCTION,
-    "Post Construction": SiteObservation.POST_CONSTRUCTION,
-    "Site Preparation": SiteObservation.SITE_PREPARATION,
-}
+from rdwatch.utils.satellite_bands import Band, get_bands
 
 
-@dataclass
+@lru_cache
+def get_constellation(slug: str) -> lookups.Constellation:
+    return lookups.Constellation.objects.get(slug=slug)
+
+
+@lru_cache
+def get_commonband(slug: str) -> lookups.CommonBand | None:
+    if slug == "salient":
+        return None
+    return lookups.CommonBand.objects.get(slug=slug)
+
+
+@lru_cache
+def get_performer(slug: str) -> lookups.Performer:
+    return lookups.Performer.objects.get(slug=slug)
+
+
+@lru_cache
+def get_regionclassification(slug: str) -> lookups.RegionClassification:
+    return lookups.RegionClassification.objects.get(slug=slug)
+
+
+@lru_cache
+def get_label(slug: str) -> lookups.ObservationLabel:
+    return lookups.ObservationLabel.objects.get(slug=slug)
+
+
+@dataclass(frozen=True)
 class CropParse:
     xmin: float
     ymin: float
     xmax: float
     ymax: float
     timestamp: datetime
-    sensor: str
-    band: str
+    constellation: lookups.Constellation
+    spectrum: lookups.CommonBand | None
 
-    def open_raster(self, filepath: str | Path) -> GDALRaster:
-        """
-        Open the raster at the given file path using the metadata from this CropParse
-        and return it as a GDALRaster.
-        """
-        if isinstance(filepath, str):
-            filepath = Path(filepath)
-
-        with open(filepath, "rb") as f:
-            rst = GDALRaster(f.read())
-
-        if not len(rst.bands) == 1:
-            raise ValueError("Expected single-band raster")
-
-        bnd = rst.bands[0]
-
-        return GDALRaster(
-            {
-                "width": bnd.width,
-                "height": bnd.height,
-                "scale": [
-                    (self.xmax - self.xmin) / bnd.width,
-                    (self.ymax - self.ymin) / bnd.height,
-                ],
-                "origin": [self.xmin, self.ymin],
-                "skew": [0, 0],
-                "srid": 4326,
-                "datatype": bnd.datatype(),
-                "bands": [
-                    {
-                        "data": bnd.data(),
-                        "nodata_value": bnd.nodata_value,
-                    }
-                ],
-            }
-        ).transform(3857)
-
-    @classmethod
-    def from_string(cls, crop_string: str) -> "CropParse":
-        pattern = re.compile(
-            r"""
-                ^crop_
-                (?P<timestamp>\d+T\d+Z)_
-                (?P<ymin_dir>[NS])(?P<ymin>\d+\.\d+)
-                (?P<xmin_dir>[EW])(?P<xmin>\d+\.\d+)_
-                (?P<ymax_dir>[NS])(?P<ymax>\d+\.\d+)
-                (?P<xmax_dir>[EW])(?P<xmax>\d+\.\d+)_
-                (?P<sensor>(?:L8) | (?:S2))_0_
-                (?P<band>\w+)
-                \.tif$
-            """,
-            re.X,
-        )
-        match = pattern.match(crop_string)
-        if not match:
-            raise TypeError("Invalid crop string")
-
-        return cls(
-            xmin=_latlong_str_to_float(match["xmin_dir"], match["xmin"]),
-            ymin=_latlong_str_to_float(match["ymin_dir"], match["ymin"]),
-            xmax=_latlong_str_to_float(match["xmax_dir"], match["xmax"]),
-            ymax=_latlong_str_to_float(match["ymax_dir"], match["ymax"]),
-            timestamp=datetime.strptime(match["timestamp"], "%Y%m%dT%H%M%SZ"),
-            sensor=match["sensor"],
-            band=match["band"],
-        )
+    @property
+    def bbox(self):
+        return (self.xmin, self.ymin, self.xmax, self.ymax)
 
 
-def _latlong_str_to_float(direction: str, latlong_str: str) -> float:
-    latlong = float(latlong_str)
-    if direction in ("W", "S"):
-        latlong *= -1
-    return latlong
+def get_cropparse(crop_string: str) -> CropParse:
+    pattern = re.compile(
+        r"""
+            ^crop_
+            (?P<timestamp>\d+T\d+Z)_
+            (?P<ymin_dir>[NS])(?P<ymin>\d+\.\d+)
+            (?P<xmin_dir>[EW])(?P<xmin>\d+\.\d+)_
+            (?P<ymax_dir>[NS])(?P<ymax>\d+\.\d+)
+            (?P<xmax_dir>[EW])(?P<xmax>\d+\.\d+)_
+            (?P<constellation>(?:L8) | (?:S2))_0_
+            (?P<spectrum>\w+)
+            \.tif$
+        """,
+        re.X,
+    )
+    match = pattern.match(crop_string)
+    if not match:
+        raise ValueError("Invalid crop string")
 
+    def _latlong(direction: str, latlong_str: str) -> float:
+        latlong = float(latlong_str)
+        if direction in ("W", "S"):
+            latlong *= -1
+        return latlong
 
-def open_raster(fn: str) -> GDALRaster:
-    path = Path(fn)
-
-    with open(path, "rb") as f:
-        rst = GDALRaster(f.read())
-
-    if not len(rst.bands) == 1:
-        raise ValueError("Expected single-band raster")
-
-    bnd = rst.bands[0]
-    info = CropParse.from_string(path.name)
-
-    return GDALRaster(
-        {
-            "width": bnd.width,
-            "height": bnd.height,
-            "scale": [
-                (info.xmax - info.xmin) / bnd.width,
-                (info.ymax - info.ymin) / bnd.height,
-            ],
-            "origin": [info.xmin, info.ymin],
-            "skew": [0, 0],
-            "srid": 4326,
-            "datatype": bnd.datatype(),
-            "bands": [
-                {
-                    "data": bnd.data(),
-                    "nodata_value": bnd.nodata_value,
-                }
-            ],
-        }
-    ).transform(3857)
-
-
-def tile_raster(rst: GDALRaster) -> Iterable[GDALRaster]:
-    if not len(rst.bands) == 1:
-        raise ValueError("Expected single-band raster")
-    if not rst.srid == 3857:
-        raise ValueError("Expected raster projected to SRID 3857")
-
-    bnd = rst.bands[0]
-    tilesize = 64
-
-    for xoffset in range(0, bnd.width, tilesize):
-        for yoffset in range(0, bnd.height, tilesize):
-            size = (
-                tilesize if xoffset + tilesize <= rst.width else rst.width - xoffset,
-                tilesize if yoffset + tilesize <= rst.height else rst.height - yoffset,
-            )
-            data = bnd.data(
-                offset=(xoffset, yoffset),
-                size=size,
-            )
-            yield GDALRaster(
-                {
-                    "width": tilesize,
-                    "height": tilesize,
-                    "scale": rst.scale,
-                    "origin": [
-                        rst.origin.x + xoffset * rst.scale.x,
-                        rst.origin.y + yoffset * rst.scale.y,
-                    ],
-                    "skew": rst.skew,
-                    "srid": rst.srid,
-                    "nr_of_bands": 1,
-                    "datatype": bnd.datatype(),
-                    "bands": [
-                        {
-                            "data": data,
-                            "size": size,
-                            "nodata_value": bnd.nodata_value,
-                        }
-                    ],
-                }
-            )
-
-
-def _ingest_geojson(
-    site_geojson_file: Path,
-    prediction_configuration: PredictionConfiguration,
-    tracking_configuration: TrackingConfiguration,
-) -> Iterable[SiteObservation]:
-    """
-    Ingest the geojson file at the given path into the Site model,
-    creating all SiteObservation instances.
-    """
-    site_observation_geojson = orjson.loads(site_geojson_file.read_bytes())
-    site_json = site_observation_geojson["features"][0]
-    site_geometry = GEOSGeometry(orjson.dumps(site_json["geometry"]))
-    site, _ = Site.objects.get_or_create(
-        geometry=site_geometry,
-        score=site_json["properties"]["score"],
+    return CropParse(
+        xmin=_latlong(match["xmin_dir"], match["xmin"]),
+        ymin=_latlong(match["ymin_dir"], match["ymin"]),
+        xmax=_latlong(match["xmax_dir"], match["xmax"]),
+        ymax=_latlong(match["ymax_dir"], match["ymax"]),
+        timestamp=datetime.strptime(
+            match["timestamp"][:-1] + "+0000",
+            "%Y%m%dT%H%M%S%z",
+        ),
+        constellation=get_constellation(match["constellation"]),
+        spectrum=get_commonband(match["spectrum"]),
     )
 
-    # Ingest each site observation in the geojson
-    for site_observation_json in site_observation_geojson["features"][1:]:
-        properties: dict = site_observation_json["properties"]
-        label = label_mapping[properties["current_phase"]]
-        score = properties["score"]
-        geometry = GEOSGeometry(orjson.dumps(site_observation_json["geometry"]))
-        crop_path = Path(properties["source"])
-        crop_string = crop_path.name
-        crop_parse = CropParse.from_string(crop_string)
-        sensor_name = crop_parse.sensor
-        satellite_timestamp = crop_parse.timestamp
-        tif_filepath = (
-            site_geojson_file.parents[3]
-            / "_assets"
-            / "pred_saliency"
-            / f"{crop_path.parent.name}_salient.tif"
-        )
-        satellite_image, satellite_image_created = SatelliteImage.objects.get_or_create(
-            sensor=sensor_name,
-            timestamp=satellite_timestamp,
-        )
-        saliency, saliency_created = Saliency.objects.get_or_create(
-            configuration=prediction_configuration,
-            source=satellite_image,
-        )
-        # TODO: not sure why some crop strings don't have
-        # a corresponding saliency TIF; there's quite a few in
-        # the sample data that don't. If one is encountered,
-        # just skip it and move on to the next raster.
-        if saliency_created:
-            if not tif_filepath.exists():
-                relative_filepath = str(
-                    tif_filepath.relative_to(site_geojson_file.parents[4])
-                )
-                click.echo(message=f"WARNING: {relative_filepath} doesn't exist.")
-                Saliency.objects.filter(pk=saliency.pk).delete()
-                if satellite_image_created:
-                    SatelliteImage.objects.filter(pk=satellite_image.pk).delete()
-                continue
-            raster = crop_parse.open_raster(tif_filepath)
-            saliency_tiles: Iterable[SaliencyTile] = (
-                SaliencyTile(raster=tile, saliency=saliency)
-                for tile in tile_raster(raster)
-            )
-            SaliencyTile.objects.bulk_create(
-                saliency_tiles,
-                ignore_conflicts=True,
-            )
-        yield SiteObservation(
-            site=site,
-            configuration=tracking_configuration,
-            label=label,
-            score=score,
-            geometry=geometry,
-            saliency=saliency,
-            band=crop_parse.band,
-        )
+
+@dataclass(frozen=True)
+class KWCOCOParse:
+    code: str
+    timestamp: datetime
+    threshold: float | None
 
 
-@click.command()
-@click.argument(
-    "directory", required=True, type=click.Path(exists=True, path_type=Path)
-)
-def ingest(directory: Path):
-    """
-    Ingests the WATCH format files located in the given directory.
+def get_kwcocoparse(kwcoco_file: Path, process: str) -> KWCOCOParse:
+    code = kwcoco_file.parent.name.split("_")[-1]
 
-    NOTE: DIRECTORY must be a valid file path to a kwcoco directory.
-    """
+    kwcoco = json.loads(kwcoco_file.read_text())
+    kwcoco_info: list = kwcoco["info"]
+    proc = next(
+        filter(
+            lambda t: t["properties"]["name"] == process,
+            kwcoco_info,
+        )
+    )
 
-    for pred in directory.iterdir():
-        if not pred.is_dir():
+    raw_timestr = proc["properties"]["timestamp"]
+    fixed_timestr = raw_timestr[:-1] + raw_timestr[-1].zfill(2) + "00"
+    timestamp = datetime.strptime(
+        fixed_timestr,
+        "%Y-%m-%dT%H%M%S%z",
+    )
+
+    match proc:
+        case {"properties": {"args": {"track_kwargs": track_kwargs_str}}}:
+            track_kwargs = json.loads(track_kwargs_str)
+            threshold = track_kwargs["thresh"]
+        case _:
+            threshold = None
+
+    return KWCOCOParse(
+        code=code,
+        timestamp=timestamp,
+        threshold=threshold,
+    )
+
+
+def iterkwcoco(
+    root: Path,
+    kwcoco_file_name: str,
+    kwcoco_process_name: str,
+) -> Iterable[tuple[KWCOCOParse, Path]]:
+    for kwcoco_dir in root.iterdir():
+        kwcoco_file = kwcoco_dir / kwcoco_file_name
+        if not kwcoco_file.exists():
             continue
-
-        prediction_json_file = pred / "pred.kwcoco.json"
-
-        if not prediction_json_file.exists():
-            click.echo(message=f"WARNING: {prediction_json_file} doesn't exist.")
-            continue
-
-        prediction_json = orjson.loads(
-            (pred / "pred.kwcoco.json")
-            .read_bytes()
-            .replace("NaN".encode("utf-8"), "null".encode("utf-8"))
+        kwcoco = get_kwcocoparse(
+            kwcoco_file,
+            kwcoco_process_name,
         )
-        prediction_process_info = prediction_json["info"][1]
+        yield kwcoco, kwcoco_dir
 
-        assert (
-            prediction_process_info["properties"]["name"]
-            == "watch.tasks.fusion.predict"
+
+class Command(BaseCommand):
+    help = "Ingest KWCOCO directory"
+
+    def add_arguments(self, parser):
+        parser.add_argument(
+            "directory",
+            type=Path,
+            help="A KWCOCO direcotry",
         )
 
-        timestamp_str = prediction_process_info["properties"]["timestamp"]
-        prediction_timestamp_str = (
-            timestamp_str[:-1] + timestamp_str[-1].zfill(2) + "00"
-        )
+    def handle(self, *args, **options):
+        directory: Path = options["directory"]
 
-        prediction_timestamp = datetime.strptime(
-            prediction_timestamp_str,
-            "%Y-%m-%dT%H%M%S%z",
-        )
-        prediction_slug = pred.stem.split("_")[-1]
-        prediction_configuration, _ = PredictionConfiguration.objects.get_or_create(
-            slug=prediction_slug,
-            timestamp=prediction_timestamp,
-        )
+        siteevals: list[SiteEvaluation] = []
+        regions: dict[str, Region] = {}
+        hyperparams: dict[tuple[str, str, float], HyperParameters] = {}
+        siteobservations: list[SiteObservation] = []
+        stacsearches: set[
+            tuple[
+                lookups.Constellation,
+                datetime,
+                tuple[float, float, float, float],
+            ]
+        ] = set()
+        satimgs: list[SatelliteImage] = []
 
-        for trackcfg in (pred / "tracking").iterdir():
-            if not trackcfg.is_dir():
-                continue
-
-            tracks_json = orjson.loads((trackcfg / "tracks.json").read_bytes())
-            tracks_process_info = list(
-                filter(lambda t: t["type"] == "process", tracks_json["info"])
-            )[0]
-
-            tracking_threshold = orjson.loads(
-                tracks_process_info["properties"]["args"]["track_kwargs"]
-            )["thresh"]
-            timestamp_str = tracks_process_info["properties"]["timestamp"]
-            tracking_timestamp_str = (
-                timestamp_str[:-1] + timestamp_str[-1].zfill(2) + "00"
-            )
-
-            tracking_timestamp = datetime.strptime(
-                tracking_timestamp_str,
-                "%Y-%m-%dT%H%M%S%z",
-            )
-            tracking_timestamp.utcoffset
-            tracking_slug = trackcfg.name.split("_")[-1]
-            tracking_configuration, _ = TrackingConfiguration.objects.get_or_create(
-                slug=tracking_slug,
-                timestamp=tracking_timestamp,
-                threshold=tracking_threshold,
-            )
-
-            for site_geojson_file in (trackcfg / "tracked_sites").iterdir():
-                assert site_geojson_file.suffix == ".geojson"
-                SiteObservation.objects.bulk_create(
-                    _ingest_geojson(
-                        site_geojson_file,
-                        prediction_configuration,
-                        tracking_configuration,
-                    ),
-                    ignore_conflicts=True,
+        for predcfg_kwcoco, predcfg_dir in iterkwcoco(
+            root=directory,
+            kwcoco_file_name="pred.kwcoco.json",
+            kwcoco_process_name="watch.tasks.fusion.predict",
+        ):
+            for trackcfg_kwcoco, trackcfg_dir in iterkwcoco(
+                root=(predcfg_dir / "tracking"),
+                kwcoco_file_name="tracks.json",
+                kwcoco_process_name="watch.cli.kwcoco_to_geojson",
+            ):
+                cfg_key = (
+                    predcfg_kwcoco.code,
+                    trackcfg_kwcoco.code,
+                    trackcfg_kwcoco.threshold,
                 )
+                if cfg_key not in hyperparams:
+                    cfg = HyperParameters(
+                        performer=get_performer("KIT"),
+                        parameters={
+                            "predcfg": predcfg_kwcoco.code,
+                            "trackcfg": trackcfg_kwcoco.code,
+                            "thresh": trackcfg_kwcoco.threshold,
+                        },
+                    )
+                    hyperparams[cfg_key] = cfg  # type: ignore
+                else:
+                    cfg = hyperparams[cfg_key]
+
+                for geojson_file in (trackcfg_dir / "tracked_sites").iterdir():
+                    geojson = json.loads(geojson_file.read_text())
+                    site_json = geojson["features"][0]
+                    region_str = site_json["properties"]["region_id"]
+
+                    if region_str not in regions:
+                        countrystr, numstr = region_str.split("_")
+                        contrynum = iso3166.countries_by_alpha2[countrystr].numeric
+                        region = Region(
+                            country=int(contrynum),
+                            classification=get_regionclassification(numstr[0]),
+                            number=int(numstr[1:]),
+                        )
+                        regions[region_str] = region
+                    else:
+                        region = regions[region_str]
+
+                    siteeval = SiteEvaluation(
+                        configuration=cfg,
+                        region=region,
+                        number=int(site_json["properties"]["site_id"][8:]),
+                        timestamp=max(
+                            predcfg_kwcoco.timestamp,
+                            trackcfg_kwcoco.timestamp,
+                        ),
+                        geom=GEOSGeometry(json.dumps(site_json["geometry"])),
+                        score=site_json["properties"]["score"],
+                    )
+                    siteevals.append(siteeval)
+
+                    for feature in geojson["features"][1:]:
+                        properties = feature["properties"]
+                        crop_path = Path(properties["source"])
+                        crop_parse = get_cropparse(crop_path.name)
+                        geom = GEOSGeometry(json.dumps(feature["geometry"]))
+                        geom.srid = 4326
+                        geom.transform(3857)
+
+                        siteobservations.append(
+                            SiteObservation(
+                                siteeval=siteeval,
+                                label=get_label(
+                                    ("_")
+                                    .join(properties["current_phase"].split(" "))
+                                    .lower()
+                                ),
+                                score=properties["score"],
+                                geom=geom,
+                                constellation=crop_parse.constellation,
+                                spectrum=crop_parse.spectrum,
+                                timestamp=crop_parse.timestamp,
+                            )
+                        )
+                        stacsearches.add(
+                            (
+                                crop_parse.constellation,
+                                crop_parse.timestamp,
+                                crop_parse.bbox,
+                            )
+                        )
+
+        stacbands: set[Band] = set()
+
+        def addbands(args):
+            for band in get_bands(*args):
+                stacbands.add(band)
+
+        with futures.ThreadPoolExecutor(max_workers=100) as executor:
+            jobs = (
+                executor.submit(addbands, stacsearch) for stacsearch in stacsearches
+            )
+            for _ in futures.as_completed(jobs):
+                ...
+
+        for stacband in stacbands:
+            bbox: Polygon = Polygon.from_bbox(stacband.bbox)
+            bbox.srid = 4326
+            bbox.transform(3857)
+
+            satimgs.append(
+                SatelliteImage(
+                    constellation=stacband.constellation,
+                    spectrum=stacband.spectrum,
+                    level=stacband.level,
+                    timestamp=stacband.timestamp,
+                    bbox=bbox,
+                    uri=stacband.uri,
+                )
+            )
+
+        # insert cogs first, duplicate jp2 images will be skipped upon insert
+        satimgs.sort(key=(lambda satimg: 2 if satimg.uri.endswith("jp2") else 1))
+
+        Region.objects.bulk_create(regions.values())
+        HyperParameters.objects.bulk_create(hyperparams.values())
+        SiteEvaluation.objects.bulk_create(siteevals)
+        SiteObservation.objects.bulk_create(siteobservations)
+        SatelliteImage.objects.bulk_create(satimgs, ignore_conflicts=True)

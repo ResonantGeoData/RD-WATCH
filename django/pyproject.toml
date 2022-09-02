@@ -28,9 +28,8 @@ djangorestframework = "~3.13.1"
 psycopg2 = "~2.9.3"
 redis = { version = "~4.3.4", extras = [ "hiredis" ] }
 uritemplate = "^4.1.1"
-django-click = "^2.3.0"
-numpy = "^1.23.2"
-orjson = "^3.8.0"
+iso3166 = "^2.1.1"
+rio-tiler = "^3.1.6"
 
 [tool.poetry.dev-dependencies]
 black = "~22.6.0"

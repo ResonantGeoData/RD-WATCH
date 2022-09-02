@@ -1,4 +1,8 @@
 from .server_status import ServerStatusSerializer
-from .site_observation import SiteObservationSerializer
+from .site import SiteEvaluationSerializer, SiteObservationSerializer
 
-__all__ = ["ServerStatusSerializer", "SiteObservationSerializer"]
+__all__ = [
+    "ServerStatusSerializer",
+    "SiteEvaluationSerializer",
+    "SiteObservationSerializer",
+]

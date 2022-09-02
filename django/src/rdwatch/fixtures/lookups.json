@@ -1,0 +1,317 @@
+[
+  {
+    "model": "rdwatch.commonband",
+    "pk": 1,
+    "fields": {
+      "slug": "coastal",
+      "description": "coastal aerosol (deep blues and violets)",
+      "spectrum": [0.4, 0.45]
+    }
+  },
+  {
+    "model": "rdwatch.commonband",
+    "pk": 2,
+    "fields": {
+      "slug": "blue",
+      "description": "blue",
+      "spectrum": [0.45, 0.5]
+    }
+  },
+  {
+    "model": "rdwatch.commonband",
+    "pk": 3,
+    "fields": {
+      "slug": "green",
+      "description": "green",
+      "spectrum": [0.5, 0.6]
+    }
+  },
+  {
+    "model": "rdwatch.commonband",
+    "pk": 4,
+    "fields": {
+      "slug": "red",
+      "description": "red",
+      "spectrum": [0.6, 0.7]
+    }
+  },
+  {
+    "model": "rdwatch.commonband",
+    "pk": 5,
+    "fields": {
+      "slug": "yellow",
+      "description": "yellow",
+      "spectrum": [0.58, 0.62]
+    }
+  },
+  {
+    "model": "rdwatch.commonband",
+    "pk": 6,
+    "fields": {
+      "slug": "pan",
+      "description": "panchromatic",
+      "spectrum": [0.5, 0.7]
+    }
+  },
+  {
+    "model": "rdwatch.commonband",
+    "pk": 7,
+    "fields": {
+      "slug": "rededge",
+      "description": "vegetation red edge",
+      "spectrum": [0.7, 0.79]
+    }
+  },
+  {
+    "model": "rdwatch.commonband",
+    "pk": 8,
+    "fields": {
+      "slug": "rededge070",
+      "description": "vegetation red edge (lower narrow band)",
+      "spectrum": [0.7, 0.71]
+    }
+  },
+  {
+    "model": "rdwatch.commonband",
+    "pk": 9,
+    "fields": {
+      "slug": "rededge074",
+      "description": "vegetation red edge (middle narrow band)",
+      "spectrum": [0.73, 0.75]
+    }
+  },
+  {
+    "model": "rdwatch.commonband",
+    "pk": 10,
+    "fields": {
+      "slug": "rededge078",
+      "description": "vegetation red edge (upper narrow band)",
+      "spectrum": [0.77, 0.79]
+    }
+  },
+  {
+    "model": "rdwatch.commonband",
+    "pk": 11,
+    "fields": {
+      "slug": "nir",
+      "description": "near infared",
+      "spectrum": [0.75, 1.0]
+    }
+  },
+  {
+    "model": "rdwatch.commonband",
+    "pk": 12,
+    "fields": {
+      "slug": "nir08",
+      "description": "near infared (lower narrow band)",
+      "spectrum": [0.75, 0.9]
+    }
+  },
+  {
+    "model": "rdwatch.commonband",
+    "pk": 13,
+    "fields": {
+      "slug": "nir09",
+      "description": "near infrared (upper narrow band)",
+      "spectrum": [0.85, 1.05]
+    }
+  },
+  {
+    "model": "rdwatch.commonband",
+    "pk": 14,
+    "fields": {
+      "slug": "cirrus",
+      "description": "short-wave thermal infrared (cirrus clouds)",
+      "spectrum": [1.35, 1.4]
+    }
+  },
+  {
+    "model": "rdwatch.commonband",
+    "pk": 15,
+    "fields": {
+      "slug": "swir16",
+      "description": "short-wave thermal infrared (lower narrow band)",
+      "spectrum": [1.55, 1.75]
+    }
+  },
+  {
+    "model": "rdwatch.commonband",
+    "pk": 16,
+    "fields": {
+      "slug": "swir22",
+      "description": "short-wave thermal infrared (upper narrow band)",
+      "spectrum": [2.1, 2.3]
+    }
+  },
+  {
+    "model": "rdwatch.commonband",
+    "pk": 17,
+    "fields": {
+      "slug": "lwir",
+      "description": "long-wave thermal infrared",
+      "spectrum": [10.5, 12.5]
+    }
+  },
+  {
+    "model": "rdwatch.commonband",
+    "pk": 18,
+    "fields": {
+      "slug": "lwir11",
+      "description": "long-wave thermal infrared (narrow band)",
+      "spectrum": [10.5, 11.5]
+    }
+  },
+  {
+    "model": "rdwatch.commonband",
+    "pk": 19,
+    "fields": {
+      "slug": "lwir12",
+      "description": "long-wave thermal infrared (narrow band)",
+      "spectrum": [11.5, 12.5]
+    }
+  },
+  {
+    "model": "rdwatch.constellation",
+    "pk": 1,
+    "fields": {
+      "slug": "L8",
+      "description": "Landsat 8"
+    }
+  },
+  {
+    "model": "rdwatch.constellation",
+    "pk": 2,
+    "fields": {
+      "slug": "S2",
+      "description": "Sentinel 2"
+    }
+  },
+  {
+    "model": "rdwatch.observationlabel",
+    "pk": 1,
+    "fields": {
+      "slug": "active_construction",
+      "description": "active construction"
+    }
+  },
+  {
+    "model": "rdwatch.observationlabel",
+    "pk": 2,
+    "fields": {
+      "slug": "post_construction",
+      "description": "post construction"
+    }
+  },
+  {
+    "model": "rdwatch.observationlabel",
+    "pk": 3,
+    "fields": {
+      "slug": "site_preparation",
+      "description": "site preparation"
+    }
+  },
+  {
+    "model": "rdwatch.performer",
+    "pk": 1,
+    "fields": {
+      "slug": "TE",
+      "description": "Test and Evaluation Team"
+    }
+  },
+  {
+    "model": "rdwatch.performer",
+    "pk": 2,
+    "fields": {
+      "slug": "ACC",
+      "description": "Accenture"
+    }
+  },
+  {
+    "model": "rdwatch.performer",
+    "pk": 3,
+    "fields": {
+      "slug": "ARA",
+      "description": "ARA"
+    }
+  },
+  {
+    "model": "rdwatch.performer",
+    "pk": 4,
+    "fields": {
+      "slug": "AST",
+      "description": "Astra"
+    }
+  },
+  {
+    "model": "rdwatch.performer",
+    "pk": 5,
+    "fields": {
+      "slug": "BLA",
+      "description": "BlackSky"
+    }
+  },
+  {
+    "model": "rdwatch.performer",
+    "pk": 6,
+    "fields": {
+      "slug": "IAI",
+      "description": "IAI"
+    }
+  },
+  {
+    "model": "rdwatch.performer",
+    "pk": 7,
+    "fields": {
+      "slug": "KIT",
+      "description": "Kitware"
+    }
+  },
+  {
+    "model": "rdwatch.performer",
+    "pk": 8,
+    "fields": {
+      "slug": "STR",
+      "description": "STR"
+    }
+  },
+  {
+    "model": "rdwatch.processinglevel",
+    "pk": 1,
+    "fields": {
+      "slug": "1C",
+      "description": "top of atmosphere radiance"
+    }
+  },
+  {
+    "model": "rdwatch.processinglevel",
+    "pk": 2,
+    "fields": {
+      "slug": "2A",
+      "description": "surface reflectance"
+    }
+  },
+  {
+    "model": "rdwatch.regionclassification",
+    "pk": 1,
+    "fields": {
+      "slug": "R",
+      "description": "standard region identifier"
+    }
+  },
+  {
+    "model": "rdwatch.regionclassification",
+    "pk": 2,
+    "fields": {
+      "slug": "C",
+      "description": "a proposal by anyone for 'coarse' annotation"
+    }
+  },
+  {
+    "model": "rdwatch.regionclassification",
+    "pk": 3,
+    "fields": {
+      "slug": "S",
+      "description": "a 'super-region', which will contain one or more 'standard' or 'coarse' regions"
+    }
+  }
+]

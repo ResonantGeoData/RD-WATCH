@@ -1,31 +1,61 @@
-from django.contrib.gis.db.models.functions import AsGeoJSON, Envelope, Transform
-from django.http import HttpResponse
-from django.shortcuts import get_object_or_404
-from rdwatch.models import Site
-from rdwatch.serializers import SiteSerializer
-from rest_framework import permissions, viewsets
-from rest_framework.decorators import action
+from django.contrib.gis.db.models.aggregates import Collect
+from django.contrib.gis.db.models.functions import Envelope, Transform
+from django.http import HttpRequest
+from django.views.decorators.cache import cache_page
+from rdwatch.models import SiteEvaluation, SiteObservation
+from rdwatch.serializers import SiteEvaluationSerializer, SiteObservationSerializer
+from rest_framework.decorators import api_view, schema
+from rest_framework.response import Response
+from rest_framework.schemas.openapi import AutoSchema
 
 
-class SiteViewSet(viewsets.ReadOnlyModelViewSet):
+class SiteEvaluationsSchema(AutoSchema):
+    def get_operation_id(self, *args):
+        return "getSiteEvaluations"
+
+    def get_serializer(self, *args):
+        return SiteEvaluationSerializer()
+
+
+class SiteObservationsSchema(AutoSchema):
+    def get_operation_id(self, *args):
+        return "getSiteObservations"
+
+    def get_serializer(self, *args):
+        return SiteObservationSerializer()
+
+
+@api_view(["GET"])
+@schema(SiteEvaluationsSchema())
+def site_evaluations(request: HttpRequest):
     queryset = (
-        Site.objects.annotate(boundingbox=Transform(Envelope("geometry"), 4326))
-        .defer("geometry")
-        .all()
-    )
-    serializer_class = SiteSerializer
-    permission_classes = [permissions.AllowAny]
+        SiteEvaluation.objects.select_related(
+            "configuration",
+            "configuration__performer",
+            "region",
+            "region__classification",
+        )
+        .defer("geom")
+        .annotate(bbox=Transform(Envelope(Collect("observations__geom")), 4326))
+    ).order_by("timestamp")
+    serializer = SiteEvaluationSerializer(queryset, many=True)
+    return Response(serializer.data)
 
-    @action(detail=True)
-    def geojson(self, *args, pk=None, **kwargs):
-        """
-        Retrieve the GeoJSON.
-        """
-        obj = get_object_or_404(
-            Site.objects.values(geojson=AsGeoJSON(Transform("geometry", 4326))),
-            pk=pk,
+
+@cache_page(60 * 60 * 24 * 365)
+@api_view(["GET"])
+@schema(SiteObservationsSchema())
+def site_observations(request: HttpRequest, pk: int | None = None):
+    if pk is None:
+        raise ValueError()
+    queryset = (
+        SiteObservation.objects.select_related(
+            "label",
+            "constellation",
+            "spectrum",
         )
-        return HttpResponse(
-            obj["geojson"],
-            content_type="application/vnd.geo+json",
-        )
+        .filter(siteeval=pk)
+        .defer("geom")
+    ).order_by("timestamp")
+    serializer = SiteObservationSerializer(queryset, many=True)
+    return Response(serializer.data)

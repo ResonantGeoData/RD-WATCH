@@ -217,7 +217,7 @@ watchEffect(() => {
         @mouseleave.stop="mouseInFocus = false"
       >
         <button
-          class="h-20 w-72 rounded-t-md bg-blue-600 p-2"
+          class="relative h-24 w-72 rounded-t-md bg-blue-600 p-2"
           @mouseover.stop="hoveredEvaluationIdx = idx"
           @mouseleave.stop="hoveredEvaluationIdx = undefined"
           @click="focusedEvaluationIdx = undefined"
@@ -237,6 +237,11 @@ watchEffect(() => {
             <div class="col-span-1 text-right text-xs font-light text-gray-100">
               [completion]
             </div>
+          </div>
+          <div
+            class="absolute bottom-1 right-2 rounded bg-gray-100 pl-1 pr-1 text-xs text-blue-600"
+          >
+            {{ evaluation.performer.short_code }}
           </div>
         </button>
         <div class="p-4 text-center">
@@ -275,7 +280,7 @@ watchEffect(() => {
 
       <button
         v-else
-        class="h-20 w-72 rounded-md bg-gray-50 p-2 hover:bg-gray-200"
+        class="relative h-24 w-72 rounded-md bg-gray-50 p-2 hover:bg-gray-200"
         @mouseover="hoveredEvaluationIdx = idx"
         @mouseleave="hoveredEvaluationIdx = undefined"
         @click="focusedEvaluationIdx = idx"
@@ -293,6 +298,11 @@ watchEffect(() => {
           <div class="col-span-1 text-right text-xs font-light text-gray-400">
             [completion]
           </div>
+        </div>
+        <div
+          class="absolute bottom-1 right-2 rounded bg-gray-400 pl-1 pr-1 text-xs text-white"
+        >
+          {{ evaluation.performer.short_code }}
         </div>
       </button>
     </div>

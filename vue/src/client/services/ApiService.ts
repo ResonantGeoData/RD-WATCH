@@ -39,7 +39,7 @@ export class ApiService {
    */
   public static getSiteObservations(
     id: string
-  ): CancelablePromise<SiteObservation> {
+  ): CancelablePromise<Array<SiteObservation>> {
     return __request(OpenAPI, {
       method: "GET",
       url: "/api/site/{id}/",

@@ -1,6 +1,7 @@
 from datetime import datetime
 
-from django.db.models import DateTimeField, F, Value
+from django.db import connection
+from django.db.models import BooleanField, DateTimeField, F, Field, Func, Q, Value
 from django.http import (
     HttpRequest,
     HttpResponse,
@@ -10,8 +11,8 @@ from django.http import (
 )
 from django.shortcuts import get_object_or_404
 from django.views.decorators.cache import cache_page
-from rdwatch.db.functions import GistDistance, VectorTile
-from rdwatch.models import SatelliteImage, SiteEvaluation
+from rdwatch.db.functions import GistDistance
+from rdwatch.models import SatelliteImage, SiteEvaluation, SiteObservation
 from rdwatch.utils.raster_tile import get_raster_tile
 from rest_framework.reverse import reverse
 
@@ -24,16 +25,36 @@ def site_evaluation_vector_tile(
 ):
     if z is None or x is None or y is None:
         raise ValueError()
-    queryset = SiteEvaluation.objects.all()
-    agg = queryset.aggregate(tile=VectorTile("geom", z, x, y))
+    envelope = Func(z, x, y, function="ST_TileEnvelope")
+    intersects = Func(
+        "geom",
+        envelope,
+        function="ST_Intersects",
+        output_field=BooleanField(),
+    )
+    mvtgeom = Func("geom", envelope, function="ST_AsMVTGeom", output_field=Field())
+    ctequeryset = (
+        SiteEvaluation.objects.filter(Q(intersects))
+        .annotate(mvtgeom=mvtgeom)
+        .values("id", "mvtgeom", "score")
+    )
+    ctesql, cteparams = ctequeryset.query.sql_with_params()
+    with connection.cursor() as cursor:
+        sql = f"""
+        WITH cte AS ({ctesql})
+        SELECT ST_AsMVT(cte.*, 'default', 4096, 'mvtgeom', 'id') FROM cte
+        """
+        cursor.execute(sql, cteparams)
+        row = cursor.fetchone()
+    tile = row[0]
     return HttpResponse(
-        agg["tile"],
+        row[0],
         content_type="application/octet-stream",
-        status=200 if agg["tile"] else 204,
+        status=200 if tile else 204,
     )
 
 
-@cache_page(60 * 60 * 24 * 365)
+# @cache_page(60 * 60 * 24 * 365)
 def site_observation_vector_tile(
     request: HttpRequest,
     pk: int | None = None,
@@ -43,13 +64,33 @@ def site_observation_vector_tile(
 ):
     if pk is None or z is None or x is None or y is None:
         raise ValueError()
-    agg = SiteEvaluation.objects.filter(pk=pk).aggregate(
-        tile=VectorTile("observations__geom", z, x, y, feature_id="observations__pk")
+    envelope = Func(z, x, y, function="ST_TileEnvelope")
+    intersects = Func(
+        "geom",
+        envelope,
+        function="ST_Intersects",
+        output_field=BooleanField(),
     )
+    mvtgeom = Func("geom", envelope, function="ST_AsMVTGeom", output_field=Field())
+    ctequeryset = (
+        SiteObservation.objects.filter(siteeval=pk)
+        .filter(Q(intersects))
+        .annotate(mvtgeom=mvtgeom)
+        .values("id", "mvtgeom", "score")
+    )
+    ctesql, cteparams = ctequeryset.query.sql_with_params()
+    with connection.cursor() as cursor:
+        sql = f"""
+        WITH cte AS ({ctesql})
+        SELECT ST_AsMVT(cte.*, 'default', 4096, 'mvtgeom', 'id') FROM cte
+        """
+        cursor.execute(sql, cteparams)
+        row = cursor.fetchone()
+    tile = row[0]
     return HttpResponse(
-        agg["tile"],
+        row[0],
         content_type="application/octet-stream",
-        status=200 if agg["tile"] else 204,
+        status=200 if tile else 204,
     )
 
 

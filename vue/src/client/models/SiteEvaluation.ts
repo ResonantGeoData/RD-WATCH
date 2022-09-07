@@ -12,5 +12,5 @@ export type SiteEvaluation = {
   site: string;
   timestamp: string;
   score: number;
-  readonly bbox?: Array<number>;
+  bbox: Array<number>;
 };

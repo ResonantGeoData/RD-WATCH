@@ -19,8 +19,9 @@
     "lint:typescript": "vue-tsc --noEmit"
   },
   "dependencies": {
+    "@fontsource/inter": "^4.5.12",
+    "@fontsource/iosevka": "^4.5.4",
     "@heroicons/vue": "^1.0.6",
-    "inter-ui": "^3.19.3",
     "maplibre-gl": "^2.1.9",
     "vue": "^3.2.37"
   },

@@ -24,6 +24,10 @@ class SiteObservationsSchema(AutoSchema):
     def get_serializer(self, *args):
         return SiteObservationSerializer()
 
+    def get_responses(self, *args, **kwargs):
+        self.view.action = "list"
+        return super().get_responses(*args, **kwargs)
+
 
 @api_view(["GET"])
 @schema(SiteEvaluationsSchema())

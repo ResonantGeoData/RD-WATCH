@@ -1,5 +1,5 @@
 import { createApp } from "vue";
 import "./index.css";
 import App from "./App.vue";
-
-createApp(App).mount("#app");
+import { map } from "./map";
+map.on("load", () => createApp(App).mount("#app"));

@@ -1,5 +1,6 @@
 @import "maplibre-gl/dist/maplibre-gl.css";
-@import "inter-ui/inter.css";
+@import "@fontsource/inter/variable-full.css";
+@import "@fontsource/iosevka";
 @tailwind base;
 @tailwind components;
 @tailwind utilities;

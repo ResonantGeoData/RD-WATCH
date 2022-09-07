@@ -14,10 +14,8 @@ class SiteEvaluationSerializer(serializers.Serializer):
     timestamp = serializers.DateTimeField()
     score = serializers.FloatField()
     bbox = serializers.ListField(
-        child=serializers.FloatField(
-            read_only=True,
-        ),
-        read_only=True,
+        child=serializers.FloatField(),
+        required=True,
         source="bbox.extent",
         min_length=4,
         max_length=4,

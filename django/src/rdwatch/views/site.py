@@ -2,11 +2,12 @@ from django.contrib.gis.db.models.aggregates import Collect
 from django.contrib.gis.db.models.functions import Envelope, Transform
 from django.http import HttpRequest
 from django.views.decorators.cache import cache_page
-from rdwatch.models import SiteEvaluation, SiteObservation
-from rdwatch.serializers import SiteEvaluationSerializer, SiteObservationSerializer
 from rest_framework.decorators import api_view, schema
 from rest_framework.response import Response
 from rest_framework.schemas.openapi import AutoSchema
+
+from rdwatch.models import SiteEvaluation, SiteObservation
+from rdwatch.serializers import SiteEvaluationSerializer, SiteObservationSerializer
 
 
 class SiteEvaluationsSchema(AutoSchema):

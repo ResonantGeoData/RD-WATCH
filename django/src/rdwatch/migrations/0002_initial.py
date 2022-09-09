@@ -6,8 +6,9 @@ import django.contrib.postgres.fields.ranges
 import django.contrib.postgres.indexes
 import django.core.validators
 import django.db.models.deletion
-import rdwatch.validators
 from django.db import migrations, models
+
+import rdwatch.validators
 
 
 class Migration(migrations.Migration):

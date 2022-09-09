@@ -133,6 +133,7 @@ services:
     volumes:
       - .:/app
       - poetry-cache:/tmp/poetry-cache
+      - ipython-profile:/root/.ipython/profile_default
     working_dir: /app/django
 
   # Run npm commands
@@ -174,6 +175,7 @@ services:
     volumes:
       - .:/app
       - poetry-cache:/tmp/poetry-cache
+      - ipython-profile:/root/.ipython/profile_default
 
 volumes:
   pgadmin-data:
@@ -182,3 +184,4 @@ volumes:
   # debug volumes
   unit-socket:
   poetry-cache:
+  ipython-profile:

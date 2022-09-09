@@ -1,7 +1,8 @@
 from django.urls import path
-from rdwatch import views
 from rest_framework.renderers import CoreJSONRenderer
 from rest_framework.schemas import get_schema_view
+
+from rdwatch import views
 
 urlpatterns = [
     path(

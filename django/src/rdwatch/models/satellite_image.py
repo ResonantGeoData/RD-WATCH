@@ -2,6 +2,7 @@ from django.contrib.gis.db.models import PolygonField
 from django.contrib.postgres.indexes import GistIndex
 from django.core.validators import URLValidator
 from django.db import models
+
 from rdwatch.validators import validate_bbox
 
 

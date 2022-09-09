@@ -11,10 +11,11 @@ from django.http import (
 )
 from django.shortcuts import get_object_or_404
 from django.views.decorators.cache import cache_page
+from rest_framework.reverse import reverse
+
 from rdwatch.db.functions import GistDistance
 from rdwatch.models import SatelliteImage, SiteEvaluation, SiteObservation
 from rdwatch.utils.raster_tile import get_raster_tile
-from rest_framework.reverse import reverse
 
 
 def site_evaluation_vector_tile(

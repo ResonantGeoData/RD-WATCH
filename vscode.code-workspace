@@ -137,6 +137,13 @@
     "python.linting.pydocstyleEnabled": false,
     "python.linting.pylamaEnabled": false,
     "python.linting.pylintEnabled": false,
+    "python.linting.mypyArgs": [
+      "--follow-imports=silent",
+      "--ignore-missing-imports",
+      "--show-column-numbers",
+      "--no-pretty",
+      "--cache-dir=.mypy_cache/.vscode"
+    ],
 
     "stylelint.enable": true,
     "stylelint.validate": [

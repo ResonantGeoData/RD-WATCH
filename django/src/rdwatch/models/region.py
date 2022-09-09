@@ -1,6 +1,7 @@
 import iso3166
 
 from django.db import models
+
 from rdwatch.validators import validate_iso3166
 
 

@@ -1,5 +1,6 @@
-from rdwatch.dataclasses import ServerStatus
 from rest_framework import serializers
+
+from rdwatch.dataclasses import ServerStatus
 
 
 class UptimeSerializer(serializers.Serializer):

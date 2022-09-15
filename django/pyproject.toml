@@ -66,6 +66,11 @@ sections=["FUTURE", "STDLIB", "THIRDPARTY", "DJANGO", "FIRSTPARTY", "LOCALFOLDER
 plugins = ["mypy_django_plugin.main", "mypy_drf_plugin.main"]
 
 
+[[tool.mypy.overrides]]
+module = "mercantile"
+ignore_missing_imports = true
+
+
 [tool.django-stubs]
 django_settings_module = "rdwatch.server.settings"
 

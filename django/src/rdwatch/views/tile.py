@@ -1,7 +1,10 @@
 from datetime import datetime
+from urllib.parse import urlencode
+
+import mercantile
 
 from django.db import connection
-from django.db.models import BooleanField, DateTimeField, F, Field, Func, Q, Value
+from django.db.models import BooleanField, Field, Func, Q
 from django.http import (
     HttpRequest,
     HttpResponse,
@@ -9,13 +12,13 @@ from django.http import (
     HttpResponseNotFound,
     HttpResponsePermanentRedirect,
 )
-from django.shortcuts import get_object_or_404
 from django.views.decorators.cache import cache_page
 from rest_framework.reverse import reverse
 
-from rdwatch.db.functions import GistDistance
-from rdwatch.models import SatelliteImage, SiteEvaluation, SiteObservation
+from rdwatch.models import SiteEvaluation, SiteObservation
+from rdwatch.models.lookups import Constellation
 from rdwatch.utils.raster_tile import get_raster_tile
+from rdwatch.utils.satellite_bands import Band, get_bands
 
 
 def site_evaluation_vector_tile(
@@ -96,7 +99,7 @@ def site_observation_vector_tile(
 
 
 @cache_page(60 * 60 * 24 * 365)
-def satelliteimage_raster_redirect(
+def satelliteimage_raster_tile(
     request: HttpRequest,
     z: int | None = None,
     x: int | None = None,
@@ -111,45 +114,38 @@ def satelliteimage_raster_redirect(
         or "spectrum" not in request.GET
     ):
         return HttpResponseBadRequest()
-    satimg = (
-        SatelliteImage.objects.filter(
-            constellation__slug=request.GET["constellation"],
-            spectrum__slug=request.GET["spectrum"],
-            level__slug=request.GET["level"],
-        )
-        .alias(
-            timedistance=GistDistance(
-                F("timestamp"),
-                Value(
-                    datetime.fromisoformat(str(request.GET["timestamp"])),
-                    output_field=DateTimeField(),
-                ),
-            )
-        )
-        .order_by("timedistance")
-        .first()
-    )
-    if satimg is None:
+
+    constellation = Constellation(slug=request.GET["constellation"])
+    timestamp = datetime.fromisoformat(str(request.GET["timestamp"]))
+
+    # Calculate the bounding box from the given x, y, z parameters
+    bounds = mercantile.bounds(x, y, z)
+    bbox = (bounds.west, bounds.south, bounds.east, bounds.north)
+
+    bands = get_bands(constellation, timestamp, bbox)
+
+    try:
+        band: Band = next(bands)
+    except StopIteration:
         return HttpResponseNotFound()
+
+    # If the timestamp provided by the user is *exactly* the timestamp of the retrieved
+    # band, return the raster data for it. Otherwise, redirect back to this same view
+    # with the exact timestamp as a parameter so that this behavior is triggered during
+    # that request. This is done to facilitate caching of the raster data.
+    if band.timestamp == timestamp:
+        tile = get_raster_tile(band.uri, z, x, y)
+        return HttpResponse(
+            tile,
+            content_type="image/webp",
+            status=200,
+        )
+
+    query_params = {
+        **request.GET.dict(),
+        "timestamp": datetime.isoformat(band.timestamp),
+    }
+
     return HttpResponsePermanentRedirect(
-        reverse("satellite-tiles", args=[satimg.pk, z, x, y]),
-    )
-
-
-# @cache_page(60 * 60 * 24 * 365)
-def satelliteimage_raster_tile(
-    request: HttpRequest,
-    pk: int | None = None,
-    z: int | None = None,
-    x: int | None = None,
-    y: int | None = None,
-):
-    if pk is None or z is None or x is None or y is None:
-        raise ValueError()
-    satimg = get_object_or_404(SatelliteImage, pk=pk)
-    tile = get_raster_tile(satimg.uri, z, x, y)
-    return HttpResponse(
-        tile,
-        content_type="image/webp",
-        status=200,
+        reverse("satellite-tiles", args=[z, x, y]) + f"?{urlencode(query_params)}"
     )

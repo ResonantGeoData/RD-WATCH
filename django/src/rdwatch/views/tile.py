@@ -18,7 +18,7 @@ from rest_framework.reverse import reverse
 from rdwatch.models import SiteEvaluation, SiteObservation
 from rdwatch.models.lookups import Constellation
 from rdwatch.utils.raster_tile import get_raster_tile
-from rdwatch.utils.satellite_bands import Band, get_bands
+from rdwatch.utils.satellite_bands import get_bands
 
 
 def site_evaluation_vector_tile(
@@ -122,19 +122,38 @@ def satelliteimage_raster_tile(
     bounds = mercantile.bounds(x, y, z)
     bbox = (bounds.west, bounds.south, bounds.east, bounds.north)
 
-    bands = get_bands(constellation, timestamp, bbox)
+    # Convert generator to list so we can iterate over it multiple times
+    bands = list(get_bands(constellation, timestamp, bbox))
 
-    try:
-        band: Band = next(bands)
-    except StopIteration:
+    # Filter bands by requested processing level and spectrum
+    bands = [
+        band
+        for band in bands
+        if (band.level.slug, band.spectrum.slug)
+        == (request.GET["level"], request.GET["spectrum"])
+    ]
+
+    if not bands:
         return HttpResponseNotFound()
+
+    # Get timestamp closest to the requested timestamp
+    precise_timestamp = min(
+        bands, key=lambda band: abs(band.timestamp - timestamp)
+    ).timestamp
+
+    # Filter out any bands that don't have that timestamp
+    bands = [band for band in bands if band.timestamp == precise_timestamp]
+
+    # Sort bands so that bands in TIF format come first (TIFs are cheaper to tile
+    # and are preferred over other formats when possible)
+    bands.sort(key=lambda band: band.uri.lower().endswith(".tif"), reverse=True)
 
     # If the timestamp provided by the user is *exactly* the timestamp of the retrieved
     # band, return the raster data for it. Otherwise, redirect back to this same view
     # with the exact timestamp as a parameter so that this behavior is triggered during
     # that request. This is done to facilitate caching of the raster data.
-    if band.timestamp == timestamp:
-        tile = get_raster_tile(band.uri, z, x, y)
+    if precise_timestamp == timestamp:
+        tile = get_raster_tile(bands[0].uri, z, x, y)
         return HttpResponse(
             tile,
             content_type="image/webp",
@@ -143,7 +162,7 @@ def satelliteimage_raster_tile(
 
     query_params = {
         **request.GET.dict(),
-        "timestamp": datetime.isoformat(band.timestamp),
+        "timestamp": datetime.isoformat(precise_timestamp),
     }
 
     return HttpResponsePermanentRedirect(

@@ -28,10 +28,6 @@ urlpatterns = [
     ),
     path(
         "satellite-image/tile/<int:z>/<int:x>/<int:y>.webp",
-        views.satelliteimage_raster_redirect,
-    ),
-    path(
-        "satellite-image/<int:pk>/tile/<int:z>/<int:x>/<int:y>.webp",
         views.satelliteimage_raster_tile,
         name="satellite-tiles",
     ),

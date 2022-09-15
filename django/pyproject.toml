@@ -30,6 +30,7 @@ redis = { version = "~4.3.4", extras = [ "hiredis" ] }
 uritemplate = "^4.1.1"
 iso3166 = "^2.1.1"
 rio-tiler = "^3.1.6"
+mercantile = "^1.2.1"
 
 [tool.poetry.dev-dependencies]
 black = "~22.6.0"
@@ -63,6 +64,11 @@ sections=["FUTURE", "STDLIB", "THIRDPARTY", "DJANGO", "FIRSTPARTY", "LOCALFOLDER
 
 [tool.mypy]
 plugins = ["mypy_django_plugin.main", "mypy_drf_plugin.main"]
+
+
+[[tool.mypy.overrides]]
+module = "mercantile"
+ignore_missing_imports = true
 
 
 [tool.django-stubs]

@@ -1,7 +1,7 @@
 import logging
 from dataclasses import dataclass
 from datetime import datetime, timedelta
-from typing import Iterable, Tuple, cast
+from typing import Iterator, Tuple, cast
 
 from rdwatch.models.lookups import CommonBand, Constellation, ProcessingLevel
 from rdwatch.utils.stac_search import landsat_search, sentinel_search
@@ -23,7 +23,7 @@ def get_bands(
     constellation: Constellation,
     timestamp: datetime,
     bbox: Tuple[float, float, float, float],
-) -> Iterable[Band]:
+) -> Iterator[Band]:
 
     match constellation.slug:
         case "L8":

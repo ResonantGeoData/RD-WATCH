@@ -1,6 +1,5 @@
 import json
 import re
-from concurrent import futures
 from dataclasses import dataclass
 from datetime import datetime
 from functools import lru_cache
@@ -9,18 +8,16 @@ from typing import Iterable
 
 import iso3166
 
-from django.contrib.gis.geos import GEOSGeometry, Polygon
+from django.contrib.gis.geos import GEOSGeometry
 from django.core.management.base import BaseCommand
 
 from rdwatch.models import (
     HyperParameters,
     Region,
-    SatelliteImage,
     SiteEvaluation,
     SiteObservation,
     lookups,
 )
-from rdwatch.utils.satellite_bands import Band, get_bands
 
 
 @lru_cache
@@ -177,14 +174,6 @@ class Command(BaseCommand):
         regions: dict[str, Region] = {}
         hyperparams: dict[tuple[str, str, float], HyperParameters] = {}
         siteobservations: list[SiteObservation] = []
-        stacsearches: set[
-            tuple[
-                lookups.Constellation,
-                datetime,
-                tuple[float, float, float, float],
-            ]
-        ] = set()
-        satimgs: list[SatelliteImage] = []
 
         for predcfg_kwcoco, predcfg_dir in iterkwcoco(
             root=directory,
@@ -267,48 +256,8 @@ class Command(BaseCommand):
                                 timestamp=crop_parse.timestamp,
                             )
                         )
-                        stacsearches.add(
-                            (
-                                crop_parse.constellation,
-                                crop_parse.timestamp,
-                                crop_parse.bbox,
-                            )
-                        )
-
-        stacbands: set[Band] = set()
-
-        def addbands(args):
-            for band in get_bands(*args):
-                stacbands.add(band)
-
-        with futures.ThreadPoolExecutor(max_workers=100) as executor:
-            jobs = (
-                executor.submit(addbands, stacsearch) for stacsearch in stacsearches
-            )
-            for _ in futures.as_completed(jobs):
-                ...
-
-        for stacband in stacbands:
-            bbox: Polygon = Polygon.from_bbox(stacband.bbox)
-            bbox.srid = 4326
-            bbox.transform(3857)
-
-            satimgs.append(
-                SatelliteImage(
-                    constellation=stacband.constellation,
-                    spectrum=stacband.spectrum,
-                    level=stacband.level,
-                    timestamp=stacband.timestamp,
-                    bbox=bbox,
-                    uri=stacband.uri,
-                )
-            )
-
-        # insert cogs first, duplicate jp2 images will be skipped upon insert
-        satimgs.sort(key=(lambda satimg: 2 if satimg.uri.endswith("jp2") else 1))
 
         Region.objects.bulk_create(regions.values())
         HyperParameters.objects.bulk_create(hyperparams.values())
         SiteEvaluation.objects.bulk_create(siteevals)
         SiteObservation.objects.bulk_create(siteobservations)
-        SatelliteImage.objects.bulk_create(satimgs, ignore_conflicts=True)

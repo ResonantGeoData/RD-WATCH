@@ -9,7 +9,8 @@ A production-ready Docker Compose configuration is provided to easily deploy thi
 1. Make a copy of the file ["template.env"](https://github.com/ResonantGeoData/RD-WATCH/blob/phase-ii/template.env) as ".env" and fill it out
 2. Update the Docker images: `docker compose pull`
 3. Start the services: `docker compose up`
-4. [optional] Run migrations: `docker compose run --rm poetry run django-admin migrate`
+4. Run migrations: `docker compose run --rm poetry run django-admin migrate`
+5. Load fixtures: `docker compose run --rm poetry run django-admin loaddata lookups`
 
 The web application is available on [http://localhost:8000](http://localhost:8000). It's recommended to run NGINX or use a CDN to proxy requests to the application in order to have HTTP/2 and SSL.
 

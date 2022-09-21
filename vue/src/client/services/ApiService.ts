@@ -2,8 +2,8 @@
 /* tslint:disable */
 /* eslint-disable */
 import type { ServerStatus } from "../models/ServerStatus";
-import type { SiteEvaluation } from "../models/SiteEvaluation";
-import type { SiteObservation } from "../models/SiteObservation";
+import type { SiteEvaluationList } from "../models/SiteEvaluationList";
+import type { SiteObservationList } from "../models/SiteObservationList";
 
 import type { CancelablePromise } from "../core/CancelablePromise";
 import { OpenAPI } from "../core/OpenAPI";
@@ -17,32 +17,32 @@ export class ApiService {
   public static getStatus(): CancelablePromise<ServerStatus> {
     return __request(OpenAPI, {
       method: "GET",
-      url: "/api/status/",
+      url: "/api/status",
     });
   }
 
   /**
-   * @returns SiteEvaluation
+   * @returns SiteEvaluationList
    * @throws ApiError
    */
-  public static getSiteEvaluations(): CancelablePromise<Array<SiteEvaluation>> {
+  public static getSiteEvaluations(): CancelablePromise<SiteEvaluationList> {
     return __request(OpenAPI, {
       method: "GET",
-      url: "/api/site/",
+      url: "/api/evaluations",
     });
   }
 
   /**
    * @param id
-   * @returns SiteObservation
+   * @returns SiteObservationList
    * @throws ApiError
    */
   public static getSiteObservations(
     id: string
-  ): CancelablePromise<Array<SiteObservation>> {
+  ): CancelablePromise<SiteObservationList> {
     return __request(OpenAPI, {
       method: "GET",
-      url: "/api/site/{id}/",
+      url: "/api/evaluations/{id}",
       path: {
         id: id,
       },

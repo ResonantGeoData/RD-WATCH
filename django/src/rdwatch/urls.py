@@ -15,17 +15,10 @@ urlpatterns = [
         ),
         name="openapi-schema",
     ),
-    path("status/", views.RetrieveServerStatus.as_view()),  # type: ignore
-    path("site/", views.site_evaluations),
-    path("site/<int:pk>/", views.site_observations),
-    path(
-        "site/tile/<int:z>/<int:x>/<int:y>.pbf",
-        views.site_evaluation_vector_tile,
-    ),
-    path(
-        "site/<int:pk>/tile/<int:z>/<int:x>/<int:y>.pbf",
-        views.site_observation_vector_tile,
-    ),
+    path("status", views.RetrieveServerStatus.as_view()),  # type: ignore
+    path("evaluations", views.site_evaluations),
+    path("evaluations/<int:pk>", views.site_observations),
+    path("vector-tile/<int:z>/<int:x>/<int:y>.pbf", views.vector_tile),
     path(
         "satellite-image/tile/<int:z>/<int:x>/<int:y>.webp",
         views.satelliteimage_raster_tile,

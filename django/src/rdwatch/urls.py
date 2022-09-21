@@ -18,10 +18,7 @@ urlpatterns = [
     path("status/", views.RetrieveServerStatus.as_view()),  # type: ignore
     path("site/", views.site_evaluations),
     path("site/<int:pk>/", views.site_observations),
-    path(
-        "site/tile/<int:z>/<int:x>/<int:y>.pbf",
-        views.site_evaluation_vector_tile,
-    ),
+    path("vector-tile/<int:z>/<int:x>/<int:y>.pbf", views.vector_tile),
     path(
         "site/<int:pk>/tile/<int:z>/<int:x>/<int:y>.pbf",
         views.site_observation_vector_tile,

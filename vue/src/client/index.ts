@@ -7,7 +7,7 @@ export { OpenAPI } from "./core/OpenAPI";
 export type { OpenAPIConfig } from "./core/OpenAPI";
 
 export type { ServerStatus } from "./models/ServerStatus";
-export type { SiteEvaluation } from "./models/SiteEvaluation";
-export type { SiteObservation } from "./models/SiteObservation";
+export type { SiteEvaluationList } from "./models/SiteEvaluationList";
+export type { SiteObservationList } from "./models/SiteObservationList";
 
 export { ApiService } from "./services/ApiService";

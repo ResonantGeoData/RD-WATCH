@@ -13,6 +13,10 @@
       "name": "vue"
     },
     {
+      "path": "cli",
+      "name": "cli"
+    },
+    {
       "path": "docker",
       "name": "docker"
     }
@@ -21,6 +25,7 @@
     "files.exclude": {
       "django": true,
       "vue": true,
+      "cli": true,
       "docker": true
     },
     "files.insertFinalNewline": true,

@@ -7,6 +7,7 @@ RUN echo "deb [signed-by=/usr/share/keyrings/nginx.gpg] http://packages.nginx.or
  && echo "deb-src [signed-by=/usr/share/keyrings/nginx.gpg] http://packages.nginx.org/unit/ubuntu/ jammy unit" >> /etc/apt/sources.list.d/unit.list \
  && apt-get update \
  && apt-get install --no-install-recommends --yes \
+      ca-certificates \
       curl \
       libproj22 \
       libgdal30 \

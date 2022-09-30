@@ -1,7 +1,7 @@
 import logging
 from dataclasses import dataclass
 from datetime import datetime, timedelta
-from typing import Iterator, Tuple, cast
+from typing import Iterator, cast
 
 from rdwatch.models.lookups import CommonBand, Constellation, ProcessingLevel
 from rdwatch.utils.stac_search import landsat_search, sentinel_search
@@ -22,7 +22,8 @@ class Band:
 def get_bands(
     constellation: Constellation,
     timestamp: datetime,
-    bbox: Tuple[float, float, float, float],
+    bbox: tuple[float, float, float, float],
+    timebuffer: timedelta | None = None,
 ) -> Iterator[Band]:
 
     match constellation.slug:
@@ -36,7 +37,7 @@ def get_bands(
     results = search(
         timestamp,
         bbox,
-        timebuffer=timedelta(hours=1),
+        timebuffer=timebuffer or timedelta(hours=1),
     )
 
     if "features" not in results:

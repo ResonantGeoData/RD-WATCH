@@ -40,7 +40,7 @@ async def movie(
                 "constellation": "S2",
                 "start_timestamp": datetime.isoformat(start_time),
                 "end_timestamp": datetime.isoformat(end_time),
-                "spectrum": "blue",  # TODO: change to make it visual
+                "spectrum": "visual",
                 "level": "2A",
             },
         )

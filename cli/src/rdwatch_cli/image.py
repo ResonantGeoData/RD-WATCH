@@ -30,7 +30,7 @@ async def fetch_tile(
         params={
             "constellation": "S2",
             "timestamp": time.isoformat(),
-            "spectrum": "blue",  # TODO: change to make it visual
+            "spectrum": "visual",
             "level": "2A",
         },
     ) as resp:

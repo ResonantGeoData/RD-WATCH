@@ -171,6 +171,15 @@
     }
   },
   {
+    "model": "rdwatch.commonband",
+    "pk": 20,
+    "fields": {
+      "slug": "visual",
+      "description": "rgb image",
+      "spectrum": [0.45, 0.7]
+    }
+  },
+  {
     "model": "rdwatch.constellation",
     "pk": 1,
     "fields": {

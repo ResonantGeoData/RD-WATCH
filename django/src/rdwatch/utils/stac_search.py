@@ -9,7 +9,8 @@ class EOBand(TypedDict, total=False):
     common_name: str
 
 
-class AlternateS3Link(TypedDict, total=False):
+class Link(TypedDict, total=False):
+    rel: str
     href: str
 
 
@@ -18,7 +19,7 @@ Asset = TypedDict(
     {
         "eo:bands": list[EOBand],
         "href": str,
-        "alternate": dict[Literal["s3"], AlternateS3Link],
+        "alternate": dict[Literal["s3"], Link],
     },
     total=False,
 )
@@ -37,12 +38,15 @@ class Feature(TypedDict, total=False):
 
 class Results(TypedDict, total=False):
     features: list[Feature]
+    links: list[Link]
 
 
 class SearchParams(TypedDict, total=False):
     bbox: Tuple[float, float, float, float]
     datetime: str
     collections: List[str]
+    page: int
+    limit: int
 
 
 def _fmt_time(time: datetime):
@@ -53,6 +57,7 @@ def landsat_search(
     timestamp: datetime,
     bbox: Tuple[float, float, float, float],
     timebuffer: Optional[timedelta] = None,
+    page: int = 1,
 ) -> Results:
     url = "https://landsatlook.usgs.gov/stac-server/search"
     if timebuffer is not None:
@@ -64,6 +69,8 @@ def landsat_search(
     url += time_str
     url += f"&bbox={','.join(str(coord) for coord in bbox)}"
     url += "&collections=landsat-c2l1,landsat-c2l2-sr"
+    url += f"&page={page}"
+    url += "&limit=100"
     with urlopen(url) as resp:
         return json.loads(resp.read())
 
@@ -72,6 +79,7 @@ def sentinel_search(
     timestamp: datetime,
     bbox: Tuple[float, float, float, float],
     timebuffer: Optional[timedelta] = None,
+    page: int = 1,
 ) -> Results:
     url = "https://earth-search.aws.element84.com/v0/search"
     params = SearchParams()
@@ -88,5 +96,7 @@ def sentinel_search(
         "sentinel-s2-l2a",
         "sentinel-s2-l2a-cogs",
     ]
+    params["page"] = page
+    params["limit"] = 100
     with urlopen(url, bytes(json.dumps(params), "utf-8")) as resp:
         return json.loads(resp.read())

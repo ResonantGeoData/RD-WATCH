@@ -1,7 +1,7 @@
 import logging
 from dataclasses import dataclass
 from datetime import datetime, timedelta
-from typing import Iterator, Tuple, cast
+from typing import Iterator, cast
 
 from rdwatch.models.lookups import CommonBand, Constellation, ProcessingLevel
 from rdwatch.utils.stac_search import landsat_search, sentinel_search
@@ -22,7 +22,8 @@ class Band:
 def get_bands(
     constellation: Constellation,
     timestamp: datetime,
-    bbox: Tuple[float, float, float, float],
+    bbox: tuple[float, float, float, float],
+    timebuffer: timedelta | None = None,
 ) -> Iterator[Band]:
 
     match constellation.slug:
@@ -33,85 +34,100 @@ def get_bands(
         case _:
             raise ValueError(f"Unsupported constellation '{constellation.slug}'")
 
-    results = search(
-        timestamp,
-        bbox,
-        timebuffer=timedelta(hours=1),
-    )
+    page: None | int = 1
 
-    if "features" not in results:
-        logger.warning("Malformed STAC response: no 'features'")
-        return
+    while page is not None:
+        results = search(
+            timestamp,
+            bbox,
+            timebuffer=timebuffer or timedelta(hours=1),
+            page=page,
+        )
 
-    for feature in results["features"]:
+        if "features" not in results:
+            logger.warning("Malformed STAC response: no 'features'")
+            return
 
-        if "assets" not in feature:
-            logger.warning("Malformed STAC response: no 'assets'")
-            continue
+        if "links" not in results:
+            logger.warning("Malformed STAC response: no 'links'")
+            return
 
-        match feature:
-            case {"properties": {"datetime": timestr}}:
-                timestamp = datetime.fromisoformat(timestr.rstrip("Z"))
-            case _:
-                logger.warning("Malformed STAC response: no 'properties.datetime'")
+        next_page = None
+        for link in results["links"]:
+            match link:
+                case {"rel": "next"}:
+                    next_page = page + 1
+                    break
+        page = next_page
+
+        for feature in results["features"]:
+
+            if "assets" not in feature:
+                logger.warning("Malformed STAC response: no 'assets'")
                 continue
 
-        match feature:
-            case {"bbox": bbox_lst}:
-                stac_bbox = cast(tuple[float, float, float, float], tuple(bbox_lst))
-            case _:
-                logger.warning("Malformed STAC response: no 'bbox'")
-                continue
+            match feature:
+                case {"properties": {"datetime": timestr}}:
+                    timestamp = datetime.fromisoformat(timestr.rstrip("Z"))
+                case _:
+                    logger.warning("Malformed STAC response: no 'properties.datetime'")
+                    continue
 
-        match feature:
-            case {"collection": "landsat-c2l1" | "sentinel-s2-l1c"}:
-                level, _ = ProcessingLevel.objects.get_or_create(
-                    slug="1C",
-                    defaults={"description": "top of atmosphere radiance"},
-                )
-            case {
-                "collection": "landsat-c2l2-sr"
-                | "sentinel-s2-l2a"
-                | "sentinel-s2-l2a-cogs"
-            }:
-                level, _ = ProcessingLevel.objects.get_or_create(
-                    slug="2A",
-                    defaults={"description": "surface reflectance"},
-                )
-            case {"collection": collection}:
-                logger.warning(
-                    f"Malformed STAC response: unkown collection '{collection}'"
-                )
-                continue
-            case _:
-                logger.warning("Malformed STAC response: no 'collection'")
-                continue
+            match feature:
+                case {"bbox": bbox_lst}:
+                    stac_bbox = cast(tuple[float, float, float, float], tuple(bbox_lst))
+                case _:
+                    logger.warning("Malformed STAC response: no 'bbox'")
+                    continue
 
-        for asset in feature["assets"].values():
+            match feature:
+                case {"collection": "landsat-c2l1" | "sentinel-s2-l1c"}:
+                    level, _ = ProcessingLevel.objects.get_or_create(
+                        slug="1C",
+                        defaults={"description": "top of atmosphere radiance"},
+                    )
+                case {
+                    "collection": "landsat-c2l2-sr"
+                    | "sentinel-s2-l2a"
+                    | "sentinel-s2-l2a-cogs"
+                }:
+                    level, _ = ProcessingLevel.objects.get_or_create(
+                        slug="2A",
+                        defaults={"description": "surface reflectance"},
+                    )
+                case {"collection": collection}:
+                    logger.warning(
+                        f"Malformed STAC response: unkown collection '{collection}'"
+                    )
+                    continue
+                case _:
+                    logger.warning("Malformed STAC response: no 'collection'")
+                    continue
 
-            match asset:
-                case {"eo:bands": [{"common_name": common_name}]}:
-                    spectrum = CommonBand.objects.filter(slug=common_name).first()
-                    if spectrum is None:
-                        logger.warning(f"Encountered unkown spectrum '{spectrum}'")
+            for name, asset in feature["assets"].items():
+                if name == "visual":
+                    spectrum = CommonBand.objects.get(slug="visual")
+                else:
+                    match asset:
+                        case {"eo:bands": [{"common_name": common_name}]}:
+                            spectrum = CommonBand.objects.get(slug=common_name)
+                        case _:
+                            continue
+
+                match asset:
+                    case {"alternate": {"s3": {"href": uri}}}:
+                        ...
+                    case {"href": uri}:
+                        ...
+                    case _:
+                        logger.warning("Malformed STAC response: no 'href'")
                         continue
-                case _:
-                    continue
 
-            match asset:
-                case {"alternate": {"s3": {"href": uri}}}:
-                    ...
-                case {"href": uri}:
-                    ...
-                case _:
-                    logger.warning("Malformed STAC response: no 'href'")
-                    continue
-
-            yield Band(
-                constellation=constellation,
-                timestamp=timestamp,
-                level=level,
-                spectrum=spectrum,
-                bbox=stac_bbox,
-                uri=uri,
-            )
+                yield Band(
+                    constellation=constellation,
+                    timestamp=timestamp,
+                    level=level,
+                    spectrum=spectrum,
+                    bbox=stac_bbox,
+                    uri=uri,
+                )

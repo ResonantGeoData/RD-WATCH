@@ -4,7 +4,6 @@ from pathlib import Path
 
 import aiohttp
 import click
-import mercantile
 
 # register pillow plugin
 import pillow_avif  # type: ignore # noqa
@@ -20,12 +19,6 @@ async def movie(
     start_time: datetime,
     end_time: datetime,
 ) -> list[Image.Image]:
-    # The max zoom will be different for higher resolution imagery
-    # https://cogeotiff.github.io/rio-tiler/api/rio_tiler/io/cogeo/#get_zooms
-    # This is for Sentinel-2
-    zoom = 14
-
-    tile = next(mercantile.tiles(*bbox, zoom))
 
     login()
 
@@ -35,19 +28,20 @@ async def movie(
         base_url="https://resonantgeodata.dev",
     ) as client:
         resp = await client.get(
-            f"/api/satellite-image/{tile.z}/{tile.x}/{tile.y}",
+            "/api/satellite-image/timestamps",
             params={
                 "constellation": "S2",
                 "start_timestamp": datetime.isoformat(start_time),
                 "end_timestamp": datetime.isoformat(end_time),
                 "spectrum": "visual",
                 "level": "2A",
+                "bbox": ",".join(str(x) for x in bbox),
             },
         )
-        images = await resp.json()
+        timestamps = await resp.json()
 
     return await asyncio.gather(
-        *(image(bbox, datetime.fromisoformat(im["timestamp"])) for im in images)
+        *(image(bbox, datetime.fromisoformat(timestamp)) for timestamp in timestamps)
     )
 
 

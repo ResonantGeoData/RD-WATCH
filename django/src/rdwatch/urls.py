@@ -19,10 +19,7 @@ urlpatterns = [
     path("evaluations", views.site_evaluations),
     path("evaluations/<int:pk>", views.site_observations),
     path("vector-tile/<int:z>/<int:x>/<int:y>.pbf", views.vector_tile),
-    path(
-        "satellite-image/<int:z>/<int:x>/<int:y>",
-        views.satelliteimage_list,
-    ),
+    path("satellite-image/timestamps", views.satelliteimage_time_list),
     path(
         "satellite-image/tile/<int:z>/<int:x>/<int:y>.webp",
         views.satelliteimage_raster_tile,

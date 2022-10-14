@@ -192,38 +192,39 @@ def satelliteimage_raster_tile(
 
 
 @cache_page(60 * 60 * 24 * 365)
-def satelliteimage_list(
-    request: HttpRequest,
-    z: int | None = None,
-    x: int | None = None,
-    y: int | None = None,
-):
-    if z is None or x is None or y is None:
-        raise ValueError()
+def satelliteimage_time_list(request: HttpRequest):
     if (
         "constellation" not in request.GET
         or "level" not in request.GET
         or "spectrum" not in request.GET
         or "start_timestamp" not in request.GET
         or "end_timestamp" not in request.GET
+        or "bbox" not in request.GET
     ):
         return HttpResponseBadRequest()
 
-    constellation = Constellation(slug=request.GET.get("constellation", "S2"))
-    spectrum = request.GET.get("spectrum", "blue")  # TODO: change to make it visual
-    level = request.GET.get("level", "2A")
+    constellation = Constellation(slug=request.GET["constellation"])
+    spectrum = request.GET["spectrum"]  # TODO: change to make it visual
+    level = request.GET["level"]
 
     start_timestamp = datetime.fromisoformat(str(request.GET["start_timestamp"]))
     end_timestamp = datetime.fromisoformat(str(request.GET["end_timestamp"]))
 
-    timebuffer = end_timestamp - start_timestamp
+    timebuffer = (end_timestamp - start_timestamp) / 2
+    timestamp = start_timestamp + timebuffer
 
-    # Calculate the bounding box from the given x, y, z parameters
-    bounds = mercantile.bounds(x, y, z)
-    bbox = (bounds.west, bounds.south, bounds.east, bounds.north)
+    bbox_strings = request.GET["bbox"].split(",")
+    if len(bbox_strings) != 4:
+        return HttpResponseBadRequest()
+    bbox = (
+        float(bbox_strings[0]),
+        float(bbox_strings[1]),
+        float(bbox_strings[2]),
+        float(bbox_strings[3]),
+    )
 
     # Get all image bands within the given time range and requested constellation/bbox
-    bands = list(get_bands(constellation, start_timestamp, bbox, timebuffer))
+    bands = list(get_bands(constellation, timestamp, bbox, timebuffer))
 
     # Filter bands by requested processing level and spectrum
     bands = [
@@ -232,20 +233,8 @@ def satelliteimage_list(
         if (band.level.slug, band.spectrum.slug) == (level, spectrum)
     ]
 
-    # Sort bands so older bands come first
-    bands.sort(key=lambda band: band.timestamp, reverse=True)
+    timestamps_set = set(band.timestamp for band in bands)
+    timestamps = [t for t in timestamps_set]
+    timestamps.sort()
 
-    return JsonResponse(
-        [
-            {
-                "constellation": band.constellation.slug,
-                "spectrum": band.spectrum.slug,
-                "level": band.level.slug,
-                "timestamp": datetime.isoformat(band.timestamp),
-                "bbox": band.bbox,
-                "uri": band.uri,
-            }
-            for band in bands
-        ],
-        safe=False,
-    )
+    return JsonResponse(timestamps, safe=False)

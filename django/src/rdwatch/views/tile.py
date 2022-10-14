@@ -11,6 +11,7 @@ from django.http import (
     HttpResponseBadRequest,
     HttpResponseNotFound,
     HttpResponsePermanentRedirect,
+    JsonResponse,
 )
 from django.views.decorators.cache import cache_page
 from rest_framework.reverse import reverse
@@ -187,4 +188,64 @@ def satelliteimage_raster_tile(
 
     return HttpResponsePermanentRedirect(
         reverse("satellite-tiles", args=[z, x, y]) + f"?{urlencode(query_params)}"
+    )
+
+
+@cache_page(60 * 60 * 24 * 365)
+def satelliteimage_list(
+    request: HttpRequest,
+    z: int | None = None,
+    x: int | None = None,
+    y: int | None = None,
+):
+    if z is None or x is None or y is None:
+        raise ValueError()
+    if (
+        "constellation" not in request.GET
+        or "level" not in request.GET
+        or "spectrum" not in request.GET
+        or "start_timestamp" not in request.GET
+        or "end_timestamp" not in request.GET
+    ):
+        return HttpResponseBadRequest()
+
+    constellation = Constellation(slug=request.GET.get("constellation", "S2"))
+    spectrum = request.GET.get("spectrum", "blue")  # TODO: change to make it visual
+    level = request.GET.get("level", "2A")
+
+    start_timestamp = datetime.fromisoformat(str(request.GET["start_timestamp"]))
+    end_timestamp = datetime.fromisoformat(str(request.GET["end_timestamp"]))
+
+    timebuffer = end_timestamp - start_timestamp
+
+    # Calculate the bounding box from the given x, y, z parameters
+    bounds = mercantile.bounds(x, y, z)
+    bbox = (bounds.west, bounds.south, bounds.east, bounds.north)
+
+    # Get all image bands within the given time range and requested constellation/bbox
+    bands = list(get_bands(constellation, start_timestamp, bbox, timebuffer))
+
+    # Filter bands by requested processing level and spectrum
+    bands = [
+        band
+        for band in bands
+        if (band.level.slug, band.spectrum.slug) == (level, spectrum)
+    ]
+
+    # Sort bands so older bands come first
+    bands.sort(key=lambda band: band.timestamp, reverse=True)
+
+    return JsonResponse(
+        [
+            {
+                "constellation": band.constellation.slug,
+                "spectrum": band.spectrum.slug,
+                "level": band.level.slug,
+                "timestamp": datetime.isoformat(band.timestamp),
+                "bbox": band.bbox,
+                "uri": band.uri,
+            }
+            for band in bands
+        ],
+        safe=False,
     )

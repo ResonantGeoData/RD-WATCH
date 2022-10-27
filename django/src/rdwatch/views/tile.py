@@ -19,7 +19,7 @@ from rest_framework.reverse import reverse
 from rdwatch.db.functions import ExtractEpoch
 from rdwatch.models import SiteEvaluation, SiteObservation
 from rdwatch.models.lookups import Constellation
-from rdwatch.utils.raster_tile import get_raster_tile
+from rdwatch.utils.raster_tile import get_raster_tile, get_rgb_image_tile
 from rdwatch.utils.satellite_bands import get_bands
 
 
@@ -138,6 +138,7 @@ def satelliteimage_raster_tile(
 
     constellation = Constellation(slug=request.GET["constellation"])
     timestamp = datetime.fromisoformat(str(request.GET["timestamp"]))
+    spectrum = request.GET["spectrum"]
 
     # Calculate the bounding box from the given x, y, z parameters
     bounds = mercantile.bounds(x, y, z)
@@ -146,16 +147,16 @@ def satelliteimage_raster_tile(
     # Convert generator to list so we can iterate over it multiple times
     bands = list(get_bands(constellation, timestamp, bbox))
 
-    # Filter bands by requested processing level and spectrum
-    bands = [
-        band
-        for band in bands
-        if (band.level.slug, band.spectrum.slug)
-        == (request.GET["level"], request.GET["spectrum"])
-    ]
+    # Filter bands by requested processing level
+    bands = [band for band in bands if band.level.slug == request.GET["level"]]
 
-    if not bands:
-        return HttpResponseNotFound()
+    # Full RGB imagery from L8 is a special case that requires additional logic.
+    # Non-RGB imagery from L8 and all imagery from S2 can be filtered at this
+    # point, though.
+    if constellation.slug != "L8" or request.GET["spectrum"] != "visual":
+        bands = [band for band in bands if band.spectrum.slug == spectrum]
+        if not bands:
+            return HttpResponseNotFound()
 
     # Get timestamp closest to the requested timestamp
     precise_timestamp = min(
@@ -174,7 +175,19 @@ def satelliteimage_raster_tile(
     # with the exact timestamp as a parameter so that this behavior is triggered during
     # that request. This is done to facilitate caching of the raster data.
     if precise_timestamp == timestamp:
-        tile = get_raster_tile(bands[0].uri, z, x, y)
+        if (constellation.slug, spectrum) == ("L8", "visual"):
+            # L8 visual bands are a special case - the visual (RGB) band isn't
+            # precomputed and stored in the STAC data for L8 as it is for S2,
+            # so we must compute it here.
+            bands = [
+                band for band in bands if band.spectrum.slug in ("red", "green", "blue")
+            ]
+            if not bands or len(bands) != 3:
+                return HttpResponseNotFound()
+            stac_item_uri = bands[0].stac_item["links"][0]["href"]
+            tile = get_rgb_image_tile(stac_item_uri, z, x, y)
+        else:
+            tile = get_raster_tile(bands[0].uri, z, x, y)
         return HttpResponse(
             tile,
             content_type="image/webp",

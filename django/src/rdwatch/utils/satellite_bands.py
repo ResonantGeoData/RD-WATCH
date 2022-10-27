@@ -4,13 +4,14 @@ from datetime import datetime, timedelta
 from typing import Iterator, cast
 
 from rdwatch.models.lookups import CommonBand, Constellation, ProcessingLevel
-from rdwatch.utils.stac_search import landsat_search, sentinel_search
+from rdwatch.utils.stac_search import Feature, landsat_search, sentinel_search
 
 logger = logging.getLogger(__name__)
 
 
 @dataclass(frozen=True)
 class Band:
+    stac_item: Feature
     constellation: Constellation
     spectrum: CommonBand
     level: ProcessingLevel
@@ -130,4 +131,5 @@ def get_bands(
                     spectrum=spectrum,
                     bbox=stac_bbox,
                     uri=uri,
+                    stac_item=feature,
                 )

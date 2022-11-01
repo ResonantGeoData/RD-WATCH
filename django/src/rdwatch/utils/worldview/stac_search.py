@@ -30,6 +30,7 @@ Properties = TypedDict(
         "instruments": list[Literal["vis-multi", "panchromatic", "swir-multi"]],
         "nitf:bits_per_pixel": int,
         "nitf:image_representation": Literal["MULTI", "MONO", "RGB"],
+        "nitf:compression": Literal["C8", "NC"],
     },
 )
 

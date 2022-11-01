@@ -69,6 +69,7 @@ def get_captures(
         )
         for feature in get_features(timestamp, bbox, timebuffer=timebuffer)
         if feature["properties"]["instruments"][0] in {"vis-multi", "panchromatic"}
+        and feature["properties"]["nitf:compression"] == "NC"
     ]
     images.sort(key=lambda i: i.timestamp)
 

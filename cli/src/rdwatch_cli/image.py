@@ -9,7 +9,8 @@ import click
 import mercantile
 from PIL import Image
 
-from rdwatch_cli.login import login
+from rdwatch_cli.exceptions import ImageNotFound, ServerError
+from rdwatch_cli.utils import get_http_client
 from rdwatch_cli.validators import validate_bbox, validate_timestamp
 
 
@@ -24,33 +25,62 @@ async def fetch_tile(
     client: aiohttp.ClientSession,
     time: datetime,
     tile: mercantile.Tile,
+    worldview: bool = False,
 ) -> WebpTile:
-    async with client.get(
-        f"/api/satellite-image/tile/{tile.z}/{tile.x}/{tile.y}.webp",
-        params={
+
+    url = (
+        f"/api/satellite-image/visual-tile/{tile.z}/{tile.x}/{tile.y}.webp"
+        if worldview
+        else f"/api/satellite-image/tile/{tile.z}/{tile.x}/{tile.y}.webp"
+    )
+
+    params = (
+        {"timestamp": time.isoformat()}
+        if worldview
+        else {
             "constellation": "S2",
             "timestamp": time.isoformat(),
             "spectrum": "visual",
             "level": "2A",
-        },
-    ) as resp:
+        }
+    )
+
+    async with client.get(url, params=params) as resp:
         buffer = await resp.read()
+        if resp.status == 404:
+            raise ImageNotFound()
+        elif not resp.ok:
+            raise ServerError()
         image = Image.open(io.BytesIO(buffer))
         return WebpTile(tile, time, image)
 
 
-async def image(bbox: tuple[float, float, float, float], time: datetime) -> Image.Image:
-    # The max zoom will be different for higher resolution imagery
+async def image(
+    bbox: tuple[float, float, float, float],
+    time: datetime,
+    client: aiohttp.ClientSession | None = None,
+    worldview: bool = False,
+) -> Image.Image:
+    # The max zoom will be different for lower resolution imagery
     # https://cogeotiff.github.io/rio-tiler/api/rio_tiler/io/cogeo/#get_zooms
-    # This is for Sentinel-2
-    zoom = 14
+    # This is for WorldView imagery
+    zoom = 18 if worldview else 14
 
-    async with aiohttp.ClientSession(
-        auth=login(),
-        base_url="https://resonantgeodata.dev",
-    ) as client:
-        webp_tiles: list[WebpTile] = await asyncio.gather(
-            *(fetch_tile(client, time, tile) for tile in mercantile.tiles(*bbox, zoom))
+    webp_tiles: list[WebpTile]
+    if client is None:
+        async with get_http_client() as client:
+            webp_tiles = await asyncio.gather(
+                *(
+                    fetch_tile(client, time, tile)
+                    for tile in mercantile.tiles(*bbox, zoom)
+                )
+            )
+    else:
+        webp_tiles = await asyncio.gather(
+            *(
+                fetch_tile(client, time, tile, worldview=worldview)
+                for tile in mercantile.tiles(*bbox, zoom)
+            )
         )
 
     xmin = min(t.tile.x for t in webp_tiles)
@@ -88,12 +118,18 @@ async def image(bbox: tuple[float, float, float, float], time: datetime) -> Imag
 @click.option("--output", type=Path)
 @click.option("--bbox", nargs=4, type=click.UNPROCESSED, callback=validate_bbox)
 @click.option("--time", type=click.UNPROCESSED, callback=validate_timestamp)
+@click.option("--worldview", type=bool)
 def image_cmd(
     output: Path,
     bbox: tuple[float, float, float, float],
     time: datetime,
+    worldview: bool = False,
 ) -> None:
     """Retrieve an image for a bounding box at a specific time"""
-
-    img = asyncio.run(image(bbox, time))
-    img.save(output)
+    try:
+        img = asyncio.run(image(bbox, time, worldview=worldview))
+        img.save(output)
+    except ImageNotFound:
+        raise click.ClickException("No image found for the given bounding box and time")
+    except ServerError:
+        raise click.ClickException("Server down (try again later)")

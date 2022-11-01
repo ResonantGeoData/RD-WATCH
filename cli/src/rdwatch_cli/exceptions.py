@@ -1,0 +1,6 @@
+class ImageNotFound(Exception):
+    ...
+
+
+class ServerError(Exception):
+    ...

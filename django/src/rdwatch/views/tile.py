@@ -21,6 +21,8 @@ from rdwatch.models import SiteEvaluation, SiteObservation
 from rdwatch.models.lookups import Constellation
 from rdwatch.utils.raster_tile import get_raster_tile
 from rdwatch.utils.satellite_bands import get_bands
+from rdwatch.utils.worldview.raster_tile import get_worldview_visual_tile
+from rdwatch.utils.worldview.satellite_captures import get_captures
 
 
 def vector_tile(
@@ -192,6 +194,53 @@ def satelliteimage_raster_tile(
 
 
 @cache_page(60 * 60 * 24 * 365)
+def satelliteimage_visual_tile(
+    request: HttpRequest,
+    z: int | None = None,
+    x: int | None = None,
+    y: int | None = None,
+):
+    if z is None or x is None or y is None:
+        raise ValueError()
+    if "timestamp" not in request.GET:
+        return HttpResponseBadRequest()
+
+    timestamp = datetime.fromisoformat(str(request.GET["timestamp"]))
+
+    # Calculate the bounding box from the given x, y, z parameters
+    bounds = mercantile.bounds(x, y, z)
+    bbox = (bounds.west, bounds.south, bounds.east, bounds.north)
+
+    captures = get_captures(timestamp, bbox)
+    if not captures:
+        return HttpResponseNotFound()
+
+    # Get timestamp closest to the requested timestamp
+    closest_capture = min(captures, key=lambda band: abs(band.timestamp - timestamp))
+
+    # If the timestamp provided by the user is *exactly* the timestamp of the retrieved
+    # band, return the raster data for it. Otherwise, redirect back to this same view
+    # with the exact timestamp as a parameter so that this behavior is triggered during
+    # that request. This is done to facilitate caching of the raster data.
+    if closest_capture.timestamp == timestamp:
+        tile = get_worldview_visual_tile(closest_capture, z, x, y)
+        return HttpResponse(
+            tile,
+            content_type="image/webp",
+            status=200,
+        )
+
+    query_params = {
+        **request.GET.dict(),
+        "timestamp": datetime.isoformat(closest_capture.timestamp),
+    }
+    return HttpResponsePermanentRedirect(
+        reverse("satellite-visual-tiles", args=[z, x, y])
+        + f"?{urlencode(query_params)}"
+    )
+
+
+@cache_page(60 * 60 * 24 * 365)
 def satelliteimage_time_list(request: HttpRequest):
     if (
         "constellation" not in request.GET
@@ -204,7 +253,7 @@ def satelliteimage_time_list(request: HttpRequest):
         return HttpResponseBadRequest()
 
     constellation = Constellation(slug=request.GET["constellation"])
-    spectrum = request.GET["spectrum"]  # TODO: change to make it visual
+    spectrum = request.GET["spectrum"]
     level = request.GET["level"]
 
     start_timestamp = datetime.fromisoformat(str(request.GET["start_timestamp"]))
@@ -238,3 +287,33 @@ def satelliteimage_time_list(request: HttpRequest):
     timestamps.sort()
 
     return JsonResponse(timestamps, safe=False)
+
+
+@cache_page(60 * 60 * 24 * 365)
+def satelliteimage_visual_time_list(request: HttpRequest):
+    if (
+        "start_timestamp" not in request.GET
+        or "end_timestamp" not in request.GET
+        or "bbox" not in request.GET
+    ):
+        return HttpResponseBadRequest()
+
+    start_timestamp = datetime.fromisoformat(str(request.GET["start_timestamp"]))
+    end_timestamp = datetime.fromisoformat(str(request.GET["end_timestamp"]))
+
+    timebuffer = (end_timestamp - start_timestamp) / 2
+    timestamp = start_timestamp + timebuffer
+
+    bbox_strings = request.GET["bbox"].split(",")
+    if len(bbox_strings) != 4:
+        return HttpResponseBadRequest()
+    bbox = (
+        float(bbox_strings[0]),
+        float(bbox_strings[1]),
+        float(bbox_strings[2]),
+        float(bbox_strings[3]),
+    )
+
+    captures = get_captures(timestamp, bbox, timebuffer)
+
+    return JsonResponse([capture.timestamp for capture in captures], safe=False)

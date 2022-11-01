@@ -71,7 +71,7 @@ async def image(
         async with get_http_client() as client:
             webp_tiles = await asyncio.gather(
                 *(
-                    fetch_tile(client, time, tile)
+                    fetch_tile(client, time, tile, worldview=worldview)
                     for tile in mercantile.tiles(*bbox, zoom)
                 )
             )

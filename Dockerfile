@@ -1,5 +1,5 @@
 # Base runtime environment for rdwatch
-FROM ubuntu:22.04 AS base
+FROM ubuntu:22.10 AS base
 COPY docker/nginx.json /usr/local/etc/unit/config.json
 COPY docker/docker-entrypoint.sh /docker-entrypoint.sh
 COPY docker/keyrings/nginx.gpg /usr/share/keyrings/nginx.gpg
@@ -9,9 +9,9 @@ RUN echo "deb [signed-by=/usr/share/keyrings/nginx.gpg] http://packages.nginx.or
  && apt-get install --no-install-recommends --yes \
       ca-certificates \
       curl \
-      libproj22 \
-      libgdal30 \
-      netcat \
+      libproj25 \
+      libgdal31 \
+      netcat-openbsd \
       tzdata \
       unit \
       unit-python3.10 \
@@ -36,15 +36,14 @@ CMD [ \
 # Base builder
 FROM base as builder
 COPY docker/keyrings/nodesource.gpg /usr/share/keyrings/nodesource.gpg
-RUN echo "deb [signed-by=/usr/share/keyrings/nodesource.gpg] http://deb.nodesource.com/node_16.x jammy main" > /etc/apt/sources.list.d/nodesource.list \
- && echo "deb-src [signed-by=/usr/share/keyrings/nodesource.gpg] http://deb.nodesource.com/node_16.x jammy main" >> /etc/apt/sources.list.d/nodesource.list \
- && apt-get update \
+RUN apt-get update \
  && apt-get install --no-install-recommends --yes \
       build-essential \
       git \
       libgdal-dev \
       libpq-dev \
       nodejs \
+      npm \
       python3-cachecontrol \
       python3-dev \
       python3-poetry \

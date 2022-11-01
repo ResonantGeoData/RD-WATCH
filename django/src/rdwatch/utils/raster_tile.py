@@ -3,10 +3,7 @@ from rio_tiler.io.cogeo import COGReader
 
 
 def get_raster_tile(uri: str, z: int, x: int, y: int) -> bytes:
-    with rasterio.Env(
-        GDAL_DISABLE_READDIR_ON_OPEN="YES",
-        CPL_VSIL_CURL_CACHE_SIZE="200000000",
-    ):
+    with rasterio.Env(GDAL_DISABLE_READDIR_ON_OPEN="EMPTY_DIR"):
         if uri.startswith("https://sentinel-cogs.s3.us-west-2.amazonaws.com"):
             with rasterio.Env(AWS_NO_SIGN_REQUEST="YES"):
                 s3_uri = "s3://sentinel-cogs/" + uri[49:]

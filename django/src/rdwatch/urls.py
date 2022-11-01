@@ -25,4 +25,10 @@ urlpatterns = [
         views.satelliteimage_raster_tile,
         name="satellite-tiles",
     ),
+    path("satellite-image/visual-timestamps", views.satelliteimage_visual_time_list),
+    path(
+        "satellite-image/visual-tile/<int:z>/<int:x>/<int:y>.webp",
+        views.satelliteimage_visual_tile,
+        name="satellite-visual-tiles",
+    ),
 ]

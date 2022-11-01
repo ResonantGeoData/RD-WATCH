@@ -31,6 +31,7 @@ uritemplate = "^4.1.1"
 iso3166 = "^2.1.1"
 rio-tiler = "^3.1.6"
 mercantile = "^1.2.1"
+django-filter = "^22.1"
 
 [tool.poetry.dev-dependencies]
 black = "~22.6.0"
@@ -67,7 +68,10 @@ plugins = ["mypy_django_plugin.main", "mypy_drf_plugin.main"]
 
 
 [[tool.mypy.overrides]]
-module = "mercantile"
+module = [
+  "django_filters",
+  "mercantile"
+]
 ignore_missing_imports = true
 
 

@@ -1,3 +1,5 @@
+import django_filters
+
 from django.contrib.gis.db.models.aggregates import Collect
 from django.contrib.postgres.aggregates import JSONBAgg
 from django.db.models import Count, Max, Min
@@ -10,6 +12,14 @@ from rest_framework.schemas.openapi import AutoSchema
 from rdwatch.db.functions import BoundingBox, ExtractEpoch
 from rdwatch.models import SiteEvaluation
 from rdwatch.serializers import SiteEvaluationListSerializer
+
+
+class SiteEvaluationsFilter(django_filters.FilterSet):
+    timestamp = django_filters.DateTimeFromToRangeFilter()
+
+    class Meta:
+        model = SiteEvaluation
+        fields = ["timestamp"]
 
 
 class SiteEvaluationsSchema(AutoSchema):
@@ -28,8 +38,10 @@ class SiteEvaluationsSchema(AutoSchema):
 @schema(SiteEvaluationsSchema())
 def site_evaluations(request: HttpRequest):
     queryset = (
-        SiteEvaluation.objects.order_by("-timestamp")
-        .annotate(
+        SiteEvaluationsFilter(
+            request.GET, queryset=SiteEvaluation.objects.order_by("-timestamp")
+        )
+        .qs.annotate(
             timemin=Min("observations__timestamp"),
             timemax=Max("observations__timestamp"),
         )

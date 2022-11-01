@@ -107,8 +107,8 @@ async def image(
 
     crop_left = (bbox[0] - bbox_xmin) * xscale
     crop_right = (bbox[2] - bbox_xmin) * xscale
-    crop_top = (bbox[1] - bbox_ymin) * yscale
-    crop_bottom = (bbox[3] - bbox_ymin) * yscale
+    crop_top = (bbox[3] - bbox_ymax) * -yscale
+    crop_bottom = (bbox[1] - bbox_ymax) * -yscale
     crop = merged.crop((crop_left, crop_top, crop_right, crop_bottom))
 
     return crop

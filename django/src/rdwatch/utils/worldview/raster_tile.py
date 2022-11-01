@@ -1,6 +1,5 @@
-import rasterio  # type: ignore
 from rio_tiler.io.cogeo import COGReader
-from rio_tiler.utils import aws_get_object, pansharpening_brovey
+from rio_tiler.utils import pansharpening_brovey
 
 from rdwatch.utils.worldview.satellite_captures import WorldViewCapture
 

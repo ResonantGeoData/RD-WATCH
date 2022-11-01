@@ -36,7 +36,11 @@
       "group": "rdwatch",
       "home": "/app/django/.venv",
       "module": "rdwatch.server",
-      "threads": 25
+      "threads": 25,
+      "limits": {
+        "timeout": 120,
+        "requests": 5000
+      }
     }
   }
 }

@@ -17,11 +17,16 @@ from rdwatch.serializers import SiteEvaluationListSerializer
 
 
 class SiteEvaluationsFilter(django_filters.FilterSet):
+    performer = django_filters.CharFilter(
+        field_name="configuration__performer__slug",
+        lookup_expr="iexact",
+    )
+    score = django_filters.NumberFilter()
     timestamp = django_filters.DateTimeFromToRangeFilter()
 
     class Meta:
         model = SiteEvaluation
-        fields = ["timestamp"]
+        fields = ["performer", "score", "timestamp"]
 
 
 class SiteEvaluationsSchema(AutoSchema):

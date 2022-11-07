@@ -81,7 +81,7 @@ def site_evaluations(request: HttpRequest):
         overview["previous"] = None
 
     # Results
-    results = page.object_list.annotate(
+    results = page.object_list.annotate(  # type: ignore
         timemin=Min("observations__timestamp"),
         timemax=Max("observations__timestamp"),
     ).aggregate(

@@ -36,3 +36,5 @@ class SiteEvaluationListSerializer(serializers.Serializer):
     timerange = TimeRangeSerializer()
     bbox = BoundingBoxSerializer()
     results = SiteEvaluationSerializer(many=True)
+    next = serializers.CharField()
+    previous = serializers.CharField()

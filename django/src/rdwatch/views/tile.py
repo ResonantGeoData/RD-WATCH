@@ -21,8 +21,10 @@ from rdwatch.models import SiteEvaluation, SiteObservation
 from rdwatch.models.lookups import Constellation
 from rdwatch.utils.raster_tile import get_raster_tile
 from rdwatch.utils.satellite_bands import get_bands
-from rdwatch.utils.worldview.raster_tile import get_worldview_visual_tile
-from rdwatch.utils.worldview.satellite_captures import get_captures
+from rdwatch.utils.worldview_processed.raster_tile import (
+    get_worldview_processed_visual_tile,
+)
+from rdwatch.utils.worldview_processed.satellite_captures import get_captures
 
 
 def vector_tile(
@@ -223,7 +225,7 @@ def satelliteimage_visual_tile(
     # with the exact timestamp as a parameter so that this behavior is triggered during
     # that request. This is done to facilitate caching of the raster data.
     if closest_capture.timestamp == timestamp:
-        tile = get_worldview_visual_tile(closest_capture, z, x, y)
+        tile = get_worldview_processed_visual_tile(closest_capture, z, x, y)
         return HttpResponse(
             tile,
             content_type="image/webp",

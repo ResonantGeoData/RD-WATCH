@@ -17,11 +17,16 @@ from rdwatch.serializers import SiteEvaluationListSerializer
 
 
 class SiteEvaluationsFilter(django_filters.FilterSet):
+    performer = django_filters.CharFilter(
+        field_name="configuration__performer__slug",
+        lookup_expr="iexact",
+    )
+    score = django_filters.NumberFilter()
     timestamp = django_filters.DateTimeFromToRangeFilter()
 
     class Meta:
         model = SiteEvaluation
-        fields = ["timestamp"]
+        fields = ["performer", "score", "timestamp"]
 
 
 class SiteEvaluationsSchema(AutoSchema):
@@ -65,18 +70,14 @@ def site_evaluations(request: HttpRequest):
     if page.has_next():
         next_page_query_params = request.GET.copy()
         next_page_query_params["page"] = str(page.next_page_number())
-        overview[
-            "next"
-        ] = f"{request.get_full_path()}?{next_page_query_params.urlencode()}"
+        overview["next"] = f"{request.path}?{next_page_query_params.urlencode()}"
     else:
         overview["next"] = None
 
     if page.has_previous():
         prev_page_query_params = request.GET.copy()
         prev_page_query_params["page"] = str(page.previous_page_number())
-        overview[
-            "previous"
-        ] = f"{request.get_full_path()}?{prev_page_query_params.urlencode()}"
+        overview["previous"] = f"{request.path}?{prev_page_query_params.urlencode()}"
     else:
         overview["previous"] = None
 

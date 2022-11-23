@@ -31,4 +31,5 @@ urlpatterns = [
         views.satelliteimage_visual_tile,
         name="satellite-visual-tiles",
     ),
+    path("site-model", views.post_site_model),
 ]

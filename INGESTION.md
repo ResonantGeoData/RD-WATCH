@@ -5,6 +5,7 @@ There is currently append-only support for ingesting data into the system.
 You can `POST` a [Site Model Specification](https://smartgitlab.com/TE/standards/-/wikis/Site-Model-Specification) JSON to the endpoint `/api/site-model`.
 
 Example `curl` command posting a [Site Model Specification](https://smartgitlab.com/TE/standards/-/wikis/Site-Model-Specification) JSON file in the current working directory named "site.json":
+
 ```bash
 $ curl \
     -H "Content-Type: application/json" \

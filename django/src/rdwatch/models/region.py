@@ -19,6 +19,7 @@ class Region(models.Model):
     )
     number = models.PositiveSmallIntegerField(
         help_text="The region number",
+        null=True,
         db_index=True,
     )
 

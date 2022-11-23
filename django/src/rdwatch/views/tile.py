@@ -4,7 +4,7 @@ from urllib.parse import urlencode
 import mercantile
 
 from django.db import connection
-from django.db.models import BooleanField, F, Field, Func, Max, Min, Q, RowRange, Window
+from django.db.models import BooleanField, F, Field, Func, Max, Min, Q, Window
 from django.http import (
     HttpRequest,
     HttpResponse,
@@ -16,7 +16,7 @@ from django.http import (
 from django.views.decorators.cache import cache_page
 from rest_framework.reverse import reverse
 
-from rdwatch.db.functions import ExtractEpoch
+from rdwatch.db.functions import ExtractEpoch, GroupExcludeRowRange
 from rdwatch.models import SiteEvaluation, SiteObservation
 from rdwatch.models.lookups import Constellation
 from rdwatch.utils.raster_tile import get_raster_tile
@@ -80,9 +80,9 @@ def vector_tile(
             timemin=ExtractEpoch("timestamp"),
             timemax=ExtractEpoch(
                 Window(
-                    expression=Max("timestamp"),
+                    expression=Min("timestamp"),
                     partition_by=[F("siteeval")],
-                    frame=RowRange(start=0, end=1),
+                    frame=GroupExcludeRowRange(start=0, end=None),
                     order_by="timestamp",  # type: ignore
                 ),
             ),

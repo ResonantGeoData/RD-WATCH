@@ -1,5 +1,5 @@
 from django.contrib.gis.db.models.functions import Envelope, Transform
-from django.db.models import FloatField, Func, IntegerField
+from django.db.models import FloatField, Func, IntegerField, RowRange
 from django.db.models.functions import JSONObject  # type: ignore
 
 
@@ -38,3 +38,12 @@ class BoundingBox(JSONObject):
                 output_field=FloatField(),
             ),
         )
+
+
+class GroupExcludeRowRange(RowRange):
+    """A RowRange that excludes the current group
+
+    https://www.postgresql.org/docs/current/sql-expressions.html#SYNTAX-WINDOW-FUNCTIONS
+    """
+
+    template = RowRange.template + " EXCLUDE GROUP"

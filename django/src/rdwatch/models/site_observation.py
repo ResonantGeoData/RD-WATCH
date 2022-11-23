@@ -28,12 +28,14 @@ class SiteObservation(models.Model):
         to="Constellation",
         on_delete=models.PROTECT,
         help_text="The source image's satellite constellation",
+        null=True,
         db_index=True,
     )
     spectrum = models.ForeignKey(
         to="CommonBand",
         on_delete=models.PROTECT,
         help_text="The source image's satellite spectrum",
+        null=True,
         db_index=True,
     )
     timestamp = models.DateTimeField(
@@ -49,16 +51,3 @@ class SiteObservation(models.Model):
     class Meta:
         default_related_name = "observations"
         indexes = [GistIndex(fields=["timestamp"]), GistIndex(fields=["score"])]
-        constraints = [
-            models.UniqueConstraint(
-                name="uniq_siteobv",
-                fields=[
-                    "siteeval",
-                    "timestamp",
-                ],
-                violation_error_message=(  # type: ignore
-                    "Unique constraint invalid. "
-                    "Add polygons to existing site observation."
-                ),
-            ),
-        ]

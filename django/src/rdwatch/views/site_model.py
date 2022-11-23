@@ -5,7 +5,7 @@ from typing import Iterable, Literal, TypedDict, cast
 import iso3166
 from typing_extensions import NotRequired
 
-from django.contrib.gis.geos import GEOSException, GEOSGeometry
+from django.contrib.gis.geos import GEOSException, GEOSGeometry  # type: ignore
 from django.core.exceptions import ObjectDoesNotExist
 from django.db import transaction
 from rest_framework.decorators import api_view
@@ -87,7 +87,7 @@ def get_observation_features(collection: FeatureCollection) -> list[ObservationF
     return features
 
 
-def get_region(region_id: str) -> Region | None:
+def get_region(region_id: str) -> Region:
     countrystr, numstr = region_id.split("_")
     contrynum = iso3166.countries_by_alpha2[countrystr].numeric
 

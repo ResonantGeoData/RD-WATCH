@@ -86,6 +86,7 @@ def vector_tile(
                     order_by="timestamp",  # type: ignore
                 ),
             ),
+            performer=F("siteeval__configuration__performer__slug"),
         )
     )
     (

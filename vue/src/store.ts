@@ -8,4 +8,5 @@ export const state = reactive({
     xmax: 180,
     ymax: 90,
   },
+  filters: {},
 });

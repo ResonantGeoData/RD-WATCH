@@ -2,6 +2,7 @@
 import EvaluationList from "./EvaluationList.vue";
 import TimeSlider from "./TimeSlider.vue";
 import { state } from "../store";
+import { filters } from "./filters";
 import { ApiService } from "../client";
 import { ref, watch, watchEffect } from "vue";
 import type { SiteEvaluationList } from "../client";
@@ -25,12 +26,23 @@ watch(openedEvaluation, (val) => {
     state.bbox = val !== undefined ? val.bbox : evaluations.value.bbox;
   }
 });
+
+async function filterEvaluations(field: string, value: string) {
+  const query = {
+    [field]: value,
+  };
+  evaluations.value = await ApiService.getSiteEvaluations(query);
+  timemin.value = evaluations.value.timerange.min;
+  state.bbox = evaluations.value.bbox;
+  state.filters = query;
+}
 </script>
 
 <template>
   <div class="relative">
     <div class="fixed h-screen w-80 pt-2 pb-2 pl-2">
       <div
+        v-if="evaluations"
         class="relative h-full overflow-hidden rounded-xl bg-white drop-shadow-2xl"
       >
         <div
@@ -41,14 +53,17 @@ watch(openedEvaluation, (val) => {
             src="../assets/logo.svg"
             alt="Resonant GeoData"
           />
+          <component
+            :is="filter"
+            v-for="(filter, i) in filters"
+            :key="`filter-${i}`"
+            v-bind="{ evaluations }"
+            @filter="filterEvaluations"
+          />
           <TimeSlider :min="timemin" :max="Math.floor(Date.now() / 1000)" />
           {{ new Date(state.timestamp * 1000).toLocaleString() }}
         </div>
-        <EvaluationList
-          v-if="evaluations"
-          v-model="openedEvaluation"
-          :evaluations="evaluations"
-        />
+        <EvaluationList v-model="openedEvaluation" :evaluations="evaluations" />
       </div>
     </div>
   </div>

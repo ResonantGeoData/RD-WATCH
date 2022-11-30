@@ -62,6 +62,10 @@ def site_evaluations(request: HttpRequest):
         bbox=BoundingBox(Collect("geom")),
     )
 
+    overview["performers"] = SiteEvaluation.objects.values_list(
+        "configuration__performer__slug", flat=True
+    ).distinct()
+
     # Pagination
     assert api_settings.PAGE_SIZE, "PAGE_SIZE must be set."
     paginator = Paginator(queryset, api_settings.PAGE_SIZE)

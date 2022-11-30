@@ -192,7 +192,23 @@
     "pk": 2,
     "fields": {
       "slug": "S2",
-      "description": "Sentinel 2"
+      "description": "Sentinel-2"
+    }
+  },
+  {
+    "model": "rdwatch.constellation",
+    "pk": 3,
+    "fields": {
+      "slug": "WV",
+      "description": "WorldView"
+    }
+  },
+  {
+    "model": "rdwatch.constellation",
+    "pk": 4,
+    "fields": {
+      "slug": "PL",
+      "description": "Planet"
     }
   },
   {
@@ -217,6 +233,22 @@
     "fields": {
       "slug": "site_preparation",
       "description": "site preparation"
+    }
+  },
+  {
+    "model": "rdwatch.observationlabel",
+    "pk": 4,
+    "fields": {
+      "slug": "unknown",
+      "description": "unknown"
+    }
+  },
+  {
+    "model": "rdwatch.observationlabel",
+    "pk": 5,
+    "fields": {
+      "slug": "no_activity",
+      "description": "no activity"
     }
   },
   {

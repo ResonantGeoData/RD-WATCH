@@ -18,8 +18,8 @@ export const buildObservationFilter = (
     ["<=", ["get", "timemin"], timestamp],
     [
       "any",
+      ["!", ["to-boolean", ["get", "timemax"]]],
       [">", ["get", "timemax"], timestamp],
-      ["==", ["get", "timemin"], ["get", "timemax"]],
     ],
   ];
 

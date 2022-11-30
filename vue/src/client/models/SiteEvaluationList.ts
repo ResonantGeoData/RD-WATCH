@@ -14,6 +14,7 @@ export type SiteEvaluationList = {
     ymin: number;
     ymax: number;
   };
+  performers: Array<any>;
   results: Array<{
     id: number;
     site: string;
@@ -35,4 +36,6 @@ export type SiteEvaluationList = {
       ymax: number;
     };
   }>;
+  next: string;
+  previous: string;
 };

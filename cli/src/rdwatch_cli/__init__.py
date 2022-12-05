@@ -64,6 +64,72 @@ def cli():
     ...
 
 
-cli.add_command(login_cmd, name="login")
-cli.add_command(image_cmd, name="image")
-cli.add_command(movie_cmd, name="movie")
+@cli.command()
+def login():
+    _login()
+
+
+@cli.command()
+@click.option("--host", type=str, default="https://resonantgeodata.dev")
+@click.option("--output", type=Path)
+@click.option("--bbox", nargs=4, type=click.UNPROCESSED, callback=validate_bbox)
+@click.option("--time", type=click.UNPROCESSED, callback=validate_timestamp)
+@click.option("--worldview", is_flag=True)
+@_coroutine
+async def image(
+    host: str,
+    output: Path,
+    bbox: tuple[float, float, float, float],
+    time: datetime,
+    worldview: bool,
+) -> None:
+    """Retrieve an image for a bounding box at a specific time"""
+    async with _get_http_client(host) as client:
+        try:
+            img = await api.image(client, bbox, time, worldview=worldview)
+            img.save(output)
+        except ImageNotFound:
+            raise click.ClickException(
+                "No image found for the given bounding box and time"
+            )
+        except ServerError:
+            raise click.ClickException("Server down (try again later)")
+
+
+@cli.command()
+@click.option("--host", type=str, default="https://resonantgeodata.dev")
+@click.option("--output", type=Path)
+@click.option("--bbox", nargs=4, type=click.UNPROCESSED, callback=validate_bbox)
+@click.option("--start-time", type=click.DateTime())
+@click.option("--end-time", type=click.DateTime())
+@click.option("--worldview", is_flag=True)
+@_coroutine
+async def movie(
+    host: str,
+    output: Path,
+    bbox: tuple[float, float, float, float],
+    start_time: datetime,
+    end_time: datetime,
+    worldview: bool,
+) -> None:
+    """Generate a movie for a bounding box at each timestamp"""
+    async with _get_http_client(host) as client:
+        try:
+            imgs = [
+                img
+                for img in await api.movie(
+                    client,
+                    bbox,
+                    start_time,
+                    end_time,
+                    worldview=worldview,
+                )
+                if img
+            ]
+            imgs[0].save(output, save_all=True, append_images=imgs)
+        except ImageNotFound:
+            raise click.ClickException(
+                "No image found for the given bounding box and time"
+            )
+        except ServerError:
+            raise click.ClickException("Server down (try again later)")

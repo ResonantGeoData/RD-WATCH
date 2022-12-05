@@ -14,7 +14,7 @@ You can view and create `model-runs` on the `/api/model-runs` endpoint.
 
 The following JSON is an example of data to be used to create a `model-run`:
 
-```json
+```jsonc
 //model-run.json
 {
   // must be a valid performer short-code

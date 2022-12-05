@@ -1,8 +1,12 @@
 from django.urls import path
+from rest_framework import routers
 from rest_framework.renderers import CoreJSONRenderer
 from rest_framework.schemas import get_schema_view
 
 from rdwatch import views
+
+router = routers.SimpleRouter(trailing_slash=False)
+router.register(r"model-runs", views.ModelRunViewSet)
 
 urlpatterns = [
     path(
@@ -33,3 +37,5 @@ urlpatterns = [
     ),
     path("site-model", views.post_site_model),
 ]
+
+urlpatterns += router.urls

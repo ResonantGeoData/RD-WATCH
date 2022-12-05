@@ -1,3 +1,5 @@
+import sys
+
 import django_filters
 
 from django.contrib.gis.db.models.aggregates import Collect
@@ -64,7 +66,8 @@ def site_evaluations(request: HttpRequest):
 
     # Pagination
     assert api_settings.PAGE_SIZE, "PAGE_SIZE must be set."
-    paginator = Paginator(queryset, api_settings.PAGE_SIZE)
+    limit = int(request.GET.get("limit", api_settings.PAGE_SIZE)) or sys.maxsize
+    paginator = Paginator(queryset, limit)
     page = paginator.page(request.GET.get("page", 1))
 
     if page.has_next():

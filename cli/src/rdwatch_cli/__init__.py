@@ -49,6 +49,16 @@ def _get_http_client(host: str) -> aiohttp.ClientSession:
     )
 
 
+def _coroutine(f):
+    """Run a click command as a coroutine."""
+
+    @wraps(f)
+    def wrapper(*args, **kwargs):
+        return asyncio.run(f(*args, **kwargs))
+
+    return wrapper
+
+
 @click.group()
 def cli():
     ...

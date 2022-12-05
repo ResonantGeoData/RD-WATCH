@@ -1,19 +1,4 @@
-from datetime import datetime
-
 import click
-
-
-def validate_timestamp(ctx, param, value):
-    if isinstance(value, datetime):
-        return value
-    try:
-        return datetime.fromisoformat(value)
-    except ValueError:
-        raise click.BadParameter("invalid isoformat string")
-
-
-def validate_timestamps(ctx, param, value):
-    return tuple(validate_timestamp(ctx, param, v) for v in value)
 
 
 def validate_bbox(ctx, param, value):

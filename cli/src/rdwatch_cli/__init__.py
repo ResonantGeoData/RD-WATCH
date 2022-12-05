@@ -9,7 +9,7 @@ import click
 from rdwatch_cli import api
 from rdwatch_cli.config import get_credentials, set_credentials
 from rdwatch_cli.exceptions import ImageNotFound, ServerError
-from rdwatch_cli.validators import validate_bbox, validate_timestamp
+from rdwatch_cli.validators import validate_bbox
 
 
 def _login():
@@ -66,15 +66,36 @@ def cli():
 
 @cli.command()
 def login():
+    """Set HTTP Basic Auth credentials"""
     _login()
 
 
 @cli.command()
-@click.option("--host", type=str, default="https://resonantgeodata.dev")
-@click.option("--output", type=Path)
-@click.option("--bbox", nargs=4, type=click.UNPROCESSED, callback=validate_bbox)
-@click.option("--time", type=click.UNPROCESSED, callback=validate_timestamp)
-@click.option("--worldview", is_flag=True)
+@click.option(
+    "--host",
+    type=str,
+    default="https://resonantgeodata.dev",
+    show_default=True,
+    help="Hostname of the RD-Watch instance to use",
+)
+@click.option("--output", type=Path, help="Output file path")
+@click.option(
+    "--bbox",
+    nargs=4,
+    type=click.UNPROCESSED,
+    callback=validate_bbox,
+    help="Bounding box (min-x min-y max-x max-y)",
+)
+@click.option(
+    "--time",
+    type=click.DateTime(),
+    help="Time near satellite capture",
+)
+@click.option(
+    "--worldview",
+    is_flag=True,
+    help="Use WorldView satellite imagery instead of Sentinel-2",
+)
 @_coroutine
 async def image(
     host: str,
@@ -97,12 +118,36 @@ async def image(
 
 
 @cli.command()
-@click.option("--host", type=str, default="https://resonantgeodata.dev")
-@click.option("--output", type=Path)
-@click.option("--bbox", nargs=4, type=click.UNPROCESSED, callback=validate_bbox)
-@click.option("--start-time", type=click.DateTime())
-@click.option("--end-time", type=click.DateTime())
-@click.option("--worldview", is_flag=True)
+@click.option(
+    "--host",
+    type=str,
+    default="https://resonantgeodata.dev",
+    show_default=True,
+    help="Hostname of the RD-Watch instance to use",
+)
+@click.option("--output", type=Path, help="Output file path")
+@click.option(
+    "--bbox",
+    nargs=4,
+    type=click.UNPROCESSED,
+    callback=validate_bbox,
+    help="Bounding box (min-x min-y max-x max-y)",
+)
+@click.option(
+    "--start-time",
+    type=click.DateTime(),
+    help="Time near beginning of satellite capture",
+)
+@click.option(
+    "--end-time",
+    type=click.DateTime(),
+    help="Time near end of satellite capture",
+)
+@click.option(
+    "--worldview",
+    is_flag=True,
+    help="Use WorldView satellite imagery instead of Sentinel-2",
+)
 @_coroutine
 async def movie(
     host: str,

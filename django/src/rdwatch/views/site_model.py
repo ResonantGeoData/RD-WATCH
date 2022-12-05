@@ -104,18 +104,6 @@ def get_region(region_id: str) -> Region:
     return region
 
 
-def get_hyper_parameters(feature: SiteFeature) -> HyperParameters:
-    originator = feature["properties"]["originator"]
-    misc_info = feature["properties"].get("misc_info", dict())
-
-    try:
-        performer = lookups.Performer.objects.get(slug=originator.upper())
-    except ObjectDoesNotExist:
-        raise ValidationError(f"unkown originator '{originator}'")
-
-    return HyperParameters.objects.create(performer=performer, parameters=misc_info)
-
-
 def get_site_evaluation(
     feature: SiteFeature,
     region: Region,
@@ -220,13 +208,18 @@ def gen_site_observations(
 
 @api_view(["POST"])
 @transaction.atomic
-def post_site_model(request: Request):
+def post_site_model(request: Request, hyper_parameters_id: int):
+
+    try:
+        hyper_parameters = HyperParameters.objects.get(pk=hyper_parameters_id)
+    except ObjectDoesNotExist:
+        raise ValidationError(f"unkown model-run ID: '{hyper_parameters_id}'")
+
     feature_collection = cast(FeatureCollection, request.data)
 
     try:
         site_feature = get_site_feature(feature_collection)
         region = get_region(site_feature["properties"]["region_id"])
-        hyper_parameters = get_hyper_parameters(site_feature)
         site_evaluation = get_site_evaluation(site_feature, region, hyper_parameters)
         observation_features = get_observation_features(feature_collection)
         SiteObservation.objects.bulk_create(

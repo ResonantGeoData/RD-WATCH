@@ -1,8 +1,12 @@
 from django.urls import path
+from rest_framework import routers
 from rest_framework.renderers import CoreJSONRenderer
 from rest_framework.schemas import get_schema_view
 
 from rdwatch import views
+
+router = routers.SimpleRouter(trailing_slash=False)
+router.register(r"model-runs", views.ModelRunViewSet)
 
 urlpatterns = [
     path(
@@ -31,5 +35,7 @@ urlpatterns = [
         views.satelliteimage_visual_tile,
         name="satellite-visual-tiles",
     ),
-    path("site-model", views.post_site_model),
+    path("model-runs/<int:hyper_parameters_id>/site-model", views.post_site_model),
 ]
+
+urlpatterns += router.urls

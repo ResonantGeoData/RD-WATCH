@@ -1,3 +1,4 @@
+from .model_run import ModelRunViewSet
 from .server_status import RetrieveServerStatus
 from .site_evaluation import site_evaluations
 from .site_model import post_site_model
@@ -11,6 +12,7 @@ from .tile import (
 )
 
 __all__ = [
+    "ModelRunViewSet",
     "RetrieveServerStatus",
     "site_evaluations",
     "post_site_model",

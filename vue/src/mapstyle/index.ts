@@ -12,7 +12,10 @@ import {
 } from "./rdwatchtiles";
 import type { StyleSpecification } from "maplibre-gl";
 
-export const style = (timestamp: number): StyleSpecification => ({
+export const style = (
+  timestamp: number,
+  filters: Record<string, string>
+): StyleSpecification => ({
   version: 8,
   sources: {
     ...naturalearthSources,
@@ -29,6 +32,6 @@ export const style = (timestamp: number): StyleSpecification => ({
     },
     ...naturalearthLayers,
     ...openmaptilesLayers,
-    ...rdwatchtilesLayers(timestamp),
+    ...rdwatchtilesLayers(timestamp, filters),
   ],
 });

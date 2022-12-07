@@ -6,5 +6,8 @@ module.exports = {
       mono: ["Iosevka", "monospace"],
     },
   },
-  plugins: [],
+  plugins: [require("daisyui")],
+  daisyui: {
+    themes: ["lofi"],
+  },
 };

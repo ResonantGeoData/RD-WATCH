@@ -25,10 +25,13 @@ export class ApiService {
    * @returns SiteEvaluationList
    * @throws ApiError
    */
-  public static getSiteEvaluations(): CancelablePromise<SiteEvaluationList> {
+  public static getSiteEvaluations(
+    query?: Record<string, string>
+  ): CancelablePromise<SiteEvaluationList> {
     return __request(OpenAPI, {
       method: "GET",
       url: "/api/evaluations",
+      query,
     });
   }
 

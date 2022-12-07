@@ -10,16 +10,26 @@ import type {
 } from "maplibre-gl";
 
 export const buildObservationFilter = (
-  timestamp: number
-): FilterSpecification => [
-  "all",
-  ["<=", ["get", "timemin"], timestamp],
-  [
-    "any",
-    ["!", ["to-boolean", ["get", "timemax"]]],
-    [">", ["get", "timemax"], timestamp],
-  ],
-];
+  timestamp: number,
+  filters: Record<string, string>
+): FilterSpecification => {
+  const filter: FilterSpecification = [
+    "all",
+    ["<=", ["get", "timemin"], timestamp],
+    [
+      "any",
+      ["!", ["to-boolean", ["get", "timemax"]]],
+      [">", ["get", "timemax"], timestamp],
+    ],
+  ];
+
+  // Add any filters set in the UI
+  Object.entries(filters).forEach(([key, value]) => {
+    filter.push(["==", ["get", key], value]);
+  });
+
+  return filter;
+};
 
 export const buildSiteFilter = (timestamp: number): FilterSpecification => [
   "<=",
@@ -48,7 +58,10 @@ const source: SourceSpecification = {
 };
 export const sources = { rdwatchtiles: source };
 
-export const layers = (timestamp: number): LayerSpecification[] => [
+export const layers = (
+  timestamp: number,
+  filters: Record<string, string>
+): LayerSpecification[] => [
   {
     id: "sites-outline",
     type: "line",
@@ -69,7 +82,7 @@ export const layers = (timestamp: number): LayerSpecification[] => [
       "fill-color": observationColor,
       "fill-opacity": 0.05,
     },
-    filter: buildObservationFilter(timestamp),
+    filter: buildObservationFilter(timestamp, filters),
   },
   {
     id: "observations-outline",
@@ -80,7 +93,7 @@ export const layers = (timestamp: number): LayerSpecification[] => [
       "line-color": observationColor,
       "line-width": 2,
     },
-    filter: buildObservationFilter(timestamp),
+    filter: buildObservationFilter(timestamp, filters),
   },
   {
     id: "observations-text",
@@ -106,6 +119,6 @@ export const layers = (timestamp: number): LayerSpecification[] => [
     paint: {
       "text-color": observationColor,
     },
-    filter: buildObservationFilter(timestamp),
+    filter: buildObservationFilter(timestamp, filters),
   },
 ];

@@ -35,7 +35,6 @@ INSTALLED_APPS = [
     "django.contrib.postgres",
     "django_filters",
     "rest_framework",
-    "django_extensions",
     "rdwatch",
 ]
 MIDDLEWARE = [

@@ -8,10 +8,36 @@ import type {
   LayerSpecification,
   SourceSpecification,
 } from "maplibre-gl";
+import type { MapFilters } from "../store";
+
+// function buildSearchFilters(filters: MapFilters) {
+//   const filter: FilterSpecification = ["all"];
+//   if (filters.groundtruth) {
+//     Object.entries(filters).forEach(([key, value]) => {
+//       if (value !== undefined && key !== "groundtruth") {
+//         filter.push([
+//           "any",
+//           ["in", ["get", key], value],
+//           ["get", "groundtruth"],
+//         ]);
+//       }
+//     });
+//     if (filter.length === 1) {
+//       filter.push(["get", "groundtruth"]);
+//     }
+//   } else {
+//     Object.entries(filters).forEach(([key, value]) => {
+//       if (value !== undefined && key !== "groundtruth") {
+//         filter.push([["in", ["get", key], value]]);
+//       }
+//     });
+//   }
+//   return filter;
+// }
 
 export const buildObservationFilter = (
   timestamp: number,
-  filters: Record<string, string>
+  filters: MapFilters
 ): FilterSpecification => {
   const filter: FilterSpecification = [
     "all",
@@ -25,17 +51,47 @@ export const buildObservationFilter = (
 
   // Add any filters set in the UI
   Object.entries(filters).forEach(([key, value]) => {
-    filter.push(["==", ["get", key], value]);
+    if (value !== undefined && key !== "groundtruth") {
+      filter.push(
+        filters.groundtruth === undefined
+          ? ["in", ["get", key], ["literal", value]]
+          : [
+              "any",
+              ["in", ["get", key], ["literal", value]],
+              ["get", "groundtruth"],
+            ]
+      );
+    }
+  });
+  return filter;
+};
+
+export const buildSiteFilter = (
+  timestamp: number,
+  filters: MapFilters
+): FilterSpecification => {
+  const filter: FilterSpecification = [
+    "all",
+    ["<=", ["get", "timemin"], timestamp],
+  ];
+
+  // Add any filters set in the UI
+  Object.entries(filters).forEach(([key, value]) => {
+    if (value !== undefined && key !== "groundtruth") {
+      filter.push(
+        filters.groundtruth === undefined
+          ? ["in", ["get", key], ["literal", value]]
+          : [
+              "any",
+              ["in", ["get", key], ["literal", value]],
+              ["get", "groundtruth"],
+            ]
+      );
+    }
   });
 
   return filter;
 };
-
-export const buildSiteFilter = (timestamp: number): FilterSpecification => [
-  "<=",
-  ["get", "timemin"],
-  timestamp,
-];
 
 const rdwatchtiles = "rdwatchtiles";
 const urlRoot = `${location.protocol}//${location.host}`;
@@ -60,7 +116,7 @@ export const sources = { rdwatchtiles: source };
 
 export const layers = (
   timestamp: number,
-  filters: Record<string, string>
+  filters: Record<string, number>
 ): LayerSpecification[] => [
   {
     id: "sites-outline",
@@ -71,7 +127,7 @@ export const layers = (
       "line-color": "#FFA500",
       "line-width": 2,
     },
-    filter: buildSiteFilter(timestamp),
+    filter: buildSiteFilter(timestamp, filters),
   },
   {
     id: "observations-fill",

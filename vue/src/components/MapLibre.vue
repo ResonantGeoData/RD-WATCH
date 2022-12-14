@@ -37,7 +37,7 @@ onMounted(() => {
     map.value = markRaw(
       new Map({
         container: mapContainer.value,
-        style: style(state.timestamp, state.filters),
+        style: style(state.timestamp, {}),
         bounds: [
           [state.bbox.xmin, state.bbox.ymin],
           [state.bbox.xmax, state.bbox.ymax],
@@ -52,7 +52,7 @@ onUnmounted(() => {
 });
 
 watch([() => state.timestamp, () => state.filters], () => {
-  const siteFilter = buildSiteFilter(state.timestamp);
+  const siteFilter = buildSiteFilter(state.timestamp, state.filters);
   const observationFilter = buildObservationFilter(
     state.timestamp,
     state.filters

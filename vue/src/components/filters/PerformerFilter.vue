@@ -1,33 +1,38 @@
 <script setup lang="ts">
-import { state } from "../../store";
-import type { SiteEvaluationList } from "../../client";
+import FilterSelect from "../FilterSelect.vue";
+import { ref, watch, watchEffect } from "vue";
+import { ApiService } from "../../client";
+import type { Ref } from "vue";
+import type { Performer } from "../../client";
+
+type SelectedPerformer = Performer | null;
 
 const props = defineProps<{
-  evaluations: SiteEvaluationList;
+  modelValue: SelectedPerformer;
 }>();
 
 const emit = defineEmits<{
-  (e: "filter", by: string, value: string): void;
+  (e: "update:modelValue", performer: SelectedPerformer): void;
 }>();
+
+const performers: Ref<Performer[]> = ref([]);
+const selectedPerformer: Ref<SelectedPerformer> = ref(props.modelValue);
+
+watchEffect(async () => {
+  const performerList = await ApiService.getPerformers();
+  const performerResults = performerList["results"];
+  performerResults.sort((a, b) => (a.team_name > b.team_name ? 1 : -1));
+  performers.value = performerResults;
+});
+
+watch(selectedPerformer, (val) => emit("update:modelValue", val));
 </script>
 
 <template>
-  <div class="dropdown">
-    <label tabindex="0" class="btn m-1">Performer</label>
-    <ul
-      tabindex="0"
-      class="dropdown-content menu rounded-box w-52 bg-base-100 p-2 shadow"
-    >
-      <li
-        v-for="(performer, i) in props.evaluations.performers"
-        :key="`performer-filter-${i}`"
-      >
-        <a
-          :class="state.filters.performer === performer ? 'bg-info' : ''"
-          @click="emit('filter', 'performer', performer)"
-          >{{ performer }}</a
-        >
-      </li>
-    </ul>
-  </div>
+  <FilterSelect
+    v-model="selectedPerformer"
+    label="Performer"
+    :options="performers"
+    value-key="team_name"
+  />
 </template>

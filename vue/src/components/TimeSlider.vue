@@ -13,7 +13,7 @@ defineProps<{
     :min="min"
     :max="max"
     :disabled="min == max"
-    class="w-full"
+    class="chrome-range w-full"
     type="range"
   />
 </template>

@@ -14,7 +14,7 @@ import type { StyleSpecification } from "maplibre-gl";
 
 export const style = (
   timestamp: number,
-  filters: Record<string, string>
+  filters: Record<string, number>
 ): StyleSpecification => ({
   version: 8,
   sources: {

@@ -4,10 +4,24 @@
 import type { ServerStatus } from "../models/ServerStatus";
 import type { SiteEvaluationList } from "../models/SiteEvaluationList";
 import type { SiteObservationList } from "../models/SiteObservationList";
+import type { ModelRunList } from "../models/ModelRunList";
+import type { ModelRun } from "../models/ModelRun";
+import type { PerformerList } from "../models/PerformerList";
+import type { Performer } from "../models/Performer";
+import type { RegionList } from "../models/RegionList";
+import type { Region } from "../models/Region";
 
 import type { CancelablePromise } from "../core/CancelablePromise";
 import { OpenAPI } from "../core/OpenAPI";
 import { request as __request } from "../core/request";
+
+export interface QueryArguments {
+  performer?: string;
+  groundtruth?: boolean;
+  region?: string;
+  page?: number;
+  limit?: number;
+}
 
 export class ApiService {
   /**
@@ -26,7 +40,7 @@ export class ApiService {
    * @throws ApiError
    */
   public static getSiteEvaluations(
-    query?: Record<string, string>
+    query: QueryArguments = {}
   ): CancelablePromise<SiteEvaluationList> {
     return __request(OpenAPI, {
       method: "GET",
@@ -46,6 +60,89 @@ export class ApiService {
     return __request(OpenAPI, {
       method: "GET",
       url: "/api/evaluations/{id}",
+      path: {
+        id: id,
+      },
+    });
+  }
+
+  /**
+   * @returns ModelRunList
+   * @throws ApiError
+   */
+  public static getModelRuns(
+    query: QueryArguments = {}
+  ): CancelablePromise<ModelRunList> {
+    return __request(OpenAPI, {
+      method: "GET",
+      url: "/api/model-runs",
+      query: Object.fromEntries(
+        Object.entries(query).filter(([key, value]) => value !== undefined)
+      ),
+    });
+  }
+
+  /**
+   * @param id
+   * @returns ModelRun
+   * @throws ApiError
+   */
+  public static getModelRun(id: number): CancelablePromise<ModelRun> {
+    return __request(OpenAPI, {
+      method: "GET",
+      url: "/api/model-runs/{id}",
+      path: {
+        id: id,
+      },
+    });
+  }
+
+  /**
+   * @returns PerformerList
+   * @throws ApiError
+   */
+  public static getPerformers(): CancelablePromise<PerformerList> {
+    return __request(OpenAPI, {
+      method: "GET",
+      url: "/api/performers",
+    });
+  }
+
+  /**
+   * @param id
+   * @returns Performer
+   * @throws ApiError
+   */
+  public static getPerformer(id: number): CancelablePromise<Performer> {
+    return __request(OpenAPI, {
+      method: "GET",
+      url: "/api/performers/{id}",
+      path: {
+        id: id,
+      },
+    });
+  }
+
+  /**
+   * @returns PerformerList
+   * @throws ApiError
+   */
+  public static getRegions(): CancelablePromise<RegionList> {
+    return __request(OpenAPI, {
+      method: "GET",
+      url: "/api/regions",
+    });
+  }
+
+  /**
+   * @param id
+   * @returns Performer
+   * @throws ApiError
+   */
+  public static getRegion(id: number): CancelablePromise<Region> {
+    return __request(OpenAPI, {
+      method: "GET",
+      url: "/api/regions/{id}",
       path: {
         id: id,
       },

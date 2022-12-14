@@ -4,7 +4,18 @@ from urllib.parse import urlencode
 import mercantile
 
 from django.db import connection
-from django.db.models import BooleanField, F, Field, Func, Max, Min, Q, Window
+from django.db.models import (
+    BooleanField,
+    Case,
+    F,
+    Field,
+    Func,
+    Max,
+    Min,
+    Q,
+    When,
+    Window,
+)
 from django.http import (
     HttpRequest,
     HttpResponse,
@@ -58,10 +69,19 @@ def vector_tile(
         .annotate(
             id=F("pk"),
             mvtgeom=mvtgeom,
-            configuration=F("configuration_id"),
+            configuration_id=F("configuration_id"),
             timestamp=ExtractEpoch("timestamp"),
             timemin=ExtractEpoch(Min("observations__timestamp")),
             timemax=ExtractEpoch(Max("observations__timestamp")),
+            performer_id=F("configuration__performer_id"),
+            region_id=F("region_id"),
+            groundtruth=Case(
+                When(
+                    Q(configuration__performer__slug="TE") & Q(score=1),
+                    True,
+                ),
+                default=False,
+            ),
         )
     )
     (
@@ -75,7 +95,7 @@ def vector_tile(
         .annotate(
             id=F("pk"),
             mvtgeom=mvtgeom,
-            evaluation=F("siteeval_id"),
+            configuration_id=F("siteeval__configuration_id"),
             label=F("label_id"),
             timemin=ExtractEpoch("timestamp"),
             timemax=ExtractEpoch(
@@ -86,7 +106,16 @@ def vector_tile(
                     order_by="timestamp",  # type: ignore
                 ),
             ),
-            performer=F("siteeval__configuration__performer__slug"),
+            performer_id=F("siteeval__configuration__performer_id"),
+            region_id=F("siteeval__region_id"),
+            groundtruth=Case(
+                When(
+                    Q(siteeval__configuration__performer__slug="TE")
+                    & Q(siteeval__score=1),
+                    True,
+                ),
+                default=False,
+            ),
         )
     )
     (

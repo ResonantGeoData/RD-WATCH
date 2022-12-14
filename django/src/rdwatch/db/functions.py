@@ -1,6 +1,20 @@
-from django.contrib.gis.db.models.functions import Envelope, Transform
-from django.db.models import FloatField, Func, IntegerField, RowRange
+from django.contrib.gis.db.models.fields import PolygonField
+from django.contrib.gis.db.models.functions import AsGeoJSON, Envelope, Transform
+from django.contrib.postgres.expressions import ArraySubquery  # type: ignore
+from django.contrib.postgres.fields import ArrayField
+from django.db.models import (
+    Aggregate,
+    FloatField,
+    Func,
+    IntegerField,
+    JSONField,
+    Max,
+    Min,
+    RowRange,
+    Value,
+)
 from django.db.models.functions import JSONObject  # type: ignore
+from django.db.models.functions import Cast, NullIf
 
 
 class ExtractEpoch(Func):
@@ -12,7 +26,14 @@ class ExtractEpoch(Func):
 
 
 class BoundingBox(JSONObject):
-    """Gets the WGS-84 bounding box of a geometry"""
+    """Gets the WGS-84 bounding box of a geometry
+
+    This function has been superseded by the
+    'rdwatch.db.functions.BoundingBox' class. This legacy
+    version has been copied here rather than updating
+    the view as this view will likely be removed in the
+    future.
+    """
 
     def __init__(self, field):
         geom = Transform(Envelope(field), 4326)
@@ -38,6 +59,48 @@ class BoundingBox(JSONObject):
                 output_field=FloatField(),
             ),
         )
+
+
+class BoundingBoxPolygon(Aggregate):
+    """Gets the WGS-84 bounding box of a geometry stored in Web Mercator coordinates"""
+
+    template = "ST_Transform(ST_SetSRID(ST_Extent(%(expressions)s), 3857), 4326)"
+    arity = 1
+    output_field = PolygonField()  # type: ignore
+
+
+class BoundingBoxGeoJSON(Cast):
+    """Gets the GeoJSON bounding box of a geometry in Web Mercator coordinates"""
+
+    def __init__(self, field):
+        bbox = BoundingBoxPolygon(field)
+        json_str = AsGeoJSON(bbox)
+        return super().__init__(json_str, JSONField())
+
+
+class TimeRangeJSON(NullIf):
+    """Represents the min/max time of a field as JSON"""
+
+    def __init__(self, field):
+        json = JSONObject(
+            min=ExtractEpoch(Min(field)),
+            max=ExtractEpoch(Max(field)),
+        )
+        null = Value({"min": None, "max": None}, output_field=JSONField())
+        return super().__init__(json, null)
+
+
+class AggregateArraySubquery(Max):
+    """A hacky way to add a subquery to an aggregate
+
+    Input is passed to 'ArraySubquery'.
+
+    https://docs.djangoproject.com/en/4.1/ref/contrib/postgres/expressions/#arraysubquery-expressions
+    """
+
+    def __init__(self, *args, **kwargs):
+        null = Value(None, output_field=ArrayField(base_field=JSONField()))
+        return super().__init__(null, default=ArraySubquery(*args, **kwargs))
 
 
 class GroupExcludeRowRange(RowRange):

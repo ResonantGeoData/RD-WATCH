@@ -1,10 +1,14 @@
 from rest_framework import serializers
 
-from rdwatch.models import HyperParameters, lookups
+from rdwatch.models import lookups
+from rdwatch.serializers.generics import TimeRangeSerializer
+from rdwatch.serializers.performer import PerformerSerializer
+from rdwatch.serializers.region import RegionSerializer
 
 
-class HyperParametersSerializer(serializers.ModelSerializer):
-    performer = serializers.CharField(help_text="The team short-code")
+class HyperParametersWriteSerializer(serializers.Serializer):
+    performer = serializers.CharField()
+    parameters = serializers.JSONField(default=dict)
 
     def validate_performer(self, value: str) -> lookups.Performer:
         try:
@@ -12,7 +16,24 @@ class HyperParametersSerializer(serializers.ModelSerializer):
         except lookups.Performer.DoesNotExist:
             raise serializers.ValidationError(f"Invalid performer '{value}'")
 
-    class Meta:
-        model = HyperParameters
-        fields = "__all__"
-        extra_kwargs = {"parameters": {"default": dict}}
+
+class HyperParametersDetailSerializer(serializers.Serializer):
+    id = serializers.IntegerField()
+    title = serializers.CharField()
+    region = RegionSerializer(allow_null=True)
+    performer = PerformerSerializer()
+    parameters = serializers.JSONField()
+    numsites = serializers.IntegerField()
+    score = serializers.FloatField(allow_null=True)
+    timestamp = serializers.IntegerField(allow_null=True)
+    timerange = TimeRangeSerializer(allow_null=True)
+    bbox = serializers.JSONField(allow_null=True)
+
+
+class HyperParametersListSerializer(serializers.Serializer):
+    count = serializers.IntegerField()
+    previous = serializers.CharField()
+    next = serializers.CharField()
+    timerange = TimeRangeSerializer()
+    bbox = serializers.JSONField(allow_null=True)
+    results = HyperParametersDetailSerializer(many=True)

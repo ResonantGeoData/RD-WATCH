@@ -46,8 +46,8 @@ flake8-django = "^1.1.5"
 
 [tool.taskipy.tasks]
 "build:openapi" = "DJANGO_SETTINGS_MODULE=rdwatch.server.settings django-admin generateschema --format openapi-json --file openapi.json"
-"lint" = "task lint:black; task lint:isort; task lint:flake8; task lint:mypy"
-"lint:fix" = "task lint:black:fix; task lint:isort:fix; task lint:flake8; task lint:mypy;"
+"lint" = "task lint:black; task lint:isort; task lint:flake8"
+"lint:fix" = "task lint:black:fix; task lint:isort:fix; task lint:flake8"
 "lint:flake8" = "flake8 src"
 "lint:black" = "black --check --diff --quiet src"
 "lint:black:fix" = "black  --quiet src"

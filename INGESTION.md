@@ -19,6 +19,8 @@ The following JSON is an example of data to be used to create a `model-run`:
 {
   // must be a valid performer short-code
   "performer": "KIT",
+  // a human-readable title
+  "title": "Ingestion 3.2",
   // can be any JSON that helps keep track of what this model-run is
   "parameters": {
     "any": "data"
@@ -42,6 +44,7 @@ You'll get the newly created `model-run` as a response:
 {
   "id": 12,
   "performer": "KIT",
+  "title": "Ingestion 3.2",
   "parameters": {
     "any": "data"
   }

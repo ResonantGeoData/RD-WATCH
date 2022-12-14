@@ -11,7 +11,10 @@ export default defineConfig(({ mode }) => {
       host: "0.0.0.0",
       port: 9000,
       proxy: {
-        "/api": "http://django:80",
+        "/api": {
+          target: "http://django:80",
+          xfwd: true,
+        },
       },
       strictPort: true,
       usePolling: env.RDWATCH_FILE_POLLING === "1",

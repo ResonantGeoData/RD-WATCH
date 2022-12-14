@@ -229,4 +229,4 @@ def post_site_model(request: Request, hyper_parameters_id: int):
     except KeyError as e:
         raise ValidationError(f"malformed site model: no key '{e.args[0]}'")
 
-    return Response()
+    return Response(status=201)

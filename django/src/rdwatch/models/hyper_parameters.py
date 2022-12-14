@@ -2,6 +2,7 @@ from django.db import models
 
 
 class HyperParameters(models.Model):
+    title = models.CharField(max_length=1000)
     performer = models.ForeignKey(
         to="Performer",
         on_delete=models.PROTECT,

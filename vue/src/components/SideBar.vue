@@ -10,20 +10,24 @@ import type { Performer, QueryArguments, Region } from "../client";
 import type { Ref } from "vue";
 
 const timemin = ref(Math.floor(new Date(0).valueOf() / 1000));
-const queryFilters: Ref<QueryArguments> = ref({});
+const queryFilters: Ref<QueryArguments> = ref({ page: 1 });
 
 const selectedPerformer: Ref<Performer | null> = ref(null);
 const selectedRegion: Ref<Region | null> = ref(null);
 const groundTruth = ref(false);
 watch(selectedPerformer, (val) => {
-  queryFilters.value = { ...queryFilters.value, performer: val?.short_code };
+  queryFilters.value = {
+    ...queryFilters.value,
+    performer: val?.short_code,
+    page: 1,
+  };
   state.filters = {
     ...state.filters,
     performer_id: val?.id === undefined ? undefined : [val.id],
   };
 });
 watch(selectedRegion, (val) => {
-  queryFilters.value = { ...queryFilters.value, region: val?.name };
+  queryFilters.value = { ...queryFilters.value, region: val?.name, page: 1 };
   state.filters = {
     ...state.filters,
     region_id: val?.id === undefined ? undefined : [val.id],
@@ -31,13 +35,24 @@ watch(selectedRegion, (val) => {
 });
 watch(groundTruth, (val) => {
   if (val) {
-    queryFilters.value = { ...queryFilters.value, groundtruth: true };
+    queryFilters.value = { ...queryFilters.value, groundtruth: true, page: 1 };
     state.filters = { ...state.filters, groundtruth: true };
   } else {
-    queryFilters.value = { ...queryFilters.value, groundtruth: undefined };
+    queryFilters.value = {
+      ...queryFilters.value,
+      groundtruth: undefined,
+      page: 1,
+    };
     state.filters = { ...state.filters, groundtruth: undefined };
   }
 });
+
+function nextPage() {
+  queryFilters.value = {
+    ...queryFilters.value,
+    page: (queryFilters.value.page || 0) + 1,
+  };
+}
 </script>
 
 <template>
@@ -68,6 +83,7 @@ watch(groundTruth, (val) => {
 
         <ModelRunList
           :filters="queryFilters"
+          @next-page="nextPage"
           @update:timerange="
             (timerange) => {
               if (timerange !== null) {

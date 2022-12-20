@@ -17,6 +17,7 @@ const props = defineProps<{
 
 const emit = defineEmits<{
   (e: "update:timerange", timerange: ModelRun["timerange"]): void;
+  (e: "nextPage"): void;
 }>();
 
 const modelRuns: Ref<KeyedModelRun[]> = ref([]);
@@ -27,12 +28,16 @@ const resultsBoundingBox = ref({
   xmax: 180,
   ymax: 90,
 });
+const totalModelRuns = ref(1);
 
-watchEffect(async () => {
+async function loadMore() {
   const modelRunList = await ApiService.getModelRuns({
-    limit: 0,
+    limit: 10,
     ...props.filters,
   });
+
+  totalModelRuns.value = modelRunList.count;
+
   const modelRunResults = modelRunList.results;
   const keyedModelRunResults = modelRunResults.map((val) => {
     return { ...val, key: `${val.id}|${val.region.id}` };
@@ -50,9 +55,17 @@ watchEffect(async () => {
   };
   resultsBoundingBox.value = bbox;
   state.bbox = bbox;
-  modelRuns.value = keyedModelRunResults;
+
+  // If we're on page 1, we *might* have switched to a different filter/grouping in the UI,
+  // meaning we would need to clear out any existing results.
+  // To account for this, just set the array to the results directly instead of concatenating.
+  if (props.filters.page === 1) {
+    modelRuns.value = keyedModelRunResults;
+  } else {
+    modelRuns.value = modelRuns.value.concat(keyedModelRunResults);
+  }
   emit("update:timerange", modelRunList["timerange"]);
-});
+}
 
 function handleToggle(modelRun: KeyedModelRun) {
   if (openedModelRuns.value.has(modelRun.key)) {
@@ -94,10 +107,25 @@ function handleToggle(modelRun: KeyedModelRun) {
     };
   }
 }
+
+async function handleScroll(event: Event) {
+  const target = event.target as HTMLElement;
+
+  // If the user has scrolled to the bottom of the list AND there are still more model runs to
+  // fetch, bump the current page to trigger the loadMore function via a watcher.
+  if (
+    target.scrollHeight - target.scrollTop === target.clientHeight &&
+    modelRuns.value.length < totalModelRuns.value
+  ) {
+    emit("nextPage");
+  }
+}
+
+watchEffect(loadMore);
 </script>
 
 <template>
-  <div class="h-4/5 overflow-y-scroll px-2">
+  <div class="h-4/5 overflow-y-scroll px-2" @scroll="handleScroll">
     <ModelRunDetail
       v-for="modelRun in modelRuns"
       :key="modelRun.key"

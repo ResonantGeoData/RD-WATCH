@@ -8,6 +8,7 @@ from rdwatch.serializers.region import RegionSerializer
 
 class HyperParametersWriteSerializer(serializers.Serializer):
     performer = serializers.CharField()
+    title = serializers.CharField(max_length=1000)
     parameters = serializers.JSONField(default=dict)
 
     def validate_performer(self, value: str) -> lookups.Performer:

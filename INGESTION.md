@@ -43,11 +43,21 @@ You'll get the newly created `model-run` as a response:
 ```json
 {
   "id": 12,
-  "performer": "KIT",
   "title": "Ingestion 3.2",
+  "region": null,
+  "performer": {
+    "id": 7,
+    "team_name": "Kitware",
+    "short_code": "KIT"
+  },
   "parameters": {
     "any": "data"
-  }
+  },
+  "numsites": 0,
+  "score": null,
+  "timestamp": null,
+  "timerange": null,
+  "bbox": null
 }
 ```
 

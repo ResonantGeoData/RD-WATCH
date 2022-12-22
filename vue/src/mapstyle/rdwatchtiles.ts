@@ -124,7 +124,7 @@ export const layers = (
     source: rdwatchtiles,
     "source-layer": "sites",
     paint: {
-      "line-color": "#FFA500",
+      "line-color": "#DC143C",
       "line-width": 2,
     },
     filter: buildSiteFilter(timestamp, filters),

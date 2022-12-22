@@ -100,7 +100,7 @@ const observationColor: DataDrivenPropertyValueSpecification<string> = [
   ["==", ["get", "label"], 1],
   "#1F77B4",
   ["==", ["get", "label"], 2],
-  "#FF7F0E",
+  "#A020F0",
   ["==", ["get", "label"], 3],
   "#2CA02C",
   "#7F7F7F",

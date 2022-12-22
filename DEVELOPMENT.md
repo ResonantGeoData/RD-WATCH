@@ -10,8 +10,10 @@ Get up and running with the recommended development setup. It's advised to devel
 2. Pull in the Docker images: `docker compose --profile vscode pull`
 3. Install the dependencies for Django: `docker compose run --rm poetry install`
 4. Install the dependencies for Vue: `docker compose run --rm npm install`
-5. Install the VS Code [Remote - Containers](https://marketplace.visualstudio.com/items?itemName=ms-vscode-remote.remote-containers) extension
-6. In VS Code, open the Command Palette (<kbd>⌘</kbd> <kbd>⇧</kbd> <kbd>P</kbd> or <kbd>Ctrl</kbd> <kbd>Shift</kbd> <kbd>P</kbd>) and run `>Remote-Containers: Open Workspace in Container...` selecting the file ["vscode.code-workspace"](https://github.com/ResonantGeoData/RD-WATCH/blob/phase-ii/vscode.code-workspace) as the Workspace file
+5. Run migrations: `docker compose run --rm poetry run django-admin migrate`
+6. Load test data: `docker compose run --rm poetry run django-admin loaddata testdata`
+7. Install the VS Code [Remote - Containers](https://marketplace.visualstudio.com/items?itemName=ms-vscode-remote.remote-containers) extension
+8. In VS Code, open the Command Palette (<kbd>⌘</kbd> <kbd>⇧</kbd> <kbd>P</kbd> or <kbd>Ctrl</kbd> <kbd>Shift</kbd> <kbd>P</kbd>) and run `>Remote-Containers: Open Workspace in Container...` selecting the file ["vscode.code-workspace"](https://github.com/ResonantGeoData/RD-WATCH/blob/phase-ii/vscode.code-workspace) as the Workspace file
 
 Two ports will be open:
 
@@ -22,7 +24,6 @@ Two ports will be open:
 
 - [`django-admin`](https://docs.djangoproject.com/en/4.1/ref/django-admin) commands:
   - e.g. run migrations: `docker compose run --rm poetry run django-admin migrate`
-  - e.g. load fixtures: `docker compose run --rm poetry run django-admin loaddata lookups`
   - e.g. run tests: `docker compose run --rm poetry run django-admin test`
 - `npm` commands and scripts (see [`scripts` in `package.json`](https://github.com/ResonantGeoData/RD-WATCH/blob/phase-ii/vue/package.json#L5)):
   - e.g. lint and fix code: `docker compose run --rm npm run lint:fix`

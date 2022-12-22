@@ -1,3 +1,6 @@
+# flake8: noqa
+# type: ignore
+
 import django.contrib.gis.db.models.fields
 import django.contrib.postgres.fields.ranges
 import django.contrib.postgres.indexes

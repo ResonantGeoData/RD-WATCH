@@ -105,6 +105,13 @@ const observationColor: DataDrivenPropertyValueSpecification<string> = [
   "#2CA02C",
   "#7F7F7F",
 ];
+const observationWidth: DataDrivenPropertyValueSpecification<number> = [
+  // If this observation is a grouth truth, make the width 4. Otherwise, make it 2.
+  "case",
+  ["get", "groundtruth"],
+  4,
+  2,
+];
 
 const source: SourceSpecification = {
   type: "vector",
@@ -147,7 +154,7 @@ export const layers = (
     "source-layer": "observations",
     paint: {
       "line-color": observationColor,
-      "line-width": 2,
+      "line-width": observationWidth,
     },
     filter: buildObservationFilter(timestamp, filters),
   },

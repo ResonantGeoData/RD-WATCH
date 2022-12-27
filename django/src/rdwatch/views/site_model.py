@@ -22,6 +22,11 @@ from rdwatch.models import (
 )
 
 
+class Polygon(TypedDict):
+    type: Literal["Polygon"]
+    coordinates: list[list[tuple[float, float]]]
+
+
 class MultiPolygon(TypedDict):
     type: Literal["MultiPolygon"]
     coordinates: list[list[list[tuple[float, float]]]]
@@ -52,7 +57,7 @@ class ObservationFeatureProperties(TypedDict):
 
 
 class SiteFeature(TypedDict):
-    geometry: dict
+    geometry: Polygon
     properties: SiteFeatureProperties
 
 
@@ -73,6 +78,8 @@ def get_site_feature(collection: FeatureCollection) -> SiteFeature:
     ]
     if len(features) != 1:
         raise ValidationError("must contain exactly one 'Site' feature")
+    if features[0].get("geometry", {}).get("type") != "Polygon":
+        raise ValidationError("the 'Site' feature must be a 'Polygon'")
     return features[0]
 
 
@@ -84,6 +91,10 @@ def get_observation_features(collection: FeatureCollection) -> list[ObservationF
     ]
     if not features:
         raise ValidationError("must contain one or more 'Observation' features")
+    for feature in features:
+        if feature.get("geometry", {}).get("type") != "MultiPolygon":
+            raise ValidationError("the 'Observation' feature must be a 'MultiPolygon'")
+
     return features
 
 

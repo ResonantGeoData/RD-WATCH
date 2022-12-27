@@ -4,7 +4,6 @@
 import django.contrib.gis.db.models.fields
 import django.contrib.postgres.fields.ranges
 import django.contrib.postgres.indexes
-import django.core.validators
 import django.db.models.deletion
 from django.db import migrations, models
 
@@ -60,6 +59,7 @@ class Migration(migrations.Migration):
                         verbose_name="ID",
                     ),
                 ),
+                ("title", models.CharField(max_length=1000)),
                 (
                     "parameters",
                     models.JSONField(
@@ -124,7 +124,7 @@ class Migration(migrations.Migration):
                 (
                     "number",
                     models.PositiveSmallIntegerField(
-                        db_index=True, help_text="The region number"
+                        db_index=True, help_text="The region number", null=True
                     ),
                 ),
             ],
@@ -219,6 +219,7 @@ class Migration(migrations.Migration):
                     "constellation",
                     models.ForeignKey(
                         help_text="The source image's satellite constellation",
+                        null=True,
                         on_delete=django.db.models.deletion.PROTECT,
                         to="rdwatch.constellation",
                     ),
@@ -243,6 +244,7 @@ class Migration(migrations.Migration):
                     "spectrum",
                     models.ForeignKey(
                         help_text="The source image's satellite spectrum",
+                        null=True,
                         on_delete=django.db.models.deletion.PROTECT,
                         to="rdwatch.commonband",
                     ),
@@ -250,72 +252,6 @@ class Migration(migrations.Migration):
             ],
             options={
                 "default_related_name": "observations",
-            },
-        ),
-        migrations.CreateModel(
-            name="SatelliteImage",
-            fields=[
-                (
-                    "id",
-                    models.AutoField(
-                        auto_created=True,
-                        primary_key=True,
-                        serialize=False,
-                        verbose_name="ID",
-                    ),
-                ),
-                (
-                    "timestamp",
-                    models.DateTimeField(help_text="The time the imagery was captured"),
-                ),
-                (
-                    "bbox",
-                    django.contrib.gis.db.models.fields.PolygonField(
-                        help_text="The spatial extent of the image",
-                        srid=3857,
-                        validators=[rdwatch.validators.validate_bbox],
-                    ),
-                ),
-                (
-                    "uri",
-                    models.CharField(
-                        help_text="The URI of the raster",
-                        max_length=200,
-                        unique=True,
-                        validators=[
-                            django.core.validators.URLValidator(
-                                schemes=["http", "https", "s3"]
-                            )
-                        ],
-                    ),
-                ),
-                (
-                    "constellation",
-                    models.ForeignKey(
-                        help_text="The source satellite constellation",
-                        on_delete=django.db.models.deletion.PROTECT,
-                        to="rdwatch.constellation",
-                    ),
-                ),
-                (
-                    "level",
-                    models.ForeignKey(
-                        help_text="The processing level of the imagery",
-                        on_delete=django.db.models.deletion.PROTECT,
-                        to="rdwatch.processinglevel",
-                    ),
-                ),
-                (
-                    "spectrum",
-                    models.ForeignKey(
-                        help_text="The spectrum range this raster captures",
-                        on_delete=django.db.models.deletion.PROTECT,
-                        to="rdwatch.commonband",
-                    ),
-                ),
-            ],
-            options={
-                "default_related_name": "satellite_images",
             },
         ),
         migrations.AddField(
@@ -348,14 +284,6 @@ class Migration(migrations.Migration):
                 fields=["score"], name="rdwatch_sit_score_338731_gist"
             ),
         ),
-        migrations.AddConstraint(
-            model_name="siteobservation",
-            constraint=models.UniqueConstraint(
-                fields=("siteeval", "timestamp"),
-                name="uniq_siteobv",
-                violation_error_message="Unique constraint invalid. Add polygons to existing site observation.",
-            ),
-        ),
         migrations.AddIndex(
             model_name="siteevaluation",
             index=django.contrib.postgres.indexes.GistIndex(
@@ -374,20 +302,6 @@ class Migration(migrations.Migration):
                 fields=("configuration", "region", "number"),
                 name="unique_siteeval",
                 violation_error_message="Site evaluation already exists.",
-            ),
-        ),
-        migrations.AddIndex(
-            model_name="satelliteimage",
-            index=django.contrib.postgres.indexes.GistIndex(
-                fields=["timestamp"], name="rdwatch_sat_timesta_f7c7c6_gist"
-            ),
-        ),
-        migrations.AddConstraint(
-            model_name="satelliteimage",
-            constraint=models.UniqueConstraint(
-                fields=("constellation", "spectrum", "level", "timestamp"),
-                name="uniq_satimg",
-                violation_error_message="Image already exists.",
             ),
         ),
         migrations.AddConstraint(

@@ -12,6 +12,8 @@ RUN echo "deb [signed-by=/usr/share/keyrings/nginx.gpg] http://packages.nginx.or
       libproj25 \
       libgdal31 \
       netcat-openbsd \
+      python3-cachecontrol \
+      python3-poetry \
       tzdata \
       unit \
       unit-python3.10 \
@@ -44,9 +46,7 @@ RUN apt-get update \
       libpq-dev \
       nodejs \
       npm \
-      python3-cachecontrol \
       python3-dev \
-      python3-poetry \
  && rm -rf /var/lib/apt/lists/* \
  && poetry config installer.parallel true \
  && poetry config virtualenvs.in-project true

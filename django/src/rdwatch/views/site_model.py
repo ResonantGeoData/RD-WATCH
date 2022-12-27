@@ -22,6 +22,11 @@ from rdwatch.models import (
 )
 
 
+class Polygon(TypedDict):
+    type: Literal["Polygon"]
+    coordinates: list[list[tuple[float, float]]]
+
+
 class MultiPolygon(TypedDict):
     type: Literal["MultiPolygon"]
     coordinates: list[list[list[tuple[float, float]]]]
@@ -52,7 +57,7 @@ class ObservationFeatureProperties(TypedDict):
 
 
 class SiteFeature(TypedDict):
-    geometry: dict
+    geometry: Polygon
     properties: SiteFeatureProperties
 
 

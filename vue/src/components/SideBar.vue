@@ -56,23 +56,21 @@ function nextPage() {
 </script>
 
 <template>
-  <div class="relative">
-    <div class="fixed h-screen w-80 pt-2 pb-2 pl-2">
-      <div
-        class="relative h-full overflow-hidden rounded-xl bg-white drop-shadow-2xl"
-      >
-        <div
-          class="relative rounded-t-xl bg-gray-100 p-4 text-center text-sm font-light"
-        >
-          <img
-            class="mx-auto pb-4"
-            src="../assets/logo.svg"
-            alt="Resonant GeoData"
-            draggable="false"
-          />
-          <TimeSlider :min="timemin" :max="Math.floor(Date.now() / 1000)" />
-          {{ new Date(state.timestamp * 1000).toLocaleString() }}
-        </div>
+  <div class="fixed h-screen w-80 pt-2 pb-2 pl-2">
+    <div
+      class="flex h-full flex-col overflow-hidden rounded-xl bg-white drop-shadow-2xl"
+    >
+      <div class="bg-gray-100 p-4 text-center text-sm font-light">
+        <img
+          class="mx-auto pb-4"
+          src="../assets/logo.svg"
+          alt="Resonant GeoData"
+          draggable="false"
+        />
+        <TimeSlider :min="timemin" :max="Math.floor(Date.now() / 1000)" />
+        {{ new Date(state.timestamp * 1000).toLocaleString() }}
+      </div>
+      <div>
         <div
           class="flex flex-nowrap gap-2 overflow-x-scroll border-t border-gray-300 bg-gray-100 p-2"
         >
@@ -80,19 +78,20 @@ function nextPage() {
           <RegionFilter v-model="selectedRegion" />
           <FilterCheckBox v-model="groundTruth" label="Ground Truth" />
         </div>
-
-        <ModelRunList
-          :filters="queryFilters"
-          @next-page="nextPage"
-          @update:timerange="
-            (timerange) => {
-              if (timerange !== null) {
-                timemin = timerange.min;
-              }
-            }
-          "
-        />
       </div>
+
+      <ModelRunList
+        :filters="queryFilters"
+        class="basis-full"
+        @next-page="nextPage"
+        @update:timerange="
+          (timerange) => {
+            if (timerange !== null) {
+              timemin = timerange.min;
+            }
+          }
+        "
+      />
     </div>
   </div>
 </template>

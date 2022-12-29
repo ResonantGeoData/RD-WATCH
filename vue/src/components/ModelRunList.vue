@@ -114,7 +114,7 @@ async function handleScroll(event: Event) {
   // If the user has scrolled to the bottom of the list AND there are still more model runs to
   // fetch, bump the current page to trigger the loadMore function via a watcher.
   if (
-    target.scrollHeight - target.scrollTop === target.clientHeight &&
+    target.scrollHeight - target.scrollTop <= target.clientHeight &&
     modelRuns.value.length < totalModelRuns.value
   ) {
     emit("nextPage");
@@ -125,13 +125,12 @@ watchEffect(loadMore);
 </script>
 
 <template>
-  <div class="h-4/5 overflow-y-scroll px-2" @scroll="handleScroll">
+  <div class="flex flex-col gap-2 overflow-y-scroll p-2" @scroll="handleScroll">
     <ModelRunDetail
       v-for="modelRun in modelRuns"
       :key="modelRun.key"
       :model-run="modelRun"
       :open="openedModelRuns.has(modelRun.key)"
-      class="mt-2"
       @toggle="() => handleToggle(modelRun)"
     />
   </div>

@@ -125,13 +125,12 @@ watchEffect(loadMore);
 </script>
 
 <template>
-  <div class="h-4/5 overflow-y-scroll px-2" @scroll="handleScroll">
+  <div class="flex flex-col gap-2 overflow-y-scroll p-2" @scroll="handleScroll">
     <ModelRunDetail
       v-for="modelRun in modelRuns"
       :key="modelRun.key"
       :model-run="modelRun"
       :open="openedModelRuns.has(modelRun.key)"
-      class="mt-2"
       @toggle="() => handleToggle(modelRun)"
     />
   </div>

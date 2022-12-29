@@ -114,7 +114,7 @@ async function handleScroll(event: Event) {
   // If the user has scrolled to the bottom of the list AND there are still more model runs to
   // fetch, bump the current page to trigger the loadMore function via a watcher.
   if (
-    target.scrollHeight - target.scrollTop === target.clientHeight &&
+    target.scrollHeight - target.scrollTop <= target.clientHeight &&
     modelRuns.value.length < totalModelRuns.value
   ) {
     emit("nextPage");

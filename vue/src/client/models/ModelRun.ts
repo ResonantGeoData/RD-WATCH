@@ -3,7 +3,7 @@ import type { Region } from "./Region";
 
 export type ModelRun = {
   id: number;
-  region: Region;
+  region: Region | null;
   title: string;
   performer: Performer;
   parameters: object;

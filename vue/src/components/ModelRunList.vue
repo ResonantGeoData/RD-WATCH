@@ -39,8 +39,11 @@ async function loadMore() {
   totalModelRuns.value = modelRunList.count;
 
   const modelRunResults = modelRunList.results;
-  const keyedModelRunResults = modelRunResults.map((val) => {
-    return { ...val, key: `${val.id}|${val.region.id}` };
+  const keyedModelRunResults = modelRunResults.map((val, i) => {
+    return {
+      ...val,
+      key: `${val.id}|${i + modelRuns.value.length}`,
+    };
   });
 
   const bounds = new LngLatBounds();

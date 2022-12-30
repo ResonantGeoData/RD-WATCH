@@ -38,7 +38,7 @@ async function handleClick() {
         <div
           class="col-span-5 font-mono text-xs font-light group-open:text-white"
         >
-          {{ modelRun.region.name }}
+          {{ modelRun.region?.name || "(none)" }}
         </div>
         <div
           class="col-span-3 text-xs font-light text-gray-600 group-open:text-gray-100"

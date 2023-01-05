@@ -100,10 +100,17 @@ const observationColor: DataDrivenPropertyValueSpecification<string> = [
   ["==", ["get", "label"], 1],
   "#1F77B4",
   ["==", ["get", "label"], 2],
-  "#FF7F0E",
+  "#A020F0",
   ["==", ["get", "label"], 3],
   "#2CA02C",
   "#7F7F7F",
+];
+const observationWidth: DataDrivenPropertyValueSpecification<number> = [
+  // If this observation is a grouth truth, make the width 4. Otherwise, make it 2.
+  "case",
+  ["get", "groundtruth"],
+  4,
+  2,
 ];
 
 const source: SourceSpecification = {
@@ -124,7 +131,7 @@ export const layers = (
     source: rdwatchtiles,
     "source-layer": "sites",
     paint: {
-      "line-color": "#FFA500",
+      "line-color": "#DC143C",
       "line-width": 2,
     },
     filter: buildSiteFilter(timestamp, filters),
@@ -147,7 +154,7 @@ export const layers = (
     "source-layer": "observations",
     paint: {
       "line-color": observationColor,
-      "line-width": 2,
+      "line-width": observationWidth,
     },
     filter: buildObservationFilter(timestamp, filters),
   },

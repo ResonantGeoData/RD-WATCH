@@ -41,6 +41,14 @@ export const buildObservationFilter = (
 ): FilterSpecification => {
   const filter: FilterSpecification = [
     "all",
+    [
+      "in",
+      ["get", "configuration_id"],
+      [
+        "literal",
+        filters.configuration_id?.length ? filters.configuration_id : [""],
+      ],
+    ],
     ["<=", ["get", "timemin"], timestamp],
     [
       "any",
@@ -72,6 +80,14 @@ export const buildSiteFilter = (
 ): FilterSpecification => {
   const filter: FilterSpecification = [
     "all",
+    [
+      "in",
+      ["get", "configuration_id"],
+      [
+        "literal",
+        filters.configuration_id?.length ? filters.configuration_id : [""],
+      ],
+    ],
     ["<=", ["get", "timemin"], timestamp],
   ];
 

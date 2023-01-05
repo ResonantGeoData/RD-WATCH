@@ -60,15 +60,7 @@ export const buildObservationFilter = (
   // Add any filters set in the UI
   Object.entries(filters).forEach(([key, value]) => {
     if (value !== undefined && key !== "groundtruth") {
-      filter.push(
-        filters.groundtruth === undefined
-          ? ["in", ["get", key], ["literal", value]]
-          : [
-              "any",
-              ["in", ["get", key], ["literal", value]],
-              ["get", "groundtruth"],
-            ]
-      );
+      filter.push(["in", ["get", key], ["literal", value]]);
     }
   });
   return filter;
@@ -94,15 +86,7 @@ export const buildSiteFilter = (
   // Add any filters set in the UI
   Object.entries(filters).forEach(([key, value]) => {
     if (value !== undefined && key !== "groundtruth") {
-      filter.push(
-        filters.groundtruth === undefined
-          ? ["in", ["get", key], ["literal", value]]
-          : [
-              "any",
-              ["in", ["get", key], ["literal", value]],
-              ["get", "groundtruth"],
-            ]
-      );
+      filter.push(["in", ["get", key], ["literal", value]]);
     }
   });
 

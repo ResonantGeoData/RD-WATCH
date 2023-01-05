@@ -4,7 +4,6 @@ export interface MapFilters {
   configuration_id?: number[];
   performer_id?: number[];
   region_id?: number[];
-  groundtruth?: boolean;
 }
 
 export const state = reactive<{

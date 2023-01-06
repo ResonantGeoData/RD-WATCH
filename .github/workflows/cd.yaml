@@ -76,3 +76,12 @@ jobs:
       - name: Build rdwatch-cli
         run: poetry build
         working-directory: cli
+      - name: Make package index
+        uses: banesullivan/create-pip-index-action@main
+        with:
+          package_directory: cli/dist/
+      - name: Deploy to GH Pages
+        uses: peaceiris/actions-gh-pages@v3
+        with:
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          publish_dir: cli/dist/

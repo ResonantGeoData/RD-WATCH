@@ -111,7 +111,6 @@ function handleToggle(modelRun: KeyedModelRun) {
       ...state.filters,
       configuration_id: Array.from(configurationIds),
     };
-    console.log(state.filters);
   } else {
     state.bbox = resultsBoundingBox.value;
     state.filters = {

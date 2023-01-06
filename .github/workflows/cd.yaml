@@ -54,3 +54,34 @@ jobs:
           push: true
           tags: ${{ steps.repo-slug.outputs.result }}/${{ matrix.image-name }}:latest
           target: ${{ matrix.target }}
+  publish-cli:
+    name: Build [rdwatch-cli]
+    runs-on: ubuntu-latest
+    steps:
+      - name: Install system dependencies
+        run: apt-fast install --no-install-recommends --yes
+          libgdal30
+          libproj22
+          python3-cachecontrol
+          python3-dev
+          python3-poetry
+      - name: Checkout repository
+        uses: actions/checkout@v3
+      - name: Setup Python environment
+        uses: actions/setup-python@v4
+        with:
+          python-version: "3.10"
+          cache: "poetry"
+          cache-dependency-path: "cli/poetry.lock"
+      - name: Build rdwatch-cli
+        run: poetry build
+        working-directory: cli
+      - name: Make package index
+        uses: banesullivan/create-pip-index-action@main
+        with:
+          package_directory: cli/dist/
+      - name: Deploy to GH Pages
+        uses: peaceiris/actions-gh-pages@v3
+        with:
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          publish_dir: cli/dist/

@@ -2,8 +2,8 @@
 import ModelRunList from "./ModelRunList.vue";
 import TimeSlider from "./TimeSlider.vue";
 import PerformerFilter from "./filters/PerformerFilter.vue";
-import FilterCheckBox from "./FilterCheckBox.vue";
 import RegionFilter from "./filters/RegionFilter.vue";
+import FilterCheckBox from "./FilterCheckBox.vue";
 import { state } from "../store";
 import { ref, watch } from "vue";
 import type { Performer, QueryArguments, Region } from "../client";
@@ -14,7 +14,7 @@ const queryFilters: Ref<QueryArguments> = ref({ page: 1 });
 
 const selectedPerformer: Ref<Performer | null> = ref(null);
 const selectedRegion: Ref<Region | null> = ref(null);
-const groundTruth = ref(false);
+const showSiteOutline: Ref<boolean> = ref(false);
 watch(selectedPerformer, (val) => {
   queryFilters.value = {
     ...queryFilters.value,
@@ -33,18 +33,8 @@ watch(selectedRegion, (val) => {
     region_id: val?.id === undefined ? undefined : [val.id],
   };
 });
-watch(groundTruth, (val) => {
-  if (val) {
-    queryFilters.value = { ...queryFilters.value, groundtruth: true, page: 1 };
-    state.filters = { ...state.filters, groundtruth: true };
-  } else {
-    queryFilters.value = {
-      ...queryFilters.value,
-      groundtruth: undefined,
-      page: 1,
-    };
-    state.filters = { ...state.filters, groundtruth: undefined };
-  }
+watch(showSiteOutline, (val) => {
+  state.filters = { ...state.filters, showSiteOutline: val };
 });
 
 function nextPage() {
@@ -76,7 +66,7 @@ function nextPage() {
         >
           <PerformerFilter v-model="selectedPerformer" />
           <RegionFilter v-model="selectedRegion" />
-          <FilterCheckBox v-model="groundTruth" label="Ground Truth" />
+          <FilterCheckBox v-model="showSiteOutline" label="Site Outline" />
         </div>
       </div>
 

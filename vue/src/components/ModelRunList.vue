@@ -70,6 +70,26 @@ async function loadMore() {
   emit("update:timerange", modelRunList["timerange"]);
 }
 
+/**
+ * Set the camera bounds/viewport based on the currently selected model run(s).
+ */
+function updateCameraBounds() {
+  const bounds = new LngLatBounds();
+  modelRuns.value
+    .filter((modelRun) => openedModelRuns.value.has(modelRun.key))
+    .forEach((modelRun) =>
+      modelRun.bbox?.coordinates
+        .flat()
+        .forEach((c) => bounds.extend(c as [number, number]))
+    );
+  state.bbox = {
+    xmin: bounds.getWest(),
+    ymin: bounds.getSouth(),
+    xmax: bounds.getEast(),
+    ymax: bounds.getNorth(),
+  };
+}
+
 function handleToggle(modelRun: KeyedModelRun) {
   if (openedModelRuns.value.has(modelRun.key)) {
     openedModelRuns.value.delete(modelRun.key);
@@ -78,20 +98,10 @@ function handleToggle(modelRun: KeyedModelRun) {
   }
 
   if (openedModelRuns.value.size > 0) {
-    const bounds = new LngLatBounds();
-    modelRuns.value
-      .filter((modelRun) => openedModelRuns.value.has(modelRun.key))
-      .forEach((modelRun) =>
-        modelRun.bbox?.coordinates
-          .flat()
-          .forEach((c) => bounds.extend(c as [number, number]))
-      );
-    state.bbox = {
-      xmin: bounds.getWest(),
-      ymin: bounds.getSouth(),
-      xmax: bounds.getEast(),
-      ymax: bounds.getNorth(),
-    };
+    // Only move camera if we're *not* currently filtering by region
+    if (!state.filters.region_id?.length) {
+      updateCameraBounds();
+    }
 
     const configurationIds: Set<number> = new Set();
     modelRuns.value
@@ -101,7 +111,6 @@ function handleToggle(modelRun: KeyedModelRun) {
       ...state.filters,
       configuration_id: Array.from(configurationIds),
     };
-    console.log(state.filters);
   } else {
     state.bbox = resultsBoundingBox.value;
     state.filters = {

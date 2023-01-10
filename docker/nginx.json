@@ -42,5 +42,10 @@
         "requests": 5000
       }
     }
+  },
+  "settings": {
+    "http": {
+      "max_body_size": 134217728
+    }
   }
 }

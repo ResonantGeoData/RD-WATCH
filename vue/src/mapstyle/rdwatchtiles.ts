@@ -41,6 +41,14 @@ export const buildObservationFilter = (
 ): FilterSpecification => {
   const filter: FilterSpecification = [
     "all",
+    [
+      "in",
+      ["get", "configuration_id"],
+      [
+        "literal",
+        filters.configuration_id?.length ? filters.configuration_id : [""],
+      ],
+    ],
     ["<=", ["get", "timemin"], timestamp],
     [
       "any",
@@ -51,16 +59,8 @@ export const buildObservationFilter = (
 
   // Add any filters set in the UI
   Object.entries(filters).forEach(([key, value]) => {
-    if (value !== undefined && key !== "groundtruth") {
-      filter.push(
-        filters.groundtruth === undefined
-          ? ["in", ["get", key], ["literal", value]]
-          : [
-              "any",
-              ["in", ["get", key], ["literal", value]],
-              ["get", "groundtruth"],
-            ]
-      );
+    if (value !== undefined && typeof value === "string") {
+      filter.push(["in", ["get", key], ["literal", value]]);
     }
   });
   return filter;
@@ -72,21 +72,22 @@ export const buildSiteFilter = (
 ): FilterSpecification => {
   const filter: FilterSpecification = [
     "all",
+    [
+      "in",
+      ["get", "configuration_id"],
+      [
+        "literal",
+        filters.configuration_id?.length ? filters.configuration_id : [""],
+      ],
+    ],
     ["<=", ["get", "timemin"], timestamp],
+    ["literal", !!filters.showSiteOutline],
   ];
 
   // Add any filters set in the UI
   Object.entries(filters).forEach(([key, value]) => {
-    if (value !== undefined && key !== "groundtruth") {
-      filter.push(
-        filters.groundtruth === undefined
-          ? ["in", ["get", key], ["literal", value]]
-          : [
-              "any",
-              ["in", ["get", key], ["literal", value]],
-              ["get", "groundtruth"],
-            ]
-      );
+    if (value !== undefined && typeof value === "string") {
+      filter.push(["in", ["get", key], ["literal", value]]);
     }
   });
 

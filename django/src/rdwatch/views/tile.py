@@ -38,6 +38,7 @@ from rdwatch.utils.worldview_processed.raster_tile import (
 from rdwatch.utils.worldview_processed.satellite_captures import get_captures
 
 
+@cache_page(60 * 10)
 def vector_tile(
     request: HttpRequest,
     z: int | None = None,

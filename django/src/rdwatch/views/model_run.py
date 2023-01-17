@@ -175,9 +175,17 @@ class ModelRunViewSet(viewsets.ViewSet):
         aggregate = queryset.defer("json").aggregate(
             count=Count("evaluations__region__pk", distinct=True),
             timerange=TimeRangeJSON("evaluations__observations__timestamp"),
-            bbox=BoundingBoxGeoJSON("evaluations__observations__geom"),
             results=AggregateArraySubquery(subquery.values("json")),
         )
+
+        # Only bother calculating the entire bounding box of this model run
+        # list if the user has specified a region. We don't want to overload
+        # PostGIS by making it calculate a bounding box for every polygon in
+        # the database.
+        if "region" in request.query_params:
+            aggregate |= queryset.defer("json").aggregate(
+                bbox=BoundingBoxGeoJSON("evaluations__observations__geom")
+            )
 
         if aggregate["count"] > 0 and not aggregate["results"]:
             raise NotFound({"page": f"Invalid page '{page}'"})

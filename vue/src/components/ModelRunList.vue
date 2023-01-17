@@ -46,18 +46,21 @@ async function loadMore() {
     };
   });
 
-  const bounds = new LngLatBounds();
-  modelRunList.bbox.coordinates
-    .flat()
-    .forEach((c) => bounds.extend(c as [number, number]));
-  const bbox = {
-    xmin: bounds.getWest(),
-    ymin: bounds.getSouth(),
-    xmax: bounds.getEast(),
-    ymax: bounds.getNorth(),
-  };
-  resultsBoundingBox.value = bbox;
-  state.bbox = bbox;
+  // If a bounding box was provided for this model run list, zoom the camera to it.
+  if (modelRunList.bbox) {
+    const bounds = new LngLatBounds();
+    modelRunList.bbox.coordinates
+      .flat()
+      .forEach((c) => bounds.extend(c as [number, number]));
+    const bbox = {
+      xmin: bounds.getWest(),
+      ymin: bounds.getSouth(),
+      xmax: bounds.getEast(),
+      ymax: bounds.getNorth(),
+    };
+    resultsBoundingBox.value = bbox;
+    state.bbox = bbox;
+  }
 
   // If we're on page 1, we *might* have switched to a different filter/grouping in the UI,
   // meaning we would need to clear out any existing results.

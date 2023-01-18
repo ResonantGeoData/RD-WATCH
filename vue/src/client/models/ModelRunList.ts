@@ -8,6 +8,6 @@ export type ModelRunList = {
     min: number;
     max: number;
   };
-  bbox: GeoJSON.Polygon;
+  bbox: GeoJSON.Polygon | null;
   results: ModelRun[];
 };

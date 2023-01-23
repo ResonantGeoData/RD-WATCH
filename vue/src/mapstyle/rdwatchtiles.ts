@@ -114,6 +114,13 @@ const observationWidth: DataDrivenPropertyValueSpecification<number> = [
   2,
 ];
 
+const observationFill: DataDrivenPropertyValueSpecification<string> = [
+  "case",
+  ["get", "groundtruth"],
+  "diagonal-right",
+  "diagonal-left"
+]
+
 const source: SourceSpecification = {
   type: "vector",
   tiles: [`${urlRoot}/api/vector-tile/{z}/{x}/{y}.pbf`],
@@ -144,7 +151,8 @@ export const layers = (
     "source-layer": "observations",
     paint: {
       "fill-color": observationColor,
-      "fill-opacity": 0.05,
+      "fill-opacity": 0.25,
+      "fill-pattern": observationFill,
     },
     filter: buildObservationFilter(timestamp, filters),
   },

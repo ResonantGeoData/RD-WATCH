@@ -6,7 +6,7 @@ export type ModelRun = {
   region: Region | null;
   title: string;
   performer: Performer;
-  parameters: object;
+  parameters: Record<string, any>;
   numsites: number;
   score: number | null;
   timestamp: number | null;

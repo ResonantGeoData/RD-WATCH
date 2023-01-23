@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { Map, Popup } from "maplibre-gl";
+import { Map } from "maplibre-gl";
 import { style } from "../mapstyle";
 import {
   buildObservationFilter,
@@ -9,6 +9,7 @@ import { state } from "../store";
 import { markRaw, onMounted, onUnmounted, shallowRef, watch } from "vue";
 import type { FilterSpecification } from "maplibre-gl";
 import type { ShallowRef } from "vue";
+import popupLogic from '../interactions/popup'
 
 const mapContainer: ShallowRef<null | HTMLElement> = shallowRef(null);
 const map: ShallowRef<null | Map> = shallowRef(null);
@@ -32,6 +33,7 @@ function fitBounds(bbox: typeof state["bbox"]) {
   );
 }
 
+
 onMounted(() => {
   if (mapContainer.value !== null) {
     map.value = markRaw(
@@ -44,47 +46,7 @@ onMounted(() => {
         ],
       })
     );
-    map.value.on('load', () => {
-      const size = 8;
-      const bytesPerPixel = 4
-      const dataRight = new Uint8Array(size * size * bytesPerPixel);
-      const dataLeft = new Uint8Array(size * size * bytesPerPixel);
-      // Generate our pattern from the pixels
-      const X = [0, 0, 0, 255]; //RGBA
-      const O = [0, 0, 0, 0];
-      const patternRight = [ 
-               O, O, O, O, O, O, X, X,
-               O, O, O, O, O, X, X, X,
-               O, O, O, O, X, X, X, O,
-               O, O, O, X, X, X, O, O,
-               O, O, X, X, X, O, O, O,
-               O, X, X, X, O, O, O, O,
-               X, X, X, O, O, O, O, O,
-               X, X, O, O, O, O, O, O,
-              ];
-      const patternLeft = [ 
-               X, X, O, O, O, O, O, O,
-               X, X, X, O, O, O, O, O,
-               O, X, X, X, O, O, O, O,
-               O, O, X, X, X, O, O, O,
-               O, O, O, X, X, X, O, O,
-               O, O, O, O, X, X, X, O,
-               O, O, O, O, O, X, X, X,
-               O, O, O, O, O, O, X, X,
-              ];
-      for (let i = 0; i < patternRight.length; i += 1) {
-        for (let bit = 0; bit < 4; bit += 1) {
-          
-          dataRight[(4*i) + bit] = patternRight[i][bit];
-          dataLeft[(4*i) + bit] = patternLeft[i][bit];
-        }
-      }
-
-      if (map.value) {
-        map.value.addImage('diagonal-right', { width: size, height: size, data: dataRight });
-        map.value.addImage('diagonal-left', { width: size, height: size, data: dataLeft });
-      }
-    });
+    popupLogic(map);
   }
 });
 
@@ -127,4 +89,10 @@ watch(
   bottom: 0;
   z-index: -1;
 }
+
+.mapboxgl-popup {
+  max-width: 400px;
+  font-size: 1.5em;
+}
+
 </style>

@@ -17,7 +17,6 @@ const popupLogic = (map: ShallowRef<null | Map>) => {
             insideObservation = true;
             e.features.forEach((item: GeoJSON.GeoJsonProperties & { layer?: {paint?: { 'fill-color'?: Color}} }) => {
             if (item.properties && item.properties.id) {
-                console.log(item);
                 const id = item.properties.id
                 let fillString = '';
                 if (!htmlMap[id]) {

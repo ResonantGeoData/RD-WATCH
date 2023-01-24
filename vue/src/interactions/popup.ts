@@ -35,7 +35,7 @@ const popupLogic = (map: ShallowRef<null | Map>) => {
             hoveredInfo.value = [];
             e.features.forEach((item: GeoJSON.GeoJsonProperties & { layer?: {paint?: { 'fill-color'?: Color}} }) => {
                 if (item.properties && item.properties.id) {
-                    const id = item.properties.id
+                    const id = item.properties.siteeval_id
                     const score = item.properties.score;
                     hoveredInfo.value.push(`${item.properties.configuration_id}_${item.properties.region_id}_${item.properties.performer_id}`);
                     let fillString = '';
@@ -43,7 +43,7 @@ const popupLogic = (map: ShallowRef<null | Map>) => {
                         if (item.layer?.paint) {
                             const fillColor = item.layer?.paint['fill-color'] as Color;
                             if (fillColor) {
-                                fillString = `style="background-color: rgba(${fillColor.r * 255}, ${fillColor.g*255}, ${fillColor.b*255}, ${fillColor.a*255}); font-weight: bolder"`;
+                                fillString = `style="background-color: rgba(${fillColor.r * 255}, ${fillColor.g*255}, ${fillColor.b*255}, ${fillColor.a*255}); font-weight: bolder; opacity: 1.0 !important;"`;
                                 ids.push(id);
                                 htmlMap[id] = true;
                                 let groundtruth = checkBadge;
@@ -54,8 +54,8 @@ const popupLogic = (map: ShallowRef<null | Map>) => {
                                     groundtruth = groundtruth.replace('replacementColor',`rgba(0,0,0,0)`);
 
                                 }
-                                const scoreStyle = `style="background-color:${calculateScoreColor(score.toFixed(2))};color: black; font-weight:bolder;"`
-                                html = `${html}<li>${groundtruth}<div class='badge' ${fillString}>ID:${id}</div> <div class='badge' ${scoreStyle}>Score:${score.toFixed(2)}</div></li>`;
+                                const scoreStyle = `style="background-color:${calculateScoreColor(score.toFixed(2))};color: black; font-weight:bolder; opacity: 1.0 !important;"`
+                                html = `${html}<li>${groundtruth}<div class='badge' ${fillString}>SiteId:${id}</div> <div class='badge' ${scoreStyle}>Score:${score.toFixed(2)}</div></li>`;
                             }
                         }
                     }

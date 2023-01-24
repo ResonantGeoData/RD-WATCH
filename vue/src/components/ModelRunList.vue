@@ -6,7 +6,7 @@ import type { Ref } from "vue";
 import { ApiService } from "../client";
 import { state } from "../store";
 import { LngLatBounds } from "maplibre-gl";
-
+import { hoveredInfo } from "../interactions/popup";
 interface KeyedModelRun extends ModelRun {
   key: string;
 }
@@ -144,7 +144,15 @@ watchEffect(loadMore);
       :key="modelRun.key"
       :model-run="modelRun"
       :open="openedModelRuns.has(modelRun.key)"
+      :class="{outlined: hoveredInfo.includes(`${modelRun.id}_${modelRun.region?.id}_${modelRun.performer.id}`)}"
       @toggle="() => handleToggle(modelRun)"
     />
   </div>
 </template>
+
+<style scoped>
+.outlined {
+  background-color: orange;
+  border: 2px solid orange;
+}
+</style>

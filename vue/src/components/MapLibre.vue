@@ -9,7 +9,7 @@ import { state } from "../store";
 import { markRaw, onMounted, onUnmounted, shallowRef, watch } from "vue";
 import type { FilterSpecification } from "maplibre-gl";
 import type { ShallowRef } from "vue";
-import popupLogic from '../interactions/popup'
+import { popupLogic } from '../interactions/popup'
 
 const mapContainer: ShallowRef<null | HTMLElement> = shallowRef(null);
 const map: ShallowRef<null | Map> = shallowRef(null);
@@ -93,6 +93,11 @@ watch(
 .mapboxgl-popup {
   max-width: 400px;
   font-size: 1.5em;
+  opacity: 0.75;
+}
+
+.mapboxgl-popup ul {
+  opacity: 1.0;
 }
 
 </style>

@@ -6,7 +6,8 @@ export type ModelRun = {
   region: Region | null;
   title: string;
   performer: Performer;
-  parameters: object;
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  parameters: Record<string, any>;
   numsites: number;
   score: number | null;
   timestamp: number | null;

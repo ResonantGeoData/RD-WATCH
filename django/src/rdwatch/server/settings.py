@@ -38,23 +38,6 @@ INSTALLED_APPS = [
     "rest_framework",
     "rdwatch",
 ]
-LOGGING = {
-    'version': 1,
-    'disable_existing_loggers': False,
-    "handlers": {
-        "console": {
-            "level": "INFO",
-            "class": "logging.StreamHandler",
-            "stream": sys.stdout,
-            "formatter": "verbose",
-        },
-    },
-    'root': {
-        'handlers': ['console'],
-        'level': 'WARNING',
-    },
-}
-
 MIDDLEWARE = [
     "django.middleware.common.CommonMiddleware",
     "django.middleware.clickjacking.XFrameOptionsMiddleware",

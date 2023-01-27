@@ -1,4 +1,5 @@
 from os import environ
+import sys
 from urllib.parse import urlparse
 
 SECRET_KEY = environ["RDWATCH_SECRET_KEY"]
@@ -37,6 +38,17 @@ INSTALLED_APPS = [
     "rest_framework",
     "rdwatch",
 ]
+LOGGING = {
+    "handlers": {
+        "console": {
+            "level": "INFO",
+            "class": "logging.StreamHandler",
+            "stream": sys.stdout,
+            "formatter": "verbose",
+        },
+    },
+}
+
 MIDDLEWARE = [
     "django.middleware.common.CommonMiddleware",
     "django.middleware.clickjacking.XFrameOptionsMiddleware",

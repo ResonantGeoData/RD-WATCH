@@ -118,7 +118,9 @@ const observationFill: DataDrivenPropertyValueSpecification<string> = [
   "case",
   ["get", "groundtruth"],
   "diagonal-right",
-  "diagonal-left"
+  ["!=", ["get", "groundtruth"], true],
+  "diagonal-left",
+  "",
 ]
 
 const source: SourceSpecification = {

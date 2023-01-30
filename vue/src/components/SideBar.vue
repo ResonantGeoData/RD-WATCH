@@ -62,7 +62,7 @@ function nextPage() {
       </div>
       <div>
         <div
-          class="flex flex-nowrap gap-2 overflow-x-scroll border-t border-gray-300 bg-gray-100 p-2"
+          class="sample flex flex-nowrap gap-2 overflow-x-scroll border-t border-gray-300 bg-gray-100 p-2"
         >
           <PerformerFilter v-model="selectedPerformer" />
           <RegionFilter v-model="selectedRegion" />
@@ -85,3 +85,9 @@ function nextPage() {
     </div>
   </div>
 </template>
+
+<style scoped>
+.sample {
+  z-index: 999;
+}
+</style>

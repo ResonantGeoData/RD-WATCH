@@ -32,6 +32,7 @@ iso3166 = "^2.1.1"
 rio-tiler = "^3.1.6"
 mercantile = "^1.2.1"
 django-filter = "^22.1"
+django-redis = "^5.2.0"
 
 [tool.poetry.dev-dependencies]
 black = "~22.6.0"

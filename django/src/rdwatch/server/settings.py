@@ -19,13 +19,9 @@ else:
     CACHES = {
         "default": {
             "BACKEND": "django_redis.cache.RedisCache",
-            "LOCATION": f'{environ["RDWATCH_REDIS_URI"]}/0',
+            "LOCATION": environ["RDWATCH_REDIS_URI"],
             "OPTIONS": {
-                "REDIS_CLIENT_CLASS": "rdwatch.redis.CustomRedisClient",
-                "REDIS_CLIENT_KWARGS": {
-                    "url": f'{environ["RDWATCH_REDIS_URI"]}/0',
-                },
-                "PARSER_CLASS": "redis.cluster.ClusterParser",
+                "CLIENT_CLASS": "rdwatch.redis.CustomRedisCluster",
             },
         }
     }

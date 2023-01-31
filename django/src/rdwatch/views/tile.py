@@ -38,7 +38,7 @@ from rdwatch.utils.worldview_processed.raster_tile import (
 from rdwatch.utils.worldview_processed.satellite_captures import get_captures
 
 
-@cache_page(60 * 60 * 24 * 7)  # Cache endpoint response for 1 week
+# @cache_page(60 * 60 * 24 * 7)  # Cache endpoint response for 1 week
 def vector_tile(
     request: HttpRequest,
     z: int | None = None,

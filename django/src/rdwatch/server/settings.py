@@ -21,7 +21,7 @@ else:
             "BACKEND": "django_redis.cache.RedisCache",
             "LOCATION": f'{environ["RDWATCH_REDIS_URI"]}/0',
             "OPTIONS": {
-                "REDIS_CLIENT_CLASS": "common.redis_client.CustomRedisClient",
+                "REDIS_CLIENT_CLASS": "rdwatch.redis.CustomRedisClient",
                 "REDIS_CLIENT_KWARGS": {
                     "url": f'{environ["RDWATCH_REDIS_URI"]}/0',
                 },

@@ -5,11 +5,11 @@
 import type { LayerSpecification, SourceSpecification } from "maplibre-gl";
 
 const naturalearth = "naturalearth";
-
+const tileServerURL = import.meta.env.VITE_TILE_SERVER_URL
 const source: SourceSpecification = {
   maxzoom: 6,
   tileSize: 256,
-  tiles: ["https://tiles.mcovalt.com/raster/{z}/{x}/{y}.webp"],
+  tiles: [`${tileServerURL}/raster/{z}/{x}/{y}.webp`],
   type: "raster",
 };
 export const sources = { naturalearth: source };

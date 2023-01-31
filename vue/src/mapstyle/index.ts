@@ -12,6 +12,7 @@ import {
 } from "./rdwatchtiles";
 import type { StyleSpecification } from "maplibre-gl";
 
+const tileServerURL = import.meta.env.VITE_TILE_SERVER_URL
 export const style = (
   timestamp: number,
   filters: Record<string, number>
@@ -22,8 +23,8 @@ export const style = (
     ...openmaptilesSources,
     ...rdwatchtilesSources,
   },
-  sprite: "https://tiles.mcovalt.com/sprites/osm-liberty",
-  glyphs: "https://tiles.mcovalt.com/fonts/{fontstack}/{range}.pbf",
+  sprite: `${tileServerURL}/sprites/osm-liberty`,
+  glyphs: `${tileServerURL}/fonts/{fontstack}/{range}.pbf`,
   layers: [
     {
       id: "background",

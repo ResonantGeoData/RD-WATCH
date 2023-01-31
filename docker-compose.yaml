@@ -6,6 +6,8 @@ services:
   # RD-WATCH
   rdwatch:
     image: ghcr.io/resonantgeodata/rd-watch/rdwatch:latest
+    build: 
+      context: '.'
     depends_on:
       - postgresql
       - redis
@@ -19,6 +21,7 @@ services:
       RDWATCH_REDIS_URI: ${RDWATCH_REDIS_URI:?}
       RDWATCH_SMART_STAC_URL: ${RDWATCH_SMART_STAC_URL:?}
       RDWATCH_SMART_STAC_KEY: ${RDWATCH_SMART_STAC_KEY:?}
+      VITE_TILE_SERVER_URL: ${VITE_TILE_SERVER_URL:?}
     ports:
       - 8000:80
 
@@ -56,6 +59,7 @@ services:
     entrypoint: npm
     environment:
       RDWATCH_FILE_POLLING: ${RDWATCH_FILE_POLLING:?}
+      VITE_TILE_SERVER_URL: ${VITE_TILE_SERVER_URL:?}
     ports:
       - 9000:9000
     profiles:

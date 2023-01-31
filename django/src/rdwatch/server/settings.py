@@ -5,25 +5,30 @@ SECRET_KEY = environ["RDWATCH_SECRET_KEY"]
 
 
 ALLOWED_HOSTS = ["*"]
-CACHES = {
-    # TODO: Ideally we'd use Django's native Redis cache adapter instead of
-    # the third-party `django-redis` package. But, the native adapter doesn't
-    # seem to support cluster mode when using AWS Elasticache, while
-    # `django-redis` does.
-    "default": {
-        "BACKEND": "django_redis.cache.RedisCache",
-        "KEY_PREFIX": "rdwatch",
-        "LOCATION": environ["RDWATCH_REDIS_URI"],
-        "OPTIONS": {
-            "REDIS_CLIENT_CLASS": "rediscluster.RedisCluster",
-            "CONNECTION_POOL_CLASS": "rediscluster.connection.ClusterConnectionPool",  # noqa: E501
-            "CONNECTION_POOL_KWARGS": {
-                # AWS ElasticCache has disabled CONFIG commands
-                "skip_full_coverage_check": True
-            },
-        },
+DEBUG = environ["RDWATCH_DJANGO_DEBUG"].lower() in ("1", "true", "yes", "on")
+
+if DEBUG:
+    CACHES = {
+        "default": {
+            "BACKEND": "django.core.cache.backends.redis.RedisCache",
+            "KEY_PREFIX": "rdwatch",
+            "LOCATION": environ["RDWATCH_REDIS_URI"],
+        }
     }
-}
+else:
+    CACHES = {
+        "default": {
+            "BACKEND": "django_redis.cache.RedisCache",
+            "LOCATION": f'{environ["RDWATCH_REDIS_URI"]}/0',
+            "OPTIONS": {
+                "REDIS_CLIENT_CLASS": "common.redis_client.CustomRedisClient",
+                "REDIS_CLIENT_KWARGS": {
+                    "url": f'{environ["RDWATCH_REDIS_URI"]}/0',
+                },
+                "PARSER_CLASS": "redis.cluster.ClusterParser",
+            },
+        }
+    }
 DATABASE_PARSE_RESULT = urlparse(environ["RDWATCH_POSTGRESQL_URI"])
 DATABASES = {
     "default": {
@@ -39,7 +44,6 @@ DATABASES = {
         },
     },
 }
-DEBUG = environ["RDWATCH_DJANGO_DEBUG"].lower() in ("1", "true", "yes", "on")
 INSTALLED_APPS = [
     "django.contrib.auth",
     "django.contrib.contenttypes",

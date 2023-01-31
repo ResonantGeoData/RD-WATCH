@@ -12,7 +12,7 @@ import {
 } from "./rdwatchtiles";
 import type { StyleSpecification } from "maplibre-gl";
 
-const tileServerURL = import.meta.env.VITE_TILE_SERVER_URL
+const tileServerURL = import.meta.env.VITE_TILE_SERVER_URL || 'https://basemap.kitware.watch'
 export const style = (
   timestamp: number,
   filters: Record<string, number>

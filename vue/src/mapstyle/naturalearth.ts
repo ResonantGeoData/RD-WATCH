@@ -5,7 +5,7 @@
 import type { LayerSpecification, SourceSpecification } from "maplibre-gl";
 
 const naturalearth = "naturalearth";
-const tileServerURL = import.meta.env.VITE_TILE_SERVER_URL
+const tileServerURL = import.meta.env.VITE_TILE_SERVER_URL || 'https://basemap.kitware.watch'
 const source: SourceSpecification = {
   maxzoom: 6,
   tileSize: 256,

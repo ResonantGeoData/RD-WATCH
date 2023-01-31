@@ -5,7 +5,7 @@
 import type { LayerSpecification, SourceSpecification } from "maplibre-gl";
 
 const openmaptiles = "openmaptiles";
-const tileServerURL = import.meta.env.VITE_TILE_SERVER_URL
+const tileServerURL = import.meta.env.VITE_TILE_SERVER_URL || 'https://basemap.kitware.watch'
 
 const source: SourceSpecification = {
   type: "vector",

@@ -66,6 +66,7 @@ watch([() => state.timestamp, () => state.filters], () => {
   setFilter("observations-fill", observationFilter);
   setFilter("observations-outline", observationFilter);
   setFilter("observations-text", observationFilter);
+  map.value?.setStyle(style(state.timestamp, state.filters as Record<string, number>));
 });
 
 watch(

@@ -4,6 +4,8 @@ import TimeSlider from "./TimeSlider.vue";
 import PerformerFilter from "./filters/PerformerFilter.vue";
 import RegionFilter from "./filters/RegionFilter.vue";
 import FilterCheckBox from "./FilterCheckBox.vue";
+import { Cog6ToothIcon } from "@heroicons/vue/24/solid";
+import SettingsPanel from "./SettingsPanel.vue";
 import { state } from "../store";
 import { ref, watch } from "vue";
 import type { Performer, QueryArguments, Region } from "../client";
@@ -36,6 +38,7 @@ watch(selectedRegion, (val) => {
 watch(showSiteOutline, (val) => {
   state.filters = { ...state.filters, showSiteOutline: val };
 });
+const expandSettings = ref(false);
 
 function nextPage() {
   queryFilters.value = {
@@ -62,12 +65,14 @@ function nextPage() {
       </div>
       <div>
         <div
-          class="sample flex flex-nowrap gap-2 overflow-x-scroll border-t border-gray-300 bg-gray-100 p-2"
+          class="sample flex items-stretch flex-nowrap gap-2 border-t border-gray-300 bg-gray-100 p-2"
         >
           <PerformerFilter v-model="selectedPerformer" />
           <RegionFilter v-model="selectedRegion" />
-          <FilterCheckBox v-model="showSiteOutline" label="Site Outline" />
+          <span class="h5 grow" />
+          <Cog6ToothIcon class="h-5 text-blue-600"  @click="expandSettings = !expandSettings"/>
         </div>
+        <SettingsPanel v-if="expandSettings"/>
       </div>
 
       <ModelRunList

@@ -12,7 +12,7 @@ export default defineConfig(({ mode }) => {
       port: 9000,
       proxy: {
         "/api": {
-          target: "http://localhost:8000",
+          target: "http://django:80",
           xfwd: true,
         },
       },

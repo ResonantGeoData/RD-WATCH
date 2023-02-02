@@ -14,34 +14,19 @@ env:
   RDWATCH_DJANGO_DEBUG: 0
 jobs:
   lint-python:
-    strategy:
-      fail-fast: false
-      matrix:
-        linter: [black, flake8, isort]
-    name: Lint [${{ matrix.linter }}]
+    name: Lint Python
     runs-on: ubuntu-22.04
     steps:
-      - name: Install system dependencies
-        run: apt-fast install --no-install-recommends --yes
-          libgdal30
-          libproj22
-          python3-cachecontrol
-          python3-dev
-          python3-poetry
       - name: Checkout repository
         uses: actions/checkout@v3
       - name: Setup Python environment
         uses: actions/setup-python@v4
         with:
           python-version: "3.10"
-          cache: "poetry"
-          cache-dependency-path: "django/poetry.lock"
-      - name: Install packages
-        run: poetry install
-        working-directory: django
-      - name: Run ${{ matrix.linter }}
-        run: poetry run task lint:${{ matrix.linter }}
-        working-directory: django
+      - name: Install pre-commit
+        run: pip install pre-commit
+      - name: Run pre-commit checks
+        run: pre-commit run --all-files
   lint-node:
     strategy:
       fail-fast: false

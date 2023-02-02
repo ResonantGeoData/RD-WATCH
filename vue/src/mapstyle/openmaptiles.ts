@@ -5,10 +5,11 @@
 import type { LayerSpecification, SourceSpecification } from "maplibre-gl";
 
 const openmaptiles = "openmaptiles";
+const tileServerURL = import.meta.env.VITE_TILE_SERVER_URL || 'https://basemap.kitware.watch'
 
 const source: SourceSpecification = {
   type: "vector",
-  tiles: ["https://tiles.mcovalt.com/vector/{z}/{x}/{y}.pbf"],
+  tiles: [`${tileServerURL}/vector/{z}/{x}/{y}.pbf`],
   minzoom: 0,
   maxzoom: 14,
   attribution:

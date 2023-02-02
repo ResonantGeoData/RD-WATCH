@@ -3,6 +3,11 @@ set -e
 
 export DJANGO_SETTINGS_MODULE=rdwatch.server.settings
 
+# Tail Django logs
+touch /tmp/django.log
+chmod a+w /tmp/django.log
+nohup tail -f /tmp/django.log &
+
 # Initialize NGINX Unit
 if [ "$1" = "unitd" ]; then
   if [ ! -f /var/lib/unit/conf.json ]; then

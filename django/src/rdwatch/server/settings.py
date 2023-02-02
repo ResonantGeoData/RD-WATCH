@@ -5,13 +5,26 @@ SECRET_KEY = environ["RDWATCH_SECRET_KEY"]
 
 
 ALLOWED_HOSTS = ["*"]
-CACHES = {
-    "default": {
-        "BACKEND": "django.core.cache.backends.redis.RedisCache",
-        "KEY_PREFIX": "rdwatch",
-        "LOCATION": environ["RDWATCH_REDIS_URI"],
+DEBUG = environ["RDWATCH_DJANGO_DEBUG"].lower() in ("1", "true", "yes", "on")
+
+if DEBUG:
+    CACHES = {
+        "default": {
+            "BACKEND": "django.core.cache.backends.redis.RedisCache",
+            "KEY_PREFIX": "rdwatch",
+            "LOCATION": environ["RDWATCH_REDIS_URI"],
+        }
     }
-}
+else:
+    CACHES = {
+        "default": {
+            "BACKEND": "django_redis.cache.RedisCache",
+            "LOCATION": environ["RDWATCH_REDIS_URI"],
+            "OPTIONS": {
+                "CLIENT_CLASS": "rdwatch.redis.CustomRedisCluster",
+            },
+        }
+    }
 DATABASE_PARSE_RESULT = urlparse(environ["RDWATCH_POSTGRESQL_URI"])
 DATABASES = {
     "default": {
@@ -27,7 +40,6 @@ DATABASES = {
         },
     },
 }
-DEBUG = environ["RDWATCH_DJANGO_DEBUG"].lower() in ("1", "true", "yes", "on")
 INSTALLED_APPS = [
     "django.contrib.auth",
     "django.contrib.contenttypes",
@@ -40,6 +52,7 @@ INSTALLED_APPS = [
 MIDDLEWARE = [
     "django.middleware.common.CommonMiddleware",
     "django.middleware.clickjacking.XFrameOptionsMiddleware",
+    "rdwatch.middleware.Log500ErrorsMiddleware",
 ]
 REST_FRAMEWORK = {
     "DEFAULT_RENDERER_CLASSES": ["rest_framework.renderers.JSONRenderer"],

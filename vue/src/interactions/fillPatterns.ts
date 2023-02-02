@@ -62,12 +62,13 @@ const patternCreation = (map: ShallowRef<Map | null>, thickness=1, opacity=255, 
     map.value.addImage('diagonal-right', { width: size, height: size, data: dataRight });
     map.value.addImage('diagonal-left', { width: size, height: size, data: dataLeft });
   }
+  return {'diagonal-left': dataLeft, 'diagonal-right': dataRight}
 
 }
 
 const updatePattern = (thickness=1, opacity=255, color=[0,0,0]) => {
   if (mapReference.value) {
-    patternCreation(mapReference, thickness, opacity, color);
+    return patternCreation(mapReference, thickness, opacity, color);
   }
 
 }

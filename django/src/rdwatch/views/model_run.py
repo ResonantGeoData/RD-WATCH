@@ -2,7 +2,19 @@ import django_filters
 import iso3166
 
 from django.db import transaction
-from django.db.models import Avg, Count, F, JSONField, Max, Min, OuterRef, Q, Subquery
+from django.db.models import (
+    Avg,
+    Case,
+    Count,
+    F,
+    JSONField,
+    Max,
+    Min,
+    OuterRef,
+    Q,
+    Subquery,
+    When,
+)
 from django.db.models.functions import JSONObject  # type: ignore
 from rest_framework import viewsets
 from rest_framework.exceptions import NotFound, ValidationError
@@ -78,7 +90,20 @@ class ModelRunFilter(django_filters.FilterSet):
 
 def get_queryset():
     return (
-        HyperParameters.objects.order_by("-id")
+        HyperParameters.objects.select_related("evaluations", "performer")
+        # Get minimum score and performer so that we can tell which runs
+        # are ground truth
+        .alias(min_score=Min("evaluations__score"), performer_slug=F("performer__slug"))
+        # Label ground truths as such. A ground truth is defined as a model run
+        # with a min_score of 1 and a performer of "TE"
+        .alias(
+            groundtruth=Case(
+                When(min_score=1, performer_slug__iexact="TE", then=True),
+                default=False,
+            )
+        )
+        # Order queryset so that ground truths are first
+        .order_by("-groundtruth", "-id")
         .alias(region_id=F("evaluations__region_id"))
         .annotate(
             json=JSONObject(

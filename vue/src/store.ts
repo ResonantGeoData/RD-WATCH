@@ -5,6 +5,10 @@ export interface MapFilters {
   performer_id?: number[];
   region_id?: number[];
   showSiteOutline?: boolean;
+  groundTruthPattern?: boolean;
+  otherPattern?: boolean;
+  patternThickness?: number;
+  patternOpacity?: number
 }
 
 export const state = reactive<{

@@ -84,7 +84,7 @@ watch(activeOption, (val) =>
       /></span>
     </span>
     <div
-      class="h-20 overflow-y-auto overflow-x-hidden rounded-b border bg-white p-1 text-gray-600 hover:text-gray-600"
+      class="dropdown overflow-y-auto overflow-x-hidden rounded-b border bg-white p-1 text-gray-600 hover:text-gray-600 text-lg"
     >
       <ul>
         <li
@@ -104,3 +104,11 @@ watch(activeOption, (val) =>
     </div>
   </div>
 </template>
+
+<style scoped>
+.dropdown {
+  position: fixed;
+  z-index: 10;
+  max-height: calc(90vh - 140px);
+}
+</style>

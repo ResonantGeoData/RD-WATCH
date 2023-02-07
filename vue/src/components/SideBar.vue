@@ -54,10 +54,6 @@ function nextPage() {
     <div
       class="flex h-full flex-col overflow-hidden rounded-xl bg-white drop-shadow-2xl"
     >
-    <div class="tooltip" data-tip="hello">
-  <button class="btn">Hover me</button>
-</div>
-
       <div class="bg-gray-100 p-4 text-center text-sm font-light">
         <img
           class="mx-auto pb-4"

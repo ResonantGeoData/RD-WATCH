@@ -70,6 +70,8 @@ RUN mkdir /app/django/src \
 #    static assets are in /app/vue/dist
 FROM vue-builder AS vue-dist
 COPY vue /app/vue
+# include gitHash and date in the client for debugging purposes
+COPY .git/ /app/
 RUN npm run build
 RUN chmod -R u=rX,g=rX,o= /app/vue/dist
 

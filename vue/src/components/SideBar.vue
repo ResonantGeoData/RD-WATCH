@@ -7,7 +7,7 @@ import FilterCheckBox from "./FilterCheckBox.vue";
 import { Cog6ToothIcon } from "@heroicons/vue/24/solid";
 import SettingsPanel from "./SettingsPanel.vue";
 import { state } from "../store";
-import { ref, watch } from "vue";
+import { computed, ref, watch } from "vue";
 import type { Performer, QueryArguments, Region } from "../client";
 import type { Ref } from "vue";
 
@@ -46,6 +46,7 @@ function nextPage() {
     page: (queryFilters.value.page || 0) + 1,
   };
 }
+
 </script>
 
 <template>
@@ -53,6 +54,10 @@ function nextPage() {
     <div
       class="flex h-full flex-col overflow-hidden rounded-xl bg-white drop-shadow-2xl"
     >
+    <div class="tooltip" data-tip="hello">
+  <button class="btn">Hover me</button>
+</div>
+
       <div class="bg-gray-100 p-4 text-center text-sm font-light">
         <img
           class="mx-auto pb-4"
@@ -70,7 +75,7 @@ function nextPage() {
           <PerformerFilter v-model="selectedPerformer" />
           <RegionFilter v-model="selectedRegion" />
           <span class="h5 grow" />
-          <Cog6ToothIcon class="h-5 text-blue-600"  @click="expandSettings = !expandSettings"/>
+          <Cog6ToothIcon class="h-5 text-blue-600 hover"  @click="expandSettings = !expandSettings"/>
         </div>
         <SettingsPanel v-if="expandSettings"/>
       </div>
@@ -94,5 +99,8 @@ function nextPage() {
 <style scoped>
 .sample {
   z-index: 999;
+}
+.hover:hover {
+  cursor:pointer;
 }
 </style>

@@ -1,10 +1,9 @@
 <script setup lang="ts">
-import { ref, watch } from "vue";
-import type { Performer, QueryArguments, Region } from "../client";
+import { computed, ref, watch } from "vue";
 import type { Ref } from "vue";
 import { state } from "../store";
 import { updatePattern } from "../interactions/fillPatterns";
-
+import { InformationCircleIcon } from "@heroicons/vue/24/solid";
 const showSiteOutline: Ref<boolean> = ref(false);
 const groundTruthPattern: Ref<boolean> = ref(false);
 const otherPattern: Ref<boolean> = ref(false);
@@ -94,6 +93,14 @@ const performerImg: Ref<null | HTMLImageElement> = ref(null)
 const siteOutlineImg: Ref<null | HTMLImageElement> = ref(null)
 const hiddenCanvas: Ref<null | HTMLCanvasElement> = ref(null)
 
+const info = computed(() => {
+  const date  = import.meta.env.VITE_GIT_COMMIT_DATE;
+  const hash = import.meta.env.VITE_GIT_COMMIT_HASH;
+  return { date, hash}
+})
+
+const expandInfo  = ref(false);
+
 watch(hiddenCanvas, () => {
   drawCanvasPattern();
 });
@@ -103,7 +110,19 @@ watch(hiddenCanvas, () => {
 <template>
   <div class="gap-2 border-t border-gray-300 bg-gray-100 p-2">
     <canvas ref="hiddenCanvas" style="display:none;"  width="75" height="75" />
-    <h4>Settings</h4>
+    <div class="grid grid-cols-8 gap-4">
+    <h4 class="col-span-7">Settings</h4> <InformationCircleIcon class="h-5 text-blue-600 hover tooltip" data-tip="Information"  @click="expandInfo = !expandInfo"/>
+    </div>
+    <div v-if="expandInfo" style="font-size:0.75em">
+      <div class="grid-cols-4">
+        <div style="font-weight:bold;"> Date:</div>
+        <span> {{ info.date }}</span>
+      </div>
+      <div class="grid-cols-4">
+        <div style="font-weight:bold;"> Hash:</div>
+        <span> {{ info.hash }}</span>
+      </div>
+    </div>
     <div class="form-control">
       <label class="label cursor-pointer">
         <img ref="siteOutlineImg" height="20" width="20" />
@@ -140,3 +159,9 @@ watch(hiddenCanvas, () => {
 
   </div>
 </template>
+
+<style scoped>
+.hover:hover {
+  cursor: pointer;
+}
+</style>

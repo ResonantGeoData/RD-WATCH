@@ -96,6 +96,7 @@ function nextPage() {
 .sample {
   z-index: 999;
 }
+
 .hover:hover {
   cursor:pointer;
 }

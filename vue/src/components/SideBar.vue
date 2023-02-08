@@ -3,7 +3,6 @@ import ModelRunList from "./ModelRunList.vue";
 import TimeSlider from "./TimeSlider.vue";
 import PerformerFilter from "./filters/PerformerFilter.vue";
 import RegionFilter from "./filters/RegionFilter.vue";
-import FilterCheckBox from "./FilterCheckBox.vue";
 import { Cog6ToothIcon } from "@heroicons/vue/24/solid";
 import SettingsPanel from "./SettingsPanel.vue";
 import { state } from "../store";

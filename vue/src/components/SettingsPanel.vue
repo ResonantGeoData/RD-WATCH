@@ -1,6 +1,5 @@
 <script setup lang="ts">
 import { ref, watch } from "vue";
-import type { Performer, QueryArguments, Region } from "../client";
 import type { Ref } from "vue";
 import { state } from "../store";
 import { updatePattern } from "../interactions/fillPatterns";

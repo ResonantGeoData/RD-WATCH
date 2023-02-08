@@ -5,11 +5,11 @@ import type { Ref } from "vue";
 import { state } from "../store";
 import { updatePattern } from "../interactions/fillPatterns";
 
-const showSiteOutline: Ref<boolean> = ref(false);
-const groundTruthPattern: Ref<boolean> = ref(false);
-const otherPattern: Ref<boolean> = ref(false);
-const patternThickness = ref(1);
-const patternOpacity = ref(255);
+const showSiteOutline: Ref<boolean> = ref(state.filters.showSiteOutline || false);
+const groundTruthPattern: Ref<boolean> = ref(state.filters.groundTruthPattern || false);
+const otherPattern: Ref<boolean> = ref(state.filters.otherPattern || false);
+const patternThickness = ref(state.patterns?.patternThickness || 1);
+const patternOpacity = ref(state.patterns?.patternOpacity || 255);
 watch(showSiteOutline, (val) => {
   state.filters = { ...state.filters, showSiteOutline: val };
 });
@@ -83,7 +83,10 @@ watch([patternThickness, patternOpacity], () => {
     var blob = new Blob( [data['diagonal-right']], { type: "image/png" } );
     var urlCreator = window.URL || window.webkitURL;
     var imageUrl = urlCreator.createObjectURL( blob );
-    console.log(groundImg.value);
+    state.patterns = {
+      patternThickness: patternThickness.value,
+      patternOpacity: patternOpacity.value,
+    };
     groundImg.value.src = imageUrl;
     drawCanvasPattern();
   }

@@ -13,9 +13,9 @@ export const state = reactive<{
   timestamp: number;
   bbox: { xmin: number; ymin: number; xmax: number; ymax: number };
   filters: MapFilters;
-  patterns?: {
-    patternThickness?: number;
-    patternOpacity?: number
+  patterns: {
+    patternThickness: number;
+    patternOpacity: number;
   },
 }>({
   timestamp: Math.floor(Date.now() / 1000),
@@ -25,5 +25,12 @@ export const state = reactive<{
     xmax: 180,
     ymax: 90,
   },
-  filters: {},
+  filters: {
+    groundTruthPattern: false,
+    otherPattern: false
+  },
+  patterns: {
+    patternThickness: 1,
+    patternOpacity: 255,
+  }
 });

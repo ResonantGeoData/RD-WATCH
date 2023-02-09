@@ -1,24 +1,30 @@
 <script setup lang="ts">
-import { ref, watch } from "vue";
+import { computed, ref, watch } from "vue";
 import type { Ref } from "vue";
 import { state } from "../store";
 import { updatePattern } from "../interactions/fillPatterns";
 
-const showSiteOutline: Ref<boolean> = ref(state.filters.showSiteOutline || false);
-const groundTruthPattern: Ref<boolean> = ref(state.filters.groundTruthPattern || false);
-const otherPattern: Ref<boolean> = ref(state.filters.otherPattern || false);
-const patternThickness = ref(state.patterns?.patternThickness || 1);
-const patternOpacity = ref(state.patterns?.patternOpacity || 255);
-watch(showSiteOutline, (val) => {
-  state.filters = { ...state.filters, showSiteOutline: val };
+const showSiteOutline = computed({ 
+  get() {  return state.filters.showSiteOutline || false },
+  set(val: boolean) {state.filters = { ...state.filters, showSiteOutline: val} }
 });
 
-watch(groundTruthPattern, (val) => {
-  state.filters = { ...state.filters, groundTruthPattern: val };
+const groundTruthPattern = computed({ 
+  get() {  return state.filters.groundTruthPattern || false },
+  set(val: boolean) {state.filters = { ...state.filters, groundTruthPattern: val} }
+});
+const otherPattern = computed({ 
+  get() {  return state.filters.otherPattern || false },
+  set(val: boolean) {state.filters = { ...state.filters, otherPattern: val} }
+});
+const patternThickness = computed({ 
+  get() {  return state.patterns?.patternThickness },
+  set(val: number) {state.patterns = { ...state.patterns, patternThickness: val} }
 });
 
-watch(otherPattern, (val) => {
-  state.filters = { ...state.filters, otherPattern: val };
+const patternOpacity = computed({ 
+  get() {  return state.patterns?.patternOpacity },
+  set(val: number) {state.patterns = { ...state.patterns, patternOpacity: val} }
 });
 
 const drawCanvasPattern = () => {
@@ -130,7 +136,7 @@ watch(hiddenCanvas, () => {
     <div class="form-control">
       <label class="label cursor-pointer">
         <span class="label-text">Pattern Thickness:</span> 
-        <input v-model="patternThickness" type="range" min="0" max="10" step="0.25" class="range range-primary" />
+        <input v-model="patternThickness" type="range" min="1" max="10" step="0.25" class="range range-primary" />
       </label>
     </div>
     <div class="form-control">

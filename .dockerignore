@@ -1,7 +1,8 @@
 **/__pycache__
 **/.DS_Store
 **/.env
-**/.git
+# allow git for Client side display of hash
+#**/.git
 **/.idea
 **/.mypy_cache
 **/.venv

@@ -9,7 +9,7 @@ import { state } from "../store";
 import { markRaw, onMounted, onUnmounted, shallowRef, watch } from "vue";
 import type { FilterSpecification } from "maplibre-gl";
 import type { ShallowRef } from "vue";
-import { popupLogic } from '../interactions/popup'
+import { popupLogic } from "../interactions/popup";
 import { generatePatterns } from "../interactions/fillPatterns";
 
 const mapContainer: ShallowRef<null | HTMLElement> = shallowRef(null);
@@ -33,7 +33,6 @@ function fitBounds(bbox: typeof state["bbox"]) {
     }
   );
 }
-
 
 onMounted(() => {
   if (mapContainer.value !== null) {
@@ -66,7 +65,9 @@ watch([() => state.timestamp, () => state.filters], () => {
   setFilter("observations-fill", observationFilter);
   setFilter("observations-outline", observationFilter);
   setFilter("observations-text", observationFilter);
-  map.value?.setStyle(style(state.timestamp, state.filters as Record<string, number>));
+  map.value?.setStyle(
+    style(state.timestamp, state.filters as Record<string, number>)
+  );
 });
 
 watch(
@@ -100,7 +101,6 @@ watch(
 }
 
 .mapboxgl-popup ul {
-  opacity: 1.0;
+  opacity: 1;
 }
-
 </style>

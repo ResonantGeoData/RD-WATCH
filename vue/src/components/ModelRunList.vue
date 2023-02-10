@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import ModelRunDetail from "./ModelRunDetail.vue";
 import type { ModelRun, QueryArguments } from "../client";
-import { ref, watchEffect } from "vue";
+import { ref, watch, watchEffect } from "vue";
 import type { Ref } from "vue";
 import { ApiService } from "../client";
 import { state } from "../store";
@@ -62,6 +62,14 @@ async function loadMore() {
       ymax: bounds.getNorth(),
     };
     resultsBoundingBox.value = bbox;
+    state.bbox = bbox;
+  } else {
+    const bbox = {
+      xmin: -180,
+      ymin: -90,
+      xmax: 180,
+      ymax: 90,
+    };
     state.bbox = bbox;
   }
 
@@ -140,6 +148,13 @@ async function handleScroll(event: Event) {
 }
 
 watchEffect(loadMore);
+watch([() => props.filters.region, ()=> props.filters.performer], () => {
+  openedModelRuns.value.clear();
+  state.filters = {
+    ...state.filters,
+    configuration_id: [],
+  };
+})
 </script>
 
 <template>

@@ -3,6 +3,7 @@ import { computed, ref, watch } from "vue";
 import type { Ref } from "vue";
 import { state } from "../store";
 import { updatePattern } from "../interactions/fillPatterns";
+import { InformationCircleIcon } from "@heroicons/vue/24/solid";
 
 const showSiteOutline = computed({
   get() {

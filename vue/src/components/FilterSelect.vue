@@ -84,7 +84,7 @@ watch(activeOption, (val) =>
       /></span>
     </span>
     <div
-      class="dropdown overflow-y-auto overflow-x-hidden rounded-b border bg-white p-1 text-gray-600 hover:text-gray-600 text-lg"
+      class="dropdown overflow-y-auto overflow-x-hidden rounded-b border bg-white p-1 text-lg text-gray-600 hover:text-gray-600"
     >
       <ul>
         <li

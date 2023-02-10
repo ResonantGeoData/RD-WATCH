@@ -16,7 +16,7 @@ export const state = reactive<{
   patterns: {
     patternThickness: number;
     patternOpacity: number;
-  },
+  };
 }>({
   timestamp: Math.floor(Date.now() / 1000),
   bbox: {
@@ -27,10 +27,10 @@ export const state = reactive<{
   },
   filters: {
     groundTruthPattern: false,
-    otherPattern: false
+    otherPattern: false,
   },
   patterns: {
     patternThickness: 1,
     patternOpacity: 255,
-  }
+  },
 });

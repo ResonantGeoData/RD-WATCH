@@ -39,7 +39,9 @@ async function loadMore() {
   totalModelRuns.value = modelRunList.count;
 
   // sort list to show ground truth near the top
-  const modelRunResults = modelRunList.results.sort((a, b) => b.parameters['ground_truth'] === true ? 1 : -1);
+  const modelRunResults = modelRunList.results.sort((a, b) =>
+    b.parameters["ground_truth"] === true ? 1 : -1
+  );
   const keyedModelRunResults = modelRunResults.map((val, i) => {
     return {
       ...val,
@@ -147,7 +149,11 @@ watchEffect(loadMore);
       :key="modelRun.key"
       :model-run="modelRun"
       :open="openedModelRuns.has(modelRun.key)"
-      :class="{outlined: hoveredInfo.includes(`${modelRun.id}_${modelRun.region?.id}_${modelRun.performer.id}`)}"
+      :class="{
+        outlined: hoveredInfo.includes(
+          `${modelRun.id}_${modelRun.region?.id}_${modelRun.performer.id}`
+        ),
+      }"
       @toggle="() => handleToggle(modelRun)"
     />
   </div>

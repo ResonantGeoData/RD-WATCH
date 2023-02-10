@@ -45,7 +45,6 @@ function nextPage() {
     page: (queryFilters.value.page || 0) + 1,
   };
 }
-
 </script>
 
 <template>
@@ -65,14 +64,17 @@ function nextPage() {
       </div>
       <div>
         <div
-          class="sample flex items-stretch flex-nowrap gap-2 border-t border-gray-300 bg-gray-100 p-2"
+          class="sample flex flex-nowrap items-stretch gap-2 border-t border-gray-300 bg-gray-100 p-2"
         >
           <PerformerFilter v-model="selectedPerformer" />
           <RegionFilter v-model="selectedRegion" />
           <span class="h5 grow" />
-          <Cog6ToothIcon class="h-5 text-blue-600 hover"  @click="expandSettings = !expandSettings"/>
+          <Cog6ToothIcon
+            class="hover h-5 text-blue-600"
+            @click="expandSettings = !expandSettings"
+          />
         </div>
-        <SettingsPanel v-if="expandSettings"/>
+        <SettingsPanel v-if="expandSettings" />
       </div>
 
       <ModelRunList
@@ -97,6 +99,6 @@ function nextPage() {
 }
 
 .hover:hover {
-  cursor:pointer;
+  cursor: pointer;
 }
 </style>

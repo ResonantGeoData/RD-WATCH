@@ -114,18 +114,19 @@ const observationWidth: DataDrivenPropertyValueSpecification<number> = [
   2,
 ];
 
-const buildObservationFill = (timestamp: number,
-filters: MapFilters
+const buildObservationFill = (
+  timestamp: number,
+  filters: MapFilters
 ): DataDrivenPropertyValueSpecification<string> => {
   return [
     "case",
     ["get", "groundtruth"],
-    !!filters.groundTruthPattern ? 'diagonal-right' : '',
+    !!filters.groundTruthPattern ? "diagonal-right" : "",
     ["!=", ["get", "groundtruth"], true],
-    !!filters.otherPattern ? 'diagonal-left' : '',
+    !!filters.otherPattern ? "diagonal-left" : "",
     "",
-  ]
-}
+  ];
+};
 
 const source: SourceSpecification = {
   type: "vector",

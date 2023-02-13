@@ -38,6 +38,9 @@ urlpatterns = [
         name="satellite-visual-tiles",
     ),
     path("model-runs/<int:hyper_parameters_id>/site-model", views.post_site_model),
+    path(
+        "model-runs/<int:hyper_parameters_id>/site-summaries", views.post_site_summaries
+    ),
 ]
 
 urlpatterns += router.urls

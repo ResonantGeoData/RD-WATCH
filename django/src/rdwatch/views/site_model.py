@@ -66,11 +66,43 @@ class ObservationFeature(TypedDict):
     properties: ObservationFeatureProperties
 
 
-class FeatureCollection(TypedDict):
+class SiteFeatureCollection(TypedDict):
     features: list[SiteFeature | ObservationFeature]
 
 
-def get_site_feature(collection: FeatureCollection) -> SiteFeature:
+class SiteSummaryFeatureProperties(TypedDict):
+    type: Literal["site_summary"]
+    site_id: str
+    originator: str
+    score: NotRequired[float]
+    misc_info: NotRequired[dict]
+
+
+class RegionFeatureProperties(TypedDict):
+    type: Literal["region"]
+    region_id: str
+    originator: str
+    score: NotRequired[float]
+    misc_info: NotRequired[dict]
+    start_date: str
+    end_date: str
+
+
+class SiteSummaryFeature(TypedDict):
+    geometry: MultiPolygon
+    properties: SiteSummaryFeatureProperties
+
+
+class RegionFeature(TypedDict):
+    geometry: MultiPolygon
+    properties: RegionFeatureProperties
+
+
+class SiteSummaryFeatureCollection(TypedDict):
+    features: list[SiteSummaryFeature | RegionFeature]
+
+
+def get_site_feature(collection: SiteFeatureCollection) -> SiteFeature:
     features: list[SiteFeature] = [
         cast(SiteFeature, feature)
         for feature in collection["features"]
@@ -83,7 +115,9 @@ def get_site_feature(collection: FeatureCollection) -> SiteFeature:
     return features[0]
 
 
-def get_observation_features(collection: FeatureCollection) -> list[ObservationFeature]:
+def get_observation_features(
+    collection: SiteFeatureCollection,
+) -> list[ObservationFeature]:
     features: list[ObservationFeature] = [
         cast(ObservationFeature, feature)
         for feature in collection["features"]
@@ -226,7 +260,7 @@ def post_site_model(request: Request, hyper_parameters_id: int):
     except ObjectDoesNotExist:
         raise ValidationError(f"unkown model-run ID: '{hyper_parameters_id}'")
 
-    feature_collection = cast(FeatureCollection, request.data)
+    feature_collection = cast(SiteFeatureCollection, request.data)
 
     try:
         site_feature = get_site_feature(feature_collection)
@@ -236,6 +270,109 @@ def post_site_model(request: Request, hyper_parameters_id: int):
         SiteObservation.objects.bulk_create(
             gen_site_observations(observation_features, site_evaluation)
         )
+
+    except KeyError as e:
+        raise ValidationError(f"malformed site model: no key '{e.args[0]}'")
+
+    return Response(status=201)
+
+
+def get_site_summary_features(
+    collection: SiteSummaryFeatureCollection,
+) -> list[SiteSummaryFeature]:
+    features: list[SiteSummaryFeature] = [
+        cast(SiteSummaryFeature, feature)
+        for feature in collection["features"]
+        if feature["properties"]["type"] == "site_summary"
+    ]
+    if not len(features):
+        raise ValidationError("must contain at least one 'SiteSummary' feature")
+    return features
+
+
+def get_site_summary_region(collection: SiteFeatureCollection) -> Region:
+    features: list[RegionFeature] = [
+        cast(SiteSummaryFeature, feature)
+        for feature in collection["features"]
+        if feature["properties"]["type"] == "region"
+    ]
+    if len(features) != 1:
+        raise ValidationError("must contain at least one 'RegionSummary' feature")
+
+    region_id = features[0]["properties"]["region_id"]
+
+    return get_region(region_id)
+
+
+@api_view(["POST"])
+@transaction.atomic
+def post_site_summaries(request: Request, hyper_parameters_id: int):
+
+    try:
+        hyper_parameters = HyperParameters.objects.get(pk=hyper_parameters_id)
+    except ObjectDoesNotExist:
+        raise ValidationError(f"unknown model-run ID: '{hyper_parameters_id}'")
+
+    feature_collection = cast(SiteSummaryFeatureCollection, request.data)
+
+    try:
+        site_summary_features = get_site_summary_features(feature_collection)
+
+        region_jsons = [
+            r["properties"]
+            for r in feature_collection["features"]
+            if r["properties"]["type"] == "region"
+        ]
+
+        if len(region_jsons) != 1:
+            raise ValidationError("must contain exactly one 'region' feature")
+
+        start_date = datetime.strptime(
+            region_jsons[0]["start_date"],
+            "%Y-%m-%d",
+        )
+        end_date = datetime.strptime(
+            region_jsons[0]["end_date"],
+            "%Y-%m-%d",
+        )
+
+        # Assign all site-summaries a label of "unknown"
+        label = lookups.ObservationLabel.objects.get(slug="unknown")
+
+        region = get_site_summary_region(feature_collection)
+
+        for feature in site_summary_features:
+            site_id = feature["properties"]["site_id"]
+            geojson = json.dumps(feature["geometry"])
+            score = feature["properties"].get("score", 1.0)
+
+            try:
+                site_number = int(site_id[8:])
+            except (IndexError, ValueError):
+                raise ValidationError(f"invalid site_id '{site_id}'")
+
+            try:
+                geom = GEOSGeometry(geojson)
+            except GEOSException:
+                raise ValidationError(f"invalid geometry '{geojson}'")
+
+            site_evaluation = SiteEvaluation.objects.create(
+                configuration=hyper_parameters,
+                region=region,
+                number=site_number,
+                timestamp=datetime.now(),
+                geom=geom.convex_hull,
+                score=score,
+            )
+
+            for timestamp in (start_date, end_date):
+                SiteObservation.objects.create(
+                    siteeval=site_evaluation,
+                    label=label,
+                    score=feature["properties"]["score"],
+                    geom=geom,
+                    timestamp=timestamp,
+                )
 
     except KeyError as e:
         raise ValidationError(f"malformed site model: no key '{e.args[0]}'")

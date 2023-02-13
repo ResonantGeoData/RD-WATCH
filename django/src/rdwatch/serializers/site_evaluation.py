@@ -12,16 +12,16 @@ class PerformerSerializer(serializers.Serializer):
 
 class SiteStringSerializer(serializers.BaseSerializer):
     def to_representation(self, value):
-        country_numeric = str(value["region"]["country"]).zfill(3)
+        country_numeric = str(value['region']['country']).zfill(3)
         country_code = iso3166.countries_by_numeric[country_numeric].alpha2
-        region_class = value["region"]["classification"]
+        region_class = value['region']['classification']
         region_number = (
-            "xxx"
-            if value["region"]["number"] is None
-            else str(value["region"]["number"]).zfill(3)
+            'xxx'
+            if value['region']['number'] is None
+            else str(value['region']['number']).zfill(3)
         )
-        site_number = str(value["number"]).zfill(3)
-        return f"{country_code}_{region_class}{region_number}_{site_number}"
+        site_number = str(value['number']).zfill(3)
+        return f'{country_code}_{region_class}{region_number}_{site_number}'
 
 
 class SiteEvaluationSerializer(serializers.Serializer):

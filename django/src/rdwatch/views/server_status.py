@@ -14,17 +14,16 @@ SERVER_INSTANCE_EPOCH = datetime.datetime.now()
 
 class ServerStatusSchema(AutoSchema):
     def get_operation_id(self, *args):
-        return "getStatus"
+        return 'getStatus'
 
     def get_serializer(self, *args):
         return ServerStatusSerializer()
 
 
 class RetrieveServerStatus(APIView):
-
     permission_classes = [permissions.AllowAny]
     schema = ServerStatusSchema()
-    action = "retrieve"
+    action = 'retrieve'
 
     def get(self, request):
         uptime = datetime.datetime.now() - SERVER_INSTANCE_EPOCH

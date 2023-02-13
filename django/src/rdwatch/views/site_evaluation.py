@@ -20,101 +20,101 @@ from rdwatch.serializers import SiteEvaluationListSerializer
 
 class SiteEvaluationsFilter(django_filters.FilterSet):
     performer = django_filters.CharFilter(
-        field_name="configuration__performer__slug",
-        lookup_expr="iexact",
+        field_name='configuration__performer__slug',
+        lookup_expr='iexact',
     )
     score = django_filters.NumberFilter()
     timestamp = django_filters.DateTimeFromToRangeFilter()
 
     class Meta:
         model = SiteEvaluation
-        fields = ["performer", "score", "timestamp"]
+        fields = ['performer', 'score', 'timestamp']
 
 
 class SiteEvaluationsSchema(AutoSchema):
     def get_operation_id(self, *args):
-        return "getSiteEvaluations"
+        return 'getSiteEvaluations'
 
     def get_serializer(self, *args):
         return SiteEvaluationListSerializer()
 
     def get_responses(self, *args, **kwargs):
-        self.view.action = "retrieve"
+        self.view.action = 'retrieve'
         return super().get_responses(*args, **kwargs)
 
 
-@api_view(["GET"])
+@api_view(['GET'])
 @schema(SiteEvaluationsSchema())
 def site_evaluations(request: HttpRequest):
     queryset = SiteEvaluationsFilter(
         request.GET,
-        queryset=SiteEvaluation.objects.order_by("-timestamp"),
+        queryset=SiteEvaluation.objects.order_by('-timestamp'),
     ).qs
 
     # Overview
     overview = queryset.annotate(
-        timemin=Min("observations__timestamp"),
-        timemax=Max("observations__timestamp"),
+        timemin=Min('observations__timestamp'),
+        timemax=Max('observations__timestamp'),
     ).aggregate(
-        count=Count("pk"),
+        count=Count('pk'),
         timerange=JSONObject(
-            min=ExtractEpoch(Min("timemin")),
-            max=ExtractEpoch(Max("timemax")),
+            min=ExtractEpoch(Min('timemin')),
+            max=ExtractEpoch(Max('timemax')),
         ),
-        bbox=BoundingBox(Collect("geom")),
+        bbox=BoundingBox(Collect('geom')),
     )
 
-    overview["performers"] = SiteEvaluation.objects.values_list(
-        "configuration__performer__slug", flat=True
+    overview['performers'] = SiteEvaluation.objects.values_list(
+        'configuration__performer__slug', flat=True
     ).distinct()
 
     # Pagination
-    assert api_settings.PAGE_SIZE, "PAGE_SIZE must be set."
-    limit = int(request.GET.get("limit", api_settings.PAGE_SIZE)) or sys.maxsize
+    assert api_settings.PAGE_SIZE, 'PAGE_SIZE must be set.'
+    limit = int(request.GET.get('limit', api_settings.PAGE_SIZE)) or sys.maxsize
     paginator = Paginator(queryset, limit)
-    page = paginator.page(request.GET.get("page", 1))
+    page = paginator.page(request.GET.get('page', 1))
 
     if page.has_next():
         next_page_query_params = request.GET.copy()
-        next_page_query_params["page"] = str(page.next_page_number())
-        overview["next"] = f"{request.path}?{next_page_query_params.urlencode()}"
+        next_page_query_params['page'] = str(page.next_page_number())
+        overview['next'] = f'{request.path}?{next_page_query_params.urlencode()}'
     else:
-        overview["next"] = None
+        overview['next'] = None
 
     if page.has_previous():
         prev_page_query_params = request.GET.copy()
-        prev_page_query_params["page"] = str(page.previous_page_number())
-        overview["previous"] = f"{request.path}?{prev_page_query_params.urlencode()}"
+        prev_page_query_params['page'] = str(page.previous_page_number())
+        overview['previous'] = f'{request.path}?{prev_page_query_params.urlencode()}'
     else:
-        overview["previous"] = None
+        overview['previous'] = None
 
     # Results
     results = page.object_list.annotate(  # type: ignore
-        timemin=Min("observations__timestamp"),
-        timemax=Max("observations__timestamp"),
+        timemin=Min('observations__timestamp'),
+        timemax=Max('observations__timestamp'),
     ).aggregate(
         results=JSONBAgg(
             JSONObject(
-                id="pk",
+                id='pk',
                 site=JSONObject(
                     region=JSONObject(
-                        country="region__country",
-                        classification="region__classification__slug",
-                        number="region__number",
+                        country='region__country',
+                        classification='region__classification__slug',
+                        number='region__number',
                     ),
-                    number="number",
+                    number='number',
                 ),
-                configuration="configuration__parameters",
+                configuration='configuration__parameters',
                 performer=JSONObject(
-                    team_name="configuration__performer__description",
-                    short_code="configuration__performer__slug",
+                    team_name='configuration__performer__description',
+                    short_code='configuration__performer__slug',
                 ),
-                score="score",
-                bbox=BoundingBox("geom"),
-                timestamp=ExtractEpoch("timestamp"),
+                score='score',
+                bbox=BoundingBox('geom'),
+                timestamp=ExtractEpoch('timestamp'),
                 timerange=JSONObject(
-                    min=ExtractEpoch("timemin"),
-                    max=ExtractEpoch("timemax"),
+                    min=ExtractEpoch('timemin'),
+                    max=ExtractEpoch('timemax'),
                 ),
             )
         ),

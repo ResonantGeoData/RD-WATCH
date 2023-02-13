@@ -16,12 +16,12 @@ class Log500ErrorsMiddleware:
         return response
 
     def process_exception(self, request, exception):
-        print("\n\n----intercepted 500 error stack trace----")
+        print('\n\n----intercepted 500 error stack trace----')
         print(exception)
         print(type(exception))
         tb = exception.__traceback__
         print(
-            "\n".join(
+            '\n'.join(
                 traceback.format_exception(
                     type(exception),
                     exception,
@@ -29,5 +29,5 @@ class Log500ErrorsMiddleware:
                 ),
             )
         )
-        print("-----------------------------------------\n\n")
+        print('-----------------------------------------\n\n')
         return None

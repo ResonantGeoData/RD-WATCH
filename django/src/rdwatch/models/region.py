@@ -7,18 +7,18 @@ from rdwatch.validators import validate_iso3166
 
 class Region(models.Model):
     country = models.PositiveSmallIntegerField(
-        help_text="The numeric country identifier as specified by ISO 3166",
+        help_text='The numeric country identifier as specified by ISO 3166',
         db_index=True,
         validators=[validate_iso3166],
     )
     classification = models.ForeignKey(
-        to="RegionClassification",
+        to='RegionClassification',
         on_delete=models.PROTECT,
-        help_text="Region classification code",
+        help_text='Region classification code',
         db_index=True,
     )
     number = models.PositiveSmallIntegerField(
-        help_text="The region number",
+        help_text='The region number',
         null=True,
         db_index=True,
     )
@@ -27,17 +27,17 @@ class Region(models.Model):
         cty = iso3166.countries_by_numeric[str(self.country).zfill(3)].alpha2
         rcls = self.classification.slug
         num = str(self.number).zfill(3)
-        return f"{cty}_{rcls}{num}"
+        return f'{cty}_{rcls}{num}'
 
     class Meta:
         constraints = [
             models.UniqueConstraint(
-                name="uniq_region",
+                name='uniq_region',
                 fields=[
-                    "country",
-                    "classification",
-                    "number",
+                    'country',
+                    'classification',
+                    'number',
                 ],
-                violation_error_message="Region already exists.",  # type: ignore
+                violation_error_message='Region already exists.',  # type: ignore
             ),
         ]

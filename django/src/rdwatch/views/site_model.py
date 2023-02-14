@@ -45,14 +45,14 @@ class ObservationFeatureProperties(TypedDict):
     type: Literal["observation"]
     observation_date: str | None
     source: str
-    sensor_name: str
+    sensor_name: str | None
     current_phase: Literal[
         "No Activity",
         "Site Preparation",
         "Active Construction",
         "Post Construction",
         "Unknown",
-    ]
+    ] | None
     score: NotRequired[float]
 
 
@@ -157,6 +157,7 @@ def get_site_evaluation(
     site_id = feature["properties"]["site_id"]
     geojson = json.dumps(feature["geometry"])
     score = feature["properties"].get("score", 1.0)
+    status = feature["properties"].get("status")
 
     try:
         site_number = int(site_id[8:])
@@ -175,6 +176,7 @@ def get_site_evaluation(
         timestamp=datetime.now(),
         geom=geom,
         score=score,
+        status=status,
     )
 
 
@@ -184,7 +186,8 @@ def gen_site_observations(
 ) -> Iterable[SiteObservation]:
     label_set: set[str] = set()
     for feature in features:
-        current_phases = feature["properties"]["current_phase"].split(", ")
+        current_phase_string = feature["properties"].get("current_phase") or "Unknown"
+        current_phases = current_phase_string.split(", ")
         for current_phase in current_phases:
             label_slug = "_".join(current_phase.split(" ")).lower()
             label_set.add(label_slug)
@@ -219,10 +222,14 @@ def gen_site_observations(
                 raise ValidationError(f"invalid geometry '{feature['geometry']}'")
 
         labels: list[lookups.ObservationLabel] = []
-        for current_phase in feature["properties"]["current_phase"].split(", "):
-            if current_phase not in label_map:
-                raise ValidationError(f"invalid current_phase '{current_phase}'")
-            labels.append(label_map[current_phase])
+        current_phases = feature["properties"].get("current_phase")
+        if current_phases:
+            for current_phase in feature["properties"]["current_phase"].split(", "):
+                if current_phase not in label_map:
+                    raise ValidationError(f"invalid current_phase '{current_phase}'")
+                labels.append(label_map[current_phase])
+        else:
+            labels.append(label_map["Unknown"])
 
         if len(labels) > 1 and len(labels) != len(geometries):
             raise ValidationError("inconsistent number of current_phase and geometries")
@@ -234,10 +241,13 @@ def gen_site_observations(
             feature["properties"]["observation_date"],
             "%Y-%m-%d",
         )
-        sensor_name = feature["properties"]["sensor_name"]
-        if sensor_name not in constellation_map:
-            raise ValidationError(f"invalid sensor_name '{sensor_name}'")
-        constellation = constellation_map[sensor_name]
+        sensor_name = feature["properties"].get("sensor_name")
+        if sensor_name:
+            if sensor_name not in constellation_map:
+                raise ValidationError(f"invalid sensor_name '{sensor_name}'")
+            constellation = constellation_map[sensor_name]
+        else:
+            constellation = None
 
         for geometry, label in zip(geometries, labels):
             yield SiteObservation(

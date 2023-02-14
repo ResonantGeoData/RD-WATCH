@@ -31,6 +31,7 @@ class SiteEvaluation(models.Model):
     score = models.FloatField(
         help_text="Score of site footprint",
     )
+    status = models.CharField(max_length=1000, null=True, blank=True)
 
     @property
     def site_id(self):

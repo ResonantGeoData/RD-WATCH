@@ -29,13 +29,15 @@ const resultsBoundingBox = ref({
   ymax: 90,
 });
 const totalModelRuns = ref(1);
+const loading = ref(false)
 
 async function loadMore() {
+  loading.value = true;
   const modelRunList = await ApiService.getModelRuns({
     limit: 10,
     ...props.filters,
   });
-
+  loading.value = false;
   totalModelRuns.value = modelRunList.count;
 
   // sort list to show ground truth near the top
@@ -63,7 +65,7 @@ async function loadMore() {
     };
     resultsBoundingBox.value = bbox;
     state.bbox = bbox;
-  } else {
+  } else if(!state.filters.region_id?.length) {
     const bbox = {
       xmin: -180,
       ymin: -90,
@@ -113,23 +115,28 @@ function handleToggle(modelRun: KeyedModelRun) {
 
   if (openedModelRuns.value.size > 0) {
     // Only move camera if we're *not* currently filtering by region
-    if (!state.filters.region_id?.length) {
-      updateCameraBounds();
-    }
-
+    updateCameraBounds();
     const configurationIds: Set<number> = new Set();
+      const regionIds: Set<number> = new Set();
     modelRuns.value
       .filter((modelRun) => openedModelRuns.value.has(modelRun.key))
-      .map((modelRun) => configurationIds.add(modelRun.id));
+      .map((modelRun) => {
+        configurationIds.add(modelRun.id);
+        if (modelRun.region) {
+          regionIds.add(modelRun.region?.id);
+        }
+      });
     state.filters = {
       ...state.filters,
       configuration_id: Array.from(configurationIds),
+      region_id: Array.from(regionIds),
     };
   } else {
     state.bbox = resultsBoundingBox.value;
     state.filters = {
       ...state.filters,
       configuration_id: undefined,
+      region_id: undefined,
     };
   }
 }
@@ -140,7 +147,7 @@ async function handleScroll(event: Event) {
   // If the user has scrolled to the bottom of the list AND there are still more model runs to
   // fetch, bump the current page to trigger the loadMore function via a watcher.
   if (
-    target.scrollHeight - target.scrollTop <= target.clientHeight &&
+    Math.floor(target.scrollHeight - target.scrollTop) <= target.clientHeight &&
     modelRuns.value.length < totalModelRuns.value
   ) {
     emit("nextPage");
@@ -158,7 +165,16 @@ watch([() => props.filters.region, ()=> props.filters.performer], () => {
 </script>
 
 <template>
-  <div class="flex flex-col gap-2 overflow-y-scroll p-2" @scroll="handleScroll">
+      <div  class="flex flex-row bg-gray-100" >
+        <span v-if="!loading" style="font-size:0.75em">{{ totalModelRuns }} {{ totalModelRuns > 1 ? 'Runs' : 'Run' }}</span>
+        <div v-if="loading" class="px-2" style="width:100%">
+          <progress  class="progress progress-primary" />
+        </div>
+    </div>
+  <div
+    class="flex flex-col gap-2 overflow-y-scroll p-2"
+    @scroll="handleScroll"
+  >
     <ModelRunDetail
       v-for="modelRun in modelRuns"
       :key="modelRun.key"

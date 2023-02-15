@@ -38,7 +38,8 @@ watch(activeOption, (val) =>
 </script>
 
 <template>
-  <div v-if="!filterOpen && activeOption !== null" class="select-none">
+  <div>
+  <div v-if="!filterOpen && activeOption !== null" class="select-none tooltip tooltip-right" :data-tip="activeOption">
     <span class="flex h-5 cursor-pointer items-baseline text-sm text-gray-100">
       <span
         class="h-5 grow self-center rounded-l border-r border-blue-800 bg-blue-600 px-1 hover:bg-blue-400"
@@ -49,7 +50,7 @@ watch(activeOption, (val) =>
         class="flex items-baseline rounded-r bg-blue-600 hover:bg-blue-400"
         @click="filterOpen = true"
       >
-        <span class="ml-2 grow-0 self-center whitespace-nowrap">{{
+        <span class="ml-2 grow-0 self-center whitespace-nowrap filter-val">{{
           activeOption
         }}</span>
         <span class="grow self-center"
@@ -61,7 +62,7 @@ watch(activeOption, (val) =>
 
   <div
     v-if="!filterOpen && activeOption === null"
-    class="h-5 cursor-pointer select-none rounded bg-gray-300 text-sm text-gray-600 hover:bg-gray-400 hover:text-gray-100"
+    class="h-5 cursor-pointer select-none rounded bg-gray-300 text-sm text-gray-600 hover:bg-gray-400 hover:text-gray-100 tooltip"
     @click="filterOpen = true"
   >
     <span class="flex items-baseline" @click="filterOpen = !filterOpen">
@@ -74,7 +75,7 @@ watch(activeOption, (val) =>
 
   <div
     v-if="filterOpen"
-    class="cursor-pointer select-none rounded bg-gray-300 text-sm text-gray-600 hover:bg-gray-400 hover:text-gray-100"
+    class="cursor-pointer select-none rounded bg-gray-300 text-sm text-gray-600 hover:bg-gray-400 hover:text-gray-100 tooltip-right"
     @click="filterOpen = false"
   >
     <span class="flex items-baseline">
@@ -103,6 +104,7 @@ watch(activeOption, (val) =>
       </ul>
     </div>
   </div>
+  </div>
 </template>
 
 <style scoped>
@@ -111,4 +113,11 @@ watch(activeOption, (val) =>
   z-index: 10;
   max-height: calc(90vh - 140px);
 }
+
+.filter-val {
+  max-width:70px;
+  overflow-x: hidden;
+  text-overflow: ellipsis;
+}
+
 </style>

@@ -10,18 +10,18 @@ def get_worldview_processed_visual_tile(
     capture: WorldViewProcessedCapture, z: int, x: int, y: int
 ) -> bytes:
     with rasterio.Env(
-        GDAL_DISABLE_READDIR_ON_OPEN="EMPTY_DIR",
-        GDAL_HTTP_MERGE_CONSECUTIVE_RANGES="YES",
+        GDAL_DISABLE_READDIR_ON_OPEN='EMPTY_DIR',
+        GDAL_HTTP_MERGE_CONSECUTIVE_RANGES='YES',
         GDAL_CACHEMAX=200,
         CPL_VSIL_CURL_CACHE_SIZE=20000000,
-        GDAL_BAND_BLOCK_CACHE="HASHSET",
-        GDAL_HTTP_MULTIPLEX="YES",
+        GDAL_BAND_BLOCK_CACHE='HASHSET',
+        GDAL_HTTP_MULTIPLEX='YES',
         GDAL_HTTP_VERSION=2,
-        VSI_CACHE="TRUE",
+        VSI_CACHE='TRUE',
         VSI_CACHE_SIZE=5000000,
-        CPL_CURL_VERBOSE="YES",
+        CPL_CURL_VERBOSE='YES',
     ):
         with COGReader(input=capture.uri) as img:
             rgb = img.tile(x, y, z, tilesize=512)
         rgb.rescale(in_range=((0, 2**11),))
-        return rgb.render(img_format="WEBP")
+        return rgb.render(img_format='WEBP')

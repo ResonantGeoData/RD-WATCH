@@ -43,6 +43,7 @@ mypy = "0.961"
 taskipy = "^1.10.2"
 flake8 = "^5.0.4"
 flake8-django = "^1.1.5"
+pre-commit = "^3.0.3"
 
 
 [tool.taskipy.tasks]
@@ -56,6 +57,8 @@ flake8-django = "^1.1.5"
 "lint:isort:fix" = "isort src"
 "lint:mypy" = "mypy src"
 
+[tool.black]
+skip-string-normalization = true
 
 [tool.isort]
 profile = "black"

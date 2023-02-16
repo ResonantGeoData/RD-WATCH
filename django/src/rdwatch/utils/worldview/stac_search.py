@@ -1,7 +1,7 @@
 import json
 from datetime import datetime, timedelta
 from os import environ, path
-from typing import List, Literal, Optional, Tuple, TypedDict
+from typing import Literal, TypedDict
 from urllib.request import Request, urlopen
 
 
@@ -15,22 +15,22 @@ class Link(TypedDict):
 
 
 Asset = TypedDict(
-    "Asset",
+    'Asset',
     {
-        "eo:bands": list[EOBand],
-        "href": str,
+        'eo:bands': list[EOBand],
+        'href': str,
     },
 )
 
 Properties = TypedDict(
-    "Properties",
+    'Properties',
     {
-        "datetime": str,
-        "mission": Literal["WV01", "GE01", "WV02", "WV03", "WV04"],
-        "instruments": list[Literal["vis-multi", "panchromatic", "swir-multi"]],
-        "nitf:bits_per_pixel": int,
-        "nitf:image_representation": Literal["MULTI", "MONO", "RGB"],
-        "nitf:compression": Literal["C8", "NC"],
+        'datetime': str,
+        'mission': Literal['WV01', 'GE01', 'WV02', 'WV03', 'WV04'],
+        'instruments': list[Literal['vis-multi', 'panchromatic', 'swir-multi']],
+        'nitf:bits_per_pixel': int,
+        'nitf:image_representation': Literal['MULTI', 'MONO', 'RGB'],
+        'nitf:compression': Literal['C8', 'NC'],
     },
 )
 
@@ -39,8 +39,8 @@ class Feature(TypedDict):
     id: str
     collection: str
     properties: Properties
-    assets: dict[Literal["data"], Asset]
-    bbox: List[float]
+    assets: dict[Literal['data'], Asset]
+    bbox: list[float]
 
 
 class Context(TypedDict):
@@ -55,40 +55,40 @@ class Results(TypedDict):
 
 
 class SearchParams(TypedDict, total=False):
-    bbox: Tuple[float, float, float, float]
+    bbox: tuple[float, float, float, float]
     datetime: str
-    collections: List[str]
+    collections: list[str]
     page: int
     limit: int
 
 
 def _fmt_time(time: datetime):
-    return f"{time.isoformat()[:19]}Z"
+    return f'{time.isoformat()[:19]}Z'
 
 
 def worldview_search(
     timestamp: datetime,
-    bbox: Tuple[float, float, float, float],
-    timebuffer: Optional[timedelta] = None,
+    bbox: tuple[float, float, float, float],
+    timebuffer: timedelta | None = None,
     page: int = 1,
 ) -> Results:
-    url = path.join(environ["RDWATCH_SMART_STAC_URL"], "search")
+    url = path.join(environ['RDWATCH_SMART_STAC_URL'], 'search')
     params = SearchParams()
-    params["bbox"] = bbox
+    params['bbox'] = bbox
     if timebuffer is not None:
         min_time = timestamp - timebuffer
         max_time = timestamp + timebuffer
-        time_str = f"{_fmt_time(min_time)}/{_fmt_time(max_time)}"
+        time_str = f'{_fmt_time(min_time)}/{_fmt_time(max_time)}'
     else:
-        time_str = f"{_fmt_time(timestamp)}Z"
-    params["datetime"] = time_str
-    params["collections"] = ["worldview-nitf"]
-    params["page"] = page
-    params["limit"] = 100
+        time_str = f'{_fmt_time(timestamp)}Z'
+    params['datetime'] = time_str
+    params['collections'] = ['worldview-nitf']
+    params['page'] = page
+    params['limit'] = 100
     request = Request(
         url,
-        data=bytes(json.dumps(params), "utf-8"),
-        headers={"x-api-key": environ["RDWATCH_SMART_STAC_KEY"]},
+        data=bytes(json.dumps(params), 'utf-8'),
+        headers={'x-api-key': environ['RDWATCH_SMART_STAC_KEY']},
     )
     with urlopen(request) as resp:
         return json.loads(resp.read())

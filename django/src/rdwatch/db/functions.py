@@ -21,7 +21,7 @@ class ExtractEpoch(Func):
     """Represents the DateTimeField as a UNIX timestamp"""
 
     output_field: IntegerField = IntegerField()
-    template = "EXTRACT(epoch FROM %(expressions)s)::bigint"
+    template = 'EXTRACT(epoch FROM %(expressions)s)::bigint'
     arity = 1
 
 
@@ -40,22 +40,22 @@ class BoundingBox(JSONObject):
         return super().__init__(
             xmin=Func(
                 geom,
-                function="ST_XMin",
+                function='ST_XMin',
                 output_field=FloatField(),
             ),
             ymin=Func(
                 geom,
-                function="ST_YMin",
+                function='ST_YMin',
                 output_field=FloatField(),
             ),
             xmax=Func(
                 geom,
-                function="ST_XMax",
+                function='ST_XMax',
                 output_field=FloatField(),
             ),
             ymax=Func(
                 geom,
-                function="ST_YMax",
+                function='ST_YMax',
                 output_field=FloatField(),
             ),
         )
@@ -64,7 +64,7 @@ class BoundingBox(JSONObject):
 class BoundingBoxPolygon(Aggregate):
     """Gets the WGS-84 bounding box of a geometry stored in Web Mercator coordinates"""
 
-    template = "ST_Transform(ST_SetSRID(ST_Extent(%(expressions)s), 3857), 4326)"
+    template = 'ST_Transform(ST_SetSRID(ST_Extent(%(expressions)s), 3857), 4326)'
     arity = 1
     output_field = PolygonField()  # type: ignore
 
@@ -86,7 +86,7 @@ class TimeRangeJSON(NullIf):
             min=ExtractEpoch(Min(field)),
             max=ExtractEpoch(Max(field)),
         )
-        null = Value({"min": None, "max": None}, output_field=JSONField())
+        null = Value({'min': None, 'max': None}, output_field=JSONField())
         return super().__init__(json, null)
 
 
@@ -109,4 +109,4 @@ class GroupExcludeRowRange(RowRange):
     https://www.postgresql.org/docs/current/sql-expressions.html#SYNTAX-WINDOW-FUNCTIONS
     """
 
-    template = RowRange.template + " EXCLUDE GROUP"
+    template = RowRange.template + ' EXCLUDE GROUP'

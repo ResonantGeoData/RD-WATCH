@@ -7,7 +7,6 @@ import click
 # register pillow plugin
 import pillow_avif  # type: ignore # noqa
 from PIL import Image
-
 from rdwatch_cli.api.image import image
 from rdwatch_cli.exceptions import ImageNotFound, ServerError
 
@@ -26,7 +25,7 @@ async def try_to_fetch_image(
             worldview=worldview,
         )
     except ServerError:
-        click.echo(f"Skipping {time} due to server error (malformed raw image?)")
+        click.echo(f'Skipping {time} due to server error (malformed raw image?)')
         return None
 
 
@@ -37,22 +36,21 @@ async def movie(
     end_time: datetime,
     worldview: bool = False,
 ) -> list[Image.Image]:
-
     url = (
-        "/api/satellite-image/visual-timestamps"
+        '/api/satellite-image/visual-timestamps'
         if worldview
-        else "/api/satellite-image/timestamps"
+        else '/api/satellite-image/timestamps'
     )
 
     params = {
-        "start_timestamp": datetime.isoformat(start_time),
-        "end_timestamp": datetime.isoformat(end_time),
-        "bbox": ",".join(str(x) for x in bbox),
+        'start_timestamp': datetime.isoformat(start_time),
+        'end_timestamp': datetime.isoformat(end_time),
+        'bbox': ','.join(str(x) for x in bbox),
     }
     if not worldview:
-        params["constellation"] = "S2"
-        params["spectrum"] = "visual"
-        params["level"] = "2A"
+        params['constellation'] = 'S2'
+        params['spectrum'] = 'visual'
+        params['level'] = '2A'
 
     resp = await client.get(url, params=params)
     timestamps = await resp.json()

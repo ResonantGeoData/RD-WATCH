@@ -22,7 +22,7 @@ class Lookup(models.Model):
 
 class CommonBand(Lookup):
     spectrum = DecimalRangeField(
-        help_text="The spectrum this band captures (μm)",
+        help_text='The spectrum this band captures (μm)',
         db_index=True,
     )
 

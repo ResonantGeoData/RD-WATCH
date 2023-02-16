@@ -14,34 +14,19 @@ env:
   RDWATCH_DJANGO_DEBUG: 0
 jobs:
   lint-python:
-    strategy:
-      fail-fast: false
-      matrix:
-        linter: [black, flake8, isort]
-    name: Lint [${{ matrix.linter }}]
+    name: Lint Python
     runs-on: ubuntu-22.04
     steps:
-      - name: Install system dependencies
-        run: apt-fast install --no-install-recommends --yes
-          libgdal30
-          libproj22
-          python3-cachecontrol
-          python3-dev
-          python3-poetry
       - name: Checkout repository
         uses: actions/checkout@v3
       - name: Setup Python environment
         uses: actions/setup-python@v4
         with:
           python-version: "3.10"
-          cache: "poetry"
-          cache-dependency-path: "django/poetry.lock"
-      - name: Install packages
-        run: poetry install
-        working-directory: django
-      - name: Run ${{ matrix.linter }}
-        run: poetry run task lint:${{ matrix.linter }}
-        working-directory: django
+      - name: Install pre-commit
+        run: pip install pre-commit
+      - name: Run pre-commit checks
+        run: pre-commit run --all-files
   lint-node:
     strategy:
       fail-fast: false
@@ -65,8 +50,12 @@ jobs:
         run: npm run lint:${{ matrix.linter }}
         working-directory: vue
   test-django:
-    name: Test [django]
+    name: Test Django [${{ matrix.tox-env }}]
     runs-on: ubuntu-22.04
+    strategy:
+      fail-fast: false
+      matrix:
+        tox-env: [test, check-migrations]
     services:
       postgres:
         image: ghcr.io/resonantgeodata/rd-watch/postgresql:latest
@@ -90,47 +79,10 @@ jobs:
         uses: actions/setup-python@v4
         with:
           python-version: "3.10"
-          cache: "poetry"
-          cache-dependency-path: "django/poetry.lock"
-      - name: Install packages
-        run: poetry install
-        working-directory: django
+      - name: Install tox
+        run: pip install tox
       - name: Run tests
-        run: poetry run django-admin test
-        working-directory: django
-  test-django-makemigrations:
-    name: Test [django makemigrations]
-    runs-on: ubuntu-22.04
-    services:
-      postgres:
-        image: ghcr.io/resonantgeodata/rd-watch/postgresql:latest
-        env:
-          POSTGRES_PASSWORD: ${{ env.RDWATCH_SECRET_KEY }}
-      redis:
-        image: ghcr.io/resonantgeodata/rd-watch/redis:latest
-        env:
-          RDWATCH_SECRET_KEY: ${{ env.RDWATCH_SECRET_KEY }}
-    steps:
-      - name: Install system dependencies
-        run: apt-fast install --no-install-recommends --yes
-          libgdal30
-          libproj22
-          python3-cachecontrol
-          python3-dev
-          python3-poetry
-      - name: Checkout repository
-        uses: actions/checkout@v3
-      - name: Setup Python environment
-        uses: actions/setup-python@v4
-        with:
-          python-version: "3.10"
-          cache: "poetry"
-          cache-dependency-path: "django/poetry.lock"
-      - name: Install packages
-        run: poetry install
-        working-directory: django
-      - name: Check for up-to-date migrations
-        run: poetry run django-admin makemigrations --dry-run --check
+        run: tox -e ${{ matrix.tox-env }}
         working-directory: django
   test-vue:
     name: Test [vue]

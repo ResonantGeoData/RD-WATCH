@@ -5,7 +5,6 @@ from pathlib import Path
 
 import aiohttp
 import click
-
 from rdwatch_cli import api
 from rdwatch_cli.config import get_credentials, set_credentials
 from rdwatch_cli.exceptions import ImageNotFound, ServerError
@@ -15,9 +14,9 @@ from rdwatch_cli.validators import validate_bbox
 def _login():
     """Set HTTP Basic Auth credentials"""
 
-    username = click.prompt("Username", type=str)
+    username = click.prompt('Username', type=str)
     password = click.prompt(
-        "Password",
+        'Password',
         type=str,
         confirmation_prompt=True,
         hide_input=True,
@@ -33,7 +32,7 @@ def _get_http_client(host: str) -> aiohttp.ClientSession:
     """
 
     auth = None
-    if host == "https://resonantgeodata.dev":
+    if host == 'https://resonantgeodata.dev':
         auth = get_credentials() or _login()
 
     return aiohttp.ClientSession(
@@ -72,29 +71,29 @@ def login():
 
 @cli.command()
 @click.option(
-    "--host",
+    '--host',
     type=str,
-    default="https://resonantgeodata.dev",
+    default='https://resonantgeodata.dev',
     show_default=True,
-    help="Hostname of the RD-Watch instance to use",
+    help='Hostname of the RD-Watch instance to use',
 )
-@click.option("--output", type=Path, help="Output file path")
+@click.option('--output', type=Path, help='Output file path')
 @click.option(
-    "--bbox",
+    '--bbox',
     nargs=4,
     type=click.UNPROCESSED,
     callback=validate_bbox,
-    help="Bounding box (min-x min-y max-x max-y)",
+    help='Bounding box (min-x min-y max-x max-y)',
 )
 @click.option(
-    "--time",
+    '--time',
     type=click.DateTime(),
-    help="Time near satellite capture",
+    help='Time near satellite capture',
 )
 @click.option(
-    "--worldview",
+    '--worldview',
     is_flag=True,
-    help="Use WorldView satellite imagery instead of Sentinel-2",
+    help='Use WorldView satellite imagery instead of Sentinel-2',
 )
 @_coroutine
 async def image(
@@ -111,42 +110,42 @@ async def image(
             img.save(output)
         except ImageNotFound:
             raise click.ClickException(
-                "No image found for the given bounding box and time"
+                'No image found for the given bounding box and time'
             )
         except ServerError:
-            raise click.ClickException("Server down (try again later)")
+            raise click.ClickException('Server down (try again later)')
 
 
 @cli.command()
 @click.option(
-    "--host",
+    '--host',
     type=str,
-    default="https://resonantgeodata.dev",
+    default='https://resonantgeodata.dev',
     show_default=True,
-    help="Hostname of the RD-Watch instance to use",
+    help='Hostname of the RD-Watch instance to use',
 )
-@click.option("--output", type=Path, help="Output file path")
+@click.option('--output', type=Path, help='Output file path')
 @click.option(
-    "--bbox",
+    '--bbox',
     nargs=4,
     type=click.UNPROCESSED,
     callback=validate_bbox,
-    help="Bounding box (min-x min-y max-x max-y)",
+    help='Bounding box (min-x min-y max-x max-y)',
 )
 @click.option(
-    "--start-time",
+    '--start-time',
     type=click.DateTime(),
-    help="Time near beginning of satellite capture",
+    help='Time near beginning of satellite capture',
 )
 @click.option(
-    "--end-time",
+    '--end-time',
     type=click.DateTime(),
-    help="Time near end of satellite capture",
+    help='Time near end of satellite capture',
 )
 @click.option(
-    "--worldview",
+    '--worldview',
     is_flag=True,
-    help="Use WorldView satellite imagery instead of Sentinel-2",
+    help='Use WorldView satellite imagery instead of Sentinel-2',
 )
 @_coroutine
 async def movie(
@@ -174,7 +173,7 @@ async def movie(
             imgs[0].save(output, save_all=True, append_images=imgs)
         except ImageNotFound:
             raise click.ClickException(
-                "No image found for the given bounding box and time"
+                'No image found for the given bounding box and time'
             )
         except ServerError:
-            raise click.ClickException("Server down (try again later)")
+            raise click.ClickException('Server down (try again later)')

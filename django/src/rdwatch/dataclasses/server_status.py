@@ -4,7 +4,6 @@ from datetime import timedelta
 
 @dataclass
 class ServerStatus:
-
     uptime: timedelta
     hostname: str
     ip: str

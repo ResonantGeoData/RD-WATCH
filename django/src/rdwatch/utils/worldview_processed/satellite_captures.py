@@ -18,53 +18,51 @@ def get_features(
     bbox: tuple[float, float, float, float],
     timebuffer: timedelta,
 ):
-
     results = worldview_search(timestamp, bbox, timebuffer=timebuffer)
-    yield from results["features"]
+    yield from results['features']
 
-    matched = results["context"]["matched"]
-    limit = results["context"]["limit"]
+    matched = results['context']['matched']
+    limit = results['context']['limit']
     for i in range(matched // limit):
         page = i + 2
         results = worldview_search(timestamp, bbox, timebuffer=timebuffer, page=page)
-        yield from results["features"]
+        yield from results['features']
 
 
 def get_captures(
     timestamp: datetime,
     bbox: tuple[float, float, float, float],
-    timebuffer: timedelta = timedelta(hours=1),
+    timebuffer: timedelta | None = None,
 ) -> list[WorldViewProcessedCapture]:
+    if timebuffer is None:
+        timebuffer = timedelta(hours=1)
+
     features = [f for f in get_features(timestamp, bbox, timebuffer=timebuffer)]
 
     captures = [
         WorldViewProcessedCapture(
             timestamp=datetime.fromisoformat(
-                feature["properties"]["datetime"].rstrip("Z")
+                feature['properties']['datetime'].rstrip('Z')
             ),
-            bbox=cast(tuple[float, float, float, float], tuple(feature["bbox"])),
-            uri=feature["assets"]["visual"]["href"],
+            bbox=cast(tuple[float, float, float, float], tuple(feature['bbox'])),
+            uri=feature['assets']['visual']['href'],
             panuri=None,
         )
         for feature in features
-        if "visual" in feature["assets"]
+        if 'visual' in feature['assets']
     ]
 
     # find each vis-multi image's related panchromatic image
     for cap in captures:
         try:
             pan_feature = next(
-                (
-                    feat
-                    for feat in features
-                    if feat["properties"]["nitf:image_representation"] == "MONO"
-                    and datetime.fromisoformat(
-                        feat["properties"]["datetime"].rstrip("Z")
-                    )
-                    == cap.timestamp
-                )
+                feat
+                for feat in features
+                if feat['properties']['nitf:image_representation'] == 'MONO'
+                and datetime.fromisoformat(feat['properties']['datetime'].rstrip('Z'))
+                == cap.timestamp
             )
-            cap.panuri = pan_feature["assets"]["B01"]["href"]
+            cap.panuri = pan_feature['assets']['B01']['href']
         except StopIteration:
             continue
 

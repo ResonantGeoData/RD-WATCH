@@ -25,30 +25,30 @@ class CropParse:
         if isinstance(filepath, str):
             filepath = Path(filepath)
 
-        with open(filepath, "rb") as f:
+        with open(filepath, 'rb') as f:
             rst = GDALRaster(f.read())
 
         if not len(rst.bands) == 1:
-            raise ValueError("Expected single-band raster")
+            raise ValueError('Expected single-band raster')
 
         bnd = rst.bands[0]
 
         return GDALRaster(
             {
-                "width": bnd.width,
-                "height": bnd.height,
-                "scale": [
+                'width': bnd.width,
+                'height': bnd.height,
+                'scale': [
                     (self.xmax - self.xmin) / bnd.width,
                     (self.ymax - self.ymin) / bnd.height,
                 ],
-                "origin": [self.xmin, self.ymin],
-                "skew": [0, 0],
-                "srid": 4326,
-                "datatype": bnd.datatype(),
-                "bands": [
+                'origin': [self.xmin, self.ymin],
+                'skew': [0, 0],
+                'srid': 4326,
+                'datatype': bnd.datatype(),
+                'bands': [
                     {
-                        "data": bnd.data(),
-                        "nodata_value": bnd.nodata_value,
+                        'data': bnd.data(),
+                        'nodata_value': bnd.nodata_value,
                     }
                 ],
             }
@@ -74,20 +74,20 @@ class CropParse:
 
         match = pattern.match(crop_string)
         if not match:
-            raise TypeError("Invalid crop string")
+            raise TypeError('Invalid crop string')
 
         return cls(
-            xmin=_latlong_str_to_float(match["xmin_dir"], match["xmin"]),
-            ymin=_latlong_str_to_float(match["ymin_dir"], match["ymin"]),
-            xmax=_latlong_str_to_float(match["xmax_dir"], match["xmax"]),
-            ymax=_latlong_str_to_float(match["ymax_dir"], match["ymax"]),
-            timestamp=datetime.strptime(match["timestamp"], "%Y%m%dT%H%M%SZ"),
-            sensor=match["sensor"],
+            xmin=_latlong_str_to_float(match['xmin_dir'], match['xmin']),
+            ymin=_latlong_str_to_float(match['ymin_dir'], match['ymin']),
+            xmax=_latlong_str_to_float(match['xmax_dir'], match['xmax']),
+            ymax=_latlong_str_to_float(match['ymax_dir'], match['ymax']),
+            timestamp=datetime.strptime(match['timestamp'], '%Y%m%dT%H%M%SZ'),
+            sensor=match['sensor'],
         )
 
 
 def _latlong_str_to_float(direction: str, latlong_str: str) -> float:
     latlong = float(latlong_str)
-    if direction in ("W", "S"):
+    if direction in ('W', 'S'):
         latlong *= -1
     return latlong

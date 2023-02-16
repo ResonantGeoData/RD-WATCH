@@ -1,5 +1,5 @@
-from redis import RedisCluster
 from django_redis.client import DefaultClient
+from redis import RedisCluster
 
 
 class CustomRedisCluster(DefaultClient):

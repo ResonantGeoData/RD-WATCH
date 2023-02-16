@@ -13,11 +13,11 @@ class ConfigSchema(TypedDict):
 
 CONFIG_PATH = (
     Path(
-        os.environ.get("APPDATA")
-        or os.environ.get("XDG_CONFIG_HOME")
-        or os.path.join(os.environ["HOME"], ".config")
+        os.environ.get('APPDATA')
+        or os.environ.get('XDG_CONFIG_HOME')
+        or os.path.join(os.environ['HOME'], '.config')
     )
-    / "rdwatch"
+    / 'rdwatch'
 )
 
 
@@ -26,7 +26,7 @@ def get_credentials() -> BasicAuth | None:
         return None
     with open(CONFIG_PATH) as f:
         config: ConfigSchema = json.load(f)
-    return BasicAuth(config["username"], config["password"])
+    return BasicAuth(config['username'], config['password'])
 
 
 def set_credentials(username: str, password: str):
@@ -35,7 +35,7 @@ def set_credentials(username: str, password: str):
             config = json.load(f)
     else:
         config = {}
-    config["username"] = username
-    config["password"] = password
-    with open(CONFIG_PATH, "w") as f:
+    config['username'] = username
+    config['password'] = password
+    with open(CONFIG_PATH, 'w') as f:
         json.dump(config, f)

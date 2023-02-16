@@ -6,7 +6,7 @@ import RegionFilter from "./filters/RegionFilter.vue";
 import { Cog6ToothIcon } from "@heroicons/vue/24/solid";
 import SettingsPanel from "./SettingsPanel.vue";
 import { state } from "../store";
-import { computed, ref, watch } from "vue";
+import { ref, watch } from "vue";
 import type { Performer, QueryArguments, Region } from "../client";
 import type { Ref } from "vue";
 

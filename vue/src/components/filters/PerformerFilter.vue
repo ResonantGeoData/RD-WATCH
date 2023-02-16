@@ -31,7 +31,7 @@ watch(selectedPerformer, (val) => emit("update:modelValue", val));
 <template>
   <FilterSelect
     v-model="selectedPerformer"
-    label="Performer"
+    :label="`Performer (${performers.length})`"
     :options="performers"
     value-key="team_name"
   />

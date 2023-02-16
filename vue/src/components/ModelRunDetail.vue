@@ -28,7 +28,7 @@ async function handleClick() {
     >
       <div class="grid grid-cols-8">
         <div class="col-span-8 group-open:text-white">
-          <div class="modelTitle">
+          <div class="model-title">
             {{ modelRun.title }}
           </div>
         </div>
@@ -124,7 +124,7 @@ async function handleClick() {
 </template>
 
 <style scoped>
-.modelTitle {
+.model-title {
   max-width: 250px;
   overflow: hidden;
   text-overflow: ellipsis;

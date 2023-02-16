@@ -89,21 +89,36 @@ async function loadMore() {
 /**
  * Set the camera bounds/viewport based on the currently selected model run(s).
  */
-function updateCameraBounds() {
+function updateCameraBounds(filtered = true) {
   const bounds = new LngLatBounds();
-  modelRuns.value
-    .filter((modelRun) => openedModelRuns.value.has(modelRun.key))
-    .forEach((modelRun) =>
-      modelRun.bbox?.coordinates
-        .flat()
-        .forEach((c) => bounds.extend(c as [number, number]))
+  let list = modelRuns.value;
+  if (filtered) {
+    list = modelRuns.value.filter((modelRun) =>
+      openedModelRuns.value.has(modelRun.key)
     );
-  state.bbox = {
-    xmin: bounds.getWest(),
-    ymin: bounds.getSouth(),
-    xmax: bounds.getEast(),
-    ymax: bounds.getNorth(),
-  };
+  }
+
+  list.forEach((modelRun) => {
+    modelRun.bbox?.coordinates
+      .flat()
+      .forEach((c) => bounds.extend(c as [number, number]));
+  });
+  if (bounds.isEmpty()) {
+    const bbox = {
+      xmin: -180,
+      ymin: -90,
+      xmax: 180,
+      ymax: 90,
+    };
+    state.bbox = bbox;
+  } else {
+    state.bbox = {
+      xmin: bounds.getWest(),
+      ymin: bounds.getSouth(),
+      xmax: bounds.getEast(),
+      ymax: bounds.getNorth(),
+    };
+  }
 }
 
 function handleToggle(modelRun: KeyedModelRun) {
@@ -132,12 +147,7 @@ function handleToggle(modelRun: KeyedModelRun) {
       region_id: Array.from(regionIds),
     };
   } else {
-    state.bbox = resultsBoundingBox.value;
-    state.filters = {
-      ...state.filters,
-      configuration_id: undefined,
-      region_id: undefined,
-    };
+    updateCameraBounds(false);
   }
 }
 
@@ -166,7 +176,10 @@ watch([() => props.filters.region, () => props.filters.performer], () => {
 
 <template>
   <div class="flex flex-row bg-gray-100">
-    <span v-if="!loading" style="font-size: 0.75em"
+    <span
+      v-if="!loading"
+      style="font-size: 0.75em"
+      class="badge-accent badge ml-2"
       >{{ totalModelRuns }} {{ totalModelRuns > 1 ? "Runs" : "Run" }}</span
     >
     <div v-if="loading" class="px-2" style="width: 100%">

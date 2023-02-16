@@ -196,12 +196,16 @@ class ModelRunViewSet(viewsets.ViewSet):
                 raise ValidationError({'page': f"Invalid page '{page}'"})
             page = int(page)
 
+        # Calculate total number of model runs prior to paginating queryset
+        total_model_run_count = queryset.count()
+
         subquery = queryset[(page - 1) * limit : page * limit] if limit else queryset
         aggregate = queryset.defer('json').aggregate(
-            count=Count('evaluations__region__pk', distinct=True),
             timerange=TimeRangeJSON('evaluations__observations__timestamp'),
             results=AggregateArraySubquery(subquery.values('json')),
         )
+
+        aggregate['count'] = total_model_run_count
 
         # Only bother calculating the entire bounding box of this model run
         # list if the user has specified a region. We don't want to overload

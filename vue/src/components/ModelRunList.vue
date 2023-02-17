@@ -1,6 +1,12 @@
 <script setup lang="ts">
 import ModelRunDetail from "./ModelRunDetail.vue";
-import type { ModelRun, QueryArguments } from "../client";
+import type { ModelRunList } from "../client/models/ModelRunList";
+import {
+  CancelError,
+  CancelablePromise,
+  ModelRun,
+  QueryArguments,
+} from "../client";
 import { ref, watch, watchEffect } from "vue";
 import type { Ref } from "vue";
 import { ApiService } from "../client";
@@ -31,59 +37,75 @@ const resultsBoundingBox = ref({
 const totalModelRuns = ref(1);
 const loading = ref(false);
 
+let request: CancelablePromise<ModelRunList> | undefined;
+
 async function loadMore() {
   loading.value = true;
-  const modelRunList = await ApiService.getModelRuns({
+  if (request !== undefined) {
+    console.log("Cancelling request");
+    request.cancel();
+  }
+  request = ApiService.getModelRuns({
     limit: 10,
     ...props.filters,
   });
-  loading.value = false;
-  totalModelRuns.value = modelRunList.count;
+  try {
+    const modelRunList = await request;
+    request = undefined;
+    loading.value = false;
+    totalModelRuns.value = modelRunList.count;
 
-  // sort list to show ground truth near the top
-  const modelRunResults = modelRunList.results.sort((a, b) =>
-    b.parameters["ground_truth"] === true ? 1 : -1
-  );
-  const keyedModelRunResults = modelRunResults.map((val, i) => {
-    return {
-      ...val,
-      key: `${val.id}|${i + modelRuns.value.length}`,
-    };
-  });
+    // sort list to show ground truth near the top
+    const modelRunResults = modelRunList.results.sort((a, b) =>
+      b.parameters["ground_truth"] === true ? 1 : -1
+    );
+    const keyedModelRunResults = modelRunResults.map((val, i) => {
+      return {
+        ...val,
+        key: `${val.id}|${i + modelRuns.value.length}`,
+      };
+    });
 
-  // If a bounding box was provided for this model run list, zoom the camera to it.
-  if (modelRunList.bbox) {
-    const bounds = new LngLatBounds();
-    modelRunList.bbox.coordinates
-      .flat()
-      .forEach((c) => bounds.extend(c as [number, number]));
-    const bbox = {
-      xmin: bounds.getWest(),
-      ymin: bounds.getSouth(),
-      xmax: bounds.getEast(),
-      ymax: bounds.getNorth(),
-    };
-    resultsBoundingBox.value = bbox;
-    state.bbox = bbox;
-  } else if (!state.filters.region_id?.length) {
-    const bbox = {
-      xmin: -180,
-      ymin: -90,
-      xmax: 180,
-      ymax: 90,
-    };
-    state.bbox = bbox;
+    // If a bounding box was provided for this model run list, zoom the camera to it.
+    if (modelRunList.bbox) {
+      const bounds = new LngLatBounds();
+      modelRunList.bbox.coordinates
+        .flat()
+        .forEach((c) => bounds.extend(c as [number, number]));
+      const bbox = {
+        xmin: bounds.getWest(),
+        ymin: bounds.getSouth(),
+        xmax: bounds.getEast(),
+        ymax: bounds.getNorth(),
+      };
+      resultsBoundingBox.value = bbox;
+      state.bbox = bbox;
+    } else if (!state.filters.region_id?.length) {
+      const bbox = {
+        xmin: -180,
+        ymin: -90,
+        xmax: 180,
+        ymax: 90,
+      };
+      state.bbox = bbox;
+    }
+
+    // If we're on page 1, we *might* have switched to a different filter/grouping in the UI,
+    // meaning we would need to clear out any existing results.
+    // To account for this, just set the array to the results directly instead of concatenating.
+    if (props.filters.page === 1) {
+      modelRuns.value = keyedModelRunResults;
+    } else {
+      modelRuns.value = modelRuns.value.concat(keyedModelRunResults);
+    }
+    emit("update:timerange", modelRunList["timerange"]);
+  } catch (e) {
+    if (e instanceof CancelError) {
+      console.warn(e);
+    } else {
+      throw e;
+    }
   }
-
-  // If we're on page 1, we *might* have switched to a different filter/grouping in the UI,
-  // meaning we would need to clear out any existing results.
-  // To account for this, just set the array to the results directly instead of concatenating.
-  if (props.filters.page === 1) {
-    modelRuns.value = keyedModelRunResults;
-  } else {
-    modelRuns.value = modelRuns.value.concat(keyedModelRunResults);
-  }
-  emit("update:timerange", modelRunList["timerange"]);
 }
 
 /**
@@ -97,7 +119,13 @@ function updateCameraBounds(filtered = true) {
       openedModelRuns.value.has(modelRun.key)
     );
   }
-
+  if (
+    !state.settings.autoZoom &&
+    state.filters.region_id &&
+    state.filters.region_id?.length > 0
+  ) {
+    return;
+  }
   list.forEach((modelRun) => {
     modelRun.bbox?.coordinates
       .flat()
@@ -147,6 +175,10 @@ function handleToggle(modelRun: KeyedModelRun) {
       region_id: Array.from(regionIds),
     };
   } else {
+    state.filters = {
+      ...state.filters,
+      configuration_id: undefined,
+    };
     updateCameraBounds(false);
   }
 }

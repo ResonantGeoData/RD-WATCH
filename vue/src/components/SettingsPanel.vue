@@ -5,6 +5,15 @@ import { state } from "../store";
 import { updatePattern } from "../interactions/fillPatterns";
 import { InformationCircleIcon } from "@heroicons/vue/24/solid";
 
+const autoZoom = computed({
+  get() {
+    return state.settings.autoZoom || false;
+  },
+  set(val: boolean) {
+    state.settings = { ...state.settings, autoZoom: val };
+  },
+});
+
 const showSiteOutline = computed({
   get() {
     return state.filters.showSiteOutline || false;
@@ -157,6 +166,17 @@ watch(hiddenCanvas, () => {
         <span> {{ info.hash }}</span>
       </div>
     </div>
+    <div class="form-control">
+      <label class="label cursor-pointer">
+        <span class="label-text">Auto Zoom:</span>
+        <input
+          v-model="autoZoom"
+          type="checkbox"
+          class="checkbox-primary checkbox"
+        />
+      </label>
+    </div>
+
     <div class="form-control">
       <label class="label cursor-pointer">
         <img ref="siteOutlineImg" height="20" width="20" />

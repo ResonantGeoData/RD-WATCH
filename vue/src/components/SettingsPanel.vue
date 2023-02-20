@@ -151,7 +151,7 @@ watch(hiddenCanvas, () => {
     <div class="grid grid-cols-8 gap-4">
       <h4 class="col-span-7">Settings</h4>
       <InformationCircleIcon
-        class="hover tooltip h-5 text-blue-600"
+        class="hover h-5 text-blue-600"
         data-tip="Information"
         @click="expandInfo = !expandInfo"
       />

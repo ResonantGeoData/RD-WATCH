@@ -13,6 +13,7 @@ import { ApiService } from "../client";
 import { state } from "../store";
 import { LngLatBounds } from "maplibre-gl";
 import { hoveredInfo } from "../interactions/popup";
+const limit = 10;
 interface KeyedModelRun extends ModelRun {
   key: string;
 }
@@ -46,7 +47,7 @@ async function loadMore() {
     request.cancel();
   }
   request = ApiService.getModelRuns({
-    limit: 10,
+    limit,
     ...props.filters,
   });
   try {
@@ -191,7 +192,7 @@ async function handleScroll(event: Event) {
   if (
     Math.floor(target.scrollHeight - target.scrollTop) <= target.clientHeight &&
     modelRuns.value.length < totalModelRuns.value
-  ) {
+  ) if (props.filters.page !== undefined && Math.ceil(totalModelRuns.value / limit) > props.filters.page ) {
     emit("nextPage");
   }
 }

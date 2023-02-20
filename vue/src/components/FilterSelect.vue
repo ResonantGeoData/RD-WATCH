@@ -68,7 +68,7 @@ watch(activeOption, (val) =>
 
     <div
       v-if="!filterOpen && activeOption === null"
-      class="tooltip h-5 cursor-pointer select-none rounded bg-gray-300 text-sm text-gray-600 hover:bg-gray-400 hover:text-gray-100"
+      class="h-5 cursor-pointer select-none rounded bg-gray-300 text-sm text-gray-600 hover:bg-gray-400 hover:text-gray-100"
       @click="filterOpen = true"
     >
       <span class="flex items-baseline" @click="filterOpen = !filterOpen">
@@ -81,7 +81,7 @@ watch(activeOption, (val) =>
 
     <div
       v-if="filterOpen"
-      class="tooltip-right cursor-pointer select-none rounded bg-gray-300 text-sm text-gray-600 hover:bg-gray-400 hover:text-gray-100"
+      class="cursor-pointer select-none rounded bg-gray-300 text-sm text-gray-600 hover:bg-gray-400 hover:text-gray-100"
       @click="filterOpen = false"
     >
       <span class="flex items-baseline">

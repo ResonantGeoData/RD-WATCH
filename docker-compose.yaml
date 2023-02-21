@@ -6,6 +6,9 @@ services:
   # RD-WATCH
   rdwatch:
     image: ghcr.io/resonantgeodata/rd-watch/rdwatch:latest
+    build:
+      context: .
+      dockerfile: ./Dockerfile
     depends_on:
       - postgresql
       - redis

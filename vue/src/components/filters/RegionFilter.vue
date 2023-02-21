@@ -31,7 +31,7 @@ watch(selectedRegion, (val) => emit("update:modelValue", val));
 <template>
   <FilterSelect
     v-model="selectedRegion"
-    label="Region"
+    :label="`Region (${regions.length})`"
     :options="regions"
     value-key="name"
   />

@@ -49,6 +49,11 @@ export const buildObservationFilter = (
         filters.configuration_id?.length ? filters.configuration_id : [""],
       ],
     ],
+    [
+      "in",
+      ["get", "region_id"],
+      ["literal", filters.region_id?.length ? filters.region_id : [""]],
+    ],
     ["<=", ["get", "timemin"], timestamp],
     [
       "any",

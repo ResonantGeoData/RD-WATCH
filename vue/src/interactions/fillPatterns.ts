@@ -65,6 +65,11 @@ const patternCreation = (
       map.value.removeImage("diagonal-left");
     }
 
+    map.value.addImage("null", {
+      width: 0,
+      height: 0,
+      data: new Uint8Array(),
+    });
     map.value.addImage("diagonal-right", {
       width: size,
       height: size,

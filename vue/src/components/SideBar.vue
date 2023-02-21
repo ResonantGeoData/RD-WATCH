@@ -6,7 +6,7 @@ import RegionFilter from "./filters/RegionFilter.vue";
 import { Cog6ToothIcon } from "@heroicons/vue/24/solid";
 import SettingsPanel from "./SettingsPanel.vue";
 import { state } from "../store";
-import { computed, ref, watch } from "vue";
+import { ref, watch } from "vue";
 import type { Performer, QueryArguments, Region } from "../client";
 import type { Ref } from "vue";
 
@@ -66,7 +66,7 @@ function nextPage() {
         <div
           class="sample flex flex-nowrap items-stretch gap-2 border-t border-gray-300 bg-gray-100 p-2"
         >
-          <PerformerFilter v-model="selectedPerformer" />
+          <PerformerFilter v-model="selectedPerformer" class="customfilter" />
           <RegionFilter v-model="selectedRegion" />
           <span class="h5 grow" />
           <Cog6ToothIcon
@@ -79,7 +79,6 @@ function nextPage() {
 
       <ModelRunList
         :filters="queryFilters"
-        class="basis-full"
         @next-page="nextPage"
         @update:timerange="
           (timerange) => {
@@ -96,6 +95,10 @@ function nextPage() {
 <style scoped>
 .sample {
   z-index: 999;
+}
+
+.customfilter {
+  max-width: 40%;
 }
 
 .hover:hover {

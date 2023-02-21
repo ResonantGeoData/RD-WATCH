@@ -11,6 +11,9 @@ export interface MapFilters {
 
 export const state = reactive<{
   timestamp: number;
+  settings: {
+    autoZoom: boolean;
+  };
   bbox: { xmin: number; ymin: number; xmax: number; ymax: number };
   filters: MapFilters;
   patterns: {
@@ -19,6 +22,9 @@ export const state = reactive<{
   };
 }>({
   timestamp: Math.floor(Date.now() / 1000),
+  settings: {
+    autoZoom: false,
+  },
   bbox: {
     xmin: -180,
     ymin: -90,

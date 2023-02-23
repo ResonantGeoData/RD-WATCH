@@ -165,6 +165,10 @@ def _preprocess_features(features: list) -> list:
             ):
                 new_properties = {
                     **feature['properties'],
+                    'geometry': {
+                        'type': feature['geometry']['type'],
+                        'coordinates': feature['geometry']['coordinates'][i],
+                    },
                     **{
                         field: feature['properties'][field].split(', ')[i]
                         for field in affected_fields

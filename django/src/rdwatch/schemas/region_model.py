@@ -77,6 +77,10 @@ class SiteSummaryFeature(BaseModel):
     validated: Literal['True', 'False'] | None
     annotation_cache: dict[Any, Any] | None
 
+    @property
+    def site_number(self) -> int:
+        return int(self.site_id[8:])
+
 
 class Feature(BaseModel):
     class Config:
@@ -98,6 +102,31 @@ class RegionModel(BaseModel):
     @validator('features', pre=True)
     def preprocess_features(cls, v: list):
         return _preprocess_features(v)
+
+    @validator('features')
+    def ensure_one_region_feature(cls, v: list[Feature]):
+        region_features = [
+            feature for feature in v if isinstance(feature.properties, RegionFeature)
+        ]
+        if len(region_features) != 1:
+            raise ValueError('More than one "region" feature was detected.')
+        return v
+
+    @property
+    def region_feature(self) -> Feature:
+        return [
+            feature
+            for feature in self.features
+            if isinstance(feature.properties, RegionFeature)
+        ][0]
+
+    @property
+    def site_summary_features(self) -> list[Feature]:
+        return [
+            feature
+            for feature in self.features
+            if isinstance(feature.properties, SiteSummaryFeature)
+        ]
 
 
 def _preprocess_features(features: list) -> list:

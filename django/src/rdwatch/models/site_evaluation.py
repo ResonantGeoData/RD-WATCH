@@ -1,6 +1,17 @@
+from datetime import datetime
+
+from typing_extensions import Self
+
 from django.contrib.gis.db.models import PolygonField
+from django.contrib.gis.geos import MultiPolygon, Polygon
 from django.contrib.postgres.indexes import GistIndex
-from django.db import models
+from django.db import models, transaction
+
+from rdwatch.models import HyperParameters, lookups
+from rdwatch.models.region import get_or_create_region
+from rdwatch.schemas import RegionModel, SiteModel
+from rdwatch.schemas.region_model import RegionFeature, SiteSummaryFeature
+from rdwatch.schemas.site_model import SiteFeature
 
 
 class SiteEvaluation(models.Model):
@@ -31,6 +42,93 @@ class SiteEvaluation(models.Model):
     score = models.FloatField(
         help_text='Score of site footprint',
     )
+
+    @classmethod
+    def bulk_create_from_site_model(
+        cls, site_model: SiteModel, configuration: HyperParameters
+    ):
+        from rdwatch.models import SiteObservation
+
+        site_feature = site_model.site_feature
+        assert isinstance(site_feature.properties, SiteFeature)
+
+        with transaction.atomic():
+            region = get_or_create_region(site_feature.properties.region_id)[0]
+            site_eval = cls.objects.create(
+                configuration=configuration,
+                region=region,
+                number=site_feature.properties.site_number,
+                timestamp=datetime.now(),
+                geom=site_feature.geometry,
+                score=site_feature.properties.score,
+            )
+
+            SiteObservation.bulk_create_from_site_evaluation(site_eval, site_model)
+
+        return site_eval
+
+    @classmethod
+    def bulk_create_from_from_region_model(
+        cls, region_model: RegionModel, configuration: HyperParameters
+    ) -> list[Self]:
+        from rdwatch.models import SiteObservation
+
+        region_feature = region_model.region_feature
+        assert isinstance(region_feature.properties, RegionFeature)
+
+        site_evals: list[SiteEvaluation] = []
+        site_observations: list[SiteObservation] = []
+        with transaction.atomic():
+            region = get_or_create_region(region_feature.properties.region_id)[0]
+
+            # Assign all site-summaries a label of "unknown"
+            label = lookups.ObservationLabel.objects.get(slug='unknown')
+
+            for feature in region_model.site_summary_features:
+                assert isinstance(feature.properties, SiteSummaryFeature)
+
+                geometry = feature.geometry
+                if isinstance(geometry, MultiPolygon):
+                    geometry = geometry.convex_hull
+
+                site_eval = cls(
+                    configuration=configuration,
+                    region=region,
+                    number=feature.properties.site_number,
+                    timestamp=datetime.now(),
+                    geom=geometry,
+                    score=feature.properties.score or 1.0,
+                )
+                site_evals.append(site_eval)
+
+                start_date = datetime.strptime(
+                    region_feature.properties.start_date,
+                    '%Y-%m-%d',
+                )
+                end_date = datetime.strptime(
+                    region_feature.properties.end_date,
+                    '%Y-%m-%d',
+                )
+
+                for timestamp in (start_date, end_date):
+                    # Site summaries can be polygons, so convert then into MultiPolygons
+                    # before writing them to the database
+                    if isinstance(feature.geometry, Polygon):
+                        feature.geometry = MultiPolygon(feature.geometry)
+
+                    site_observations.append(
+                        SiteObservation(
+                            siteeval=site_eval,
+                            label=label,
+                            score=feature.properties.score,
+                            geom=feature.geometry,
+                            timestamp=timestamp,
+                        )
+                    )
+            created = cls.objects.bulk_create(site_evals)
+            SiteObservation.objects.bulk_create(site_observations)
+
+        return created
 
     @property
     def site_id(self):

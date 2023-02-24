@@ -172,6 +172,55 @@ export const layers = (
   filters: Record<string, number>
 ): LayerSpecification[] => [
   {
+    id: "observations-fill",
+    type: "fill",
+    source: rdwatchtiles,
+    "source-layer": "observations",
+    paint: {
+      "fill-color": annotationColor,
+      "fill-opacity": 1,
+      "fill-pattern": buildObservationFill(timestamp, filters),
+    },
+    filter: buildObservationFilter(timestamp, filters),
+  },
+  {
+    id: "observations-outline",
+    type: "line",
+    source: rdwatchtiles,
+    "source-layer": "observations",
+    paint: {
+      "line-color": annotationColor,
+      "line-width": observationWidth,
+    },
+    filter: buildObservationFilter(timestamp, filters),
+  },
+  {
+    id: "observations-text",
+    type: "symbol",
+    source: rdwatchtiles,
+    "source-layer": "observations",
+    layout: {
+      "text-anchor": "center",
+      "text-font": ["Roboto Regular"],
+      "text-max-width": 5,
+      "text-size": 12,
+      "text-field": [
+        "case",
+        ["==", ["get", "label"], 1],
+        "active_construction",
+        ["==", ["get", "label"], 2],
+        "post_construction",
+        ["==", ["get", "label"], 3],
+        "site_preparation",
+        "",
+      ],
+    },
+    paint: {
+      "text-color": annotationColor,
+    },
+    filter: buildObservationFilter(timestamp, filters),
+  },
+  {
     id: "sites-outline",
     type: "line",
     source: rdwatchtiles,
@@ -227,54 +276,5 @@ export const layers = (
       "text-color": annotationColor,
     },
     filter: buildSiteFilter(timestamp, filters),
-  },
-  {
-    id: "observations-fill",
-    type: "fill",
-    source: rdwatchtiles,
-    "source-layer": "observations",
-    paint: {
-      "fill-color": annotationColor,
-      "fill-opacity": 1,
-      "fill-pattern": buildObservationFill(timestamp, filters),
-    },
-    filter: buildObservationFilter(timestamp, filters),
-  },
-  {
-    id: "observations-outline",
-    type: "line",
-    source: rdwatchtiles,
-    "source-layer": "observations",
-    paint: {
-      "line-color": annotationColor,
-      "line-width": observationWidth,
-    },
-    filter: buildObservationFilter(timestamp, filters),
-  },
-  {
-    id: "observations-text",
-    type: "symbol",
-    source: rdwatchtiles,
-    "source-layer": "observations",
-    layout: {
-      "text-anchor": "center",
-      "text-font": ["Roboto Regular"],
-      "text-max-width": 5,
-      "text-size": 12,
-      "text-field": [
-        "case",
-        ["==", ["get", "label"], 1],
-        "active_construction",
-        ["==", ["get", "label"], 2],
-        "post_construction",
-        ["==", ["get", "label"], 3],
-        "site_preparation",
-        "",
-      ],
-    },
-    paint: {
-      "text-color": annotationColor,
-    },
-    filter: buildObservationFilter(timestamp, filters),
   },
 ];

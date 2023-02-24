@@ -1,5 +1,6 @@
 # flake8: noqa: F722
 import json
+from datetime import datetime
 from typing import Any, Literal
 
 from pydantic import BaseModel, constr, validator
@@ -13,8 +14,8 @@ class RegionFeature(BaseModel):
     version: str | None
     mgrs: str
     model_content: Literal['empty', 'annotation', 'proposed'] | None
-    start_date: str | None
-    end_date: str | None
+    start_date: datetime | None
+    end_date: datetime | None
     originator: Literal[
         'te',
         'pmo',
@@ -32,6 +33,12 @@ class RegionFeature(BaseModel):
     # Optional fields
     comments: str | None
     performer_cache: dict[Any, Any] | None
+
+    @validator('start_date', 'end_date', pre=True)
+    def parse_dates(cls, v: str | None) -> datetime | None:
+        if v is None:
+            return v
+        return datetime.strptime(v, '%Y-%m-%d')
 
 
 class SiteSummaryFeature(BaseModel):
@@ -54,8 +61,8 @@ class SiteSummaryFeature(BaseModel):
         'system_confirmed',
         'system_rejected',
     ]
-    start_date: str | None
-    end_date: str | None
+    start_date: datetime | None
+    end_date: datetime | None
     model_content: Literal['annotation', 'proposed'] | None
     originator: Literal[
         'te',
@@ -76,6 +83,12 @@ class SiteSummaryFeature(BaseModel):
     score: float | None
     validated: Literal['True', 'False'] | None
     annotation_cache: dict[Any, Any] | None
+
+    @validator('start_date', 'end_date', pre=True)
+    def parse_dates(cls, v: str | None) -> datetime | None:
+        if v is None:
+            return v
+        return datetime.strptime(v, '%Y-%m-%d')
 
     @property
     def site_number(self) -> int:

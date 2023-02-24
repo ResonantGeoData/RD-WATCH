@@ -1,5 +1,6 @@
 # flake8: noqa: F722
 import json
+from datetime import datetime
 from typing import Any, Literal
 
 from pydantic import BaseModel, constr, validator
@@ -28,8 +29,8 @@ class SiteFeature(BaseModel):
         'system_confirmed',
         'system_rejected',
     ]
-    start_date: str | None
-    end_date: str | None
+    start_date: datetime | None
+    end_date: datetime | None
     model_content: Literal['annotation', 'proposed']
     originator: Literal[
         'te',
@@ -55,6 +56,12 @@ class SiteFeature(BaseModel):
     predicted_phase_transition_date: str | None
     misc_info: dict[Any, Any] | None
 
+    @validator('start_date', 'end_date', pre=True)
+    def parse_dates(cls, v: str | None) -> datetime | None:
+        if v is None:
+            return v
+        return datetime.strptime(v, '%Y-%m-%d')
+
     @property
     def site_number(self) -> int:
         return int(self.site_id[8:])
@@ -62,7 +69,7 @@ class SiteFeature(BaseModel):
 
 class ObservationFeature(BaseModel):
     type: Literal['observation']
-    observation_date: str | None
+    observation_date: datetime | None
     source: str | None
     sensor_name: Literal['Landsat 8', 'Sentinel-2', 'WorldView', 'Planet'] | None
     current_phase: Literal[
@@ -86,6 +93,12 @@ class ObservationFeature(BaseModel):
         if val is None:
             return 'Unknown'
         return val
+
+    @validator('observation_date', pre=True)
+    def parse_dates(cls, v: str | None) -> datetime | None:
+        if v is None:
+            return v
+        return datetime.strptime(v, '%Y-%m-%d')
 
     # Optional fields
     score: float | None

@@ -1,5 +1,3 @@
-from datetime import datetime
-
 from typing_extensions import Self
 
 from django.contrib.gis.db.models import MultiPolygonField
@@ -90,10 +88,6 @@ class SiteObservation(models.Model):
 
             label = label_map[feature.properties.current_phase]
             constellation = constellation_map.get(feature.properties.sensor_name, None)
-            observation_date = datetime.strptime(
-                feature.properties.observation_date,
-                '%Y-%m-%d',
-            )
 
             site_observations.append(
                 cls(
@@ -103,7 +97,7 @@ class SiteObservation(models.Model):
                     geom=feature.geometry,
                     constellation=constellation,
                     spectrum=None,
-                    timestamp=observation_date,
+                    timestamp=feature.properties.observation_date,
                 )
             )
 

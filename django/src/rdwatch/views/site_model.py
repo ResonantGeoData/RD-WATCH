@@ -23,7 +23,7 @@ def post_site_model(request: Request, hyper_parameters_id: int):
 
 
 @api_view(['POST'])
-def post_site_summaries(request: Request, hyper_parameters_id: int):
+def post_region_model(request: Request, hyper_parameters_id: int):
     try:
         hyper_parameters = HyperParameters.objects.get(pk=hyper_parameters_id)
     except ObjectDoesNotExist:

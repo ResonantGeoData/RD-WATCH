@@ -252,6 +252,110 @@
     }
   },
   {
+    "model": "rdwatch.observationlabel",
+    "pk": 6,
+    "fields": {
+      "slug": "positive_annotated",
+      "description": "positive annotated"
+    }
+  },
+  {
+    "model": "rdwatch.observationlabel",
+    "pk": 7,
+    "fields": {
+      "slug": "positive_partial",
+      "description": "positive partial"
+    }
+  },
+  {
+    "model": "rdwatch.observationlabel",
+    "pk": 8,
+    "fields": {
+      "slug": "positive_annotated_static",
+      "description": "positive annotated static"
+    }
+  },
+  {
+    "model": "rdwatch.observationlabel",
+    "pk": 9,
+    "fields": {
+      "slug": "positive_partial_static",
+      "description": "positive partial static"
+    }
+  },
+  {
+    "model": "rdwatch.observationlabel",
+    "pk": 10,
+    "fields": {
+      "slug": "positive_pending",
+      "description": "positive pending"
+    }
+  },
+  {
+    "model": "rdwatch.observationlabel",
+    "pk": 11,
+    "fields": {
+      "slug": "positive_excluded",
+      "description": "positive excluded"
+    }
+  },
+  {
+    "model": "rdwatch.observationlabel",
+    "pk": 12,
+    "fields": {
+      "slug": "negative",
+      "description": "negative"
+    }
+  },
+  {
+    "model": "rdwatch.observationlabel",
+    "pk": 13,
+    "fields": {
+      "slug": "ignore",
+      "description": "ignore"
+    }
+  },
+  {
+    "model": "rdwatch.observationlabel",
+    "pk": 14,
+    "fields": {
+      "slug": "transient_positive",
+      "description": "transient positive"
+    }
+  },
+  {
+    "model": "rdwatch.observationlabel",
+    "pk": 15,
+    "fields": {
+      "slug": "transient_negative",
+      "description": "transient negative"
+    }
+  },
+  {
+    "model": "rdwatch.observationlabel",
+    "pk": 16,
+    "fields": {
+      "slug": "system_proposed",
+      "description": "system proposed"
+    }
+  },
+  {
+    "model": "rdwatch.observationlabel",
+    "pk": 17,
+    "fields": {
+      "slug": "system_confirmed",
+      "description": "system confirmed"
+    }
+  },
+  {
+    "model": "rdwatch.observationlabel",
+    "pk": 18,
+    "fields": {
+      "slug": "system_rejected",
+      "description": "system rejected"
+    }
+  },
+  {
     "model": "rdwatch.performer",
     "pk": 1,
     "fields": {

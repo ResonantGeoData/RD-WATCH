@@ -166,7 +166,7 @@ class Migration(migrations.Migration):
                 (
                     'geom',
                     django.contrib.gis.db.models.fields.PolygonField(
-                        help_text='Footprint of site', srid=3857
+                        help_text="Polygon from this site's Site Feature", srid=3857
                     ),
                 ),
                 ('score', models.FloatField(help_text='Score of site footprint')),
@@ -176,6 +176,14 @@ class Migration(migrations.Migration):
                         help_text='The hyper parameters used this site evaluation.',
                         on_delete=django.db.models.deletion.PROTECT,
                         to='rdwatch.hyperparameters',
+                    ),
+                ),
+                (
+                    'label',
+                    models.ForeignKey(
+                        help_text='Site feature classification label',
+                        on_delete=django.db.models.deletion.PROTECT,
+                        to='rdwatch.observationlabel',
                     ),
                 ),
                 (

@@ -3,7 +3,7 @@ from datetime import datetime
 from typing_extensions import Self
 
 from django.contrib.gis.db.models import PolygonField
-from django.contrib.gis.geos import MultiPolygon, Polygon
+from django.contrib.gis.geos import MultiPolygon
 from django.contrib.postgres.indexes import GistIndex
 from django.db import models, transaction
 
@@ -35,9 +35,15 @@ class SiteEvaluation(models.Model):
         help_text='Time when this evaluation was finished',
     )
     geom = PolygonField(
-        help_text='Footprint of site',
+        help_text="Polygon from this site's Site Feature",
         srid=3857,
         spatial_index=True,
+    )
+    label = models.ForeignKey(
+        to='ObservationLabel',
+        on_delete=models.PROTECT,
+        help_text='Site feature classification label',
+        db_index=True,
     )
     score = models.FloatField(
         help_text='Score of site footprint',
@@ -54,12 +60,16 @@ class SiteEvaluation(models.Model):
 
         with transaction.atomic():
             region = get_or_create_region(site_feature.properties.region_id)[0]
+            label = lookups.ObservationLabel.objects.get(
+                slug=site_feature.properties.status
+            )
             site_eval = cls.objects.create(
                 configuration=configuration,
                 region=region,
                 number=site_feature.properties.site_number,
                 timestamp=datetime.now(),
                 geom=site_feature.geometry,
+                label=label,
                 score=site_feature.properties.score,
             )
 
@@ -71,18 +81,21 @@ class SiteEvaluation(models.Model):
     def bulk_create_from_from_region_model(
         cls, region_model: RegionModel, configuration: HyperParameters
     ) -> list[Self]:
-        from rdwatch.models import SiteObservation
-
         region_feature = region_model.region_feature
         assert isinstance(region_feature.properties, RegionFeature)
 
+        label_set: set[str] = {
+            '_'.join(feature.properties.status.lower().split(' '))
+            for feature in region_model.site_summary_features
+        }
+        label_set.add('unknown')
+
+        labels_query = lookups.ObservationLabel.objects.filter(slug__in=label_set)
+        label_map = {label.slug: label for label in labels_query}
+
         site_evals: list[SiteEvaluation] = []
-        site_observations: list[SiteObservation] = []
         with transaction.atomic():
             region = get_or_create_region(region_feature.properties.region_id)[0]
-
-            # Assign all site-summaries a label of "unknown"
-            label = lookups.ObservationLabel.objects.get(slug='unknown')
 
             for feature in region_model.site_summary_features:
                 assert isinstance(feature.properties, SiteSummaryFeature)
@@ -97,36 +110,12 @@ class SiteEvaluation(models.Model):
                     number=feature.properties.site_number,
                     timestamp=datetime.now(),
                     geom=geometry,
+                    label=label_map[feature.properties.status],
                     score=feature.properties.score or 1.0,
                 )
                 site_evals.append(site_eval)
 
-                start_date = datetime.strptime(
-                    region_feature.properties.start_date,
-                    '%Y-%m-%d',
-                )
-                end_date = datetime.strptime(
-                    region_feature.properties.end_date,
-                    '%Y-%m-%d',
-                )
-
-                for timestamp in (start_date, end_date):
-                    # Site summaries can be polygons, so convert then into MultiPolygons
-                    # before writing them to the database
-                    if isinstance(feature.geometry, Polygon):
-                        feature.geometry = MultiPolygon(feature.geometry)
-
-                    site_observations.append(
-                        SiteObservation(
-                            siteeval=site_eval,
-                            label=label,
-                            score=feature.properties.score,
-                            geom=feature.geometry,
-                            timestamp=timestamp,
-                        )
-                    )
             created = cls.objects.bulk_create(site_evals)
-            SiteObservation.objects.bulk_create(site_observations)
 
         return created
 

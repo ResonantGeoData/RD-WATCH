@@ -213,7 +213,7 @@ class ModelRunViewSet(viewsets.ViewSet):
         # the database.
         if 'region' in request.query_params:
             aggregate |= queryset.defer('json').aggregate(
-                bbox=BoundingBoxGeoJSON('evaluations__observations__geom')
+                bbox=BoundingBoxGeoJSON('evaluations__geom')
             )
 
         if aggregate['count'] > 0 and not aggregate['results']:

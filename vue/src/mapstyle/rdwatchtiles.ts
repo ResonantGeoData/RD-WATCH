@@ -103,7 +103,7 @@ export const buildSiteFilter = (
 
 const rdwatchtiles = "rdwatchtiles";
 const urlRoot = `${location.protocol}//${location.host}`;
-const observationColor: DataDrivenPropertyValueSpecification<string> = [
+const annotationColor: DataDrivenPropertyValueSpecification<string> = [
   "case",
   ["==", ["get", "label"], 1],
   "#1F77B4",
@@ -177,7 +177,7 @@ export const layers = (
     source: rdwatchtiles,
     "source-layer": "sites",
     paint: {
-      "line-color": observationColor,
+      "line-color": annotationColor,
       "line-width": 2,
     },
     filter: buildSiteFilter(timestamp, filters),
@@ -224,7 +224,7 @@ export const layers = (
       ],
     },
     paint: {
-      "text-color": observationColor,
+      "text-color": annotationColor,
     },
     filter: buildSiteFilter(timestamp, filters),
   },
@@ -234,7 +234,7 @@ export const layers = (
     source: rdwatchtiles,
     "source-layer": "observations",
     paint: {
-      "fill-color": observationColor,
+      "fill-color": annotationColor,
       "fill-opacity": 1,
       "fill-pattern": buildObservationFill(timestamp, filters),
     },
@@ -246,7 +246,7 @@ export const layers = (
     source: rdwatchtiles,
     "source-layer": "observations",
     paint: {
-      "line-color": observationColor,
+      "line-color": annotationColor,
       "line-width": observationWidth,
     },
     filter: buildObservationFilter(timestamp, filters),
@@ -273,7 +273,7 @@ export const layers = (
       ],
     },
     paint: {
-      "text-color": observationColor,
+      "text-color": annotationColor,
     },
     filter: buildObservationFilter(timestamp, filters),
   },

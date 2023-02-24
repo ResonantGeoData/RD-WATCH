@@ -1,4 +1,4 @@
-from datetime import datetime
+from datetime import datetime, timedelta
 from urllib.parse import urlencode
 
 import mercantile
@@ -179,8 +179,8 @@ def satelliteimage_raster_tile(
     bbox = (bounds.west, bounds.south, bounds.east, bounds.north)
 
     # Convert generator to list so we can iterate over it multiple times
-    bands = list(get_bands(constellation, timestamp, bbox))
-
+    timebuffer = timedelta(hours=1)
+    bands = list(get_bands(constellation, timestamp, bbox, timebuffer))
     # Filter bands by requested processing level and spectrum
     bands = [
         band

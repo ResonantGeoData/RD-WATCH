@@ -148,4 +148,37 @@ export class ApiService {
       },
     });
   }
+
+  public static getSatelliteTimestamps(
+    constellation="S2",
+    spectrum="visual",
+    level="2A",
+    startTimestamp=0,
+    endTimestamp=0,
+    bbox=[]
+  ): CancelablePromise<string[]>
+  {
+    const startTime = new Date(startTimestamp * 1000).toISOString().substring(0, 10);
+    const endTime = new Date(endTimestamp * 1000).toISOString().substring(0, 10);
+    console.log(startTime)
+    // Convert bbox into array of numbers, min/max
+    let minX = Infinity;
+    let maxX = -Infinity;
+    let minY = Infinity;
+    let maxY = -Infinity;
+    bbox.forEach((item: [number, number]) => {
+      minX = Math.min(minX, item[1]);
+      minY = Math.min(minY, item[0]);
+      maxX = Math.max(maxX, item[1]);
+      maxY = Math.max(maxY, item[0]);
+    })
+    const bboxstr = `${minX},${minY},${maxX},${maxY}`;
+    return __request(OpenAPI, {
+      method: "GET",
+      url: "/api/satellite-image/timestamps",
+      query: { constellation, level, spectrum, start_timestamp: startTime, end_timestamp: endTime, bbox: bboxstr
+      }
+    });
+  }
 }
+

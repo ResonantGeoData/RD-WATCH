@@ -143,7 +143,7 @@ export const sources = { rdwatchtiles: source };
 
 export const layers = (
   timestamp: number,
-  filters: Record<string, number>
+  filters: MapFilters
 ): LayerSpecification[] => [
   {
     id: "sites-outline",

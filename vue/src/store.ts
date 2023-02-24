@@ -7,6 +7,9 @@ export interface MapFilters {
   showSiteOutline?: boolean;
   groundTruthPattern?: boolean;
   otherPattern?: boolean;
+  satelliteImagesOn: boolean;
+  imageOpacity: number;
+  satelliteTimeList: string[]
 }
 
 export const state = reactive<{
@@ -34,6 +37,9 @@ export const state = reactive<{
   filters: {
     groundTruthPattern: false,
     otherPattern: false,
+    satelliteImagesOn: false,
+    satelliteTimeList:[],
+    imageOpacity: 0.75,
   },
   patterns: {
     patternThickness: 1,

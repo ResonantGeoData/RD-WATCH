@@ -150,11 +150,19 @@ function updateCameraBounds(filtered = true) {
   }
 }
 
+async function getSatelliteTimestamps(modelRun: KeyedModelRun) {
+  const results = await ApiService.getSatelliteTimestamps(
+      'S2', 'visual','2A', modelRun.timerange?.min, modelRun.timerange?.max, modelRun.bbox?.coordinates[0] as []);
+  console.log(results);
+  state.filters.satelliteTimeList = results;
+}
+
 function handleToggle(modelRun: KeyedModelRun) {
   if (openedModelRuns.value.has(modelRun.key)) {
     openedModelRuns.value.delete(modelRun.key);
   } else {
     openedModelRuns.value.add(modelRun.key);
+    getSatelliteTimestamps(modelRun);
   }
 
   if (openedModelRuns.value.size > 0) {

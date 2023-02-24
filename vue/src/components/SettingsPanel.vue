@@ -13,6 +13,23 @@ const autoZoom = computed({
     state.settings = { ...state.settings, autoZoom: val };
   },
 });
+const imagesOn = computed({
+  get() {
+    return state.filters.satelliteImagesOn || false;
+  },
+  set(val: boolean) {
+    state.filters = { ...state.filters, satelliteImagesOn: val };
+  },
+});
+
+const imageOpacity = computed({
+  get() {
+    return state.filters.imageOpacity || 0;
+  },
+  set(val: number) {
+    state.filters = { ...state.filters, imageOpacity: val };
+  },
+});
 
 const showSiteOutline = computed({
   get() {
@@ -176,6 +193,31 @@ watch(hiddenCanvas, () => {
         />
       </label>
     </div>
+    <div class="form-control">
+      <label class="label cursor-pointer">
+        <span class="label-text">Images:</span>
+        <input
+          v-model="imagesOn"
+          type="checkbox"
+          class="checkbox-primary checkbox"
+        />
+      </label>
+    </div>
+    <div v-if="imagesOn" class="form-control">
+      <label class="label cursor-pointer">
+        <span class="label-text">Image Opacity:</span>
+        <input
+          v-model.number="imageOpacity"
+          min="0"
+          max="1"
+          step="0.1"
+          class="chrome-range w-full"
+          type="range"
+        />
+      </label>
+    </div>
+
+
 
     <div class="form-control">
       <label class="label cursor-pointer">

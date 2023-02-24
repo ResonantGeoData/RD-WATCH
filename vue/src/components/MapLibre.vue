@@ -11,6 +11,7 @@ import type { FilterSpecification } from "maplibre-gl";
 import type { ShallowRef } from "vue";
 import { popupLogic } from "../interactions/popup";
 import { generatePatterns } from "../interactions/fillPatterns";
+import { buildSourceFilter } from "../mapstyle/satellite-image";
 
 const mapContainer: ShallowRef<null | HTMLElement> = shallowRef(null);
 const map: ShallowRef<null | Map> = shallowRef(null);
@@ -39,7 +40,12 @@ onMounted(() => {
     map.value = markRaw(
       new Map({
         container: mapContainer.value,
-        style: style(state.timestamp, {}),
+        style: style(state.timestamp,  {
+          groundTruthPattern: false,
+          otherPattern: false,
+          satelliteImagesOn: false,
+          satelliteTimeList:[]
+        }),
         bounds: [
           [state.bbox.xmin, state.bbox.ymin],
           [state.bbox.xmax, state.bbox.ymax],
@@ -65,8 +71,9 @@ watch([() => state.timestamp, () => state.filters], () => {
   setFilter("observations-fill", observationFilter);
   setFilter("observations-outline", observationFilter);
   setFilter("observations-text", observationFilter);
+  console.log('Updating Style');
   map.value?.setStyle(
-    style(state.timestamp, state.filters as Record<string, number>)
+    style(state.timestamp, state.filters)
   );
 });
 

@@ -95,7 +95,9 @@ class SiteEvaluation(models.Model):
 
         site_evals: list[SiteEvaluation] = []
         with transaction.atomic():
-            region = get_or_create_region(region_feature.properties.region_id)[0]
+            region = get_or_create_region(
+                region_feature.properties.region_id, region_feature.geometry
+            )[0]
 
             for feature in region_model.site_summary_features:
                 assert isinstance(feature.properties, SiteSummaryFeature)

@@ -5,7 +5,7 @@ from typing import Any, Literal
 
 from pydantic import BaseModel, constr, validator
 
-from django.contrib.gis.geos import GEOSGeometry
+from django.contrib.gis.geos import GEOSGeometry, MultiPolygon, Polygon
 
 
 class RegionFeature(BaseModel):
@@ -101,11 +101,14 @@ class Feature(BaseModel):
 
     type: Literal['Feature']
     properties: RegionFeature | SiteSummaryFeature
-    geometry: GEOSGeometry
+    geometry: MultiPolygon
 
     @validator('geometry', pre=True)
     def parse_geometry(cls, v: dict[str, Any]):
-        return GEOSGeometry(json.dumps(v))
+        geom = GEOSGeometry(json.dumps(v))
+        if isinstance(geom, Polygon):
+            geom = MultiPolygon(geom)
+        return geom
 
 
 class RegionModel(BaseModel):

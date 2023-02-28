@@ -1,7 +1,9 @@
 import iso3166
 
+from django.contrib.gis.db.models import MultiPolygonField
+from django.contrib.gis.geos import MultiPolygon
 from django.core.exceptions import ObjectDoesNotExist
-from django.db import models
+from django.db import models, transaction
 from rest_framework.exceptions import ValidationError
 
 from rdwatch.models import lookups
@@ -25,6 +27,13 @@ class Region(models.Model):
         null=True,
         db_index=True,
     )
+    geom = MultiPolygonField(
+        help_text='Polygon from the associated Region Feature',
+        srid=3857,
+        spatial_index=True,
+        null=True,
+        blank=True,
+    )
 
     def __str__(self):
         cty = iso3166.countries_by_numeric[str(self.country).zfill(3)].alpha2
@@ -46,7 +55,10 @@ class Region(models.Model):
         ]
 
 
-def get_or_create_region(region_id: str) -> tuple[Region, bool]:
+def get_or_create_region(
+    region_id: str,
+    region_polygon: MultiPolygon | None = None,
+) -> tuple[Region, bool]:
     countrystr, numstr = region_id.split('_')
     contrynum = iso3166.countries_by_alpha2[countrystr].numeric
 
@@ -55,8 +67,13 @@ def get_or_create_region(region_id: str) -> tuple[Region, bool]:
     except ObjectDoesNotExist:
         raise ValidationError(f'invalid region classification {numstr[0]}')
 
-    return Region.objects.get_or_create(
-        country=int(contrynum),
-        classification=region_classification,
-        number=None if numstr[1:] == 'xxx' else int(numstr[1:]),
-    )
+    with transaction.atomic():
+        region, created = Region.objects.select_for_update().get_or_create(
+            country=int(contrynum),
+            classification=region_classification,
+            number=None if numstr[1:] == 'xxx' else int(numstr[1:]),
+        )
+        if region.geom is None and region_polygon is not None:
+            region.geom = region_polygon
+            region.save()
+        return region, created

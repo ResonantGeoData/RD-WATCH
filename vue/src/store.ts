@@ -42,7 +42,7 @@ export const state = reactive<{
     imageOpacity: 0.75,
   },
   patterns: {
-    patternThickness: 1,
+    patternThickness: 8,
     patternOpacity: 255,
   },
 });

@@ -85,7 +85,14 @@ export const buildSiteFilter = (
         filters.configuration_id?.length ? filters.configuration_id : [""],
       ],
     ],
-    ["<=", ["get", "timemin"], timestamp],
+    [
+      "any",
+      // When the site_polygon attribute is present, that indicates that there are no
+      // observations associated with this model run and that the main site polygon
+      // should be rendered regardless of timestamp
+      ["get", "site_polygon"],
+      ["<=", ["get", "timemin"], timestamp],
+    ],
     ["literal", !!filters.showSiteOutline],
   ];
 
@@ -101,7 +108,7 @@ export const buildSiteFilter = (
 
 const rdwatchtiles = "rdwatchtiles";
 const urlRoot = `${location.protocol}//${location.host}`;
-const observationColor: DataDrivenPropertyValueSpecification<string> = [
+const annotationColor: DataDrivenPropertyValueSpecification<string> = [
   "case",
   ["==", ["get", "label"], 1],
   "#1F77B4",
@@ -109,6 +116,30 @@ const observationColor: DataDrivenPropertyValueSpecification<string> = [
   "#A020F0",
   ["==", ["get", "label"], 3],
   "#2CA02C",
+  ["==", ["get", "label"], 4],
+  "#2f4f4f",
+  ["==", ["get", "label"], 5],
+  "#228b22",
+  ["==", ["get", "label"], 6],
+  "#7f0000",
+  ["==", ["get", "label"], 7],
+  "#00008b",
+  ["==", ["get", "label"], 8],
+  "#ff8c00",
+  ["==", ["get", "label"], 9],
+  "#ffff00",
+  ["==", ["get", "label"], 10],
+  "#1e90ff",
+  ["==", ["get", "label"], 11],
+  "#00ffff",
+  ["==", ["get", "label"], 12],
+  "#ff00ff",
+  ["==", ["get", "label"], 13],
+  "#00ff00",
+  ["==", ["get", "label"], 14],
+  "#ff69b4",
+  ["==", ["get", "label"], 15],
+  "#ffe4c4",
   "#7F7F7F",
 ];
 const observationWidth: DataDrivenPropertyValueSpecification<number> = [
@@ -146,23 +177,12 @@ export const layers = (
   filters: MapFilters
 ): LayerSpecification[] => [
   {
-    id: "sites-outline",
-    type: "line",
-    source: rdwatchtiles,
-    "source-layer": "sites",
-    paint: {
-      "line-color": "#DC143C",
-      "line-width": 2,
-    },
-    filter: buildSiteFilter(timestamp, filters),
-  },
-  {
     id: "observations-fill",
     type: "fill",
     source: rdwatchtiles,
     "source-layer": "observations",
     paint: {
-      "fill-color": observationColor,
+      "fill-color": annotationColor,
       "fill-opacity": 1,
       "fill-pattern": buildObservationFill(timestamp, filters),
     },
@@ -174,7 +194,7 @@ export const layers = (
     source: rdwatchtiles,
     "source-layer": "observations",
     paint: {
-      "line-color": observationColor,
+      "line-color": annotationColor,
       "line-width": observationWidth,
     },
     filter: buildObservationFilter(timestamp, filters),
@@ -201,8 +221,65 @@ export const layers = (
       ],
     },
     paint: {
-      "text-color": observationColor,
+      "text-color": annotationColor,
     },
     filter: buildObservationFilter(timestamp, filters),
+  },
+  {
+    id: "sites-outline",
+    type: "line",
+    source: rdwatchtiles,
+    "source-layer": "sites",
+    paint: {
+      "line-color": annotationColor,
+      "line-width": 2,
+    },
+    filter: buildSiteFilter(timestamp, filters),
+  },
+  {
+    id: "sites-text",
+    type: "symbol",
+    source: rdwatchtiles,
+    "source-layer": "sites",
+    layout: {
+      "text-anchor": "center",
+      "text-font": ["Roboto Regular"],
+      "text-max-width": 5,
+      "text-size": 12,
+      "text-field": [
+        "case",
+        ["==", ["get", "label"], 6],
+        "positive_annotated",
+        ["==", ["get", "label"], 7],
+        "positive_partial",
+        ["==", ["get", "label"], 8],
+        "positive_annotated_static",
+        ["==", ["get", "label"], 9],
+        "positive_partial_static",
+        ["==", ["get", "label"], 10],
+        "positive_pending",
+        ["==", ["get", "label"], 11],
+        "positive_excluded",
+        ["==", ["get", "label"], 12],
+        "negative",
+        ["==", ["get", "label"], 13],
+        "ignore",
+        ["==", ["get", "label"], 14],
+        "transient_positive",
+        ["==", ["get", "label"], 15],
+        "transient_negative",
+        ["==", ["get", "label"], 16],
+        "system_proposed",
+        ["==", ["get", "label"], 17],
+        "system_confirmed",
+        ["==", ["get", "label"], 18],
+        "system_rejected",
+        "",
+      ],
+    },
+    paint: {
+      "text-color": annotationColor,
+    },
+    filter: buildSiteFilter(timestamp, filters),
   },
 ];

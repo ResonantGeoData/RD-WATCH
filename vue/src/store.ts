@@ -36,7 +36,7 @@ export const state = reactive<{
     otherPattern: false,
   },
   patterns: {
-    patternThickness: 1,
+    patternThickness: 8,
     patternOpacity: 255,
   },
 });

@@ -104,7 +104,10 @@ def get_queryset():
         )
         # Order queryset so that ground truths are first
         .order_by('-groundtruth', '-id')
-        .alias(region_id=F('evaluations__region_id'))
+        .alias(
+            region_id=F('evaluations__region_id'),
+            observation_count=Count('evaluations__observations'),
+        )
         .annotate(
             json=JSONObject(
                 id='pk',
@@ -137,7 +140,17 @@ def get_queryset():
                 score=Avg('evaluations__score'),
                 timestamp=ExtractEpoch(Max('evaluations__timestamp')),
                 timerange=TimeRangeJSON('evaluations__observations__timestamp'),
-                bbox=BoundingBoxGeoJSON('evaluations__observations__geom'),
+                bbox=Case(
+                    # If there are no site observations associated with this
+                    # site evaluation, return the bbox of the site polygon.
+                    # Otherwise, return the bounding box of all observation
+                    # polygons.
+                    When(
+                        observation_count=0,
+                        then=BoundingBoxGeoJSON('evaluations__geom'),
+                    ),
+                    default=BoundingBoxGeoJSON('evaluations__observations__geom'),
+                ),
             )
         )
     )
@@ -213,7 +226,7 @@ class ModelRunViewSet(viewsets.ViewSet):
         # the database.
         if 'region' in request.query_params:
             aggregate |= queryset.defer('json').aggregate(
-                bbox=BoundingBoxGeoJSON('evaluations__observations__geom')
+                bbox=BoundingBoxGeoJSON('evaluations__geom')
             )
 
         if aggregate['count'] > 0 and not aggregate['results']:

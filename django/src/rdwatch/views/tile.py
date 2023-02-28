@@ -7,6 +7,7 @@ from django.db import connection
 from django.db.models import (
     BooleanField,
     Case,
+    Count,
     F,
     Field,
     Func,
@@ -67,10 +68,12 @@ def vector_tile(
     evaluations_queryset = (
         SiteEvaluation.objects.filter(intersects)
         .values()
+        .alias(observation_count=Count('observations'))
         .annotate(
             id=F('pk'),
             mvtgeom=mvtgeom,
             configuration_id=F('configuration_id'),
+            label=F('label_id'),
             timestamp=ExtractEpoch('timestamp'),
             timemin=ExtractEpoch(Min('observations__timestamp')),
             timemax=ExtractEpoch(Max('observations__timestamp')),
@@ -80,6 +83,13 @@ def vector_tile(
                 When(
                     Q(configuration__performer__slug='TE') & Q(score=1),
                     True,
+                ),
+                default=False,
+            ),
+            site_polygon=Case(
+                When(
+                    observation_count=0,
+                    then=True,
                 ),
                 default=False,
             ),

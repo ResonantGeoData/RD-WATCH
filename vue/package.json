@@ -8,12 +8,10 @@
     "preview": "vite preview",
     "build:client": "openapi --input http://django:80/api/openapi.json --output src/client",
     "test": "vitest run",
-    "lint": "npm run lint:prettier; npm run lint:eslint; npm run lint:stylelint; npm run lint:typescript;",
-    "lint:fix": "npm run lint:prettier:fix; npm run lint:eslint:fix; npm run lint:stylelint:fix; npm run lint:typescript;",
+    "lint": "npm run lint:eslint; npm run lint:stylelint; npm run lint:typescript;",
+    "lint:fix": "npm run lint:eslint:fix; npm run lint:stylelint:fix; npm run lint:typescript;",
     "lint:eslint": "eslint --ext .cjs,.js,.ts,.vue --ignore-path ../.gitignore .",
     "lint:eslint:fix": "eslint --ext .cjs,.js,.ts,.vue --fix --ignore-path ../.gitignore .",
-    "lint:prettier": "prettier --loglevel warn --check --ignore-path ../.gitignore ..",
-    "lint:prettier:fix": "prettier --loglevel warn --check --ignore-path ../.gitignore --write ..",
     "lint:stylelint": "stylelint --ignore-path ../.gitignore src/**/*.{css,vue} index.html",
     "lint:stylelint:fix": "stylelint --ignore-path ../.gitignore --fix src/**/*.{css,vue} index.html",
     "lint:typescript": "vue-tsc --noEmit"
@@ -34,16 +32,12 @@
     "autoprefixer": "^10.4.7",
     "daisyui": "^2.42.1",
     "eslint": "^8.20.0",
-    "eslint-config-prettier": "^8.5.0",
     "eslint-plugin-vue": "^9.2.0",
     "openapi-typescript-codegen": "^0.23.0",
     "postcss": "^8.4.14",
     "postcss-html": "^1.5.0 <2.0.0",
-    "prettier": "2.7.1",
-    "prettier-plugin-tailwindcss": "^0.1.12",
     "stylelint": "^14.9.1",
     "stylelint-config-html": "^1.1.0",
-    "stylelint-config-prettier": "^9.0.3",
     "stylelint-config-recommended-vue": "^1.4.0",
     "stylelint-config-standard": "^26.0.0",
     "tailwindcss": "^3.1.6",
@@ -75,16 +69,14 @@
     },
     "extends": [
       "plugin:@typescript-eslint/recommended",
-      "plugin:vue/vue3-recommended",
-      "prettier"
+      "plugin:vue/vue3-recommended"
     ]
   },
   "stylelint": {
     "extends": [
       "stylelint-config-standard",
       "stylelint-config-recommended-vue",
-      "stylelint-config-html",
-      "stylelint-config-prettier"
+      "stylelint-config-html"
     ],
     "rules": {
       "at-rule-no-unknown": [

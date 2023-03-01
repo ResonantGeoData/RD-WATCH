@@ -154,7 +154,9 @@ async function getSatelliteTimestamps(modelRun: KeyedModelRun) {
   const results = await ApiService.getSatelliteTimestamps(
       'S2', 'visual','2A', modelRun.timerange?.min, modelRun.timerange?.max, modelRun.bbox?.coordinates[0] as []);
   console.log(results);
+  console.log(modelRun.bbox)
   state.filters.satelliteTimeList = results;
+  state.filters.satelliteBounds = modelRun.bbox?.coordinates[0] as [];
 }
 
 function handleToggle(modelRun: KeyedModelRun) {

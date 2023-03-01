@@ -9,7 +9,8 @@ export interface MapFilters {
   otherPattern?: boolean;
   satelliteImagesOn: boolean;
   imageOpacity: number;
-  satelliteTimeList: string[]
+  satelliteTimeList: string[];
+  satelliteBounds:[number,number][];
 }
 
 export const state = reactive<{
@@ -39,6 +40,7 @@ export const state = reactive<{
     otherPattern: false,
     satelliteImagesOn: false,
     satelliteTimeList:[],
+    satelliteBounds: [],
     imageOpacity: 0.75,
   },
   patterns: {

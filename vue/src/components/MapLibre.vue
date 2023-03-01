@@ -44,7 +44,8 @@ onMounted(() => {
           groundTruthPattern: false,
           otherPattern: false,
           satelliteImagesOn: false,
-          satelliteTimeList:[]
+          satelliteTimeList:[],
+          imageOpacity: 0.75,
         }),
         bounds: [
           [state.bbox.xmin, state.bbox.ymin],

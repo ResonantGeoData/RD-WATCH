@@ -24,11 +24,26 @@ export const buildSourceFilter = (
     }
     const constellation = "S2";
     const spectrum="visual";
+    let minX = Infinity;
+    let maxX = -Infinity;
+    let minY = Infinity;
+    let maxY = -Infinity;
+    console.log(filters.satelliteBounds);
+    filters.satelliteBounds.forEach((item: [number, number]) => {
+      minX = Math.min(minX, item[1]);
+      minY = Math.min(minY, item[0]);
+      maxX = Math.max(maxX, item[1]);
+      maxY = Math.max(maxY, item[0]);
+    })
+
+    const bbox : [number, number, number, number]= [minY, minX, maxY, maxX];
     const source: SourceSpecification = {
         type: "raster",
         tiles: [`${urlRoot}/api/satellite-image/tile/{z}/{x}/{y}.webp?constellation=${constellation}&timestamp=${timeStamp}&spectrum=${spectrum}&level=2A`],
         minzoom: 0,
         maxzoom: 14,
+        bounds: bbox,
+
       };
     return {satelliteTiles : source}
 }

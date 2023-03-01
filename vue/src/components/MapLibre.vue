@@ -97,7 +97,7 @@ watch(
 .mapboxgl-popup {
   max-width: 400px;
   font-size: 1.5em;
-  opacity: 0.75;
+  opacity: 1.00;
 }
 
 .mapboxgl-popup ul {

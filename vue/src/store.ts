@@ -1,5 +1,7 @@
 import { reactive } from "vue";
 
+import type { Region } from "./client";
+
 export interface MapFilters {
   configuration_id?: number[];
   performer_id?: number[];
@@ -20,6 +22,7 @@ export const state = reactive<{
     patternThickness: number;
     patternOpacity: number;
   };
+  regionMap: Record<Region["id"], Region["name"]>
 }>({
   timestamp: Math.floor(Date.now() / 1000),
   settings: {
@@ -39,4 +42,5 @@ export const state = reactive<{
     patternThickness: 8,
     patternOpacity: 255,
   },
+  regionMap: {}
 });

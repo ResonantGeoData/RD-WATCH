@@ -190,7 +190,7 @@ async function handleScroll(event: Event) {
   // If the user has scrolled to the bottom of the list AND there are still more model runs to
   // fetch, bump the current page to trigger the loadMore function via a watcher.
   if (
-    Math.floor(target.scrollHeight - target.scrollTop) <= target.clientHeight &&
+    !loading.value && Math.floor(target.scrollHeight - target.scrollTop) <= target.clientHeight &&
     modelRuns.value.length < totalModelRuns.value
   ) if (props.filters.page !== undefined && Math.ceil(totalModelRuns.value / limit) > props.filters.page ) {
     emit("nextPage");

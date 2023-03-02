@@ -80,19 +80,19 @@ async function handleClick() {
             modelRun.timerange === null
               ? "--"
               : `${new Date(modelRun.timerange.min * 1000).toLocaleString(
-                  "en",
-                  {
-                    dateStyle: "short",
-                  }
-                )} - ${new Date(modelRun.timerange.max * 1000).toLocaleString(
-                  "en",
-                  {
-                    dateStyle: "short",
-                  }
-                )}`
+                "en",
+                {
+                  dateStyle: "short",
+                }
+              )} - ${new Date(modelRun.timerange.max * 1000).toLocaleString(
+                "en",
+                {
+                  dateStyle: "short",
+                }
+              )}`
           }}
         </div>
-        <div class="col-span-8 pt-2"></div>
+        <div class="col-span-8 pt-2" />
         <div
           class="tooltip tooltip-right col-span-1 h-5 w-5 text-xs text-lime-600 group-open:text-white"
           data-tip="Ground Truth"

@@ -58,15 +58,21 @@ function nextPage() {
           src="../assets/logo.svg"
           alt="Resonant GeoData"
           draggable="false"
+        >
+        <TimeSlider
+          :min="timemin"
+          :max="Math.floor(Date.now() / 1000)"
         />
-        <TimeSlider :min="timemin" :max="Math.floor(Date.now() / 1000)" />
         {{ new Date(state.timestamp * 1000).toLocaleString() }}
       </div>
       <div>
         <div
           class="sample flex flex-nowrap items-stretch gap-2 border-t border-gray-300 bg-gray-100 p-2"
         >
-          <PerformerFilter v-model="selectedPerformer" class="customfilter" />
+          <PerformerFilter
+            v-model="selectedPerformer"
+            class="customfilter"
+          />
           <RegionFilter v-model="selectedRegion" />
           <span class="h5 grow" />
           <Cog6ToothIcon

@@ -213,13 +213,19 @@ watch([() => props.filters.region, () => props.filters.performer], () => {
       v-if="!loading"
       style="font-size: 0.75em"
       class="badge-accent badge ml-2"
-      >{{ totalModelRuns }} {{ totalModelRuns > 1 ? "Runs" : "Run" }}</span
+    >{{ totalModelRuns }} {{ totalModelRuns > 1 ? "Runs" : "Run" }}</span>
+    <div
+      v-if="loading"
+      class="px-2"
+      style="width: 100%"
     >
-    <div v-if="loading" class="px-2" style="width: 100%">
       <progress class="progress progress-primary" />
     </div>
   </div>
-  <div class="flex flex-col gap-2 overflow-y-scroll p-2" @scroll="handleScroll">
+  <div
+    class="flex flex-col gap-2 overflow-y-scroll p-2"
+    @scroll="handleScroll"
+  >
     <ModelRunDetail
       v-for="modelRun in modelRuns"
       :key="modelRun.key"

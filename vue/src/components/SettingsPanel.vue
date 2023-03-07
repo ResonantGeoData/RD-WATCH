@@ -156,22 +156,36 @@ watch(hiddenCanvas, () => {
 
 <template>
   <div class="gap-2 border-t border-gray-300 bg-gray-100 p-2">
-    <canvas ref="hiddenCanvas" style="display: none" width="128" height="128" />
+    <canvas
+      ref="hiddenCanvas"
+      style="display: none"
+      width="128"
+      height="128"
+    />
     <div class="grid grid-cols-8 gap-4">
-      <h4 class="col-span-7">Settings</h4>
+      <h4 class="col-span-7">
+        Settings
+      </h4>
       <InformationCircleIcon
         class="hover h-5 text-blue-600"
         data-tip="Information"
         @click="expandInfo = !expandInfo"
       />
     </div>
-    <div v-if="expandInfo" style="font-size: 0.75em">
+    <div
+      v-if="expandInfo"
+      style="font-size: 0.75em"
+    >
       <div class="grid-cols-4">
-        <div style="font-weight: bold">Date:</div>
+        <div style="font-weight: bold">
+          Date:
+        </div>
         <span> {{ info.date }}</span>
       </div>
       <div class="grid-cols-4">
-        <div style="font-weight: bold">Hash:</div>
+        <div style="font-weight: bold">
+          Hash:
+        </div>
         <span> {{ info.hash }}</span>
       </div>
     </div>
@@ -182,41 +196,54 @@ watch(hiddenCanvas, () => {
           v-model="autoZoom"
           type="checkbox"
           class="checkbox-primary checkbox"
-        />
+        >
       </label>
     </div>
 
     <div class="form-control">
       <label class="label cursor-pointer">
-        <img ref="siteOutlineImg" height="32" width="32" />
+        <img
+          ref="siteOutlineImg"
+          height="32"
+          width="32"
+        >
         <span class="label-text">Site Outline:</span>
         <input
           v-model="showSiteOutline"
           type="checkbox"
           class="checkbox-primary checkbox"
-        />
+        >
       </label>
     </div>
     <div class="form-control">
       <label class="label cursor-pointer">
-        <img class="img-pixelated" ref="groundImg" height="32" width="32" />
+        <img
+          ref="groundImg"
+          class="img-pixelated"
+          height="32"
+          width="32"
+        >
         <span class="label-text">Ground Truth Pattern:</span>
         <input
           v-model="groundTruthPattern"
           type="checkbox"
           class="checkbox-primary checkbox"
-        />
+        >
       </label>
     </div>
     <div class="form-control">
       <label class="label cursor-pointer">
-        <img ref="performerImg" height="32" width="32" />
+        <img
+          ref="performerImg"
+          height="32"
+          width="32"
+        >
         <span class="label-text">Performer Pattern:</span>
         <input
           v-model="otherPattern"
           type="checkbox"
           class="checkbox-primary checkbox"
-        />
+        >
       </label>
     </div>
     <div class="form-control">
@@ -229,7 +256,7 @@ watch(hiddenCanvas, () => {
           max="16"
           step="1"
           class="range range-primary"
-        />
+        >
       </label>
     </div>
     <div class="form-control">
@@ -242,7 +269,7 @@ watch(hiddenCanvas, () => {
           max="1"
           step="0.1"
           class="range range-primary"
-        />
+        >
       </label>
     </div>
   </div>

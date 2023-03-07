@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import FilterSelect from "../FilterSelect.vue";
+import { state } from "../../store";
 import { ref, watch, watchEffect } from "vue";
 import { ApiService } from "../../client";
 import type { Ref } from "vue";
@@ -23,6 +24,12 @@ watchEffect(async () => {
   const regionResults = regionList["results"];
   regionResults.sort((a, b) => (a.name > b.name ? 1 : -1));
   regions.value = regionResults;
+  const generatedMap: Record<Region['id'], Region['name']> = {}
+    regionResults.forEach((item) => {
+      generatedMap[item.id] = item.name;
+  })
+  state.regionMap = generatedMap;
+  
 });
 
 watch(selectedRegion, (val) => emit("update:modelValue", val));

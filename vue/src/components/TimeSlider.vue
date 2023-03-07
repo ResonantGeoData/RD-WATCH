@@ -15,5 +15,5 @@ defineProps<{
     :disabled="min == max"
     class="chrome-range w-full"
     type="range"
-  />
+  >
 </template>

@@ -16,19 +16,19 @@ const autoZoom = computed({
 });
 const imagesOn = computed({
   get() {
-    return state.filters.satelliteImagesOn || false;
+    return state.satellite.satelliteImagesOn || false;
   },
   set(val: boolean) {
-    state.filters = { ...state.filters, satelliteImagesOn: val };
+    state.satellite = { ...state.satellite, satelliteImagesOn: val };
   },
 });
 
 const imageOpacity = computed({
   get() {
-    return state.filters.imageOpacity || 0;
+    return state.satellite.imageOpacity || 0;
   },
   set(val: number) {
-    state.filters = { ...state.filters, imageOpacity: val };
+    state.satellite = { ...state.satellite, imageOpacity: val };
   },
 });
 

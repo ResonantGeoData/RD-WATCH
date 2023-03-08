@@ -158,8 +158,8 @@ async function getSatelliteTimestamps(modelRun: ModelRunList) {
   const results = await ApiService.getSatelliteTimestamps(
       'S2', 'visual','2A', modelRun.timerange?.min, modelRun.timerange?.max, modelRun.bbox?.coordinates[0] as []);
   loadingSatelliteTimestamps.value = false;
-  state.filters.satelliteTimeList = results;
-  state.filters.satelliteBounds = modelRun.bbox?.coordinates[0] as [];
+  state.satellite.satelliteTimeList = results;
+  state.satellite.satelliteBounds = modelRun.bbox?.coordinates[0] as [];
 }
 
 function handleToggle(modelRun: KeyedModelRun) {
@@ -227,10 +227,15 @@ watch([() => props.filters.region, () => props.filters.performer], () => {
       class="badge-accent badge ml-2"
     >{{ totalModelRuns }} {{ totalModelRuns > 1 ? "Runs" : "Run" }}</span>
     <span
-      v-if="!loading && !loadingSatelliteTimestamps && state.filters.satelliteTimeList.length "
+      v-if="!loading && !loadingSatelliteTimestamps && state.satellite.satelliteTimeList.length && !state.satellite.satelliteImagesOn "
       style="font-size: 0.75em"
       class="badge-secondary badge ml-2"
-    >{{ state.filters.satelliteTimeList.length }} {{ state.filters.satelliteTimeList.length > 1 ? "Image Timestamps" : "Image Timestamp" }}</span>
+    >{{ state.satellite.satelliteTimeList.length }} {{ state.satellite.satelliteTimeList.length > 1 ? "Image Timestamps" : "Image Timestamp" }}</span>
+    <span
+      v-else-if="!loading && !loadingSatelliteTimestamps && state.satellite.satelliteTimeStamp "
+      style="font-size: 0.75em"
+      class="badge-secondary badge ml-2"
+    >Satellite Time: {{ state.satellite.satelliteTimeStamp }}</span>
     <div
       v-if="loading"
       class="px-2"

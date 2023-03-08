@@ -1,13 +1,13 @@
 import type { LayerSpecification, SourceSpecification } from "maplibre-gl";
-import type { MapFilters } from "../store";
+import type { MapFilters, SatelliteData } from "../store";
 
 const urlRoot = `${location.protocol}//${location.host}`;
 const satelliteImages = "satelliteTiles";
 export const buildSourceFilter = (
     timestamp: number,
-    filters: MapFilters
+    satellite: SatelliteData
 ) => {
-    if (!filters.satelliteImagesOn) {
+    if (!satellite.satelliteImagesOn) {
          return undefined;
     }
     const constellation = "S2";
@@ -16,7 +16,7 @@ export const buildSourceFilter = (
     let maxX = -Infinity;
     let minY = Infinity;
     let maxY = -Infinity;
-    filters.satelliteBounds.forEach((item: [number, number]) => {
+    satellite.satelliteBounds.forEach((item: [number, number]) => {
       minX = Math.min(minX, item[1]);
       minY = Math.min(minY, item[0]);
       maxX = Math.max(maxX, item[1]);
@@ -25,9 +25,9 @@ export const buildSourceFilter = (
 
     const bbox : [number, number, number, number]= [minY, minX, maxY, maxX];
     if (bbox.filter((item) => item === Infinity || item === -Infinity).length) {
-      console.error(`Filter for current Region: ${filters.region_id} has infinite bounding box`);
+      console.error(`Filter for current has infinite bounding box`);
     } else {
-    const timeStamp = filters.satelliteTimeStamp;
+    const timeStamp = satellite.satelliteTimeStamp;
       if (timeStamp !== '') {
         const source: SourceSpecification = {
             type: "raster",
@@ -39,15 +39,15 @@ export const buildSourceFilter = (
           };
         return {satelliteTiles : source}
       }
-      return undefined;
     }
+    return undefined;
 }
   
 export const layers = (
     timestamp: number,
-    filters: MapFilters
+    satellite: SatelliteData
   ): LayerSpecification[] => {
-    if (!filters.satelliteImagesOn) {
+    if (!satellite.satelliteImagesOn) {
          return [];
     }
     const layers: LayerSpecification[] = [
@@ -56,7 +56,7 @@ export const layers = (
         type: "raster",
         source: satelliteImages,
         paint: {
-            "raster-opacity":filters.imageOpacity,
+            "raster-opacity":satellite.imageOpacity,
           },
       
     },

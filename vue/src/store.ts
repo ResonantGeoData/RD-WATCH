@@ -9,10 +9,13 @@ export interface MapFilters {
   showSiteOutline?: boolean;
   groundTruthPattern?: boolean;
   otherPattern?: boolean;
+}
+
+export interface SatelliteData {
   satelliteImagesOn: boolean;
   imageOpacity: number;
   satelliteTimeList: string[];
-  satelliteTimeStamp: string,
+  satelliteTimeStamp: string | null,
   satelliteBounds:[number,number][];
 }
 
@@ -23,6 +26,7 @@ export const state = reactive<{
   };
   bbox: { xmin: number; ymin: number; xmax: number; ymax: number };
   filters: MapFilters;
+  satellite: SatelliteData;
   patterns: {
     patternThickness: number;
     patternOpacity: number;
@@ -42,9 +46,11 @@ export const state = reactive<{
   filters: {
     groundTruthPattern: false,
     otherPattern: false,
+  },
+  satellite: {
     satelliteImagesOn: false,
     satelliteTimeList:[],
-    satelliteTimeStamp: '',
+    satelliteTimeStamp: null,
     satelliteBounds: [],
     imageOpacity: 0.75,
   },

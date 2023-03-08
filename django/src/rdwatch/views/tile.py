@@ -184,13 +184,15 @@ def satelliteimage_raster_tile(
 
     constellation = Constellation(slug=request.GET['constellation'])
     timestamp = datetime.fromisoformat(str(request.GET['timestamp']))
+    print(f"GETTING TIMESTAMP")
+    print(timestamp)
 
     # Calculate the bounding box from the given x, y, z parameters
     bounds = mercantile.bounds(x, y, z)
     bbox = (bounds.west, bounds.south, bounds.east, bounds.north)
 
     # Convert generator to list so we can iterate over it multiple times
-    timebuffer = timedelta(hours=1)
+    timebuffer = timedelta(hours=7)
     bands = list(get_bands(constellation, timestamp, bbox, timebuffer))
     # Filter bands by requested processing level and spectrum
     bands = [

@@ -43,12 +43,8 @@ onMounted(() => {
         style: style(state.timestamp,  {
           groundTruthPattern: false,
           otherPattern: false,
-          satelliteImagesOn: false,
-          satelliteTimeList:[],
-          imageOpacity: 0.75,
-          satelliteBounds: [],
-          satelliteTimeStamp: '',
-        }),
+        }, state.satellite
+        ),
         bounds: [
           [state.bbox.xmin, state.bbox.ymin],
           [state.bbox.xmax, state.bbox.ymax],
@@ -64,24 +60,28 @@ onUnmounted(() => {
   map.value?.remove();
 });
 
-watch([() => state.timestamp, () => state.filters], () => {
-  if (state.filters.satelliteImagesOn) {
-    if (state.filters && state.filters.satelliteTimeList && state.filters.satelliteTimeList.length > 0) {
-        const list = state.filters.satelliteTimeList.map((item) => new Date(item));
-        const base = new Date(Date.now());
+watch([() => state.timestamp, () => state.filters, () => state.satellite], () => {
+  if (state.satellite.satelliteImagesOn) {
+    if (state.filters && state.satellite.satelliteTimeList && state.satellite.satelliteTimeList.length > 0) {
+        const list = state.satellite.satelliteTimeList.map((item) => new Date(item));
+        const base = new Date(state.timestamp * 1000);
         list.sort((a,b) => {
             const distanceA = Math.abs(base.valueOf() - a.valueOf());
             const distanceB = Math.abs(base.valueOf() - b.valueOf());
             return distanceA - distanceB;
         })
         const date = list[0];
-        const timeStamp = new Date(date.getTime() - (date.getTimezoneOffset() * 60000)).toISOString().substring(0,19);
-        if (state.filters.satelliteTimeList.includes(timeStamp)) {
-          state.filters.satelliteTimeStamp = timeStamp;
-        } else 
-        {
-          state.filters.satelliteTimeStamp = '';
-        }
+        console.log(state.timestamp)
+        console.log(state.satellite.satelliteTimeList);
+        //const timeStamp = new Date(date.getTime() - (date.getTimezoneOffset() * 60000)).toISOString().substring(0,19);
+        const timeStamp = date.toISOString().substring(0,19);
+        state.satellite.satelliteTimeStamp = timeStamp;
+        // if (state.satellite.satelliteTimeList.includes(timeStamp)) {
+        //   state.satellite.satelliteTimeStamp = timeStamp;
+        // } else 
+        // {
+        //   state.satellite.satelliteTimeStamp = null;
+        // }
     }
   }
   const siteFilter = buildSiteFilter(state.timestamp, state.filters);
@@ -95,7 +95,7 @@ watch([() => state.timestamp, () => state.filters], () => {
   setFilter("observations-text", observationFilter);
   console.log('Updating Style');
   map.value?.setStyle(
-    style(state.timestamp, state.filters)
+    style(state.timestamp, state.filters, state.satellite)
   );
 });
 

@@ -208,5 +208,5 @@ export class ApiService {
       query: { constellation, level, spectrum, start_timestamp: startTime, end_timestamp: endTime, bbox: bboxstr
       }
     });
-}
+  }
 }

@@ -50,8 +50,7 @@ watch(activeOption, (val) =>
         <span
           class="h-5 grow self-center rounded-l border-r border-blue-800 bg-blue-600 px-1 hover:bg-blue-400"
           @click="emit('update:modelValue', null)"
-          >✕</span
-        >
+        >✕</span>
         <div
           class="flex items-baseline rounded-r bg-blue-600 hover:bg-blue-400"
           @click="filterOpen = true"
@@ -59,9 +58,7 @@ watch(activeOption, (val) =>
           <span class="filter-val ml-2 grow-0 self-center whitespace-nowrap">{{
             activeOption
           }}</span>
-          <span class="grow self-center"
-            ><ChevronUpDownIcon class="float-right mx-1 w-3"
-          /></span>
+          <span class="grow self-center"><ChevronUpDownIcon class="float-right mx-1 w-3" /></span>
         </div>
       </span>
     </div>
@@ -71,11 +68,12 @@ watch(activeOption, (val) =>
       class="h-5 cursor-pointer select-none rounded bg-gray-300 text-sm text-gray-600 hover:bg-gray-400 hover:text-gray-100"
       @click="filterOpen = true"
     >
-      <span class="flex items-baseline" @click="filterOpen = !filterOpen">
+      <span
+        class="flex items-baseline"
+        @click="filterOpen = !filterOpen"
+      >
         <span class="ml-2 grow-0 self-center">{{ label }}</span>
-        <span class="grow self-center"
-          ><ChevronUpDownIcon class="float-right mx-1 w-3"
-        /></span>
+        <span class="grow self-center"><ChevronUpDownIcon class="float-right mx-1 w-3" /></span>
       </span>
     </div>
 
@@ -86,9 +84,7 @@ watch(activeOption, (val) =>
     >
       <span class="flex items-baseline">
         <span class="ml-2 grow-0">{{ label }}</span>
-        <span class="grow self-center"
-          ><ChevronUpDownIcon class="float-right mx-1 w-3"
-        /></span>
+        <span class="grow self-center"><ChevronUpDownIcon class="float-right mx-1 w-3" /></span>
       </span>
       <div
         class="dropdown overflow-y-auto overflow-x-hidden rounded-b border bg-white p-1 text-lg text-gray-600 hover:text-gray-600"

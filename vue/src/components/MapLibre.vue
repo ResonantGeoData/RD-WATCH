@@ -85,7 +85,10 @@ watch(
 </script>
 
 <template>
-  <div ref="mapContainer" class="map"></div>
+  <div
+    ref="mapContainer"
+    class="map"
+  />
 </template>
 
 <style>
@@ -105,7 +108,7 @@ watch(
 .mapboxgl-popup {
   max-width: 400px;
   font-size: 1.5em;
-  opacity: 0.75;
+  opacity: 1;
 }
 
 .mapboxgl-popup ul {

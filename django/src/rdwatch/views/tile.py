@@ -107,6 +107,7 @@ def vector_tile(
             id=F('pk'),
             mvtgeom=mvtgeom,
             configuration_id=F('siteeval__configuration_id'),
+            site_number=F('siteeval__number'),
             label=F('label_id'),
             timemin=ExtractEpoch('timestamp'),
             timemax=ExtractEpoch(

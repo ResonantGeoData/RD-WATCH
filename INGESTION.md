@@ -63,7 +63,7 @@ You'll get the newly created `model-run` as a response:
 
 ## Add data to a `model-run`
 
-You can `POST` a [Site Model Specification](https://smartgitlab.com/TE/standards/-/wikis/Site-Model-Specification) JSON to the endpoint `/api/model-runs/{id}/site-model`.
+You can `POST` a [Site Model Specification](https://smartgitlab.com/TE/standards/-/wikis/Site-Model-Specification) JSON to the endpoint `/api/model-runs/{id}/site-model` or a [Region Model Specification](https://smartgitlab.com/TE/standards/-/wikis/Region-Model-Specification) JSON to the endpoint `/api/model-runs/{id}/region-model`.
 
 Following the above example, lets POST a [Site Model Specification](https://smartgitlab.com/TE/standards/-/wikis/Site-Model-Specification) JSON file in the current working directory named "site.json" to the newly created `model-run`:
 

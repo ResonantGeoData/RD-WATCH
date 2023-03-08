@@ -12,6 +12,7 @@ export interface MapFilters {
   satelliteImagesOn: boolean;
   imageOpacity: number;
   satelliteTimeList: string[];
+  satelliteTimeStamp: string,
   satelliteBounds:[number,number][];
 }
 
@@ -43,6 +44,7 @@ export const state = reactive<{
     otherPattern: false,
     satelliteImagesOn: false,
     satelliteTimeList:[],
+    satelliteTimeStamp: '',
     satelliteBounds: [],
     imageOpacity: 0.75,
   },

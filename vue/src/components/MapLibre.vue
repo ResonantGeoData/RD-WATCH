@@ -46,6 +46,8 @@ onMounted(() => {
           satelliteImagesOn: false,
           satelliteTimeList:[],
           imageOpacity: 0.75,
+          satelliteBounds: [],
+          satelliteTimeStamp: '',
         }),
         bounds: [
           [state.bbox.xmin, state.bbox.ymin],
@@ -63,6 +65,25 @@ onUnmounted(() => {
 });
 
 watch([() => state.timestamp, () => state.filters], () => {
+  if (state.filters.satelliteImagesOn) {
+    if (state.filters && state.filters.satelliteTimeList && state.filters.satelliteTimeList.length > 0) {
+        const list = state.filters.satelliteTimeList.map((item) => new Date(item));
+        const base = new Date(Date.now());
+        list.sort((a,b) => {
+            const distanceA = Math.abs(base.valueOf() - a.valueOf());
+            const distanceB = Math.abs(base.valueOf() - b.valueOf());
+            return distanceA - distanceB;
+        })
+        const date = list[0];
+        const timeStamp = new Date(date.getTime() - (date.getTimezoneOffset() * 60000)).toISOString().substring(0,19);
+        if (state.filters.satelliteTimeList.includes(timeStamp)) {
+          state.filters.satelliteTimeStamp = timeStamp;
+        } else 
+        {
+          state.filters.satelliteTimeStamp = '';
+        }
+    }
+  }
   const siteFilter = buildSiteFilter(state.timestamp, state.filters);
   const observationFilter = buildObservationFilter(
     state.timestamp,

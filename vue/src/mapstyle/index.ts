@@ -28,8 +28,8 @@ export const style = (
   sources: {
     ...naturalearthSources,
     ...openmaptilesSources,
+    ...buildSatelliteSourceFilter(timestamp, filters),
     ...rdwatchtilesSources,
-    ...buildSatelliteSourceFilter(timestamp, filters)
   },
   sprite: `${tileServerURL}/sprites/osm-liberty`,
   glyphs: `${tileServerURL}/fonts/{fontstack}/{range}.pbf`,
@@ -41,7 +41,7 @@ export const style = (
     },
     ...naturalearthLayers,
     ...openmaptilesLayers,
-    ...rdwatchtilesLayers(timestamp, filters),
     ...satelliteLayers(timestamp, filters),
+    ...rdwatchtilesLayers(timestamp, filters),
   ],
 });

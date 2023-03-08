@@ -10,25 +10,12 @@ export const buildSourceFilter = (
     if (!filters.satelliteImagesOn) {
          return undefined;
     }
-    let timeStamp = '0';
-    if (filters && filters.satelliteTimeList && filters.satelliteTimeList.length > 0) {
-        const list = filters.satelliteTimeList.map((item) => new Date(item));
-        const base = new Date(timestamp * 1000)
-        list.sort((a,b) => {
-            const distanceA = Math.abs(base.valueOf() - a.valueOf());
-            const distanceB = Math.abs(base.valueOf() - b.valueOf());
-            return distanceA - distanceB;
-        })
-        timeStamp = list[0].toISOString().substring(0,19);
-        console.log(timeStamp);
-    }
     const constellation = "S2";
     const spectrum="visual";
     let minX = Infinity;
     let maxX = -Infinity;
     let minY = Infinity;
     let maxY = -Infinity;
-    console.log(filters.satelliteBounds);
     filters.satelliteBounds.forEach((item: [number, number]) => {
       minX = Math.min(minX, item[1]);
       minY = Math.min(minY, item[0]);
@@ -37,15 +24,23 @@ export const buildSourceFilter = (
     })
 
     const bbox : [number, number, number, number]= [minY, minX, maxY, maxX];
-    const source: SourceSpecification = {
-        type: "raster",
-        tiles: [`${urlRoot}/api/satellite-image/tile/{z}/{x}/{y}.webp?constellation=${constellation}&timestamp=${timeStamp}&spectrum=${spectrum}&level=2A`],
-        minzoom: 0,
-        maxzoom: 14,
-        bounds: bbox,
+    if (bbox.filter((item) => item === Infinity || item === -Infinity).length) {
+      console.error(`Filter for current Region: ${filters.region_id} has infinite bounding box`);
+    } else {
+    const timeStamp = filters.satelliteTimeStamp;
+      if (timeStamp !== '') {
+        const source: SourceSpecification = {
+            type: "raster",
+            tiles: [`${urlRoot}/api/satellite-image/tile/{z}/{x}/{y}.webp?constellation=${constellation}&timestamp=${timeStamp}&spectrum=${spectrum}&level=2A`],
+            minzoom: 0,
+            maxzoom: 14,
+            bounds: bbox,
 
-      };
-    return {satelliteTiles : source}
+          };
+        return {satelliteTiles : source}
+      }
+      return undefined;
+    }
 }
   
 export const layers = (

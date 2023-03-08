@@ -80,6 +80,7 @@ async function loadMore() {
         ymax: bounds.getNorth(),
       };
       resultsBoundingBox.value = bbox;
+      getSatelliteTimestamps(modelRunList)
       state.bbox = bbox;
     } else if (!state.filters.region_id?.length) {
       const bbox = {
@@ -150,11 +151,13 @@ function updateCameraBounds(filtered = true) {
   }
 }
 
-async function getSatelliteTimestamps(modelRun: KeyedModelRun) {
+const loadingSatelliteTimestamps = ref(false);
+
+async function getSatelliteTimestamps(modelRun: ModelRunList) {
+  loadingSatelliteTimestamps.value = true;
   const results = await ApiService.getSatelliteTimestamps(
       'S2', 'visual','2A', modelRun.timerange?.min, modelRun.timerange?.max, modelRun.bbox?.coordinates[0] as []);
-  console.log(results);
-  console.log(modelRun.bbox)
+  loadingSatelliteTimestamps.value = false;
   state.filters.satelliteTimeList = results;
   state.filters.satelliteBounds = modelRun.bbox?.coordinates[0] as [];
 }
@@ -164,7 +167,6 @@ function handleToggle(modelRun: KeyedModelRun) {
     openedModelRuns.value.delete(modelRun.key);
   } else {
     openedModelRuns.value.add(modelRun.key);
-    getSatelliteTimestamps(modelRun);
   }
 
   if (openedModelRuns.value.size > 0) {
@@ -220,15 +222,29 @@ watch([() => props.filters.region, () => props.filters.performer], () => {
 <template>
   <div class="flex flex-row bg-gray-100">
     <span
-      v-if="!loading"
+      v-if="!loading && !loadingSatelliteTimestamps"
       style="font-size: 0.75em"
       class="badge-accent badge ml-2"
     >{{ totalModelRuns }} {{ totalModelRuns > 1 ? "Runs" : "Run" }}</span>
+    <span
+      v-if="!loading && !loadingSatelliteTimestamps && state.filters.satelliteTimeList.length "
+      style="font-size: 0.75em"
+      class="badge-secondary badge ml-2"
+    >{{ state.filters.satelliteTimeList.length }} {{ state.filters.satelliteTimeList.length > 1 ? "Image Timestamps" : "Image Timestamp" }}</span>
     <div
       v-if="loading"
       class="px-2"
       style="width: 100%"
     >
+      <b>ModelRun</b>
+      <progress class="progress progress-primary" />
+    </div>
+    <div
+      v-if="loadingSatelliteTimestamps"
+      class="px-2"
+      style="width: 100%"
+    >
+      <b>Satellite Timestamps</b>
       <progress class="progress progress-primary" />
     </div>
   </div>

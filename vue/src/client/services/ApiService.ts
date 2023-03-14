@@ -171,7 +171,7 @@ export class ApiService {
       maxX = Math.max(maxX, item[1]);
       maxY = Math.max(maxY, item[0]);
     })
-    const bboxstr = `${minX},${minY},${maxX},${maxY}`;
+    const bboxstr = `${minY},${minX},${maxY},${maxX}`;;
     return __request(OpenAPI, {
       method: "GET",
       url: "/api/satellite-image/timestamps",
@@ -201,7 +201,7 @@ export class ApiService {
       maxX = Math.max(maxX, item[1]);
       maxY = Math.max(maxY, item[0]);
     })
-    const bboxstr = `${minX},${minY},${maxX},${maxY}`;
+    const bboxstr = `${minY},${minX},${maxY},${maxX}`;
     return __request(OpenAPI, {
       method: "GET",
       url: "/api/satellite-image/visual-timestamps",

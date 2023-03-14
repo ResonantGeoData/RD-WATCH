@@ -71,8 +71,6 @@ watch([() => state.timestamp, () => state.filters, () => state.satellite], () =>
             return distanceA - distanceB;
         })
         const date = list[0];
-        console.log(state.timestamp)
-        console.log(state.satellite.satelliteTimeList);
         //const timeStamp = new Date(date.getTime() - (date.getTimezoneOffset() * 60000)).toISOString().substring(0,19);
         const timeStamp = date.toISOString().substring(0,19);
         state.satellite.satelliteTimeStamp = timeStamp;
@@ -93,7 +91,6 @@ watch([() => state.timestamp, () => state.filters, () => state.satellite], () =>
   setFilter("observations-fill", observationFilter);
   setFilter("observations-outline", observationFilter);
   setFilter("observations-text", observationFilter);
-  console.log('Updating Style');
   map.value?.setStyle(
     style(state.timestamp, state.filters, state.satellite)
   );

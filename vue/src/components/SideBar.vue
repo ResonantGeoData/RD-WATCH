@@ -6,7 +6,7 @@ import RegionFilter from "./filters/RegionFilter.vue";
 import { Cog6ToothIcon } from "@heroicons/vue/24/solid";
 import SettingsPanel from "./SettingsPanel.vue";
 import { state } from "../store";
-import { ref, watch } from "vue";
+import { computed, ref, watch } from "vue";
 import type { Performer, QueryArguments, Region } from "../client";
 import type { Ref } from "vue";
 
@@ -29,6 +29,9 @@ watch(selectedPerformer, (val) => {
 });
 watch(selectedRegion, (val) => {
   queryFilters.value = { ...queryFilters.value, region: val?.name, page: 1 };
+  if (selectedRegion.value === null) {
+    state.satellite.satelliteImagesOn = false;
+  }
   state.filters = {
     ...state.filters,
     region_id: val?.id === undefined ? undefined : [val.id],
@@ -39,6 +42,16 @@ watch(showSiteOutline, (val) => {
 });
 const expandSettings = ref(false);
 
+const imagesOn = computed({
+  get() {
+    return state.satellite.satelliteImagesOn || false;
+  },
+  set(val: boolean) {
+    state.satellite = { ...state.satellite, satelliteImagesOn: val };
+  },
+});
+
+
 function nextPage() {
   queryFilters.value = {
     ...queryFilters.value,
@@ -48,7 +61,7 @@ function nextPage() {
 </script>
 
 <template>
-  <div class="fixed h-screen w-80 pt-2 pb-2 pl-2">
+  <div class="fixed h-screen w-200 pt-2 pb-2 pl-2">
     <div
       class="flex h-full flex-col overflow-hidden rounded-xl bg-white drop-shadow-2xl"
     >
@@ -74,6 +87,13 @@ function nextPage() {
             class="customfilter"
           />
           <RegionFilter v-model="selectedRegion" />
+          <input
+            v-model="imagesOn"
+            type="checkbox"
+            :disabled="selectedRegion === null"
+            class="toggle toggle-xs mt-1"
+          >
+
           <span class="h5 grow" />
           <Cog6ToothIcon
             class="hover h-5 text-blue-600"

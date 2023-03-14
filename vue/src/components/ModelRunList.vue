@@ -227,12 +227,12 @@ watch([() => props.filters.region, () => props.filters.performer], () => {
       class="badge-accent badge ml-2"
     >{{ totalModelRuns }} {{ totalModelRuns > 1 ? "Runs" : "Run" }}</span>
     <span
-      v-if="!loading && !loadingSatelliteTimestamps && state.satellite.satelliteTimeList.length && !state.satellite.satelliteImagesOn "
+      v-if="!loading && !loadingSatelliteTimestamps && state.satellite.satelliteTimeList.length && !state.satellite.satelliteImagesOn && state.filters.region_id?.length"
       style="font-size: 0.75em"
       class="badge-secondary badge ml-2"
     >{{ state.satellite.satelliteTimeList.length }} {{ state.satellite.satelliteTimeList.length > 1 ? "Image Timestamps" : "Image Timestamp" }}</span>
     <span
-      v-else-if="!loading && !loadingSatelliteTimestamps && state.satellite.satelliteTimeStamp "
+      v-else-if="!loading && !loadingSatelliteTimestamps && state.satellite.satelliteTimeStamp && state.satellite.satelliteImagesOn"
       style="font-size: 0.75em"
       class="badge-secondary badge ml-2"
     >Satellite Time: {{ state.satellite.satelliteTimeStamp }}</span>

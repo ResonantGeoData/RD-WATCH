@@ -106,6 +106,16 @@ export const buildSiteFilter = (
   return filter;
 };
 
+export const buildRegionFilter = (
+  filters: MapFilters
+): FilterSpecification => {
+  const filter: FilterSpecification = [
+    "literal", !!filters.showRegionPolygon,
+  ];
+
+  return filter;
+};
+
 const rdwatchtiles = "rdwatchtiles";
 const urlRoot = `${location.protocol}//${location.host}`;
 const annotationColor: DataDrivenPropertyValueSpecification<string> = [
@@ -224,6 +234,17 @@ export const layers = (
       "text-color": annotationColor,
     },
     filter: buildObservationFilter(timestamp, filters),
+  },
+  {
+    id: "regions-outline",
+    type: "line",
+    source: rdwatchtiles,
+    "source-layer": "regions",
+    paint: {
+      "line-color": annotationColor,
+      "line-width": 2,
+    },
+    filter: buildRegionFilter(filters),
   },
   {
     id: "sites-outline",

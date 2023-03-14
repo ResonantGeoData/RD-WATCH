@@ -24,6 +24,15 @@ const showSiteOutline = computed({
   },
 });
 
+const showRegionPolygon = computed({
+  get() {
+    return state.filters.showRegionPolygon || false;
+  },
+  set(val: boolean) {
+    state.filters = { ...state.filters, showRegionPolygon: val };
+  },
+});
+
 const groundTruthPattern = computed({
   get() {
     return state.filters.groundTruthPattern || false;
@@ -73,8 +82,8 @@ const drawCanvasPattern = () => {
       ctx.rect(0, 0, width, height);
       ctx.stroke();
       const outlineURL = hiddenCanvas.value.toDataURL();
-      if (siteOutlineImg.value) {
-        siteOutlineImg.value.src = outlineURL;
+      if (polygonImg.value) {
+        polygonImg.value.src = outlineURL;
       }
 
       ctx.lineWidth = thickness;
@@ -138,7 +147,7 @@ watch([patternThickness, patternOpacity], () => {
 
 const groundImg: Ref<null | HTMLImageElement> = ref(null);
 const performerImg: Ref<null | HTMLImageElement> = ref(null);
-const siteOutlineImg: Ref<null | HTMLImageElement> = ref(null);
+const polygonImg: Ref<null | HTMLImageElement> = ref(null);
 const hiddenCanvas: Ref<null | HTMLCanvasElement> = ref(null);
 
 const info = computed(() => {
@@ -203,13 +212,28 @@ watch(hiddenCanvas, () => {
     <div class="form-control">
       <label class="label cursor-pointer">
         <img
-          ref="siteOutlineImg"
+          ref="polygonImg"
           height="32"
           width="32"
         >
         <span class="label-text">Site Outline:</span>
         <input
           v-model="showSiteOutline"
+          type="checkbox"
+          class="checkbox-primary checkbox"
+        >
+      </label>
+    </div>
+    <div class="form-control">
+      <label class="label cursor-pointer">
+        <img
+          ref="polygonImg"
+          height="32"
+          width="32"
+        >
+        <span class="label-text">Region Polygon:</span>
+        <input
+          v-model="showRegionPolygon"
           type="checkbox"
           class="checkbox-primary checkbox"
         >

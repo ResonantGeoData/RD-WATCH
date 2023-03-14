@@ -9,6 +9,7 @@ export interface MapFilters {
   showSiteOutline?: boolean;
   groundTruthPattern?: boolean;
   otherPattern?: boolean;
+  showRegionPolygon?: boolean;
 }
 
 export const state = reactive<{

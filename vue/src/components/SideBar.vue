@@ -3,7 +3,7 @@ import ModelRunList from "./ModelRunList.vue";
 import TimeSlider from "./TimeSlider.vue";
 import PerformerFilter from "./filters/PerformerFilter.vue";
 import RegionFilter from "./filters/RegionFilter.vue";
-import { Cog6ToothIcon } from "@heroicons/vue/24/solid";
+import { Cog6ToothIcon, PhotoIcon } from "@heroicons/vue/24/solid";
 import SettingsPanel from "./SettingsPanel.vue";
 import { state } from "../store";
 import { computed, ref, watch } from "vue";
@@ -87,16 +87,19 @@ function nextPage() {
             class="customfilter"
           />
           <RegionFilter v-model="selectedRegion" />
-          <input
-            v-model="imagesOn"
-            type="checkbox"
-            :disabled="selectedRegion === null"
-            class="toggle toggle-xs mt-1"
-          >
-
+          <span class="h5 grow" />
+          <PhotoIcon 
+            class="h-5 mt-0.5"
+            :class="{
+              'text-blue-600': imagesOn,
+              'hover': selectedRegion !== null && state.satellite.satelliteTimeList.length !== 0,
+              'text-gray-400': selectedRegion === null || state.satellite.satelliteTimeList.length === 0,
+            }"
+            @click="imagesOn = selectedRegion !== null && state.satellite.satelliteTimeList.length !== 0 ? !imagesOn : imagesOn"
+          />
           <span class="h5 grow" />
           <Cog6ToothIcon
-            class="hover h-5 text-blue-600"
+            class="hover h-5 text-blue-600 mt-0.5"
             @click="expandSettings = !expandSettings"
           />
         </div>

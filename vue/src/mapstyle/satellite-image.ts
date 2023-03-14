@@ -1,5 +1,5 @@
 import type { LayerSpecification, SourceSpecification } from "maplibre-gl";
-import type { MapFilters, SatelliteData } from "../store";
+import type { SatelliteData } from "../store";
 
 const urlRoot = `${location.protocol}//${location.host}`;
 const satelliteImages = "satelliteTiles";

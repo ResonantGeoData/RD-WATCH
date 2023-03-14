@@ -221,12 +221,17 @@ watch(hiddenCanvas, () => {
         <span class="label-text">Images:</span>
         <input
           v-model="imagesOn"
+          :disabled="state.satellite.satelliteTimeList.length === 0"
+
           type="checkbox"
           class="checkbox-primary checkbox"
-        />
+        >
       </label>
     </div>
-    <div v-if="imagesOn" class="form-control">
+    <div
+      v-if="imagesOn"
+      class="form-control"
+    >
       <label class="label cursor-pointer">
         <span class="label-text">Image Opacity:</span>
         <input
@@ -236,7 +241,7 @@ watch(hiddenCanvas, () => {
           step="0.1"
           class="chrome-range w-full"
           type="range"
-        />
+        >
       </label>
     </div>
 

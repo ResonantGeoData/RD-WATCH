@@ -29,7 +29,7 @@ from django.views.decorators.cache import cache_page
 from rest_framework.reverse import reverse
 
 from rdwatch.db.functions import ExtractEpoch, GroupExcludeRowRange
-from rdwatch.models import SiteEvaluation, SiteObservation
+from rdwatch.models import Region, SiteEvaluation, SiteObservation
 from rdwatch.models.lookups import Constellation
 from rdwatch.utils.raster_tile import get_raster_tile
 from rdwatch.utils.satellite_bands import get_bands
@@ -135,10 +135,24 @@ def vector_tile(
         observations_params,
     ) = observations_queryset.query.sql_with_params()
 
+    regions_queryset = (
+        Region.objects.filter(intersects)
+        .values()
+        .annotate(
+            id=F('pk'),
+            mvtgeom=mvtgeom,
+        )
+    )
+    (
+        regions_sql,
+        regions_params,
+    ) = regions_queryset.query.sql_with_params()
+
     sql = f"""
         WITH
             evaluations AS ({evaluations_sql}),
-            observations AS ({observations_sql})
+            observations AS ({observations_sql}),
+            regions AS ({regions_sql})
         SELECT (
             (
                 SELECT ST_AsMVT(evaluations.*, 'sites', 4096, 'mvtgeom', 'id')
@@ -149,9 +163,14 @@ def vector_tile(
                 SELECT ST_AsMVT(observations.*, 'observations', 4096, 'mvtgeom', 'id')
                 FROM observations
             )
+            ||
+            (
+                SELECT ST_AsMVT(regions.*, 'regions', 4096, 'mvtgeom', 'id')
+                FROM regions
+            )
         )
     """
-    params = evaluations_params + observations_params
+    params = evaluations_params + observations_params + regions_params
 
     with connection.cursor() as cursor:
         cursor.execute(sql, params)

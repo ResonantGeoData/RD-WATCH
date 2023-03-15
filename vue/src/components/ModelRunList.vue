@@ -174,7 +174,6 @@ async function getSatelliteTimestamps(modelRun: ModelRunList, force=false) {
     })
     const xSize = maxX - minX;
     const ySize = maxY - minY;
-    console.log(`${xSize}, ${ySize}`)
     if (xSize > 1 || ySize > 1) {
       loadingSatelliteTimestamps.value = false;
       satelliteRegionTooLarge.value = true;
@@ -232,12 +231,6 @@ async function handleScroll(event: Event) {
     if (props.filters.page !== undefined && Math.ceil(totalModelRuns.value / limit) > props.filters.page ) {
       emit("nextPage");
     }
-  }
-}
-
-function forceSatelliteImages(){
-  if (lastModelRunList !== null) {
-    getSatelliteTimestamps(lastModelRunList, true);
   }
 }
 

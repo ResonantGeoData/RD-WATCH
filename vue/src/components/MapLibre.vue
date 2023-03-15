@@ -62,23 +62,22 @@ onUnmounted(() => {
 watch([() => state.timestamp, () => state.filters, () => state.satellite], () => {
   if (state.satellite.satelliteImagesOn) {
     if (state.filters && state.satellite.satelliteTimeList && state.satellite.satelliteTimeList.length > 0) {
-        const list = state.satellite.satelliteTimeList.map((item) => new Date(item));
+        const list = state.satellite.satelliteTimeList.map((item) => new Date(`${item}Z`));
         const base = new Date(state.timestamp * 1000);
-        list.sort((a,b) => {
+        const filtered = list.filter((item) => item.valueOf() <= base.valueOf());
+        let baseList = filtered;
+        if (filtered.length === 0) {
+          baseList = list;
+        }
+        baseList.sort((a,b) => {
             const distanceA = Math.abs(base.valueOf() - a.valueOf());
             const distanceB = Math.abs(base.valueOf() - b.valueOf());
             return distanceA - distanceB;
         })
-        const date = list[0];
-        //const timeStamp = new Date(date.getTime() - (date.getTimezoneOffset() * 60000)).toISOString().substring(0,19);
+        // Lets try to get the closes timestamp that is less than the current time.
+        const date = baseList[0];
         const timeStamp = date.toISOString().substring(0,19);
         state.satellite.satelliteTimeStamp = timeStamp;
-        // if (state.satellite.satelliteTimeList.includes(timeStamp)) {
-        //   state.satellite.satelliteTimeStamp = timeStamp;
-        // } else 
-        // {
-        //   state.satellite.satelliteTimeStamp = null;
-        // }
     }
   }
   const siteFilter = buildSiteFilter(state.timestamp, state.filters);

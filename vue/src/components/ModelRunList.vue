@@ -38,7 +38,6 @@ const resultsBoundingBox = ref({
 const totalModelRuns = ref(1);
 const loading = ref(false);
 const satelliteRegionTooLarge = ref(false);
-let lastModelRunList: ModelRunList | null = null;
 
 let request: CancelablePromise<ModelRunList> | undefined;
 
@@ -57,7 +56,6 @@ async function loadMore() {
     request = undefined;
     loading.value = false;
     totalModelRuns.value = modelRunList.count;
-    lastModelRunList = modelRunList;
 
     // sort list to show ground truth near the top
     const modelRunResults = modelRunList.results.sort((a, b) =>

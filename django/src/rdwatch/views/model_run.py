@@ -15,7 +15,7 @@ from django.db.models import (
     Subquery,
     When,
 )
-from django.db.models.functions import JSONObject  # type: ignore
+from django.db.models.functions import Coalesce, JSONObject  # type: ignore
 from rest_framework import viewsets
 from rest_framework.exceptions import NotFound, ValidationError
 from rest_framework.request import Request
@@ -226,7 +226,12 @@ class ModelRunViewSet(viewsets.ViewSet):
         # the database.
         if 'region' in request.query_params:
             aggregate |= queryset.defer('json').aggregate(
-                bbox=BoundingBoxGeoJSON('evaluations__geom')
+                # Use the region polygon for the bbox if it exists.
+                # Otherwise, fall back on the site polygon.
+                bbox=Coalesce(
+                    BoundingBoxGeoJSON('evaluations__region__geom'),
+                    BoundingBoxGeoJSON('evaluations__geom'),
+                )
             )
 
         if aggregate['count'] > 0 and not aggregate['results']:

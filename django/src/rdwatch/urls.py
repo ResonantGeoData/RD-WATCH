@@ -4,6 +4,7 @@ from rest_framework.renderers import CoreJSONRenderer
 from rest_framework.schemas import get_schema_view
 
 from rdwatch import views
+from rdwatch.api import api
 
 router = routers.SimpleRouter(trailing_slash=False)
 router.register(r'model-runs', views.ModelRunViewSet, basename='model-runs')
@@ -11,6 +12,7 @@ router.register(r'performers', views.PerformerViewSet, basename='performers')
 router.register(r'regions', views.RegionViewSet, basename='regions')
 
 urlpatterns = [
+    path('', api.urls),
     path(
         'openapi.json',
         get_schema_view(

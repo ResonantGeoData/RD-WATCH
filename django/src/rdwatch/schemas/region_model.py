@@ -6,6 +6,7 @@ from typing import Any, Literal
 from ninja import Schema
 from pydantic import constr, validator
 
+from django.contrib.gis.gdal import GDALException
 from django.contrib.gis.geos import GEOSGeometry, MultiPolygon, Polygon
 
 
@@ -106,10 +107,13 @@ class Feature(Schema):
 
     @validator('geometry', pre=True)
     def parse_geometry(cls, v: dict[str, Any]):
-        geom = GEOSGeometry(json.dumps(v))
-        if isinstance(geom, Polygon):
-            geom = MultiPolygon(geom)
-        return geom
+        try:
+            geom = GEOSGeometry(json.dumps(v))
+            if isinstance(geom, Polygon):
+                geom = MultiPolygon(geom)
+            return geom
+        except GDALException:
+            raise ValueError('Failed to parse geometry.')
 
 
 class RegionModel(Schema):

@@ -3,12 +3,13 @@ import json
 from datetime import datetime
 from typing import Any, Literal
 
-from pydantic import BaseModel, constr, validator
+from ninja import Schema
+from pydantic import constr, validator
 
 from django.contrib.gis.geos import GEOSGeometry, MultiPolygon, Polygon
 
 
-class RegionFeature(BaseModel):
+class RegionFeature(Schema):
     type: Literal['region']
     region_id: constr(regex=r'^[A-Z]{2}_[RCST]\d{3}$')
     version: str | None
@@ -41,7 +42,7 @@ class RegionFeature(BaseModel):
         return datetime.strptime(v, '%Y-%m-%d')
 
 
-class SiteSummaryFeature(BaseModel):
+class SiteSummaryFeature(Schema):
     type: Literal['site_summary']
     site_id: constr(regex=r'^[A-Z]{2}_[RCST]\d{3}_\d{4}$')
     version: str | None
@@ -95,7 +96,7 @@ class SiteSummaryFeature(BaseModel):
         return int(self.site_id[8:])
 
 
-class Feature(BaseModel):
+class Feature(Schema):
     class Config:
         arbitrary_types_allowed = True
 
@@ -111,7 +112,7 @@ class Feature(BaseModel):
         return geom
 
 
-class RegionModel(BaseModel):
+class RegionModel(Schema):
     type: Literal['FeatureCollection']
     features: list[Feature]
 

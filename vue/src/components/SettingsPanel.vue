@@ -41,6 +41,15 @@ const showSiteOutline = computed({
   },
 });
 
+const showRegionPolygon = computed({
+  get() {
+    return state.filters.showRegionPolygon || false;
+  },
+  set(val: boolean) {
+    state.filters = { ...state.filters, showRegionPolygon: val };
+  },
+});
+
 const groundTruthPattern = computed({
   get() {
     return state.filters.groundTruthPattern || false;
@@ -257,6 +266,23 @@ watch(hiddenCanvas, () => {
         <span class="label-text">Site Outline:</span>
         <input
           v-model="showSiteOutline"
+          type="checkbox"
+          class="checkbox-primary checkbox"
+        >
+      </label>
+    </div>
+    <div class="form-control">
+      <label class="label cursor-pointer">
+        <div
+          :style="{
+            border: '1px solid grey',
+            height: '32px',
+            width: '32px'
+          }"
+        />
+        <span class="label-text">Region Polygon:</span>
+        <input
+          v-model="showRegionPolygon"
           type="checkbox"
           class="checkbox-primary checkbox"
         >

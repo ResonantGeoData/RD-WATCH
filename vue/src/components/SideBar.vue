@@ -135,34 +135,13 @@ function nextPage() {
   cursor: pointer;
 }
 
-@keyframes flickerAnimation {
-  0% { opacity: 1; }
-  50% { opacity: 0; }
-  100% { opacity: 1; }
-}
-
-@keyframes flickerAnimation {
-  0% { opacity: 1; }
-  50% { opacity: 0; }
-  100% { opacity: 1; }
-}
-
-@keyframes flickerAnimation {
-  0% { opacity: 1; }
-  50% { opacity: 0; }
-  100% { opacity: 1; }
-}
-
-@keyframes flickerAnimation {
+@keyframes flicker-animation {
   0% { opacity: 1; }
   50% { opacity: 0; }
   100% { opacity: 1; }
 }
 
 .animate-flicker {
-  animation: flickerAnimation 1s infinite;
-  animation: flickerAnimation 1s infinite;
-  animation: flickerAnimation 1s infinite;
-  animation: flickerAnimation 1s infinite;
+  animation: flicker-animation 1s infinite;
 }
 </style>

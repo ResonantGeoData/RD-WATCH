@@ -10,6 +10,7 @@ import { markRaw, onMounted, onUnmounted, shallowRef, watch } from "vue";
 import type { FilterSpecification } from "maplibre-gl";
 import type { ShallowRef } from "vue";
 import { popupLogic } from "../interactions/popup";
+import { satelliteLoading } from "../interactions/satelliteLoading";
 import { setReference } from "../interactions/fillPatterns";
 
 const mapContainer: ShallowRef<null | HTMLElement> = shallowRef(null);
@@ -51,6 +52,7 @@ onMounted(() => {
       })
     );
     popupLogic(map);
+    satelliteLoading(map);
     setReference(map);
   }
 });

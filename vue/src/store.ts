@@ -17,6 +17,7 @@ export interface SatelliteData {
   satelliteTimeList: string[];
   satelliteTimeStamp: string | null,
   satelliteBounds:[number,number][];
+  loadingSatelliteImages: boolean;
 }
 
 export const state = reactive<{
@@ -53,6 +54,7 @@ export const state = reactive<{
     satelliteTimeStamp: null,
     satelliteBounds: [],
     imageOpacity: 0.75,
+    loadingSatelliteImages: false,
   },
   patterns: {
     patternThickness: 8,

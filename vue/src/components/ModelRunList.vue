@@ -276,6 +276,9 @@ watch([() => props.filters.region, () => props.filters.performer], () => {
       <progress class="progress progress-primary" />
     </div>
   </div>
+  <div v-if="state.satellite.loadingSatelliteImages">
+    <progress class="progress h-1 progress-primary" />
+  </div>
   <div
     v-if="!loading && state.filters.region_id?.length && satelliteRegionTooLarge"
     style="font-size: 0.75em"

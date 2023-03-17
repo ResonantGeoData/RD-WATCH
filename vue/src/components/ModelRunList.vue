@@ -37,6 +37,7 @@ const resultsBoundingBox = ref({
 });
 const totalModelRuns = ref(1);
 const loading = ref(false);
+const satelliteRegionTooLarge = ref(false);
 
 let request: CancelablePromise<ModelRunList> | undefined;
 
@@ -80,6 +81,7 @@ async function loadMore() {
         ymax: bounds.getNorth(),
       };
       resultsBoundingBox.value = bbox;
+      getSatelliteTimestamps(modelRunList)
       state.bbox = bbox;
     } else if (!state.filters.region_id?.length) {
       const bbox = {
@@ -150,6 +152,39 @@ function updateCameraBounds(filtered = true) {
   }
 }
 
+const loadingSatelliteTimestamps = ref(false);
+
+async function getSatelliteTimestamps(modelRun: ModelRunList, force=false) {
+  satelliteRegionTooLarge.value = false;
+  loadingSatelliteTimestamps.value = true;
+  state.satellite.satelliteTimeList = [];
+  const bbox = modelRun.bbox?.coordinates[0];
+  if (bbox && !force) {
+    let minX = Infinity;
+    let maxX = -Infinity;
+    let minY = Infinity;
+    let maxY = -Infinity;
+    (bbox as []).forEach((item: [number, number]) => {
+      minX = Math.min(minX, item[1]);
+      minY = Math.min(minY, item[0]);
+      maxX = Math.max(maxX, item[1]);
+      maxY = Math.max(maxY, item[0]);
+    })
+    const xSize = maxX - minX;
+    const ySize = maxY - minY;
+    if (xSize > 1 || ySize > 1) {
+      loadingSatelliteTimestamps.value = false;
+      satelliteRegionTooLarge.value = true;
+      return;
+    }
+  }
+  const results = await ApiService.getSatelliteTimestamps(
+      'S2', 'visual','2A', modelRun.timerange?.min, modelRun.timerange?.max, modelRun.bbox?.coordinates[0] as []);
+  loadingSatelliteTimestamps.value = false;
+  state.satellite.satelliteTimeList = results;
+  state.satellite.satelliteBounds = modelRun.bbox?.coordinates[0] as [];
+}
+
 function handleToggle(modelRun: KeyedModelRun) {
   if (openedModelRuns.value.has(modelRun.key)) {
     openedModelRuns.value.delete(modelRun.key);
@@ -210,16 +245,69 @@ watch([() => props.filters.region, () => props.filters.performer], () => {
 <template>
   <div class="flex flex-row bg-gray-100">
     <span
-      v-if="!loading"
+      v-if="!loading && !loadingSatelliteTimestamps"
       style="font-size: 0.75em"
       class="badge-accent badge ml-2"
     >{{ totalModelRuns }} {{ totalModelRuns > 1 ? "Runs" : "Run" }}</span>
+    <span
+      v-if="!loading && !loadingSatelliteTimestamps && state.satellite.satelliteTimeList.length && !state.satellite.satelliteImagesOn && state.filters.region_id?.length"
+      style="font-size: 0.75em"
+      class="badge-secondary badge ml-2"
+    >{{ state.satellite.satelliteTimeList.length }} {{ state.satellite.satelliteTimeList.length > 1 ? "Image Timestamps" : "Image Timestamp" }}</span>
+    <span
+      v-else-if="!loading && !loadingSatelliteTimestamps && state.satellite.satelliteTimeStamp && state.satellite.satelliteImagesOn && !satelliteRegionTooLarge"
+      style="font-size: 0.75em"
+      class="badge-secondary badge ml-2"
+    >Satellite Time: {{ state.satellite.satelliteTimeStamp }}</span>
     <div
       v-if="loading"
       class="px-2"
       style="width: 100%"
     >
+      <b>ModelRun</b>
       <progress class="progress progress-primary" />
+    </div>
+    <div
+      v-if="loadingSatelliteTimestamps"
+      class="px-2"
+      style="width: 100%"
+    >
+      <b>Satellite Timestamps</b>
+      <progress class="progress progress-primary" />
+    </div>
+  </div>
+  <div v-if="state.satellite.loadingSatelliteImages">
+    <progress class="progress h-1 progress-primary" />
+  </div>
+  <div
+    v-if="!loading && state.filters.region_id?.length && satelliteRegionTooLarge"
+    style="font-size: 0.75em"
+    class=""
+  >
+    <div class="alert alert-warning shadow-lg">
+      <div>
+        <svg
+          xmlns="http://www.w3.org/2000/svg"
+          class="stroke-current flex-shrink-0 h-6 w-6"
+          fill="none"
+          viewBox="0 0 24 24"
+        ><path
+          stroke-linecap="round"
+          stroke-linejoin="round"
+          stroke-width="2"
+          d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"
+        /></svg>
+        <span>    Region is Too Large to efficiently get Images: 
+        </span>
+        <div class="flex-none">
+          <button
+            class="btn btn-xs btn-primary"
+            @click="satelliteRegionTooLarge = false"
+          >
+            Dismiss
+          </button>
+        </div>
+      </div>
     </div>
   </div>
   <div

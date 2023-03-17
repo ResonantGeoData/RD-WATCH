@@ -3,10 +3,10 @@ import ModelRunList from "./ModelRunList.vue";
 import TimeSlider from "./TimeSlider.vue";
 import PerformerFilter from "./filters/PerformerFilter.vue";
 import RegionFilter from "./filters/RegionFilter.vue";
-import { Cog6ToothIcon } from "@heroicons/vue/24/solid";
+import { Cog6ToothIcon, PhotoIcon } from "@heroicons/vue/24/solid";
 import SettingsPanel from "./SettingsPanel.vue";
 import { state } from "../store";
-import { ref, watch } from "vue";
+import { computed, ref, watch } from "vue";
 import type { Performer, QueryArguments, Region } from "../client";
 import type { Ref } from "vue";
 
@@ -29,6 +29,9 @@ watch(selectedPerformer, (val) => {
 });
 watch(selectedRegion, (val) => {
   queryFilters.value = { ...queryFilters.value, region: val?.name, page: 1 };
+  if (selectedRegion.value === null) {
+    state.satellite.satelliteImagesOn = false;
+  }
   state.filters = {
     ...state.filters,
     region_id: val?.id === undefined ? undefined : [val.id],
@@ -39,6 +42,16 @@ watch(showSiteOutline, (val) => {
 });
 const expandSettings = ref(false);
 
+const imagesOn = computed({
+  get() {
+    return state.satellite.satelliteImagesOn || false;
+  },
+  set(val: boolean) {
+    state.satellite = { ...state.satellite, satelliteImagesOn: val };
+  },
+});
+
+
 function nextPage() {
   queryFilters.value = {
     ...queryFilters.value,
@@ -48,7 +61,7 @@ function nextPage() {
 </script>
 
 <template>
-  <div class="fixed h-screen w-80 pt-2 pb-2 pl-2">
+  <div class="fixed h-screen w-200 pt-2 pb-2 pl-2">
     <div
       class="flex h-full flex-col overflow-hidden rounded-xl bg-white drop-shadow-2xl"
     >
@@ -75,8 +88,19 @@ function nextPage() {
           />
           <RegionFilter v-model="selectedRegion" />
           <span class="h5 grow" />
+          <PhotoIcon 
+            class="h-5 mt-0.5"
+            :class="{
+              'animate-flicker': state.satellite.loadingSatelliteImages,
+              'text-blue-600': imagesOn,
+              'hover': selectedRegion !== null && state.satellite.satelliteTimeList.length !== 0,
+              'text-gray-400': selectedRegion === null || state.satellite.satelliteTimeList.length === 0,
+            }"
+            @click="imagesOn = selectedRegion !== null && state.satellite.satelliteTimeList.length !== 0 ? !imagesOn : imagesOn"
+          />
+          <span class="h5 grow" />
           <Cog6ToothIcon
-            class="hover h-5 text-blue-600"
+            class="hover h-5 text-blue-600 mt-0.5"
             @click="expandSettings = !expandSettings"
           />
         </div>
@@ -109,5 +133,15 @@ function nextPage() {
 
 .hover:hover {
   cursor: pointer;
+}
+
+@keyframes flicker-animation {
+  0% { opacity: 1; }
+  50% { opacity: 0; }
+  100% { opacity: 1; }
+}
+
+.animate-flicker {
+  animation: flicker-animation 1s infinite;
 }
 </style>

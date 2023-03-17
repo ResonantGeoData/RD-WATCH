@@ -10,6 +10,7 @@ import { markRaw, onMounted, onUnmounted, shallowRef, watch } from "vue";
 import type { FilterSpecification } from "maplibre-gl";
 import type { ShallowRef } from "vue";
 import { popupLogic } from "../interactions/popup";
+import { satelliteLoading } from "../interactions/satelliteLoading";
 import { setReference } from "../interactions/fillPatterns";
 
 const mapContainer: ShallowRef<null | HTMLElement> = shallowRef(null);
@@ -39,7 +40,11 @@ onMounted(() => {
     map.value = markRaw(
       new Map({
         container: mapContainer.value,
-        style: style(state.timestamp, {}),
+        style: style(state.timestamp,  {
+          groundTruthPattern: false,
+          otherPattern: false,
+        }, state.satellite
+        ),
         bounds: [
           [state.bbox.xmin, state.bbox.ymin],
           [state.bbox.xmax, state.bbox.ymax],
@@ -47,6 +52,7 @@ onMounted(() => {
       })
     );
     popupLogic(map);
+    satelliteLoading(map);
     setReference(map);
   }
 });
@@ -55,7 +61,27 @@ onUnmounted(() => {
   map.value?.remove();
 });
 
-watch([() => state.timestamp, () => state.filters], () => {
+watch([() => state.timestamp, () => state.filters, () => state.satellite], () => {
+  if (state.satellite.satelliteImagesOn) {
+    if (state.filters && state.satellite.satelliteTimeList && state.satellite.satelliteTimeList.length > 0) {
+        const list = state.satellite.satelliteTimeList.map((item) => new Date(`${item}Z`));
+        const base = new Date(state.timestamp * 1000);
+        const filtered = list.filter((item) => item.valueOf() <= base.valueOf());
+        let baseList = filtered;
+        if (filtered.length === 0) {
+          baseList = list;
+        }
+        baseList.sort((a,b) => {
+            const distanceA = Math.abs(base.valueOf() - a.valueOf());
+            const distanceB = Math.abs(base.valueOf() - b.valueOf());
+            return distanceA - distanceB;
+        })
+        // Lets try to get the closes timestamp that is less than the current time.
+        const date = baseList[0];
+        const timeStamp = date.toISOString().substring(0,19);
+        state.satellite.satelliteTimeStamp = timeStamp;
+    }
+  }
   const siteFilter = buildSiteFilter(state.timestamp, state.filters);
   const observationFilter = buildObservationFilter(
     state.timestamp,
@@ -66,7 +92,7 @@ watch([() => state.timestamp, () => state.filters], () => {
   setFilter("observations-outline", observationFilter);
   setFilter("observations-text", observationFilter);
   map.value?.setStyle(
-    style(state.timestamp, state.filters as Record<string, number>)
+    style(state.timestamp, state.filters, state.satellite)
   );
 });
 

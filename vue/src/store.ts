@@ -11,6 +11,15 @@ export interface MapFilters {
   otherPattern?: boolean;
 }
 
+export interface SatelliteData {
+  satelliteImagesOn: boolean;
+  imageOpacity: number;
+  satelliteTimeList: string[];
+  satelliteTimeStamp: string | null,
+  satelliteBounds:[number,number][];
+  loadingSatelliteImages: boolean;
+}
+
 export const state = reactive<{
   timestamp: number;
   settings: {
@@ -18,6 +27,7 @@ export const state = reactive<{
   };
   bbox: { xmin: number; ymin: number; xmax: number; ymax: number };
   filters: MapFilters;
+  satellite: SatelliteData;
   patterns: {
     patternThickness: number;
     patternOpacity: number;
@@ -37,6 +47,14 @@ export const state = reactive<{
   filters: {
     groundTruthPattern: false,
     otherPattern: false,
+  },
+  satellite: {
+    satelliteImagesOn: false,
+    satelliteTimeList:[],
+    satelliteTimeStamp: null,
+    satelliteBounds: [],
+    imageOpacity: 0.75,
+    loadingSatelliteImages: false,
   },
   patterns: {
     patternThickness: 8,

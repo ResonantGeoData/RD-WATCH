@@ -82,8 +82,8 @@ const drawCanvasPattern = () => {
       ctx.rect(0, 0, width, height);
       ctx.stroke();
       const outlineURL = hiddenCanvas.value.toDataURL();
-      if (polygonImg.value) {
-        polygonImg.value.src = outlineURL;
+      if (siteOutlineImg.value) {
+        siteOutlineImg.value.src = outlineURL;
       }
 
       ctx.lineWidth = thickness;
@@ -147,7 +147,7 @@ watch([patternThickness, patternOpacity], () => {
 
 const groundImg: Ref<null | HTMLImageElement> = ref(null);
 const performerImg: Ref<null | HTMLImageElement> = ref(null);
-const polygonImg: Ref<null | HTMLImageElement> = ref(null);
+const siteOutlineImg: Ref<null | HTMLImageElement> = ref(null);
 const hiddenCanvas: Ref<null | HTMLCanvasElement> = ref(null);
 
 const info = computed(() => {
@@ -212,7 +212,7 @@ watch(hiddenCanvas, () => {
     <div class="form-control">
       <label class="label cursor-pointer">
         <img
-          ref="polygonImg"
+          ref="siteOutlineImg"
           height="32"
           width="32"
         >
@@ -226,11 +226,13 @@ watch(hiddenCanvas, () => {
     </div>
     <div class="form-control">
       <label class="label cursor-pointer">
-        <img
-          ref="polygonImg"
-          height="32"
-          width="32"
-        >
+        <div
+          :style="{
+            border: '1px solid grey',
+            height: '32px',
+            width: '32px'
+          }"
+        />
         <span class="label-text">Region Polygon:</span>
         <input
           v-model="showRegionPolygon"

@@ -10,7 +10,7 @@ env:
   DJANGO_SETTINGS_MODULE: rdwatch.server.settings
   RDWATCH_SECRET_KEY: ff07f533a59fed1349a4fc49941d02ff22514f6dbf6086a44ea0c0a8952e8644
   RDWATCH_POSTGRESQL_URI: postgresql://rdwatch:ff07f533a59fed1349a4fc49941d02ff22514f6dbf6086a44ea0c0a8952e8644@localhost:5432/rdwatch
-  RDWATCH_REDIS_URI: redis://rdwatch:ff07f533a59fed1349a4fc49941d02ff22514f6dbf6086a44ea0c0a8952e8644@localhost:6379/rdwatch
+  RDWATCH_REDIS_URI: redis://localhost:6379/rdwatch
   RDWATCH_DJANGO_DEBUG: 0
 jobs:
   lint-python:
@@ -58,13 +58,15 @@ jobs:
         tox-env: [test, check-migrations]
     services:
       postgres:
-        image: ghcr.io/resonantgeodata/rd-watch/postgresql:latest
+        image: postgis/postgis:latest
         env:
+          POSTGRES_DB: rdwatch
+          POSTGRES_USER: rdwatch
           POSTGRES_PASSWORD: ${{ env.RDWATCH_SECRET_KEY }}
+        ports:
+          - 5432:5432
       redis:
-        image: ghcr.io/resonantgeodata/rd-watch/redis:latest
-        env:
-          RDWATCH_SECRET_KEY: ${{ env.RDWATCH_SECRET_KEY }}
+        image: redis:latest
     steps:
       - name: Install system dependencies
         run: apt-fast install --no-install-recommends --yes

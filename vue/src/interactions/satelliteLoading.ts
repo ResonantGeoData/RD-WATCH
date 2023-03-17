@@ -33,4 +33,4 @@ const satelliteLoading = (map: ShallowRef<null | Map>) => {
     }
 };
 
-export { popupLogic, satelliteLoading };
+export { satelliteLoading };

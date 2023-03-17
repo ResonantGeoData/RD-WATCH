@@ -57,6 +57,7 @@ pre-commit = "^3.0.3"
 "lint:isort" = "isort --check --diff src"
 "lint:isort:fix" = "isort src"
 "lint:mypy" = "mypy src"
+"test" = "tox"
 
 [tool.black]
 skip-string-normalization = true

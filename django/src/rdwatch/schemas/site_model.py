@@ -3,12 +3,14 @@ import json
 from datetime import datetime
 from typing import Any, Literal
 
-from pydantic import BaseModel, constr, validator
+from ninja import Schema
+from pydantic import constr, validator
 
+from django.contrib.gis.gdal import GDALException
 from django.contrib.gis.geos import GEOSGeometry
 
 
-class SiteFeature(BaseModel):
+class SiteFeature(Schema):
     type: Literal['site']
     region_id: constr(regex=r'^[A-Z]{2}_[RCST][\dx]{3}$')
     site_id: str
@@ -67,7 +69,7 @@ class SiteFeature(BaseModel):
         return int(self.site_id[8:])
 
 
-class ObservationFeature(BaseModel):
+class ObservationFeature(Schema):
     type: Literal['observation']
     observation_date: datetime | None
     source: str | None
@@ -105,7 +107,7 @@ class ObservationFeature(BaseModel):
     misc_info: dict[Any, Any] | None
 
 
-class Feature(BaseModel):
+class Feature(Schema):
     class Config:
         arbitrary_types_allowed = True
 
@@ -115,7 +117,10 @@ class Feature(BaseModel):
 
     @validator('geometry', pre=True)
     def parse_geometry(cls, v: dict[str, Any]):
-        return GEOSGeometry(json.dumps(v))
+        try:
+            return GEOSGeometry(json.dumps(v))
+        except GDALException:
+            raise ValueError('Failed to parse geometry.')
 
     @validator('geometry')
     def ensure_correct_geometry_type(cls, v: GEOSGeometry, values: dict[str, Any]):
@@ -129,7 +134,7 @@ class Feature(BaseModel):
         return v
 
 
-class SiteModel(BaseModel):
+class SiteModel(Schema):
     type: Literal['FeatureCollection']
     features: list[Feature]
 

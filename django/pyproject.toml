@@ -33,7 +33,7 @@ rio-tiler = "^3.1.6"
 mercantile = "^1.2.1"
 django-filter = "^22.1"
 django-redis = "^5.2.0"
-pydantic = "^1.10.5"
+django-ninja = "^0.21.0"
 
 [tool.poetry.dev-dependencies]
 black = "~22.6.0"

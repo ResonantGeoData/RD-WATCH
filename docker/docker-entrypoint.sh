@@ -21,9 +21,11 @@ if [ "$1" = "unitd" ]; then
   fi
 fi
 
-# Run migrations
-cd /app/django
-poetry run django-admin migrate
-cd -
+# Run migrations if `django-admin` is installed
+if command -v "django-admin"; then
+  cd /app/django
+  poetry run django-admin migrate
+  cd -
+fi
 
 exec "$@"

@@ -8,7 +8,7 @@ Get up and running with the recommended development setup. It's advised to devel
 
 1. Make a copy of the file ["template.env"](https://github.com/ResonantGeoData/RD-WATCH/blob/phase-ii/template.env) as ".env" and fill it out
 2. Pull in the Docker images: `docker compose --profile vscode pull`
-3. Install the dependencies for Django: `docker compose run --rm poetry install`
+3. Install the dependencies for Django: `docker compose run --rm poetry install --all-extras`
 4. Install the dependencies for Vue: `docker compose run --rm npm install`
 5. Run migrations: `docker compose run --rm poetry run django-admin migrate`
 6. Load test data: `docker compose run --rm poetry run django-admin loaddata testdata`

@@ -7,7 +7,7 @@ from ninja import Schema
 from pydantic import constr, validator
 
 from django.contrib.gis.gdal import GDALException
-from django.contrib.gis.geos import GEOSGeometry, MultiPolygon, Polygon
+from django.contrib.gis.geos import GEOSGeometry, Polygon
 
 
 class RegionFeature(Schema):
@@ -103,14 +103,14 @@ class Feature(Schema):
 
     type: Literal['Feature']
     properties: RegionFeature | SiteSummaryFeature
-    geometry: MultiPolygon
+    geometry: Polygon
 
     @validator('geometry', pre=True)
     def parse_geometry(cls, v: dict[str, Any]):
         try:
             geom = GEOSGeometry(json.dumps(v))
-            if isinstance(geom, Polygon):
-                geom = MultiPolygon(geom)
+            if not isinstance(geom, Polygon):
+                raise ValueError('A region or site summary geometry must be a Polygon.')
             return geom
         except GDALException:
             raise ValueError('Failed to parse geometry.')

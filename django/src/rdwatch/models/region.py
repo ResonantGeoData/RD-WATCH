@@ -1,7 +1,7 @@
 import iso3166
 
-from django.contrib.gis.db.models import MultiPolygonField
-from django.contrib.gis.geos import MultiPolygon
+from django.contrib.gis.db.models import PolygonField
+from django.contrib.gis.geos import Polygon
 from django.core.exceptions import ObjectDoesNotExist
 from django.db import models, transaction
 from rest_framework.exceptions import ValidationError
@@ -27,7 +27,7 @@ class Region(models.Model):
         null=True,
         db_index=True,
     )
-    geom = MultiPolygonField(
+    geom = PolygonField(
         help_text='Polygon from the associated Region Feature',
         srid=3857,
         spatial_index=True,
@@ -57,7 +57,7 @@ class Region(models.Model):
 
 def get_or_create_region(
     region_id: str,
-    region_polygon: MultiPolygon | None = None,
+    region_polygon: Polygon | None = None,
 ) -> tuple[Region, bool]:
     countrystr, numstr = region_id.split('_')
     contrynum = iso3166.countries_by_alpha2[countrystr].numeric

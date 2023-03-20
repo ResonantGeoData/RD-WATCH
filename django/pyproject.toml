@@ -34,6 +34,7 @@ mercantile = "^1.2.1"
 django-filter = "^22.1"
 django-redis = "^5.2.0"
 django-ninja = "^0.21.0"
+tox = {version = "^4.4.7", extras = ["test"]}
 
 [tool.poetry.dev-dependencies]
 black = "~22.6.0"
@@ -57,6 +58,7 @@ pre-commit = "^3.0.3"
 "lint:isort" = "isort --check --diff src"
 "lint:isort:fix" = "isort src"
 "lint:mypy" = "mypy src"
+"test" = "tox"
 
 [tool.black]
 skip-string-normalization = true

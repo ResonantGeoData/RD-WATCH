@@ -69,7 +69,7 @@ def worldview_search(
     else:
         time_str = f'{_fmt_time(timestamp)}Z'
     params['datetime'] = time_str
-    params['collections'] = ['ta1-wv-acc']
+    params['collections'] = ['ta1-wv-acc-2']
     params['page'] = page
     params['limit'] = 100
     request = Request(

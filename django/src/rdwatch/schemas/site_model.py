@@ -4,7 +4,7 @@ from datetime import datetime
 from typing import Any, Literal
 
 from ninja import Schema
-from pydantic import constr, validator
+from pydantic import constr, root_validator, validator
 
 from django.contrib.gis.gdal import GDALException
 from django.contrib.gis.geos import GEOSGeometry
@@ -122,16 +122,21 @@ class Feature(Schema):
         except GDALException:
             raise ValueError('Failed to parse geometry.')
 
-    @validator('geometry')
-    def ensure_correct_geometry_type(cls, v: GEOSGeometry, values: dict[str, Any]):
-        if isinstance(values['properties'], SiteFeature) and v.geom_type != 'Polygon':
+    @root_validator
+    def ensure_correct_geometry_type(cls, values: dict[str, Any]):
+        if 'properties' not in values or 'geometry' not in values:
+            return values
+        if (
+            isinstance(values['properties'], SiteFeature)
+            and values['geometry'].geom_type != 'Polygon'
+        ):
             raise ValueError('Site geometry must be of type "Polygon"')
         if (
             isinstance(values['properties'], ObservationFeature)
-            and v.geom_type != 'MultiPolygon'
+            and values['geometry'].geom_type != 'MultiPolygon'
         ):
             raise ValueError('Observation geometry must be of type "MultiPolygon"')
-        return v
+        return values
 
 
 class SiteModel(Schema):

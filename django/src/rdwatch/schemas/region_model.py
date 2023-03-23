@@ -1,9 +1,9 @@
 # flake8: noqa: F722
 import json
 from datetime import datetime
-from typing import Any, Literal
+from typing import Annotated, Any, Literal
 
-from ninja import Schema
+from ninja import Field, Schema
 from pydantic import constr, validator
 
 from django.contrib.gis.gdal import GDALException
@@ -102,7 +102,10 @@ class Feature(Schema):
         arbitrary_types_allowed = True
 
     type: Literal['Feature']
-    properties: RegionFeature | SiteSummaryFeature
+    properties: Annotated[
+        RegionFeature | SiteSummaryFeature,
+        Field(discriminator='type'),
+    ]
     geometry: Polygon
 
     @validator('geometry', pre=True)

@@ -82,7 +82,7 @@ class ObservationFeature(Schema):
             'Post Construction',
             'Unknown',
         ]
-    ]
+    ] | None
     is_occluded: list[bool] | None
     is_site_boundary: list[bool] | None
 
@@ -125,7 +125,7 @@ class ObservationFeature(Schema):
             for field in ('current_phase', 'is_occluded', 'is_site_boundary')
             if values.get(field) is not None
         ]
-        if len({len(l) for l in lists}) != 1:
+        if len(lists) and len({len(l) for l in lists}) != 1:
             raise ValueError(
                 'current_phase/is_occluded/is_site_boundary lists must be the same length!'
             )

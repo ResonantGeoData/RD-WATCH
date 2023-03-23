@@ -74,33 +74,62 @@ class ObservationFeature(Schema):
     observation_date: datetime | None
     source: str | None
     sensor_name: Literal['Landsat 8', 'Sentinel-2', 'WorldView', 'Planet'] | None
-    current_phase: Literal[
-        'No Activity',
-        'Site Preparation',
-        'Active Construction',
-        'Post Construction',
-        'Unknown',
+    current_phase: list[
+        Literal[
+            'No Activity',
+            'Site Preparation',
+            'Active Construction',
+            'Post Construction',
+            'Unknown',
+        ]
     ]
-    is_occluded: bool | None
-    is_site_boundary: bool | None
+    is_occluded: list[bool] | None
+    is_site_boundary: list[bool] | None
 
     @validator('is_occluded', 'is_site_boundary', pre=True)
-    def coerce_booleans(cls, val: Literal['True', 'False'] | bool | None):
-        if val is None or isinstance(val, bool):
+    def convert_bools_to_list(cls, val: str, values, field):
+        """
+        Converts comma-space-seperated strings into lists of bools.
+        """
+        if val is None:
             return val
-        return val != 'False'
+        converted_list = [
+            {'True': True, 'False': False}.get(v, None) for v in val.split(', ')
+        ]
+        if None in converted_list:
+            raise ValueError(
+                f'Invalid value "{val}" for field {field.name} - '
+                'must be a comma-space-separated formatted string.'
+            )
+        return converted_list
 
     @validator('current_phase', pre=True)
-    def convert_null_phases_to_unknown(cls, val: str | None):
+    def convert_phases_to_list(cls, val: str | None):
+        """
+        Converts comma-space-seperated strings into lists of phase strings.
+        """
         if val is None:
-            return 'Unknown'
-        return val
+            return val
+        return val.split(', ')
 
     @validator('observation_date', pre=True)
     def parse_dates(cls, v: str | None) -> datetime | None:
         if v is None:
             return v
         return datetime.strptime(v, '%Y-%m-%d')
+
+    @root_validator
+    def ensure_consistent_list_lengths(cls, values: dict[str, Any]):
+        lists = [
+            values.get(field)
+            for field in ('current_phase', 'is_occluded', 'is_site_boundary')
+            if values.get(field) is not None
+        ]
+        if len({len(l) for l in lists}) != 1:
+            raise ValueError(
+                'current_phase/is_occluded/is_site_boundary lists must be the same length!'
+            )
+        return values
 
     # Optional fields
     score: float | None
@@ -168,41 +197,3 @@ class SiteModel(Schema):
         if len(site_features) != 1:
             raise ValueError("must contain exactly one 'Site' feature")
         return v
-
-    @validator('features', pre=True)
-    def preprocess_features(cls, v: list):
-        return _preprocess_features(v)
-
-
-def _preprocess_features(features: list) -> list:
-    new_features = []
-    for feature in features:
-        if (
-            feature['properties'].get('current_phase')
-            and ', ' in feature['properties']['current_phase']
-        ):
-            affected_fields = (
-                'current_phase',
-                'is_occluded',
-                'is_site_boundary',
-            )
-            for i, phase in enumerate(
-                feature['properties']['current_phase'].split(', ')
-            ):
-                new_properties = {
-                    **feature['properties'],
-                    'geometry': {
-                        'type': feature['geometry']['type'],
-                        'coordinates': feature['geometry']['coordinates'][i],
-                    },
-                    **{
-                        field: feature['properties'][field].split(', ')[i]
-                        for field in affected_fields
-                    },
-                }
-                new_feature = {**feature, 'properties': new_properties}
-                new_features.append(new_feature)
-        else:
-            new_features.append(feature)
-            continue
-    return new_features

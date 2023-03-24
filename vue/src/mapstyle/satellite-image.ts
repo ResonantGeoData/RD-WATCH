@@ -1,5 +1,5 @@
 import type { LayerSpecification, SourceSpecification } from "maplibre-gl";
-import type { SatelliteData } from "../store";
+import type { MapFilters, SatelliteData } from "../store";
 
 const urlRoot = `${location.protocol}//${location.host}`;
 const satelliteImages = "satelliteTiles";
@@ -51,15 +51,36 @@ export const layers = (
          return [];
     }
     const layers: LayerSpecification[] = [
-    {
-        id: "satelliteimages",
-        type: "raster",
-        source: satelliteImages,
-        paint: {
-            "raster-opacity":satellite.imageOpacity,
-          },
-      
-    },
-];
-return layers;
+      {
+          id: "satelliteimages",
+          type: "raster",
+          source: satelliteImages,
+          paint: {
+              "raster-opacity":satellite.imageOpacity,
+              "raster-fade-duration": 0,
+            },      
+      },  
+    ];
+    return layers;
   }
+
+export const setSatelliteTimeStamp = (state: { filters: MapFilters, satellite: SatelliteData, timestamp: number}) => {
+  if (state.filters && state.satellite.satelliteTimeList && state.satellite.satelliteTimeList.length > 0) {
+    const list = state.satellite.satelliteTimeList.map((item) => new Date(`${item}Z`));
+    const base = new Date(state.timestamp * 1000);
+    const filtered = list.filter((item) => item.valueOf() <= base.valueOf());
+    let baseList = filtered;
+    if (filtered.length === 0) {
+      baseList = list;
+    }
+    baseList.sort((a,b) => {
+        const distanceA = Math.abs(base.valueOf() - a.valueOf());
+        const distanceB = Math.abs(base.valueOf() - b.valueOf());
+        return distanceA - distanceB;
+    })
+    // Lets try to get the closes timestamp that is less than the current time.
+    const date = baseList[0];
+    const timeStamp = date.toISOString().substring(0,19);
+    state.satellite.satelliteTimeStamp = timeStamp;
+}
+}

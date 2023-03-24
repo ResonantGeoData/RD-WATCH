@@ -10,6 +10,8 @@ import type {
 } from "maplibre-gl";
 import type { MapFilters } from "../store";
 
+import { annotationColors, observationText, siteText } from "./annotationStyles";
+
 // function buildSearchFilters(filters: MapFilters) {
 //   const filter: FilterSpecification = ["all"];
 //   if (filters.groundtruth) {
@@ -118,40 +120,6 @@ export const buildRegionFilter = (
 
 const rdwatchtiles = "rdwatchtiles";
 const urlRoot = `${location.protocol}//${location.host}`;
-const annotationColor: DataDrivenPropertyValueSpecification<string> = [
-  "case",
-  ["==", ["get", "label"], 1],
-  "#1F77B4",
-  ["==", ["get", "label"], 2],
-  "#A020F0",
-  ["==", ["get", "label"], 3],
-  "#2CA02C",
-  ["==", ["get", "label"], 4],
-  "#2f4f4f",
-  ["==", ["get", "label"], 5],
-  "#228b22",
-  ["==", ["get", "label"], 6],
-  "#7f0000",
-  ["==", ["get", "label"], 7],
-  "#00008b",
-  ["==", ["get", "label"], 8],
-  "#ff8c00",
-  ["==", ["get", "label"], 9],
-  "#ffff00",
-  ["==", ["get", "label"], 10],
-  "#1e90ff",
-  ["==", ["get", "label"], 11],
-  "#00ffff",
-  ["==", ["get", "label"], 12],
-  "#ff00ff",
-  ["==", ["get", "label"], 13],
-  "#00ff00",
-  ["==", ["get", "label"], 14],
-  "#ff69b4",
-  ["==", ["get", "label"], 15],
-  "#ffe4c4",
-  "#7F7F7F",
-];
 const observationWidth: DataDrivenPropertyValueSpecification<number> = [
   // If this observation is a grouth truth, make the width 4. Otherwise, make it 2.
   "case",
@@ -192,7 +160,7 @@ export const layers = (
     source: rdwatchtiles,
     "source-layer": "observations",
     paint: {
-      "fill-color": annotationColor,
+      "fill-color": annotationColors,
       "fill-opacity": 1,
       "fill-pattern": buildObservationFill(timestamp, filters),
     },
@@ -204,7 +172,7 @@ export const layers = (
     source: rdwatchtiles,
     "source-layer": "observations",
     paint: {
-      "line-color": annotationColor,
+      "line-color": annotationColors,
       "line-width": observationWidth,
     },
     filter: buildObservationFilter(timestamp, filters),
@@ -219,19 +187,10 @@ export const layers = (
       "text-font": ["Roboto Regular"],
       "text-max-width": 5,
       "text-size": 12,
-      "text-field": [
-        "case",
-        ["==", ["get", "label"], 1],
-        "active_construction",
-        ["==", ["get", "label"], 2],
-        "post_construction",
-        ["==", ["get", "label"], 3],
-        "site_preparation",
-        "",
-      ],
+      "text-field": observationText,
     },
     paint: {
-      "text-color": annotationColor,
+      "text-color": annotationColors,
     },
     filter: buildObservationFilter(timestamp, filters),
   },
@@ -241,7 +200,7 @@ export const layers = (
     source: rdwatchtiles,
     "source-layer": "regions",
     paint: {
-      "line-color": annotationColor,
+      "line-color": annotationColors,
       "line-width": 2,
     },
     filter: buildRegionFilter(filters),
@@ -252,7 +211,7 @@ export const layers = (
     source: rdwatchtiles,
     "source-layer": "sites",
     paint: {
-      "line-color": annotationColor,
+      "line-color": annotationColors,
       "line-width": 2,
     },
     filter: buildSiteFilter(timestamp, filters),
@@ -267,39 +226,10 @@ export const layers = (
       "text-font": ["Roboto Regular"],
       "text-max-width": 5,
       "text-size": 12,
-      "text-field": [
-        "case",
-        ["==", ["get", "label"], 6],
-        "positive_annotated",
-        ["==", ["get", "label"], 7],
-        "positive_partial",
-        ["==", ["get", "label"], 8],
-        "positive_annotated_static",
-        ["==", ["get", "label"], 9],
-        "positive_partial_static",
-        ["==", ["get", "label"], 10],
-        "positive_pending",
-        ["==", ["get", "label"], 11],
-        "positive_excluded",
-        ["==", ["get", "label"], 12],
-        "negative",
-        ["==", ["get", "label"], 13],
-        "ignore",
-        ["==", ["get", "label"], 14],
-        "transient_positive",
-        ["==", ["get", "label"], 15],
-        "transient_negative",
-        ["==", ["get", "label"], 16],
-        "system_proposed",
-        ["==", ["get", "label"], 17],
-        "system_confirmed",
-        ["==", ["get", "label"], 18],
-        "system_rejected",
-        "",
-      ],
+      "text-field": siteText,
     },
     paint: {
-      "text-color": annotationColor,
+      "text-color": annotationColors,
     },
     filter: buildSiteFilter(timestamp, filters),
   },

@@ -23,10 +23,10 @@ export default defineConfig(({ mode }) => {
     plugins: [vue()],
     server: {
       host: "0.0.0.0",
-      port: 9000,
+      port: 8080,
       proxy: {
         "/api": {
-          target: "http://django:80",
+          target: "http://localhost:8000",
           xfwd: true,
         },
       },

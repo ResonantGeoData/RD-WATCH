@@ -85,7 +85,7 @@ const patternOpacity = computed({
 });
 
 const patternDensity: Ref<number> = ref(1);
-const patternDensityIndex = ref([128, 256, 512, 1024, 2048, 4096])
+const patternDensityIndex = ref([64, 128, 256, 512, 1024])
 
 
 const drawCanvasPattern = () => {
@@ -352,12 +352,12 @@ watch(hiddenCanvas, () => {
     </div>
     <div class="form-control">
       <label class="label cursor-pointer">
-        <span class="label-text">Pattern Thickness:</span>
+        <span class="label-text">Pattern Desnsity:</span>
         <input
           v-model="patternDensity"
           type="range"
           min="0"
-          max="6"
+          max="4"
           step="1"
           class="range range-primary"
         >

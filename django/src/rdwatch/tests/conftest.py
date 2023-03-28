@@ -21,7 +21,7 @@ def django_db_setup(django_db_setup, django_db_blocker: _DatabaseBlocker) -> Non
         call_command('loaddata', 'lookups')
 
 
-@pytest.fixture
+@pytest.fixture(scope='session')
 def test_client() -> TestClient:
     return TestClient(router_or_app=api)
 

@@ -1,11 +1,13 @@
 from typing_extensions import Self
 
-from django.contrib.gis.db.models import MultiPolygonField
+from django.contrib.gis.db.models import PolygonField
+from django.contrib.gis.geos import MultiPolygon
 from django.contrib.postgres.indexes import GistIndex
 from django.db import models
 
 from rdwatch.models import SiteEvaluation, lookups
 from rdwatch.schemas import SiteModel
+from rdwatch.schemas.site_model import ObservationFeature
 
 
 class SiteObservation(models.Model):
@@ -24,7 +26,7 @@ class SiteObservation(models.Model):
     score = models.FloatField(
         help_text='Evaluation accuracy',
     )
-    geom = MultiPolygonField(
+    geom = PolygonField(
         help_text='Footprint of site observation',
         srid=3857,
         spatial_index=True,
@@ -60,9 +62,13 @@ class SiteObservation(models.Model):
         site_observations: list[SiteObservation] = []
 
         label_set: set[str] = {
-            '_'.join(feature.properties.current_phase.lower().split(' '))
+            '_'.join(phase.lower().split(' '))
             for feature in site_model.observation_features
+            for phase in feature.properties.current_phase or []
         }
+        if not len(label_set):
+            label_set = {'unknown'}
+
         labels_query = lookups.ObservationLabel.objects.filter(slug__in=label_set)
         label_map = {
             ' '.join(label.slug.split('_')).title(): label for label in labels_query
@@ -83,23 +89,32 @@ class SiteObservation(models.Model):
         }
 
         for feature in site_model.observation_features:
+            assert isinstance(feature.properties, ObservationFeature)
+
             if not feature.properties.observation_date:
                 continue
 
-            label = label_map[feature.properties.current_phase]
             constellation = constellation_map.get(feature.properties.sensor_name, None)
 
-            site_observations.append(
-                cls(
-                    siteeval=site_eval,
-                    label=label,
-                    score=feature.properties.score,
-                    geom=feature.geometry,
-                    constellation=constellation,
-                    spectrum=None,
-                    timestamp=feature.properties.observation_date,
+            assert isinstance(feature.geometry, MultiPolygon)
+
+            for i, polygon in enumerate(feature.geometry):
+                if feature.properties.current_phase:
+                    phase = feature.properties.current_phase[i]
+                else:
+                    phase = 'Unknown'
+
+                site_observations.append(
+                    cls(
+                        siteeval=site_eval,
+                        label=label_map[phase],
+                        score=feature.properties.score,
+                        geom=polygon,
+                        constellation=constellation,
+                        spectrum=None,
+                        timestamp=feature.properties.observation_date,
+                    )
                 )
-            )
 
         return SiteObservation.objects.bulk_create(site_observations)
 

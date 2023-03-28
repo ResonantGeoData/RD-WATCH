@@ -1,9 +1,9 @@
 # flake8: noqa: F722
 import json
 from datetime import datetime
-from typing import Any, Literal
+from typing import Annotated, Any, Literal
 
-from ninja import Schema
+from ninja import Field, Schema
 from pydantic import constr, validator
 
 from django.contrib.gis.gdal import GDALException
@@ -102,7 +102,10 @@ class Feature(Schema):
         arbitrary_types_allowed = True
 
     type: Literal['Feature']
-    properties: RegionFeature | SiteSummaryFeature
+    properties: Annotated[
+        RegionFeature | SiteSummaryFeature,
+        Field(discriminator='type'),
+    ]
     geometry: Polygon
 
     @validator('geometry', pre=True)
@@ -119,10 +122,6 @@ class Feature(Schema):
 class RegionModel(Schema):
     type: Literal['FeatureCollection']
     features: list[Feature]
-
-    @validator('features', pre=True)
-    def preprocess_features(cls, v: list):
-        return _preprocess_features(v)
 
     @validator('features')
     def ensure_one_region_feature(cls, v: list[Feature]):
@@ -148,21 +147,3 @@ class RegionModel(Schema):
             for feature in self.features
             if isinstance(feature.properties, SiteSummaryFeature)
         ]
-
-
-def _preprocess_features(features: list) -> list:
-    for feature in features:
-        if (
-            feature['properties']['type'] == 'site_summary'
-            and 'region_id' in feature['properties']
-        ):
-            del feature['properties']['region_id']
-
-        for key, value in feature['properties'].items():
-            if isinstance(value, str):
-                feature['properties'][key] = value.strip()
-
-        if 'model_cont' in feature['properties']:
-            feature['properties']['model_content'] = feature['properties']['model_cont']
-            del feature['properties']['model_cont']
-    return features

@@ -84,6 +84,9 @@ const patternOpacity = computed({
   },
 });
 
+const patternDensity: Ref<number> = ref(1);
+const patternDensityIndex = ref([64, 128, 256, 512, 1024])
+
 
 const drawCanvasPattern = () => {
   if (hiddenCanvas.value) {
@@ -92,8 +95,8 @@ const drawCanvasPattern = () => {
       ctx.strokeStyle = "rgba(255,0,0,1)";
       ctx.lineWidth = 4;
       const thickness = patternThickness.value;
-      const width = hiddenCanvas.value.width;
-      const height = hiddenCanvas.value.height;
+      const width = patternDensityIndex.value[patternDensity.value];
+      const height = patternDensityIndex.value[patternDensity.value];
 
       ctx.clearRect(0, 0, width, height);
       ctx.rect(0, 0, width, height);
@@ -153,20 +156,22 @@ nextTick(() => {
   });
 });
 
-watch([patternThickness, patternOpacity], () => {
-    drawCanvasPattern();
+
+watch([patternThickness, patternOpacity, patternDensity], () => {
     nextTick(() => {
-      if (performerImg.value !== null && groundImg.value !== null) {
-        addPattern(performerImg.value, groundImg.value);
-      }
-  });
+      drawCanvasPattern();
+      nextTick(() => {
+        if (performerImg.value !== null && groundImg.value !== null) {
+          addPattern(performerImg.value, groundImg.value);
+        }
+      });
+    });
 });
 
 const groundImg: Ref<null | HTMLImageElement> = ref(null);
 const performerImg: Ref<null | HTMLImageElement> = ref(null);
 const siteOutlineImg: Ref<null | HTMLImageElement> = ref(null);
 const hiddenCanvas: Ref<null | HTMLCanvasElement> = ref(null);
-
 const info = computed(() => {
   const date = import.meta.env.VITE_GIT_COMMIT_DATE;
   const hash = import.meta.env.VITE_GIT_COMMIT_HASH;
@@ -185,8 +190,8 @@ watch(hiddenCanvas, () => {
     <canvas
       ref="hiddenCanvas"
       style="display: none"
-      width="128"
-      height="128"
+      :width="patternDensityIndex[patternDensity]"
+      :height="patternDensityIndex[patternDensity]"
     />
     <div class="grid grid-cols-8 gap-4">
       <h4 class="col-span-7">
@@ -341,6 +346,19 @@ watch(hiddenCanvas, () => {
           min="0"
           max="1"
           step="0.1"
+          class="range range-primary"
+        >
+      </label>
+    </div>
+    <div class="form-control">
+      <label class="label cursor-pointer">
+        <span class="label-text">Pattern Desnsity:</span>
+        <input
+          v-model="patternDensity"
+          type="range"
+          min="0"
+          max="4"
+          step="1"
           class="range range-primary"
         >
       </label>

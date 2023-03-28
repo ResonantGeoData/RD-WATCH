@@ -12,6 +12,8 @@ import type { ShallowRef } from "vue";
 import { popupLogic } from "../interactions/popup";
 import { satelliteLoading } from "../interactions/satelliteLoading";
 import { setReference } from "../interactions/fillPatterns";
+import { setSatelliteTimeStamp } from "../mapstyle/satellite-image";
+import { throttle } from 'lodash';
 
 const mapContainer: ShallowRef<null | HTMLElement> = shallowRef(null);
 const map: ShallowRef<null | Map> = shallowRef(null);
@@ -51,6 +53,7 @@ onMounted(() => {
         ],
       })
     );
+    map.value.keyboard.disable();
     popupLogic(map);
     satelliteLoading(map);
     setReference(map);
@@ -60,27 +63,12 @@ onMounted(() => {
 onUnmounted(() => {
   map.value?.remove();
 });
+const throttledSetSatelliteTimeStamp = throttle(setSatelliteTimeStamp, 300);
+
 
 watch([() => state.timestamp, () => state.filters, () => state.satellite], () => {
   if (state.satellite.satelliteImagesOn) {
-    if (state.filters && state.satellite.satelliteTimeList && state.satellite.satelliteTimeList.length > 0) {
-        const list = state.satellite.satelliteTimeList.map((item) => new Date(`${item}Z`));
-        const base = new Date(state.timestamp * 1000);
-        const filtered = list.filter((item) => item.valueOf() <= base.valueOf());
-        let baseList = filtered;
-        if (filtered.length === 0) {
-          baseList = list;
-        }
-        baseList.sort((a,b) => {
-            const distanceA = Math.abs(base.valueOf() - a.valueOf());
-            const distanceB = Math.abs(base.valueOf() - b.valueOf());
-            return distanceA - distanceB;
-        })
-        // Lets try to get the closes timestamp that is less than the current time.
-        const date = baseList[0];
-        const timeStamp = date.toISOString().substring(0,19);
-        state.satellite.satelliteTimeStamp = timeStamp;
-    }
+    throttledSetSatelliteTimeStamp(state);
   }
   const siteFilter = buildSiteFilter(state.timestamp, state.filters);
   const observationFilter = buildObservationFilter(
@@ -116,10 +104,7 @@ watch(
   position: fixed;
   width: 100vw;
   height: 100vh;
-  left: 0;
-  right: 0;
-  top: 0;
-  bottom: 0;
+  inset: 0;
   z-index: -1;
 }
 

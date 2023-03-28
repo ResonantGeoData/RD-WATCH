@@ -23,6 +23,7 @@ export interface SatelliteData {
 
 export const state = reactive<{
   timestamp: number;
+  timeMin: number;
   settings: {
     autoZoom: boolean;
   };
@@ -36,6 +37,7 @@ export const state = reactive<{
   regionMap: Record<Region["id"], Region["name"]>
 }>({
   timestamp: Math.floor(Date.now() / 1000),
+  timeMin: new Date(0).valueOf(),
   settings: {
     autoZoom: false,
   },

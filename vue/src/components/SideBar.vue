@@ -6,9 +6,10 @@ import RegionFilter from "./filters/RegionFilter.vue";
 import { Cog6ToothIcon, PhotoIcon } from "@heroicons/vue/24/solid";
 import SettingsPanel from "./SettingsPanel.vue";
 import { state } from "../store";
-import { computed, ref, watch } from "vue";
+import { computed, onMounted, ref, watch } from "vue";
 import type { Performer, QueryArguments, Region } from "../client";
 import type { Ref } from "vue";
+import { changeTime } from "../interactions/timeStepper";
 
 const timemin = ref(Math.floor(new Date(0).valueOf() / 1000));
 const queryFilters: Ref<QueryArguments> = ref({ page: 1 });
@@ -58,6 +59,19 @@ function nextPage() {
     page: (queryFilters.value.page || 0) + 1,
   };
 }
+
+onMounted(() => {
+  window.document.addEventListener('keydown', (event) => {
+    if (event.code === 'ArrowLeft') {
+      // Call function for left arrow key press
+      changeTime(-1);
+    } else if (event.code === 'ArrowRight') {
+      // Call function for right arrow key press
+      changeTime(1);
+    }
+  });
+});
+
 </script>
 
 <template>
@@ -114,6 +128,7 @@ function nextPage() {
           (timerange) => {
             if (timerange !== null) {
               timemin = timerange.min;
+              state.timeMin = timemin;
             }
           }
         "

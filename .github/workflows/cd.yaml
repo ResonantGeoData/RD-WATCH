@@ -3,6 +3,12 @@ on:
   push:
     branches:
       - "main"
+concurrency:
+  # Only run the latest workflow.
+  # If a build is already happening, cancel it to avoid a race
+  # condition where an older image overwrites a newer one.
+  group: ${{ github.workflow }}
+  cancel-in-progress: true
 jobs:
   build:
     strategy:

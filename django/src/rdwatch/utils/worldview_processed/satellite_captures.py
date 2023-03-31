@@ -11,6 +11,8 @@ class WorldViewProcessedCapture:
     bbox: tuple[float, float, float, float]
     uri: str
     panuri: str | None
+    cloudcover: int | None
+    collection: str
 
 
 def get_features(
@@ -39,18 +41,24 @@ def get_captures(
 
     features = [f for f in get_features(timestamp, bbox, timebuffer=timebuffer)]
 
-    captures = [
-        WorldViewProcessedCapture(
-            timestamp=datetime.fromisoformat(
-                feature['properties']['datetime'].rstrip('Z')
-            ),
-            bbox=cast(tuple[float, float, float, float], tuple(feature['bbox'])),
-            uri=feature['assets']['visual']['href'],
-            panuri=None,
-        )
-        for feature in features
-        if 'visual' in feature['assets']
-    ]
+    captures = []
+    for feature in features:
+        if 'visual' in feature['assets']:
+            cloudcover = 0
+            if 'properties' in feature:
+                if 'eo:cloud_cover' in feature['properties']:
+                    cloudcover = feature['properties']['eo:cloud_cover']
+            capture = WorldViewProcessedCapture(
+                timestamp=datetime.fromisoformat(
+                    feature['properties']['datetime'].rstrip('Z')
+                ),
+                bbox=cast(tuple[float, float, float, float], tuple(feature['bbox'])),
+                uri=feature['assets']['visual']['href'],
+                panuri=None,
+                cloudcover=cloudcover,
+                collection=feature['collection']
+            )
+            captures.append(capture)
 
     # find each vis-multi image's related panchromatic image
     for cap in captures:
@@ -58,7 +66,7 @@ def get_captures(
             pan_feature = next(
                 feat
                 for feat in features
-                if feat['properties']['nitf:image_representation'] == 'MONO'
+                if feat['properties'].get('nitf:image_representation', False) == 'MONO'
                 and datetime.fromisoformat(feat['properties']['datetime'].rstrip('Z'))
                 == cap.timestamp
             )

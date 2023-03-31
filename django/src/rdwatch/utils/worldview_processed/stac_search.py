@@ -69,7 +69,9 @@ def worldview_search(
     else:
         time_str = f'{_fmt_time(timestamp)}Z'
     params['datetime'] = time_str
-    params['collections'] = ['ta1-wv-acc-2']
+    params['collections'] = [
+        "ta1-wv-acc-1",
+    ]
     params['page'] = page
     params['limit'] = 100
     request = Request(
@@ -78,4 +80,5 @@ def worldview_search(
         headers={'x-api-key': environ['RDWATCH_SMART_STAC_KEY']},
     )
     with urlopen(request) as resp:
-        return json.loads(resp.read())
+        data = resp.read()
+        return json.loads(data)

@@ -32,6 +32,15 @@ const imageOpacity = computed({
   },
 });
 
+const cloudCover = computed({
+  get() {
+    return state.satellite.cloudCover || 1000;
+  },
+  set(val: number) {
+    state.satellite = { ...state.satellite, cloudCover: val };
+  },
+});
+
 const showSiteOutline = computed({
   get() {
     return state.filters.showSiteOutline || false;
@@ -253,6 +262,22 @@ watch(hiddenCanvas, () => {
           min="0"
           max="1"
           step="0.1"
+          class="chrome-range w-full"
+          type="range"
+        >
+      </label>
+    </div>
+    <div
+      class="form-control"
+    >
+      <label class="label cursor-pointer">
+        <span class="label-text">Cloud Cover:</span>
+        <input
+          v-model.number="cloudCover"
+          :disabled="state.satellite.loadingSatelliteImages"
+          min="0"
+          max="100"
+          step="20"
           class="chrome-range w-full"
           type="range"
         >

@@ -12,13 +12,22 @@ export interface MapFilters {
   showRegionPolygon?: boolean;
 }
 
+export interface SatelliteTimeStamp {
+  timestamp: string;
+  cloudcover: number;
+  collection: string;
+  source: 'S2' | 'WorldView'
+}
+
 export interface SatelliteData {
   satelliteImagesOn: boolean;
   imageOpacity: number;
-  satelliteTimeList: string[];
+  satelliteTimeList: SatelliteTimeStamp[];
+  satelliteTimeSource: 'S2' | 'WorldView'
   satelliteTimeStamp: string | null,
   satelliteBounds:[number,number][];
   loadingSatelliteImages: boolean;
+  cloudCover: number;
 }
 
 export const state = reactive<{
@@ -58,6 +67,8 @@ export const state = reactive<{
     satelliteBounds: [],
     imageOpacity: 0.75,
     loadingSatelliteImages: false,
+    satelliteTimeSource: 'S2',
+    cloudCover: 100,
   },
   patterns: {
     patternThickness: 8,

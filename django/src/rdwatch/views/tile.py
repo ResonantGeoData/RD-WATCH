@@ -380,3 +380,67 @@ def satelliteimage_visual_time_list(request: HttpRequest):
     captures = get_captures(timestamp, bbox, timebuffer)
 
     return JsonResponse([capture.timestamp for capture in captures], safe=False)
+
+# Additional endpoint that returns worldview and satellite images with data about images
+@cache_page(60 * 60 * 24 * 365)
+def all_satellite_timestamps(request: HttpRequest):
+    if (
+        'constellation' not in request.GET
+        or 'level' not in request.GET
+        or 'spectrum' not in request.GET
+        or 'start_timestamp' not in request.GET
+        or 'end_timestamp' not in request.GET
+        or 'bbox' not in request.GET
+    ):
+        return HttpResponseBadRequest()
+
+    constellation = Constellation(slug=request.GET['constellation'])
+    spectrum = request.GET['spectrum']
+    level = request.GET['level']
+
+    start_timestamp = datetime.fromisoformat(str(request.GET['start_timestamp']))
+    end_timestamp = datetime.fromisoformat(str(request.GET['end_timestamp']))
+
+    timebuffer = (end_timestamp - start_timestamp) / 2
+    timestamp = start_timestamp + timebuffer
+
+    bbox_strings = request.GET['bbox'].split(',')
+    if len(bbox_strings) != 4:
+        return HttpResponseBadRequest()
+    bbox = (
+        float(bbox_strings[0]),
+        float(bbox_strings[1]),
+        float(bbox_strings[2]),
+        float(bbox_strings[3]),
+    )
+
+    # Get all image bands within the given time range and requested constellation/bbox
+    bands = list(get_bands(constellation, timestamp, bbox, timebuffer))
+
+    # Filter bands by requested processing level and spectrum
+    bands = [
+        band
+        for band in bands
+        if (band.level.slug, band.spectrum.slug) == (level, spectrum)
+    ]
+    results = []
+    for band in bands:
+        results.append({
+            'timestamp': band.timestamp,
+            'cloudcover': band.cloudcover,
+            'collection': band.collection,
+            'source': 'S2'
+        })
+    timestamps_set = {band.timestamp for band in bands}
+    timestamps = [t for t in timestamps_set]
+    timestamps.sort()
+    captures = get_captures(timestamp, bbox, timebuffer)
+    for capture in captures:
+        results.append({
+            'timestamp': capture.timestamp,
+            'cloudcover':capture.cloudcover,
+            'collection': capture.collection,
+            'source': 'WorldView',
+        })
+    results.sort(key=lambda d: d['timestamp'])
+    return JsonResponse(results, safe=False)

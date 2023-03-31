@@ -7,7 +7,7 @@ import {
   ModelRun,
   QueryArguments,
 } from "../client";
-import { ref, watch, watchEffect } from "vue";
+import { computed, ref, watch, watchEffect } from "vue";
 import type { Ref } from "vue";
 import { ApiService } from "../client";
 import { state } from "../store";
@@ -178,10 +178,11 @@ async function getSatelliteTimestamps(modelRun: ModelRunList, force=false) {
       return;
     }
   }
-  const results = await ApiService.getSatelliteTimestamps(
+  const results = await ApiService.getAllSatelliteTimestamps(
       'S2', 'visual','2A', modelRun.timerange?.min, modelRun.timerange?.max, modelRun.bbox?.coordinates[0] as []);
+
   loadingSatelliteTimestamps.value = false;
-  state.satellite.satelliteTimeList = results;
+  state.satellite.satelliteTimeList = results; //.filter((item) => item.source === 'WorldView');
   state.satellite.satelliteBounds = modelRun.bbox?.coordinates[0] as [];
 }
 
@@ -232,6 +233,8 @@ async function handleScroll(event: Event) {
   }
 }
 
+const hasSatelliteImages = computed(() => state.satellite.satelliteTimeList.length);
+
 watchEffect(loadMore);
 watch([() => props.filters.region, () => props.filters.performer], () => {
   openedModelRuns.value.clear();
@@ -250,15 +253,15 @@ watch([() => props.filters.region, () => props.filters.performer], () => {
       class="badge-accent badge ml-2"
     >{{ totalModelRuns }} {{ totalModelRuns > 1 ? "Runs" : "Run" }}</span>
     <span
-      v-if="!loading && !loadingSatelliteTimestamps && state.satellite.satelliteTimeList.length && !state.satellite.satelliteImagesOn && state.filters.region_id?.length"
+      v-if="!loading && !loadingSatelliteTimestamps && hasSatelliteImages&& !state.satellite.satelliteImagesOn && state.filters.region_id?.length"
       style="font-size: 0.75em"
       class="badge-secondary badge ml-2"
-    >{{ state.satellite.satelliteTimeList.length }} {{ state.satellite.satelliteTimeList.length > 1 ? "Image Timestamps" : "Image Timestamp" }}</span>
+    >{{ hasSatelliteImages }} {{ hasSatelliteImages > 1 ? "Image Timestamps" : "Image Timestamp" }}</span>
     <span
       v-else-if="!loading && !loadingSatelliteTimestamps && state.satellite.satelliteTimeStamp && state.satellite.satelliteImagesOn && !satelliteRegionTooLarge"
       style="font-size: 0.75em"
       class="badge-secondary badge ml-2"
-    >Satellite Time: {{ state.satellite.satelliteTimeStamp }}</span>
+    >Satellite Time: {{ state.satellite.satelliteTimeStamp }} - {{ state.satellite.satelliteTimeSource }}</span>
     <div
       v-if="loading"
       class="px-2"

@@ -1,16 +1,16 @@
 // Does time stepping left/right based on satellite timestamps if they exists
-import { state } from '../store';
+import { filteredSatelliteTimeList, state } from '../store';
 
 function changeTime(direction: -1 | 1) {
     if (state.satellite.satelliteImagesOn) { // Jump to the next timestmap within an hour of the current one
-        const currentIndex = state.satellite.satelliteTimeList.findIndex((item) => item.timestamp === state.satellite.satelliteTimeStamp);
+        const currentIndex = filteredSatelliteTimeList.value.findIndex((item) => item.timestamp === state.satellite.satelliteTimeStamp);
         const currentImageTime = new Date(`${state.satellite.satelliteTimeStamp}Z`);
         console.log(currentIndex);
         // Now we go from the current index and find the Next Day in either direction
         let newTime = null;
         let checkDateIndex = currentIndex + direction * 1
         while (newTime === null && currentIndex !== -1 && checkDateIndex >= 0) {
-            const checkTimeString = state.satellite.satelliteTimeList[checkDateIndex].timestamp;
+            const checkTimeString = filteredSatelliteTimeList.value[checkDateIndex].timestamp;
             const checkTime = new Date(`${checkTimeString}Z`);
             const diffTime = Math.abs(checkTime.getTime() - currentImageTime.getTime());
             const diffDays = Math.ceil(diffTime / (60 * 60 * 24));

@@ -10,7 +10,7 @@ import {
 import { computed, ref, watch, watchEffect } from "vue";
 import type { Ref } from "vue";
 import { ApiService } from "../client";
-import { state } from "../store";
+import { filteredSatelliteTimeList, state } from "../store";
 import { LngLatBounds } from "maplibre-gl";
 import { hoveredInfo } from "../interactions/popup";
 const limit = 10;
@@ -182,7 +182,7 @@ async function getSatelliteTimestamps(modelRun: ModelRunList, force=false) {
       'S2', 'visual','2A', modelRun.timerange?.min, modelRun.timerange?.max, modelRun.bbox?.coordinates[0] as []);
 
   loadingSatelliteTimestamps.value = false;
-  state.satellite.satelliteTimeList = results.filter((item) => item.source === 'WorldView');
+  state.satellite.satelliteTimeList = results;
   state.satellite.satelliteBounds = modelRun.bbox?.coordinates[0] as [];
 }
 
@@ -233,7 +233,7 @@ async function handleScroll(event: Event) {
   }
 }
 
-const hasSatelliteImages = computed(() => state.satellite.satelliteTimeList.length);
+const hasSatelliteImages = computed(() => filteredSatelliteTimeList.value.length);
 
 watchEffect(loadMore);
 watch([() => props.filters.region, () => props.filters.performer], () => {

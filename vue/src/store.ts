@@ -1,4 +1,4 @@
-import { reactive } from "vue";
+import { computed, reactive } from "vue";
 
 import type { Region } from "./client";
 
@@ -28,6 +28,7 @@ export interface SatelliteData {
   satelliteBounds:[number,number][];
   loadingSatelliteImages: boolean;
   cloudCover: number;
+  satelliteSources: ('S2' |'WorldView')[];
 }
 
 export const state = reactive<{
@@ -69,6 +70,7 @@ export const state = reactive<{
     loadingSatelliteImages: false,
     satelliteTimeSource: 'S2',
     cloudCover: 100,
+    satelliteSources: ['S2', 'WorldView'],
   },
   patterns: {
     patternThickness: 8,
@@ -76,3 +78,12 @@ export const state = reactive<{
   },
   regionMap: {}
 });
+
+export const filteredSatelliteTimeList = computed(() => {
+  let filtered = state.satellite.satelliteTimeList;
+  if (state.satellite.cloudCover <  100 ) {
+    filtered = filtered.filter((item) => item.cloudcover < state.satellite.cloudCover);
+  }
+  filtered = filtered.filter((item) => state.satellite.satelliteSources.includes(item.source))
+  return filtered;
+})

@@ -1,5 +1,5 @@
 import type { LayerSpecification, SourceSpecification } from "maplibre-gl";
-import type { MapFilters, SatelliteData } from "../store";
+import type { MapFilters, SatelliteData, SatelliteTimeStamp } from "../store";
 
 const urlRoot = `${location.protocol}//${location.host}`;
 const satelliteImages = "satelliteTiles";
@@ -73,9 +73,9 @@ export const layers = (
     return layers;
   }
 
-export const setSatelliteTimeStamp = (state: { filters: MapFilters, satellite: SatelliteData, timestamp: number}) => {
-  if (state.filters && state.satellite.satelliteTimeList && state.satellite.satelliteTimeList.length > 0) {
-    const list = state.satellite.satelliteTimeList.map((item) => new Date(`${item.timestamp}Z`));
+export const setSatelliteTimeStamp = (state: { filters: MapFilters, satellite: SatelliteData, timestamp: number}, filteredTimeList: SatelliteTimeStamp[]) => {
+  if (state.filters && filteredTimeList && filteredTimeList.length > 0) {
+    const list = filteredTimeList.map((item) => new Date(`${item.timestamp}Z`));
     const base = new Date(state.timestamp * 1000);
     const filtered = list.filter((item) => item.valueOf() <= base.valueOf());
     let baseList = filtered;

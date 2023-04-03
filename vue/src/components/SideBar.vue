@@ -5,7 +5,7 @@ import PerformerFilter from "./filters/PerformerFilter.vue";
 import RegionFilter from "./filters/RegionFilter.vue";
 import { Cog6ToothIcon, PhotoIcon } from "@heroicons/vue/24/solid";
 import SettingsPanel from "./SettingsPanel.vue";
-import { state } from "../store";
+import { filteredSatelliteTimeList, state } from "../store";
 import { computed, onMounted, ref, watch } from "vue";
 import type { Performer, QueryArguments, Region } from "../client";
 import type { Ref } from "vue";
@@ -107,10 +107,10 @@ onMounted(() => {
             :class="{
               'animate-flicker': state.satellite.loadingSatelliteImages,
               'text-blue-600': imagesOn,
-              'hover': selectedRegion !== null && state.satellite.satelliteTimeList.length !== 0,
-              'text-gray-400': selectedRegion === null || state.satellite.satelliteTimeList.length === 0,
+              'hover': selectedRegion !== null && filteredSatelliteTimeList.length !== 0,
+              'text-gray-400': selectedRegion === null || filteredSatelliteTimeList.length === 0,
             }"
-            @click="imagesOn = selectedRegion !== null && state.satellite.satelliteTimeList.length !== 0 ? !imagesOn : imagesOn"
+            @click="imagesOn = selectedRegion !== null && filteredSatelliteTimeList.length !== 0 ? !imagesOn : imagesOn"
           />
           <span class="h5 grow" />
           <Cog6ToothIcon

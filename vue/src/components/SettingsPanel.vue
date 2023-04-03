@@ -93,6 +93,35 @@ const patternOpacity = computed({
   },
 });
 
+const S2Imagery = computed({
+  get() {
+    return state.satellite.satelliteSources.includes('S2');
+  },
+  set(val: boolean) {
+    if (!state.satellite.satelliteSources.includes('S2') && val) {
+      state.satellite.satelliteSources.push('S2')
+    } else if (state.satellite.satelliteSources.includes('S2')) {
+      const index = state.satellite.satelliteSources.indexOf('S2');
+      state.satellite.satelliteSources.splice(index, 1);
+    }
+  },
+});
+
+const worldViewImagery = computed({
+  get() {
+    return state.satellite.satelliteSources.includes('WorldView');
+  },
+  set(val: boolean) {
+    if (!state.satellite.satelliteSources.includes('WorldView') && val) {
+      state.satellite.satelliteSources.push('WorldView')
+    } else if (state.satellite.satelliteSources.includes('WorldView')) {
+      const index = state.satellite.satelliteSources.indexOf('WorldView');
+      state.satellite.satelliteSources.splice(index, 1);
+    }
+  },
+});
+
+
 const patternDensity: Ref<number> = ref(1);
 const patternDensityIndex = ref([64, 128, 256, 512, 1024])
 
@@ -267,6 +296,26 @@ watch(hiddenCanvas, () => {
         >
       </label>
     </div>
+    <div class="form-control">
+      <label class="label cursor-pointer">
+        <span class="label-text">S2 Imagery:</span>
+        <input
+          v-model="S2Imagery"
+          type="checkbox"
+          class="checkbox-primary checkbox"
+        >
+      </label>
+    </div>
+    <div class="form-control">
+      <label class="label cursor-pointer">
+        <span class="label-text">WorldView Imagery:</span>
+        <input
+          v-model="worldViewImagery"
+          type="checkbox"
+          class="checkbox-primary checkbox"
+        >
+      </label>
+    </div>
     <div
       class="form-control"
     >
@@ -281,6 +330,7 @@ watch(hiddenCanvas, () => {
           class="chrome-range w-full"
           type="range"
         >
+        <span class="label-text pl-2">&lt{{ cloudCover }}%</span>
       </label>
     </div>
 
@@ -377,7 +427,7 @@ watch(hiddenCanvas, () => {
     </div>
     <div class="form-control">
       <label class="label cursor-pointer">
-        <span class="label-text">Pattern Desnsity:</span>
+        <span class="label-text">Pattern Density:</span>
         <input
           v-model="patternDensity"
           type="range"

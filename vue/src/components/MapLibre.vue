@@ -5,7 +5,7 @@ import {
   buildObservationFilter,
   buildSiteFilter,
 } from "../mapstyle/rdwatchtiles";
-import { state } from "../store";
+import { filteredSatelliteTimeList, state } from "../store";
 import { markRaw, onMounted, onUnmounted, shallowRef, watch } from "vue";
 import type { FilterSpecification } from "maplibre-gl";
 import type { ShallowRef } from "vue";
@@ -68,7 +68,7 @@ const throttledSetSatelliteTimeStamp = throttle(setSatelliteTimeStamp, 300);
 
 watch([() => state.timestamp, () => state.filters, () => state.satellite], () => {
   if (state.satellite.satelliteImagesOn) {
-    throttledSetSatelliteTimeStamp(state);
+    throttledSetSatelliteTimeStamp(state, filteredSatelliteTimeList.value);
   }
   const siteFilter = buildSiteFilter(state.timestamp, state.filters);
   const observationFilter = buildObservationFilter(

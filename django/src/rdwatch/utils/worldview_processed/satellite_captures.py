@@ -56,7 +56,7 @@ def get_captures(
                 uri=feature['assets']['visual']['href'],
                 panuri=None,
                 cloudcover=cloudcover,
-                collection=feature['collection']
+                collection=feature['collection'],
             )
             captures.append(capture)
 

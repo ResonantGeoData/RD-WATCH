@@ -381,6 +381,7 @@ def satelliteimage_visual_time_list(request: HttpRequest):
 
     return JsonResponse([capture.timestamp for capture in captures], safe=False)
 
+
 # Additional endpoint that returns worldview and satellite images with data about images
 @cache_page(60 * 60 * 24 * 365)
 def all_satellite_timestamps(request: HttpRequest):
@@ -425,22 +426,26 @@ def all_satellite_timestamps(request: HttpRequest):
     ]
     results = []
     for band in bands:
-        results.append({
-            'timestamp': band.timestamp,
-            'cloudcover': band.cloudcover,
-            'collection': band.collection,
-            'source': 'S2'
-        })
+        results.append(
+            {
+                'timestamp': band.timestamp,
+                'cloudcover': band.cloudcover,
+                'collection': band.collection,
+                'source': 'S2',
+            }
+        )
     timestamps_set = {band.timestamp for band in bands}
     timestamps = [t for t in timestamps_set]
     timestamps.sort()
     captures = get_captures(timestamp, bbox, timebuffer)
     for capture in captures:
-        results.append({
-            'timestamp': capture.timestamp,
-            'cloudcover':capture.cloudcover,
-            'collection': capture.collection,
-            'source': 'WorldView',
-        })
+        results.append(
+            {
+                'timestamp': capture.timestamp,
+                'cloudcover': capture.cloudcover,
+                'collection': capture.collection,
+                'source': 'WorldView',
+            }
+        )
     results.sort(key=lambda d: d['timestamp'])
     return JsonResponse(results, safe=False)

@@ -136,5 +136,5 @@ def get_bands(
                     bbox=stac_bbox,
                     uri=uri,
                     cloudcover=cloudcover,
-                    collection=feature['collection']
+                    collection=feature['collection'],
                 )

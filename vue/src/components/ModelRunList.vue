@@ -182,7 +182,7 @@ async function getSatelliteTimestamps(modelRun: ModelRunList, force=false) {
       'S2', 'visual','2A', modelRun.timerange?.min, modelRun.timerange?.max, modelRun.bbox?.coordinates[0] as []);
 
   loadingSatelliteTimestamps.value = false;
-  state.satellite.satelliteTimeList = results; //.filter((item) => item.source === 'WorldView');
+  state.satellite.satelliteTimeList = results.filter((item) => item.source === 'WorldView');
   state.satellite.satelliteBounds = modelRun.bbox?.coordinates[0] as [];
 }
 

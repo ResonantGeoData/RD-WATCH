@@ -330,7 +330,7 @@ watch(hiddenCanvas, () => {
           class="chrome-range w-full"
           type="range"
         >
-        <span class="label-text pl-2">&lt{{ cloudCover }}%</span>
+        <span class="label-text pl-2">&lt;{{ cloudCover }}%</span>
       </label>
     </div>
 

@@ -5,7 +5,6 @@ function changeTime(direction: -1 | 1) {
     if (state.satellite.satelliteImagesOn) { // Jump to the next timestmap within an hour of the current one
         const currentIndex = filteredSatelliteTimeList.value.findIndex((item) => item.timestamp === state.satellite.satelliteTimeStamp);
         const currentImageTime = new Date(`${state.satellite.satelliteTimeStamp}Z`);
-        console.log(currentIndex);
         // Now we go from the current index and find the Next Day in either direction
         let newTime = null;
         let checkDateIndex = currentIndex + direction * 1

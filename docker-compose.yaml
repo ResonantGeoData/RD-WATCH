@@ -97,6 +97,42 @@ services:
       - .:/app
       - unit-socket:/run/unit
 
+  celery:
+    build:
+      dockerfile: Dockerfile
+    command: [
+     "poetry",
+     "run",
+     "--directory",
+     "/app/django",
+     "celery",
+      "--app", "rdwatch.celery",
+      "worker",
+      "--loglevel", "INFO",
+      "--without-heartbeat"
+    ]
+    environment:
+      AWS_ACCESS_KEY_ID: ${AWS_ACCESS_KEY_ID:?}
+      AWS_SECRET_ACCESS_KEY: ${AWS_SECRET_ACCESS_KEY:?}
+      AWS_REQUEST_PAYER: requester
+      RDWATCH_DJANGO_DEBUG: ${RDWATCH_DJANGO_DEBUG:?}
+      RDWATCH_SECRET_KEY: ${RDWATCH_SECRET_KEY:?}
+      RDWATCH_POSTGRESQL_URI: ${RDWATCH_POSTGRESQL_URI:?}
+      RDWATCH_REDIS_URI: ${RDWATCH_REDIS_URI:?}
+      RDWATCH_SMART_STAC_URL: ${RDWATCH_SMART_STAC_URL:?}
+      RDWATCH_SMART_STAC_KEY: ${RDWATCH_SMART_STAC_KEY:?}
+    depends_on:
+      - postgresql
+      - redis
+      - django
+    profiles:
+      - debug
+      - tools
+      - vscode
+    volumes:
+      - .:/app
+      - unit-socket:/run/unit
+
   # Watches for file changes and restarts the "django" service
   unit-reloader:
     image: ghcr.io/resonantgeodata/rd-watch/unit-reloader:latest

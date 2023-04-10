@@ -13,7 +13,7 @@ RUN echo "deb [signed-by=/usr/share/keyrings/nginx.gpg] http://packages.nginx.or
       libgdal31 \
       netcat-openbsd \
       python3-cachecontrol \
-      python3-poetry \
+      python3-pip \
       tzdata \
       unit \
       unit-python3.10 \
@@ -23,6 +23,7 @@ RUN echo "deb [signed-by=/usr/share/keyrings/nginx.gpg] http://packages.nginx.or
  && useradd --no-create-home rdwatch \
  && usermod --lock rdwatch \
  && usermod --append --groups rdwatch unit
+RUN python3 -m pip install poetry==1.4.2
 WORKDIR /app
 EXPOSE 80
 ENTRYPOINT [ "/docker-entrypoint.sh" ]

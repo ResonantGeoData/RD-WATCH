@@ -74,7 +74,8 @@ services:
 
   # Serves RD-WATCH API with source files mounted in
   django:
-    image: ghcr.io/resonantgeodata/rd-watch/builder:latest
+    build:
+      dockerfile: Dockerfile
     environment:
       AWS_ACCESS_KEY_ID: ${AWS_ACCESS_KEY_ID:?}
       AWS_SECRET_ACCESS_KEY: ${AWS_SECRET_ACCESS_KEY:?}

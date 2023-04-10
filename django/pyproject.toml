@@ -35,6 +35,7 @@ django-filter = "^22.1"
 django-redis = "^5.2.0"
 django-ninja = "^0.21.0"
 tox = {version = "^4.4.7", extras = ["test"]}
+celery = "^5.2.7"
 
 [tool.poetry.dev-dependencies]
 black = "~22.6.0"

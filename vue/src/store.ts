@@ -70,7 +70,7 @@ export const state = reactive<{
     loadingSatelliteImages: false,
     satelliteTimeSource: 'S2',
     cloudCover: 100,
-    satelliteSources: ['S2', 'WorldView'],
+    satelliteSources: ['S2'],
   },
   patterns: {
     patternThickness: 8,

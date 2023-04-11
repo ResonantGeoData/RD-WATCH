@@ -253,7 +253,7 @@ watch([() => props.filters.region, () => props.filters.performer], () => {
       class="badge-accent badge ml-2"
     >{{ totalModelRuns }} {{ totalModelRuns > 1 ? "Runs" : "Run" }}</span>
     <span
-      v-if="!loading && !loadingSatelliteTimestamps && hasSatelliteImages&& !state.satellite.satelliteImagesOn && state.filters.region_id?.length"
+      v-if="!loading && !loadingSatelliteTimestamps && hasSatelliteImages && !state.satellite.satelliteImagesOn && state.filters.region_id?.length"
       style="font-size: 0.75em"
       class="badge-secondary badge ml-2"
     >{{ hasSatelliteImages }} {{ hasSatelliteImages > 1 ? "Image Timestamps" : "Image Timestamp" }}</span>

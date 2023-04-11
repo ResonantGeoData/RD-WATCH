@@ -107,10 +107,10 @@ onMounted(() => {
             :class="{
               'animate-flicker': state.satellite.loadingSatelliteImages,
               'text-blue-600': imagesOn,
-              'hover': selectedRegion !== null && filteredSatelliteTimeList.length !== 0,
-              'text-gray-400': selectedRegion === null || filteredSatelliteTimeList.length === 0,
+              'hover': selectedRegion !== null && (filteredSatelliteTimeList.length !== 0 || state.satellite.satelliteSources.length === 0),
+              'text-gray-400': selectedRegion === null || (filteredSatelliteTimeList.length === 0 && state.satellite.satelliteSources.length !== 0),
             }"
-            @click="imagesOn = selectedRegion !== null && filteredSatelliteTimeList.length !== 0 ? !imagesOn : imagesOn"
+            @click="imagesOn = selectedRegion !== null && (filteredSatelliteTimeList.length !== 0 || state.satellite.satelliteSources.length === 0) ? !imagesOn : imagesOn"
           />
           <span class="h5 grow" />
           <Cog6ToothIcon

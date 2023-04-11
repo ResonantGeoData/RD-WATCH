@@ -7,7 +7,7 @@ export const buildSourceFilter = (
     timestamp: number,
     satellite: SatelliteData
 ) => {
-    if (!satellite.satelliteImagesOn) {
+    if (!satellite.satelliteImagesOn || satellite.satelliteSources.length === 0) {
          return undefined;
     }
     const constellation = "S2";
@@ -56,7 +56,7 @@ export const layers = (
     timestamp: number,
     satellite: SatelliteData
   ): LayerSpecification[] => {
-    if (!satellite.satelliteImagesOn) {
+    if (!satellite.satelliteImagesOn || satellite.satelliteSources.length === 0) {
          return [];
     }
     const layers: LayerSpecification[] = [

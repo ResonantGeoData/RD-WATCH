@@ -78,5 +78,4 @@ def worldview_search(
         headers={'x-api-key': environ['RDWATCH_SMART_STAC_KEY']},
     )
     with urlopen(request) as resp:
-        data = resp.read()
-        return json.loads(data)
+        return json.loads(resp.read())

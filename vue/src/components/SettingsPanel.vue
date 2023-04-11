@@ -317,6 +317,7 @@ watch(hiddenCanvas, () => {
       </label>
     </div>
     <div
+      v-if="imagesOn"
       class="form-control"
     >
       <label class="label cursor-pointer">

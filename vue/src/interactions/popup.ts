@@ -2,6 +2,7 @@ import { Ref, ref } from "vue";
 import { Color, Map, MapLayerMouseEvent, Popup } from "maplibre-gl";
 import { ShallowRef } from "vue";
 import { state } from "../store";
+import { ApiService } from "../client";
 
 const checkBadge =
   '<svg style="display:inline;" width="20" height="20" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="replacementColor" aria-hidden="true"><path fill-rule="evenodd" d="M8.603 3.799A4.49 4.49 0 0112 2.25c1.357 0 2.573.6 3.397 1.549a4.49 4.49 0 013.498 1.307 4.491 4.491 0 011.307 3.497A4.49 4.49 0 0121.75 12a4.49 4.49 0 01-1.549 3.397 4.491 4.491 0 01-1.307 3.497 4.491 4.491 0 01-3.497 1.307A4.49 4.49 0 0112 21.75a4.49 4.49 0 01-3.397-1.549 4.49 4.49 0 01-3.498-1.306 4.491 4.491 0 01-1.307-3.498A4.49 4.49 0 012.25 12c0-1.357.6-2.573 1.549-3.397a4.49 4.49 0 011.307-3.497 4.49 4.49 0 013.497-1.307zm7.007 6.387a.75.75 0 10-1.22-.872l-3.236 4.53L9.53 12.22a.75.75 0 00-1.06 1.06l2.25 2.25a.75.75 0 001.14-.094l3.75-5.25z" clip-rule="evenodd"></path></svg>';
@@ -99,9 +100,48 @@ const popupLogic = (map: ShallowRef<null | Map>) => {
       popup.remove();
     }
   };
+
+
+  const clickObservation = async (e: MapLayerMouseEvent) => {
+    if (e.features && e.features[0]?.properties && map.value) {
+      console.log(e.features);
+      console.log(e.features[0]);
+      const feature = e.features[0];
+      if (feature.properties) {
+        const siteId = feature.properties.siteeval_id;
+        if (siteId) {
+          const data = await ApiService.getSiteObservations(siteId);
+          console.log(data);
+          const { results } = data;
+          const worldView = results.filter((item) => item.constellation === 'WV');
+          const bbox = data.bbox;
+          const bboxStr = `${bbox.xmin} ${bbox.ymin} ${bbox.xmax} ${bbox.ymax}`
+          const commands: string[]  = [];
+          let count = 0;
+          const totalStartTime = new Date(data.timerange.min * 1000).toISOString().substring(0, 19)
+          const totalEndTime = new Date(data.timerange.max * 1000).toISOString().substring(0, 19)
+          const totalCommand = `poetry run rdwatch movie --bbox ${bboxStr} --start-time ${totalStartTime} --end-time ${totalEndTime} --worldview --host http://localhost:8000 --output image${count}.avif`
+          worldView.forEach((item) => {
+            const startTime = new Date(item.timerange.min * 1000).toISOString().substring(0, 19)
+            const endTime = new Date(item.timerange.max * 1000).toISOString().substring(0, 19)
+            const newCommand = `poetry run rdwatch image --bbox ${bboxStr} --time ${endTime} --worldview --host http://localhost:8000 --output image${count}.avif`
+            commands.push(newCommand);
+            count += 1;
+          });
+          console.log(totalCommand);
+          console.log(commands);
+
+        }
+      }
+    }
+
+  }
   if (map.value) {
     map.value.on("mouseenter", "observations-fill", function (e) {
       drawPopup(e);
+    });
+    map.value.on("click", "observations-fill", function (e) {
+      clickObservation(e);
     });
     map.value.on("mouseleave", "observations-fill", function (e) {
       drawPopup(e);

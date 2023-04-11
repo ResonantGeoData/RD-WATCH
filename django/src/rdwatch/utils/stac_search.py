@@ -1,7 +1,8 @@
 import json
 from datetime import datetime, timedelta
+from os import environ, path
 from typing import Literal, TypedDict
-from urllib.request import urlopen
+from urllib.request import Request, urlopen
 
 
 class EOBand(TypedDict, total=False):
@@ -81,7 +82,7 @@ def sentinel_search(
     timebuffer: timedelta | None = None,
     page: int = 1,
 ) -> Results:
-    url = 'https://earth-search.aws.element84.com/v0/search'
+    url = path.join(environ['RDWATCH_SMART_STAC_URL'], 'search')
     params = SearchParams()
     params['bbox'] = bbox
     if timebuffer is not None:
@@ -91,12 +92,13 @@ def sentinel_search(
     else:
         time_str = f'{_fmt_time(timestamp)}Z'
     params['datetime'] = time_str
-    params['collections'] = [
-        'sentinel-s2-l1c',
-        'sentinel-s2-l2a',
-        'sentinel-s2-l2a-cogs',
-    ]
+    params['collections'] = ['ta1-s2-acc-2']
     params['page'] = page
     params['limit'] = 100
-    with urlopen(url, bytes(json.dumps(params), 'utf-8')) as resp:
+    request = Request(
+        url,
+        data=bytes(json.dumps(params), 'utf-8'),
+        headers={'x-api-key': environ['RDWATCH_SMART_STAC_KEY']},
+    )
+    with urlopen(request) as resp:
         return json.loads(resp.read())

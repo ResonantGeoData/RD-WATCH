@@ -89,6 +89,7 @@ def get_bands(
                     'collection': 'landsat-c2l2-sr'
                     | 'sentinel-s2-l2a'
                     | 'sentinel-s2-l2a-cogs'
+                    | 'ta1-s2-acc-2'
                 }:
                     level, _ = ProcessingLevel.objects.get_or_create(
                         slug='2A',
@@ -96,7 +97,7 @@ def get_bands(
                     )
                 case {'collection': collection}:
                     logger.warning(
-                        f"Malformed STAC response: unkown collection '{collection}'"
+                        f"Malformed STAC response: unknown collection '{collection}'"
                     )
                     continue
                 case _:

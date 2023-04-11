@@ -18,7 +18,7 @@ repos:
       - id: trailing-whitespace
 
   - repo: https://github.com/psf/black
-    rev: 23.1.0
+    rev: 23.3.0
     hooks:
       - id: black
         args: [--config, django/pyproject.toml]
@@ -36,13 +36,13 @@ repos:
         args: [--py310-plus]
 
   - repo: https://github.com/adamchainz/django-upgrade
-    rev: 1.12.0
+    rev: 1.13.0
     hooks:
     -   id: django-upgrade
         args: [--target-version, "4.1"]
 
   - repo: https://github.com/PyCQA/autoflake
-    rev: v1.4
+    rev: v2.0.2
     hooks:
       - id: autoflake
         args:

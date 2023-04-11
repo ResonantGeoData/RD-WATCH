@@ -65,3 +65,5 @@ USE_I18N = False
 USE_TZ = False
 USE_X_FORWARDED_HOST = True
 WSGI_APPLICATION = 'rdwatch.server.application'
+
+ACCENTURE_IMAGERY_VERSION = environ.get('RDWATCH_ACCENTURE_VERSION', None)

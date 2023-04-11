@@ -4,6 +4,8 @@ from os import environ, path
 from typing import Literal, TypedDict
 from urllib.request import Request, urlopen
 
+from django.conf import settings
+
 
 class EOBand(TypedDict, total=False):
     name: str
@@ -54,10 +56,13 @@ def _fmt_time(time: datetime):
     return f'{time.isoformat()[:19]}Z'
 
 
-COLLECTIONS = {
+COLLECTIONS: dict[str, list[str]] = {
     'L8': ['landsat-c2l1', 'landsat-c2l2-sr'],
-    'S2': ['ta1-s2-acc-2'],
+    'S2': [],
 }
+
+if settings.ACCENTURE_IMAGERY_VERSION is not None:
+    COLLECTIONS['S2'].append(f'ta1-s2-acc-{settings.ACCENTURE_IMAGERY_VERSION}')
 
 
 def stac_search(

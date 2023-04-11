@@ -5,7 +5,7 @@ from datetime import datetime, timedelta
 from typing import cast
 
 from rdwatch.models.lookups import CommonBand, Constellation, ProcessingLevel
-from rdwatch.utils.stac_search import landsat_search, sentinel_search
+from rdwatch.utils.stac_search import stac_search
 
 logger = logging.getLogger(__name__)
 
@@ -26,18 +26,14 @@ def get_bands(
     bbox: tuple[float, float, float, float],
     timebuffer: timedelta | None = None,
 ) -> Iterator[Band]:
-    match constellation.slug:
-        case 'L8':
-            search = landsat_search
-        case 'S2':
-            search = sentinel_search
-        case _:
-            raise ValueError(f"Unsupported constellation '{constellation.slug}'")
+    if constellation.slug not in ('L8', 'S2'):
+        raise ValueError(f"Unsupported constellation '{constellation.slug}'")
 
     page: None | int = 1
 
     while page is not None:
-        results = search(
+        results = stac_search(
+            constellation.slug,
             timestamp,
             bbox,
             timebuffer=timebuffer or timedelta(hours=1),
@@ -85,21 +81,22 @@ def get_bands(
                         slug='1C',
                         defaults={'description': 'top of atmosphere radiance'},
                     )
-                case {
-                    'collection': 'landsat-c2l2-sr'
-                    | 'sentinel-s2-l2a'
-                    | 'sentinel-s2-l2a-cogs'
-                    | 'ta1-s2-acc-2'
-                }:
-                    level, _ = ProcessingLevel.objects.get_or_create(
-                        slug='2A',
-                        defaults={'description': 'surface reflectance'},
-                    )
                 case {'collection': collection}:
-                    logger.warning(
-                        f"Malformed STAC response: unknown collection '{collection}'"
-                    )
-                    continue
+                    if 'collection' in (
+                        'landsat-c2l2-sr',
+                        'sentinel-s2-l2a',
+                        'sentinel-s2-l2a-cogs',
+                    ) or collection.startswith('ta1-s2-acc-'):
+                        level, _ = ProcessingLevel.objects.get_or_create(
+                            slug='2A',
+                            defaults={'description': 'surface reflectance'},
+                        )
+                    else:
+                        logger.warning(
+                            'Malformed STAC response: unknown collection '
+                            f"'{collection}'"
+                        )
+                        continue
                 case _:
                     logger.warning("Malformed STAC response: no 'collection'")
                     continue

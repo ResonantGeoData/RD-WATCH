@@ -54,29 +54,14 @@ def _fmt_time(time: datetime):
     return f'{time.isoformat()[:19]}Z'
 
 
-def landsat_search(
-    timestamp: datetime,
-    bbox: tuple[float, float, float, float],
-    timebuffer: timedelta | None = None,
-    page: int = 1,
-) -> Results:
-    url = 'https://landsatlook.usgs.gov/stac-server/search'
-    if timebuffer is not None:
-        min_time = timestamp - timebuffer
-        max_time = timestamp + timebuffer
-        time_str = f'?datetime={_fmt_time(min_time)}/{_fmt_time(max_time)}'
-    else:
-        time_str = f'?datetime={_fmt_time(timestamp)}'
-    url += time_str
-    url += f"&bbox={','.join(str(coord) for coord in bbox)}"
-    url += '&collections=landsat-c2l1,landsat-c2l2-sr'
-    url += f'&page={page}'
-    url += '&limit=100'
-    with urlopen(url) as resp:
-        return json.loads(resp.read())
+COLLECTIONS = {
+    'L8': ['landsat-c2l1', 'landsat-c2l2-sr'],
+    'S2': ['ta1-s2-acc-2'],
+}
 
 
-def sentinel_search(
+def stac_search(
+    source: Literal['S2', 'L8'],
     timestamp: datetime,
     bbox: tuple[float, float, float, float],
     timebuffer: timedelta | None = None,
@@ -92,7 +77,7 @@ def sentinel_search(
     else:
         time_str = f'{_fmt_time(timestamp)}Z'
     params['datetime'] = time_str
-    params['collections'] = ['ta1-s2-acc-2']
+    params['collections'] = COLLECTIONS[source]
     params['page'] = page
     params['limit'] = 100
     request = Request(

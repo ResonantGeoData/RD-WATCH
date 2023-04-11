@@ -37,6 +37,15 @@ import { annotationColors, observationText, siteText } from "./annotationStyles"
 //   return filter;
 // }
 
+const buildTextOffset = (type: 'site' | 'observation', filters: MapFilters): [number, number] => {
+  if (filters.showSiteOutline && type === 'site') {
+    return [0, 0.5];
+  } else if (filters.showSiteOutline && type === 'observation') {
+    return [0, -0.5];
+  }
+  return [0, 0];
+}
+
 export const buildObservationFilter = (
   timestamp: number,
   filters: MapFilters
@@ -187,6 +196,8 @@ export const layers = (
       "text-font": ["Roboto Regular"],
       "text-max-width": 5,
       "text-size": 12,
+      "text-allow-overlap": true,
+      "text-offset": buildTextOffset('observation', filters),
       "text-field": observationText,
     },
     paint: {
@@ -226,6 +237,8 @@ export const layers = (
       "text-font": ["Roboto Regular"],
       "text-max-width": 5,
       "text-size": 12,
+      "text-allow-overlap": true,
+      "text-offset": buildTextOffset('site', filters),
       "text-field": siteText,
     },
     paint: {

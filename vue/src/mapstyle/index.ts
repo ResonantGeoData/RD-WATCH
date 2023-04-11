@@ -1,7 +1,6 @@
 import {
   layers as naturalearthLayers,
   sources as naturalearthSources,
-  sources,
 } from "./naturalearth";
 import {
   layers as openmaptilesLayers,

@@ -18,6 +18,8 @@ class Band:
     timestamp: datetime
     bbox: tuple[float, float, float, float]
     uri: str
+    cloudcover: int
+    collection: str
 
 
 def get_bands(
@@ -79,6 +81,7 @@ def get_bands(
                     logger.warning("Malformed STAC response: no 'bbox'")
                     continue
 
+            cloudcover = 0
             match feature:
                 case {'collection': 'landsat-c2l1' | 'sentinel-s2-l1c'}:
                     level, _ = ProcessingLevel.objects.get_or_create(
@@ -102,6 +105,9 @@ def get_bands(
                 case _:
                     logger.warning("Malformed STAC response: no 'collection'")
                     continue
+            if 'properties' in feature.keys():
+                if 'eo:cloud_cover' in feature['properties'].keys():
+                    cloudcover = feature['properties']['eo:cloud_cover']
 
             for name, asset in feature['assets'].items():
                 if name == 'visual':
@@ -129,4 +135,6 @@ def get_bands(
                     spectrum=spectrum,
                     bbox=stac_bbox,
                     uri=uri,
+                    cloudcover=cloudcover,
+                    collection=feature['collection'],
                 )

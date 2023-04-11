@@ -14,6 +14,7 @@ import type { Region } from "../models/Region";
 import type { CancelablePromise } from "../core/CancelablePromise";
 import { OpenAPI } from "../core/OpenAPI";
 import { request as __request } from "../core/request";
+import { SatelliteTimeStamp } from "../../store";
 
 export interface QueryArguments {
   performer?: string;
@@ -155,7 +156,7 @@ export class ApiService {
     level="2A",
     startTimestamp=0,
     endTimestamp=0,
-    bbox=[]
+    bbox=[],
   ): CancelablePromise<string[]>
   {
     const startTime = new Date(startTimestamp * 1000).toISOString().substring(0, 10);
@@ -175,17 +176,19 @@ export class ApiService {
     return __request(OpenAPI, {
       method: "GET",
       url: "/api/satellite-image/timestamps",
-      query: { constellation, level, spectrum, start_timestamp: startTime, end_timestamp: endTime, bbox: bboxstr
+      query: { constellation, level, spectrum, start_timestamp: startTime, end_timestamp: endTime, bbox: bboxstr,
       }
     });
   }
+
   public static getSatelliteVisualTimestamps(
     constellation="S2",
     spectrum="visual",
     level="2A",
     startTimestamp=0,
     endTimestamp=0,
-    bbox=[]
+    bbox=[],
+    cloudcover = 100
   ): CancelablePromise<string[]>
   {
     const startTime = new Date(startTimestamp * 1000).toISOString().substring(0, 10);
@@ -205,7 +208,37 @@ export class ApiService {
     return __request(OpenAPI, {
       method: "GET",
       url: "/api/satellite-image/visual-timestamps",
-      query: { constellation, level, spectrum, start_timestamp: startTime, end_timestamp: endTime, bbox: bboxstr
+      query: { constellation, level, spectrum, start_timestamp: startTime, end_timestamp: endTime, bbox: bboxstr,
+      }
+    });
+  }
+  public static getAllSatelliteTimestamps(
+    constellation="S2",
+    spectrum="visual",
+    level="2A",
+    startTimestamp=0,
+    endTimestamp=0,
+    bbox=[],
+  ): CancelablePromise<SatelliteTimeStamp[]>
+  {
+    const startTime = new Date(startTimestamp * 1000).toISOString().substring(0, 10);
+    const endTime = new Date(endTimestamp * 1000).toISOString().substring(0, 10);
+    // Convert bbox into array of numbers, min/max
+    let minX = Infinity;
+    let maxX = -Infinity;
+    let minY = Infinity;
+    let maxY = -Infinity;
+    bbox.forEach((item: [number, number]) => {
+      minX = Math.min(minX, item[1]);
+      minY = Math.min(minY, item[0]);
+      maxX = Math.max(maxX, item[1]);
+      maxY = Math.max(maxY, item[0]);
+    })
+    const bboxstr = `${minY},${minX},${maxY},${maxX}`;
+    return __request(OpenAPI, {
+      method: "GET",
+      url: "/api/satellite-image/all-timestamps",
+      query: { constellation, level, spectrum, start_timestamp: startTime, end_timestamp: endTime, bbox: bboxstr,
       }
     });
   }

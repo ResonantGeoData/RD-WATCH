@@ -157,6 +157,10 @@ services:
   # Run poetry commands
   poetry:
     image: ghcr.io/resonantgeodata/rd-watch/builder:latest
+    build:
+      context: .
+      dockerfile: ./Dockerfile
+      target: builder
     depends_on:
       - django
     entrypoint:

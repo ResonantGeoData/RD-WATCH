@@ -72,6 +72,7 @@ def stac_search(
     timebuffer: timedelta | None = None,
     page: int = 1,
 ) -> Results:
+    # Use SMART program server instead of public server (https://earth-search.aws.element84.com/v0/search)
     url = path.join(environ['RDWATCH_SMART_STAC_URL'], 'search')
     params = SearchParams()
     params['bbox'] = bbox

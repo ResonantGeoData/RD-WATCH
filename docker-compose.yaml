@@ -24,6 +24,9 @@ services:
       RDWATCH_SMART_STAC_KEY: ${RDWATCH_SMART_STAC_KEY:?}
       RDWATCH_ACCENTURE_VERSION: ${RDWATCH_ACCENTURE_VERSION:?}
       VITE_TILE_SERVER_URL: ${VITE_TILE_SERVER_URL:?}
+      RDWATCH_MINIO_STORAGE_ENDPOINT: minio:9002
+      RDWATCH_MINIO_STORAGE_ACCESS_KEY: minio
+      RDWATCH_MINIO_STORAGE_SECRET_KEY: ${RDWATCH_SECRET_KEY:?}
     ports:
       - 8000:80
 
@@ -46,6 +49,18 @@ services:
       RDWATCH_SECRET_KEY: ${RDWATCH_SECRET_KEY:?}
     volumes:
       - redis-data:/data
+
+  minio:
+    image: minio/minio:latest
+    # When run with a TTY, minio prints credentials on startup
+    tty: true
+    command: ["server", "/data", "--console-address", ":${DOCKER_MINIO_CONSOLE_PORT-9003}"]
+    environment:
+      MINIO_ROOT_USER: minio
+      MINIO_ROOT_PASSWORD: ${RDWATCH_SECRET_KEY:?}
+    ports:
+      - ${DOCKER_MINIO_PORT-9002}:9002
+      - ${DOCKER_MINIO_CONSOLE_PORT-9003}:9003
 
   ###################
   # debug services  #
@@ -88,6 +103,9 @@ services:
       RDWATCH_ACCENTURE_VERSION: ${RDWATCH_ACCENTURE_VERSION:?}
       RDWATCH_SMART_STAC_URL: ${RDWATCH_SMART_STAC_URL:?}
       RDWATCH_SMART_STAC_KEY: ${RDWATCH_SMART_STAC_KEY:?}
+      RDWATCH_MINIO_STORAGE_ENDPOINT: minio:9002
+      RDWATCH_MINIO_STORAGE_ACCESS_KEY: minio
+      RDWATCH_MINIO_STORAGE_SECRET_KEY: ${RDWATCH_SECRET_KEY:?}
     depends_on:
       - postgresql
       - redis
@@ -123,6 +141,9 @@ services:
       RDWATCH_REDIS_URI: ${RDWATCH_REDIS_URI:?}
       RDWATCH_SMART_STAC_URL: ${RDWATCH_SMART_STAC_URL:?}
       RDWATCH_SMART_STAC_KEY: ${RDWATCH_SMART_STAC_KEY:?}
+      RDWATCH_MINIO_STORAGE_ENDPOINT: minio:9002
+      RDWATCH_MINIO_STORAGE_ACCESS_KEY: minio
+      RDWATCH_MINIO_STORAGE_SECRET_KEY: ${RDWATCH_SECRET_KEY:?}
     depends_on:
       - postgresql
       - redis
@@ -181,6 +202,9 @@ services:
       RDWATCH_REDIS_URI: ${RDWATCH_REDIS_URI:?}
       RDWATCH_SMART_STAC_URL: ${RDWATCH_SMART_STAC_URL:?}
       RDWATCH_SMART_STAC_KEY: ${RDWATCH_SMART_STAC_KEY:?}
+      RDWATCH_MINIO_STORAGE_ENDPOINT: minio:9002
+      RDWATCH_MINIO_STORAGE_ACCESS_KEY: minio
+      RDWATCH_MINIO_STORAGE_SECRET_KEY: ${RDWATCH_SECRET_KEY:?}
     profiles:
       - tools
     user: ${UID-0}:${GID-0}
@@ -224,6 +248,9 @@ services:
       RDWATCH_REDIS_URI: ${RDWATCH_REDIS_URI:?}
       RDWATCH_SMART_STAC_URL: ${RDWATCH_SMART_STAC_URL:?}
       RDWATCH_SMART_STAC_KEY: ${RDWATCH_SMART_STAC_KEY:?}
+      RDWATCH_MINIO_STORAGE_ENDPOINT: minio:9002
+      RDWATCH_MINIO_STORAGE_ACCESS_KEY: minio
+      RDWATCH_MINIO_STORAGE_SECRET_KEY: ${RDWATCH_SECRET_KEY:?}
     init: true
     network_mode: service:vue
     profiles:

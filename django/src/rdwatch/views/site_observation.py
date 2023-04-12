@@ -3,6 +3,7 @@ from django.contrib.postgres.aggregates import JSONBAgg
 from django.db.models import Count, F, Max, Min, RowRange, Window
 from django.db.models.functions import JSONObject  # type: ignore
 from django.http import HttpRequest
+from django.shortcuts import get_object_or_404
 from rest_framework.decorators import api_view, schema
 from rest_framework.exceptions import NotFound
 from rest_framework.response import Response
@@ -11,6 +12,7 @@ from rest_framework.schemas.openapi import AutoSchema
 from rdwatch.db.functions import BoundingBox, ExtractEpoch
 from rdwatch.models import SiteEvaluation, SiteObservation
 from rdwatch.serializers import SiteObservationListSerializer
+from rdwatch.tasks import generate_video_task
 
 
 class SiteObservationsSchema(AutoSchema):
@@ -67,3 +69,15 @@ def site_observations(request: HttpRequest, pk: int):
     )
     serializer = SiteObservationListSerializer(queryset)
     return Response(serializer.data)
+
+
+@api_view(['POST'])
+def generate_video_from_site_observation(request: HttpRequest, pk: int):
+    site_observation = get_object_or_404(SiteObservation, pk=pk)
+    if site_observation.video:
+        return Response(
+            'This site observation already has an associated video.',
+            status=200,
+        )
+    generate_video_task.delay(pk)
+    return Response(status=202)

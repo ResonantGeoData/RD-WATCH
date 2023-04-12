@@ -1,3 +1,4 @@
+import logging
 from django.contrib.gis.db.models.aggregates import Collect
 from django.contrib.postgres.aggregates import JSONBAgg
 from django.db.models import Count, F, Max, Min, RowRange, Window
@@ -14,6 +15,7 @@ from rdwatch.models import SiteEvaluation, SiteObservation
 from rdwatch.serializers import SiteObservationListSerializer
 from rdwatch.tasks import generate_video_task
 
+logger = logging.getLogger(__name__)
 
 class SiteObservationsSchema(AutoSchema):
     def get_operation_id(self, *args):
@@ -56,6 +58,7 @@ def site_observations(request: HttpRequest, pk: int):
                     id='pk',
                     label='label__slug',
                     score='score',
+                    video='video',
                     constellation='constellation__slug',
                     spectrum='spectrum__slug',
                     timerange=JSONObject(
@@ -73,11 +76,9 @@ def site_observations(request: HttpRequest, pk: int):
 
 @api_view(['POST'])
 def generate_video_from_site_observation(request: HttpRequest, pk: int):
-    site_observation = get_object_or_404(SiteObservation, pk=pk)
-    if site_observation.video:
-        return Response(
-            'This site observation already has an associated video.',
-            status=200,
-        )
+    logger.warning(f'Getting siteObservation: {pk}')
+    observations = SiteObservation.objects.filter(siteeval=pk)   
+    logger.warning(observations)
+    logger.warning(f'Generating video for siteObservation: {pk}')
     generate_video_task.delay(pk)
     return Response(status=202)

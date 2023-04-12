@@ -116,6 +116,7 @@ const popupLogic = (map: ShallowRef<null | Map>) => {
         if (siteId && !selectedObservationList.value.includes(siteId)) {
           const data = await ApiService.getSiteObservations(siteId);
           const { results } = data;
+          console.log(data);
           const worldView = results.filter((item) => item.constellation === 'WV');
           const bbox = data.bbox;
           const bboxStr = `${bbox.xmin} ${bbox.ymin} ${bbox.xmax} ${bbox.ymax}`

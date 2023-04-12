@@ -39,6 +39,8 @@ services:
       AWS_SECRET_ACCESS_KEY: ${AWS_SECRET_ACCESS_KEY:?}
       AWS_REQUEST_PAYER: requester
       POSTGRES_PASSWORD: ${RDWATCH_SECRET_KEY:?}
+    ports:
+      - 5432:5432
     volumes:
       - postgresql-data:/var/lib/postgresql/data
 
@@ -54,7 +56,9 @@ services:
     image: minio/minio:latest
     # When run with a TTY, minio prints credentials on startup
     tty: true
-    command: ["server", "/data", "--console-address", ":${DOCKER_MINIO_CONSOLE_PORT-9003}"]
+    command: ["server", "/data", "--console-address", ":${DOCKER_MINIO_CONSOLE_PORT-9003}", "--address", ":${DOCKER_MINIO_PORT-9002}"]
+    volumes:
+      - minio:/data
     environment:
       MINIO_ROOT_USER: minio
       MINIO_ROOT_PASSWORD: ${RDWATCH_SECRET_KEY:?}
@@ -148,6 +152,7 @@ services:
       - postgresql
       - redis
       - django
+      - minio
     profiles:
       - debug
       - tools
@@ -264,6 +269,7 @@ volumes:
   pgadmin-data:
   postgresql-data:
   redis-data:
+  minio:
   # debug volumes
   unit-socket:
   poetry-cache:

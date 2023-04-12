@@ -79,3 +79,16 @@ if DEBUG:
     MINIO_STORAGE_AUTO_CREATE_MEDIA_BUCKET = True
     MINIO_STORAGE_AUTO_CREATE_MEDIA_POLICY = 'READ_WRITE'
     MINIO_STORAGE_MEDIA_USE_PRESIGNED = True
+    LOGGING = {
+        "version": 1,
+        "disable_existing_loggers": False,
+        "handlers": {
+            "console": {
+                "class": "logging.StreamHandler",
+            },
+        },
+        "root": {
+            "handlers": ["console"],
+            "level": "INFO",
+        },
+    }

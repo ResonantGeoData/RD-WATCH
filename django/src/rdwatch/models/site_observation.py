@@ -48,6 +48,7 @@ class SiteObservation(models.Model):
     timestamp = models.DateTimeField(
         help_text="The source image's timestamp",
     )
+    video = models.FileField(null=True, blank=True)
 
     def __str__(self):
         sit = str(self.siteeval)

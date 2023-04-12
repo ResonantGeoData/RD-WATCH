@@ -4,7 +4,7 @@ from .region import RegionViewSet
 from .server_status import RetrieveServerStatus
 from .site_evaluation import site_evaluations
 from .site_model import post_region_model, post_site_model
-from .site_observation import site_observations
+from .site_observation import generate_video_from_site_observation, site_observations
 from .tile import (
     all_satellite_timestamps,
     satelliteimage_raster_tile,
@@ -23,6 +23,7 @@ __all__ = [
     'post_region_model',
     'post_site_model',
     'site_observations',
+    'generate_video_from_site_observation',
     'satelliteimage_raster_tile',
     'satelliteimage_time_list',
     'satelliteimage_visual_tile',

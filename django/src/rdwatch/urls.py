@@ -26,6 +26,10 @@ urlpatterns = [
     path('status', views.RetrieveServerStatus.as_view()),  # type: ignore
     path('evaluations', views.site_evaluations),
     path('evaluations/<int:pk>', views.site_observations),
+    path(
+        'observations/<int:pk>/generate-video',
+        views.generate_video_from_site_observation,
+    ),
     path('vector-tile/<int:z>/<int:x>/<int:y>.pbf', views.vector_tile),
     path('satellite-image/timestamps', views.satelliteimage_time_list),
     path('satellite-image/all-timestamps', views.all_satellite_timestamps),

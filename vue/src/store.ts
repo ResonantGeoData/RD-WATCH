@@ -19,6 +19,27 @@ export interface SatelliteTimeStamp {
   source: 'S2' | 'WorldView'
 }
 
+export interface SiteObservation {
+  id: number;
+  timerange: {
+    min: number;
+    max: number;
+  },
+  imagesLoaded: boolean;
+  imageCounts: {
+    L8: number;
+    S2: number;
+    WV: number;
+  }
+  score: {
+    min: number,
+    max: number,
+    average: number,
+  }
+  imagesActive: boolean;
+  bbox: { xmin: number; ymin: number; xmax: number; ymax: number };
+}
+
 export interface SatelliteData {
   satelliteImagesOn: boolean;
   imageOpacity: number;
@@ -45,6 +66,7 @@ export const state = reactive<{
     patternOpacity: number;
   };
   regionMap: Record<Region["id"], Region["name"]>
+  selectedObservations: SiteObservation[];
 }>({
   timestamp: Math.floor(Date.now() / 1000),
   timeMin: new Date(0).valueOf(),
@@ -76,7 +98,8 @@ export const state = reactive<{
     patternThickness: 8,
     patternOpacity: 255,
   },
-  regionMap: {}
+  regionMap: {},
+  selectedObservations: [],
 });
 
 export const filteredSatelliteTimeList = computed(() => {
@@ -86,4 +109,10 @@ export const filteredSatelliteTimeList = computed(() => {
   }
   filtered = filtered.filter((item) => state.satellite.satelliteSources.includes(item.source))
   return filtered;
+})
+
+
+export const selectedObservationList = computed(() => {
+  const selected = state.selectedObservations;
+  return selected.map((item) => item.id);
 })

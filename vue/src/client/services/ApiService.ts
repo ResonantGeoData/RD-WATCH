@@ -67,6 +67,22 @@ export class ApiService {
     });
   }
 
+    /**
+   * @param id
+   * @returns boolean
+   * @throws ApiError
+   */
+    public static getObservationImages(
+      id: string
+    ): CancelablePromise<boolean> {
+      return __request(OpenAPI, {
+        method: "POST",
+        url: "/api/observations/{id}/generate-video",
+        path: {
+          id: id,
+        },
+      });
+    }
   /**
    * @returns ModelRunList
    * @throws ApiError

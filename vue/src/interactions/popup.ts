@@ -1,13 +1,13 @@
 import { Ref, ref } from "vue";
 import { Color, Map, MapLayerMouseEvent, Popup } from "maplibre-gl";
 import { ShallowRef } from "vue";
-import { state } from "../store";
+import { selectedObservationList, state } from "../store";
 import { ApiService } from "../client";
 
 const checkBadge =
   '<svg style="display:inline;" width="20" height="20" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="replacementColor" aria-hidden="true"><path fill-rule="evenodd" d="M8.603 3.799A4.49 4.49 0 0112 2.25c1.357 0 2.573.6 3.397 1.549a4.49 4.49 0 013.498 1.307 4.491 4.491 0 011.307 3.497A4.49 4.49 0 0121.75 12a4.49 4.49 0 01-1.549 3.397 4.491 4.491 0 01-1.307 3.497 4.491 4.491 0 01-3.497 1.307A4.49 4.49 0 0112 21.75a4.49 4.49 0 01-3.397-1.549 4.49 4.49 0 01-3.498-1.306 4.491 4.491 0 01-1.307-3.498A4.49 4.49 0 012.25 12c0-1.357.6-2.573 1.549-3.397a4.49 4.49 0 011.307-3.497 4.49 4.49 0 013.497-1.307zm7.007 6.387a.75.75 0 10-1.22-.872l-3.236 4.53L9.53 12.22a.75.75 0 00-1.06 1.06l2.25 2.25a.75.75 0 001.14-.094l3.75-5.25z" clip-rule="evenodd"></path></svg>';
 
-const hoveredInfo: Ref<string[]> = ref([]);
+const hoveredInfo: Ref<{region: string[], siteId: number[]}> = ref({region: [], siteId:[]});
 
 const calculateScoreColor = (score: number) => {
   if (score <= 0.25) {
@@ -39,7 +39,8 @@ const popupLogic = (map: ShallowRef<null | Map>) => {
       let html = "<div><ul>";
       const htmlMap: Record<string, boolean> = {};
       insideObservation = true;
-      hoveredInfo.value = [];
+      hoveredInfo.value.region = [];
+      hoveredInfo.value.siteId = [];
       e.features.forEach(
         (
           item: GeoJSON.GeoJsonProperties & {
@@ -50,9 +51,11 @@ const popupLogic = (map: ShallowRef<null | Map>) => {
             const id = item.properties.site_number;
             const regionName = state.regionMap[item.properties.region_id]
             const score = item.properties.score;
-            hoveredInfo.value.push(
+            const siteId = item.properties.siteeval_id;
+            hoveredInfo.value.region.push(
               `${item.properties.configuration_id}_${item.properties.region_id}_${item.properties.performer_id}`
             );
+            hoveredInfo.value.siteId.push(siteId);
             let fillString = "";
             if (!htmlMap[id]) {
               if (item.layer?.paint) {
@@ -94,7 +97,8 @@ const popupLogic = (map: ShallowRef<null | Map>) => {
       html += "</ul></div>";
       popup.setLngLat(coordinates).setHTML(html).addTo(map.value);
     } else if (map.value) {
-      hoveredInfo.value = [];
+      hoveredInfo.value.region = [];
+      hoveredInfo.value.siteId = [];
       insideObservation = false;
       map.value.getCanvas().style.cursor = "";
       popup.remove();
@@ -109,14 +113,42 @@ const popupLogic = (map: ShallowRef<null | Map>) => {
       const feature = e.features[0];
       if (feature.properties) {
         const siteId = feature.properties.siteeval_id;
-        if (siteId) {
+        if (siteId && !selectedObservationList.value.includes(siteId)) {
           const data = await ApiService.getSiteObservations(siteId);
-          console.log(data);
           const { results } = data;
           const worldView = results.filter((item) => item.constellation === 'WV');
           const bbox = data.bbox;
           const bboxStr = `${bbox.xmin} ${bbox.ymin} ${bbox.xmax} ${bbox.ymax}`
           const commands: string[]  = [];
+          const L8 = results.filter((item) => item.constellation === 'L8').length;
+          const S2 = results.filter((item) => item.constellation === 'S2').length;
+          const WV = results.filter((item) => item.constellation === 'WV').length;
+          let minScore = Infinity;
+          let maxScore = -Infinity;
+          let avgScore = 0;
+          results.forEach((item) => {
+            minScore = Math.min(minScore, item.score);
+            maxScore = Math.max(maxScore, item.score);
+            avgScore += item.score
+          })
+          avgScore = avgScore / results.length;
+          state.selectedObservations.push( {
+            id: siteId,
+            timerange: data.timerange,
+            imagesLoaded: false,
+            imagesActive: false,
+            imageCounts: {
+              L8,
+              S2,
+              WV,
+            },
+            score: {
+              min: minScore,
+              max: maxScore,
+              average: avgScore,
+            },
+            bbox: data.bbox,
+          })
           let count = 0;
           const totalStartTime = new Date(data.timerange.min * 1000).toISOString().substring(0, 19)
           const totalEndTime = new Date(data.timerange.max * 1000).toISOString().substring(0, 19)

@@ -323,7 +323,7 @@ watch([() => props.filters.region, () => props.filters.performer], () => {
       :model-run="modelRun"
       :open="openedModelRuns.has(modelRun.key)"
       :class="{
-        outlined: hoveredInfo.includes(
+        outlined: hoveredInfo.region.includes(
           `${modelRun.id}_${modelRun.region?.id}_${modelRun.performer.id}`
         ),
       }"

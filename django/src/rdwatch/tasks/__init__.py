@@ -17,7 +17,7 @@ from dataclasses import dataclass
 from rdwatch.utils.worldview_processed.raster_tile import (
     get_worldview_processed_visual_tile,
 )
-from rdwatch.utils.worldview_processed.satellite_captures import get_captures
+from rdwatch.utils.worldview_processed.satellite_captures import get_captures, WorldViewProcessedCapture
 
 
 @dataclass
@@ -53,46 +53,40 @@ def generate_video_task(site_observation_id: int) -> None:
                 logger.warning(f'COULD NOT FIND ANY IMAGE FOR TIMESTAMP: {timestamp}')
                 continue
             logger.warning(f'Retrieved Image with timestamp: {timestamp}')
-            output = f'tile_image_{item.id}.png'
+            output = f'tile_image_{item.id}.jpg'
             img.save(output)
             with open(output, 'rb') as imageFile:
                 item.video = File(imageFile, output)
                 item.save()
                 os.remove(output)
 
-def fetch_tile(
+
+def get_closest_capture(
     bbox: tuple[float, float, float, float],
     timestamp: datetime,
-    tile: mercantile.Tile,
-    worldview: bool = False,
-) -> WebpTile:
-    params = {'timestamp': datetime.isoformat(timestamp)}
-    if not worldview:
-        params['constellation'] = 'S2'
-        params['spectrum'] = 'visual'
-        params['level'] = '2A'
-
+):
     timebuffer = timedelta(days=1)
 
     captures = get_captures(timestamp, bbox, timebuffer)
     logger.warning(f'Captures: {len(captures)}')
     if not captures:
         return None
-
-    # Get timestamp closest to the requested timestamp
     closest_capture = min(captures, key=lambda band: abs(band.timestamp - timestamp))
 
-    # If the timestamp provided by the user is *exactly* the timestamp of the retrieved
-    # band, return the raster data for it. Otherwise, redirect back to this same view
-    # with the exact timestamp as a parameter so that this behavior is triggered during
-    # that request. This is done to facilitate caching of the raster data.
+    return closest_capture
+
+def fetch_tile(
+    capture: WorldViewProcessedCapture,
+    tile: mercantile.Tile,
+    timestamp: datetime,
+    worldview: bool = False,
+) -> WebpTile:
     try:
-        buffer = get_worldview_processed_visual_tile(closest_capture, tile.z, tile.x, tile.y)
+        buffer = get_worldview_processed_visual_tile(capture, tile.z, tile.x, tile.y)
         image = Image.open(io.BytesIO(buffer))
         return WebpTile(tile, timestamp, image)
     except:
         return None
-
 
 def image(
     bbox: tuple[float, float, float, float],
@@ -102,13 +96,14 @@ def image(
     # The max zoom will be different for lower resolution imagery
     # https://cogeotiff.github.io/rio-tiler/api/rio_tiler/io/cogeo/#get_zooms
     # This is for WorldView imagery
-    zoom = 14 if worldview else 14
+    zoom = 16 if worldview else 14
 
     webp_tiles: list[WebpTile] = []
     logger.warning(f'inside Image requesting')
     counter = 0
+    capture = get_closest_capture(bbox, time)
     for tile in mercantile.tiles(*bbox, zoom):
-        result = fetch_tile(bbox, time, tile, worldview=worldview)
+        result = fetch_tile(capture, tile, time, worldview=worldview)
         if result is not None:
             webp_tiles.append(result)
         counter += 1

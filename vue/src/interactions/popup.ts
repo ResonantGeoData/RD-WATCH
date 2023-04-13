@@ -117,13 +117,27 @@ const popupLogic = (map: ShallowRef<null | Map>) => {
           const data = await ApiService.getSiteObservations(siteId);
           const { results } = data;
           console.log(data);
-          const worldView = results.filter((item) => item.constellation === 'WV');
-          const bbox = data.bbox;
-          const bboxStr = `${bbox.xmin} ${bbox.ymin} ${bbox.xmax} ${bbox.ymax}`
-          const commands: string[]  = [];
-          const L8 = { total: results.filter((item) => item.constellation === 'L8').length, loaded:results.filter((item) => item.constellation === 'L8' && item.video !== null).length};
-          const S2 = { total: results.filter((item) => item.constellation === 'S2').length, loaded:results.filter((item) => item.constellation === 'S2' && item.video !== null).length};
-          const WV = { total: results.filter((item) => item.constellation === 'WV').length, loaded:results.filter((item) => item.constellation === 'WV' && item.video !== null).length};
+          const images: {url: string; timestamp: number}[] = [];
+          const worldView = results.filter((item) => item.constellation === 'WV')
+          worldView.forEach((item) => {
+            if (item.video !== null) {
+              images.push({url: item.video, timestamp: item.timerange.min});
+            }
+          });
+
+          const L8 = { 
+            total: results.filter((item) => item.constellation === 'L8').length,
+            loaded:results.filter((item) => item.constellation === 'L8' && item.video !== null).length,
+          };
+          const S2 = {
+            total: results.filter((item) => item.constellation === 'S2').length,
+            loaded:results.filter((item) => item.constellation === 'S2' && item.video !== null).length,
+          };
+          const WV = { 
+            total: results.filter((item) => item.constellation === 'WV').length,
+            loaded:results.filter((item) => item.constellation === 'WV' && item.video !== null).length,
+            images,
+          };
           let minScore = Infinity;
           let maxScore = -Infinity;
           let avgScore = 0;
@@ -133,6 +147,8 @@ const popupLogic = (map: ShallowRef<null | Map>) => {
             avgScore += item.score
           })
           avgScore = avgScore / results.length;
+          console.log(images);
+
           state.selectedObservations.push( {
             id: siteId,
             timerange: data.timerange,
@@ -150,13 +166,6 @@ const popupLogic = (map: ShallowRef<null | Map>) => {
             },
             bbox: data.bbox,
           })
-          const images: string[] = [];
-          worldView.forEach((item) => {
-            if (item.video !== null) {
-              images.push(item.video);
-            }
-          });
-          console.log(images);
 
         }
       }

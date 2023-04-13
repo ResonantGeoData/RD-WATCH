@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { ApiService } from "../../client";
+import { ImageBBox, state } from "../../store";
 import { SiteObservation } from "../../store";
 
 const props = defineProps<{
@@ -8,6 +9,37 @@ const props = defineProps<{
 
 const getImages = (id:number)  => {
     ApiService.getObservationImages(id.toString());
+}
+
+const turnImagesOn = (siteObs: SiteObservation) => {
+    const found = state.enabledSiteObservations.find((item) => item.id === siteObs.id);
+    if (found === undefined) {
+        const baseBBox = siteObs.bbox;
+        const bbox = [
+            [baseBBox.xmin, baseBBox.ymax],
+            [baseBBox.xmax, baseBBox.ymax],
+            [baseBBox.xmax, baseBBox.ymin],
+            [baseBBox.xmin, baseBBox.ymin],
+        ] as ImageBBox;
+        if (siteObs.imageCounts.WV.images) {
+            const tempArr = [...state.enabledSiteObservations];
+            tempArr.push({
+                id: siteObs.id,
+                timestamp: siteObs.timerange.min,
+                images: siteObs.imageCounts.WV.images,
+                bbox,
+            });
+            state.enabledSiteObservations = tempArr;
+            console.log(`Adding site: ${siteObs.id}`)
+        }
+    } else {
+        const tempArr = [...state.enabledSiteObservations];
+        const index = tempArr.findIndex((item) => item.id === siteObs.id);
+        if (index !== -1) {
+            tempArr.splice(index, 1);
+            state.enabledSiteObservations = tempArr;
+        }
+    }
 }
 
 </script>
@@ -80,6 +112,18 @@ const getImages = (id:number)  => {
           >
             Get Images
           </button>
+          <div class="form-control ml-10">
+            <label class="label cursor-pointer">
+              <span class="label-text">Images:</span>
+              <input
+                :value="siteObservation.imagesActive"
+                :disabled="siteObservation.imageCounts.WV.loaded === 0"
+                type="checkbox"
+                class="checkbox-primary checkbox"
+                @click="turnImagesOn(siteObservation)"
+              >
+            </label>
+          </div>
         </div>
       </div>
     </summary>

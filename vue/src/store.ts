@@ -27,9 +27,9 @@ export interface SiteObservation {
   },
   imagesLoaded: boolean;
   imageCounts: {
-    L8: number;
-    S2: number;
-    WV: number;
+    L8: {total:number, loaded: number};
+    S2: {total:number, loaded: number};
+    WV: {total:number, loaded: number};
   }
   score: {
     min: number,

@@ -31,9 +31,9 @@ const getImages = (id:number)  => {
           images:
         </div>
         <div class="col-span-5 text-xs font-light group-open:text-white">
-          <div>L8:{{ siteObservation.imageCounts.L8 }}</div>
-          <div>S2:{{ siteObservation.imageCounts.S2 }}</div>
-          <div>WV:{{ siteObservation.imageCounts.WV }}</div>
+          <div>L8: <b>{{ siteObservation.imageCounts.L8.loaded }}</b> of {{ siteObservation.imageCounts.L8.total }}</div>
+          <div>S2: <b>{{ siteObservation.imageCounts.S2.loaded }}</b> of {{ siteObservation.imageCounts.S2.total }}</div>
+          <div>WV: <b>{{ siteObservation.imageCounts.WV.loaded }}</b> of {{ siteObservation.imageCounts.WV.total }}</div>
         </div>
         <div
           class="col-span-3 text-xs font-light text-gray-600 group-open:text-gray-100"

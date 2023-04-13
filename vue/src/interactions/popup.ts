@@ -121,9 +121,9 @@ const popupLogic = (map: ShallowRef<null | Map>) => {
           const bbox = data.bbox;
           const bboxStr = `${bbox.xmin} ${bbox.ymin} ${bbox.xmax} ${bbox.ymax}`
           const commands: string[]  = [];
-          const L8 = results.filter((item) => item.constellation === 'L8').length;
-          const S2 = results.filter((item) => item.constellation === 'S2').length;
-          const WV = results.filter((item) => item.constellation === 'WV').length;
+          const L8 = { total: results.filter((item) => item.constellation === 'L8').length, loaded:results.filter((item) => item.constellation === 'L8' && item.video !== null).length};
+          const S2 = { total: results.filter((item) => item.constellation === 'S2').length, loaded:results.filter((item) => item.constellation === 'S2' && item.video !== null).length};
+          const WV = { total: results.filter((item) => item.constellation === 'WV').length, loaded:results.filter((item) => item.constellation === 'WV' && item.video !== null).length};
           let minScore = Infinity;
           let maxScore = -Infinity;
           let avgScore = 0;
@@ -150,19 +150,13 @@ const popupLogic = (map: ShallowRef<null | Map>) => {
             },
             bbox: data.bbox,
           })
-          let count = 0;
-          const totalStartTime = new Date(data.timerange.min * 1000).toISOString().substring(0, 19)
-          const totalEndTime = new Date(data.timerange.max * 1000).toISOString().substring(0, 19)
-          const totalCommand = `poetry run rdwatch movie --bbox ${bboxStr} --start-time ${totalStartTime} --end-time ${totalEndTime} --worldview --host http://localhost:8000 --output image${count}.avif`
+          const images: string[] = [];
           worldView.forEach((item) => {
-            const startTime = new Date(item.timerange.min * 1000).toISOString().substring(0, 19)
-            const endTime = new Date(item.timerange.max * 1000).toISOString().substring(0, 19)
-            const newCommand = `poetry run rdwatch image --bbox ${bboxStr} --time ${endTime} --worldview --host http://localhost:8000 --output image${count}.avif`
-            commands.push(newCommand);
-            count += 1;
+            if (item.video !== null) {
+              images.push(item.video);
+            }
           });
-          console.log(totalCommand);
-          console.log(commands);
+          console.log(images);
 
         }
       }

@@ -79,6 +79,7 @@ if DEBUG:
     MINIO_STORAGE_AUTO_CREATE_MEDIA_BUCKET = True
     MINIO_STORAGE_AUTO_CREATE_MEDIA_POLICY = 'READ_WRITE'
     MINIO_STORAGE_MEDIA_USE_PRESIGNED = True
+    MINIO_STORAGE_MEDIA_URL = 'http://127.0.0.1:9002/rdwatch'
     LOGGING = {
         "version": 1,
         "disable_existing_loggers": False,

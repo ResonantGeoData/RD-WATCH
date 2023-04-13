@@ -30,5 +30,6 @@ export type SiteObservationList = {
       ymin: number;
       ymax: number;
     };
+    video: null | string;
   }>;
 };

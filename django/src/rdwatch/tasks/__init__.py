@@ -131,7 +131,7 @@ def fetch_tile(
         buffer = get_worldview_processed_visual_tile(capture, tile.z, tile.x, tile.y)
         image = Image.open(io.BytesIO(buffer))
         return WebpTile(tile, timestamp, image)
-    except:  # noqa: E722
+    except:  # noqa: E722, B001
         return None
 
 

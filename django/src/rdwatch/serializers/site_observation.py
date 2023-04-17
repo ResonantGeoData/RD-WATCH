@@ -1,8 +1,9 @@
+from django.core.files.storage import default_storage
 from rest_framework import serializers
 
-from rdwatch.serializers import BoundingBoxSerializer, TimeRangeSerializer
-from django.core.files.storage import default_storage
 from rdwatch.models import SiteObservation
+from rdwatch.serializers import BoundingBoxSerializer, TimeRangeSerializer
+
 
 class SiteObservationSerializer(serializers.Serializer):
     id = serializers.IntegerField()

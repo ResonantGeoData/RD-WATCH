@@ -1,8 +1,7 @@
 <script setup lang="ts">
-import { computed, onMounted, ref, watch } from "vue";
+import { computed } from "vue";
 import { state } from '../../store'
 import SiteObservationDisplay from "./SiteObservationDisplay.vue";
-import type { Ref } from "vue";
 import { hoveredInfo } from "../../interactions/popup";
 
 const clearAll = () => {
@@ -15,7 +14,6 @@ const S2Imagery = computed({
     return state.observationSources.includes('S2');
   },
   set(val: boolean) {
-    console.log(`Setting S2 to: ${val}`)
     if (val && !state.observationSources.includes('S2')) {
       state.observationSources.push('S2');
     }

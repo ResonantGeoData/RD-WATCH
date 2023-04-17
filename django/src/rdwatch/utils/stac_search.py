@@ -6,6 +6,7 @@ from typing import Literal, TypedDict
 from urllib.request import Request, urlopen
 
 from django.conf import settings
+
 logger = logging.getLogger(__name__)
 
 

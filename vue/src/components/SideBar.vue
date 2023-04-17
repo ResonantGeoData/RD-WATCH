@@ -32,6 +32,8 @@ watch(selectedRegion, (val) => {
   queryFilters.value = { ...queryFilters.value, region: val?.name, page: 1 };
   if (selectedRegion.value === null) {
     state.satellite.satelliteImagesOn = false;
+    state.enabledSiteObservations = [];
+    state.selectedObservations = [];
   }
   state.filters = {
     ...state.filters,

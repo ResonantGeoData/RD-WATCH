@@ -1,30 +1,29 @@
+import io
 import logging
-from celery import shared_task
-
+import os
+from dataclasses import dataclass
 from datetime import datetime, timedelta
 
 import mercantile
-from pyproj import Transformer
-import os
+from celery import shared_task
 from PIL import Image
+from pyproj import Transformer
 
 from django.core.files import File
-from django.core.files.uploadedfile import SimpleUploadedFile
-from rdwatch.models import SiteObservation
 
-import io
-from dataclasses import dataclass
+from rdwatch.models import SiteObservation
+from rdwatch.utils.raster_tile import get_raster_tile_bbox
+from rdwatch.utils.satellite_bands import get_bands
 from rdwatch.utils.worldview_processed.raster_tile import (
-    get_worldview_processed_visual_tile,
     get_worldview_processed_visual_bbox,
+    get_worldview_processed_visual_tile,
+)
+from rdwatch.utils.worldview_processed.satellite_captures import (
+    WorldViewProcessedCapture,
 )
 from rdwatch.utils.worldview_processed.satellite_captures import (
     get_captures as get_worldview_captures,
-    WorldViewProcessedCapture,
 )
-from rdwatch.utils.raster_tile import get_raster_tile_bbox
-
-from rdwatch.utils.satellite_bands import get_bands
 
 
 @dataclass
@@ -50,10 +49,15 @@ def generate_video_task(site_observation_id: int, baseConstellation='WV') -> Non
         timestamp = item.timestamp
         constellation = item.constellation
         # We need to grab the image for this timerange and type
-        logger.warning(f'Comparing site constellation: {constellation} to test constellation: {baseConstellation}')
+        logger.warning(
+            f'Comparing site constellation: {constellation} \
+                to test constellation: {baseConstellation}'
+        )
         if str(constellation) == baseConstellation:
             logger.warning(f'Trying to retrieve for constellation: {constellation}')
-            bytes = fetch_boundbox_image(bbox, timestamp, constellation, baseConstellation == 'WV')
+            bytes = fetch_boundbox_image(
+                bbox, timestamp, constellation, baseConstellation == 'WV'
+            )
             # img = image(bbox, timestamp, worldview=True) # Old way
             if bytes is None:
                 logger.warning(f'COULD NOT FIND ANY IMAGE FOR TIMESTAMP: {timestamp}')
@@ -72,14 +76,17 @@ def get_closest_capture(
     bbox: tuple[float, float, float, float],
     timestamp: datetime,
     constellation: str,
-    worldView=False
+    worldView=False,
 ):
     timebuffer = timedelta(days=1)
     captures = None
     if worldView:
         captures = get_worldview_captures(timestamp, bbox, timebuffer)
     else:
-        logger.warning(f'Getting capture constellation: {constellation} timestmap: {timestamp} bbox: {bbox}')
+        logger.warning(
+            f'Getting capture constellation: {constellation} \
+            timestmap: {timestamp} bbox: {bbox}'
+        )
         captures = list(get_bands(constellation, timestamp, bbox, timebuffer))
 
         # Filter bands by requested processing level and spectrum
@@ -95,11 +102,12 @@ def get_closest_capture(
 
     return closest_capture
 
+
 def fetch_boundbox_image(
     bbox: tuple[float, float, float, float],
     timestamp: datetime,
     constellation: str,
-    worldView=False
+    worldView=False,
 ):
     capture = get_closest_capture(bbox, timestamp, constellation, worldView)
     logger.warning(f'Closest Capture is: {capture}')
@@ -123,7 +131,7 @@ def fetch_tile(
         buffer = get_worldview_processed_visual_tile(capture, tile.z, tile.x, tile.y)
         image = Image.open(io.BytesIO(buffer))
         return WebpTile(tile, timestamp, image)
-    except:
+    except:  # noqa: E722
         return None
 
 

@@ -108,15 +108,12 @@ const popupLogic = (map: ShallowRef<null | Map>) => {
 
   const clickObservation = async (e: MapLayerMouseEvent) => {
     if (e.features && e.features[0]?.properties && map.value) {
-      console.log(e.features);
-      console.log(e.features[0]);
       const feature = e.features[0];
       if (feature.properties) {
         const siteId = feature.properties.siteeval_id;
         if (siteId && !selectedObservationList.value.includes(siteId)) {
           const data = await ApiService.getSiteObservations(siteId);
           const { results } = data;
-          console.log(data);
           const wolrdViewImages: SiteObservationImage[] = [];
           const worldView = results.filter((item) => item.constellation === 'WV')
           worldView.forEach((item) => {

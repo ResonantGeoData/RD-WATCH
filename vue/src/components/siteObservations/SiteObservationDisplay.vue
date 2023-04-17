@@ -295,7 +295,6 @@ const goToTimestamp = (dir: number) => {
           >
             Next
           </button>
-
         </div>
       </div>
     </summary>

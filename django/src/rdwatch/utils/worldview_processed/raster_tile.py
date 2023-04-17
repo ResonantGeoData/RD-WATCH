@@ -26,6 +26,7 @@ def get_worldview_processed_visual_tile(
         rgb.rescale(in_range=((0, 2**11),))
         return rgb.render(img_format='WEBP')
 
+
 def get_worldview_processed_visual_bbox(
     capture: WorldViewProcessedCapture, bbox: tuple[float, float, float, float]
 ) -> bytes:

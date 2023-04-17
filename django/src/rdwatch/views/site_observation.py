@@ -1,10 +1,10 @@
 import logging
+
 from django.contrib.gis.db.models.aggregates import Collect
 from django.contrib.postgres.aggregates import JSONBAgg
 from django.db.models import Count, F, Max, Min, RowRange, Window
 from django.db.models.functions import JSONObject  # type: ignore
 from django.http import HttpRequest
-from django.shortcuts import get_object_or_404
 from rest_framework.decorators import api_view, schema
 from rest_framework.exceptions import NotFound
 from rest_framework.response import Response
@@ -16,6 +16,7 @@ from rdwatch.serializers import SiteObservationListSerializer
 from rdwatch.tasks import generate_video_task
 
 logger = logging.getLogger(__name__)
+
 
 class SiteObservationsSchema(AutoSchema):
     def get_operation_id(self, *args):

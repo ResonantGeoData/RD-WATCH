@@ -82,6 +82,7 @@ RUN chmod -R u=rX,g=rX,o= /app/vue/dist
 #    virtual environment is in /app/django/.venv
 FROM django-builder AS django-dist
 COPY django/src/rdwatch /app/django/src/rdwatch
+COPY django/src/manage.py /app/django/src/manage.py
 RUN chmod -R u=rX,g=rX,o= .
 
 

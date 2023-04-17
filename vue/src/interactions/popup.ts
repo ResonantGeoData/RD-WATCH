@@ -1,7 +1,7 @@
 import { Ref, ref } from "vue";
 import { Color, Map, MapLayerMouseEvent, Popup } from "maplibre-gl";
 import { ShallowRef } from "vue";
-import { selectedObservationList, state } from "../store";
+import { SiteObservationImage, selectedObservationList, state } from "../store";
 import { ApiService } from "../client";
 
 const checkBadge =
@@ -117,11 +117,18 @@ const popupLogic = (map: ShallowRef<null | Map>) => {
           const data = await ApiService.getSiteObservations(siteId);
           const { results } = data;
           console.log(data);
-          const images: {url: string; timestamp: number}[] = [];
+          const wolrdViewImages: SiteObservationImage[] = [];
           const worldView = results.filter((item) => item.constellation === 'WV')
           worldView.forEach((item) => {
             if (item.video !== null) {
-              images.push({url: item.video, timestamp: item.timerange.min});
+              wolrdViewImages.push({url: item.video, timestamp: item.timerange.min, type: 'WV'});
+            }
+          });
+          const S2Images: SiteObservationImage[] = [];
+          const S2List = results.filter((item) => item.constellation === 'S2')
+          S2List.forEach((item) => {
+            if (item.video !== null) {
+              S2Images.push({url: item.video, timestamp: item.timerange.min, type:'S2'});
             }
           });
 
@@ -132,11 +139,12 @@ const popupLogic = (map: ShallowRef<null | Map>) => {
           const S2 = {
             total: results.filter((item) => item.constellation === 'S2').length,
             loaded:results.filter((item) => item.constellation === 'S2' && item.video !== null).length,
+            images: S2Images,
           };
           const WV = { 
             total: results.filter((item) => item.constellation === 'WV').length,
             loaded:results.filter((item) => item.constellation === 'WV' && item.video !== null).length,
-            images,
+            images: wolrdViewImages,
           };
           let minScore = Infinity;
           let maxScore = -Infinity;
@@ -147,7 +155,6 @@ const popupLogic = (map: ShallowRef<null | Map>) => {
             avgScore += item.score
           })
           avgScore = avgScore / results.length;
-          console.log(images);
 
           state.selectedObservations.push( {
             id: siteId,

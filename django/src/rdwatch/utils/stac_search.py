@@ -1,10 +1,12 @@
 import json
+import logging
 from datetime import datetime, timedelta
 from os import environ, path
 from typing import Literal, TypedDict
 from urllib.request import Request, urlopen
 
 from django.conf import settings
+logger = logging.getLogger(__name__)
 
 
 class EOBand(TypedDict, total=False):
@@ -92,5 +94,7 @@ def stac_search(
         data=bytes(json.dumps(params), 'utf-8'),
         headers={'x-api-key': environ['RDWATCH_SMART_STAC_KEY']},
     )
+    logger.warning(request.get_full_url())
+    logger.warning(f'Parms: {params}')
     with urlopen(request) as resp:
         return json.loads(resp.read())

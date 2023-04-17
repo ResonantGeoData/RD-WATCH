@@ -4,16 +4,17 @@ import type { LayerSpecification, SourceSpecification } from "maplibre-gl";
 
 
 const getClosestTimestamp = (id: number, timestamp: number, enabledSiteObservations: EnabledSiteObservations[]) => {
-    const observation = enabledSiteObservations.find((item) => item.id === id);
-    if (observation) {
-        const closest = observation.images.map((item) => item.timestamp).reduce((prev, curr) => {
-            return Math.abs(curr - timestamp) < Math.abs(prev - timestamp) ? curr : prev
-        });
-        const index = observation.images.findIndex((item) => item.timestamp === closest);
-        if (index !== -1) {
-            return observation.images[index].url 
+    if (enabledSiteObservations.length > 0) {
+        const observation = enabledSiteObservations.find((item) => item.id === id);
+        if (observation) {
+            const closest = observation.images.map((item) => item.timestamp).reduce((prev, curr) => {
+                return Math.abs(curr - timestamp) < Math.abs(prev - timestamp) ? curr : prev
+            });
+            const index = observation.images.findIndex((item) => item.timestamp === closest);
+            if (index !== -1) {
+                return observation.images[index].url 
+            }
         }
-
     }
     return '';
 }
@@ -26,7 +27,6 @@ export const buildImageSourceFilter = (
     enabledSiteObservations: EnabledSiteObservations[],
 ) => {
     const results: Record<string, SourceSpecification> = {};
-    console.log(enabledSiteObservations);
     enabledSiteObservations.forEach((item) => {
         const source  = `siteImageSource_${item.id}`;
         results[source] = 

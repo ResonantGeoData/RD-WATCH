@@ -76,9 +76,11 @@ def site_observations(request: HttpRequest, pk: int):
 
 @api_view(['POST'])
 def generate_video_from_site_observation(request: HttpRequest, pk: int):
+    if 'constellation' not in request.GET:
+        constellation = 'WV'
+    else:
+        constellation = request.GET['constellation']
     logger.warning(f'Getting siteObservation: {pk}')
-    observations = SiteObservation.objects.filter(siteeval=pk)   
-    logger.warning(observations)
     logger.warning(f'Generating video for siteObservation: {pk}')
-    generate_video_task.delay(pk)
+    generate_video_task.delay(pk, constellation)
     return Response(status=202)

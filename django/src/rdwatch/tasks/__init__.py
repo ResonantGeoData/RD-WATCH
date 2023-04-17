@@ -4,7 +4,7 @@ from celery import shared_task
 from datetime import datetime, timedelta
 
 import mercantile
-import pyproj
+from pyproj import Transformer
 import os
 from PIL import Image
 
@@ -16,8 +16,15 @@ import io
 from dataclasses import dataclass
 from rdwatch.utils.worldview_processed.raster_tile import (
     get_worldview_processed_visual_tile,
+    get_worldview_processed_visual_bbox,
 )
-from rdwatch.utils.worldview_processed.satellite_captures import get_captures, WorldViewProcessedCapture
+from rdwatch.utils.worldview_processed.satellite_captures import (
+    get_captures as get_worldview_captures,
+    WorldViewProcessedCapture,
+)
+from rdwatch.utils.raster_tile import get_raster_tile_bbox
+
+from rdwatch.utils.satellite_bands import get_bands
 
 
 @dataclass
@@ -26,35 +33,35 @@ class WebpTile:
     timestamp: datetime
     image: Image.Image
 
+
 logger = logging.getLogger(__name__)
 
 
 @shared_task
-def generate_video_task(site_observation_id: int) -> None:
-    # Sample code for saving a file.
-    # TODO: Update this function to actually generate a video
+def generate_video_task(site_observation_id: int, baseConstellation='WV') -> None:
     site_observations = SiteObservation.objects.filter(siteeval=site_observation_id)
-    logger.warning(f'Attempting to run generateVideo on site Observation: {site_observation_id}')
-    web_mercator = pyproj.Proj("EPSG:3857")
-
-    # Create a WGS 84 projection (SRS ID 4326)
-    wgs84 = pyproj.Proj("EPSG:4326")
+    transformer = Transformer.from_crs("EPSG:3857", "EPSG:4326")
     for item in site_observations:
         mercator: tuple[float, float, float, float] = item.geom.extent
-        lon_min, lat_min = pyproj.transform(web_mercator, wgs84, mercator[0], mercator[1])
-        lon_max, lat_max = pyproj.transform(web_mercator, wgs84, mercator[2], mercator[3])
-        bbox = [lat_min, lon_min, lat_max, lon_max]
+        tempbox = transformer.transform_bounds(
+            mercator[0], mercator[1], mercator[2], mercator[3]
+        )
+        bbox = [tempbox[1], tempbox[0], tempbox[3], tempbox[2]]
         timestamp = item.timestamp
         constellation = item.constellation
         # We need to grab the image for this timerange and type
-        if str(constellation) == 'WV':
-            img = image(bbox, timestamp, worldview=True)
-            if img is None:
+        logger.warning(f'Comparing site constellation: {constellation} to test constellation: {baseConstellation}')
+        if str(constellation) == baseConstellation:
+            logger.warning(f'Trying to retrieve for constellation: {constellation}')
+            bytes = fetch_boundbox_image(bbox, timestamp, constellation, baseConstellation == 'WV')
+            # img = image(bbox, timestamp, worldview=True) # Old way
+            if bytes is None:
                 logger.warning(f'COULD NOT FIND ANY IMAGE FOR TIMESTAMP: {timestamp}')
                 continue
             logger.warning(f'Retrieved Image with timestamp: {timestamp}')
             output = f'tile_image_{item.id}.jpg'
-            img.save(output)
+            with open(output, "wb") as f:
+                f.write(bytes)
             with open(output, 'rb') as imageFile:
                 item.video = File(imageFile, output)
                 item.save()
@@ -64,16 +71,47 @@ def generate_video_task(site_observation_id: int) -> None:
 def get_closest_capture(
     bbox: tuple[float, float, float, float],
     timestamp: datetime,
+    constellation: str,
+    worldView=False
 ):
     timebuffer = timedelta(days=1)
+    captures = None
+    if worldView:
+        captures = get_worldview_captures(timestamp, bbox, timebuffer)
+    else:
+        logger.warning(f'Getting capture constellation: {constellation} timestmap: {timestamp} bbox: {bbox}')
+        captures = list(get_bands(constellation, timestamp, bbox, timebuffer))
 
-    captures = get_captures(timestamp, bbox, timebuffer)
+        # Filter bands by requested processing level and spectrum
+        tempCaptures = []
+        for band in captures:
+            if band.level.slug == '2A' and band.spectrum.slug == 'visual':
+                tempCaptures.append(band)
+        captures = tempCaptures
     logger.warning(f'Captures: {len(captures)}')
     if not captures:
         return None
     closest_capture = min(captures, key=lambda band: abs(band.timestamp - timestamp))
 
     return closest_capture
+
+def fetch_boundbox_image(
+    bbox: tuple[float, float, float, float],
+    timestamp: datetime,
+    constellation: str,
+    worldView=False
+):
+    capture = get_closest_capture(bbox, timestamp, constellation, worldView)
+    logger.warning(f'Closest Capture is: {capture}')
+    if capture is None:
+        return None
+    bytes = None
+    if worldView:
+        bytes = get_worldview_processed_visual_bbox(capture, bbox)
+    else:
+        bytes = get_raster_tile_bbox(capture.uri, bbox)
+    return bytes
+
 
 def fetch_tile(
     capture: WorldViewProcessedCapture,
@@ -88,6 +126,7 @@ def fetch_tile(
     except:
         return None
 
+
 def image(
     bbox: tuple[float, float, float, float],
     time: datetime,
@@ -99,7 +138,7 @@ def image(
     zoom = 16 if worldview else 14
 
     webp_tiles: list[WebpTile] = []
-    logger.warning(f'inside Image requesting')
+    logger.warning('inside Image requesting')
     counter = 0
     capture = get_closest_capture(bbox, time)
     for tile in mercantile.tiles(*bbox, zoom):

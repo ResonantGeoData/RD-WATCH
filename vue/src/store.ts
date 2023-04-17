@@ -37,9 +37,16 @@ export type ImageBBox = [
     number
   ]
 ];
+
+export interface SiteObservationImage {
+  url: string;
+  timestamp: number;
+  type: 'S2' | 'WV' | 'L8'
+}
+
 export interface EnabledSiteObservations {
   id: number;
-  images: {url: string; timestamp: number}[];
+  images: SiteObservationImage[];
   bbox: ImageBBox;
   timestamp: number;
 }
@@ -53,9 +60,9 @@ export interface SiteObservation {
   },
   imagesLoaded: boolean;
   imageCounts: {
-    L8: {total:number, loaded: number, images?: {url: string; timestamp: number}[]};
-    S2: {total:number, loaded: number, images?: {url: string; timestamp: number}[]};
-    WV: {total:number, loaded: number, images?: {url: string; timestamp: number}[]};
+    L8: {total:number, loaded: number, images?: SiteObservationImage[]};
+    S2: {total:number, loaded: number, images?: SiteObservationImage[]};
+    WV: {total:number, loaded: number, images?: SiteObservationImage[]};
   }
   score: {
     min: number,
@@ -94,6 +101,7 @@ export const state = reactive<{
   regionMap: Record<Region["id"], Region["name"]>
   selectedObservations: SiteObservation[];
   enabledSiteObservations: EnabledSiteObservations[],
+  observationSources: ('S2' | 'WV')[]
 }>({
   timestamp: Math.floor(Date.now() / 1000),
   timeMin: new Date(0).valueOf(),
@@ -128,6 +136,7 @@ export const state = reactive<{
   regionMap: {},
   selectedObservations: [],
   enabledSiteObservations: [],
+  observationSources: ['S2', 'WV'],
 });
 
 export const filteredSatelliteTimeList = computed(() => {

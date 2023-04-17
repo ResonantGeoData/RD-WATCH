@@ -73,7 +73,8 @@ export class ApiService {
    * @throws ApiError
    */
     public static getObservationImages(
-      id: string
+      id: string,
+      constellation: 'WV' | 'S2' | 'L8' = 'WV'
     ): CancelablePromise<boolean> {
       return __request(OpenAPI, {
         method: "POST",
@@ -81,6 +82,9 @@ export class ApiService {
         path: {
           id: id,
         },
+        query: {
+          constellation,
+        }
       });
     }
   /**

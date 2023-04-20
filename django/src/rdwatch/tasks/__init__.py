@@ -35,6 +35,18 @@ class WebpTile:
 
 logger = logging.getLogger(__name__)
 
+def scale_bbox(bbox: tuple[float, float, float, float], scale_factor: float):
+    xmin, ymin, xmax, ymax = bbox
+    width = xmax - xmin
+    height = ymax - ymin
+    new_width = width * scale_factor
+    new_height = height * scale_factor
+    new_xmin = xmin - ((new_width - width) / 2)
+    new_ymin = ymin - ((new_height - height) / 2)
+    new_xmax = xmax + ((new_width - width) / 2)
+    new_ymax = ymax + ((new_height - height) / 2)
+    scaled_bbox = [new_xmin, new_ymin, new_xmax, new_ymax]
+    return scaled_bbox
 
 @shared_task
 def generate_video_task(site_observation_id: int, baseConstellation='WV') -> None:
@@ -46,6 +58,7 @@ def generate_video_task(site_observation_id: int, baseConstellation='WV') -> Non
             mercator[0], mercator[1], mercator[2], mercator[3]
         )
         bbox = [tempbox[1], tempbox[0], tempbox[3], tempbox[2]]
+        bbox = scale_bbox(bbox, 1.2)
         timestamp = item.timestamp
         constellation = item.constellation
         # We need to grab the image for this timerange and type

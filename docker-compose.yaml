@@ -154,10 +154,6 @@ services:
       - redis
       - django
       - minio
-    profiles:
-      - debug
-      - tools
-      - vscode
     volumes:
       - .:/app
       - unit-socket:/run/unit

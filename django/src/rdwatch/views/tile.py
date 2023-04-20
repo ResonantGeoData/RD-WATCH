@@ -28,7 +28,7 @@ from django.http import (
 from django.views.decorators.cache import cache_page
 from rest_framework.reverse import reverse
 
-from rdwatch.db.functions import ExtractEpoch, GroupExcludeRowRange
+from rdwatch.db.functions import ExtractEpoch, GroupExcludeRowRange, GeomArea
 from rdwatch.models import Region, SiteEvaluation, SiteObservation
 from rdwatch.models.lookups import Constellation
 from rdwatch.utils.raster_tile import get_raster_tile
@@ -110,6 +110,7 @@ def vector_tile(
             site_number=F('siteeval__number'),
             label=F('label_id'),
             timemin=ExtractEpoch('timestamp'),
+            area=GeomArea('geom'),
             timemax=ExtractEpoch(
                 Window(
                     expression=Min('timestamp'),

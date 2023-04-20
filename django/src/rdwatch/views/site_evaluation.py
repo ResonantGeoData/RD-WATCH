@@ -13,7 +13,7 @@ from rest_framework.response import Response
 from rest_framework.schemas.openapi import AutoSchema
 from rest_framework.settings import api_settings
 
-from rdwatch.db.functions import BoundingBox, ExtractEpoch
+from rdwatch.db.functions import BoundingBox, ExtractEpoch, GeomArea
 from rdwatch.models import SiteEvaluation
 from rdwatch.serializers import SiteEvaluationListSerializer
 
@@ -111,6 +111,7 @@ def site_evaluations(request: HttpRequest):
                 ),
                 score='score',
                 bbox=BoundingBox('geom'),
+                area=GeomArea('geom'),
                 timestamp=ExtractEpoch('timestamp'),
                 timerange=JSONObject(
                     min=ExtractEpoch('timemin'),

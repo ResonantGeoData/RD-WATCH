@@ -24,6 +24,16 @@ class ExtractEpoch(Func):
     template = 'EXTRACT(epoch FROM %(expressions)s)::bigint'
     arity = 1
 
+class GeomArea(JSONObject):
+    def __init__(self, field):
+        geom = Transform((field), 3086)
+        return super().__init__(
+            area=Func(
+                geom,
+                function='ST_Area',
+                output_field=FloatField(),
+            )
+        )
 
 class BoundingBox(JSONObject):
     """Gets the WGS-84 bounding box of a geometry

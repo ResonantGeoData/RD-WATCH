@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { computed } from "vue";
+import { computed, onUnmounted } from "vue";
 import { ApiService } from "../../client";
 import { ImageBBox, SiteObservationImage, state } from "../../store";
 import { SiteObservation } from "../../store";
@@ -132,31 +132,59 @@ const canGetImages = computed(() => ({
 const currentClosestTimestamp = computed(() => {
   const observation = state.enabledSiteObservations.find((item) => item.id === props.siteObservation.id);
   if (observation) {
-    const closest = observation.images.map((item) => item.timestamp).reduce((prev, curr) => {
-                return Math.abs(curr - state.timestamp) < Math.abs(prev - state.timestamp) ? curr : prev
-            });
-    const index = observation.images.findIndex((item) => item.timestamp === closest);
-    
-    return {time: new Date(closest * 1000).toLocaleDateString(), type: observation.images[index].type };
+    const images = observation.images.filter((item) => !item.disabled)
+    if (images.length) {
+      const closest = images.map((item) => item.timestamp).reduce((prev, curr) => {
+                  return Math.abs(curr - state.timestamp) < Math.abs(prev - state.timestamp) ? curr : prev
+              });
+      const index = observation.images.findIndex((item) => item.timestamp === closest);
+      let prev = true;
+      let next = true;
+      if (index === 0) {
+        prev = false;
+      }
+      if (index + 1 >= observation.images.length) {
+        next = false;
+      }
+      return {time: new Date(closest * 1000).toLocaleDateString(), type: observation.images[index].type, prev, next };
+    }
   }
   return null;
 })
 
-const goToTimestamp = (dir: number) => {
+const goToTimestamp = (dir: number, loop = false) => {
   if (currentClosestTimestamp.value && currentClosestTimestamp.value.time) {
     const observation = state.enabledSiteObservations.find((item) => item.id === props.siteObservation.id);
     if (observation) {
-      const closest = observation.images.map((item) => item.timestamp).reduce((prev, curr) => {
+      const closest = observation.images.filter((item) => !item.disabled).map((item) => item.timestamp).reduce((prev, curr) => {
                 return Math.abs(curr - state.timestamp) < Math.abs(prev - state.timestamp) ? curr : prev
             });
       const index = observation.images.findIndex((item) => item.timestamp === closest);
-      if (dir === 1 && index < observation.images.length) {
+      if (dir === 1 && index + 1< observation.images.length) {
         state.timestamp = observation.images[index + 1].timestamp;
+      } else if (dir === 1 && loop && observation.images.length) {
+        state.timestamp = observation.images[0].timestamp;
       }
       if (dir === -1 && index > 0) {
         state.timestamp = observation.images[index - 1].timestamp;
       }
     }
+  }
+}
+const startLooping = () => {
+  if (state.loopingInterval !== null) {
+    clearInterval(state.loopingInterval);
+  }
+  state.loopingInterval = setInterval(() => {
+    goToTimestamp(1, true)
+  }, 1000);
+  state.loopingId = props.siteObservation.id;
+}
+const stopLooping = () => {
+  if (state.loopingInterval !== null) {
+    clearInterval(state.loopingInterval);
+    state.loopingId = null;
+
   }
 }
 
@@ -272,13 +300,30 @@ const goToTimestamp = (dir: number) => {
               @click="toggleImages(siteObservation)"
             >
           </span>
+          <span v-if="imagesActive">
+            <button
+              v-if="state.loopingId !== siteObservation.id"
+              class="btn-success btn-xs m-1 ml-2"
+              @click="startLooping()"
+            >
+              Play
+            </button>
+            <button
+              v-else
+              class="btn-error btn-xs m-1 ml-2"
+              @click="stopLooping()"
+            >
+              Stop
+            </button>
+          </span>
         </div>
         <div 
-          v-if="imagesActive"
+          v-if="imagesActive && currentClosestTimestamp"
           class="col-span-4 font-light text-gray-600 group-open:text-gray-100"
         >
           <button
             class="btn-primary btn-xs m-1"
+            :class="{'btn-disabled': !currentClosestTimestamp.prev}"
             @click="goToTimestamp(-1)"
           >
             Prev
@@ -287,10 +332,11 @@ const goToTimestamp = (dir: number) => {
           <span
             v-if="currentClosestTimestamp"
             style="font-size: 0.75em"
-            class="badge-secondary badge ml-2"
+            class="badge-secondary badge ml-1"
           >Satellite Time: {{ currentClosestTimestamp.time }} - {{ currentClosestTimestamp.type }}</span>
           <button
             class="btn-primary btn-xs m-1"
+            :class="{'btn-disabled': !currentClosestTimestamp.next}"
             @click="goToTimestamp(1)"
           >
             Next

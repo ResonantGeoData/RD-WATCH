@@ -55,6 +55,7 @@ const popupLogic = (map: ShallowRef<null | Map>) => {
             hoveredInfo.value.region.push(
               `${item.properties.configuration_id}_${item.properties.region_id}_${item.properties.performer_id}`
             );
+            const area = item.properties.area;
             hoveredInfo.value.siteId.push(siteId);
             let fillString = "";
             if (!htmlMap[id]) {
@@ -82,12 +83,13 @@ const popupLogic = (map: ShallowRef<null | Map>) => {
                       `rgba(0,0,0,0)`
                     );
                   }
+                  const areaDiv = `<div class='badge'>${area.toFixed(0)}m<sup>2</sup></div>`;
                   const scoreStyle = `style="background-color:${calculateScoreColor(
                     score.toFixed(2)
                   )};color: black; font-weight:bolder; opacity: 1.0 !important;"`;
                   html = `${html}<li>${groundtruth}<div class='badge' ${fillString}>SiteId:${regionName}_${String(id).padStart(4, '0')}</div> <div class='badge' ${scoreStyle}>Score:${score.toFixed(
                     2
-                  )}</div></li>`;
+                  )}</div> </li>`;
                 }
               }
             }

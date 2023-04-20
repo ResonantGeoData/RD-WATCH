@@ -66,7 +66,8 @@ def get_captures(
             pan_feature = next(
                 feat
                 for feat in features
-                if feat['properties'].get('nitf:image_representation', False) == 'MONO'
+                if 'B01' in feat['assets']
+                and feat['properties'].get('nitf:image_representation', False) == 'MONO'
                 and datetime.fromisoformat(feat['properties']['datetime'].rstrip('Z'))
                 == cap.timestamp
             )

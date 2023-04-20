@@ -1,12 +1,32 @@
 <script setup lang="ts">
-import { computed } from "vue";
-import { state } from '../../store'
+import { computed, onUnmounted } from "vue";
+import { EnabledSiteObservations, SiteObservationImage, state } from '../../store'
 import SiteObservationDisplay from "./SiteObservationDisplay.vue";
 import { hoveredInfo } from "../../interactions/popup";
 
 const clearAll = () => {
   state.enabledSiteObservations = [];
   state.selectedObservations = [];
+}
+
+const updateSources = () => {
+  const newObservations: EnabledSiteObservations[] = [];
+  state.enabledSiteObservations.filter((item) => {
+    const tempImages: SiteObservationImage[] = [];
+    item.images.forEach((image) => {
+      if (!state.observationSources.includes(image.type)) {
+        image.disabled = true;
+      } else if (image.disabled) {
+        delete image.disabled;
+      }
+      tempImages.push(image);
+    });
+    if (tempImages.length) {
+      item.images = tempImages;
+    }
+    newObservations.push(item);
+  });
+  state.enabledSiteObservations = newObservations;
 }
 
 const S2Imagery = computed({
@@ -21,6 +41,7 @@ const S2Imagery = computed({
       const index = state.observationSources.findIndex((item) => item === 'S2');
       state.observationSources.splice(index, 1);
     }
+    updateSources();
   },
 });
 
@@ -36,8 +57,16 @@ const WVImagery = computed({
       const index = state.observationSources.findIndex((item) => item === 'WV');
       state.observationSources.splice(index, 1);
     }
+    updateSources();
   },
 });
+
+onUnmounted(() => {
+  if (state.loopingInterval !== null) {
+    clearInterval(state.loopingInterval);
+    state.loopingId = null;
+  }
+})
 
 
 </script>
@@ -45,7 +74,7 @@ const WVImagery = computed({
 <template>
   <div
     v-if="state.selectedObservations.length"
-    class="fixed h-screen w-200 pt-2 pb-2 pr-2 absolute inset-y-0 right-0"
+    class="fixed h-screen w-200 pt-2 pb-2 pr-2 absolute inset-y-0 right-0 observation-sidebar"
   >
     <div
       class="flex h-full flex-col overflow-hidden rounded-xl bg-white drop-shadow-2xl "
@@ -108,5 +137,7 @@ const WVImagery = computed({
 .checkboxlabel {
   display: inline;
 }
-
+.observation-sidebar{
+  max-width: 350px;
+}
 </style>

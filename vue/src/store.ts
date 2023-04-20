@@ -41,7 +41,8 @@ export type ImageBBox = [
 export interface SiteObservationImage {
   url: string;
   timestamp: number;
-  type: 'S2' | 'WV' | 'L8'
+  type: 'S2' | 'WV' | 'L8';
+  disabled?: boolean;
 }
 
 export interface EnabledSiteObservations {
@@ -101,7 +102,9 @@ export const state = reactive<{
   regionMap: Record<Region["id"], Region["name"]>
   selectedObservations: SiteObservation[];
   enabledSiteObservations: EnabledSiteObservations[],
-  observationSources: ('S2' | 'WV')[]
+  observationSources: ('S2' | 'WV' | 'L8')[],
+  loopingInterval: NodeJS.Timeout | null,
+  loopingId: number | null,
 }>({
   timestamp: Math.floor(Date.now() / 1000),
   timeMin: new Date(0).valueOf(),
@@ -137,6 +140,8 @@ export const state = reactive<{
   selectedObservations: [],
   enabledSiteObservations: [],
   observationSources: ['S2', 'WV'],
+  loopingInterval: null,
+  loopingId: null,
 });
 
 export const filteredSatelliteTimeList = computed(() => {

@@ -31,11 +31,11 @@ from rest_framework.reverse import reverse
 from rdwatch.db.functions import ExtractEpoch, GroupExcludeRowRange
 from rdwatch.models import Region, SiteEvaluation, SiteObservation
 from rdwatch.models.lookups import Constellation
-from rdwatch.utils.raster_tile import get_raster_tile, get_raster_bbox
+from rdwatch.utils.raster_tile import get_raster_bbox, get_raster_tile
 from rdwatch.utils.satellite_bands import get_bands
 from rdwatch.utils.worldview_processed.raster_tile import (
+    get_worldview_processed_visual_bbox,
     get_worldview_processed_visual_tile,
-    get_worldview_processed_visual_bbox
 )
 from rdwatch.utils.worldview_processed.satellite_captures import get_captures
 
@@ -184,6 +184,7 @@ def vector_tile(
         status=200 if tile else 204,
     )
 
+
 @cache_page(60 * 60 * 24 * 365)
 def satelliteimage_raster_bbox(
     request: HttpRequest,
@@ -198,7 +199,16 @@ def satelliteimage_raster_bbox(
 
     constellation = Constellation(slug=request.GET['constellation'])
     timestamp = datetime.fromisoformat(str(request.GET['timestamp']))
-    bbox = request.GET['bbox']
+    bbox_strings = request.GET['bbox'].split(',')
+    if len(bbox_strings) != 4:
+        return HttpResponseBadRequest()
+    bbox = (
+        float(bbox_strings[0]),
+        float(bbox_strings[1]),
+        float(bbox_strings[2]),
+        float(bbox_strings[3]),
+    )
+
     format = str(request.GET['format'])
     # Convert generator to list so we can iterate over it multiple times
     bands = list(get_bands(constellation, timestamp, bbox))
@@ -246,6 +256,7 @@ def satelliteimage_raster_bbox(
     return HttpResponsePermanentRedirect(
         reverse('satellite-bbox') + f'?{urlencode(query_params)}'
     )
+
 
 @cache_page(60 * 60 * 24 * 365)
 def satelliteimage_raster_tile(
@@ -318,6 +329,7 @@ def satelliteimage_raster_tile(
         reverse('satellite-tiles', args=[z, x, y]) + f'?{urlencode(query_params)}'
     )
 
+
 @cache_page(60 * 60 * 24 * 365)
 def satelliteimage_visual_bbox(
     request: HttpRequest,
@@ -330,7 +342,16 @@ def satelliteimage_visual_bbox(
         return HttpResponseBadRequest()
 
     timestamp = datetime.fromisoformat(str(request.GET['timestamp']))
-    bbox = request.GET['bbox']
+    bbox_strings = request.GET['bbox'].split(',')
+    if len(bbox_strings) != 4:
+        return HttpResponseBadRequest()
+    bbox = (
+        float(bbox_strings[0]),
+        float(bbox_strings[1]),
+        float(bbox_strings[2]),
+        float(bbox_strings[3]),
+    )
+
     format = str(request.GET['format'])
 
     # Calculate the bounding box from the given x, y, z parameters
@@ -358,9 +379,9 @@ def satelliteimage_visual_bbox(
         'timestamp': datetime.isoformat(closest_capture.timestamp),
     }
     return HttpResponsePermanentRedirect(
-        reverse('satellite-visual-bbox')
-        + f'?{urlencode(query_params)}'
+        reverse('satellite-visual-bbox') + f'?{urlencode(query_params)}'
     )
+
 
 @cache_page(60 * 60 * 24 * 365)
 def satelliteimage_visual_tile(

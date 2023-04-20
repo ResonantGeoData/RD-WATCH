@@ -27,7 +27,9 @@ def get_worldview_processed_visual_tile(
 
 
 def get_worldview_processed_visual_bbox(
-    capture: WorldViewProcessedCapture, bbox: tuple[float, float, float, float], format = 'JPEG',
+    capture: WorldViewProcessedCapture,
+    bbox: tuple[float, float, float, float],
+    format='JPEG',
 ) -> bytes:
     with rasterio.Env(
         GDAL_DISABLE_READDIR_ON_OPEN='EMPTY_DIR',

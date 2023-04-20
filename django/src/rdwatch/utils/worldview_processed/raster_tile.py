@@ -27,7 +27,7 @@ def get_worldview_processed_visual_tile(
 
 
 def get_worldview_processed_visual_bbox(
-    capture: WorldViewProcessedCapture, bbox: tuple[float, float, float, float]
+    capture: WorldViewProcessedCapture, bbox: tuple[float, float, float, float], format = 'JPEG',
 ) -> bytes:
     with rasterio.Env(
         GDAL_DISABLE_READDIR_ON_OPEN='EMPTY_DIR',
@@ -43,4 +43,4 @@ def get_worldview_processed_visual_bbox(
         with COGReader(input=capture.uri) as img:
             rgb = img.part(bbox)
         rgb.rescale(in_range=((0, 2**11),))
-        return rgb.render(img_format='JPEG')
+        return rgb.render(img_format=format)

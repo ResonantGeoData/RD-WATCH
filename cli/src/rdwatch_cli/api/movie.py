@@ -7,8 +7,10 @@ import click
 # register pillow plugin
 import pillow_avif  # type: ignore # noqa
 from PIL import Image
+
 from rdwatch_cli.api.image import image, image_bbox
 from rdwatch_cli.exceptions import ImageNotFound, ServerError
+
 
 async def try_to_fetch_image_bbox(
     client: aiohttp.ClientSession,
@@ -91,14 +93,12 @@ async def movie_bbox(
     # crop to the smallest size
     minWidth = min(t.width for t in results)
     minHeight = min(t.height for t in results)
-    merged = Image.new('RGB', (minWidth, minHeight))
     cropped = []
     for img in results:
         print(f'cropping image {img.width} {img.height} to {minWidth} {minHeight}')
         cropped.append(img.crop([0, 0, minWidth, minHeight]))
 
     return cropped
-
 
 
 async def movie(

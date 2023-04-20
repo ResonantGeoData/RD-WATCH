@@ -5,6 +5,7 @@ from pathlib import Path
 
 import aiohttp
 import click
+
 from rdwatch_cli import api
 from rdwatch_cli.config import get_credentials, set_credentials
 from rdwatch_cli.exceptions import ImageNotFound, ServerError
@@ -116,7 +117,7 @@ async def image(
 
     async with _get_http_client(host) as client:
         try:
-            img = await api.create_image(client, bbox, time, worldview=worldview)
+            img = await create_image(client, bbox, time, worldview=worldview)
             img.save(output)
         except ImageNotFound:
             raise click.ClickException(

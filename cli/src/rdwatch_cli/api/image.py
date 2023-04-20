@@ -6,6 +6,7 @@ from datetime import datetime
 import aiohttp
 import mercantile
 from PIL import Image
+
 from rdwatch_cli.exceptions import ImageNotFound, ServerError
 
 
@@ -14,6 +15,7 @@ class WebpTile:
     tile: mercantile.Tile
     timestamp: datetime
     image: Image.Image
+
 
 @dataclass
 class ObsImage:
@@ -28,9 +30,9 @@ async def fetch_bbox(
     worldview: bool = False
 ) -> ObsImage:
     url = (
-        f'/api/satellite-image/visual-bbox'
+        '/api/satellite-image/visual-bbox'
         if worldview
-        else f'/api/satellite-image/bbox'
+        else '/api/satellite-image/bbox'
     )
     params = {'timestamp': datetime.isoformat(time)}
     params['bbox'] = ','.join(str(x) for x in bbox)
@@ -48,7 +50,6 @@ async def fetch_bbox(
             raise ServerError()
         image = Image.open(io.BytesIO(buffer))
         return ObsImage(time, image)
-
 
 
 async def fetch_tile(
@@ -78,6 +79,7 @@ async def fetch_tile(
         image = Image.open(io.BytesIO(buffer))
         return WebpTile(tile, time, image)
 
+
 async def image_bbox(
     client: aiohttp.ClientSession,
     bbox: tuple[float, float, float, float],
@@ -87,6 +89,7 @@ async def image_bbox(
 
     result = await fetch_bbox(client, bbox, time, worldview=worldview)
     return result.image
+
 
 async def image(
     client: aiohttp.ClientSession,

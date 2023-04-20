@@ -5,7 +5,6 @@ from pathlib import Path
 
 import aiohttp
 import click
-
 from rdwatch_cli import api
 from rdwatch_cli.config import get_credentials, set_credentials
 from rdwatch_cli.exceptions import ImageNotFound, ServerError

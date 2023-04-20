@@ -7,7 +7,6 @@ import click
 # register pillow plugin
 import pillow_avif  # type: ignore # noqa
 from PIL import Image
-
 from rdwatch_cli.api.image import image, image_bbox
 from rdwatch_cli.exceptions import ImageNotFound, ServerError
 

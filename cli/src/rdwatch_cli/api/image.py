@@ -6,7 +6,6 @@ from datetime import datetime
 import aiohttp
 import mercantile
 from PIL import Image
-
 from rdwatch_cli.exceptions import ImageNotFound, ServerError
 
 

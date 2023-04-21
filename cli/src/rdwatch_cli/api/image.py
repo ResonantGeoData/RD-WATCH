@@ -45,7 +45,7 @@ async def fetch_bbox(
             raise ImageNotFound()
         elif not resp.ok:
             raise ServerError()
-        image = Image.open(io.BytesIO(buffer))
+        image = Image.open(io.BytesIO(buffer)).convert('RGB')
         return ObsImage(time, image)
 
 

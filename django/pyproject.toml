@@ -37,6 +37,7 @@ django-ninja = "^0.21.0"
 tox = {version = "^4.4.7", extras = ["test"]}
 celery = "^5.2.7"
 django-extensions = "^3.2.1"
+django-minio-storage = "^0.3.10"
 
 [tool.poetry.dev-dependencies]
 black = "~22.6.0"

@@ -1,3 +1,4 @@
+version: '3'
 services:
   #######################
   # production services #
@@ -123,14 +124,11 @@ services:
       RDWATCH_REDIS_URI: ${RDWATCH_REDIS_URI:?}
       RDWATCH_SMART_STAC_URL: ${RDWATCH_SMART_STAC_URL:?}
       RDWATCH_SMART_STAC_KEY: ${RDWATCH_SMART_STAC_KEY:?}
+      RDWATCH_ACCENTURE_VERSION: ${RDWATCH_ACCENTURE_VERSION:?}
     depends_on:
       - postgresql
       - redis
       - django
-    profiles:
-      - debug
-      - tools
-      - vscode
     volumes:
       - .:/app
       - unit-socket:/run/unit

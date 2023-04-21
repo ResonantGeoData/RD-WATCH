@@ -17,7 +17,7 @@ class WebpTile:
 
 
 @dataclass
-class ObsImage:
+class ObservationImage:
     timestamp: datetime
     image: Image.Image
 

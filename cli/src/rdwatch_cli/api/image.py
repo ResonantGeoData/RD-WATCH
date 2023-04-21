@@ -26,20 +26,18 @@ async def fetch_bbox(
     client: aiohttp.ClientSession,
     bbox: tuple[float, float, float, float],
     time: datetime,
-    worldview: bool = False
+    worldview: bool = False,
 ) -> ObsImage:
     url = (
-        '/api/satellite-image/visual-bbox'
-        if worldview
-        else '/api/satellite-image/bbox'
+        "/api/satellite-image/visual-bbox" if worldview else "/api/satellite-image/bbox"
     )
-    params = {'timestamp': datetime.isoformat(time)}
-    params['bbox'] = ','.join(str(x) for x in bbox)
-    params['format'] = 'WEBP'
+    params = {"timestamp": datetime.isoformat(time)}
+    params["bbox"] = ",".join(str(x) for x in bbox)
+    params["format"] = "WEBP"
     if not worldview:
-        params['constellation'] = 'S2'
-        params['spectrum'] = 'visual'
-        params['level'] = '2A'
+        params["constellation"] = "S2"
+        params["spectrum"] = "visual"
+        params["level"] = "2A"
 
     async with client.get(url, params=params) as resp:
         buffer = await resp.read()
@@ -58,16 +56,16 @@ async def fetch_tile(
     worldview: bool = False,
 ) -> WebpTile:
     url = (
-        f'/api/satellite-image/visual-tile/{tile.z}/{tile.x}/{tile.y}.webp'
+        f"/api/satellite-image/visual-tile/{tile.z}/{tile.x}/{tile.y}.webp"
         if worldview
-        else f'/api/satellite-image/tile/{tile.z}/{tile.x}/{tile.y}.webp'
+        else f"/api/satellite-image/tile/{tile.z}/{tile.x}/{tile.y}.webp"
     )
 
-    params = {'timestamp': datetime.isoformat(time)}
+    params = {"timestamp": datetime.isoformat(time)}
     if not worldview:
-        params['constellation'] = 'S2'
-        params['spectrum'] = 'visual'
-        params['level'] = '2A'
+        params["constellation"] = "S2"
+        params["spectrum"] = "visual"
+        params["level"] = "2A"
 
     async with client.get(url, params=params) as resp:
         buffer = await resp.read()
@@ -116,7 +114,7 @@ async def image(
 
     merged_width = ((xmax - xmin) + 1) * 512
     merged_height = ((ymax - ymin) + 1) * 512
-    merged = Image.new('RGB', (merged_width, merged_height))
+    merged = Image.new("RGB", (merged_width, merged_height))
     for tile in webp_tiles:
         x = (tile.tile.x - xmin) * 512
         y = (tile.tile.y - ymin) * 512

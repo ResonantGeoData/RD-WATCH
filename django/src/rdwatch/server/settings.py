@@ -7,15 +7,13 @@ SECRET_KEY = environ['RDWATCH_SECRET_KEY']
 ALLOWED_HOSTS = ['*']
 DEBUG = environ['RDWATCH_DJANGO_DEBUG'].lower() in ('1', 'true', 'yes', 'on')
 
-if DEBUG:
-    CACHES = {
-        'default': {
-            'BACKEND': 'django.core.cache.backends.redis.RedisCache',
-            'KEY_PREFIX': 'rdwatch',
-            'LOCATION': environ['RDWATCH_REDIS_URI'],
-        }
-    }
-else:
+REDIS_CLUSTER_MODE = environ.get('RDWATCH_REDIS_CLUSTER_MODE', '0').lower() in (
+    '1',
+    'true',
+    'yes',
+    'on',
+)
+if REDIS_CLUSTER_MODE:
     CACHES = {
         'default': {
             'BACKEND': 'django_redis.cache.RedisCache',
@@ -25,6 +23,15 @@ else:
             },
         }
     }
+else:
+    CACHES = {
+        'default': {
+            'BACKEND': 'django.core.cache.backends.redis.RedisCache',
+            'KEY_PREFIX': 'rdwatch',
+            'LOCATION': environ['RDWATCH_REDIS_URI'],
+        }
+    }
+
 DATABASE_PARSE_RESULT = urlparse(environ['RDWATCH_POSTGRESQL_URI'])
 DATABASES = {
     'default': {

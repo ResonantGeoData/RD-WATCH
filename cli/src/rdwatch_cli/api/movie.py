@@ -94,7 +94,7 @@ async def movie_bbox(
     minHeight = min(t.height for t in results)
     cropped = []
     for img in results:
-        print(f'cropping image {img.width} {img.height} to {minWidth} {minHeight}')
+        click.echo(f'cropping image {img.width} {img.height} to {minWidth} {minHeight}')
         cropped.append(img.crop([0, 0, minWidth, minHeight]))
 
     return cropped

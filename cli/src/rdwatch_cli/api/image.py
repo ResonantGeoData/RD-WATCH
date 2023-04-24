@@ -16,6 +16,39 @@ class WebpTile:
     image: Image.Image
 
 
+@dataclass
+class ObservationImage:
+    timestamp: datetime
+    image: Image.Image
+
+
+async def fetch_bbox(
+    client: aiohttp.ClientSession,
+    bbox: tuple[float, float, float, float],
+    time: datetime,
+    worldview: bool = False,
+) -> ObservationImage:
+    url = (
+        '/api/satellite-image/visual-bbox' if worldview else '/api/satellite-image/bbox'
+    )
+    params = {'timestamp': datetime.isoformat(time)}
+    params['bbox'] = ','.join(str(x) for x in bbox)
+    params['format'] = 'WEBP'
+    if not worldview:
+        params['constellation'] = 'S2'
+        params['spectrum'] = 'visual'
+        params['level'] = '2A'
+
+    async with client.get(url, params=params) as resp:
+        buffer = await resp.read()
+        if resp.status == 404:
+            raise ImageNotFound()
+        elif not resp.ok:
+            raise ServerError()
+        image = Image.open(io.BytesIO(buffer)).convert('RGB')
+        return ObservationImage(time, image)
+
+
 async def fetch_tile(
     client: aiohttp.ClientSession,
     time: datetime,
@@ -42,6 +75,16 @@ async def fetch_tile(
             raise ServerError()
         image = Image.open(io.BytesIO(buffer))
         return WebpTile(tile, time, image)
+
+
+async def image_bbox(
+    client: aiohttp.ClientSession,
+    bbox: tuple[float, float, float, float],
+    time: datetime,
+    worldview: bool = False,
+) -> Image.Image:
+    result = await fetch_bbox(client, bbox, time, worldview=worldview)
+    return result.image
 
 
 async def image(

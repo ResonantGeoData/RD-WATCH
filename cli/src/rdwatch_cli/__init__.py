@@ -95,6 +95,11 @@ def login():
     is_flag=True,
     help='Use WorldView satellite imagery instead of Sentinel-2',
 )
+@click.option(
+    '--tile',
+    is_flag=True,
+    help='Use tiles instead of bbox to download imagery',
+)
 @_coroutine
 async def image(
     host: str,
@@ -102,15 +107,21 @@ async def image(
     bbox: tuple[float, float, float, float],
     time: datetime,
     worldview: bool,
+    tile=False,
 ) -> None:
     """Retrieve an image for a bounding box at a specific time"""
+    create_image = api.image_bbox
+    if tile:
+        create_image = api.image
+
     async with _get_http_client(host) as client:
         try:
-            img = await api.image(client, bbox, time, worldview=worldview)
+            img = await create_image(client, bbox, time, worldview=worldview)
             img.save(output)
         except ImageNotFound:
-            raise click.ClickException(
-                'No image found for the given bounding box and time'
+            click.echo(
+                f'No image found for the given bounding box: \
+                {bbox} and time: {datetime.isoformat(time)}'
             )
         except ServerError:
             raise click.ClickException('Server down (try again later)')
@@ -147,6 +158,11 @@ async def image(
     is_flag=True,
     help='Use WorldView satellite imagery instead of Sentinel-2',
 )
+@click.option(
+    '--tile',
+    is_flag=True,
+    help='Use tiles instead of bbox to download imagery',
+)
 @_coroutine
 async def movie(
     host: str,
@@ -155,13 +171,17 @@ async def movie(
     start_time: datetime,
     end_time: datetime,
     worldview: bool,
+    tile=False,
 ) -> None:
     """Generate a movie for a bounding box at each timestamp"""
+    create_movie = api.movie_bbox
+    if tile:
+        create_movie = api.movie
     async with _get_http_client(host) as client:
         try:
             imgs = [
                 img
-                for img in await api.movie(
+                for img in await create_movie(
                     client,
                     bbox,
                     start_time,
@@ -172,8 +192,10 @@ async def movie(
             ]
             imgs[0].save(output, save_all=True, append_images=imgs)
         except ImageNotFound:
-            raise click.ClickException(
-                'No image found for the given bounding box and time'
+            click.echo(
+                f'No image found for the given bounding box:\
+                {bbox} and time Range:\
+                {datetime.isoformat(start_time)} - {datetime.isoformat(end_time)}'
             )
         except ServerError:
             raise click.ClickException('Server down (try again later)')

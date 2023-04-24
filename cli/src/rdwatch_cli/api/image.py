@@ -27,7 +27,7 @@ async def fetch_bbox(
     bbox: tuple[float, float, float, float],
     time: datetime,
     worldview: bool = False,
-) -> ObsImage:
+) -> ObservationImage:
     url = (
         '/api/satellite-image/visual-bbox' if worldview else '/api/satellite-image/bbox'
     )
@@ -46,7 +46,7 @@ async def fetch_bbox(
         elif not resp.ok:
             raise ServerError()
         image = Image.open(io.BytesIO(buffer)).convert('RGB')
-        return ObsImage(time, image)
+        return ObservationImage(time, image)
 
 
 async def fetch_tile(

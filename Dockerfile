@@ -25,15 +25,15 @@ RUN echo "deb [signed-by=/usr/share/keyrings/nginx.gpg] http://packages.nginx.or
  && usermod --append --groups rdwatch unit
 RUN python3 -m pip install poetry==1.4.2
 WORKDIR /app
-EXPOSE 80
-ENTRYPOINT [ "/docker-entrypoint.sh" ]
-CMD [ \
-      "unitd", \
-        "--no-daemon", \
-        "--control", "unix:/run/unit/control.unit.sock", \
-        "--user", "unit", \
-        "--group", "unit", \
-        "--log", "/dev/stdout" \
+# EXPOSE 80
+# ENTRYPOINT [ "/docker-entrypoint.sh" ]
+# CMD [ \
+#       "unitd", \
+#         "--no-daemon", \
+#         "--control", "unix:/run/unit/control.unit.sock", \
+#         "--user", "unit", \
+#         "--group", "unit", \
+#         "--log", "/dev/stdout" \
      ]
 
 # Base builder

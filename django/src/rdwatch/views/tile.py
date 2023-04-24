@@ -1,4 +1,5 @@
 from datetime import datetime
+from typing import Literal
 from urllib.parse import urlencode
 
 import mercantile
@@ -185,31 +186,45 @@ def vector_tile(
     )
 
 
-@cache_page(60 * 60 * 24 * 365)
-def satelliteimage_raster_bbox(
+def get_satelliteimage_raster(
     request: HttpRequest,
+    z: int | None = None,
+    x: int | None = None,
+    y: int | None = None,
 ):
+    request_type: Literal['tile', 'bbox'] = 'tile'
+    bbox = None
+    format = None
+    if x is None and y is None and z is None:  # Bbox image request
+        request_type = 'bbox'
+        format = request.GET['format']
+        bbox_strings = request.GET['bbox'].split(',')
+        if len(bbox_strings) != 4:
+            return HttpResponseBadRequest()
+        bbox = (
+            float(bbox_strings[0]),
+            float(bbox_strings[1]),
+            float(bbox_strings[2]),
+            float(bbox_strings[3]),
+        )
+    else:
+        bounds = mercantile.bounds(x, y, z)
+        format = 'WEBP'
+        bbox = (bounds.west, bounds.south, bounds.east, bounds.north)
+
     if (
         'constellation' not in request.GET
-        or 'bbox' not in request.GET
         or 'timestamp' not in request.GET
-        or 'format' not in request.GET
+        or bbox is None
+        or format is None
     ):
         return HttpResponseBadRequest()
 
     constellation = Constellation(slug=request.GET['constellation'])
     timestamp = datetime.fromisoformat(str(request.GET['timestamp']))
-    bbox_strings = request.GET['bbox'].split(',')
-    if len(bbox_strings) != 4:
-        return HttpResponseBadRequest()
-    bbox = (
-        float(bbox_strings[0]),
-        float(bbox_strings[1]),
-        float(bbox_strings[2]),
-        float(bbox_strings[3]),
-    )
+    level = request.GET['level']
+    spectrum = request.GET['spectrum']
 
-    format = str(request.GET['format'])
     # Convert generator to list so we can iterate over it multiple times
     bands = list(get_bands(constellation, timestamp, bbox))
 
@@ -217,8 +232,7 @@ def satelliteimage_raster_bbox(
     bands = [
         band
         for band in bands
-        if (band.level.slug, band.spectrum.slug)
-        == (request.GET['level'], request.GET['spectrum'])
+        if (band.level.slug, band.spectrum.slug) == (level, spectrum)
     ]
 
     if not bands:
@@ -236,12 +250,11 @@ def satelliteimage_raster_bbox(
     # and are preferred over other formats when possible)
     bands.sort(key=lambda band: band.uri.lower().endswith('.tif'), reverse=True)
 
-    # If the timestamp provided by the user is *exactly* the timestamp of the retrieved
-    # band, return the raster data for it. Otherwise, redirect back to this same view
-    # with the exact timestamp as a parameter so that this behavior is triggered during
-    # that request. This is done to facilitate caching of the raster data.
     if precise_timestamp == timestamp:
-        tile = get_raster_bbox(bands[0].uri, bbox, format)
+        if request_type == 'bbox':
+            tile = get_raster_bbox(bands[0].uri, bbox, format)
+        else:
+            tile = get_raster_tile(bands[0].uri, z, x, y)
         return HttpResponse(
             tile,
             content_type=f'image/{format}',
@@ -252,10 +265,21 @@ def satelliteimage_raster_bbox(
         **request.GET.dict(),
         'timestamp': datetime.isoformat(precise_timestamp),
     }
+    if request_type == 'bbox':
+        return HttpResponsePermanentRedirect(
+            reverse('satellite-bbox') + f'?{urlencode(query_params)}'
+        )
+    else:
+        return HttpResponsePermanentRedirect(
+            reverse('satellite-tiles', args=[z, x, y]) + f'?{urlencode(query_params)}'
+        )
 
-    return HttpResponsePermanentRedirect(
-        reverse('satellite-bbox') + f'?{urlencode(query_params)}'
-    )
+
+@cache_page(60 * 60 * 24 * 365)
+def satelliteimage_raster_bbox(
+    request: HttpRequest,
+):
+    return get_satelliteimage_raster(request)
 
 
 @cache_page(60 * 60 * 24 * 365)
@@ -267,94 +291,37 @@ def satelliteimage_raster_tile(
 ):
     if z is None or x is None or y is None:
         raise ValueError()
-    if (
-        'constellation' not in request.GET
-        or 'level' not in request.GET
-        or 'timestamp' not in request.GET
-        or 'spectrum' not in request.GET
-    ):
-        return HttpResponseBadRequest()
-
-    constellation = Constellation(slug=request.GET['constellation'])
-    timestamp = datetime.fromisoformat(str(request.GET['timestamp']))
-
-    # Calculate the bounding box from the given x, y, z parameters
-    bounds = mercantile.bounds(x, y, z)
-    bbox = (bounds.west, bounds.south, bounds.east, bounds.north)
-
-    # Convert generator to list so we can iterate over it multiple times
-    bands = list(get_bands(constellation, timestamp, bbox))
-
-    # Filter bands by requested processing level and spectrum
-    bands = [
-        band
-        for band in bands
-        if (band.level.slug, band.spectrum.slug)
-        == (request.GET['level'], request.GET['spectrum'])
-    ]
-
-    if not bands:
-        return HttpResponseNotFound()
-
-    # Get timestamp closest to the requested timestamp
-    precise_timestamp = min(
-        bands, key=lambda band: abs(band.timestamp - timestamp)
-    ).timestamp
-
-    # Filter out any bands that don't have that timestamp
-    bands = [band for band in bands if band.timestamp == precise_timestamp]
-
-    # Sort bands so that bands in TIF format come first (TIFs are cheaper to tile
-    # and are preferred over other formats when possible)
-    bands.sort(key=lambda band: band.uri.lower().endswith('.tif'), reverse=True)
-
-    # If the timestamp provided by the user is *exactly* the timestamp of the retrieved
-    # band, return the raster data for it. Otherwise, redirect back to this same view
-    # with the exact timestamp as a parameter so that this behavior is triggered during
-    # that request. This is done to facilitate caching of the raster data.
-    if precise_timestamp == timestamp:
-        tile = get_raster_tile(bands[0].uri, z, x, y)
-        return HttpResponse(
-            tile,
-            content_type='image/webp',
-            status=200,
-        )
-
-    query_params = {
-        **request.GET.dict(),
-        'timestamp': datetime.isoformat(precise_timestamp),
-    }
-
-    return HttpResponsePermanentRedirect(
-        reverse('satellite-tiles', args=[z, x, y]) + f'?{urlencode(query_params)}'
-    )
+    return get_satelliteimage_raster(request, z, x, y)
 
 
-@cache_page(60 * 60 * 24 * 365)
-def satelliteimage_visual_bbox(
+def get_satelliteimage_visual(
     request: HttpRequest,
+    z: int | None = None,
+    x: int | None = None,
+    y: int | None = None,
 ):
-    if (
-        'bbox' not in request.GET
-        or 'timestamp' not in request.GET
-        or 'format' not in request.GET
-    ):
+    request_type: Literal['tile', 'bbox'] = 'tile'
+    bbox = None
+    format = None
+    if x is None and y is None and z is None:  # Bbox image request
+        request_type = 'bbox'
+        format = request.GET['format']
+        bbox_strings = request.GET['bbox'].split(',')
+        if len(bbox_strings) != 4:
+            return HttpResponseBadRequest()
+        bbox = (
+            float(bbox_strings[0]),
+            float(bbox_strings[1]),
+            float(bbox_strings[2]),
+            float(bbox_strings[3]),
+        )
+    else:
+        bounds = mercantile.bounds(x, y, z)
+        format = 'WEBP'
+        bbox = (bounds.west, bounds.south, bounds.east, bounds.north)
+    if 'timestamp' not in request.GET or format is None or bbox is None:
         return HttpResponseBadRequest()
-
     timestamp = datetime.fromisoformat(str(request.GET['timestamp']))
-    bbox_strings = request.GET['bbox'].split(',')
-    if len(bbox_strings) != 4:
-        return HttpResponseBadRequest()
-    bbox = (
-        float(bbox_strings[0]),
-        float(bbox_strings[1]),
-        float(bbox_strings[2]),
-        float(bbox_strings[3]),
-    )
-
-    format = str(request.GET['format'])
-
-    # Calculate the bounding box from the given x, y, z parameters
     captures = get_captures(timestamp, bbox)
     if not captures:
         return HttpResponseNotFound()
@@ -367,7 +334,10 @@ def satelliteimage_visual_bbox(
     # with the exact timestamp as a parameter so that this behavior is triggered during
     # that request. This is done to facilitate caching of the raster data.
     if closest_capture.timestamp == timestamp:
-        tile = get_worldview_processed_visual_bbox(closest_capture, bbox, format)
+        if request_type == 'bbox':
+            tile = get_worldview_processed_visual_bbox(closest_capture, bbox, format)
+        else:
+            tile = get_worldview_processed_visual_tile(closest_capture, z, x, y)
         return HttpResponse(
             tile,
             content_type=f'image/{format}',
@@ -378,9 +348,22 @@ def satelliteimage_visual_bbox(
         **request.GET.dict(),
         'timestamp': datetime.isoformat(closest_capture.timestamp),
     }
-    return HttpResponsePermanentRedirect(
-        reverse('satellite-visual-bbox') + f'?{urlencode(query_params)}'
-    )
+    if request_type == 'bbox':
+        return HttpResponsePermanentRedirect(
+            reverse('satellite-visual-bbox') + f'?{urlencode(query_params)}'
+        )
+    else:
+        return HttpResponsePermanentRedirect(
+            reverse('satellite-visual-tiles', args=[z, x, y])
+            + f'?{urlencode(query_params)}'
+        )
+
+
+@cache_page(60 * 60 * 24 * 365)
+def satelliteimage_visual_bbox(
+    request: HttpRequest,
+):
+    return get_satelliteimage_visual(request)
 
 
 @cache_page(60 * 60 * 24 * 365)
@@ -392,42 +375,7 @@ def satelliteimage_visual_tile(
 ):
     if z is None or x is None or y is None:
         raise ValueError()
-    if 'timestamp' not in request.GET:
-        return HttpResponseBadRequest()
-
-    timestamp = datetime.fromisoformat(str(request.GET['timestamp']))
-
-    # Calculate the bounding box from the given x, y, z parameters
-    bounds = mercantile.bounds(x, y, z)
-    bbox = (bounds.west, bounds.south, bounds.east, bounds.north)
-
-    captures = get_captures(timestamp, bbox)
-    if not captures:
-        return HttpResponseNotFound()
-
-    # Get timestamp closest to the requested timestamp
-    closest_capture = min(captures, key=lambda band: abs(band.timestamp - timestamp))
-
-    # If the timestamp provided by the user is *exactly* the timestamp of the retrieved
-    # band, return the raster data for it. Otherwise, redirect back to this same view
-    # with the exact timestamp as a parameter so that this behavior is triggered during
-    # that request. This is done to facilitate caching of the raster data.
-    if closest_capture.timestamp == timestamp:
-        tile = get_worldview_processed_visual_tile(closest_capture, z, x, y)
-        return HttpResponse(
-            tile,
-            content_type='image/webp',
-            status=200,
-        )
-
-    query_params = {
-        **request.GET.dict(),
-        'timestamp': datetime.isoformat(closest_capture.timestamp),
-    }
-    return HttpResponsePermanentRedirect(
-        reverse('satellite-visual-tiles', args=[z, x, y])
-        + f'?{urlencode(query_params)}'
-    )
+    return get_satelliteimage_visual(request, z, x, y)
 
 
 @cache_page(60 * 60 * 24 * 365)

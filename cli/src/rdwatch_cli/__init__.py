@@ -119,7 +119,10 @@ async def image(
             img = await create_image(client, bbox, time, worldview=worldview)
             img.save(output)
         except ImageNotFound:
-            print('No image found for the given bounding box and time')
+            print(
+                f'No image found for the given bounding box: \
+                {bbox} and time: {datetime.isoformat(time)}'
+            )
         except ServerError:
             raise click.ClickException('Server down (try again later)')
 
@@ -189,6 +192,10 @@ async def movie(
             ]
             imgs[0].save(output, save_all=True, append_images=imgs)
         except ImageNotFound:
-            print('No image found for the given bounding box and time')
+            print(
+                f'No image found for the given bounding box:\
+                {bbox} and time Range:\
+                {datetime.isoformat(start_time)} - {datetime.isoformat(end_time)}'
+            )
         except ServerError:
             raise click.ClickException('Server down (try again later)')

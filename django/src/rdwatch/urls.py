@@ -50,6 +50,11 @@ urlpatterns = [
         views.satelliteimage_visual_tile,
         name='satellite-visual-tiles',
     ),
+        path(
+        'observations/<int:pk>/get-images',
+        views.get_site_observation_images,
+    ),
+
 ]
 
 urlpatterns += router.urls

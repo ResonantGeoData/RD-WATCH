@@ -11,6 +11,7 @@ from rest_framework.schemas.openapi import AutoSchema
 from rdwatch.db.functions import BoundingBox, ExtractEpoch
 from rdwatch.models import SiteEvaluation, SiteObservation
 from rdwatch.serializers import SiteObservationListSerializer
+from rdwatch.tasks import get_siteobservations_images
 
 
 class SiteObservationsSchema(AutoSchema):
@@ -67,3 +68,12 @@ def site_observations(request: HttpRequest, pk: int):
     )
     serializer = SiteObservationListSerializer(queryset)
     return Response(serializer.data)
+
+@api_view(['POST'])
+def get_site_observation_images(request: HttpRequest, pk: int):
+    if 'constellation' not in request.GET:
+        constellation = 'WV'
+    else:
+        constellation = request.GET['constellation']
+    get_siteobservations_images.delay(pk, constellation)
+    return Response(status=202)

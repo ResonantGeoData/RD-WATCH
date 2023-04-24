@@ -193,10 +193,21 @@ def get_satelliteimage_raster(
     y: int | None = None,
 ):
     request_type: Literal['tile', 'bbox'] = 'tile'
+    if (
+        'constellation' not in request.GET
+        or 'timestamp' not in request.GET
+        or 'spectrum' not in request.GET
+        or 'level' not in request.GET
+    ):
+        return HttpResponseBadRequest()
+
     bbox = None
     format = None
     if x is None and y is None and z is None:  # Bbox image request
         request_type = 'bbox'
+        if 'bbox' not in request.GET or 'format' not in request.GET:
+            return HttpResponseBadRequest()
+
         format = request.GET['format']
         bbox_strings = request.GET['bbox'].split(',')
         if len(bbox_strings) != 4:
@@ -211,14 +222,6 @@ def get_satelliteimage_raster(
         bounds = mercantile.bounds(x, y, z)
         format = 'WEBP'
         bbox = (bounds.west, bounds.south, bounds.east, bounds.north)
-
-    if (
-        'constellation' not in request.GET
-        or 'timestamp' not in request.GET
-        or bbox is None
-        or format is None
-    ):
-        return HttpResponseBadRequest()
 
     constellation = Constellation(slug=request.GET['constellation'])
     timestamp = datetime.fromisoformat(str(request.GET['timestamp']))
@@ -300,11 +303,17 @@ def get_satelliteimage_visual(
     x: int | None = None,
     y: int | None = None,
 ):
+    if 'timestamp' not in request.GET:
+        return HttpResponseBadRequest()
+
     request_type: Literal['tile', 'bbox'] = 'tile'
     bbox = None
     format = None
     if x is None and y is None and z is None:  # Bbox image request
         request_type = 'bbox'
+        if 'format' not in request.GET or 'bbox' not in request.GET:
+            return HttpResponseBadRequest()
+
         format = request.GET['format']
         bbox_strings = request.GET['bbox'].split(',')
         if len(bbox_strings) != 4:
@@ -319,8 +328,6 @@ def get_satelliteimage_visual(
         bounds = mercantile.bounds(x, y, z)
         format = 'WEBP'
         bbox = (bounds.west, bounds.south, bounds.east, bounds.north)
-    if 'timestamp' not in request.GET or format is None or bbox is None:
-        return HttpResponseBadRequest()
     timestamp = datetime.fromisoformat(str(request.GET['timestamp']))
     captures = get_captures(timestamp, bbox)
     if not captures:

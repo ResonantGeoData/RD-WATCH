@@ -9,8 +9,8 @@ from celery import shared_task
 from pyproj import Transformer
 
 from django.core.files import File
-
-from rdwatch.models import SiteObservation
+from PIL import Image
+from rdwatch.models import SiteObservation, SiteImage
 from rdwatch.utils.raster_tile import get_raster_tile_bbox
 from rdwatch.utils.satellite_bands import get_bands
 from rdwatch.utils.worldview_processed.raster_tile import (
@@ -96,15 +96,15 @@ def fetch_boundbox_image(
 def get_siteobservations_images(site_observation_id: int, baseConstellation='WV') -> None:
     site_observations = SiteObservation.objects.filter(siteeval=site_observation_id)
     transformer = Transformer.from_crs("EPSG:3857", "EPSG:4326")
-    for item in site_observations:
-        mercator: tuple[float, float, float, float] = item.geom.extent
+    for observation in site_observations:
+        mercator: tuple[float, float, float, float] = observation.geom.extent
         tempbox = transformer.transform_bounds(
             mercator[0], mercator[1], mercator[2], mercator[3]
         )
         bbox = [tempbox[1], tempbox[0], tempbox[3], tempbox[2]]
         bbox = scale_bbox(bbox, 1.2)
-        timestamp = item.timestamp
-        constellation = item.constellation
+        timestamp = observation.timestamp
+        constellation = observation.constellation
         # We need to grab the image for this timerange and type
         logger.warning(
             f'Comparing site constellation: {constellation} \
@@ -120,10 +120,16 @@ def get_siteobservations_images(site_observation_id: int, baseConstellation='WV'
                 logger.warning(f'COULD NOT FIND ANY IMAGE FOR TIMESTAMP: {timestamp}')
                 continue
             logger.warning(f'Retrieved Image with timestamp: {timestamp}')
-            output = f'tile_image_{item.id}.jpg'
+            output = f'tile_image_{observation.id}.jpg'
             with open(output, "wb") as f:
                 f.write(bytes)
             with open(output, 'rb') as imageFile:
-                item.video = File(imageFile, output)
-                item.save()
+                image = File(imageFile, output)
+                SiteImage.objects.create(
+                    siteeval=observation.siteeval,
+                    siteobs=observation.id,
+                    timestamp=observation.timestamp,
+                    image=image,
+                    source=baseConstellation,
+                )
                 os.remove(output)

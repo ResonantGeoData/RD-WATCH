@@ -19,6 +19,61 @@ export interface SatelliteTimeStamp {
   source: 'S2' | 'WorldView'
 }
 
+export type ImageBBox = [
+  [
+    number,
+    number
+  ],
+  [
+    number,
+    number
+  ],
+  [
+    number,
+    number
+  ],
+  [
+    number,
+    number
+  ]
+];
+
+export interface SiteObservationImage {
+  url: string;
+  timestamp: number;
+  type: 'S2' | 'WV' | 'L8';
+  disabled?: boolean;
+}
+
+export interface EnabledSiteObservations {
+  id: number;
+  images: SiteObservationImage[];
+  bbox: ImageBBox;
+  timestamp: number;
+}
+
+export interface SiteObservation {
+  id: number;
+  timerange: {
+    min: number;
+    max: number;
+  },
+  imagesLoaded: boolean;
+  imageCounts: {
+    L8: {total:number, loaded: number, images?: SiteObservationImage[]};
+    S2: {total:number, loaded: number, images?: SiteObservationImage[]};
+    WV: {total:number, loaded: number, images?: SiteObservationImage[]};
+  }
+  score: {
+    min: number,
+    max: number,
+    average: number,
+  }
+  imagesActive: boolean;
+  bbox: { xmin: number; ymin: number; xmax: number; ymax: number };
+}
+
+
 export interface SatelliteData {
   satelliteImagesOn: boolean;
   imageOpacity: number;
@@ -45,6 +100,11 @@ export const state = reactive<{
     patternOpacity: number;
   };
   regionMap: Record<Region["id"], Region["name"]>
+  selectedObservations: SiteObservation[];
+  enabledSiteObservations: EnabledSiteObservations[],
+  observationSources: ('S2' | 'WV' | 'L8')[],
+  loopingInterval: NodeJS.Timeout | null,
+  loopingId: number | null,
 }>({
   timestamp: Math.floor(Date.now() / 1000),
   timeMin: new Date(0).valueOf(),
@@ -76,7 +136,12 @@ export const state = reactive<{
     patternThickness: 8,
     patternOpacity: 255,
   },
-  regionMap: {}
+  regionMap: {},
+  selectedObservations: [],
+  enabledSiteObservations: [],
+  observationSources: ['S2', 'WV'],
+  loopingInterval: null,
+  loopingId: null,
 });
 
 export const filteredSatelliteTimeList = computed(() => {
@@ -86,4 +151,9 @@ export const filteredSatelliteTimeList = computed(() => {
   }
   filtered = filtered.filter((item) => state.satellite.satelliteSources.includes(item.source))
   return filtered;
+})
+
+export const selectedObservationList = computed(() => {
+  const selected = state.selectedObservations;
+  return selected.map((item) => item.id);
 })

@@ -67,6 +67,27 @@ export class ApiService {
     });
   }
 
+      /**
+   * @param id
+   * @returns boolean
+   * @throws ApiError
+   */
+      public static getObservationImages(
+        id: string,
+        constellation: 'WV' | 'S2' | 'L8' = 'WV'
+      ): CancelablePromise<boolean> {
+        return __request(OpenAPI, {
+          method: "POST",
+          url: "/api/observations/{id}/get-images",
+          path: {
+            id: id,
+          },
+          query: {
+            constellation,
+          }
+        });
+      }
+  
   /**
    * @returns ModelRunList
    * @throws ApiError

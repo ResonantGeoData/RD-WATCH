@@ -15,20 +15,23 @@ import {
   layers as satelliteLayers,
 } from "./satellite-image";
 import type { StyleSpecification } from "maplibre-gl";
-import { MapFilters, SatelliteData } from "../store";
+import { EnabledSiteObservations, MapFilters, SatelliteData } from "../store";
+import { buildImageLayerFilter, buildImageSourceFilter } from "./images";
 
 const tileServerURL =
   import.meta.env.VITE_TILE_SERVER_URL || "https://basemap.kitware.watch";
 export const style = (
   timestamp: number,
   filters: MapFilters,
-  satellite: SatelliteData
+  satellite: SatelliteData,
+  enabledSiteObservations: EnabledSiteObservations[],
 ): StyleSpecification => ({
   version: 8,
   sources: {
     ...naturalearthSources,
     ...openmaptilesSources,
     ...buildSatelliteSourceFilter(timestamp, satellite),
+    ...buildImageSourceFilter(timestamp, enabledSiteObservations),
     ...rdwatchtilesSources,
   },
   sprite: `${tileServerURL}/sprites/osm-liberty`,
@@ -42,6 +45,7 @@ export const style = (
     ...naturalearthLayers,
     ...openmaptilesLayers,
     ...satelliteLayers(timestamp, satellite),
+    ...buildImageLayerFilter(timestamp, enabledSiteObservations),
     ...rdwatchtilesLayers(timestamp, filters),
   ],
 });

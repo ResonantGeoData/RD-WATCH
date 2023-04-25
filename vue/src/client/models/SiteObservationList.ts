@@ -30,5 +30,6 @@ export type SiteObservationList = {
       ymin: number;
       ymax: number;
     };
+    images?: {image: string, timestamp: number, source: 'S2' |'WV'|'L8'}[],
   }>;
 };

@@ -45,7 +45,9 @@ onMounted(() => {
         style: style(state.timestamp,  {
           groundTruthPattern: false,
           otherPattern: false,
-        }, state.satellite
+        },
+        state.satellite,
+        state.enabledSiteObservations,
         ),
         bounds: [
           [state.bbox.xmin, state.bbox.ymin],
@@ -66,7 +68,8 @@ onUnmounted(() => {
 const throttledSetSatelliteTimeStamp = throttle(setSatelliteTimeStamp, 300);
 
 
-watch([() => state.timestamp, () => state.filters, () => state.satellite, () => state.satellite.satelliteSources], () => {
+watch([() => state.timestamp, () => state.filters, () => state.satellite,
+() => state.satellite.satelliteSources, () => state.enabledSiteObservations], () => {
   if (state.satellite.satelliteImagesOn) {
     throttledSetSatelliteTimeStamp(state, filteredSatelliteTimeList.value);
   }
@@ -79,9 +82,7 @@ watch([() => state.timestamp, () => state.filters, () => state.satellite, () => 
   setFilter("observations-fill", observationFilter);
   setFilter("observations-outline", observationFilter);
   setFilter("observations-text", observationFilter);
-  map.value?.setStyle(
-    style(state.timestamp, state.filters, state.satellite)
-  );
+  style(state.timestamp, state.filters, state.satellite, state.enabledSiteObservations)
 });
 
 watch(

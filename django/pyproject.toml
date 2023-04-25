@@ -34,7 +34,6 @@ mercantile = "^1.2.1"
 django-filter = "^22.1"
 django-redis = "^5.2.0"
 django-ninja = "^0.21.0"
-tox = {version = "^4.4.7", extras = ["test"]}
 celery = "^5.2.7"
 django-extensions = "^3.2.1"
 
@@ -48,6 +47,7 @@ taskipy = "^1.10.2"
 flake8 = "^5.0.4"
 flake8-django = "^1.1.5"
 pre-commit = "^3.0.3"
+tox = "^4.5.0"
 
 
 [tool.taskipy.tasks]

@@ -29,7 +29,6 @@ class SiteImage(models.Model):
     )
 
     class Meta:
-        default_related_name = 'siteimages'
         indexes = [GistIndex(fields=['timestamp'])]
 
 

@@ -4,7 +4,7 @@ from .region import RegionViewSet
 from .server_status import RetrieveServerStatus
 from .site_evaluation import site_evaluations
 from .site_model import post_region_model, post_site_model
-from .site_observation import site_observations, get_site_observation_images
+from .site_observation import get_site_observation_images, site_observations
 from .tile import (
     all_satellite_timestamps,
     satelliteimage_raster_bbox,

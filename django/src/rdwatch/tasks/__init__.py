@@ -1,24 +1,20 @@
-import io
 import logging
 import os
 from dataclasses import dataclass
 from datetime import datetime, timedelta
+
+import mercantile
 from celery import shared_task
-
-
+from PIL import Image
 from pyproj import Transformer
 
 from django.core.files import File
-from PIL import Image
-from rdwatch.models import SiteObservation, SiteImage
-from rdwatch.utils.raster_tile import get_raster_tile_bbox
+
+from rdwatch.models import SiteImage, SiteObservation
+from rdwatch.utils.raster_tile import get_raster_bbox
 from rdwatch.utils.satellite_bands import get_bands
 from rdwatch.utils.worldview_processed.raster_tile import (
     get_worldview_processed_visual_bbox,
-    get_worldview_processed_visual_tile,
-)
-from rdwatch.utils.worldview_processed.satellite_captures import (
-    WorldViewProcessedCapture,
 )
 from rdwatch.utils.worldview_processed.satellite_captures import (
     get_captures as get_worldview_captures,
@@ -26,11 +22,13 @@ from rdwatch.utils.worldview_processed.satellite_captures import (
 
 logger = logging.getLogger(__name__)
 
+
 @dataclass
 class WebpTile:
     tile: mercantile.Tile
     timestamp: datetime
     image: Image.Image
+
 
 def scale_bbox(bbox: tuple[float, float, float, float], scale_factor: float):
     xmin, ymin, xmax, ymax = bbox
@@ -44,6 +42,7 @@ def scale_bbox(bbox: tuple[float, float, float, float], scale_factor: float):
     new_ymax = ymax + ((new_height - height) / 2)
     scaled_bbox = [new_xmin, new_ymin, new_xmax, new_ymax]
     return scaled_bbox
+
 
 def get_closest_capture(
     bbox: tuple[float, float, float, float],
@@ -75,6 +74,7 @@ def get_closest_capture(
 
     return closest_capture
 
+
 def fetch_boundbox_image(
     bbox: tuple[float, float, float, float],
     timestamp: datetime,
@@ -89,13 +89,16 @@ def fetch_boundbox_image(
     if worldView:
         bytes = get_worldview_processed_visual_bbox(capture, bbox)
     else:
-        bytes = get_worldview_processed_visual_tile(capture.uri, bbox)
-    return bytes
+        bytes = get_raster_bbox(capture.uri, bbox)
+    return (bytes, capture.cloudcover)
+
 
 @shared_task
-def get_siteobservations_images(site_observation_id: int, baseConstellation='WV') -> None:
+def get_siteobservations_images(
+    site_observation_id: int, baseConstellation='WV'
+) -> None:
     site_observations = SiteObservation.objects.filter(siteeval=site_observation_id)
-    transformer = Transformer.from_crs("EPSG:3857", "EPSG:4326")
+    transformer = Transformer.from_crs('EPSG:3857', 'EPSG:4326')
     for observation in site_observations:
         mercator: tuple[float, float, float, float] = observation.geom.extent
         tempbox = transformer.transform_bounds(
@@ -112,7 +115,7 @@ def get_siteobservations_images(site_observation_id: int, baseConstellation='WV'
         )
         if str(constellation) == baseConstellation:
             logger.warning(f'Trying to retrieve for constellation: {constellation}')
-            bytes = fetch_boundbox_image(
+            bytes, cloudcover = fetch_boundbox_image(
                 bbox, timestamp, constellation, baseConstellation == 'WV'
             )
             # img = image(bbox, timestamp, worldview=True) # Old way
@@ -121,15 +124,29 @@ def get_siteobservations_images(site_observation_id: int, baseConstellation='WV'
                 continue
             logger.warning(f'Retrieved Image with timestamp: {timestamp}')
             output = f'tile_image_{observation.id}.jpg'
-            with open(output, "wb") as f:
+            with open(output, 'wb') as f:
                 f.write(bytes)
             with open(output, 'rb') as imageFile:
                 image = File(imageFile, output)
-                SiteImage.objects.create(
+                found = SiteImage.objects.filter(
                     siteeval=observation.siteeval,
-                    siteobs=observation.id,
+                    siteobs=observation,
                     timestamp=observation.timestamp,
-                    image=image,
                     source=baseConstellation,
                 )
+                if found.count() > 0:
+                    existing = found.first()
+                    existing.image.delete()
+                    existing.cloudcover = cloudcover
+                    existing.image = image
+                    existing.save()
+                else:
+                    SiteImage.objects.create(
+                        siteeval=observation.siteeval,
+                        siteobs=observation,
+                        timestamp=observation.timestamp,
+                        image=image,
+                        cloudcover=cloudcover,
+                        source=baseConstellation,
+                    )
                 os.remove(output)

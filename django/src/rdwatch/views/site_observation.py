@@ -69,6 +69,7 @@ def site_observations(request: HttpRequest, pk: int):
     serializer = SiteObservationListSerializer(queryset)
     return Response(serializer.data)
 
+
 @api_view(['POST'])
 def get_site_observation_images(request: HttpRequest, pk: int):
     if 'constellation' not in request.GET:

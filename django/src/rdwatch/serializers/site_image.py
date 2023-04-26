@@ -1,8 +1,7 @@
-from rest_framework import serializers
 from django.core.files.storage import default_storage
+from rest_framework import serializers
 
 from rdwatch.models import SiteImage
-from rdwatch.serializers import BoundingBoxSerializer, TimeRangeSerializer
 
 
 class SiteImageSerializer(serializers.Serializer):

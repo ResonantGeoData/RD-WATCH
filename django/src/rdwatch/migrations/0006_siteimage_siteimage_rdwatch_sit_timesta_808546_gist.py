@@ -43,7 +43,8 @@ class Migration(migrations.Migration):
                 (
                     'siteeval',
                     models.ForeignKey(
-                        help_text='The site evaluation associated with this observation.',
+                        help_text='The site evaluation associated with\
+                             this observation.',
                         on_delete=django.db.models.deletion.CASCADE,
                         to='rdwatch.siteevaluation',
                     ),
@@ -51,7 +52,8 @@ class Migration(migrations.Migration):
                 (
                     'siteobs',
                     models.ForeignKey(
-                        help_text='The site Observation associated with this Image if it exists.',
+                        help_text='The site Observation associated with\
+                        this Image if it exists.',
                         null=True,
                         on_delete=django.db.models.deletion.CASCADE,
                         to='rdwatch.siteobservation',

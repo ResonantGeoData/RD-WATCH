@@ -32,7 +32,7 @@ DATABASES = {
         },
     },
 }
-CELERY_BROKER_URL = environ['RDWATCH_REDIS_URI']
+CELERY_BROKER_URL = environ['RDWATCH_CELERY_BROKER_URL']
 INSTALLED_APPS = [
     'django.contrib.auth',
     'django.contrib.contenttypes',

@@ -2,6 +2,8 @@
 /* tslint:disable */
 /* eslint-disable */
 
+import { SiteObservationImage } from "../../store";
+
 export type SiteObservationList = {
   count: number;
   timerange: {
@@ -30,6 +32,9 @@ export type SiteObservationList = {
       ymin: number;
       ymax: number;
     };
-    images?: {image: string, timestamp: number, source: 'S2' |'WV'|'L8'}[],
   }>;
+  images: {
+    count: number;
+    results: SiteObservationImage[],
+  },
 };

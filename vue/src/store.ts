@@ -39,9 +39,11 @@ export type ImageBBox = [
 ];
 
 export interface SiteObservationImage {
-  url: string;
+  image: string; // URL string toImage
   timestamp: number;
-  type: 'S2' | 'WV' | 'L8';
+  source: 'S2' | 'WV' | 'L8';
+  cloudcover?: number;
+  siteobs_id: number | null;
   disabled?: boolean;
 }
 

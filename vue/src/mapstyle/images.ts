@@ -13,7 +13,7 @@ const getClosestTimestamp = (id: number, timestamp: number, enabledSiteObservati
             });
             const index = observation.images.findIndex((item) => item.timestamp === closest);
             if (index !== -1) {
-                return observation.images[index].url 
+                return observation.images[index].image 
             }
         }
     }

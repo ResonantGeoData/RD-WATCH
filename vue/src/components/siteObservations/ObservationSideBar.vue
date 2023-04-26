@@ -12,7 +12,7 @@ const updateSources = () => {
   state.enabledSiteObservations.filter((item) => {
     const tempImages: SiteObservationImage[] = [];
     item.images.forEach((image) => {
-      if (!state.observationSources.includes(image.type)) {
+      if (!state.observationSources.includes(image.source)) {
         image.disabled = true;
       } else if (image.disabled) {
         delete image.disabled;

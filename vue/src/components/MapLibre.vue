@@ -82,7 +82,9 @@ watch([() => state.timestamp, () => state.filters, () => state.satellite,
   setFilter("observations-fill", observationFilter);
   setFilter("observations-outline", observationFilter);
   setFilter("observations-text", observationFilter);
-  style(state.timestamp, state.filters, state.satellite, state.enabledSiteObservations)
+  map.value?.setStyle(
+  style(state.timestamp, state.filters, state.satellite, state.enabledSiteObservations),
+  );
 });
 
 watch(

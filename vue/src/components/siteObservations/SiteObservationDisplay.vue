@@ -1,9 +1,8 @@
 <script setup lang="ts">
-import { computed, onUnmounted } from "vue";
+import { computed } from "vue";
 import { ApiService } from "../../client";
 import { ImageBBox, SiteObservationImage, state } from "../../store";
 import { SiteObservation } from "../../store";
-import { ArrowPathIcon, XMarkIcon } from "@heroicons/vue/24/solid";
 const props = defineProps<{
   siteObservation: SiteObservation;
 }>();
@@ -48,34 +47,23 @@ const toggleImages = (siteObs: SiteObservation, off= false) => {
 }
 const refresh = async () => {
   const data = await ApiService.getSiteObservations(props.siteObservation.id.toString());
-          const { results } = data;
-          const wolrdViewImages: SiteObservationImage[] = [];
-          const worldView = results.filter((item) => item.constellation === 'WV')
-          worldView.forEach((item) => {
-            if (item.video !== null) {
-              wolrdViewImages.push({url: item.video, timestamp: item.timerange.min, type: 'WV'});
-            }
-          });
-          const S2Images: SiteObservationImage[] = [];
-          const S2List = results.filter((item) => item.constellation === 'S2')
-          S2List.forEach((item) => {
-            if (item.video !== null) {
-              S2Images.push({url: item.video, timestamp: item.timerange.min, type: 'S2'});
-            }
-          });
+          const { results, images } = data;
+          const worldViewList = images.results.filter((item) => item.source === 'WV')
+            .sort((a, b) => (a.timestamp - b.timestamp));
+          const S2List = images.results.filter((item) => item.source === 'S2');
           const L8 = { 
             total: results.filter((item) => item.constellation === 'L8').length,
-            loaded:results.filter((item) => item.constellation === 'L8' && item.video !== null).length,
+            loaded:0,
           };
           const S2 = {
             total: results.filter((item) => item.constellation === 'S2').length,
-            loaded:results.filter((item) => item.constellation === 'S2' && item.video !== null).length,
-            images: S2Images,
+            loaded:S2List.length,
+            images: S2List,
           };
           const WV = { 
             total: results.filter((item) => item.constellation === 'WV').length,
-            loaded:results.filter((item) => item.constellation === 'WV' && item.video !== null).length,
-            images: wolrdViewImages,
+            loaded:worldViewList.length,
+            images: worldViewList,
           };
           let minScore = Infinity;
           let maxScore = -Infinity;
@@ -137,7 +125,7 @@ const currentClosestTimestamp = computed(() => {
       if (index + 1 >= observation.images.length) {
         next = false;
       }
-      return {time: new Date(closest * 1000).toLocaleDateString(), type: observation.images[index].type, prev, next };
+      return {time: new Date(closest * 1000).toLocaleDateString(), type: observation.images[index].source, prev, next, siteobs: observation.images[index].siteobs_id };
     }
   }
   return null;
@@ -318,9 +306,9 @@ const stopLooping = () => {
 
           <span
             v-if="currentClosestTimestamp"
-            style="font-size: 0.75em"
+            style="font-size: 0.75em; min-width:175px"
             class="badge-secondary badge ml-1"
-          >Satellite Time: {{ currentClosestTimestamp.time }} - {{ currentClosestTimestamp.type }}</span>
+          >{{ currentClosestTimestamp.time }} - {{ currentClosestTimestamp.type }} id:{{  currentClosestTimestamp.siteobs ? currentClosestTimestamp.siteobs : 'null'}}</span>
           <button
             class="btn-primary btn-xs m-1"
             :class="{'btn-disabled': !currentClosestTimestamp.next}"

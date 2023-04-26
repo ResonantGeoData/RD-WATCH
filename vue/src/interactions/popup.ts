@@ -1,7 +1,7 @@
 import { Ref, ref } from "vue";
 import { Color, Map, MapLayerMouseEvent, Popup } from "maplibre-gl";
 import { ShallowRef } from "vue";
-import { SiteObservationImage, selectedObservationList, state } from "../store";
+import { selectedObservationList, state } from "../store";
 import { ApiService } from "../client";
 
 const checkBadge =
@@ -118,34 +118,25 @@ const popupLogic = (map: ShallowRef<null | Map>) => {
         if (siteId && !selectedObservationList.value.includes(siteId)) {
           const data = await ApiService.getSiteObservations(siteId);
           const { results } = data;
-          const wolrdViewImages: SiteObservationImage[] = [];
-          const worldView = results.filter((item) => item.constellation === 'WV')
-          worldView.forEach((item) => {
-            if (item.video !== null) {
-              wolrdViewImages.push({url: item.video, timestamp: item.timerange.min, type: 'WV'});
-            }
-          });
-          const S2Images: SiteObservationImage[] = [];
-          const S2List = results.filter((item) => item.constellation === 'S2')
-          S2List.forEach((item) => {
-            if (item.video !== null) {
-              S2Images.push({url: item.video, timestamp: item.timerange.min, type:'S2'});
-            }
-          });
+          const { images } = data;
+          console.log(images);
+          const worldViewList = images.results.filter((item) => item.source === 'WV')
+            .sort((a, b) => (a.timestamp - b.timestamp));
+          const S2List = images.results.filter((item) => item.source === 'S2');
 
           const L8 = { 
             total: results.filter((item) => item.constellation === 'L8').length,
-            loaded:results.filter((item) => item.constellation === 'L8' && item.video !== null).length,
+            loaded:images.results.filter((item) => item.source === 'L8').length,
           };
           const S2 = {
             total: results.filter((item) => item.constellation === 'S2').length,
-            loaded:results.filter((item) => item.constellation === 'S2' && item.video !== null).length,
-            images: S2Images,
+            loaded:S2List.length,
+            images: S2List,
           };
           const WV = { 
             total: results.filter((item) => item.constellation === 'WV').length,
-            loaded:results.filter((item) => item.constellation === 'WV' && item.video !== null).length,
-            images: wolrdViewImages,
+            loaded:worldViewList.length,
+            images: worldViewList,
           };
           let minScore = Infinity;
           let maxScore = -Infinity;

@@ -23,9 +23,6 @@ jobs:
           - image-name: postgresql
             context: docker/services/postgresql
             target:
-          - image-name: redis
-            context: docker/services/redis
-            target:
           - image-name: unit-reloader
             context: docker/services/debug/unit-reloader
             target:

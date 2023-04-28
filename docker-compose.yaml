@@ -12,13 +12,14 @@ services:
       dockerfile: ./Dockerfile
     depends_on:
       - postgresql
-      - redis
+      - redis-master
     environment:
       AWS_ACCESS_KEY_ID: ${AWS_ACCESS_KEY_ID:?}
       AWS_SECRET_ACCESS_KEY: ${AWS_SECRET_ACCESS_KEY:?}
       AWS_REQUEST_PAYER: requester
       RDWATCH_DJANGO_DEBUG: ${RDWATCH_DJANGO_DEBUG:?}
       RDWATCH_SECRET_KEY: ${RDWATCH_SECRET_KEY:?}
+      RDWATCH_CELERY_BROKER_URL: ${RDWATCH_CELERY_BROKER_URL:?}
       RDWATCH_POSTGRESQL_URI: ${RDWATCH_POSTGRESQL_URI:?}
       RDWATCH_REDIS_URI: ${RDWATCH_REDIS_URI:?}
       RDWATCH_SMART_STAC_URL: ${RDWATCH_SMART_STAC_URL:?}
@@ -40,13 +41,44 @@ services:
     volumes:
       - postgresql-data:/var/lib/postgresql/data
 
-  # Redis 7
-  redis:
-    image: ghcr.io/resonantgeodata/rd-watch/redis:latest
-    environment:
-      RDWATCH_SECRET_KEY: ${RDWATCH_SECRET_KEY:?}
+  # Redis cluster
+  redis-master:
+    image: bitnami/redis-cluster:latest
     volumes:
-      - redis-data:/data
+      - redis-master-data:/bitnami/redis/data
+    environment:
+      REDIS_PASSWORD: ${RDWATCH_SECRET_KEY:?}
+      REDISCLI_AUTH: ${RDWATCH_SECRET_KEY:?}
+      REDIS_NODES: redis-master redis-replica-1 redis-replica-2
+      REDIS_CLUSTER_REPLICAS: 0
+      REDIS_CLUSTER_CREATOR: "yes"
+    depends_on:
+      - redis-replica-1
+      - redis-replica-2
+
+  redis-replica-1:
+    image: bitnami/redis-cluster:latest
+    volumes:
+      - redis-replica-1-data:/bitnami/redis/data
+    environment:
+      REDIS_PASSWORD: ${RDWATCH_SECRET_KEY:?}
+      REDIS_NODES: redis-master redis-replica-1 redis-replica-2
+
+  redis-replica-2:
+    image: bitnami/redis-cluster:latest
+    volumes:
+      - redis-replica-2-data:/bitnami/redis/data
+    environment:
+      REDIS_PASSWORD: ${RDWATCH_SECRET_KEY:?}
+      REDIS_NODES: redis-master redis-replica-1 redis-replica-2
+
+
+  rabbitmq:
+    image: rabbitmq:management
+    environment:
+      RABBITMQ_DEFAULT_USER: rdwatch
+      RABBITMQ_DEFAULT_PASS: ${RDWATCH_SECRET_KEY:?}
+
 
   ###################
   # debug services  #
@@ -84,6 +116,7 @@ services:
       AWS_REQUEST_PAYER: requester
       RDWATCH_DJANGO_DEBUG: ${RDWATCH_DJANGO_DEBUG:?}
       RDWATCH_SECRET_KEY: ${RDWATCH_SECRET_KEY:?}
+      RDWATCH_CELERY_BROKER_URL: ${RDWATCH_CELERY_BROKER_URL:?}
       RDWATCH_POSTGRESQL_URI: ${RDWATCH_POSTGRESQL_URI:?}
       RDWATCH_REDIS_URI: ${RDWATCH_REDIS_URI:?}
       RDWATCH_ACCENTURE_VERSION: ${RDWATCH_ACCENTURE_VERSION:?}
@@ -91,7 +124,7 @@ services:
       RDWATCH_SMART_STAC_KEY: ${RDWATCH_SMART_STAC_KEY:?}
     depends_on:
       - postgresql
-      - redis
+      - redis-master
     profiles:
       - debug
       - tools
@@ -120,6 +153,7 @@ services:
       AWS_REQUEST_PAYER: requester
       RDWATCH_DJANGO_DEBUG: ${RDWATCH_DJANGO_DEBUG:?}
       RDWATCH_SECRET_KEY: ${RDWATCH_SECRET_KEY:?}
+      RDWATCH_CELERY_BROKER_URL: ${RDWATCH_CELERY_BROKER_URL:?}
       RDWATCH_POSTGRESQL_URI: ${RDWATCH_POSTGRESQL_URI:?}
       RDWATCH_REDIS_URI: ${RDWATCH_REDIS_URI:?}
       RDWATCH_SMART_STAC_URL: ${RDWATCH_SMART_STAC_URL:?}
@@ -175,6 +209,7 @@ services:
       POETRY_VIRTUALENVS_IN_PROJECT: "1"
       RDWATCH_DJANGO_DEBUG: ${RDWATCH_DJANGO_DEBUG:?}
       RDWATCH_SECRET_KEY: ${RDWATCH_SECRET_KEY:?}
+      RDWATCH_CELERY_BROKER_URL: ${RDWATCH_CELERY_BROKER_URL:?}
       RDWATCH_POSTGRESQL_URI: ${RDWATCH_POSTGRESQL_URI:?}
       RDWATCH_REDIS_URI: ${RDWATCH_REDIS_URI:?}
       RDWATCH_SMART_STAC_URL: ${RDWATCH_SMART_STAC_URL:?}
@@ -218,6 +253,7 @@ services:
       POETRY_VIRTUALENVS_IN_PROJECT: "1"
       RDWATCH_DJANGO_DEBUG: ${RDWATCH_DJANGO_DEBUG:?}
       RDWATCH_SECRET_KEY: ${RDWATCH_SECRET_KEY:?}
+      RDWATCH_CELERY_BROKER_URL: ${RDWATCH_CELERY_BROKER_URL:?}
       RDWATCH_POSTGRESQL_URI: ${RDWATCH_POSTGRESQL_URI:?}
       RDWATCH_REDIS_URI: ${RDWATCH_REDIS_URI:?}
       RDWATCH_SMART_STAC_URL: ${RDWATCH_SMART_STAC_URL:?}
@@ -234,7 +270,9 @@ services:
 volumes:
   pgadmin-data:
   postgresql-data:
-  redis-data:
+  redis-master-data:
+  redis-replica-1-data:
+  redis-replica-2-data:
   # debug volumes
   unit-socket:
   poetry-cache:

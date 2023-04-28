@@ -163,6 +163,7 @@ services:
       - postgresql
       - redis-master
       - django
+      - rabbitmq
     volumes:
       - .:/app
       - unit-socket:/run/unit

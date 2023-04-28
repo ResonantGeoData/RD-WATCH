@@ -1,0 +1,71 @@
+version: '3'
+services:
+  #######################
+  # production services #
+  #######################
+
+  # RD-WATCH
+  rdwatch:
+    depends_on:
+      - postgresql
+      - redis-master
+      - minio
+    environment:
+      RDWATCH_MINIO_STORAGE_ENDPOINT: minio:9002
+      RDWATCH_MINIO_STORAGE_ACCESS_KEY: minio
+      RDWATCH_MINIO_STORAGE_SECRET_KEY: ${RDWATCH_SECRET_KEY:?}
+      MINIO_STORAGE: true
+
+  # PostgreSQL 14
+  postgresql:
+    ports:
+      - 5432:5432 # expose ports locally
+
+  # Serves RD-WATCH API with source files mounted in
+  django:
+    environment:
+      RDWATCH_MINIO_STORAGE_ENDPOINT: minio:9002
+      RDWATCH_MINIO_STORAGE_ACCESS_KEY: minio
+      RDWATCH_MINIO_STORAGE_SECRET_KEY: ${RDWATCH_SECRET_KEY:?}
+      MINIO_STORAGE: true
+    depends_on:
+      - postgresql
+      - redis-master
+      - minio
+
+  celery:
+    environment:
+      RDWATCH_MINIO_STORAGE_ENDPOINT: minio:9002
+      RDWATCH_MINIO_STORAGE_ACCESS_KEY: minio
+      RDWATCH_MINIO_STORAGE_SECRET_KEY: ${RDWATCH_SECRET_KEY:?}
+      MINIO_STORAGE: true
+    depends_on:
+      - postgresql
+      - redis-master
+      - django
+      - minio
+
+  poetry:
+    environment:
+      RDWATCH_MINIO_STORAGE_ENDPOINT: minio:9002
+      RDWATCH_MINIO_STORAGE_ACCESS_KEY: minio
+      RDWATCH_MINIO_STORAGE_SECRET_KEY: ${RDWATCH_SECRET_KEY:?}
+      MINIO_STORAGE: true
+  
+  minio:
+    image: minio/minio:latest
+    # When run with a TTY, minio prints credentials on startup
+    tty: true
+    command: ["server", "/data", "--console-address", ":${DOCKER_MINIO_CONSOLE_PORT-9003}", "--address", ":${DOCKER_MINIO_PORT-9002}"]
+    volumes:
+      - minio:/data
+    environment:
+      MINIO_ROOT_USER: minio
+      MINIO_ROOT_PASSWORD: ${RDWATCH_SECRET_KEY:?}
+    ports:
+      - ${DOCKER_MINIO_PORT-9002}:9002
+      - ${DOCKER_MINIO_CONSOLE_PORT-9003}:9003
+
+
+volumes:
+  minio:

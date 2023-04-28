@@ -79,10 +79,6 @@ def get_closest_capture(
     if worldView:
         captures = get_worldview_captures(timestamp, bbox, timebuffer)
     else:
-        logger.warning(
-            f'Getting capture constellation: {constellation} \
-            timestmap: {timestamp} bbox: {bbox}'
-        )
         captures = list(get_bands(constellation, timestamp, bbox, timebuffer))
 
         # Filter bands by requested processing level and spectrum
@@ -91,7 +87,7 @@ def get_closest_capture(
             if band.level.slug == '2A' and band.spectrum.slug == 'visual':
                 tempCaptures.append(band)
         captures = tempCaptures
-    logger.warning(f'Captures: {len(captures)}')
+    # logger.warning(f'Captures: {len(captures)}')
     if not captures:
         return None
     closest_capture = min(captures, key=lambda band: abs(band.timestamp - timestamp))
@@ -110,10 +106,6 @@ def get_range_captures(
     if worldView:
         captures = get_worldview_captures(timestamp, bbox, timebuffer)
     else:
-        logger.warning(
-            f'Getting capture constellation: {constellation} \
-            timestmap: {timestamp} bbox: {bbox}'
-        )
         captures = list(get_bands(constellation, timestamp, bbox, timebuffer))
 
         # Filter bands by requested processing level and spectrum
@@ -122,7 +114,7 @@ def get_range_captures(
             if band.level.slug == '2A' and band.spectrum.slug == 'visual':
                 tempCaptures.append(band)
         captures = tempCaptures
-    logger.warning(f'Captures: {len(captures)}')
+    # logger.warning(f'Captures: {len(captures)}')
     if not captures:
         return None
 
@@ -136,7 +128,7 @@ def fetch_boundbox_image(
     worldView=False,
 ):
     capture = get_closest_capture(bbox, timestamp, constellation, worldView)
-    logger.warning(f'Closest Capture is: {capture}')
+    # logger.warning(f'Closest Capture is: {capture}')
     if capture is None:
         return None
     bytes = None
@@ -173,10 +165,6 @@ def get_siteobservations_images(
         timestamp = observation.timestamp
         constellation = observation.constellation
         # We need to grab the image for this timerange and type
-        logger.warning(
-            f'Comparing site constellation: {constellation} \
-                to test constellation: {baseConstellation}'
-        )
         if str(constellation) == baseConstellation:
             baseSiteEval = observation.siteeval
             matchConstellation = constellation
@@ -196,7 +184,7 @@ def get_siteobservations_images(
                 logger.warning(f'COULD NOT FIND ANY IMAGE FOR TIMESTAMP: {timestamp}')
                 continue
             found_timestamps[found_timestamp] = True
-            logger.warning(f'Retrieved Image with timestamp: {timestamp}')
+            # logger.warning(f'Retrieved Image with timestamp: {timestamp}')
             output = f'tile_image_{observation.id}.jpg'
             with open(output, 'wb') as f:
                 f.write(bytes)

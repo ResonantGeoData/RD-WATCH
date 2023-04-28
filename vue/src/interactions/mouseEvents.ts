@@ -112,14 +112,12 @@ const popupLogic = (map: ShallowRef<null | Map>) => {
   const clickObservation = async (e: MapLayerMouseEvent) => {
     if (e.features && e.features[0]?.properties && map.value) {
       const feature = e.features[0];
-      console.log(feature.properties);
       if (feature.properties) {
         const siteId = feature.properties.siteeval_id;
         if (siteId && !selectedObservationList.value.includes(siteId)) {
           const data = await ApiService.getSiteObservations(siteId);
           const { results } = data;
           const { images } = data;
-          console.log(images);
           const worldViewList = images.results.filter((item) => item.source === 'WV')
             .sort((a, b) => (a.timestamp - b.timestamp));
           const S2List = images.results.filter((item) => item.source === 'S2');

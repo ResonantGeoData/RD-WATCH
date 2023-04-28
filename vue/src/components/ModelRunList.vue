@@ -12,7 +12,7 @@ import type { Ref } from "vue";
 import { ApiService } from "../client";
 import { filteredSatelliteTimeList, state } from "../store";
 import { LngLatBounds } from "maplibre-gl";
-import { hoveredInfo } from "../interactions/popup";
+import { hoveredInfo } from "../interactions/mouseEvents";
 const limit = 10;
 interface KeyedModelRun extends ModelRun {
   key: string;

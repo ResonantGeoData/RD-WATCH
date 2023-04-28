@@ -3,6 +3,7 @@ import { computed } from "vue";
 import { ApiService } from "../../client";
 import { ImageBBox, SiteObservationImage, state } from "../../store";
 import { SiteObservation } from "../../store";
+import { ArrowPathIcon, ChevronLeftIcon, ChevronRightIcon, XMarkIcon } from "@heroicons/vue/24/solid";
 const props = defineProps<{
   siteObservation: SiteObservation;
 }>();
@@ -194,38 +195,62 @@ const stopLooping = () => {
             </span>
           </div>
         </div>
-        <div
-          class="col-span-1 text-xs font-light text-gray-600 group-open:text-gray-100"
-        >
-          images:
+        <div class="col-span-4 text-sm font-light group-open:text-white ">
+          <div class="grid grid-cols-4 ">
+            <div class="justify-self-center">
+              Source
+            </div>
+            <div class="justify-self-center">
+              Loaded
+            </div>
+            <div class="justify-self-center">
+              Obs
+            </div>
+            <div class="justify-self-center">
+              Non-Obs
+            </div>
+          </div>
+          <div class="grid grid-cols-4 ">
+            <b class="justify-self-center">L8</b>
+            <b class="justify-self-center">{{ siteObservation.imageCounts.L8.loaded }}</b>
+            <b class="justify-self-center">{{ siteObservation.imageCounts.L8.total }}</b>
+            <b class="justify-self-center">{{ siteObservation.imageCounts.L8.loaded !== 0 ?Math.max(siteObservation.imageCounts.L8.loaded - siteObservation.imageCounts.L8.total, 0) : '-' }}</b>
+          </div>
+          <div class="grid grid-cols-4 ">
+            <b class="justify-self-center">S2</b>
+            <b class="justify-self-center">{{ siteObservation.imageCounts.S2.loaded }}</b>
+            <b class="justify-self-center">{{ siteObservation.imageCounts.S2.total }}</b>
+            <b class="justify-self-center">{{ siteObservation.imageCounts.S2.loaded !== 0 ?Math.max(siteObservation.imageCounts.S2.loaded - siteObservation.imageCounts.S2.total, 0) : '-' }}</b>
+          </div>
+          <div class="grid grid-cols-4 ">
+            <b class="justify-self-center">WV</b>
+            <b class="justify-self-center">{{ siteObservation.imageCounts.WV.loaded }}</b>
+            <b class="justify-self-center">{{ siteObservation.imageCounts.WV.total }}</b>
+            <b class="justify-self-center">{{ siteObservation.imageCounts.WV.loaded !== 0 ?Math.max(siteObservation.imageCounts.WV.loaded - siteObservation.imageCounts.WV.total, 0) : '-' }}</b>
+          </div>
         </div>
-        <div class="col-span-3 text-xs font-light group-open:text-white">
-          <div>L8: <b>{{ siteObservation.imageCounts.L8.loaded }}</b> of {{ siteObservation.imageCounts.L8.total }}</div>
-          <div>S2: <b>{{ siteObservation.imageCounts.S2.loaded }}</b> of {{ siteObservation.imageCounts.S2.total }}</div>
-          <div>WV: <b>{{ siteObservation.imageCounts.WV.loaded }}</b> of {{ siteObservation.imageCounts.WV.total }}</div>
-        </div>
         <div
-          class="col-span-1 text-xs font-light text-gray-600 group-open:text-gray-100"
+          class="col-span-1 text-sm font-light text-gray-600 group-open:text-gray-100"
         >
           score:
         </div>
-        <div class="col-span-3 text-xs font-light group-open:text-white">
+        <div class="col-span-3 text-sm font-light group-open:text-white">
           {{ siteObservation.score.min.toFixed(2) }} to {{ siteObservation.score.max.toFixed(2) }} 
         </div>
         <div
-          class="col-span-1 text-xs font-light text-gray-600 group-open:text-gray-100"
+          class="col-span-1 text-sm font-light text-gray-600 group-open:text-gray-100"
         >
-          average score:
+          average:
         </div>
-        <div class="col-span-3 text-xs font-light group-open:text-white">
+        <div class="col-span-3 text-sm font-light group-open:text-white">
           {{ siteObservation.score.average.toFixed(2) }}
         </div>
         <div
-          class="col-span-1 text-xs font-light text-gray-600 group-open:text-gray-100"
+          class="col-span-1 text-sm font-light text-gray-600 group-open:text-gray-100"
         >
-          date coverage:
+          dates:
         </div>
-        <div class="col-span-3 text-xs font-light group-open:text-white">
+        <div class="col-span-3 text-sm font-light group-open:text-white">
           {{
             siteObservation.timerange === null
               ? "--"
@@ -242,7 +267,7 @@ const stopLooping = () => {
               )}`
           }}
         </div>
-        <div class="col-span-4 text-xs font-light text-gray-600 group-open:text-gray-100">
+        <div class="col-span-4 text-sm font-light text-gray-600 group-open:text-gray-100">
           <button
             class="btn-accent btn-xs m-1"
             :class="{'btn-disabled': canGetImages.WV === 0}"
@@ -294,28 +319,23 @@ const stopLooping = () => {
         </div>
         <div 
           v-if="imagesActive && currentClosestTimestamp"
-          class="col-span-4 font-light text-gray-600 group-open:text-gray-100"
+          class="col-span-4 grid grid-flow-col"
         >
-          <button
-            class="btn-primary btn-xs m-1"
-            :class="{'btn-disabled': !currentClosestTimestamp.prev}"
+          <ChevronLeftIcon
+            class="h-10 text-blue-600"
+            :class="{'icon': currentClosestTimestamp.prev, 'text-gray-600': !currentClosestTimestamp.prev}"
             @click="goToTimestamp(-1)"
-          >
-            Prev
-          </button>
-
+          />
           <span
             v-if="currentClosestTimestamp"
-            style="font-size: 0.75em; min-width:175px"
-            class="badge-secondary badge ml-1"
-          >{{ currentClosestTimestamp.time }} - {{ currentClosestTimestamp.type }} id:{{  currentClosestTimestamp.siteobs ? currentClosestTimestamp.siteobs : 'null'}}</span>
-          <button
-            class="btn-primary btn-xs m-1"
-            :class="{'btn-disabled': !currentClosestTimestamp.next}"
+            style="font-size: 1em; min-width:200px; text-align: center;"
+            class="justify-self-center self-center"
+          >{{ currentClosestTimestamp.time }} - {{ currentClosestTimestamp.type }}{{ currentClosestTimestamp.siteobs !== null ? '*': ''}}</span>
+          <ChevronRightIcon
+            class="h-10 text-blue-600 "
+            :class="{'icon': currentClosestTimestamp.next, 'text-gray-600': !currentClosestTimestamp.next}"
             @click="goToTimestamp(1)"
-          >
-            Next
-          </button>
+          />
         </div>
       </div>
     </summary>
@@ -331,5 +351,8 @@ const stopLooping = () => {
 }
 .checkboxlabel {
   display: inline;
+}
+.icon:hover {
+  cursor: pointer;
 }
 </style>

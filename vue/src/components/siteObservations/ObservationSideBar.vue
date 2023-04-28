@@ -2,7 +2,7 @@
 import { computed, onUnmounted } from "vue";
 import { EnabledSiteObservations, SiteObservationImage, state } from '../../store'
 import SiteObservationDisplay from "./SiteObservationDisplay.vue";
-import { hoveredInfo } from "../../interactions/popup";
+import { hoveredInfo } from "../../interactions/mouseEvents";
 const clearAll = () => {
   state.enabledSiteObservations = [];
   state.selectedObservations = [];
@@ -121,15 +121,18 @@ onUnmounted(() => {
 }
 .siteObs {
   margin: 10px;
+  border: 5px solid transparent;
+
 }
 .outlined {
   background-color: orange;
-  border: 2px solid orange;
+  border: 5px solid orange;
 }
 .checkboxlabel {
   display: inline;
 }
 .observation-sidebar{
   max-width: 350px;
+  min-width: 350px;
 }
 </style>

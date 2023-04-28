@@ -161,7 +161,7 @@ services:
       RDWATCH_ACCENTURE_VERSION: ${RDWATCH_ACCENTURE_VERSION:?}
     depends_on:
       - postgresql
-      - redis
+      - redis-master
       - django
     volumes:
       - .:/app

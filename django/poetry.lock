@@ -418,6 +418,21 @@ python-versions = ">=3.7"
 Django = ">=3.2"
 
 [[package]]
+name = "django-minio-storage"
+version = "0.5.0"
+description = "Django file storage using the minio python client"
+category = "dev"
+optional = false
+python-versions = ">=3.8"
+
+[package.dependencies]
+django = ">=3.2"
+minio = ">=7.1.12"
+
+[package.extras]
+test = ["coverage", "requests"]
+
+[[package]]
 name = "django-ninja"
 version = "0.21.0"
 description = "Django Ninja - Fast Django REST framework"
@@ -448,6 +463,26 @@ redis = ">=3,<4.0.0 || >4.0.0,<4.0.1 || >4.0.1"
 
 [package.extras]
 hiredis = ["redis[hiredis] (>=3,!=4.0.0,!=4.0.1)"]
+
+[[package]]
+name = "django-storages"
+version = "1.13.2"
+description = "Support for many storage backends in Django"
+category = "main"
+optional = false
+python-versions = ">=3.7"
+
+[package.dependencies]
+boto3 = {version = ">=1.4.4", optional = true, markers = "extra == \"boto3\""}
+Django = ">=3.2"
+
+[package.extras]
+azure = ["azure-storage-blob (>=12.0.0)"]
+boto3 = ["boto3 (>=1.4.4)"]
+dropbox = ["dropbox (>=7.2.1)"]
+google = ["google-cloud-storage (>=1.27.0)"]
+libcloud = ["apache-libcloud"]
+sftp = ["paramiko (>=1.10.0)"]
 
 [[package]]
 name = "django-stubs"
@@ -739,6 +774,18 @@ click = ">=3.0"
 [package.extras]
 dev = ["check-manifest"]
 test = ["hypothesis", "pytest"]
+
+[[package]]
+name = "minio"
+version = "7.1.14"
+description = "MinIO Python SDK for Amazon S3 Compatible Cloud Storage"
+category = "dev"
+optional = false
+python-versions = "*"
+
+[package.dependencies]
+certifi = "*"
+urllib3 = "*"
 
 [[package]]
 name = "morecantile"
@@ -1363,7 +1410,7 @@ python-versions = "*"
 [metadata]
 lock-version = "1.1"
 python-versions = "~3.10.0"
-content-hash = "b22a1fa255e2159e2eb4f7e3bddb85813e67298e8cc4b3a413a4e130d3380fbc"
+content-hash = "7dabdc9a3802c33fecf69d5870a6b84f3c0042d72531e0678b62863e4bc99dcc"
 
 [metadata.files]
 affine = [
@@ -1601,6 +1648,10 @@ django-filter = [
     {file = "django-filter-22.1.tar.gz", hash = "sha256:ed473b76e84f7e83b2511bb2050c3efb36d135207d0128dfe3ae4b36e3594ba5"},
     {file = "django_filter-22.1-py3-none-any.whl", hash = "sha256:ed429e34760127e3520a67f415bec4c905d4649fbe45d0d6da37e6ff5e0287eb"},
 ]
+django-minio-storage = [
+    {file = "django-minio-storage-0.5.0.tar.gz", hash = "sha256:dd0b73398252d9ce7056bc3cc5a1456f845522a00058010601d6bfe90da4f267"},
+    {file = "django_minio_storage-0.5.0-py3-none-any.whl", hash = "sha256:47efd1574c367504c3ed3542ddcd5706d64d7114d3dc4622364ca8473159cdaf"},
+]
 django-ninja = [
     {file = "django-ninja-0.21.0.tar.gz", hash = "sha256:3ed90fc55877408d5c42ec3d3cec8384c9a0cc7adf2cd66d6669561bed10a485"},
     {file = "django_ninja-0.21.0-py3-none-any.whl", hash = "sha256:b6ed7647212a4647682b134a6f82277ecf02e9d99960777aa75d124685682d25"},
@@ -1608,6 +1659,10 @@ django-ninja = [
 django-redis = [
     {file = "django-redis-5.2.0.tar.gz", hash = "sha256:8a99e5582c79f894168f5865c52bd921213253b7fd64d16733ae4591564465de"},
     {file = "django_redis-5.2.0-py3-none-any.whl", hash = "sha256:1d037dc02b11ad7aa11f655d26dac3fb1af32630f61ef4428860a2e29ff92026"},
+]
+django-storages = [
+    {file = "django-storages-1.13.2.tar.gz", hash = "sha256:cbadd15c909ceb7247d4ffc503f12a9bec36999df8d0bef7c31e57177d512688"},
+    {file = "django_storages-1.13.2-py3-none-any.whl", hash = "sha256:31dc5a992520be571908c4c40d55d292660ece3a55b8141462b4e719aa38eab3"},
 ]
 django-stubs = [
     {file = "django-stubs-1.12.0.tar.gz", hash = "sha256:ea8b35d0da49f7b2ee99a79125f1943e033431dd114726d6643cc35de619230e"},
@@ -1831,6 +1886,10 @@ mccabe = [
 mercantile = [
     {file = "mercantile-1.2.1-py3-none-any.whl", hash = "sha256:30f457a73ee88261aab787b7069d85961a5703bb09dc57a170190bc042cd023f"},
     {file = "mercantile-1.2.1.tar.gz", hash = "sha256:fa3c6db15daffd58454ac198b31887519a19caccee3f9d63d17ae7ff61b3b56b"},
+]
+minio = [
+    {file = "minio-7.1.14-py3-none-any.whl", hash = "sha256:ee5cbd4ba73f71b73555209f3411d5da3e9742bbe3fd038c362042d6d2527256"},
+    {file = "minio-7.1.14.tar.gz", hash = "sha256:230faf1d0db1c3ce09aef86b0eb38e994a64769e34dad4b77febf59bc90d8ab0"},
 ]
 morecantile = [
     {file = "morecantile-3.2.5-py3-none-any.whl", hash = "sha256:0490b452d7aa168717ef24d71e3fe727e14a38c8039e6b85938ce4819511e386"},

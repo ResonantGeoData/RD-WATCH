@@ -79,6 +79,21 @@ services:
       RABBITMQ_DEFAULT_PASS: ${RDWATCH_SECRET_KEY:?}
 
 
+  minio:
+    image: minio/minio:latest
+    # When run with a TTY, minio prints credentials on startup
+    tty: true
+    command: ["server", "/data", "--console-address", ":${DOCKER_MINIO_CONSOLE_PORT-9003}", "--address", ":${DOCKER_MINIO_PORT-9002}"]
+    volumes:
+      - minio-data:/data
+    environment:
+      MINIO_ROOT_USER: rdwatch
+      MINIO_ROOT_PASSWORD: ${RDWATCH_SECRET_KEY:?}
+    ports:
+      - ${DOCKER_MINIO_PORT-9002}:9002
+      - ${DOCKER_MINIO_CONSOLE_PORT-9003}:9003
+
+
   ###################
   # debug services  #
   # --profile debug #
@@ -274,6 +289,7 @@ volumes:
   redis-master-data:
   redis-replica-1-data:
   redis-replica-2-data:
+  minio-data:
   # debug volumes
   unit-socket:
   poetry-cache:

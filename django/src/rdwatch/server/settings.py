@@ -95,23 +95,6 @@ class DevelopmentConfiguration(BaseConfiguration):
 class ProductionConfiguration(BaseConfiguration):
     DEFAULT_FILE_STORAGE = 'storages.backends.s3boto3.S3Boto3Storage'
 
-    # This exact environ_name is important, as direct use of Boto will also use it
-    AWS_S3_REGION_NAME = values.Value(
-        environ_prefix=_environ_prefix,
-        environ_name='AWS_DEFAULT_REGION',
-        environ_required=True,
-    )
-    AWS_S3_ACCESS_KEY_ID = values.Value(
-        environ_prefix=_environ_prefix,
-        environ_name='AWS_ACCESS_KEY_ID',
-        environ_required=True,
-    )
-    AWS_S3_SECRET_ACCESS_KEY = values.Value(
-        environ_prefix=_environ_prefix,
-        environ_name='AWS_SECRET_ACCESS_KEY',
-        environ_required=True,
-    )
-
     AWS_STORAGE_BUCKET_NAME = values.Value(
         _environ_prefix=_environ_prefix,
         environ_name='STORAGE_BUCKET_NAME',

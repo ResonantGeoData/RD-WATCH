@@ -18,6 +18,8 @@ class BaseConfiguration(Configuration):
     USE_TZ = False
     USE_X_FORWARDED_HOST = True
     WSGI_APPLICATION = 'rdwatch.server.application'
+    ALLOWED_HOSTS = ['*']
+    DEBUG = values.BooleanValue(False, _environ_prefix='RDWATCH_DJANGO')
 
     SECRET_KEY = values.Value(environ_required=True, environ_prefix=_environ_prefix)
 

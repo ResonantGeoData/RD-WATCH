@@ -61,8 +61,8 @@ COLLECTIONS: dict[str, list[str]] = {
     'S2': [],
 }
 
-if settings.ACCENTURE_IMAGERY_VERSION is not None:
-    COLLECTIONS['S2'].append(f'ta1-s2-acc-{settings.ACCENTURE_IMAGERY_VERSION}')
+if settings.ACCENTURE_VERSION is not None:
+    COLLECTIONS['S2'].append(f'ta1-s2-acc-{settings.ACCENTURE_VERSION}')
 
 
 def stac_search(

@@ -57,6 +57,7 @@ def site_observations(request: HttpRequest, pk: int):
                     score='score',
                     constellation='constellation__slug',
                     spectrum='spectrum__slug',
+                    timestamp=ExtractEpoch('timestamp'),
                     timerange=JSONObject(
                         min=ExtractEpoch('timemin'),
                         max=ExtractEpoch('timemax'),

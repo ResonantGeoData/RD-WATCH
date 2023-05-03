@@ -175,11 +175,11 @@ def get_siteobservations_images(
                 source=baseConstellation,
             )
             if found.count() > 0 and not force:
+                found_timestamps[observation.timestamp] = True
                 continue
             bytes, cloudcover, found_timestamp = fetch_boundbox_image(
                 bbox, timestamp, constellation, baseConstellation == 'WV'
             )
-            # img = image(bbox, timestamp, worldview=True) # Old way
             if bytes is None:
                 logger.warning(f'COULD NOT FIND ANY IMAGE FOR TIMESTAMP: {timestamp}')
                 continue
@@ -245,7 +245,7 @@ def get_siteobservations_images(
                 image = File(imageFile, output)
                 found = SiteImage.objects.filter(
                     siteeval=baseSiteEval,
-                    timestamp=observation.timestamp,
+                    timestamp=capture.timestamp,
                     source=baseConstellation,
                 )
                 if found.count() > 0:

@@ -28,6 +28,10 @@ class SiteImage(models.Model):
         max_length=2, blank=True, help_text='WV, S2, L8 imagery source'
     )
 
+    def __str__(self):
+        tim = self.timestamp.isoformat()
+        return f'{self.siteeval}.{self.source}@{tim}'
+
     class Meta:
         indexes = [GistIndex(fields=['timestamp'])]
 

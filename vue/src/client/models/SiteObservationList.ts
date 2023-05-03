@@ -6,6 +6,7 @@ import { SiteObservationImage } from "../../store";
 
 export type SiteObservationList = {
   count: number;
+  timestamp: number;
   timerange: {
     min: number;
     max: number;
@@ -22,6 +23,7 @@ export type SiteObservationList = {
     score: number;
     constellation: string;
     spectrum: string;
+    timestamp: number;
     timerange: {
       min: number;
       max: number;

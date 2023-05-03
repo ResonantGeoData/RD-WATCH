@@ -1,7 +1,7 @@
 import { Ref, ref } from "vue";
 import { Color, Map, MapLayerMouseEvent, Popup } from "maplibre-gl";
 import { ShallowRef } from "vue";
-import { selectedObservationList, state } from "../store";
+import { getSiteObservationDetails, selectedObservationList, state } from "../store";
 import { ApiService } from "../client";
 
 const checkBadge =
@@ -115,55 +115,7 @@ const popupLogic = (map: ShallowRef<null | Map>) => {
       if (feature.properties) {
         const siteId = feature.properties.siteeval_id;
         if (siteId && !selectedObservationList.value.includes(siteId)) {
-          const data = await ApiService.getSiteObservations(siteId);
-          const { results } = data;
-          const { images } = data;
-          const worldViewList = images.results.filter((item) => item.source === 'WV')
-            .sort((a, b) => (a.timestamp - b.timestamp));
-          const S2List = images.results.filter((item) => item.source === 'S2');
-
-          const L8 = { 
-            total: results.filter((item) => item.constellation === 'L8').length,
-            loaded:images.results.filter((item) => item.source === 'L8').length,
-          };
-          const S2 = {
-            total: results.filter((item) => item.constellation === 'S2').length,
-            loaded:S2List.length,
-            images: S2List,
-          };
-          const WV = { 
-            total: results.filter((item) => item.constellation === 'WV').length,
-            loaded:worldViewList.length,
-            images: worldViewList,
-          };
-          let minScore = Infinity;
-          let maxScore = -Infinity;
-          let avgScore = 0;
-          results.forEach((item) => {
-            minScore = Math.min(minScore, item.score);
-            maxScore = Math.max(maxScore, item.score);
-            avgScore += item.score
-          })
-          avgScore = avgScore / results.length;
-
-          state.selectedObservations.push( {
-            id: siteId,
-            timerange: data.timerange,
-            imagesLoaded: false,
-            imagesActive: false,
-            imageCounts: {
-              L8,
-              S2,
-              WV,
-            },
-            score: {
-              min: minScore,
-              max: maxScore,
-              average: avgScore,
-            },
-            bbox: data.bbox,
-          })
-
+          await getSiteObservationDetails(siteId);
         }
       }
     }

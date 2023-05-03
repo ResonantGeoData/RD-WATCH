@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { computed } from "vue";
 import { ApiService } from "../../client";
-import { ImageBBox, SiteObservationImage, state } from "../../store";
+import { ImageBBox, SiteObservationImage, getSiteObservationDetails, state } from "../../store";
 import { SiteObservation } from "../../store";
 import { ArrowPathIcon, ChevronLeftIcon, ChevronRightIcon, XMarkIcon } from "@heroicons/vue/24/solid";
 const props = defineProps<{
@@ -47,54 +47,7 @@ const toggleImages = (siteObs: SiteObservation, off= false) => {
     }
 }
 const refresh = async () => {
-  const data = await ApiService.getSiteObservations(props.siteObservation.id.toString());
-          const { results, images } = data;
-          const worldViewList = images.results.filter((item) => item.source === 'WV')
-            .sort((a, b) => (a.timestamp - b.timestamp));
-          const S2List = images.results.filter((item) => item.source === 'S2');
-          const L8 = { 
-            total: results.filter((item) => item.constellation === 'L8').length,
-            loaded:0,
-          };
-          const S2 = {
-            total: results.filter((item) => item.constellation === 'S2').length,
-            loaded:S2List.length,
-            images: S2List,
-          };
-          const WV = { 
-            total: results.filter((item) => item.constellation === 'WV').length,
-            loaded:worldViewList.length,
-            images: worldViewList,
-          };
-          let minScore = Infinity;
-          let maxScore = -Infinity;
-          let avgScore = 0;
-          results.forEach((item) => {
-            minScore = Math.min(minScore, item.score);
-            maxScore = Math.max(maxScore, item.score);
-            avgScore += item.score
-          })
-          avgScore = avgScore / results.length;
-          const foundIndex = state.selectedObservations.findIndex((item) => item.id === props.siteObservation.id);
-          
-          state.selectedObservations.splice(foundIndex,1,
-          {
-            id: props.siteObservation.id,
-            timerange: data.timerange,
-            imagesLoaded: false,
-            imagesActive: false,
-            imageCounts: {
-              L8,
-              S2,
-              WV,
-            },
-            score: {
-              min: minScore,
-              max: maxScore,
-              average: avgScore,
-            },
-            bbox: data.bbox,
-          } )
+  await getSiteObservationDetails(props.siteObservation.id.toString());
 }
 const close = () => {
   const foundIndex = state.selectedObservations.findIndex((item) => item.id === props.siteObservation.id);
@@ -169,10 +122,10 @@ const stopLooping = () => {
 
 <template>
   <details
-    class="relative rounded-lg border-2 border-gray-50 open:border-blue-600 hover:border-gray-200 open:hover:border-blue-600"
+    class="relative rounded-lg border-2 border-gray-50 open:border-blue-600 hover:border-gray-200"
   >
     <summary
-      class="select-none list-none bg-gray-50 p-2 group-hover:bg-gray-200"
+      class="list-none bg-gray-50 p-2 group-hover:bg-gray-200"
     >
       <div class="grid grid-cols-4">
         <div class="col-span-4">
@@ -182,13 +135,13 @@ const stopLooping = () => {
             </span>
             <span class="grid grid-cols-2 justify-self-end">
               <ArrowPathIcon
-                class="hover h-5 text-blue-600"
+                class="icon h-5 text-blue-600"
                 data-tip="Refresh"
                 @click="refresh()"
               />
 
               <XMarkIcon
-                class="hover h-5 text-red-600 "
+                class="icon h-5 text-red-600 "
                 data-tip="Close"
                 @click="close()"
               />
@@ -201,7 +154,7 @@ const stopLooping = () => {
               Source
             </div>
             <div class="justify-self-center">
-              Loaded
+              Cached
             </div>
             <div class="justify-self-center">
               Obs
@@ -330,7 +283,7 @@ const stopLooping = () => {
             v-if="currentClosestTimestamp"
             style="font-size: 1em; min-width:200px; text-align: center;"
             class="justify-self-center self-center"
-          >{{ currentClosestTimestamp.time }} - {{ currentClosestTimestamp.type }}{{ currentClosestTimestamp.siteobs !== null ? '*': ''}}</span>
+          >{{ currentClosestTimestamp.time }} - {{ currentClosestTimestamp.type }}{{ currentClosestTimestamp.siteobs !== null ? '*': '' }}</span>
           <ChevronRightIcon
             class="h-10 text-blue-600 "
             :class="{'icon': currentClosestTimestamp.next, 'text-gray-600': !currentClosestTimestamp.next}"
@@ -354,5 +307,6 @@ const stopLooping = () => {
 }
 .icon:hover {
   cursor: pointer;
+  font-weight: bolder;
 }
 </style>

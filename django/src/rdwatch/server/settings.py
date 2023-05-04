@@ -85,11 +85,14 @@ class DevelopmentConfiguration(BaseConfiguration):
     MINIO_STORAGE_ACCESS_KEY = values.SecretValue(environ_prefix=_environ_prefix)
     MINIO_STORAGE_SECRET_KEY = values.SecretValue(environ_prefix=_environ_prefix)
     MINIO_STORAGE_MEDIA_BUCKET_NAME = values.Value(
-        environ_prefix=_environ_prefix, environ_required=True
+        environ_prefix=_environ_prefix,
+        environ_name='STORAGE_BUCKET_NAME',
+        environ_required=True,
     )
     MINIO_STORAGE_AUTO_CREATE_MEDIA_BUCKET = True
     MINIO_STORAGE_AUTO_CREATE_MEDIA_POLICY = 'READ_WRITE'
     MINIO_STORAGE_MEDIA_USE_PRESIGNED = True
+    MINIO_STORAGE_MEDIA_URL = 'http://127.0.0.1:9002/rdwatch'
 
 
 class ProductionConfiguration(BaseConfiguration):

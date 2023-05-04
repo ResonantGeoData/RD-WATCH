@@ -2,8 +2,6 @@
 
 # overrides for developers
 requirements.dev.txt
-docker-compose.override.yml
-docker-compose.override.yaml
 .vscode
 
 # system files

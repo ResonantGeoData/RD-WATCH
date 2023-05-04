@@ -10,6 +10,7 @@ class SiteObservationSerializer(serializers.Serializer):
     constellation = serializers.CharField()
     spectrum = serializers.CharField()
     timerange = TimeRangeSerializer()
+    timestamp = serializers.IntegerField()  # type: ignore
     bbox = BoundingBoxSerializer()
 
 

@@ -7,13 +7,11 @@ class SiteImage(models.Model):
     siteeval = models.ForeignKey(
         to='SiteEvaluation',
         on_delete=models.CASCADE,
-        help_text='The site evaluation associated with this observation.',
         db_index=True,
     )
     siteobs = models.ForeignKey(
         to='SiteObservation',
         on_delete=models.CASCADE,
-        help_text='The site Observation associated with this Image if it exists.',
         null=True,
         db_index=True,
     )

@@ -6,7 +6,6 @@ from django.db import migrations, models
 
 
 class Migration(migrations.Migration):
-
     dependencies = [
         ('rdwatch', '0005_alter_siteobservation_geom'),
     ]

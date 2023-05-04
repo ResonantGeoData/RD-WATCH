@@ -9,8 +9,9 @@ from rest_framework.response import Response
 from rest_framework.schemas.openapi import AutoSchema
 
 from rdwatch.db.functions import BoundingBox, ExtractEpoch
-from rdwatch.models import SiteEvaluation, SiteObservation
-from rdwatch.serializers import SiteObservationListSerializer
+from rdwatch.models import SiteEvaluation, SiteImage, SiteObservation
+from rdwatch.serializers import SiteImageListSerializer, SiteObservationListSerializer
+from rdwatch.tasks import get_siteobservations_images
 
 
 class SiteObservationsSchema(AutoSchema):
@@ -56,6 +57,7 @@ def site_observations(request: HttpRequest, pk: int):
                     score='score',
                     constellation='constellation__slug',
                     spectrum='spectrum__slug',
+                    timestamp=ExtractEpoch('timestamp'),
                     timerange=JSONObject(
                         min=ExtractEpoch('timemin'),
                         max=ExtractEpoch('timemax'),
@@ -65,5 +67,35 @@ def site_observations(request: HttpRequest, pk: int):
             ),
         )
     )
+    image_queryset = (
+        SiteImage.objects.filter(siteeval__id=pk)
+        .order_by('timestamp')
+        .aggregate(
+            count=Count('pk'),
+            results=JSONBAgg(
+                JSONObject(
+                    id='pk',
+                    timestamp=ExtractEpoch('timestamp'),
+                    image='image',
+                    cloudcover='cloudcover',
+                    source='source',
+                    siteobs_id='siteobs_id',
+                )
+            ),
+        )
+    )
+    image_serializer = SiteImageListSerializer(image_queryset)
     serializer = SiteObservationListSerializer(queryset)
-    return Response(serializer.data)
+    output = serializer.data
+    output['images'] = image_serializer.data
+    return Response(output)
+
+
+@api_view(['POST'])
+def get_site_observation_images(request: HttpRequest, pk: int):
+    if 'constellation' not in request.GET:
+        constellation = 'WV'
+    else:
+        constellation = request.GET['constellation']
+    get_siteobservations_images.delay(pk, constellation)
+    return Response(status=202)

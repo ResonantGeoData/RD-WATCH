@@ -36,6 +36,7 @@ django-redis = "^5.2.0"
 django-ninja = "^0.21.0"
 celery = "^5.2.7"
 django-extensions = "^3.2.1"
+pillow = "^9.5.0"
 django-configurations = {extras = ["cache", "database", "email"], version = "^2.4.1"}
 django-storages = {extras = ["boto3"], version = "^1.13.2"}
 

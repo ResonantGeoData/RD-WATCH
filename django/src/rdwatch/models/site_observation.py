@@ -14,13 +14,11 @@ class SiteObservation(models.Model):
     siteeval = models.ForeignKey(
         to='SiteEvaluation',
         on_delete=models.CASCADE,
-        help_text='The site evaluation associated with this observation.',
         db_index=True,
     )
     label = models.ForeignKey(
         to='ObservationLabel',
         on_delete=models.PROTECT,
-        help_text='Site observation classification label',
         db_index=True,
     )
     score = models.FloatField(

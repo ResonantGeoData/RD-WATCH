@@ -25,9 +25,6 @@ services:
       RDWATCH_SMART_STAC_URL: ${RDWATCH_SMART_STAC_URL:?}
       RDWATCH_SMART_STAC_KEY: ${RDWATCH_SMART_STAC_KEY:?}
       RDWATCH_ACCENTURE_VERSION: ${RDWATCH_ACCENTURE_VERSION:?}
-      RDWATCH_MINIO_STORAGE_ACCESS_KEY: rdwatch
-      RDWATCH_MINIO_STORAGE_SECRET_KEY: ${RDWATCH_SECRET_KEY:?}
-      RDWATCH_MINIO_STORAGE_MEDIA_BUCKET_NAME: rdwatch
       VITE_TILE_SERVER_URL: ${VITE_TILE_SERVER_URL:?}
     ports:
       - 8000:80
@@ -82,21 +79,39 @@ services:
       RABBITMQ_DEFAULT_USER: rdwatch
       RABBITMQ_DEFAULT_PASS: ${RDWATCH_SECRET_KEY:?}
 
-
-  minio:
-    image: minio/minio:latest
-    # When run with a TTY, minio prints credentials on startup
-    tty: true
-    command: ["server", "/data", "--console-address", ":${DOCKER_MINIO_CONSOLE_PORT-9003}", "--address", ":${DOCKER_MINIO_PORT-9002}"]
-    volumes:
-      - minio-data:/data
+  celery:
+    build:
+      dockerfile: Dockerfile
+    command: [
+     "poetry",
+     "run",
+     "--directory",
+     "/app/django",
+     "celery",
+      "--app", "rdwatch.celery",
+      "worker",
+      "--loglevel", "INFO",
+      "--without-heartbeat"
+    ]
     environment:
-      MINIO_ROOT_USER: rdwatch
-      MINIO_ROOT_PASSWORD: ${RDWATCH_SECRET_KEY:?}
-    ports:
-      - ${DOCKER_MINIO_PORT-9002}:9002
-      - ${DOCKER_MINIO_CONSOLE_PORT-9003}:9003
-
+      AWS_ACCESS_KEY_ID: ${AWS_ACCESS_KEY_ID:?}
+      AWS_SECRET_ACCESS_KEY: ${AWS_SECRET_ACCESS_KEY:?}
+      AWS_REQUEST_PAYER: requester
+      RDWATCH_ACCENTURE_VERSION: ${RDWATCH_ACCENTURE_VERSION:?}
+      DJANGO_CONFIGURATION: DevelopmentConfiguration
+      RDWATCH_DJANGO_DEBUG: ${RDWATCH_DJANGO_DEBUG:?}
+      RDWATCH_SECRET_KEY: ${RDWATCH_SECRET_KEY:?}
+      RDWATCH_CELERY_BROKER_URL: ${RDWATCH_CELERY_BROKER_URL:?}
+      RDWATCH_POSTGRESQL_URI: ${RDWATCH_POSTGRESQL_URI:?}
+      RDWATCH_REDIS_URI: ${RDWATCH_REDIS_URI:?}
+      RDWATCH_SMART_STAC_URL: ${RDWATCH_SMART_STAC_URL:?}
+      RDWATCH_SMART_STAC_KEY: ${RDWATCH_SMART_STAC_KEY:?}
+    depends_on:
+      - postgresql
+      - rabbitmq
+    volumes:
+      - .:/app
+      - unit-socket:/run/unit
 
   ###################
   # debug services  #
@@ -141,53 +156,9 @@ services:
       RDWATCH_ACCENTURE_VERSION: ${RDWATCH_ACCENTURE_VERSION:?}
       RDWATCH_SMART_STAC_URL: ${RDWATCH_SMART_STAC_URL:?}
       RDWATCH_SMART_STAC_KEY: ${RDWATCH_SMART_STAC_KEY:?}
-      RDWATCH_MINIO_STORAGE_ACCESS_KEY: rdwatch
-      RDWATCH_MINIO_STORAGE_SECRET_KEY: ${RDWATCH_SECRET_KEY:?}
-      RDWATCH_MINIO_STORAGE_MEDIA_BUCKET_NAME: rdwatch
     depends_on:
       - postgresql
       - redis-master
-    profiles:
-      - debug
-      - tools
-      - vscode
-    volumes:
-      - .:/app
-      - unit-socket:/run/unit
-
-  celery:
-    build:
-      dockerfile: Dockerfile
-    command: [
-     "poetry",
-     "run",
-     "--directory",
-     "/app/django",
-     "celery",
-      "--app", "rdwatch.celery",
-      "worker",
-      "--loglevel", "INFO",
-      "--without-heartbeat"
-    ]
-    environment:
-      AWS_ACCESS_KEY_ID: ${AWS_ACCESS_KEY_ID:?}
-      AWS_SECRET_ACCESS_KEY: ${AWS_SECRET_ACCESS_KEY:?}
-      AWS_REQUEST_PAYER: requester
-      RDWATCH_ACCENTURE_VERSION: ${RDWATCH_ACCENTURE_VERSION:?}
-      DJANGO_CONFIGURATION: DevelopmentConfiguration
-      RDWATCH_DJANGO_DEBUG: ${RDWATCH_DJANGO_DEBUG:?}
-      RDWATCH_SECRET_KEY: ${RDWATCH_SECRET_KEY:?}
-      RDWATCH_CELERY_BROKER_URL: ${RDWATCH_CELERY_BROKER_URL:?}
-      RDWATCH_POSTGRESQL_URI: ${RDWATCH_POSTGRESQL_URI:?}
-      RDWATCH_REDIS_URI: ${RDWATCH_REDIS_URI:?}
-      RDWATCH_SMART_STAC_URL: ${RDWATCH_SMART_STAC_URL:?}
-      RDWATCH_SMART_STAC_KEY: ${RDWATCH_SMART_STAC_KEY:?}
-      RDWATCH_MINIO_STORAGE_ACCESS_KEY: rdwatch
-      RDWATCH_MINIO_STORAGE_SECRET_KEY: ${RDWATCH_SECRET_KEY:?}
-      RDWATCH_MINIO_STORAGE_MEDIA_BUCKET_NAME: rdwatch
-    depends_on:
-      - postgresql
-      - rabbitmq
     profiles:
       - debug
       - tools
@@ -245,9 +216,6 @@ services:
       RDWATCH_REDIS_URI: ${RDWATCH_REDIS_URI:?}
       RDWATCH_SMART_STAC_URL: ${RDWATCH_SMART_STAC_URL:?}
       RDWATCH_SMART_STAC_KEY: ${RDWATCH_SMART_STAC_KEY:?}
-      RDWATCH_MINIO_STORAGE_ACCESS_KEY: rdwatch
-      RDWATCH_MINIO_STORAGE_SECRET_KEY: ${RDWATCH_SECRET_KEY:?}
-      RDWATCH_MINIO_STORAGE_MEDIA_BUCKET_NAME: rdwatch
     profiles:
       - tools
     user: ${UID-0}:${GID-0}
@@ -293,9 +261,6 @@ services:
       RDWATCH_REDIS_URI: ${RDWATCH_REDIS_URI:?}
       RDWATCH_SMART_STAC_URL: ${RDWATCH_SMART_STAC_URL:?}
       RDWATCH_SMART_STAC_KEY: ${RDWATCH_SMART_STAC_KEY:?}
-      RDWATCH_MINIO_STORAGE_ACCESS_KEY: rdwatch
-      RDWATCH_MINIO_STORAGE_SECRET_KEY: ${RDWATCH_SECRET_KEY:?}
-      RDWATCH_MINIO_STORAGE_MEDIA_BUCKET_NAME: rdwatch
     init: true
     network_mode: service:vue
     profiles:
@@ -311,7 +276,6 @@ volumes:
   redis-master-data:
   redis-replica-1-data:
   redis-replica-2-data:
-  minio-data:
   # debug volumes
   unit-socket:
   poetry-cache:

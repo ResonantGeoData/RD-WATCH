@@ -11,18 +11,23 @@ services:
       dockerfile: ./Dockerfile
     depends_on:
       - postgresql
-      - redis
+      - redis-master
     environment:
       AWS_ACCESS_KEY_ID: ${AWS_ACCESS_KEY_ID:?}
       AWS_SECRET_ACCESS_KEY: ${AWS_SECRET_ACCESS_KEY:?}
       AWS_REQUEST_PAYER: requester
+      DJANGO_CONFIGURATION: DevelopmentConfiguration
       RDWATCH_DJANGO_DEBUG: ${RDWATCH_DJANGO_DEBUG:?}
       RDWATCH_SECRET_KEY: ${RDWATCH_SECRET_KEY:?}
+      RDWATCH_CELERY_BROKER_URL: ${RDWATCH_CELERY_BROKER_URL:?}
       RDWATCH_POSTGRESQL_URI: ${RDWATCH_POSTGRESQL_URI:?}
       RDWATCH_REDIS_URI: ${RDWATCH_REDIS_URI:?}
       RDWATCH_SMART_STAC_URL: ${RDWATCH_SMART_STAC_URL:?}
       RDWATCH_SMART_STAC_KEY: ${RDWATCH_SMART_STAC_KEY:?}
       RDWATCH_ACCENTURE_VERSION: ${RDWATCH_ACCENTURE_VERSION:?}
+      RDWATCH_MINIO_STORAGE_ACCESS_KEY: rdwatch
+      RDWATCH_MINIO_STORAGE_SECRET_KEY: ${RDWATCH_SECRET_KEY:?}
+      RDWATCH_MINIO_STORAGE_MEDIA_BUCKET_NAME: rdwatch
       VITE_TILE_SERVER_URL: ${VITE_TILE_SERVER_URL:?}
     ports:
       - 8000:80
@@ -39,13 +44,59 @@ services:
     volumes:
       - postgresql-data:/var/lib/postgresql/data
 
-  # Redis 7
-  redis:
-    image: ghcr.io/resonantgeodata/rd-watch/redis:latest
-    environment:
-      RDWATCH_SECRET_KEY: ${RDWATCH_SECRET_KEY:?}
+  # Redis cluster
+  redis-master:
+    image: bitnami/redis-cluster:latest
     volumes:
-      - redis-data:/data
+      - redis-master-data:/bitnami/redis/data
+    environment:
+      REDIS_PASSWORD: ${RDWATCH_SECRET_KEY:?}
+      REDISCLI_AUTH: ${RDWATCH_SECRET_KEY:?}
+      REDIS_NODES: redis-master redis-replica-1 redis-replica-2
+      REDIS_CLUSTER_REPLICAS: 0
+      REDIS_CLUSTER_CREATOR: "yes"
+    depends_on:
+      - redis-replica-1
+      - redis-replica-2
+
+  redis-replica-1:
+    image: bitnami/redis-cluster:latest
+    volumes:
+      - redis-replica-1-data:/bitnami/redis/data
+    environment:
+      REDIS_PASSWORD: ${RDWATCH_SECRET_KEY:?}
+      REDIS_NODES: redis-master redis-replica-1 redis-replica-2
+
+  redis-replica-2:
+    image: bitnami/redis-cluster:latest
+    volumes:
+      - redis-replica-2-data:/bitnami/redis/data
+    environment:
+      REDIS_PASSWORD: ${RDWATCH_SECRET_KEY:?}
+      REDIS_NODES: redis-master redis-replica-1 redis-replica-2
+
+
+  rabbitmq:
+    image: rabbitmq:management
+    environment:
+      RABBITMQ_DEFAULT_USER: rdwatch
+      RABBITMQ_DEFAULT_PASS: ${RDWATCH_SECRET_KEY:?}
+
+
+  minio:
+    image: minio/minio:latest
+    # When run with a TTY, minio prints credentials on startup
+    tty: true
+    command: ["server", "/data", "--console-address", ":${DOCKER_MINIO_CONSOLE_PORT-9003}", "--address", ":${DOCKER_MINIO_PORT-9002}"]
+    volumes:
+      - minio-data:/data
+    environment:
+      MINIO_ROOT_USER: rdwatch
+      MINIO_ROOT_PASSWORD: ${RDWATCH_SECRET_KEY:?}
+    ports:
+      - ${DOCKER_MINIO_PORT-9002}:9002
+      - ${DOCKER_MINIO_CONSOLE_PORT-9003}:9003
+
 
   ###################
   # debug services  #
@@ -81,16 +132,21 @@ services:
       AWS_ACCESS_KEY_ID: ${AWS_ACCESS_KEY_ID:?}
       AWS_SECRET_ACCESS_KEY: ${AWS_SECRET_ACCESS_KEY:?}
       AWS_REQUEST_PAYER: requester
+      DJANGO_CONFIGURATION: DevelopmentConfiguration
       RDWATCH_DJANGO_DEBUG: ${RDWATCH_DJANGO_DEBUG:?}
       RDWATCH_SECRET_KEY: ${RDWATCH_SECRET_KEY:?}
+      RDWATCH_CELERY_BROKER_URL: ${RDWATCH_CELERY_BROKER_URL:?}
       RDWATCH_POSTGRESQL_URI: ${RDWATCH_POSTGRESQL_URI:?}
       RDWATCH_REDIS_URI: ${RDWATCH_REDIS_URI:?}
       RDWATCH_ACCENTURE_VERSION: ${RDWATCH_ACCENTURE_VERSION:?}
       RDWATCH_SMART_STAC_URL: ${RDWATCH_SMART_STAC_URL:?}
       RDWATCH_SMART_STAC_KEY: ${RDWATCH_SMART_STAC_KEY:?}
+      RDWATCH_MINIO_STORAGE_ACCESS_KEY: rdwatch
+      RDWATCH_MINIO_STORAGE_SECRET_KEY: ${RDWATCH_SECRET_KEY:?}
+      RDWATCH_MINIO_STORAGE_MEDIA_BUCKET_NAME: rdwatch
     depends_on:
       - postgresql
-      - redis
+      - redis-master
     profiles:
       - debug
       - tools
@@ -117,16 +173,21 @@ services:
       AWS_ACCESS_KEY_ID: ${AWS_ACCESS_KEY_ID:?}
       AWS_SECRET_ACCESS_KEY: ${AWS_SECRET_ACCESS_KEY:?}
       AWS_REQUEST_PAYER: requester
+      RDWATCH_ACCENTURE_VERSION: ${RDWATCH_ACCENTURE_VERSION:?}
+      DJANGO_CONFIGURATION: DevelopmentConfiguration
       RDWATCH_DJANGO_DEBUG: ${RDWATCH_DJANGO_DEBUG:?}
       RDWATCH_SECRET_KEY: ${RDWATCH_SECRET_KEY:?}
+      RDWATCH_CELERY_BROKER_URL: ${RDWATCH_CELERY_BROKER_URL:?}
       RDWATCH_POSTGRESQL_URI: ${RDWATCH_POSTGRESQL_URI:?}
       RDWATCH_REDIS_URI: ${RDWATCH_REDIS_URI:?}
       RDWATCH_SMART_STAC_URL: ${RDWATCH_SMART_STAC_URL:?}
       RDWATCH_SMART_STAC_KEY: ${RDWATCH_SMART_STAC_KEY:?}
+      RDWATCH_MINIO_STORAGE_ACCESS_KEY: rdwatch
+      RDWATCH_MINIO_STORAGE_SECRET_KEY: ${RDWATCH_SECRET_KEY:?}
+      RDWATCH_MINIO_STORAGE_MEDIA_BUCKET_NAME: rdwatch
     depends_on:
       - postgresql
-      - redis
-      - django
+      - rabbitmq
     profiles:
       - debug
       - tools
@@ -172,15 +233,21 @@ services:
       AWS_ACCESS_KEY_ID: ${AWS_ACCESS_KEY_ID:?}
       AWS_SECRET_ACCESS_KEY: ${AWS_SECRET_ACCESS_KEY:?}
       AWS_REQUEST_PAYER: requester
+      DJANGO_CONFIGURATION: DevelopmentConfiguration
       POETRY_CACHE_DIR: /tmp/poetry-cache
       POETRY_INSTALLER_PARALLEL: "1"
       POETRY_VIRTUALENVS_IN_PROJECT: "1"
+      RDWATCH_ACCENTURE_VERSION: ${RDWATCH_ACCENTURE_VERSION:?}
       RDWATCH_DJANGO_DEBUG: ${RDWATCH_DJANGO_DEBUG:?}
       RDWATCH_SECRET_KEY: ${RDWATCH_SECRET_KEY:?}
+      RDWATCH_CELERY_BROKER_URL: ${RDWATCH_CELERY_BROKER_URL:?}
       RDWATCH_POSTGRESQL_URI: ${RDWATCH_POSTGRESQL_URI:?}
       RDWATCH_REDIS_URI: ${RDWATCH_REDIS_URI:?}
       RDWATCH_SMART_STAC_URL: ${RDWATCH_SMART_STAC_URL:?}
       RDWATCH_SMART_STAC_KEY: ${RDWATCH_SMART_STAC_KEY:?}
+      RDWATCH_MINIO_STORAGE_ACCESS_KEY: rdwatch
+      RDWATCH_MINIO_STORAGE_SECRET_KEY: ${RDWATCH_SECRET_KEY:?}
+      RDWATCH_MINIO_STORAGE_MEDIA_BUCKET_NAME: rdwatch
     profiles:
       - tools
     user: ${UID-0}:${GID-0}
@@ -214,16 +281,21 @@ services:
       AWS_ACCESS_KEY_ID: ${AWS_ACCESS_KEY_ID:?}
       AWS_SECRET_ACCESS_KEY: ${AWS_SECRET_ACCESS_KEY:?}
       AWS_REQUEST_PAYER: requester
+      DJANGO_CONFIGURATION: DevelopmentConfiguration
       DJANGO_SETTINGS_MODULE: rdwatch.server.settings
       POETRY_CACHE_DIR: /tmp/poetry-cache
       POETRY_INSTALLER_PARALLEL: "1"
       POETRY_VIRTUALENVS_IN_PROJECT: "1"
       RDWATCH_DJANGO_DEBUG: ${RDWATCH_DJANGO_DEBUG:?}
       RDWATCH_SECRET_KEY: ${RDWATCH_SECRET_KEY:?}
+      RDWATCH_CELERY_BROKER_URL: ${RDWATCH_CELERY_BROKER_URL:?}
       RDWATCH_POSTGRESQL_URI: ${RDWATCH_POSTGRESQL_URI:?}
       RDWATCH_REDIS_URI: ${RDWATCH_REDIS_URI:?}
       RDWATCH_SMART_STAC_URL: ${RDWATCH_SMART_STAC_URL:?}
       RDWATCH_SMART_STAC_KEY: ${RDWATCH_SMART_STAC_KEY:?}
+      RDWATCH_MINIO_STORAGE_ACCESS_KEY: rdwatch
+      RDWATCH_MINIO_STORAGE_SECRET_KEY: ${RDWATCH_SECRET_KEY:?}
+      RDWATCH_MINIO_STORAGE_MEDIA_BUCKET_NAME: rdwatch
     init: true
     network_mode: service:vue
     profiles:
@@ -236,7 +308,10 @@ services:
 volumes:
   pgadmin-data:
   postgresql-data:
-  redis-data:
+  redis-master-data:
+  redis-replica-1-data:
+  redis-replica-2-data:
+  minio-data:
   # debug volumes
   unit-socket:
   poetry-cache:

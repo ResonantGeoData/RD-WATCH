@@ -7,11 +7,16 @@ on:
       - "main"
 env:
   # using a dummy secret key
+  DJANGO_CONFIGURATION: DevelopmentConfiguration
   DJANGO_SETTINGS_MODULE: rdwatch.server.settings
   RDWATCH_SECRET_KEY: ff07f533a59fed1349a4fc49941d02ff22514f6dbf6086a44ea0c0a8952e8644
   RDWATCH_POSTGRESQL_URI: postgresql://rdwatch:ff07f533a59fed1349a4fc49941d02ff22514f6dbf6086a44ea0c0a8952e8644@localhost:5432/rdwatch
+  RDWATCH_CELERY_BROKER_URL: amqp://localhost:5672/
   RDWATCH_REDIS_URI: redis://localhost:6379/rdwatch
   RDWATCH_DJANGO_DEBUG: 0
+  RDWATCH_MINIO_STORAGE_ACCESS_KEY: rdwatch
+  RDWATCH_MINIO_STORAGE_SECRET_KEY: ff07f533a59fed1349a4fc49941d02ff22514f6dbf6086a44ea0c0a8952e8644
+  RDWATCH_MINIO_STORAGE_MEDIA_BUCKET_NAME: rdwatch
 jobs:
   lint-python:
     name: Lint Python
@@ -70,8 +75,20 @@ jobs:
           POSTGRES_PASSWORD: ${{ env.RDWATCH_SECRET_KEY }}
         ports:
           - 5432:5432
+      rabbitmq:
+        image: rabbitmq:latest
+        ports:
+          - 5672:5672
       redis:
         image: redis:latest
+      minio:
+        # This image does not require any command arguments (which GitHub Actions don't support)
+        image: bitnami/minio:latest
+        env:
+          MINIO_ROOT_USER: minioAccessKey
+          MINIO_ROOT_PASSWORD: minioSecretKey
+        ports:
+          - 9000:9000
     steps:
       - name: Install system dependencies
         run: apt-fast install --no-install-recommends --yes

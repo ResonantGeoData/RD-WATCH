@@ -96,7 +96,7 @@ class ProductionConfiguration(BaseConfiguration):
     DEFAULT_FILE_STORAGE = 'storages.backends.s3boto3.S3Boto3Storage'
 
     AWS_STORAGE_BUCKET_NAME = values.Value(
-        _environ_prefix=_environ_prefix,
+        environ_prefix=_environ_prefix,
         environ_name='STORAGE_BUCKET_NAME',
         environ_required=True,
     )

@@ -136,7 +136,11 @@ def fetch_boundbox_image(
         bytes = get_worldview_processed_visual_bbox(capture, bbox)
     else:
         bytes = get_raster_bbox(capture.uri, bbox)
-    return (bytes, capture.cloudcover, capture.timestamp)
+    return {
+        'bytes': bytes,
+        'cloudcover': capture.cloudcover,
+        'timestamp': capture.timestamp,
+    }
 
 
 @shared_task
@@ -177,9 +181,15 @@ def get_siteobservations_images(
             if found.count() > 0 and not force:
                 found_timestamps[observation.timestamp] = True
                 continue
-            bytes, cloudcover, found_timestamp = fetch_boundbox_image(
+            results = fetch_boundbox_image(
                 bbox, timestamp, constellation, baseConstellation == 'WV'
             )
+            if results is None:
+                logger.warning(f'COULD NOT FIND ANY IMAGE FOR TIMESTAMP: {timestamp}')
+                continue
+            bytes = results['bytes']
+            cloudcover = results['cloudcover']
+            found_timestamp = results['timestamp']
             if bytes is None:
                 logger.warning(f'COULD NOT FIND ANY IMAGE FOR TIMESTAMP: {timestamp}')
                 continue

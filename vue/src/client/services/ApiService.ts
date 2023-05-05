@@ -67,6 +67,27 @@ export class ApiService {
     });
   }
 
+      /**
+   * @param id
+   * @returns boolean
+   * @throws ApiError
+   */
+      public static getObservationImages(
+        id: string,
+        constellation: 'WV' | 'S2' | 'L8' = 'WV'
+      ): CancelablePromise<boolean> {
+        return __request(OpenAPI, {
+          method: "POST",
+          url: "/api/observations/{id}/get-images",
+          path: {
+            id: id,
+          },
+          query: {
+            constellation,
+          }
+        });
+      }
+  
   /**
    * @returns ModelRunList
    * @throws ApiError
@@ -156,7 +177,7 @@ export class ApiService {
     level="2A",
     startTimestamp=0,
     endTimestamp=0,
-    bbox=[],
+    bbox: [number, number][]=[],
   ): CancelablePromise<string[]>
   {
     const startTime = new Date(startTimestamp * 1000).toISOString().substring(0, 10);
@@ -187,7 +208,7 @@ export class ApiService {
     level="2A",
     startTimestamp=0,
     endTimestamp=0,
-    bbox=[],
+    bbox: [number, number][] =[],
     cloudcover = 100
   ): CancelablePromise<string[]>
   {

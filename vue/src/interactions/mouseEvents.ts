@@ -1,12 +1,13 @@
 import { Ref, ref } from "vue";
 import { Color, Map, MapLayerMouseEvent, Popup } from "maplibre-gl";
 import { ShallowRef } from "vue";
-import { state } from "../store";
+import { getSiteObservationDetails, selectedObservationList, state } from "../store";
+import { ApiService } from "../client";
 
 const checkBadge =
   '<svg style="display:inline;" width="20" height="20" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="replacementColor" aria-hidden="true"><path fill-rule="evenodd" d="M8.603 3.799A4.49 4.49 0 0112 2.25c1.357 0 2.573.6 3.397 1.549a4.49 4.49 0 013.498 1.307 4.491 4.491 0 011.307 3.497A4.49 4.49 0 0121.75 12a4.49 4.49 0 01-1.549 3.397 4.491 4.491 0 01-1.307 3.497 4.491 4.491 0 01-3.497 1.307A4.49 4.49 0 0112 21.75a4.49 4.49 0 01-3.397-1.549 4.49 4.49 0 01-3.498-1.306 4.491 4.491 0 01-1.307-3.498A4.49 4.49 0 012.25 12c0-1.357.6-2.573 1.549-3.397a4.49 4.49 0 011.307-3.497 4.49 4.49 0 013.497-1.307zm7.007 6.387a.75.75 0 10-1.22-.872l-3.236 4.53L9.53 12.22a.75.75 0 00-1.06 1.06l2.25 2.25a.75.75 0 001.14-.094l3.75-5.25z" clip-rule="evenodd"></path></svg>';
 
-const hoveredInfo: Ref<string[]> = ref([]);
+  const hoveredInfo: Ref<{region: string[], siteId: number[]}> = ref({region: [], siteId:[]});
 
 const calculateScoreColor = (score: number) => {
   if (score <= 0.25) {
@@ -38,7 +39,8 @@ const popupLogic = (map: ShallowRef<null | Map>) => {
       let html = "<div><ul>";
       const htmlMap: Record<string, boolean> = {};
       insideObservation = true;
-      hoveredInfo.value = [];
+      hoveredInfo.value.region = [];
+      hoveredInfo.value.siteId = [];
       e.features.forEach(
         (
           item: GeoJSON.GeoJsonProperties & {
@@ -49,9 +51,12 @@ const popupLogic = (map: ShallowRef<null | Map>) => {
             const id = item.properties.site_number;
             const regionName = state.regionMap[item.properties.region_id]
             const score = item.properties.score;
-            hoveredInfo.value.push(
+            const siteId = item.properties.siteeval_id;
+            hoveredInfo.value.region.push(
               `${item.properties.configuration_id}_${item.properties.region_id}_${item.properties.performer_id}`
             );
+            const area = item.properties.area;
+            hoveredInfo.value.siteId.push(siteId);
             let fillString = "";
             if (!htmlMap[id]) {
               if (item.layer?.paint) {
@@ -78,13 +83,17 @@ const popupLogic = (map: ShallowRef<null | Map>) => {
                       `rgba(0,0,0,0)`
                     );
                   }
+                  if (area){
+                    const areaDiv = `<div class='badge'>${area.toFixed(0)}m<sup>2</sup></div>`;
+                  }
+
                   const scoreStyle = `style="background-color:${calculateScoreColor(
                     score.toFixed(2)
                   )};color: black; font-weight:bolder; opacity: 1.0 !important;"`;
                   html = `${html}<li>${groundtruth}<div class='badge' ${fillString}>SiteId:${regionName}_${String(id).padStart(4, '0')}</div> <div class='badge' ${scoreStyle}>Score:${score.toFixed(
                     2
-                  )}</div></li>`;
-                }
+                    )}</div></li>`;
+                  }
               }
             }
           }
@@ -93,12 +102,26 @@ const popupLogic = (map: ShallowRef<null | Map>) => {
       html += "</ul></div>";
       popup.setLngLat(coordinates).setHTML(html).addTo(map.value);
     } else if (map.value) {
-      hoveredInfo.value = [];
+      hoveredInfo.value.region = [];
+      hoveredInfo.value.siteId = [];
       insideObservation = false;
       map.value.getCanvas().style.cursor = "";
       popup.remove();
     }
   };
+  const clickObservation = async (e: MapLayerMouseEvent) => {
+    if (e.features && e.features[0]?.properties && map.value) {
+      const feature = e.features[0];
+      if (feature.properties) {
+        const siteId = feature.properties.siteeval_id;
+        if (siteId && !selectedObservationList.value.includes(siteId)) {
+          await getSiteObservationDetails(siteId);
+        }
+      }
+    }
+
+  }
+
   if (map.value) {
     map.value.on("mouseenter", "observations-fill", function (e) {
       drawPopup(e);
@@ -110,6 +133,9 @@ const popupLogic = (map: ShallowRef<null | Map>) => {
       if (insideObservation) {
         drawPopup(e);
       }
+    });
+    map.value.on("click", "observations-fill", function (e) {
+      clickObservation(e);
     });
   }
 };

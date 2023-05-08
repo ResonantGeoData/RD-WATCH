@@ -71,6 +71,10 @@ class BaseConfiguration(Configuration):
         conn_max_age=None,
     )
 
+    # Set to same value allowed by NGINX Unit server in `settings.http.max_body_size`
+    # (in /docker/nginx.json)
+    DATA_UPLOAD_MAX_MEMORY_SIZE = 134217728
+
     ACCENTURE_VERSION = values.Value(
         environ_required=True, environ_prefix=_environ_prefix
     )

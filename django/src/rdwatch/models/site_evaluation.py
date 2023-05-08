@@ -63,6 +63,10 @@ class SiteEvaluation(models.Model):
             label = lookups.ObservationLabel.objects.get(
                 slug=site_feature.properties.status
             )
+            # A missing score indicates a score of 1.0.
+            # https://smartgitlab.com/TE/standards/-/wikis/Site-Model-Specification#score-float-optional
+            score = site_feature.properties.score or 1.0
+
             site_eval = cls.objects.create(
                 configuration=configuration,
                 region=region,
@@ -70,7 +74,7 @@ class SiteEvaluation(models.Model):
                 timestamp=datetime.now(),
                 geom=site_feature.geometry,
                 label=label,
-                score=site_feature.properties.score,
+                score=score,
             )
 
             SiteObservation.bulk_create_from_site_evaluation(site_eval, site_model)
@@ -106,6 +110,10 @@ class SiteEvaluation(models.Model):
                 if isinstance(geometry, MultiPolygon):
                     geometry = geometry.convex_hull
 
+                # A missing score indicates a score of 1.0.
+                # https://smartgitlab.com/TE/standards/-/wikis/Region-Model-Specification#score-float-optional
+                score = feature.properties.score or 1.0
+
                 site_eval = cls(
                     configuration=configuration,
                     region=region,
@@ -113,7 +121,7 @@ class SiteEvaluation(models.Model):
                     timestamp=datetime.now(),
                     geom=geometry,
                     label=label_map[feature.properties.status],
-                    score=feature.properties.score or 1.0,
+                    score=score,
                 )
                 site_evals.append(site_eval)
 

@@ -78,7 +78,7 @@ export class ApiService {
       ): CancelablePromise<boolean> {
         return __request(OpenAPI, {
           method: "POST",
-          url: "/api/observations/{id}/get-images",
+          url: "/api/observations/{id}/generate-images",
           path: {
             id: id,
           },

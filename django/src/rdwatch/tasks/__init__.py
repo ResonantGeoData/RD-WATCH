@@ -165,7 +165,7 @@ def get_siteobservations_images(
             # logger.warning(f'Retrieved Image with timestamp: {timestamp}')
             output = f'tile_image_{observation.id}.jpg'
             image = File(io.BytesIO(bytes), name=output)
-            if found.count() > 0:
+            if found.exists():
                 existing = found.first()
                 existing.image.delete()  # remove previous image if new one found
                 existing.cloudcover = cloudcover

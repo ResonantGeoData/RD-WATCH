@@ -64,7 +64,7 @@ RUN mkdir /app/django/src \
  && mkdir /app/django/src/rdwatch \
  && touch /app/django/src/rdwatch/__init__.py \
  && touch /app/django/README.md \
- && poetry install --no-dev
+ && poetry install --only main
 
 
 # Built static assets for vue-rdwatch

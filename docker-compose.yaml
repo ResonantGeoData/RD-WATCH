@@ -1,45 +1,15 @@
 services:
-  #######################
-  # production services #
-  #######################
-
-  # RD-WATCH
-  rdwatch:
-    image: ghcr.io/resonantgeodata/rd-watch/rdwatch:latest
-    build:
-      context: .
-      dockerfile: ./Dockerfile
-    depends_on:
-      - postgresql
-      - redis-master
-    environment:
-      AWS_ACCESS_KEY_ID: ${AWS_ACCESS_KEY_ID:?}
-      AWS_SECRET_ACCESS_KEY: ${AWS_SECRET_ACCESS_KEY:?}
-      AWS_REQUEST_PAYER: requester
-      DJANGO_CONFIGURATION: DevelopmentConfiguration
-      RDWATCH_DJANGO_DEBUG: ${RDWATCH_DJANGO_DEBUG:?}
-      RDWATCH_SECRET_KEY: ${RDWATCH_SECRET_KEY:?}
-      RDWATCH_CELERY_BROKER_URL: ${RDWATCH_CELERY_BROKER_URL:?}
-      RDWATCH_POSTGRESQL_URI: ${RDWATCH_POSTGRESQL_URI:?}
-      RDWATCH_REDIS_URI: ${RDWATCH_REDIS_URI:?}
-      RDWATCH_SMART_STAC_URL: ${RDWATCH_SMART_STAC_URL:?}
-      RDWATCH_SMART_STAC_KEY: ${RDWATCH_SMART_STAC_KEY:?}
-      RDWATCH_ACCENTURE_VERSION: ${RDWATCH_ACCENTURE_VERSION:?}
-      VITE_TILE_SERVER_URL: ${VITE_TILE_SERVER_URL:?}
-    ports:
-      - 8000:80
-
   # PostgreSQL 14
   postgresql:
-    image: ghcr.io/resonantgeodata/rd-watch/postgresql:latest
-    command: postgres -c 'max_connections=200'
+    image: postgis/postgis:latest
     environment:
-      AWS_ACCESS_KEY_ID: ${AWS_ACCESS_KEY_ID:?}
-      AWS_SECRET_ACCESS_KEY: ${AWS_SECRET_ACCESS_KEY:?}
-      AWS_REQUEST_PAYER: requester
+      POSTGRES_USER: rdwatch
+      POSTGRES_DB: rdwatch
       POSTGRES_PASSWORD: ${RDWATCH_SECRET_KEY:?}
     volumes:
       - postgresql-data:/var/lib/postgresql/data
+    ports:
+      - 5432:5432
 
   # Redis cluster
   redis-master:
@@ -55,6 +25,8 @@ services:
     depends_on:
       - redis-replica-1
       - redis-replica-2
+    ports:
+      - 6379:6379
 
   redis-replica-1:
     image: bitnami/redis-cluster:latest
@@ -72,211 +44,32 @@ services:
       REDIS_PASSWORD: ${RDWATCH_SECRET_KEY:?}
       REDIS_NODES: redis-master redis-replica-1 redis-replica-2
 
+  minio:
+    image: minio/minio:latest
+    # When run with a TTY, minio prints credentials on startup
+    tty: true
+    command: ["server", "/data", "--console-address", ":${DOCKER_MINIO_CONSOLE_PORT-9001}", "--address", ":${DOCKER_MINIO_PORT-9000}"]
+    volumes:
+      - minio-data:/data
+    environment:
+      MINIO_ROOT_USER: rdwatch
+      MINIO_ROOT_PASSWORD: ${RDWATCH_SECRET_KEY:?}
+    ports:
+      - ${DOCKER_MINIO_PORT-9000}:9000
+      - ${DOCKER_MINIO_CONSOLE_PORT-9001}:9001
 
+  # RabbitMQ
   rabbitmq:
     image: rabbitmq:management
     environment:
       RABBITMQ_DEFAULT_USER: rdwatch
       RABBITMQ_DEFAULT_PASS: ${RDWATCH_SECRET_KEY:?}
-
-  celery:
-    build:
-      dockerfile: Dockerfile
-    command: [
-     "poetry",
-     "run",
-     "--directory",
-     "/app/django",
-     "celery",
-      "--app", "rdwatch.celery",
-      "worker",
-      "--loglevel", "INFO",
-      "--without-heartbeat"
-    ]
-    environment:
-      AWS_ACCESS_KEY_ID: ${AWS_ACCESS_KEY_ID:?}
-      AWS_SECRET_ACCESS_KEY: ${AWS_SECRET_ACCESS_KEY:?}
-      AWS_REQUEST_PAYER: requester
-      RDWATCH_ACCENTURE_VERSION: ${RDWATCH_ACCENTURE_VERSION:?}
-      DJANGO_CONFIGURATION: DevelopmentConfiguration
-      RDWATCH_DJANGO_DEBUG: ${RDWATCH_DJANGO_DEBUG:?}
-      RDWATCH_SECRET_KEY: ${RDWATCH_SECRET_KEY:?}
-      RDWATCH_CELERY_BROKER_URL: ${RDWATCH_CELERY_BROKER_URL:?}
-      RDWATCH_POSTGRESQL_URI: ${RDWATCH_POSTGRESQL_URI:?}
-      RDWATCH_REDIS_URI: ${RDWATCH_REDIS_URI:?}
-      RDWATCH_SMART_STAC_URL: ${RDWATCH_SMART_STAC_URL:?}
-      RDWATCH_SMART_STAC_KEY: ${RDWATCH_SMART_STAC_KEY:?}
-    depends_on:
-      - postgresql
-      - rabbitmq
-    volumes:
-      - .:/app
-      - unit-socket:/run/unit
-
-  ###################
-  # debug services  #
-  # --profile debug #
-  ###################
-
-  # Serves frontend dev server with source files mounted in and proxies "django" server
-  vue:
-    image: ghcr.io/resonantgeodata/rd-watch/builder:latest
-    command: ["run", "dev"]
-    depends_on:
-      - django
-    entrypoint: npm
-    environment:
-      RDWATCH_FILE_POLLING: ${RDWATCH_FILE_POLLING:?}
-      VITE_TILE_SERVER_URL: ${VITE_TILE_SERVER_URL:?}
     ports:
-      - 9000:9000
-    profiles:
-      - debug
-      - tools
-      - vscode
-    user: ${UID-0}:${GID-0}
-    volumes:
-      - .:/app
-    working_dir: /app/vue
-
-  # Serves RD-WATCH API with source files mounted in
-  django:
-    build:
-      dockerfile: Dockerfile
-    environment:
-      AWS_ACCESS_KEY_ID: ${AWS_ACCESS_KEY_ID:?}
-      AWS_SECRET_ACCESS_KEY: ${AWS_SECRET_ACCESS_KEY:?}
-      AWS_REQUEST_PAYER: requester
-      DJANGO_CONFIGURATION: DevelopmentConfiguration
-      RDWATCH_DJANGO_DEBUG: ${RDWATCH_DJANGO_DEBUG:?}
-      RDWATCH_SECRET_KEY: ${RDWATCH_SECRET_KEY:?}
-      RDWATCH_CELERY_BROKER_URL: ${RDWATCH_CELERY_BROKER_URL:?}
-      RDWATCH_POSTGRESQL_URI: ${RDWATCH_POSTGRESQL_URI:?}
-      RDWATCH_REDIS_URI: ${RDWATCH_REDIS_URI:?}
-      RDWATCH_ACCENTURE_VERSION: ${RDWATCH_ACCENTURE_VERSION:?}
-      RDWATCH_SMART_STAC_URL: ${RDWATCH_SMART_STAC_URL:?}
-      RDWATCH_SMART_STAC_KEY: ${RDWATCH_SMART_STAC_KEY:?}
-    depends_on:
-      - postgresql
-      - redis-master
-    profiles:
-      - debug
-      - tools
-      - vscode
-    volumes:
-      - .:/app
-      - unit-socket:/run/unit
-
-  # Watches for file changes and restarts the "django" service
-  unit-reloader:
-    image: ghcr.io/resonantgeodata/rd-watch/unit-reloader:latest
-    depends_on:
-      - django
-    environment:
-      RDWATCH_FILE_POLLING: ${RDWATCH_FILE_POLLING:?}
-    init: true
-    profiles:
-      - debug
-      - tools
-      - vscode
-    volumes:
-      - .:/app
-      - unit-socket:/run/unit
-
-  ###################
-  # ad-hoc tools    #
-  # --profile tools #
-  ###################
-
-  # Run poetry commands
-  poetry:
-    image: ghcr.io/resonantgeodata/rd-watch/builder:latest
-    build:
-      context: .
-      dockerfile: ./Dockerfile
-      target: builder
-    depends_on:
-      - django
-    entrypoint:
-      - /docker-entrypoint.sh
-      - poetry
-    environment:
-      AWS_ACCESS_KEY_ID: ${AWS_ACCESS_KEY_ID:?}
-      AWS_SECRET_ACCESS_KEY: ${AWS_SECRET_ACCESS_KEY:?}
-      AWS_REQUEST_PAYER: requester
-      DJANGO_CONFIGURATION: DevelopmentConfiguration
-      POETRY_CACHE_DIR: /tmp/poetry-cache
-      POETRY_INSTALLER_PARALLEL: "1"
-      POETRY_VIRTUALENVS_IN_PROJECT: "1"
-      RDWATCH_ACCENTURE_VERSION: ${RDWATCH_ACCENTURE_VERSION:?}
-      RDWATCH_DJANGO_DEBUG: ${RDWATCH_DJANGO_DEBUG:?}
-      RDWATCH_SECRET_KEY: ${RDWATCH_SECRET_KEY:?}
-      RDWATCH_CELERY_BROKER_URL: ${RDWATCH_CELERY_BROKER_URL:?}
-      RDWATCH_POSTGRESQL_URI: ${RDWATCH_POSTGRESQL_URI:?}
-      RDWATCH_REDIS_URI: ${RDWATCH_REDIS_URI:?}
-      RDWATCH_SMART_STAC_URL: ${RDWATCH_SMART_STAC_URL:?}
-      RDWATCH_SMART_STAC_KEY: ${RDWATCH_SMART_STAC_KEY:?}
-    profiles:
-      - tools
-    user: ${UID-0}:${GID-0}
-    volumes:
-      - .:/app
-      - poetry-cache:/tmp/poetry-cache
-      - ipython-profile:/root/.ipython/profile_default
-    working_dir: /app/django
-
-  # Run npm commands
-  npm:
-    image: ghcr.io/resonantgeodata/rd-watch/builder:latest
-    depends_on:
-      - vue
-    entrypoint: npm
-    profiles:
-      - tools
-    user: ${UID-0}:${GID-0}
-    volumes:
-      - .:/app
-    working_dir: /app/vue
-
-  ####################################
-  # VS Code Remote Container Service #
-  ####################################
-
-  vscode:
-    image: ghcr.io/resonantgeodata/rd-watch/builder:latest
-    command: /bin/sh -c "while sleep 1000; do :; done"
-    environment:
-      AWS_ACCESS_KEY_ID: ${AWS_ACCESS_KEY_ID:?}
-      AWS_SECRET_ACCESS_KEY: ${AWS_SECRET_ACCESS_KEY:?}
-      AWS_REQUEST_PAYER: requester
-      DJANGO_CONFIGURATION: DevelopmentConfiguration
-      DJANGO_SETTINGS_MODULE: rdwatch.server.settings
-      POETRY_CACHE_DIR: /tmp/poetry-cache
-      POETRY_INSTALLER_PARALLEL: "1"
-      POETRY_VIRTUALENVS_IN_PROJECT: "1"
-      RDWATCH_DJANGO_DEBUG: ${RDWATCH_DJANGO_DEBUG:?}
-      RDWATCH_SECRET_KEY: ${RDWATCH_SECRET_KEY:?}
-      RDWATCH_CELERY_BROKER_URL: ${RDWATCH_CELERY_BROKER_URL:?}
-      RDWATCH_POSTGRESQL_URI: ${RDWATCH_POSTGRESQL_URI:?}
-      RDWATCH_REDIS_URI: ${RDWATCH_REDIS_URI:?}
-      RDWATCH_SMART_STAC_URL: ${RDWATCH_SMART_STAC_URL:?}
-      RDWATCH_SMART_STAC_KEY: ${RDWATCH_SMART_STAC_KEY:?}
-    init: true
-    network_mode: service:vue
-    profiles:
-      - vscode
-    volumes:
-      - .:/app
-      - poetry-cache:/tmp/poetry-cache
-      - ipython-profile:/root/.ipython/profile_default
+      - 5672:5672
 
 volumes:
-  pgadmin-data:
   postgresql-data:
+  minio-data:
   redis-master-data:
   redis-replica-1-data:
   redis-replica-2-data:
-  # debug volumes
-  unit-socket:
-  poetry-cache:
-  ipython-profile:

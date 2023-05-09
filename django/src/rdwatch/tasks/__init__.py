@@ -219,7 +219,7 @@ def get_siteobservations_images(
                 timestamp=capture.timestamp,
                 source=baseConstellation,
             )
-            if found.count() > 0:
+            if found.exists():
                 existing = found.first()
                 existing.image.delete()
                 existing.cloudcover = cloudcover

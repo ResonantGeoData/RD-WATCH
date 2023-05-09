@@ -80,6 +80,12 @@ class BaseConfiguration(Configuration):
     ACCENTURE_VERSION = values.Value(
         environ_required=True, environ_prefix=_environ_prefix
     )
+    SMART_STAC_URL = values.URLValue(
+        environ_required=True, environ_prefix=_environ_prefix
+    )
+    SMART_STAC_KEY = values.SecretValue(
+        environ_required=True, environ_prefix=_environ_prefix
+    )
 
 
 class DevelopmentConfiguration(BaseConfiguration):

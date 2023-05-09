@@ -1,6 +1,5 @@
 import io
 import logging
-import os
 from datetime import datetime, timedelta
 
 from celery import shared_task
@@ -68,33 +67,6 @@ def get_percent_black_pixels(bytes: bytes):
     return percent_black_pixels
 
 
-def get_closest_capture(
-    bbox: tuple[float, float, float, float],
-    timestamp: datetime,
-    constellation: str,
-    worldView=False,
-):
-    timebuffer = timedelta(days=1)
-    captures = None
-    if worldView:
-        captures = get_worldview_captures(timestamp, bbox, timebuffer)
-    else:
-        captures = list(get_bands(constellation, timestamp, bbox, timebuffer))
-
-        # Filter bands by requested processing level and spectrum
-        tempCaptures = []
-        for band in captures:
-            if band.level.slug == '2A' and band.spectrum.slug == 'visual':
-                tempCaptures.append(band)
-        captures = tempCaptures
-    # logger.warning(f'Captures: {len(captures)}')
-    if not captures:
-        return None
-    closest_capture = min(captures, key=lambda band: abs(band.timestamp - timestamp))
-
-    return closest_capture
-
-
 def get_range_captures(
     bbox: tuple[float, float, float, float],
     timestamp: datetime,
@@ -102,7 +74,6 @@ def get_range_captures(
     timebuffer: timedelta,
     worldView=False,
 ):
-    captures = None
     if worldView:
         captures = get_worldview_captures(timestamp, bbox, timebuffer)
     else:
@@ -114,9 +85,6 @@ def get_range_captures(
             if band.level.slug == '2A' and band.spectrum.slug == 'visual':
                 tempCaptures.append(band)
         captures = tempCaptures
-    # logger.warning(f'Captures: {len(captures)}')
-    if not captures:
-        return None
 
     return captures
 
@@ -127,19 +95,19 @@ def fetch_boundbox_image(
     constellation: str,
     worldView=False,
 ):
-    capture = get_closest_capture(bbox, timestamp, constellation, worldView)
-    # logger.warning(f'Closest Capture is: {capture}')
-    if capture is None:
+    timebuffer = timedelta(days=1)
+    captures = get_range_captures(bbox, timestamp, constellation, timebuffer, worldView)
+    if len(captures) == 0:
         return None
-    bytes = None
+    closest_capture = min(captures, key=lambda band: abs(band.timestamp - timestamp))
     if worldView:
-        bytes = get_worldview_processed_visual_bbox(capture, bbox)
+        bytes = get_worldview_processed_visual_bbox(closest_capture, bbox)
     else:
-        bytes = get_raster_bbox(capture.uri, bbox)
+        bytes = get_raster_bbox(closest_capture.uri, bbox)
     return {
         'bytes': bytes,
-        'cloudcover': capture.cloudcover,
-        'timestamp': capture.timestamp,
+        'cloudcover': closest_capture.cloudcover,
+        'timestamp': closest_capture.timestamp,
     }
 
 
@@ -156,7 +124,7 @@ def get_siteobservations_images(
     matchConstellation = ''
     baseSiteEval = None
     # First we gather all images that match observations
-    for observation in site_observations:
+    for observation in site_observations.iterator():
         min_time = min(min_time, observation.timestamp)
         max_time = max(max_time, observation.timestamp)
         mercator: tuple[float, float, float, float] = observation.geom.extent
@@ -196,26 +164,22 @@ def get_siteobservations_images(
             found_timestamps[found_timestamp] = True
             # logger.warning(f'Retrieved Image with timestamp: {timestamp}')
             output = f'tile_image_{observation.id}.jpg'
-            with open(output, 'wb') as f:
-                f.write(bytes)
-            with open(output, 'rb') as imageFile:
-                image = File(imageFile, output)
-                if found.count() > 0:
-                    existing = found.first()
-                    existing.image.delete()  # remove previous image if new one found
-                    existing.cloudcover = cloudcover
-                    existing.image = image
-                    existing.save()
-                else:
-                    SiteImage.objects.create(
-                        siteeval=observation.siteeval,
-                        siteobs=observation,
-                        timestamp=observation.timestamp,
-                        image=image,
-                        cloudcover=cloudcover,
-                        source=baseConstellation,
-                    )
-            os.remove(output)
+            image = File(io.BytesIO(bytes), name=output)
+            if found.exists():
+                existing = found.first()
+                existing.image.delete()  # remove previous image if new one found
+                existing.cloudcover = cloudcover
+                existing.image = image
+                existing.save()
+            else:
+                SiteImage.objects.create(
+                    siteeval=observation.siteeval,
+                    siteobs=observation,
+                    timestamp=observation.timestamp,
+                    image=image,
+                    cloudcover=cloudcover,
+                    source=baseConstellation,
+                )
 
     # Now we need to go through and find all other images
     # that exist in the start/end range of the siteEval
@@ -249,27 +213,23 @@ def get_siteobservations_images(
             cloudcover = capture.cloudcover
             count += 1
             output = f'tile_image_{observation.siteeval}_nonobs_{count}.jpg'
-            with open(output, 'wb') as f:
-                f.write(bytes)
-            with open(output, 'rb') as imageFile:
-                image = File(imageFile, output)
-                found = SiteImage.objects.filter(
+            image = File(io.BytesIO(bytes), name=output)
+            found = SiteImage.objects.filter(
+                siteeval=baseSiteEval,
+                timestamp=capture.timestamp,
+                source=baseConstellation,
+            )
+            if found.exists():
+                existing = found.first()
+                existing.image.delete()
+                existing.cloudcover = cloudcover
+                existing.image = image
+                existing.save()
+            else:
+                SiteImage.objects.create(
                     siteeval=baseSiteEval,
                     timestamp=capture.timestamp,
+                    image=image,
+                    cloudcover=cloudcover,
                     source=baseConstellation,
                 )
-                if found.count() > 0:
-                    existing = found.first()
-                    existing.image.delete()
-                    existing.cloudcover = cloudcover
-                    existing.image = image
-                    existing.save()
-                else:
-                    SiteImage.objects.create(
-                        siteeval=baseSiteEval,
-                        timestamp=capture.timestamp,
-                        image=image,
-                        cloudcover=cloudcover,
-                        source=baseConstellation,
-                    )
-            os.remove(output)

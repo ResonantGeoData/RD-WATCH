@@ -2,39 +2,45 @@
 
 This document gives an overview of the code contained in this monorepo and the recommended development setup.
 
-## Quick start
+## Develop with Docker (recommended quickstart)
+This is the simplest configuration for developers to start with.
 
-Get up and running with the recommended development setup. It's advised to develop in the provided container since we depend on some system dependencies (e.g. GDAL).
+1. Run `docker compose up` to start the Django development server and Celery worker, plus all backing services
+   like PostGIS, Redis, RabbitMQ, etc.
+2. Start the client development server:
+   ```sh
+   cd vue
+   npm install
+   npm run dev
+   ```
+3. Access the site, starting at http://localhost:8080/
+4. When finished, use `Ctrl+C`
 
-1. Make a copy of the file ["template.env"](https://github.com/ResonantGeoData/RD-WATCH/blob/phase-ii/template.env) as ".env" and fill it out
-2. Pull in the Docker images: `docker compose --profile vscode pull`
-3. Install the dependencies for Django: `docker compose run --rm poetry install --all-extras`
-4. Install the dependencies for Vue: `docker compose run --rm npm install`
-5. Run migrations: `docker compose run --rm poetry run django-admin migrate`
-6. Load test data: `docker compose run --rm poetry run django-admin loaddata testdata`
-7. Install the VS Code [Remote - Containers](https://marketplace.visualstudio.com/items?itemName=ms-vscode-remote.remote-containers) extension
-8. In VS Code, open the Command Palette (<kbd>⌘</kbd> <kbd>⇧</kbd> <kbd>P</kbd> or <kbd>Ctrl</kbd> <kbd>Shift</kbd> <kbd>P</kbd>) and run `>Remote-Containers: Open Workspace in Container...` selecting the file ["vscode.code-workspace"](https://github.com/ResonantGeoData/RD-WATCH/blob/phase-ii/vscode.code-workspace) as the Workspace file
+## Develop Natively (advanced)
+This configuration still uses Docker to run attached services in the background,
+but allows developers to run Python code on their native system.
 
-Two ports will be open:
+### Initial Setup
+1. Run `docker compose -f ./docker-compose.yaml up -d`
+2. Install Python 3.10
+3. Install
+   [`psycopg2` build prerequisites](https://www.psycopg.org/docs/install.html#build-prerequisites)
+4. Install Poetry
+5. Run `poetry install`
+6. Run `source ./dev/export-env.sh`
 
-- [localhost:8000](localhost:8000): the latest version of the application on the `phase-ii` branch
-- [localhost:9000](localhost:9000): live updating application (server reload for Django and HMR for Vue)
+### Run Application
+1.  Ensure `docker compose -f ./docker-compose.yaml up -d` is still active
+2. Run:
+   1. `source ./dev/export-env.sh`
+   2. `poetry run --directory django django-admin runserver`
+3. Run in a separate terminal:
+   1. `source ./dev/export-env.sh`
+   2. `poetry run --directory django celery --app rdwatch.celery worker --loglevel INFO --without-heartbeat`
+4. When finished, run `docker compose stop`
+5. To destroy the stack and start fresh, run `docker compose down -v`
 
-### Common tasks
-
-- [`django-admin`](https://docs.djangoproject.com/en/4.1/ref/django-admin) commands:
-  - e.g. run migrations: `docker compose run --rm poetry run django-admin migrate`
-- `npm` commands and scripts (see [`scripts` in `package.json`](https://github.com/ResonantGeoData/RD-WATCH/blob/phase-ii/vue/package.json#L5)):
-  - e.g. lint and fix code: `docker compose run --rm npm run lint:fix`
-  - e.g. run tests: `docker compose run --rm npm run test`
-  - e.g. install a package: `docker compose run --rm npm install some-pacakge`
-- `poetry` commands and tasks (see [`tasks` in `pyproject.toml`](https://github.com/ResonantGeoData/RD-WATCH/blob/phase-ii/django/pyproject.toml#L42)):
-  - e.g. lint and fix code: `docker compose run --rm poetry run task lint:fix`
-  - e.g. build the OpenAPI spec: `docker compose run --rm poetry run task build:openapi`
-  - e.g. install a package: `docker compose run --rm poetry add some-pacakge`
-  - e.g. run tests: `docker compose run --rm poetry run task test`
-
-### Type support for ".vue" imports in VS Code
+## Type support for ".vue" imports in VS Code
 
 Enable ["takeover mode"](https://github.com/johnsoncodehk/volar/discussions/471) for Volar.
 
@@ -42,12 +48,6 @@ Enable ["takeover mode"](https://github.com/johnsoncodehk/volar/discussions/471)
    1. Open the Command Palette (<kbd>⌘</kbd> <kbd>⇧</kbd> <kbd>P</kbd> or <kbd>Ctrl</kbd> <kbd>Shift</kbd> <kbd>P</kbd>) and run `>Extensions: Show Built-in Extensions` command
    2. Find "TypeScript and JavaScript Language Features", right click and select "Disable (Workspace)"
 2. Reload VS Code
-
-### Customization
-
-- ["docker-compose.override.yaml"](https://docs.docker.com/compose/extends/) is .gitignored, so feel free to use it to modify your environment while testing.
-- "django/requirements.dev.txt" is .gitignored to keep track of extra development dependencies you may like (e.g. [IPython](https://ipython.org/)). Install them with `docker compose run --rm poetry run pip install -r django-admin requirements.dev.txt`.
-- ".vscode" directories are .gitignored. This way, you can modify the base recommended VS Code Workspace with any modifications you may like.
 
 ## Stack
 

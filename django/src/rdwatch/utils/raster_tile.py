@@ -33,7 +33,7 @@ def get_raster_tile(uri: str, z: int, x: int, y: int) -> bytes:
         if uri.startswith('https://sentinel-cogs.s3.us-west-2.amazonaws.com'):
             with rasterio.Env(AWS_NO_SIGN_REQUEST='YES'):
                 s3_uri = 's3://sentinel-cogs/' + uri[49:]
-                with COGReader(input=s3_uri, nodata=nodata_value) as cog:
+                with COGReader(input=s3_uri) as cog:
                     # stats = cog.statistics()
                     # info = cog.info()
                     # logger.warning(info.dict())
@@ -44,10 +44,10 @@ def get_raster_tile(uri: str, z: int, x: int, y: int) -> bytes:
                     #     low = stats[key].dict().get('percentile_2', False)
                     #     logger.warning(f'Low: {low} High: {high}')
                     #     logger.warning(f'Min: {min_val} Max: {max_val}')
-                    img = cog.tile(x, y, z, tilesize=512)
+                    img = cog.tile(x, y, z, tilesize=512, nodata=nodata_value)
                     img = rescale(img)
                     return img.render(img_format='WEBP')
-        with COGReader(input=uri, nodata=nodata_value) as cog:
+        with COGReader(input=uri) as cog:
             # stats = cog.statistics()
             # info = cog.info()
             # logger.warning(info.dict())
@@ -58,7 +58,7 @@ def get_raster_tile(uri: str, z: int, x: int, y: int) -> bytes:
             #     low = stats[key].dict().get('percentile_2', False)
             #     logger.warning(f'Low: {low} High: {high}')
             #     logger.warning(f'Min: {min_val} Max: {max_val}')
-            img = cog.tile(x, y, z, tilesize=512)
+            img = cog.tile(x, y, z, tilesize=512, nodata=nodata_value)
             img = rescale(img)
             return img.render(img_format='WEBP')
 

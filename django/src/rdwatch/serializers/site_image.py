@@ -10,10 +10,11 @@ class SiteImageSerializer(serializers.Serializer):
     cloudcover = serializers.FloatField()
     image = serializers.SerializerMethodField()
     siteobs_id = serializers.IntegerField()
+    percent_black = serializers.FloatField()
 
     class Meta:
         model = SiteImage
-        fields = ['timestamp', 'source', 'cloudcover', 'image', 'siteobs_id']
+        fields = ['timestamp', 'source', 'cloudcover', 'image', 'siteobs_id', 'percent_black']
 
     def get_image(self, obj):
         image = obj.get('image', None)

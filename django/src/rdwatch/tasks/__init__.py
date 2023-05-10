@@ -9,7 +9,7 @@ from pyproj import Transformer
 
 from django.core.files import File
 
-from rdwatch.models import SiteImage, SiteObservation
+from rdwatch.models import SiteImage, SiteObservation, SiteEvaluation, Retrieving
 from rdwatch.utils.raster_tile import get_raster_bbox
 from rdwatch.utils.satellite_bands import get_bands
 from rdwatch.utils.worldview_processed.raster_tile import (
@@ -147,6 +147,18 @@ def fetch_boundbox_image(
 def get_siteobservations_images(
     site_eval_id: int, baseConstellation='WV', force=False
 ) -> None:
+    site_eval = SiteEvaluation.objects.filter(
+        pk=site_eval_id
+    ).first()
+    retrieving_task = Retrieving.objects.filter(siteeval=site_eval).first()
+    if retrieving_task is None:
+        retrieving_task = Retrieving.objects.create(
+            siteeval=site_eval,
+            timestamp=datetime.now()
+        )
+    retrieving_task.timestamp = datetime.now()
+    retrieving_task.status = 'Running'
+    retrieving_task.save()
     site_observations = SiteObservation.objects.filter(siteeval=site_eval_id)
     transformer = Transformer.from_crs('EPSG:3857', 'EPSG:4326')
     found_timestamps = {}
@@ -188,6 +200,7 @@ def get_siteobservations_images(
                 logger.warning(f'COULD NOT FIND ANY IMAGE FOR TIMESTAMP: {timestamp}')
                 continue
             bytes = results['bytes']
+            percent_black = get_percent_black_pixels(bytes)
             cloudcover = results['cloudcover']
             found_timestamp = results['timestamp']
             if bytes is None:
@@ -205,6 +218,7 @@ def get_siteobservations_images(
                     existing.image.delete()  # remove previous image if new one found
                     existing.cloudcover = cloudcover
                     existing.image = image
+                    existing.percent_black = percent_black
                     existing.save()
                 else:
                     SiteImage.objects.create(
@@ -214,6 +228,7 @@ def get_siteobservations_images(
                         image=image,
                         cloudcover=cloudcover,
                         source=baseConstellation,
+                        percent_black=percent_black
                     )
             os.remove(output)
 
@@ -243,9 +258,6 @@ def get_siteobservations_images(
                 logger.warning(f'COULD NOT FIND ANY IMAGE FOR TIMESTAMP: {timestamp}')
                 continue
             percent_black = get_percent_black_pixels(bytes)
-            if percent_black > 90:
-                logger.warning(f'Black Pixels are Higher than 90 percent: {timestamp}')
-                continue
             cloudcover = capture.cloudcover
             count += 1
             output = f'tile_image_{observation.siteeval}_nonobs_{count}.jpg'
@@ -263,6 +275,7 @@ def get_siteobservations_images(
                     existing.image.delete()
                     existing.cloudcover = cloudcover
                     existing.image = image
+                    existing.percent_black = percent_black
                     existing.save()
                 else:
                     SiteImage.objects.create(
@@ -270,6 +283,9 @@ def get_siteobservations_images(
                         timestamp=capture.timestamp,
                         image=image,
                         cloudcover=cloudcover,
+                        percent_black=percent_black,
                         source=baseConstellation,
                     )
             os.remove(output)
+    retrieving_task.status = 'Complete'
+    retrieving_task.save()

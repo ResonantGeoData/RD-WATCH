@@ -285,7 +285,7 @@ def satelliteimage_raster_bbox(
     return get_satelliteimage_raster(request)
 
 
-@cache_page(60 * 60 * 24 * 365)
+# @cache_page(60 * 60 * 24 * 365)
 def satelliteimage_raster_tile(
     request: HttpRequest,
     z: int | None = None,

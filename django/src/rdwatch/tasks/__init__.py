@@ -9,7 +9,7 @@ from pyproj import Transformer
 
 from django.core.files import File
 
-from rdwatch.models import SiteImage, SiteObservation, SiteEvaluation, Retrieving
+from rdwatch.models import SatelliteFetching, SiteEvaluation, SiteImage, SiteObservation
 from rdwatch.utils.raster_tile import get_raster_bbox
 from rdwatch.utils.satellite_bands import get_bands
 from rdwatch.utils.worldview_processed.raster_tile import (
@@ -147,18 +147,15 @@ def fetch_boundbox_image(
 def get_siteobservations_images(
     site_eval_id: int, baseConstellation='WV', force=False
 ) -> None:
-    site_eval = SiteEvaluation.objects.filter(
-        pk=site_eval_id
-    ).first()
-    retrieving_task = Retrieving.objects.filter(siteeval=site_eval).first()
-    if retrieving_task is None:
-        retrieving_task = Retrieving.objects.create(
-            siteeval=site_eval,
-            timestamp=datetime.now()
+    site_eval = SiteEvaluation.objects.filter(pk=site_eval_id).first()
+    fetching_task = SatelliteFetching.objects.filter(siteeval=site_eval).first()
+    if fetching_task is None:
+        fetching_task = SatelliteFetching.objects.create(
+            siteeval=site_eval, timestamp=datetime.now()
         )
-    retrieving_task.timestamp = datetime.now()
-    retrieving_task.status = 'Running'
-    retrieving_task.save()
+    fetching_task.timestamp = datetime.now()
+    fetching_task.status = SatelliteFetching.Status.RUNNING
+    fetching_task.save()
     site_observations = SiteObservation.objects.filter(siteeval=site_eval_id)
     transformer = Transformer.from_crs('EPSG:3857', 'EPSG:4326')
     found_timestamps = {}
@@ -228,7 +225,7 @@ def get_siteobservations_images(
                         image=image,
                         cloudcover=cloudcover,
                         source=baseConstellation,
-                        percent_black=percent_black
+                        percent_black=percent_black,
                     )
             os.remove(output)
 
@@ -287,5 +284,5 @@ def get_siteobservations_images(
                         source=baseConstellation,
                     )
             os.remove(output)
-    retrieving_task.status = 'Complete'
-    retrieving_task.save()
+    fetching_task.status = SatelliteFetching.Status.COMPLETE
+    fetching_task.save()

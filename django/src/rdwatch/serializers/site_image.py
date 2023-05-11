@@ -14,7 +14,14 @@ class SiteImageSerializer(serializers.Serializer):
 
     class Meta:
         model = SiteImage
-        fields = ['timestamp', 'source', 'cloudcover', 'image', 'siteobs_id', 'percent_black']
+        fields = [
+            'timestamp',
+            'source',
+            'cloudcover',
+            'image',
+            'siteobs_id',
+            'percent_black',
+        ]
 
     def get_image(self, obj):
         image = obj.get('image', None)

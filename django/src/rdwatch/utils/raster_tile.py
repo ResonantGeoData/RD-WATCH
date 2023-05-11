@@ -1,12 +1,15 @@
+import logging
+
+import numpy as np
 import rasterio  # type: ignore
 from rio_tiler.io.cogeo import COGReader
 from rio_tiler.models import ImageData
-import logging
-import numpy as np
 
 logger = logging.getLogger(__name__)
 
 nodata_value = -9999
+
+
 def rescale(image: ImageData):
     # Calculate the percentiles for each band
     img = image.data
@@ -22,13 +25,21 @@ def rescale(image: ImageData):
     img_8bit = np.zeros_like(img, dtype=np.uint8)
     for band in range(img.shape[0]):
         img_8bit[band] = np.ma.filled(
-            ((img_masked[band] - min_values[band]) * 255 / (max_values[band] - min_values[band])).clip(0, 255).astype(np.uint8),
+            (
+                (img_masked[band] - min_values[band])
+                * 255
+                / (max_values[band] - min_values[band])
+            )
+            .clip(0, 255)
+            .astype(np.uint8),
             fill_value=nodata_value,
-        )    # Save the rescaled image
+        )  # Save the rescaled image
     image.data = img_8bit
     return image
 
+
 def get_raster_tile(uri: str, z: int, x: int, y: int) -> bytes:
+    logger.warning(f'SITE URI: {uri}')
     with rasterio.Env(GDAL_DISABLE_READDIR_ON_OPEN='EMPTY_DIR'):
         if uri.startswith('https://sentinel-cogs.s3.us-west-2.amazonaws.com'):
             with rasterio.Env(AWS_NO_SIGN_REQUEST='YES'):

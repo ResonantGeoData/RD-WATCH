@@ -9,7 +9,7 @@ from rest_framework.response import Response
 from rest_framework.schemas.openapi import AutoSchema
 
 from rdwatch.db.functions import BoundingBox, ExtractEpoch
-from rdwatch.models import SiteEvaluation, SiteImage, SiteObservation, Retrieving
+from rdwatch.models import SatelliteFetching, SiteEvaluation, SiteImage, SiteObservation
 from rdwatch.serializers import SiteImageListSerializer, SiteObservationListSerializer
 from rdwatch.tasks import get_siteobservations_images
 
@@ -90,9 +90,13 @@ def site_observations(request: HttpRequest, pk: int):
     serializer = SiteObservationListSerializer(queryset)
     output = serializer.data
     output['images'] = image_serializer.data
-    if Retrieving.objects.filter(siteeval=pk).exists():
-        retrieved = Retrieving.objects.filter(siteeval=pk).first()
-        output['job'] = { 'status': retrieved.status, 'error': retrieved.error, 'timestamp': retrieved.timestamp.timestamp()}
+    if SatelliteFetching.objects.filter(siteeval=pk).exists():
+        retrieved = SatelliteFetching.objects.filter(siteeval=pk).first()
+        output['job'] = {
+            'status': retrieved.status,
+            'error': retrieved.error,
+            'timestamp': retrieved.timestamp.timestamp(),
+        }
     return Response(output)
 
 

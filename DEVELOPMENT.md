@@ -38,7 +38,8 @@ but allows developers to run Python code on their native system.
    1. `source ./dev/export-env.sh`
    2. `poetry run --directory django celery --app rdwatch.celery worker --loglevel INFO --without-heartbeat`
 4. When finished, run `docker compose stop`
-5. To destroy the stack and start fresh, run `docker compose down -v`
+5. To destroy the stack and start fresh, run `docker compose down`
+   1. Note: this command does not destroy docker volumes, such as those associated with the postgresql and minio services. To destroy those as well, run `docker compose down -v`.
 
 ## Type support for ".vue" imports in VS Code
 

@@ -11,12 +11,9 @@ services:
     ]
     # Log printing via Rich is enhanced by a TTY
     tty: true
-    env_file: ./dev/.env.docker-compose
-    environment:
-      AWS_ACCESS_KEY_ID: ${AWS_ACCESS_KEY_ID:?}
-      AWS_SECRET_ACCESS_KEY: ${AWS_SECRET_ACCESS_KEY:?}
-      RDWATCH_SMART_STAC_URL: ${RDWATCH_SMART_STAC_URL:?}
-      RDWATCH_SMART_STAC_KEY: ${RDWATCH_SMART_STAC_KEY:?}
+    env_file:
+      - ./dev/.env.docker-compose
+      - ./dev/.env.private
     volumes:
       - ./django:/app/django
     ports:
@@ -42,12 +39,9 @@ services:
     ]
     # Log printing via Rich is enhanced by a TTY
     tty: true
-    env_file: ./dev/.env.docker-compose
-    environment:
-      AWS_ACCESS_KEY_ID: ${AWS_ACCESS_KEY_ID:?}
-      AWS_SECRET_ACCESS_KEY: ${AWS_SECRET_ACCESS_KEY:?}
-      RDWATCH_SMART_STAC_URL: ${RDWATCH_SMART_STAC_URL:?}
-      RDWATCH_SMART_STAC_KEY: ${RDWATCH_SMART_STAC_KEY:?}
+    env_file:
+      - ./dev/.env.docker-compose
+      - ./dev/.env.private
     volumes:
       - ./django:/app/django
     depends_on:

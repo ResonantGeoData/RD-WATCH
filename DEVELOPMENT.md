@@ -5,29 +5,33 @@ This document gives an overview of the code contained in this monorepo and the r
 ## Develop with Docker (recommended quickstart)
 This is the simplest configuration for developers to start with.
 
-1. Run `docker compose up` to start the Django development server and Celery worker, plus all backing services
+1. Run `cp dev/.env.template.private dev/.env.private`
+2. Set the environment variables in `dev/.env.private`.
+3. Run `docker compose up` to start the Django development server and Celery worker, plus all backing services
    like PostGIS, Redis, RabbitMQ, etc.
-2. Start the client development server:
+4. Start the client development server:
    ```sh
    cd vue
    npm install
    npm run dev
    ```
-3. Access the site, starting at http://localhost:8080/
-4. When finished, use `Ctrl+C`
+5. Access the site, starting at http://localhost:8080/
+6. When finished, use `Ctrl+C`
 
 ## Develop Natively (advanced)
 This configuration still uses Docker to run attached services in the background,
 but allows developers to run Python code on their native system.
 
 ### Initial Setup
-1. Run `docker compose -f ./docker-compose.yaml up -d`
-2. Install Python 3.10
-3. Install
+1. Run `cp dev/.env.template.private dev/.env.private`
+2. Set the environment variables in `dev/.env.private`.
+3. Run `docker compose -f ./docker-compose.yaml up -d`
+4. Install Python 3.10
+5. Install
    [`psycopg2` build prerequisites](https://www.psycopg.org/docs/install.html#build-prerequisites)
-4. Install Poetry
-5. Run `poetry install`
-6. Run `source ./dev/export-env.sh`
+6. Install Poetry
+7. Run `poetry install`
+8. Run `source ./dev/export-env.sh`
 
 ### Run Application
 1.  Ensure `docker compose -f ./docker-compose.yaml up -d` is still active

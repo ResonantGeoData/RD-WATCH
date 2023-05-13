@@ -1,4 +1,5 @@
 .env
+.env.private
 
 # overrides for developers
 requirements.dev.txt

@@ -21,11 +21,11 @@ if [ "$1" = "unitd" ]; then
   fi
 fi
 
-# Run migrations if `django-admin` is installed
-if command -v "django-admin"; then
-  cd /app/django
-  poetry run django-admin migrate
-  cd -
-fi
+# Attempt to run migrations (will only work if `django-admin` is installed)
+set +e
+poetry install --directory /app/django --only main
+poetry run --directory /app/django django-admin migrate
+poetry run --directory /app/django django-admin loaddata lookups
+set -e
 
 exec "$@"

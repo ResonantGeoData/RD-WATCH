@@ -51,7 +51,7 @@ urlpatterns = [
         name='satellite-visual-tiles',
     ),
     path(
-        'observations/<int:pk>/get-images',
+        'observations/<int:pk>/generate-images',
         views.get_site_observation_images,
     ),
 ]

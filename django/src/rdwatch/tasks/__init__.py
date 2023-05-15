@@ -174,27 +174,24 @@ def get_siteobservations_images(
             found_timestamps[found_timestamp] = True
             # logger.warning(f'Retrieved Image with timestamp: {timestamp}')
             output = f'tile_image_{observation.id}.jpg'
-            with open(output, 'wb') as f:
-                f.write(bytes)
-            with open(output, 'rb') as imageFile:
-                image = File(imageFile, output)
-                if found.exists():
-                    existing = found.first()
-                    existing.image.delete()  # remove previous image if new one found
-                    existing.cloudcover = cloudcover
-                    existing.image = image
-                    existing.percent_black = percent_black
-                    existing.save()
-                else:
-                    SiteImage.objects.create(
-                        siteeval=observation.siteeval,
-                        siteobs=observation,
-                        timestamp=observation.timestamp,
-                        image=image,
-                        cloudcover=cloudcover,
-                        source=baseConstellation,
-                        percent_black=percent_black,
-                    )
+            image = File(io.BytesIO(bytes), name=output)
+            if found.exists():
+                existing = found.first()
+                existing.image.delete()  # remove previous image if new one found
+                existing.cloudcover = cloudcover
+                existing.image = image
+                existing.percent_black = percent_black
+                existing.save()
+            else:
+                SiteImage.objects.create(
+                    siteeval=observation.siteeval,
+                    siteobs=observation,
+                    timestamp=observation.timestamp,
+                    image=image,
+                    cloudcover=cloudcover,
+                    source=baseConstellation,
+                    percent_black=percent_black,
+                )
 
     # Now we need to go through and find all other images
     # that exist in the start/end range of the siteEval

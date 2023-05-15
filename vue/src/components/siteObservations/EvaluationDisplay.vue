@@ -3,8 +3,10 @@ import { computed, onBeforeUnmount } from "vue";
 import { ApiService } from "../../client";
 import { ImageBBox, SiteObservationImage, getSiteObservationDetails, state } from "../../store";
 import { SiteObservation } from "../../store";
-import { ArrowPathIcon, ChevronLeftIcon, ChevronRightIcon, XMarkIcon } from "@heroicons/vue/24/solid";
+import { ArrowPathIcon, ChevronLeftIcon, ChevronRightIcon, Cog8ToothIcon, XMarkIcon } from "@heroicons/vue/24/solid";
 import { imageFilter } from "../../mapstyle/images";
+import { PhotoIcon } from "@heroicons/vue/24/solid";
+
 const props = defineProps<{
   siteObservation: SiteObservation;
 }>();
@@ -97,13 +99,13 @@ const currentClosestTimestamp = computed(() => {
       const closest = images.map((item) => item.timestamp).reduce((prev, curr) => {
                   return Math.abs(curr - state.timestamp) < Math.abs(prev - state.timestamp) ? curr : prev
               });
-      const index = observation.images.findIndex((item) => item.timestamp === closest);
+      const index = images.findIndex((item) => item.timestamp === closest);
       let prev = true;
       let next = true;
       if (index === 0) {
         prev = false;
       }
-      if (index + 1 >= observation.images.length) {
+      if (index + 1 >= images.length) {
         next = false;
       }
       return {time: new Date(closest * 1000).toLocaleDateString(), type: observation.images[index].source, prev, next, siteobs: observation.images[index].siteobs_id };
@@ -157,11 +159,22 @@ const isRunning = computed(() => {
     <summary
       class="list-none bg-gray-50 p-2 group-hover:bg-gray-200"
     >
-      <div class="grid grid-cols-4">
-        <div class="col-span-4">
-          <div class="grid grid-cols-2">
+      <div class="grid grid-cols-3">
+        <div class="col-span-3">
+          <div class="grid grid-cols-3">
             <span class="model-title">
               SiteId: {{ siteObservation.id }}
+            </span>
+            <span>
+              <PhotoIcon 
+                class="h-5 mt-0.5"
+                :class="{
+                  'text-blue-600': imagesActive,
+                  'hover': hasImages,
+                  'text-gray-400': !hasImages,
+                }"
+                @click="hasImages && toggleImages(siteObservation)"
+              />
             </span>
             <span class="grid grid-cols-2 justify-self-end">
               <ArrowPathIcon
@@ -281,16 +294,7 @@ const isRunning = computed(() => {
             Get L8
           </button>
 
-          <span class="label checkboxlabel">
-            <span class="label-text">Images:</span>
-            <input
-              :value="siteObservation.imagesActive"
-              :disabled="!hasImages"
-              type="checkbox"
-              class="checkbox-primary checkbox-xs ml-1"
-              @click="toggleImages(siteObservation)"
-            >
-          </span>
+
           <span v-if="imagesActive">
             <button
               v-if="state.loopingId !== siteObservation.id"
@@ -347,4 +351,9 @@ const isRunning = computed(() => {
   cursor: pointer;
   font-weight: bolder;
 }
+
+.hover:hover {
+  cursor: pointer;
+}
+
 </style>

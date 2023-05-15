@@ -1,36 +1,13 @@
 <script setup lang="ts">
-import { computed, onUnmounted } from "vue";
+import { computed, onUnmounted, ref } from "vue";
 import { EnabledSiteObservations, SiteObservationImage, state } from '../../store'
-import SiteObservationDisplay from "./SiteObservationDisplay.vue";
+import EvaluationDisplay from "./EvaluationDisplay.vue";
+import SiteEvalSettings from "./SiteEvalSettings.vue";
 import { hoveredInfo } from "../../interactions/mouseEvents";
+import { Cog6ToothIcon } from "@heroicons/vue/24/solid";
 
-const cloudFilter = computed({
-  get() {
-    return state.siteObsSatSettings.cloudCoverFilter;
-  },
-  set(val: number) {
-    state.siteObsSatSettings = { ...state.siteObsSatSettings, cloudCoverFilter: val };
-  },
-});
 
-const percentBlackFilter = computed({
-  get() {
-    return state.siteObsSatSettings.percentBlackFilter;
-  },
-  set(val: number) {
-    state.siteObsSatSettings = { ...state.siteObsSatSettings, percentBlackFilter: val };
-  },
-});
-
-const imageOpacity = computed({
-  get() {
-    return state.siteObsSatSettings.imageOpacity;
-  },
-  set(val: number) {
-    state.siteObsSatSettings = { ...state.siteObsSatSettings, imageOpacity: val };
-  },
-});
-
+const expandSettings = ref(false);
 const clearAll = () => {
   state.enabledSiteObservations = [];
   state.selectedObservations = [];
@@ -105,7 +82,7 @@ onUnmounted(() => {
         Selected Evaluations
       </h1>
       <div class="grid grid-cols-4 mx-4">
-        <div class="col-span-4">
+        <div class="col-span-1 mt-1">
           <span class="label checkboxlabel">
             <span class="label-text">S2:</span>
             <input
@@ -114,7 +91,9 @@ onUnmounted(() => {
               class="checkbox-primary checkbox-xs ml-1"
             >
           </span>
+        </div>
 
+        <div class="col-span-1 mt-1">
           <span class="label checkboxlabel">
             <span class="label-text">WV:</span>
             <input
@@ -123,68 +102,38 @@ onUnmounted(() => {
               class="checkbox-primary checkbox-xs ml-1"
             >
           </span>
+        </div>
 
+        <div class="col-span-1">
           <button
-            class=" btn-xs btn-error"
+            class="btn-xs btn-error"
             @click="clearAll()"
           >
             Clear All
           </button>
         </div>
-        <div class="col-span-4">
-          <div class="form-control">
-            <label class="label cursor-pointer">
-              <span class="label-text">Cloud Cover:</span>
-              <input
-                v-model.number="cloudFilter"
-                type="range"
-                min="0"
-                max="100"
-                step="1"
-                class="range range-primary"
-              >
-            </label>
-          </div>
-        </div>
-        <div class="col-span-4">
-          <div class="form-control">
-            <label class="label cursor-pointer">
-              <span class="label-text">Percent Black:</span>
-              <input
-                v-model.number="percentBlackFilter"
-                type="range"
-                min="0"
-                max="100"
-                step="1"
-                class="range range-primary"
-              >
-            </label>
-          </div>
-        </div>
-        <div class="col-span-4">
-          <div class="form-control">
-            <label class="label cursor-pointer">
-              <span class="label-text">Image Opacity:</span>
-              <input
-                v-model.number="imageOpacity"
-                type="range"
-                min="0"
-                max="1"
-                step=".05"
-                class="range range-primary"
-              >
-            </label>
-          </div>
+        <div class="col-span-1 justify-self-end">
+          <Cog6ToothIcon
+            class="icon h-5 text-blue-600 hover"
+            data-tip="Settings"
+            @click="expandSettings = !expandSettings"
+          />
         </div>
       </div>
-
-      <site-observation-display
-        v-for="item in state.selectedObservations"
-        :key="`siteObs_${item.id}`"
-        :site-observation="item"
-        class="siteObs"
-        :class="{ outlined: hoveredInfo.siteId.includes(item.id) }"
-      />
+      <div class="px-5">
+        <site-eval-settings
+          v-if="expandSettings"
+        />
+      </div>
+      <div style="overflow-y:auto">
+        <evaluation-display
+          v-for="item in state.selectedObservations"
+          :key="`siteObs_${item.id}`"
+          :site-observation="item"
+          class="siteObs"
+          :class="{ outlined: hoveredInfo.siteId.includes(item.id) }"
+        />
+      </div>
     </div>
   </div>
 </template>
@@ -209,4 +158,8 @@ onUnmounted(() => {
   max-width: 350px;
   min-width: 350px;
 }
+.hover:hover {
+  cursor: pointer;
+}
+
 </style>

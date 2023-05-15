@@ -1,14 +1,41 @@
 <script setup lang="ts">
-import { computed } from "vue";
+import { computed, onBeforeUnmount } from "vue";
 import { ApiService } from "../../client";
 import { ImageBBox, SiteObservationImage, getSiteObservationDetails, state } from "../../store";
 import { SiteObservation } from "../../store";
 import { ArrowPathIcon, ChevronLeftIcon, ChevronRightIcon, XMarkIcon } from "@heroicons/vue/24/solid";
+import { imageFilter } from "../../mapstyle/images";
 const props = defineProps<{
   siteObservation: SiteObservation;
 }>();
-const getImages = (id:number, constellation: 'WV' | 'S2' | 'L8' = 'WV')  => {
-    ApiService.getObservationImages(id.toString(), constellation);
+
+let loopingInterval: NodeJS.Timeout | null = null;
+
+const checkSiteObs = async () => {
+  await getSiteObservationDetails(props.siteObservation.id.toString());
+  if (loopingInterval !== null && props.siteObservation.job && props.siteObservation.job.status !== 'Running') {
+    clearInterval(loopingInterval);
+    loopingInterval = null;
+  }
+}
+
+onBeforeUnmount(() => {
+  if (loopingInterval !== null) {
+    clearInterval(loopingInterval);
+    loopingInterval = null;
+  }
+})
+
+const getImages = async (id:number, constellation: 'WV' | 'S2' | 'L8' = 'WV')  => {
+    await ApiService.getObservationImages(id.toString(), constellation);
+    // Now we get the results to see if the service is running
+    await getSiteObservationDetails(props.siteObservation.id.toString());
+    // The props should be updated now we start an interval to update until we exist, deselect or other
+    if (loopingInterval !== null) {
+      clearInterval(loopingInterval);
+      loopingInterval = null;
+    }
+    loopingInterval = setInterval(checkSiteObs, 1000);
 }
 const toggleImages = (siteObs: SiteObservation, off= false) => {
     const found = state.enabledSiteObservations.find((item) => item.id === siteObs.id);
@@ -23,10 +50,10 @@ const toggleImages = (siteObs: SiteObservation, off= false) => {
         if (siteObs.imageCounts.WV.images || siteObs.imageCounts.S2.images) {
             const tempArr = [...state.enabledSiteObservations];
             let imageList: SiteObservationImage[] = [];
-            if (siteObs.imageCounts.WV.images && state.observationSources.includes('WV')) {
+            if (siteObs.imageCounts.WV.images && state.siteObsSatSettings.observationSources.includes('WV')) {
               imageList = [...siteObs.imageCounts.WV.images]
             }
-            if (siteObs.imageCounts.S2.images && state.observationSources.includes('S2')) {
+            if (siteObs.imageCounts.S2.images && state.siteObsSatSettings.observationSources.includes('S2')) {
               imageList = [...imageList, ...siteObs.imageCounts.S2.images]
             }
             tempArr.push({
@@ -65,7 +92,7 @@ const canGetImages = computed(() => ({
 const currentClosestTimestamp = computed(() => {
   const observation = state.enabledSiteObservations.find((item) => item.id === props.siteObservation.id);
   if (observation) {
-    const images = observation.images.filter((item) => !item.disabled)
+    const images = observation.images.filter((item) => imageFilter(item, state.siteObsSatSettings));
     if (images.length) {
       const closest = images.map((item) => item.timestamp).reduce((prev, curr) => {
                   return Math.abs(curr - state.timestamp) < Math.abs(prev - state.timestamp) ? curr : prev
@@ -118,6 +145,9 @@ const stopLooping = () => {
     state.loopingId = null;
   }
 }
+const isRunning = computed(() => {
+  return !!(props.siteObservation.job && props.siteObservation.job.status === 'Running');
+});
 </script>
 
 <template>
@@ -220,17 +250,25 @@ const stopLooping = () => {
               )}`
           }}
         </div>
+        <div
+          v-if="isRunning"
+          class="px-2 text-sm col-span-3"
+          style="width: 100%"
+        >
+          <b>Downloading Images</b>
+          <progress class="progress progress-primary" />
+        </div>
         <div class="col-span-4 text-sm font-light text-gray-600 group-open:text-gray-100">
           <button
             class="btn-accent btn-xs m-1"
-            :class="{'btn-disabled': canGetImages.WV === 0}"
+            :class="{'btn-disabled': canGetImages.WV === 0 || isRunning}"
             @click="getImages(siteObservation.id, 'WV')"
           >
             Get WV
           </button>
           <button
             class="btn-accent btn-xs m-1"
-            :class="{'btn-disabled': canGetImages.S2 === 0}"
+            :class="{'btn-disabled': canGetImages.S2 === 0 || isRunning }"
             @click="getImages(siteObservation.id, 'S2')"
           >
             Get S2

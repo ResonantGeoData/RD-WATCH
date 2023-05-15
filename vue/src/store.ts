@@ -43,6 +43,7 @@ export interface SiteObservationImage {
   timestamp: number;
   source: 'S2' | 'WV' | 'L8';
   cloudcover?: number;
+  percent_black?: number;
   siteobs_id: number | null;
   disabled?: boolean;
 }
@@ -72,6 +73,7 @@ export interface SiteObservation {
     average: number,
   }
   imagesActive: boolean;
+  job?: { status: 'Running' | 'Complete' | 'Error', error?: '', timestamp: number };
   bbox: { xmin: number; ymin: number; xmax: number; ymax: number };
 }
 
@@ -86,6 +88,13 @@ export interface SatelliteData {
   loadingSatelliteImages: boolean;
   cloudCover: number;
   satelliteSources: ('S2' |'WorldView')[];
+}
+
+export interface siteObsSatSettings {
+  observationSources: ('S2' | 'WV' | 'L8')[];
+  percentBlackFilter: number;
+  cloudCoverFilter: number;
+  imageOpacity: number;
 }
 
 export const state = reactive<{
@@ -104,7 +113,7 @@ export const state = reactive<{
   regionMap: Record<Region["id"], Region["name"]>
   selectedObservations: SiteObservation[];
   enabledSiteObservations: EnabledSiteObservations[],
-  observationSources: ('S2' | 'WV' | 'L8')[],
+  siteObsSatSettings: siteObsSatSettings,
   loopingInterval: NodeJS.Timeout | null,
   loopingId: number | null,
 }>({
@@ -128,7 +137,7 @@ export const state = reactive<{
     satelliteTimeList:[],
     satelliteTimeStamp: null,
     satelliteBounds: [],
-    imageOpacity: 0.75,
+    imageOpacity: 1.0,
     loadingSatelliteImages: false,
     satelliteTimeSource: 'S2',
     cloudCover: 100,
@@ -141,7 +150,12 @@ export const state = reactive<{
   regionMap: {},
   selectedObservations: [],
   enabledSiteObservations: [],
-  observationSources: ['S2', 'WV'],
+  siteObsSatSettings: {
+    observationSources: ['S2', 'WV'],
+    cloudCoverFilter: 70,
+    percentBlackFilter: 70,
+    imageOpacity: 1.0,
+  },
   loopingInterval: null,
   loopingId: null,
 });
@@ -213,6 +227,7 @@ export const getSiteObservationDetails = async (siteId: string) => {
     max: maxScore,
     average: avgScore,
   },
+  job: data.job,
   bbox: data.bbox,
 };
   if (foundIndex === -1) {

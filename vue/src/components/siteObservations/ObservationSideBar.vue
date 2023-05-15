@@ -3,6 +3,34 @@ import { computed, onUnmounted } from "vue";
 import { EnabledSiteObservations, SiteObservationImage, state } from '../../store'
 import SiteObservationDisplay from "./SiteObservationDisplay.vue";
 import { hoveredInfo } from "../../interactions/mouseEvents";
+
+const cloudFilter = computed({
+  get() {
+    return state.siteObsSatSettings.cloudCoverFilter;
+  },
+  set(val: number) {
+    state.siteObsSatSettings = { ...state.siteObsSatSettings, cloudCoverFilter: val };
+  },
+});
+
+const percentBlackFilter = computed({
+  get() {
+    return state.siteObsSatSettings.percentBlackFilter;
+  },
+  set(val: number) {
+    state.siteObsSatSettings = { ...state.siteObsSatSettings, percentBlackFilter: val };
+  },
+});
+
+const imageOpacity = computed({
+  get() {
+    return state.siteObsSatSettings.imageOpacity;
+  },
+  set(val: number) {
+    state.siteObsSatSettings = { ...state.siteObsSatSettings, imageOpacity: val };
+  },
+});
+
 const clearAll = () => {
   state.enabledSiteObservations = [];
   state.selectedObservations = [];
@@ -12,7 +40,7 @@ const updateSources = () => {
   state.enabledSiteObservations.filter((item) => {
     const tempImages: SiteObservationImage[] = [];
     item.images.forEach((image) => {
-      if (!state.observationSources.includes(image.source)) {
+      if (!state.siteObsSatSettings.observationSources.includes(image.source)) {
         image.disabled = true;
       } else if (image.disabled) {
         delete image.disabled;
@@ -28,34 +56,35 @@ const updateSources = () => {
 }
 const S2Imagery = computed({
   get() {
-    return state.observationSources.includes('S2');
+    return state.siteObsSatSettings.observationSources.includes('S2');
   },
   set(val: boolean) {
-    if (val && !state.observationSources.includes('S2')) {
-      state.observationSources.push('S2');
+    if (val && !state.siteObsSatSettings.observationSources.includes('S2')) {
+      state.siteObsSatSettings.observationSources.push('S2');
     }
-    if (!val && state.observationSources.includes('S2')) {
-      const index = state.observationSources.findIndex((item) => item === 'S2');
-      state.observationSources.splice(index, 1);
+    if (!val && state.siteObsSatSettings.observationSources.includes('S2')) {
+      const index = state.siteObsSatSettings.observationSources.findIndex((item) => item === 'S2');
+      state.siteObsSatSettings.observationSources.splice(index, 1);
     }
     updateSources();
   },
 });
 const WVImagery = computed({
   get() {
-    return state.observationSources.includes('WV');
+    return state.siteObsSatSettings.observationSources.includes('WV');
   },
   set(val: boolean) {
-    if (val && !state.observationSources.includes('WV')) {
-      state.observationSources.push('WV');
+    if (val && !state.siteObsSatSettings.observationSources.includes('WV')) {
+      state.siteObsSatSettings.observationSources.push('WV');
     }
-    if (!val && state.observationSources.includes('WV')) {
-      const index = state.observationSources.findIndex((item) => item === 'WV');
-      state.observationSources.splice(index, 1);
+    if (!val && state.siteObsSatSettings.observationSources.includes('WV')) {
+      const index = state.siteObsSatSettings.observationSources.findIndex((item) => item === 'WV');
+      state.siteObsSatSettings.observationSources.splice(index, 1);
     }
     updateSources();
   },
 });
+
 onUnmounted(() => {
   if (state.loopingInterval !== null) {
     clearInterval(state.loopingInterval);
@@ -73,7 +102,7 @@ onUnmounted(() => {
       class="flex h-full flex-col overflow-hidden rounded-xl bg-white drop-shadow-2xl "
     >
       <h1 class="mx-4">
-        Selected Observations
+        Selected Evaluations
       </h1>
       <div class="grid grid-cols-4 mx-4">
         <div class="col-span-4">
@@ -101,6 +130,51 @@ onUnmounted(() => {
           >
             Clear All
           </button>
+        </div>
+        <div class="col-span-4">
+          <div class="form-control">
+            <label class="label cursor-pointer">
+              <span class="label-text">Cloud Cover:</span>
+              <input
+                v-model.number="cloudFilter"
+                type="range"
+                min="0"
+                max="100"
+                step="1"
+                class="range range-primary"
+              >
+            </label>
+          </div>
+        </div>
+        <div class="col-span-4">
+          <div class="form-control">
+            <label class="label cursor-pointer">
+              <span class="label-text">Percent Black:</span>
+              <input
+                v-model.number="percentBlackFilter"
+                type="range"
+                min="0"
+                max="100"
+                step="1"
+                class="range range-primary"
+              >
+            </label>
+          </div>
+        </div>
+        <div class="col-span-4">
+          <div class="form-control">
+            <label class="label cursor-pointer">
+              <span class="label-text">Image Opacity:</span>
+              <input
+                v-model.number="imageOpacity"
+                type="range"
+                min="0"
+                max="1"
+                step=".05"
+                class="range range-primary"
+              >
+            </label>
+          </div>
         </div>
       </div>
 

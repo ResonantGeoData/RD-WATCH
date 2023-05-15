@@ -48,6 +48,7 @@ onMounted(() => {
         },
         state.satellite,
         state.enabledSiteObservations,
+        state.siteObsSatSettings,
         ),
         bounds: [
           [state.bbox.xmin, state.bbox.ymin],
@@ -83,7 +84,7 @@ watch([() => state.timestamp, () => state.filters, () => state.satellite,
   setFilter("observations-outline", observationFilter);
   setFilter("observations-text", observationFilter);
   map.value?.setStyle(
-  style(state.timestamp, state.filters, state.satellite, state.enabledSiteObservations),
+  style(state.timestamp, state.filters, state.satellite, state.enabledSiteObservations, state.siteObsSatSettings),
   );
 });
 

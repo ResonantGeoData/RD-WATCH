@@ -1,11 +1,10 @@
 import logging
 
-import numpy as np
 import rasterio  # type: ignore
 from rio_tiler.io.cogeo import COGReader
-from rio_tiler.models import ImageData
 
 logger = logging.getLogger(__name__)
+
 
 def get_raster_tile(uri: str, z: int, x: int, y: int) -> bytes:
     # logger.warning(f'SITE URI: {uri}')

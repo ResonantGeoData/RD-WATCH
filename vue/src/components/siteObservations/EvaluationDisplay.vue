@@ -109,7 +109,8 @@ const currentClosestTimestamp = computed(() => {
       const closest = images.map((item) => item.timestamp).reduce((prev, curr) => {
                   return Math.abs(curr - state.timestamp) < Math.abs(prev - state.timestamp) ? curr : prev
               });
-      const index = observation.images.findIndex((item) => item.timestamp === closest);
+      const rootIndex = observation.images.findIndex((item) => item.timestamp === closest);
+      const index = images.findIndex((item) => item.timestamp === closest);
       let prev = true;
       let next = true;
       if (index === 0) {
@@ -120,15 +121,15 @@ const currentClosestTimestamp = computed(() => {
       }
       return {
         time: `${new Date(closest * 1000).toLocaleDateString()} ${new Date(closest * 1000).toLocaleTimeString()}`, 
-        type: observation.images[index].source,
+        type: observation.images[rootIndex].source,
         prev,
         next,
-        siteobs: observation.images[index].siteobs_id,
-        total: observation.images.length,
+        siteobs: observation.images[rootIndex].siteobs_id,
+        total: observation.images.filter((item) => item.source !== 'L8').length,
         filteredTotal: images.length,
         index,
-        cloudCover: observation.images[index].cloudcover,
-        percentBlack: observation.images[index].percent_black,
+        cloudCover: observation.images[rootIndex].cloudcover,
+        percentBlack: observation.images[rootIndex].percent_black,
        };
     }
   }
@@ -138,21 +139,21 @@ const goToTimestamp = (dir: number, loop = false) => {
   if (currentClosestTimestamp.value && currentClosestTimestamp.value.time) {
     const observation = state.enabledSiteObservations.find((item) => item.id === props.siteObservation.id);
     if (observation) {
-      const closest = observation.images.filter((item) => !item.disabled).map((item) => item.timestamp).reduce((prev, curr) => {
+      const images = observation.images.filter((item) => imageFilter(item, state.siteObsSatSettings));
+      const closest = images.filter((item) => !item.disabled).map((item) => item.timestamp).reduce((prev, curr) => {
                 return Math.abs(curr - state.timestamp) < Math.abs(prev - state.timestamp) ? curr : prev
             });
-      const index = observation.images.findIndex((item) => item.timestamp === closest);
-      if (dir === 1 && index + 1< observation.images.length) {
-        state.timestamp = observation.images[index + 1].timestamp;
-      } else if (dir === 1 && loop && observation.images.length) {
-        state.timestamp = observation.images[0].timestamp;
+      const index = images.findIndex((item) => item.timestamp === closest);
+      if (dir === 1 && index + 1< images.length) {
+        state.timestamp = images[index + 1].timestamp;
+      } else if (dir === 1 && loop && images.length) {
+        state.timestamp = images[0].timestamp;
       }
       if (dir === -1 && index > 0) {
-        state.timestamp = observation.images[index - 1].timestamp;
+        state.timestamp = images[index - 1].timestamp;
       }
     }
   }
-  console.log(state.timestamp);
 }
 const startLooping = () => {
   if (state.loopingInterval !== null) {

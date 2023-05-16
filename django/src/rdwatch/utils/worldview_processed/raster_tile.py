@@ -22,7 +22,7 @@ def get_worldview_processed_visual_tile(
     ):
         with COGReader(input=capture.uri) as img:
             rgb = img.tile(x, y, z, tilesize=512)
-        rgb.rescale(in_range=((0, 2**11),))
+        rgb.rescale(in_range=((0, 10000),))
         return rgb.render(img_format='WEBP')
 
 
@@ -44,5 +44,5 @@ def get_worldview_processed_visual_bbox(
     ):
         with COGReader(input=capture.uri) as img:
             rgb = img.part(bbox)
-        rgb.rescale(in_range=((0, 2**11),))
+        rgb.rescale(in_range=((0, 10000),))
         return rgb.render(img_format=format)

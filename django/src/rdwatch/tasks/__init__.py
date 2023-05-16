@@ -8,7 +8,7 @@ from pyproj import Transformer
 
 from django.core.files import File
 
-from rdwatch.models import SatelliteFetching, SiteEvaluation, SiteImage, SiteObservation
+from rdwatch.models import SatelliteFetching, SiteImage, SiteObservation
 from rdwatch.utils.raster_tile import get_raster_bbox
 from rdwatch.utils.satellite_bands import get_bands
 from rdwatch.utils.worldview_processed.raster_tile import (
@@ -115,15 +115,6 @@ def fetch_boundbox_image(
 def get_siteobservations_images(
     site_eval_id: int, baseConstellation='WV', force=False
 ) -> None:
-    site_eval = SiteEvaluation.objects.filter(pk=site_eval_id).first()
-    fetching_task = SatelliteFetching.objects.filter(siteeval=site_eval).first()
-    if fetching_task is None:
-        fetching_task = SatelliteFetching.objects.create(
-            siteeval=site_eval, timestamp=datetime.now()
-        )
-    fetching_task.timestamp = datetime.now()
-    fetching_task.status = SatelliteFetching.Status.RUNNING
-    fetching_task.save()
     site_observations = SiteObservation.objects.filter(siteeval=site_eval_id)
     transformer = Transformer.from_crs('EPSG:3857', 'EPSG:4326')
     found_timestamps = {}
@@ -258,5 +249,6 @@ def get_siteobservations_images(
                         percent_black=percent_black,
                         source=baseConstellation,
                     )
+    fetching_task = SatelliteFetching.objects.get(siteeval_id=site_eval_id)
     fetching_task.status = SatelliteFetching.Status.COMPLETE
     fetching_task.save()

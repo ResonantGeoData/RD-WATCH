@@ -7,7 +7,7 @@ class SatelliteFetching(models.Model):
         RUNNING = 'Running'
         ERROR = 'Error'
 
-    siteeval = models.ForeignKey(
+    siteeval = models.OneToOneField(
         to='SiteEvaluation',
         on_delete=models.CASCADE,
         db_index=True,

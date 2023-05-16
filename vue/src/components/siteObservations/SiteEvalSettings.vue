@@ -55,7 +55,7 @@ const cloudFilter = computed({
   <div class="col-span-4">
     <div class="form-control">
       <label class="label cursor-pointer">
-        <span class="label-text">Percent Black:</span>
+        <span class="label-text">NoData:</span>
         <input
           v-model.number="percentBlackFilter"
           type="range"

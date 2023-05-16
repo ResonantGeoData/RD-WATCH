@@ -105,7 +105,6 @@ const currentClosestTimestamp = computed(() => {
   const observation = state.enabledSiteObservations.find((item) => item.id === props.siteObservation.id);
   if (observation) {
     const images = observation.images.filter((item) => imageFilter(item, state.siteObsSatSettings));
-    console.log(images);
     if (images.length) {
       const closest = images.map((item) => item.timestamp).reduce((prev, curr) => {
                   return Math.abs(curr - state.timestamp) < Math.abs(prev - state.timestamp) ? curr : prev
@@ -350,7 +349,7 @@ const isRunning = computed(() => {
           v-if="currentClosestTimestamp && currentClosestTimestamp.percentBlack !== undefined"
           class="col-span-1 text-xs font-light justify-self-end"
         >
-          Black: {{ currentClosestTimestamp.percentBlack.toFixed(0) }}%
+          NoData: {{ currentClosestTimestamp.percentBlack.toFixed(0) }}%
         </div>
 
         <div 

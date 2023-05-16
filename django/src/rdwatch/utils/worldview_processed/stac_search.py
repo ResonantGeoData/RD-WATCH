@@ -4,6 +4,8 @@ from os import environ, path
 from typing import Literal, TypedDict
 from urllib.request import Request, urlopen
 
+from django.conf import settings
+
 
 class Link(TypedDict):
     rel: str
@@ -49,6 +51,12 @@ class SearchParams(TypedDict, total=False):
     limit: int
 
 
+COLLECTIONS: list[str] = []
+
+if settings.ACCENTURE_VERSION is not None:
+    COLLECTIONS.append(f'ta1-wv-acc-{settings.ACCENTURE_VERSION}')
+
+
 def _fmt_time(time: datetime):
     return f'{time.isoformat()[:19]}Z'
 
@@ -69,7 +77,7 @@ def worldview_search(
     else:
         time_str = f'{_fmt_time(timestamp)}Z'
     params['datetime'] = time_str
-    params['collections'] = ['ta1-wv-acc-2']
+    params['collections'] = COLLECTIONS
     params['page'] = page
     params['limit'] = 100
     request = Request(

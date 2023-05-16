@@ -181,7 +181,7 @@ export const getSiteObservationDetails = async (siteId: string) => {
   const { images } = data;
   const worldViewList = images.results.filter((item) => item.source === 'WV')
     .sort((a, b) => (a.timestamp - b.timestamp));
-  const S2List = images.results.filter((item) => item.source === 'S2');
+  const S2List = images.results.filter((item) => item.source === 'S2').sort((a, b) => (a.timestamp - b.timestamp));
 
   const L8 = { 
     total: results.filter((item) => item.constellation === 'L8').length,

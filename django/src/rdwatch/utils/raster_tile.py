@@ -54,10 +54,8 @@ def process_image(cog: COGReader, img: ImageData):
 
     # Save the rescaled image
     img.data = img_8bit
-    
+
     return img
-
-
 
 
 def get_raster_tile(uri: str, z: int, x: int, y: int) -> bytes:

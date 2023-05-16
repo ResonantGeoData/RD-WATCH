@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { computed, onBeforeUnmount } from "vue";
+import { computed, onBeforeMount, onBeforeUnmount } from "vue";
 import { ApiService } from "../../client";
 import { ImageBBox, SiteObservationImage, getSiteObservationDetails, state } from "../../store";
 import { SiteObservation } from "../../store";
@@ -20,6 +20,16 @@ const checkSiteObs = async () => {
     loopingInterval = null;
   }
 }
+
+onBeforeMount(() => {
+  if (props.siteObservation.job && props.siteObservation.job.status === 'Running') {
+    if (loopingInterval !== null) {
+      clearInterval(loopingInterval);
+      loopingInterval = null;
+    }
+    loopingInterval = setInterval(checkSiteObs, 1000);
+  }
+})
 
 onBeforeUnmount(() => {
   if (loopingInterval !== null) {
@@ -95,11 +105,12 @@ const currentClosestTimestamp = computed(() => {
   const observation = state.enabledSiteObservations.find((item) => item.id === props.siteObservation.id);
   if (observation) {
     const images = observation.images.filter((item) => imageFilter(item, state.siteObsSatSettings));
+    console.log(images);
     if (images.length) {
       const closest = images.map((item) => item.timestamp).reduce((prev, curr) => {
                   return Math.abs(curr - state.timestamp) < Math.abs(prev - state.timestamp) ? curr : prev
               });
-      const index = images.findIndex((item) => item.timestamp === closest);
+      const index = observation.images.findIndex((item) => item.timestamp === closest);
       let prev = true;
       let next = true;
       if (index === 0) {
@@ -108,7 +119,18 @@ const currentClosestTimestamp = computed(() => {
       if (index + 1 >= images.length) {
         next = false;
       }
-      return {time: new Date(closest * 1000).toLocaleDateString(), type: observation.images[index].source, prev, next, siteobs: observation.images[index].siteobs_id };
+      return {
+        time: `${new Date(closest * 1000).toLocaleDateString()} ${new Date(closest * 1000).toLocaleTimeString()}`, 
+        type: observation.images[index].source,
+        prev,
+        next,
+        siteobs: observation.images[index].siteobs_id,
+        total: observation.images.length,
+        filteredTotal: images.length,
+        index,
+        cloudCover: observation.images[index].cloudcover,
+        percentBlack: observation.images[index].percent_black,
+       };
     }
   }
   return null;
@@ -131,6 +153,7 @@ const goToTimestamp = (dir: number, loop = false) => {
       }
     }
   }
+  console.log(state.timestamp);
 }
 const startLooping = () => {
   if (state.loopingInterval !== null) {
@@ -154,10 +177,10 @@ const isRunning = computed(() => {
 
 <template>
   <details
-    class="relative rounded-lg border-2 border-gray-50 open:border-blue-600 hover:border-gray-200"
+    class="relative rounded-lg border-2 border-gray-50 open:border-blue-600 hover:border-gray-200 siteevaldisplay"
   >
     <summary
-      class="list-none bg-gray-50 p-2 group-hover:bg-gray-200"
+      class="list-none bg-gray-50 p-2"
     >
       <div class="grid grid-cols-3">
         <div class="col-span-3">
@@ -191,7 +214,7 @@ const isRunning = computed(() => {
             </span>
           </div>
         </div>
-        <div class="col-span-4 text-sm font-light group-open:text-white ">
+        <div class="col-span-4 text-sm font-light">
           <div class="grid grid-cols-4 ">
             <div class="justify-self-center">
               Source
@@ -226,27 +249,27 @@ const isRunning = computed(() => {
           </div>
         </div>
         <div
-          class="col-span-1 text-sm font-light text-gray-600 group-open:text-gray-100"
+          class="col-span-1 text-sm font-light text-gray-600"
         >
           score:
         </div>
-        <div class="col-span-3 text-sm font-light group-open:text-white">
+        <div class="col-span-3 text-sm font-light">
           {{ siteObservation.score.min.toFixed(2) }} to {{ siteObservation.score.max.toFixed(2) }} 
         </div>
         <div
-          class="col-span-1 text-sm font-light text-gray-600 group-open:text-gray-100"
+          class="col-span-1 text-sm font-light text-gray-600"
         >
           average:
         </div>
-        <div class="col-span-3 text-sm font-light group-open:text-white">
+        <div class="col-span-3 text-sm font-light ">
           {{ siteObservation.score.average.toFixed(2) }}
         </div>
         <div
-          class="col-span-1 text-sm font-light text-gray-600 group-open:text-gray-100"
+          class="col-span-1 text-sm font-light text-gray-600 "
         >
           dates:
         </div>
-        <div class="col-span-3 text-sm font-light group-open:text-white">
+        <div class="col-span-3 text-sm font-light">
           {{
             siteObservation.timerange === null
               ? "--"
@@ -271,7 +294,7 @@ const isRunning = computed(() => {
           <b>Downloading Images</b>
           <progress class="progress progress-primary" />
         </div>
-        <div class="col-span-4 text-sm font-light text-gray-600 group-open:text-gray-100">
+        <div class="col-span-4 text-sm font-light text-gray-600">
           <button
             class="btn-accent btn-xs m-1"
             :class="{'btn-disabled': canGetImages.WV === 0 || isRunning}"
@@ -294,7 +317,6 @@ const isRunning = computed(() => {
             Get L8
           </button>
 
-
           <span v-if="imagesActive">
             <button
               v-if="state.loopingId !== siteObservation.id"
@@ -312,6 +334,25 @@ const isRunning = computed(() => {
             </button>
           </span>
         </div>
+        <div
+          v-if="currentClosestTimestamp"
+          class="col-span-1 text-xs font-light justify-self-left"
+        >
+          Filter: {{ currentClosestTimestamp.filteredTotal }} of {{ currentClosestTimestamp.total }}
+        </div>
+        <div
+          v-if="currentClosestTimestamp"
+          class="col-span-1 text-xs font-light justify-self-center"
+        >
+          Cloud: {{ currentClosestTimestamp.cloudCover }}%
+        </div>
+        <div
+          v-if="currentClosestTimestamp && currentClosestTimestamp.percentBlack !== undefined"
+          class="col-span-1 text-xs font-light justify-self-end"
+        >
+          Black: {{ currentClosestTimestamp.percentBlack.toFixed(0) }}%
+        </div>
+
         <div 
           v-if="imagesActive && currentClosestTimestamp"
           class="col-span-4 grid grid-flow-col"
@@ -338,6 +379,11 @@ const isRunning = computed(() => {
 </template>
 
 <style scoped>
+.siteevaldisplay {
+  -webkit-user-select: none; /* Safari */
+  -ms-user-select: none; /* IE 10 and IE 11 */
+  user-select: none; /* Standard syntax */
+}
 .model-title {
   max-width: 250px;
   overflow: hidden;

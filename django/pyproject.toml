@@ -40,19 +40,18 @@ pillow = "^9.5.0"
 django-configurations = {extras = ["cache", "database", "email"], version = "^2.4.1"}
 django-storages = {extras = ["boto3"], version = "^1.13.2"}
 
-[tool.poetry.dev-dependencies]
-black = "~22.6.0"
-django-stubs = { version = "~1.12.0", extras = [ "compatible-mypy" ] }
-djangorestframework-stubs = { version = "~1.7.0", extras = [ "compatible-mypy" ] }
-isort = "~5.10.1"
-mypy = "0.961"
-taskipy = "^1.10.2"
-flake8 = "^5.0.4"
-flake8-django = "^1.1.5"
-pre-commit = "^3.0.3"
-tox = "^4.5.0"
-django-minio-storage = "^0.5.0"
-
+[tool.poetry.group.dev.dependencies]
+black = "^23.3.0"
+django-stubs = "^4.2.0"
+djangorestframework-stubs = "^3.14.0"
+isort = "^5.12.0"
+mypy = "^1.3.0"
+taskipy = "^1.10.4"
+flake8 = "^6.0.0"
+flake8-django = "^1.2"
+pre-commit = "^3.3.1"
+tox = "^4.5.1"
+django-minio-storage = "^0.5.2"
 
 [tool.taskipy.tasks]
 "build:openapi" = "DJANGO_SETTINGS_MODULE=rdwatch.server.settings django-admin generateschema --format openapi-json --file openapi.json"

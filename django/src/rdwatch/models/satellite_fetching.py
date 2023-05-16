@@ -11,6 +11,7 @@ class SatelliteFetching(models.Model):
         to='SiteEvaluation',
         on_delete=models.CASCADE,
         db_index=True,
+        related_name='satellite_fetching',
     )
     timestamp = models.DateTimeField(
         help_text='Start time of the task',

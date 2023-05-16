@@ -22,11 +22,15 @@ def process_image(cog: COGReader, img: ImageData):
     std_total = 0
     for key in stats.keys():
         std_total += stats[key].std
-    std_val = std_total / len(stats.keys())
-    min_values = np.array([stats[str(i + 1)].percentile_2 for i in range(img_data.shape[0])])
-    max_values = np.array([stats[str(i + 1)].percentile_98 for i in range(img_data.shape[0])])
+    std_total / len(stats.keys())
+    min_values = np.array(
+        [stats[str(i + 1)].percentile_2 for i in range(img_data.shape[0])]
+    )
+    max_values = np.array(
+        [stats[str(i + 1)].percentile_98 for i in range(img_data.shape[0])]
+    )
     img_masked = np.ma.masked_equal(img_data, nodata_value)
-    is8bit = img_data.dtype == np.uint8
+    # is8bit = img_data.dtype == np.uint8
     # logger.warning(f'STD Val AVG: {std_val}')
     # logger.warning(f'MinValues: {min_values}')
     # logger.warning(f'MaxValues: {max_values}')
@@ -34,10 +38,11 @@ def process_image(cog: COGReader, img: ImageData):
     # logger.warning(f'NoDataValue: {nodata_value}')
     # logger.warning(f'is8bit: {is8bit}')
 
-    if not np.array_equal(min_values, np.array([1., 1., 1.])):
+    if not np.array_equal(min_values, np.array([1.0, 1.0, 1.0])):
         return img
 
-    # Check if any min_values is equal to nodata_value and replace with the minimum of the corresponding band
+    # Check if any min_values is equal to nodata_value and
+    # replace with the minimum of the corresponding band
     for i, min_value in enumerate(min_values):
         if min_value == nodata_value:
             min_values[i] = base_scale_value
@@ -48,7 +53,13 @@ def process_image(cog: COGReader, img: ImageData):
     img_8bit = np.zeros_like(img_data, dtype=np.uint8)
     for band in range(img_data.shape[0]):
         img_8bit[band] = np.ma.filled(
-            ((img_masked[band] - min_values[band]) * 255 / (max_values[band] - min_values[band])).clip(0, 255).astype(np.uint8),
+            (
+                (img_masked[band] - min_values[band])
+                * 255
+                / (max_values[band] - min_values[band])
+            )
+            .clip(0, 255)
+            .astype(np.uint8),
             fill_value=nodata_value,
         )
 

@@ -3,7 +3,7 @@ import { computed, onBeforeMount, onBeforeUnmount } from "vue";
 import { ApiService } from "../../client";
 import { ImageBBox, SiteObservationImage, getSiteObservationDetails, state } from "../../store";
 import { SiteObservation } from "../../store";
-import { ArrowPathIcon, ChevronLeftIcon, ChevronRightIcon, Cog8ToothIcon, XMarkIcon } from "@heroicons/vue/24/solid";
+import { ArrowPathIcon, ChevronLeftIcon, ChevronRightIcon, XMarkIcon } from "@heroicons/vue/24/solid";
 import { imageFilter } from "../../mapstyle/images";
 import { PhotoIcon } from "@heroicons/vue/24/solid";
 
@@ -364,9 +364,10 @@ const isRunning = computed(() => {
           />
           <span
             v-if="currentClosestTimestamp"
-            style="font-size: 1em; min-width:200px; text-align: center;"
-            class="justify-self-center self-center"
-          >{{ currentClosestTimestamp.time }} - {{ currentClosestTimestamp.type }}{{ currentClosestTimestamp.siteobs !== null ? '*': '' }}</span>
+            class="justify-self-center self-center timedisplay"
+          >
+            {{ currentClosestTimestamp.time }} - {{ currentClosestTimestamp.type }}{{ currentClosestTimestamp.siteobs !== null ? '*': '' }}
+          </span>
           <ChevronRightIcon
             class="h-10 text-blue-600 "
             :class="{'icon': currentClosestTimestamp.next, 'text-gray-600': !currentClosestTimestamp.next}"
@@ -398,6 +399,12 @@ const isRunning = computed(() => {
   font-weight: bolder;
 }
 
+.timedisplay {
+  font-size: 1em;
+  min-width:220px;
+  max-width:220px;
+  text-align: center;
+}
 .hover:hover {
   cursor: pointer;
 }

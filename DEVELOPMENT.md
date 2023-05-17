@@ -23,8 +23,8 @@ This configuration still uses Docker to run attached services in the background,
 but allows developers to run Python code on their native system.
 
 ### Initial Setup
-1. Run `cp dev/.env.template.private dev/.env.private`
-2. Set the environment variables in `dev/.env.private`.
+1. Make a copy of `template.env` and call it `.env`.
+2. Set the environment variables in `.env`.
 3. Run `docker compose -f ./docker-compose.yaml up -d`
 4. Install Python 3.10
 5. Install

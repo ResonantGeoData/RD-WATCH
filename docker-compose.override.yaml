@@ -12,8 +12,12 @@ services:
     # Log printing via Rich is enhanced by a TTY
     tty: true
     env_file:
+      - .env
       - ./dev/.env.docker-compose
-      - ./dev/.env.private
+    environment:
+      RDWATCH_POSTGRESQL_URI: "postgresql://rdwatch:${RDWATCH_SECRET_KEY:?}@postgresql:5432/rdwatch"
+      RDWATCH_REDIS_URI: "redis://:${RDWATCH_SECRET_KEY:?}@redis-master:6379"
+      RDWATCH_CELERY_BROKER_URL: amqp://rdwatch:${RDWATCH_SECRET_KEY:?}@rabbitmq:5672/
     volumes:
       - ./django:/app/django
     ports:
@@ -40,8 +44,12 @@ services:
     # Log printing via Rich is enhanced by a TTY
     tty: true
     env_file:
+      - .env
       - ./dev/.env.docker-compose
-      - ./dev/.env.private
+    environment:
+      RDWATCH_POSTGRESQL_URI: "postgresql://rdwatch:${RDWATCH_SECRET_KEY:?}@postgresql:5432/rdwatch"
+      RDWATCH_REDIS_URI: "redis://:${RDWATCH_SECRET_KEY:?}@redis-master:6379"
+      RDWATCH_CELERY_BROKER_URL: amqp://rdwatch:${RDWATCH_SECRET_KEY:?}@rabbitmq:5672/
     volumes:
       - ./django:/app/django
     depends_on:

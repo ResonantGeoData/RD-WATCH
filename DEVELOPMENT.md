@@ -5,8 +5,8 @@ This document gives an overview of the code contained in this monorepo and the r
 ## Develop with Docker (recommended quickstart)
 This is the simplest configuration for developers to start with.
 
-1. Run `cp dev/.env.template.private dev/.env.private`
-2. Set the environment variables in `dev/.env.private`.
+1. Make a copy of `template.env` and call it `.env`.
+2. Set the environment variables in `.env`.
 3. Run `docker compose up` to start the Django development server and Celery worker, plus all backing services
    like PostGIS, Redis, RabbitMQ, etc.
 4. Start the client development server:

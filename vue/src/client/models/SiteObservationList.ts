@@ -35,6 +35,7 @@ export type SiteObservationList = {
       ymax: number;
     };
   }>;
+  job?: { status: 'Running' | 'Complete' | 'Error', error?: '', timestamp: number }
   images: {
     count: number;
     results: SiteObservationImage[],

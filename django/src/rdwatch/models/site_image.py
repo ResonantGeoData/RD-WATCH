@@ -22,13 +22,14 @@ class SiteImage(models.Model):
     cloudcover = models.FloatField(
         null=True, help_text='Cloud Cover associated with Image'
     )
+    percent_black = models.FloatField(null=True, help_text='NoData coverage on image')
     source = models.CharField(
         max_length=2, blank=True, help_text='WV, S2, L8 imagery source'
     )
 
     def __str__(self):
-        tim = self.timestamp.isoformat()
-        return f'{self.siteeval}.{self.source}@{tim}'
+        time = self.timestamp.isoformat()
+        return f'{self.siteeval}.{self.source}@{time}'
 
     class Meta:
         indexes = [GistIndex(fields=['timestamp'])]

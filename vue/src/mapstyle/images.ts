@@ -1,12 +1,12 @@
-import { EnabledSiteObservations, ImageBBox } from '../store';
+import { EnabledSiteObservations, ImageBBox, SiteObservationImage, siteObsSatSettings } from '../store';
 import type { LayerSpecification, SourceSpecification } from "maplibre-gl";
 
 
 
-const getClosestTimestamp = (id: number, timestamp: number, enabledSiteObservations: EnabledSiteObservations[]) => {
+const getClosestTimestamp = (id: number, timestamp: number, enabledSiteObservations: EnabledSiteObservations[], settings: siteObsSatSettings) => {
     if (enabledSiteObservations.length > 0) {
         const observation = enabledSiteObservations.find((item) => item.id === id);
-        const images = observation?.images.filter((item) => !item.disabled);
+        const images = observation?.images.filter((item) => imageFilter(item, settings));
         if (observation && images?.length) {
             const closest = images.map((item) => item.timestamp).reduce((prev, curr) => {
                 return Math.abs(curr - timestamp) < Math.abs(prev - timestamp) ? curr : prev
@@ -43,6 +43,7 @@ function scaleBoundingBox(bbox: ImageBBox, scale: number) {
 export const buildImageSourceFilter = (
     timestamp: number,
     enabledSiteObservations: EnabledSiteObservations[],
+    settings: siteObsSatSettings,
 ) => {
     const results: Record<string, SourceSpecification> = {};
     enabledSiteObservations.forEach((item) => {
@@ -50,7 +51,7 @@ export const buildImageSourceFilter = (
         results[source] = 
         {
             type: 'image',
-            url: getClosestTimestamp(item.id, timestamp, enabledSiteObservations),
+            url: getClosestTimestamp(item.id, timestamp, enabledSiteObservations, settings),
             coordinates: scaleBoundingBox(item.bbox, 1.2),
         }
     });
@@ -60,6 +61,7 @@ export const buildImageSourceFilter = (
 export const buildImageLayerFilter = (
     timestamp: number,
     enabledSiteObservations: EnabledSiteObservations[],
+    settings: siteObsSatSettings,
 ): LayerSpecification[] => {
     const results: LayerSpecification[] = [];
     enabledSiteObservations.forEach((item) => {
@@ -70,10 +72,26 @@ export const buildImageLayerFilter = (
             'type': 'raster',
             'source': source,
             'paint': {
-                'raster-fade-duration': 0
+                'raster-fade-duration': 0,
+                "raster-opacity": settings.imageOpacity,
+
             }
         });
     });
     return results;
 
 }
+
+
+export const imageFilter = (item:SiteObservationImage, settings: siteObsSatSettings) =>  {
+    if (!item.disabled) {
+      if (item.cloudcover !== undefined && item.cloudcover > settings.cloudCoverFilter) {
+        return false;
+      }
+      if (item.percent_black !== undefined && item.percent_black > settings.percentBlackFilter ) {
+        return false;
+      }
+      return true;
+    }
+    return false;
+};

@@ -54,7 +54,6 @@ const popupLogic = (map: ShallowRef<null | Map>) => {
             hoveredInfo.value.region.push(
               `${item.properties.configuration_id}_${item.properties.region_id}_${item.properties.performer_id}`
             );
-            const area = item.properties.area;
             hoveredInfo.value.siteId.push(siteId);
             let fillString = "";
             if (!htmlMap[id]) {

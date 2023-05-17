@@ -15,7 +15,7 @@ import {
   layers as satelliteLayers,
 } from "./satellite-image";
 import type { StyleSpecification } from "maplibre-gl";
-import { EnabledSiteObservations, MapFilters, SatelliteData } from "../store";
+import { EnabledSiteObservations, MapFilters, SatelliteData, siteObsSatSettings } from "../store";
 import { buildImageLayerFilter, buildImageSourceFilter } from "./images";
 
 const tileServerURL =
@@ -25,13 +25,14 @@ export const style = (
   filters: MapFilters,
   satellite: SatelliteData,
   enabledSiteObservations: EnabledSiteObservations[],
+  settings: siteObsSatSettings,
 ): StyleSpecification => ({
   version: 8,
   sources: {
     ...naturalearthSources,
     ...openmaptilesSources,
     ...buildSatelliteSourceFilter(timestamp, satellite),
-    ...buildImageSourceFilter(timestamp, enabledSiteObservations),
+    ...buildImageSourceFilter(timestamp, enabledSiteObservations, settings),
     ...rdwatchtilesSources,
   },
   sprite: `${tileServerURL}/sprites/osm-liberty`,
@@ -45,7 +46,7 @@ export const style = (
     ...naturalearthLayers,
     ...openmaptilesLayers,
     ...satelliteLayers(timestamp, satellite),
-    ...buildImageLayerFilter(timestamp, enabledSiteObservations),
+    ...buildImageLayerFilter(timestamp, enabledSiteObservations, settings),
     ...rdwatchtilesLayers(timestamp, filters),
   ],
 });

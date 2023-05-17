@@ -1,6 +1,7 @@
 import io
 import logging
 from datetime import datetime, timedelta
+from urllib.error import URLError
 
 from celery import shared_task
 from PIL import Image
@@ -96,7 +97,15 @@ def fetch_boundbox_image(
     worldView=False,
 ):
     timebuffer = timedelta(days=1)
-    captures = get_range_captures(bbox, timestamp, constellation, timebuffer, worldView)
+    try:
+        captures = get_range_captures(
+            bbox, timestamp, constellation, timebuffer, worldView
+        )
+    except URLError as e:
+        logger.warning('Failed to get range capture because of URLError')
+        logger.warning(e)
+        return None
+
     if len(captures) == 0:
         return None
     closest_capture = min(captures, key=lambda band: abs(band.timestamp - timestamp))
@@ -166,6 +175,8 @@ def get_siteobservations_images(
             # logger.warning(f'Retrieved Image with timestamp: {timestamp}')
             output = f'tile_image_{observation.id}.jpg'
             image = File(io.BytesIO(bytes), name=output)
+            if image is None:  # No null/None images should be set
+                continue
             if found.exists():
                 existing = found.first()
                 existing.image.delete()  # remove previous image if new one found
@@ -214,6 +225,8 @@ def get_siteobservations_images(
             count += 1
             output = f'tile_image_{observation.siteeval}_nonobs_{count}.jpg'
             image = File(io.BytesIO(bytes), name=output)
+            if image is None:  # No null/None images should be set
+                continue
             found = SiteImage.objects.filter(
                 siteeval=baseSiteEval,
                 timestamp=capture.timestamp,

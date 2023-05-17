@@ -6,7 +6,7 @@ services:
     command: [
       "poetry", "run",
       "--directory", "/app/django",
-      "django-admin",
+      "/app/django/src/manage.py",
       "runserver", "0.0.0.0:8000"
     ]
     # Log printing via Rich is enhanced by a TTY

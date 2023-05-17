@@ -4,5 +4,5 @@ export type PerformerList = {
   count: number;
   next: null;
   previous: null;
-  results: Performer[];
+  items: Performer[];
 };

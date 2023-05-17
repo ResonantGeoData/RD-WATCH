@@ -9,8 +9,6 @@ services:
       "/app/django/src/manage.py",
       "runserver", "0.0.0.0:8000"
     ]
-    # Log printing via Rich is enhanced by a TTY
-    tty: true
     env_file:
       - .env
       - ./dev/.env.docker-compose
@@ -41,8 +39,6 @@ services:
       "--loglevel", "INFO",
       "--without-heartbeat",
     ]
-    # Log printing via Rich is enhanced by a TTY
-    tty: true
     env_file:
       - .env
       - ./dev/.env.docker-compose

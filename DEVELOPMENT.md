@@ -36,7 +36,7 @@ but allows developers to run Python code on their native system.
    2. `source ./dev/export-env.sh .env`
 
 ### Run Application
-1.  Ensure `docker compose -f ./docker-compose.yaml up -d` is still active
+1. Ensure `docker compose -f ./docker-compose.yaml up -d` is still active
 2. Run:
    1. `source ./dev/export-env.sh dev/.env.docker-compose-native`
    2. `source ./dev/export-env.sh .env`

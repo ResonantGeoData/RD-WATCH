@@ -31,7 +31,9 @@ but allows developers to run Python code on their native system.
    [`psycopg2` build prerequisites](https://www.psycopg.org/docs/install.html#build-prerequisites)
 6. Install Poetry
 7. Run `poetry --directory django install`
-8. Run `source ./dev/export-env.sh`
+8. Run the following commands to configure your environment:
+   1. `source ./dev/export-env.sh dev/.env.docker-compose-native`
+   2. `source ./dev/export-env.sh .env`
 
 ### Run Application
 1.  Ensure `docker compose -f ./docker-compose.yaml up -d` is still active

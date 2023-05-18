@@ -347,7 +347,7 @@ const isRunning = computed(() => {
           Cloud: {{ currentClosestTimestamp.cloudCover }}%
         </div>
         <div
-          v-if="currentClosestTimestamp && currentClosestTimestamp.percentBlack !== undefined"
+          v-if="currentClosestTimestamp && currentClosestTimestamp.percentBlack !== undefined && currentClosestTimestamp.percentBlack !== null"
           class="col-span-1 text-xs font-light justify-self-end"
         >
           NoData: {{ currentClosestTimestamp.percentBlack.toFixed(0) }}%

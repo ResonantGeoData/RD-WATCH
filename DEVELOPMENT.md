@@ -30,7 +30,7 @@ but allows developers to run Python code on their native system.
 5. Install
    [`psycopg2` build prerequisites](https://www.psycopg.org/docs/install.html#build-prerequisites)
 6. Install Poetry
-7. Run `poetry install`
+7. Run `poetry --directory django install`
 8. Run `source ./dev/export-env.sh`
 
 ### Run Application

@@ -47,6 +47,8 @@ class BaseConfiguration(Configuration):
         'PAGE_SIZE': 25,
     }
 
+    NINJA_PAGINATION_CLASS = 'ninja.pagination.PageNumberPagination'
+
     CACHES = {
         'default': {
             'BACKEND': 'django_redis.cache.RedisCache',

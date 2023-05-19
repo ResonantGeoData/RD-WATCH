@@ -20,7 +20,7 @@ const selectedPerformer: Ref<SelectedPerformer> = ref(props.modelValue);
 
 watchEffect(async () => {
   const performerList = await ApiService.getPerformers();
-  const performerResults = performerList["results"];
+  const performerResults = performerList.items
   performerResults.sort((a, b) => (a.team_name > b.team_name ? 1 : -1));
   performers.value = performerResults;
 });

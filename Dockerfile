@@ -39,6 +39,7 @@ CMD [ \
 # Base builder
 FROM base as builder
 COPY docker/keyrings/nodesource.gpg /usr/share/keyrings/nodesource.gpg
+RUN mkdir -p /poetry/venvs
 RUN apt-get update \
  && apt-get install --no-install-recommends --yes \
       build-essential \
@@ -50,7 +51,8 @@ RUN apt-get update \
       python3-dev \
  && rm -rf /var/lib/apt/lists/* \
  && poetry config installer.parallel true \
- && poetry config virtualenvs.in-project true
+ && poetry config virtualenvs.in-project false \
+ && poetry config virtualenvs.path /poetry/venvs
 
 FROM builder as vue-builder
 WORKDIR /app/vue

@@ -5,7 +5,7 @@ services:
     environment:
       POSTGRES_USER: rdwatch
       POSTGRES_DB: rdwatch
-      POSTGRES_PASSWORD: ${RDWATCH_SECRET_KEY:?}
+      POSTGRES_PASSWORD: secretkey
     volumes:
       - postgresql-data:/var/lib/postgresql/data
     ports:
@@ -17,8 +17,8 @@ services:
     volumes:
       - redis-master-data:/bitnami/redis/data
     environment:
-      REDIS_PASSWORD: ${RDWATCH_SECRET_KEY:?}
-      REDISCLI_AUTH: ${RDWATCH_SECRET_KEY:?}
+      REDIS_PASSWORD: secretkey
+      REDISCLI_AUTH: secretkey
       REDIS_NODES: redis-master redis-replica-1 redis-replica-2
       REDIS_CLUSTER_REPLICAS: 0
       REDIS_CLUSTER_CREATOR: "yes"
@@ -33,7 +33,7 @@ services:
     volumes:
       - redis-replica-1-data:/bitnami/redis/data
     environment:
-      REDIS_PASSWORD: ${RDWATCH_SECRET_KEY:?}
+      REDIS_PASSWORD: secretkey
       REDIS_NODES: redis-master redis-replica-1 redis-replica-2
 
   redis-replica-2:
@@ -41,7 +41,7 @@ services:
     volumes:
       - redis-replica-2-data:/bitnami/redis/data
     environment:
-      REDIS_PASSWORD: ${RDWATCH_SECRET_KEY:?}
+      REDIS_PASSWORD: secretkey
       REDIS_NODES: redis-master redis-replica-1 redis-replica-2
 
   minio:
@@ -53,7 +53,7 @@ services:
       - minio-data:/data
     environment:
       MINIO_ROOT_USER: rdwatch
-      MINIO_ROOT_PASSWORD: ${RDWATCH_SECRET_KEY:?}
+      MINIO_ROOT_PASSWORD: secretkey
     ports:
       - ${DOCKER_MINIO_PORT-9000}:9000
       - ${DOCKER_MINIO_CONSOLE_PORT-9001}:9001
@@ -63,7 +63,7 @@ services:
     image: rabbitmq:management
     environment:
       RABBITMQ_DEFAULT_USER: rdwatch
-      RABBITMQ_DEFAULT_PASS: ${RDWATCH_SECRET_KEY:?}
+      RABBITMQ_DEFAULT_PASS: secretkey
     ports:
       - 5672:5672
 

@@ -8,7 +8,6 @@ from rdwatch.api import api
 
 router = routers.SimpleRouter(trailing_slash=False)
 router.register(r'model-runs', views.ModelRunViewSet, basename='model-runs')
-router.register(r'regions', views.RegionViewSet, basename='regions')
 
 urlpatterns = [
     path('', api.urls),

@@ -4,5 +4,5 @@ export type RegionList = {
   count: number;
   next: null;
   previous: null;
-  results: Region[];
+  items: Region[];
 };

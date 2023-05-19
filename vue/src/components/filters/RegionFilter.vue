@@ -21,7 +21,7 @@ const selectedRegion: Ref<SelectedRegion> = ref(props.modelValue);
 
 watchEffect(async () => {
   const regionList = await ApiService.getRegions();
-  const regionResults = regionList["results"];
+  const regionResults = regionList.items;
   regionResults.sort((a, b) => (a.name > b.name ? 1 : -1));
   regions.value = regionResults;
   const generatedMap: Record<Region['id'], Region['name']> = {}
@@ -29,7 +29,7 @@ watchEffect(async () => {
       generatedMap[item.id] = item.name;
   })
   state.regionMap = generatedMap;
-  
+
 });
 
 watch(selectedRegion, (val) => emit("update:modelValue", val));

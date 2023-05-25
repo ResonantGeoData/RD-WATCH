@@ -149,7 +149,7 @@ onUnmounted(() => {
 }
 .outlined {
   background-color: orange;
-  border: 5px solid orange;
+  border: 3px solid orange;
 }
 .checkboxlabel {
   display: inline;

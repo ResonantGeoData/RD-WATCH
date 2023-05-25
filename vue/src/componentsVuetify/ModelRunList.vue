@@ -246,7 +246,7 @@ watch([() => props.filters.region, () => props.filters.performer], () => {
 </script>
 
 <template>
-  <div class="flex flex-row bg-gray-100">
+  <v-row>
     <span
       v-if="!loading && !loadingSatelliteTimestamps"
       style="font-size: 0.75em"
@@ -268,7 +268,7 @@ watch([() => props.filters.region, () => props.filters.performer], () => {
       style="width: 100%"
     >
       <b>ModelRun</b>
-      <progress class="progress progress-primary" />
+      <v-progress-linear indeterminate />
     </div>
     <div
       v-if="loadingSatelliteTimestamps"
@@ -276,18 +276,18 @@ watch([() => props.filters.region, () => props.filters.performer], () => {
       style="width: 100%"
     >
       <b>Satellite Timestamps</b>
-      <progress class="progress progress-primary" />
+      <v-progress-linear indeterminate />
     </div>
-  </div>
+  </v-row>
   <div v-if="state.satellite.loadingSatelliteImages">
-    <progress class="progress h-1 progress-primary" />
+    <v-progress-linear indeterminate />
   </div>
   <div
     v-if="!loading && state.filters.region_id?.length && satelliteRegionTooLarge"
     style="font-size: 0.75em"
     class=""
   >
-    <div class="alert alert-warning shadow-lg">
+    <v-alert type="warning">
       <div>
         <svg
           xmlns="http://www.w3.org/2000/svg"
@@ -311,10 +311,10 @@ watch([() => props.filters.region, () => props.filters.performer], () => {
           </button>
         </div>
       </div>
-    </div>
+    </v-alert>
   </div>
-  <div
-    class="flex flex-col gap-2 overflow-y-scroll p-2"
+  <v-container
+    class="overflow-y-scroll p-2"
     @scroll="handleScroll"
   >
     <ModelRunDetail
@@ -329,7 +329,7 @@ watch([() => props.filters.region, () => props.filters.performer], () => {
       }"
       @toggle="() => handleToggle(modelRun)"
     />
-  </div>
+  </v-container>
 </template>
 
 <style scoped>

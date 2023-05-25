@@ -246,90 +246,92 @@ watch([() => props.filters.region, () => props.filters.performer], () => {
 </script>
 
 <template>
-  <v-row>
-    <span
-      v-if="!loading && !loadingSatelliteTimestamps"
-      style="font-size: 0.75em"
-      class="badge-accent badge ml-2"
-    >{{ totalModelRuns }} {{ totalModelRuns > 1 ? "Runs" : "Run" }}</span>
-    <span
-      v-if="!loading && !loadingSatelliteTimestamps && hasSatelliteImages && !state.satellite.satelliteImagesOn && state.filters.region_id?.length"
-      style="font-size: 0.75em"
-      class="badge-secondary badge ml-2"
-    >{{ hasSatelliteImages }} {{ hasSatelliteImages > 1 ? "Image Timestamps" : "Image Timestamp" }}</span>
-    <span
-      v-else-if="!loading && !loadingSatelliteTimestamps && state.satellite.satelliteTimeStamp && state.satellite.satelliteImagesOn && !satelliteRegionTooLarge"
-      style="font-size: 0.75em"
-      class="badge-secondary badge ml-2"
-    >Satellite Time: {{ state.satellite.satelliteTimeStamp }} - {{ state.satellite.satelliteTimeSource }}</span>
-    <div
-      v-if="loading"
-      class="px-2"
-      style="width: 100%"
-    >
-      <b>ModelRun</b>
-      <v-progress-linear indeterminate />
-    </div>
-    <div
-      v-if="loadingSatelliteTimestamps"
-      class="px-2"
-      style="width: 100%"
-    >
-      <b>Satellite Timestamps</b>
-      <v-progress-linear indeterminate />
-    </div>
-  </v-row>
-  <div v-if="state.satellite.loadingSatelliteImages">
-    <v-progress-linear indeterminate />
-  </div>
-  <div
-    v-if="!loading && state.filters.region_id?.length && satelliteRegionTooLarge"
-    style="font-size: 0.75em"
-    class=""
-  >
-    <v-alert type="warning">
-      <div>
-        <svg
-          xmlns="http://www.w3.org/2000/svg"
-          class="stroke-current flex-shrink-0 h-6 w-6"
-          fill="none"
-          viewBox="0 0 24 24"
-        ><path
-          stroke-linecap="round"
-          stroke-linejoin="round"
-          stroke-width="2"
-          d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"
-        /></svg>
-        <span>    Region is Too Large to efficiently get Images: 
-        </span>
-        <div class="flex-none">
-          <button
-            class="btn btn-xs btn-primary"
-            @click="satelliteRegionTooLarge = false"
-          >
-            Dismiss
-          </button>
-        </div>
+  <div>
+    <v-row>
+      <span
+        v-if="!loading && !loadingSatelliteTimestamps"
+        style="font-size: 0.75em"
+        class="badge-accent badge ml-2"
+      >{{ totalModelRuns }} {{ totalModelRuns > 1 ? "Runs" : "Run" }}</span>
+      <span
+        v-if="!loading && !loadingSatelliteTimestamps && hasSatelliteImages && !state.satellite.satelliteImagesOn && state.filters.region_id?.length"
+        style="font-size: 0.75em"
+        class="badge-secondary badge ml-2"
+      >{{ hasSatelliteImages }} {{ hasSatelliteImages > 1 ? "Image Timestamps" : "Image Timestamp" }}</span>
+      <span
+        v-else-if="!loading && !loadingSatelliteTimestamps && state.satellite.satelliteTimeStamp && state.satellite.satelliteImagesOn && !satelliteRegionTooLarge"
+        style="font-size: 0.75em"
+        class="badge-secondary badge ml-2"
+      >Satellite Time: {{ state.satellite.satelliteTimeStamp }} - {{ state.satellite.satelliteTimeSource }}</span>
+      <div
+        v-if="loading"
+        class="px-2"
+        style="width: 100%"
+      >
+        <b>ModelRun</b>
+        <v-progress-linear indeterminate />
       </div>
-    </v-alert>
+      <div
+        v-if="loadingSatelliteTimestamps"
+        class="px-2"
+        style="width: 100%"
+      >
+        <b>Satellite Timestamps</b>
+        <v-progress-linear indeterminate />
+      </div>
+    </v-row>
+    <div v-if="state.satellite.loadingSatelliteImages">
+      <v-progress-linear indeterminate />
+    </div>
+    <div
+      v-if="!loading && state.filters.region_id?.length && satelliteRegionTooLarge"
+      style="font-size: 0.75em"
+    >
+      <v-alert type="warning">
+        <div>
+          <svg
+            xmlns="http://www.w3.org/2000/svg"
+            class="stroke-current flex-shrink-0 h-6 w-6"
+            fill="none"
+            viewBox="0 0 24 24"
+          ><path
+            stroke-linecap="round"
+            stroke-linejoin="round"
+            stroke-width="2"
+            d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"
+          /></svg>
+          <span>    Region is Too Large to efficiently get Images: 
+          </span>
+          <div class="flex-none">
+            <button
+              class="btn btn-xs btn-primary"
+              @click="satelliteRegionTooLarge = false"
+            >
+              Dismiss
+            </button>
+          </div>
+        </div>
+      </v-alert>
+    </div>
+    <v-container
+      class="overflow-y-auto p-5 mt-5"
+      style="max-height:75vh"
+      @scroll="handleScroll"
+    >
+      <ModelRunDetail
+        v-for="modelRun in modelRuns"
+        :key="modelRun.key"
+        :model-run="modelRun"
+        :open="openedModelRuns.has(modelRun.key)"
+        :class="{
+          outlined: hoveredInfo.region.includes(
+            `${modelRun.id}_${modelRun.region?.id}_${modelRun.performer.id}`
+          ),
+        }"
+        @toggle="() => handleToggle(modelRun)"
+      />
+    </v-container>
   </div>
-  <v-container
-    class="overflow-y-scroll p-2"
-    @scroll="handleScroll"
-  >
-    <ModelRunDetail
-      v-for="modelRun in modelRuns"
-      :key="modelRun.key"
-      :model-run="modelRun"
-      :open="openedModelRuns.has(modelRun.key)"
-      :class="{
-        outlined: hoveredInfo.region.includes(
-          `${modelRun.id}_${modelRun.region?.id}_${modelRun.performer.id}`
-        ),
-      }"
-      @toggle="() => handleToggle(modelRun)"
-    />
-  </v-container>
 </template>
 
 <style scoped>

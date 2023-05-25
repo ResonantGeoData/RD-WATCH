@@ -10,6 +10,8 @@ import EvaluationsSideBar from "./components/siteObservations/EvaluationsSideBar
     <v-navigation-drawer
       location="left"
       width="400"
+      sticky
+      style="max-height:100vh;"
     >
       <SideBar />
     </v-navigation-drawer>

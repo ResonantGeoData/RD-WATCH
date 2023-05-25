@@ -77,7 +77,7 @@ onMounted(() => {
 </script>
 
 <template>
-  <v-card class="pa-5 flex-column">
+  <v-card class="pa-5" style="max-height:100vh; min-height:100vh; overflow-y: hidden;">
     <div>
       <v-row
         dense
@@ -120,10 +120,11 @@ onMounted(() => {
         <PerformerFilter
           v-model="selectedPerformer"
           class="pr-2"
+          cols="6"
         />
-        <RegionFilter v-model="selectedRegion" />
-        <SettingsPanel v-if="expandSettings" />
+        <RegionFilter cols="6" v-model="selectedRegion" />
       </v-row>
+      <SettingsPanel v-if="expandSettings" />
     </div>
     <v-row
       dense
@@ -131,6 +132,7 @@ onMounted(() => {
     >
       <ModelRunList
         :filters="queryFilters"
+        style="flex-grow: 1;"
         @next-page="nextPage"
         @update:timerange="
           (timerange) => {
@@ -149,6 +151,8 @@ onMounted(() => {
 
 .hover:hover {
   cursor: pointer;
+}
+.modelRuns {
 }
 
 @keyframes flicker-animation {

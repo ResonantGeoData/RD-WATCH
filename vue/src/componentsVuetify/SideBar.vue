@@ -77,7 +77,10 @@ onMounted(() => {
 </script>
 
 <template>
-  <v-card class="pa-5" style="max-height:100vh; min-height:100vh; overflow-y: hidden;">
+  <v-card
+    class="pa-5"
+    style="max-height:100vh; min-height:100vh; overflow-y: hidden;"
+  >
     <div>
       <v-row
         dense
@@ -122,11 +125,15 @@ onMounted(() => {
           class="pr-2"
           cols="6"
         />
-        <RegionFilter cols="6" v-model="selectedRegion" />
+        <RegionFilter
+          v-model="selectedRegion"
+          cols="6"
+        />
       </v-row>
       <SettingsPanel v-if="expandSettings" />
     </div>
     <v-row
+      v-if="!expandSettings"
       dense
       class="modelRuns"
     >

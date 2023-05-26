@@ -20,7 +20,6 @@ async function handleClick() {
 <template>
   <v-card
     outlined
-    :open="props.open"
     class="my-3 modelRunCard"
     :class="{selectedCard: props.open}"
   >
@@ -102,7 +101,7 @@ async function handleClick() {
         </div>
       </v-row>
     </v-card-text>
-    <v-card-actions>
+    <v-card-actions v-if="open">
       <TimeSlider
         :min="modelRun.timerange?.min || 0"
         :max="modelRun.timerange?.max || 0"

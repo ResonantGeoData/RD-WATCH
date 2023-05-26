@@ -280,11 +280,19 @@ watch([() => props.filters.region, () => props.filters.performer], () => {
         <v-progress-linear indeterminate />
       </div>
     </v-row>
-    <div v-if="state.satellite.loadingSatelliteImages">
-      <v-progress-linear indeterminate />
+    <div
+      v-if="state.satellite.loadingSatelliteImages"
+      class="mt-5"
+    >
+      <v-progress-linear
+        indeterminate
+        height="8"
+        color="primary"
+      />
     </div>
     <div
       v-if="!loading && state.filters.region_id?.length && satelliteRegionTooLarge"
+      class="mt-5"
       style="font-size: 0.75em"
     >
       <v-alert type="warning">
@@ -314,8 +322,7 @@ watch([() => props.filters.region, () => props.filters.performer], () => {
       </v-alert>
     </div>
     <v-container
-      class="overflow-y-auto p-5 mt-5"
-      style="max-height:75vh"
+      class="overflow-y-auto p-5 mt-5 modelRuns"
       @scroll="handleScroll"
     >
       <ModelRunDetail
@@ -335,6 +342,10 @@ watch([() => props.filters.region, () => props.filters.performer], () => {
 </template>
 
 <style scoped>
+.modelRuns {
+  height: calc(100vh - 250px);
+
+}
 .outlined {
   background-color: orange;
   border: 3px solid orange;

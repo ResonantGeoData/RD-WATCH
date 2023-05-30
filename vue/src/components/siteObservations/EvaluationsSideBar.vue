@@ -4,7 +4,6 @@ import { EnabledSiteObservations, SiteObservationImage, state } from '../../stor
 import EvaluationDisplay from "./EvaluationDisplay.vue";
 import SiteEvalSettings from "./SiteEvalSettings.vue";
 import { hoveredInfo } from "../../interactions/mouseEvents";
-import { Cog6ToothIcon } from "@heroicons/vue/24/solid";
 
 
 const expandSettings = ref(false);
@@ -71,71 +70,60 @@ onUnmounted(() => {
 </script>
 
 <template>
-  <div
+  <v-card
     v-if="state.selectedObservations.length"
-    class="fixed h-screen w-200 pt-2 pb-2 pr-2 absolute inset-y-0 right-0 observation-sidebar"
+    class="pa-5 site-eval-card"
   >
-    <div
-      class="flex h-full flex-col overflow-hidden rounded-xl bg-white drop-shadow-2xl "
-    >
-      <h1 class="mx-4">
+    <v-row>
+      <h1 class="mx-4 mt-2">
         Selected Evaluations
       </h1>
-      <div class="grid grid-cols-4 mx-4">
-        <div class="col-span-1 mt-1">
-          <span class="label checkboxlabel">
-            <span class="label-text">S2:</span>
-            <input
-              v-model="S2Imagery"
-              type="checkbox"
-              class="checkbox-primary checkbox-xs ml-1"
-            >
-          </span>
-        </div>
+    </v-row>
+    <v-row>
+      <v-checkbox
+        v-model="S2Imagery"
+        label="S2"
+        density="compact"
+        class="mx-2"
+      />
+      <v-checkbox
+        v-model="WVImagery"
+        label="WV"
+        density="compact"
+        class="mx-2"
+      />
 
-        <div class="col-span-1 mt-1">
-          <span class="label checkboxlabel">
-            <span class="label-text">WV:</span>
-            <input
-              v-model="WVImagery"
-              type="checkbox"
-              class="checkbox-primary checkbox-xs ml-1"
-            >
-          </span>
-        </div>
 
-        <div class="col-span-1">
-          <button
-            class="btn-xs btn-error"
-            @click="clearAll()"
-          >
-            Clear All
-          </button>
-        </div>
-        <div class="col-span-1 justify-self-end">
-          <Cog6ToothIcon
-            class="icon h-5 text-blue-600 hover"
-            data-tip="Settings"
-            @click="expandSettings = !expandSettings"
-          />
-        </div>
-      </div>
-      <div class="px-5">
-        <site-eval-settings
-          v-if="expandSettings"
-        />
-      </div>
-      <div style="overflow-y:auto">
-        <evaluation-display
-          v-for="item in state.selectedObservations"
-          :key="`siteObs_${item.id}`"
-          :site-observation="item"
-          class="siteObs"
-          :class="{ outlined: hoveredInfo.siteId.includes(item.id) }"
-        />
-      </div>
+
+      <v-btn
+        size="small"
+        @click="clearAll()"
+      >
+        Clear All
+      </v-btn>
+      <v-spacer />
+      <v-icon
+        :color="expandSettings ? 'rgb(37, 99, 235)' : 'black'"
+        @click="expandSettings = !expandSettings"
+      >
+        mdi-cog
+      </v-icon>
+    </v-row>
+    <div class="px-5">
+      <site-eval-settings
+        v-if="expandSettings"
+      />
     </div>
-  </div>
+    <div style="overflow-y:auto">
+      <evaluation-display
+        v-for="item in state.selectedObservations"
+        :key="`siteObs_${item.id}`"
+        :site-observation="item"
+        class="siteObs"
+        :class="{ outlined: hoveredInfo.siteId.includes(item.id) }"
+      />
+    </div>
+  </v-card>
 </template>
 
 <style scoped>
@@ -144,7 +132,8 @@ onUnmounted(() => {
 }
 .siteObs {
   margin: 10px;
-  border: 5px solid transparent;
+  border: 3px solid transparent;
+  max-height: calc(100vh - 10px);
 
 }
 .outlined {
@@ -162,4 +151,7 @@ onUnmounted(() => {
   cursor: pointer;
 }
 
+.site-eval-card{
+  min-height: 100vh;
+}
 </style>

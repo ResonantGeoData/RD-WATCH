@@ -34,7 +34,6 @@
     "@vitejs/plugin-vue": "^3.0.0",
     "@vue/test-utils": "^2.0.2",
     "autoprefixer": "^10.4.7",
-    "daisyui": "^2.42.1",
     "eslint": "^8.20.0",
     "eslint-plugin-vue": "^9.2.0",
     "openapi-typescript-codegen": "^0.23.0",

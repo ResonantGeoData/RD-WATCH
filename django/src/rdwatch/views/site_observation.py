@@ -1,6 +1,7 @@
 from datetime import datetime
 
 from django.contrib.gis.db.models.aggregates import Collect
+from django.contrib.gis.db.models.functions import Area
 from django.contrib.postgres.aggregates import JSONBAgg
 from django.db import transaction
 from django.db.models import Count, F, Max, Min, RowRange, Window
@@ -68,6 +69,7 @@ def site_observations(request: HttpRequest, pk: int):
                         max=ExtractEpoch('timemax'),
                     ),
                     bbox=BoundingBox('geom'),
+                    area=Area('geom'),
                 )
             ),
         )

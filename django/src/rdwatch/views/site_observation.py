@@ -1,5 +1,7 @@
 from datetime import datetime
 
+from celery.result import AsyncResult
+
 from django.contrib.gis.db.models.aggregates import Collect
 from django.contrib.postgres.aggregates import JSONBAgg
 from django.db import transaction
@@ -97,10 +99,18 @@ def site_observations(request: HttpRequest, pk: int):
     output['images'] = image_serializer.data
     if SatelliteFetching.objects.filter(siteeval=pk).exists():
         retrieved = SatelliteFetching.objects.filter(siteeval=pk).first()
+        celery_data = {}
+        if retrieved.celery_id != '':
+            task = AsyncResult(retrieved.celery_id)
+            celery_data['state'] = task.state
+            celery_data['status'] = task.status
+            celery_data['info'] = task.info
+
         output['job'] = {
             'status': retrieved.status,
             'error': retrieved.error,
             'timestamp': retrieved.timestamp.timestamp(),
+            'celery': celery_data,
         }
     return Response(output)
 
@@ -142,5 +152,42 @@ def get_site_observation_images(request: HttpRequest, pk: int):
                 timestamp=datetime.now(),
                 status=SatelliteFetching.Status.RUNNING,
             )
-        get_siteobservations_images.delay(pk, constellation)
+        task_id = get_siteobservations_images.delay(pk, constellation)
+        fetching_task.celery_id = task_id.id
+        fetching_task.save()
+    return Response(status=202)
+
+
+@api_view(['PUT'])
+def cancel_site_observation_images(request: HttpRequest, pk: int):
+    siteeval = get_object_or_404(SiteEvaluation, pk=pk)
+
+    with transaction.atomic():
+        # Use select_for_update here to lock the SatelliteFetching row
+        # for the duration of this transaction in order to ensure its
+        # status doesn't change out from under us
+        fetching_task = (
+            SatelliteFetching.objects.select_for_update()
+            .filter(siteeval=siteeval)
+            .first()
+        )
+        if fetching_task is not None:
+            if fetching_task.status == SatelliteFetching.Status.RUNNING:
+                if fetching_task.celery_id != '':
+                    task = AsyncResult(fetching_task.celery_id)
+                    task.revoke(terminate=True)
+                fetching_task.status = SatelliteFetching.Status.COMPLETE
+                fetching_task.celery_id = ''
+                fetching_task.save()
+            else:
+                return Response(
+                    f'There is no running task for Site Observation Id: {pk}',
+                    status=status.HTTP_409_CONFLICT,
+                )
+
+        else:
+            return Response(
+                f'There is no running task for Site Observation Id: {pk}', status=404
+            )
+
     return Response(status=202)

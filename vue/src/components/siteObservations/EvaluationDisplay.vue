@@ -173,6 +173,13 @@ const stopLooping = () => {
 const isRunning = computed(() => {
   return !!(props.siteObservation.job && props.siteObservation.job.status === 'Running');
 });
+
+const cancelTask = async (siteId: number) => {
+  await ApiService.cancelSiteObservationImageTask(siteId);
+  if (state.loopingInterval !== null) {
+    clearInterval(state.loopingInterval);
+  }
+}
 </script>
 
 <template>
@@ -292,6 +299,12 @@ const isRunning = computed(() => {
           style="width: 100%"
         >
           <b>Downloading Images</b>
+          <button
+            class="btn-error btn-xs m-1"
+            @click="cancelTask(siteObservation.id)"
+          >
+            Cancel
+          </button>
           <progress class="progress progress-primary" />
         </div>
         <div class="col-span-4 text-sm font-light text-gray-600">

@@ -32,6 +32,7 @@ class BaseConfiguration(Configuration):
         'rest_framework',
         'django_extensions',
         'rdwatch',
+        'django_celery_results',
     ]
 
     MIDDLEWARE = [
@@ -80,6 +81,9 @@ class BaseConfiguration(Configuration):
     ACCENTURE_VERSION = values.Value(
         environ_required=True, environ_prefix=_environ_prefix
     )
+    CELERY_RESULT_BACKEND = 'django-db'
+    CELERY_CACHE_BACKEND = 'django-cache'
+    CELERY_RESULT_EXTENDED = True
 
 
 class DevelopmentConfiguration(BaseConfiguration):

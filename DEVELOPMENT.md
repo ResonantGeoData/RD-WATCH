@@ -9,14 +9,15 @@ This is the simplest configuration for developers to start with.
 2. Set the environment variables in `.env`.
 3. Run `docker compose up` to start the Django development server and Celery worker, plus all backing services
    like PostGIS, Redis, RabbitMQ, etc.
-4. Start the client development server:
+4. Optionally, populate your database with test data by running `docker compose run --rm django poetry run django-admin loaddata testdata`
+5. Start the client development server:
    ```sh
    cd vue
    npm install
    npm run dev
    ```
-5. Access the site, starting at http://localhost:8080/
-6. When finished, use `Ctrl+C`
+6. Access the site, starting at http://localhost:8080/
+7. When finished, use `Ctrl+C`
 
 ## Develop Natively (advanced)
 This configuration still uses Docker to run attached services in the background,
@@ -32,6 +33,7 @@ but allows developers to run Python code on their native system.
 6. Install Poetry
 7. Run `poetry --directory django install`
 8. Run the following command to configure your environment: `source ./dev/export-env.sh dev/.env.docker-compose-native ./dev/export-env.sh .env`
+9. Optionally, populate your database with test data by running `poetry --directory django run django-admin loaddata testdata`
 
 ### Run Application
 1. Ensure `docker compose -f ./docker-compose.yaml up -d` is still active

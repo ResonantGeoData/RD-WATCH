@@ -81,7 +81,7 @@ class SiteFeature(Schema):
 
 class ObservationFeature(Schema):
     type: Literal['observation']
-    observation_date: datetime | None
+    observation_date: datetime
     source: str | None
     sensor_name: Literal['Landsat 8', 'Sentinel-2', 'WorldView', 'Planet'] | None
     current_phase: list[
@@ -123,9 +123,7 @@ class ObservationFeature(Schema):
         return val.split(', ')
 
     @validator('observation_date', pre=True)
-    def parse_dates(cls, v: str | None) -> datetime | None:
-        if v is None:
-            return v
+    def parse_dates(cls, v: str) -> datetime:
         return datetime.strptime(v, '%Y-%m-%d')
 
     @root_validator

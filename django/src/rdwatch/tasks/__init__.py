@@ -216,6 +216,15 @@ def get_siteobservations_images(
     captures = get_range_captures(
         max_bbox, timestamp, matchConstellation, timebuffer, worldView
     )
+    self.update_state(
+        state='PROGRESS',
+        meta={
+            'current': 0,
+            'total': 0,
+            'mode': 'Searching All Images',
+            'siteEvalId': site_eval_id,
+        },
+    )
     count = 0
     for (
         capture
@@ -227,7 +236,7 @@ def get_siteobservations_images(
             meta={
                 'current': count,
                 'total': len(captures) + 1,
-                'mode': 'Captures',
+                'mode': 'Image Captures',
                 'siteEvalId': site_eval_id,
             },
         )

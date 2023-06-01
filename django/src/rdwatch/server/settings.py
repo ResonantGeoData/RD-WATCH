@@ -84,6 +84,7 @@ class BaseConfiguration(Configuration):
     CELERY_RESULT_BACKEND = 'django-db'
     CELERY_CACHE_BACKEND = 'django-cache'
     CELERY_RESULT_EXTENDED = True
+    CELERYD_TIME_LIMIT = 1200
 
 
 class DevelopmentConfiguration(BaseConfiguration):

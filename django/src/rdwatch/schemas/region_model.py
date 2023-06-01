@@ -92,6 +92,16 @@ class SiteSummaryFeature(Schema):
             return v
         return datetime.strptime(v, '%Y-%m-%d')
 
+    @validator('score', pre=True, always=True)
+    def parse_score(cls, v: float | None) -> float:
+        """
+        Score is an optional field, and defaults to 1.0 if one isn't provided
+        https://smartgitlab.com/TE/standards/-/wikis/Region-Model-Specification#score-float-optional
+        """
+        if v is None:
+            return 1.0
+        return v
+
     @property
     def site_number(self) -> int:
         return int(self.site_id[8:])

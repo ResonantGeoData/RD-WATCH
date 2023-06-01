@@ -1,5 +1,4 @@
 from .model_run import ModelRunViewSet
-from .region import RegionViewSet
 from .server_status import RetrieveServerStatus
 from .site_evaluation import site_evaluations
 from .site_model import post_region_model, post_site_model
@@ -21,7 +20,6 @@ from .tile import (
 
 __all__ = [
     'ModelRunViewSet',
-    'RegionViewSet',
     'RetrieveServerStatus',
     'site_evaluations',
     'post_region_model',

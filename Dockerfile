@@ -69,6 +69,18 @@ RUN mkdir /app/django/src \
  && poetry install --only main
 
 
+# Build stage that also installs dev dependencies.
+# For use in a development environment.
+FROM builder AS dev
+WORKDIR /app/django
+COPY django/pyproject.toml django/poetry.lock /app/django/
+RUN mkdir /app/django/src \
+ && mkdir /app/django/src/rdwatch \
+ && touch /app/django/src/rdwatch/__init__.py \
+ && touch /app/django/README.md \
+ && poetry install --with dev
+
+
 # Built static assets for vue-rdwatch
 #    static assets are in /app/vue/dist
 FROM vue-builder AS vue-dist

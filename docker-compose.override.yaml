@@ -2,7 +2,7 @@ services:
   django:
     build:
       dockerfile: Dockerfile
-      target: builder
+      target: dev
     command: [
       "poetry", "run",
       "--directory", "/app/django",
@@ -29,7 +29,7 @@ services:
   celery:
     build:
       dockerfile: Dockerfile
-      target: builder
+      target: dev
     command: [
       "poetry", "run",
       "--directory", "/app/django",

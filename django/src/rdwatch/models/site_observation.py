@@ -89,9 +89,6 @@ class SiteObservation(models.Model):
         for feature in site_model.observation_features:
             assert isinstance(feature.properties, ObservationFeature)
 
-            if not feature.properties.observation_date:
-                continue
-
             constellation = constellation_map.get(feature.properties.sensor_name, None)
 
             assert isinstance(feature.geometry, MultiPolygon)

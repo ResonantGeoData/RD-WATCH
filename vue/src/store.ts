@@ -55,6 +55,19 @@ export interface EnabledSiteObservations {
   timestamp: number;
 }
 
+export interface SiteObservationJob {
+  status: 'Running' | 'Complete' | 'Error';
+  error?: '';
+  timestamp: number;
+  celery?: {
+    info?:  {
+      current: number
+      total: number;
+      mode: 'Image Captures' | 'Searching All Images' | 'Site Observations'
+    }
+  }
+}
+
 export interface SiteObservation {
   id: number;
   timerange: {
@@ -73,18 +86,7 @@ export interface SiteObservation {
     average: number,
   }
   imagesActive: boolean;
-  job?: {
-    status: 'Running' | 'Complete' | 'Error';
-    error?: '';
-    timestamp: number;
-    celery?: {
-      info?:  {
-        current: number
-        total: number;
-        mode: 'Image Captures' | 'Searching All Images' | 'Site Observations'
-      }
-    }
-  };
+  job?: SiteObservationJob;
   bbox: { xmin: number; ymin: number; xmax: number; ymax: number };
 }
 

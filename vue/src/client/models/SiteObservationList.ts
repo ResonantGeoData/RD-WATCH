@@ -2,7 +2,7 @@
 /* tslint:disable */
 /* eslint-disable */
 
-import { SiteObservationImage } from "../../store";
+import { SiteObservationImage, SiteObservationJob } from "../../store";
 
 export type SiteObservationList = {
   count: number;
@@ -35,18 +35,7 @@ export type SiteObservationList = {
       ymax: number;
     };
   }>;
-  job?: 
-  { status: 'Running' | 'Complete' | 'Error';
-    error?: '';
-    timestamp: number;
-    celery?: {
-      info?:  {
-        current: number
-        total: number;
-        mode: 'Image Captures' | 'Searching All Images' | 'Site Observations'
-      }
-    }
-  }
+  job?: SiteObservationJob
   images: {
     count: number;
     results: SiteObservationImage[],

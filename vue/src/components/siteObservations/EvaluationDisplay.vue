@@ -180,6 +180,19 @@ const cancelTask = async (siteId: number) => {
     clearInterval(state.loopingInterval);
   }
 }
+const progressInfo = computed(() => {
+  if (isRunning.value) {
+    if (props.siteObservation.job?.celery?.info) {
+      const state = {
+        title: props.siteObservation.job.celery.info.mode,
+        current:props.siteObservation.job.celery.info.current,
+        total: props.siteObservation.job.celery.info.total,
+      }
+      return state;
+    }
+  }
+  return null
+})
 </script>
 
 <template>
@@ -294,18 +307,35 @@ const cancelTask = async (siteId: number) => {
           }}
         </div>
         <div
-          v-if="isRunning"
-          class="px-2 text-sm col-span-3"
+          v-if="isRunning && progressInfo"
+          class="px-2 text-sm col-span-4"
           style="width: 100%"
         >
-          <b>Downloading Images</b>
+          <b>Downloading Images
+            <span
+              v-if="progressInfo !== null"
+              style="font-size: 0.75em"
+            >  ({{ progressInfo.title }})</span>
+          </b>
+          <div v-if="progressInfo !== null && progressInfo.total !== 0">
+            {{ progressInfo.current }} of {{ progressInfo.total }}
+          </div>
+          <progress
+            v-if="progressInfo !== null && progressInfo.current === 0 && progressInfo.total === 0"
+            class="progress progress-primary"
+          />
+          <progress
+            v-else-if="progressInfo !== null"
+            :value="progressInfo.current"
+            :max="progressInfo.total"
+            class="progress progress-primary"
+          />
           <button
             class="btn-error btn-xs m-1"
             @click="cancelTask(siteObservation.id)"
           >
             Cancel
           </button>
-          <progress class="progress progress-primary" />
         </div>
         <div class="col-span-4 text-sm font-light text-gray-600">
           <button

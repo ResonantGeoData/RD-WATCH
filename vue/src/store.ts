@@ -73,7 +73,18 @@ export interface SiteObservation {
     average: number,
   }
   imagesActive: boolean;
-  job?: { status: 'Running' | 'Complete' | 'Error', error?: '', timestamp: number };
+  job?: {
+    status: 'Running' | 'Complete' | 'Error';
+    error?: '';
+    timestamp: number;
+    celery?: {
+      info?:  {
+        current: number
+        total: number;
+        mode: 'Image Captures' | 'Searching All Images' | 'Site Observations'
+      }
+    }
+  };
   bbox: { xmin: number; ymin: number; xmax: number; ymax: number };
 }
 

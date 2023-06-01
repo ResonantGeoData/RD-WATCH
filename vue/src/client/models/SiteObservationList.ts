@@ -35,7 +35,18 @@ export type SiteObservationList = {
       ymax: number;
     };
   }>;
-  job?: { status: 'Running' | 'Complete' | 'Error', error?: '', timestamp: number }
+  job?: 
+  { status: 'Running' | 'Complete' | 'Error';
+    error?: '';
+    timestamp: number;
+    celery?: {
+      info?:  {
+        current: number
+        total: number;
+        mode: 'Image Captures' | 'Searching All Images' | 'Site Observations'
+      }
+    }
+  }
   images: {
     count: number;
     results: SiteObservationImage[],

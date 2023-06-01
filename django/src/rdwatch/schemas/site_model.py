@@ -145,6 +145,16 @@ class ObservationFeature(Schema):
     score: float | None
     misc_info: dict[Any, Any] | None
 
+    @validator('score', pre=True, always=True)
+    def parse_score(cls, v: float | None) -> float:
+        """
+        Score is an optional field, and defaults to 1.0 if one isn't provided
+        https://smartgitlab.com/TE/standards/-/wikis/Site-Model-Specification#score-float-optional-1
+        """
+        if v is None:
+            return 1.0
+        return v
+
 
 class Feature(Schema):
     class Config:

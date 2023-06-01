@@ -21,8 +21,6 @@ class BaseConfiguration(Configuration):
     ALLOWED_HOSTS = ['*']
     DEBUG = values.BooleanValue(False, _environ_prefix='RDWATCH_DJANGO')
 
-    SECRET_KEY = values.Value(environ_required=True, environ_prefix=_environ_prefix)
-
     INSTALLED_APPS = [
         'django.contrib.auth',
         'django.contrib.contenttypes',
@@ -80,9 +78,17 @@ class BaseConfiguration(Configuration):
     ACCENTURE_VERSION = values.Value(
         environ_required=True, environ_prefix=_environ_prefix
     )
+    SMART_STAC_URL = values.URLValue(
+        environ_required=True, environ_prefix=_environ_prefix
+    )
+    SMART_STAC_KEY = values.SecretValue(
+        environ_required=True, environ_prefix=_environ_prefix
+    )
 
 
 class DevelopmentConfiguration(BaseConfiguration):
+    SECRET_KEY = 'secretkey'  # Dummy value for local development configuration
+
     DEFAULT_FILE_STORAGE = 'minio_storage.storage.MinioMediaStorage'
     MINIO_STORAGE_ENDPOINT = values.Value(
         'localhost:9000', environ_prefix=_environ_prefix
@@ -98,10 +104,12 @@ class DevelopmentConfiguration(BaseConfiguration):
     MINIO_STORAGE_AUTO_CREATE_MEDIA_BUCKET = True
     MINIO_STORAGE_AUTO_CREATE_MEDIA_POLICY = 'READ_WRITE'
     MINIO_STORAGE_MEDIA_USE_PRESIGNED = True
-    MINIO_STORAGE_MEDIA_URL = 'http://127.0.0.1:9002/rdwatch'
+    MINIO_STORAGE_MEDIA_URL = 'http://127.0.0.1:9000/rdwatch'
 
 
 class ProductionConfiguration(BaseConfiguration):
+    SECRET_KEY = values.Value(environ_required=True, environ_prefix=_environ_prefix)
+
     DEFAULT_FILE_STORAGE = 'storages.backends.s3boto3.S3Boto3Storage'
 
     AWS_STORAGE_BUCKET_NAME = values.Value(

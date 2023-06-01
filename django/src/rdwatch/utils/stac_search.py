@@ -1,6 +1,6 @@
 import json
 from datetime import datetime, timedelta
-from os import environ, path
+from os import path
 from typing import Literal, TypedDict
 from urllib.request import Request, urlopen
 
@@ -74,7 +74,7 @@ def stac_search(
 ) -> Results:
     # Use SMART program server instead of public server
     # (https://earth-search.aws.element84.com/v0/search)
-    url = path.join(environ['RDWATCH_SMART_STAC_URL'], 'search')
+    url = path.join(settings.SMART_STAC_URL, 'search')
     params = SearchParams()
     params['bbox'] = bbox
     if timebuffer is not None:
@@ -90,7 +90,7 @@ def stac_search(
     request = Request(
         url,
         data=bytes(json.dumps(params), 'utf-8'),
-        headers={'x-api-key': environ['RDWATCH_SMART_STAC_KEY']},
+        headers={'x-api-key': settings.SMART_STAC_KEY},
     )
     with urlopen(request) as resp:
         return json.loads(resp.read())

@@ -39,6 +39,7 @@ CMD [ \
 # Base builder
 FROM base as builder
 COPY docker/keyrings/nodesource.gpg /usr/share/keyrings/nodesource.gpg
+RUN mkdir -p /poetry/venvs
 RUN apt-get update \
  && apt-get install --no-install-recommends --yes \
       build-essential \
@@ -50,7 +51,8 @@ RUN apt-get update \
       python3-dev \
  && rm -rf /var/lib/apt/lists/* \
  && poetry config installer.parallel true \
- && poetry config virtualenvs.in-project true
+ && poetry config virtualenvs.in-project false \
+ && poetry config virtualenvs.path /poetry/venvs
 
 FROM builder as vue-builder
 WORKDIR /app/vue
@@ -64,7 +66,19 @@ RUN mkdir /app/django/src \
  && mkdir /app/django/src/rdwatch \
  && touch /app/django/src/rdwatch/__init__.py \
  && touch /app/django/README.md \
- && poetry install --no-dev
+ && poetry install --only main
+
+
+# Build stage that also installs dev dependencies.
+# For use in a development environment.
+FROM builder AS dev
+WORKDIR /app/django
+COPY django/pyproject.toml django/poetry.lock /app/django/
+RUN mkdir /app/django/src \
+ && mkdir /app/django/src/rdwatch \
+ && touch /app/django/src/rdwatch/__init__.py \
+ && touch /app/django/README.md \
+ && poetry install --with dev
 
 
 # Built static assets for vue-rdwatch

@@ -1,86 +1,56 @@
-version: '3'
 services:
-  #######################
-  # This docker-compose allows local saving and loading of tile images files using minio
-  #######################
-
-  # RD-WATCH
-  rdwatch:
-    environment:
-      RDWATCH_MINIO_STORAGE_ACCESS_KEY: minio
-      RDWATCH_MINIO_STORAGE_SECRET_KEY: ${RDWATCH_SECRET_KEY:?}
-      RDWATCH_MINIO_STORAGE_ENDPOINT: minio:9002
-      RDWATCH_STORAGE_BUCKET_NAME: rdwatch
-    depends_on:
-      - postgresql
-      - redis-master
-      - minio
-    volumes: # be sure to run docker compose run --rm poetry install --all-extras first
-      - .:/app # for local DEV and minio-storage dev dependency
-
-  # PostgreSQL 14
-  postgresql:
-    ports:
-      - 5432:5432 # expose ports locally
-
-  celery: # jobs for download images
-    environment:
-      RDWATCH_MINIO_STORAGE_ACCESS_KEY: minio
-      RDWATCH_MINIO_STORAGE_SECRET_KEY: ${RDWATCH_SECRET_KEY:?}
-      RDWATCH_MINIO_STORAGE_ENDPOINT: minio:9002
-      RDWATCH_STORAGE_BUCKET_NAME: rdwatch
-    depends_on:
-      - postgresql
-      - redis-master
-      - minio
-
-  poetry:
-    environment:
-      RDWATCH_MINIO_STORAGE_ACCESS_KEY: minio
-      RDWATCH_MINIO_STORAGE_SECRET_KEY: ${RDWATCH_SECRET_KEY:?}
-      RDWATCH_MINIO_STORAGE_ENDPOINT: minio:9002
-      RDWATCH_STORAGE_BUCKET_NAME: rdwatch
-
-
-  minio:
-    image: minio/minio:latest
-    # When run with a TTY, minio prints credentials on startup
-    tty: true
-    command: ["server", "/data", "--console-address", ":${DOCKER_MINIO_CONSOLE_PORT-9003}", "--address", ":${DOCKER_MINIO_PORT-9002}"]
-    volumes:
-      - minio:/data
-    environment:
-      MINIO_ROOT_USER: minio
-      MINIO_ROOT_PASSWORD: ${RDWATCH_SECRET_KEY:?}
-    ports:
-      - ${DOCKER_MINIO_PORT-9002}:9002
-      - ${DOCKER_MINIO_CONSOLE_PORT-9003}:9003
-
   django:
+    build:
+      dockerfile: Dockerfile
+      target: dev
+    command: [
+      "poetry", "run",
+      "--directory", "/app/django",
+      "/app/django/src/manage.py",
+      "runserver", "0.0.0.0:8000"
+    ]
+    env_file:
+      - .env
+      - ./dev/.env.docker-compose
     environment:
-      RDWATCH_MINIO_STORAGE_ACCESS_KEY: minio
-      RDWATCH_MINIO_STORAGE_SECRET_KEY: ${RDWATCH_SECRET_KEY:?}
-      RDWATCH_MINIO_STORAGE_ENDPOINT: minio:9002
-      RDWATCH_STORAGE_BUCKET_NAME: rdwatch
-    profiles:
-      - debug
-      - tools
-      - vscode
+      RDWATCH_POSTGRESQL_URI: "postgresql://rdwatch:secretkey@postgresql:5432/rdwatch"
+      RDWATCH_REDIS_URI: "redis://:secretkey@redis-master:6379"
+      RDWATCH_CELERY_BROKER_URL: amqp://rdwatch:secretkey@rabbitmq:5672/
+    volumes:
+      - ./django:/app/django
+    ports:
+      - 8000:8000
     depends_on:
       - postgresql
+      - rabbitmq
       - redis-master
       - minio
 
-  vscode:
+  celery:
+    build:
+      dockerfile: Dockerfile
+      target: dev
+    command: [
+      "poetry", "run",
+      "--directory", "/app/django",
+      "celery",
+      "--app", "rdwatch.celery",
+      "worker",
+      "--loglevel", "INFO",
+      "--without-heartbeat",
+    ]
+    env_file:
+      - .env
+      - ./dev/.env.docker-compose
     environment:
-      RDWATCH_MINIO_STORAGE_ACCESS_KEY: minio
-      RDWATCH_MINIO_STORAGE_SECRET_KEY: ${RDWATCH_SECRET_KEY:?}
-      RDWATCH_MINIO_STORAGE_ENDPOINT: minio:9002
-      RDWATCH_STORAGE_BUCKET_NAME: rdwatch
-    profiles:
-      - debug
-      - tools
-      - vscode
-
-volumes:
-  minio:
+      RDWATCH_POSTGRESQL_URI: "postgresql://rdwatch:secretkey@postgresql:5432/rdwatch"
+      RDWATCH_REDIS_URI: "redis://:secretkey@redis-master:6379"
+      RDWATCH_CELERY_BROKER_URL: amqp://rdwatch:secretkey@rabbitmq:5672/
+    volumes:
+      - ./django:/app/django
+    depends_on:
+      - postgresql
+      - rabbitmq
+      - minio
+      - redis-master
+      - django

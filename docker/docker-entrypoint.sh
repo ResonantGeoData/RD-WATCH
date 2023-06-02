@@ -21,11 +21,8 @@ if [ "$1" = "unitd" ]; then
   fi
 fi
 
-# Attempt to run migrations (will only work if `django-admin` is installed)
-set +e
 poetry install --directory /app/django --only main
-poetry run --directory /app/django django-admin migrate
-poetry run --directory /app/django django-admin loaddata lookups
-set -e
+poetry run --directory /app/django /app/django/src/manage.py migrate
+poetry run --directory /app/django /app/django/src/manage.py loaddata lookups
 
 exec "$@"

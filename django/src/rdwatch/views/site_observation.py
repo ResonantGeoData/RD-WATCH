@@ -100,7 +100,7 @@ def site_observations(request: HttpRequest, pk: int):
     if SatelliteFetching.objects.filter(siteeval=pk).exists():
         retrieved = SatelliteFetching.objects.filter(siteeval=pk).first()
         celery_data = {}
-        if retrieved.celery_id != '':
+        if retrieved.celery_id:
             task = AsyncResult(retrieved.celery_id)
             celery_data['state'] = task.state
             celery_data['status'] = task.status

@@ -16,6 +16,12 @@ services:
       RDWATCH_POSTGRESQL_URI: "postgresql://rdwatch:secretkey@postgresql:5432/rdwatch"
       RDWATCH_REDIS_URI: "redis://:secretkey@redis-master:6379"
       RDWATCH_CELERY_BROKER_URL: amqp://rdwatch:secretkey@rabbitmq:5672/
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/api/status"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+
     volumes:
       - ./django:/app/django
     ports:
@@ -49,8 +55,13 @@ services:
     volumes:
       - ./django:/app/django
     depends_on:
-      - postgresql
-      - rabbitmq
-      - minio
-      - redis-master
-      - django
+      django:
+        condition: service_healthy
+      postgresql:
+        condition: service_started
+      minio:
+        condition: service_started
+      redis-master:
+        condition: service_started
+      rabbitmq:
+        condition: service_started

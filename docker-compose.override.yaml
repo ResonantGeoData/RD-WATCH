@@ -55,8 +55,6 @@ services:
     volumes:
       - ./django:/app/django
     depends_on:
-      django:
-        condition: service_healthy
       postgresql:
         condition: service_started
       minio:
@@ -65,3 +63,5 @@ services:
         condition: service_started
       rabbitmq:
         condition: service_started
+      django:
+        condition: service_healthy

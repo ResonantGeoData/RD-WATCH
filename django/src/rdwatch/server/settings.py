@@ -30,6 +30,7 @@ class BaseConfiguration(Configuration):
         'rest_framework',
         'django_extensions',
         'rdwatch',
+        'django_celery_results',
     ]
 
     MIDDLEWARE = [
@@ -78,12 +79,19 @@ class BaseConfiguration(Configuration):
     ACCENTURE_VERSION = values.Value(
         environ_required=True, environ_prefix=_environ_prefix
     )
+
     SMART_STAC_URL = values.URLValue(
         environ_required=True, environ_prefix=_environ_prefix
     )
     SMART_STAC_KEY = values.SecretValue(
         environ_required=True, environ_prefix=_environ_prefix
     )
+
+    # django-celery-results configuration
+    CELERY_RESULT_BACKEND = 'django-db'
+    CELERY_CACHE_BACKEND = 'django-cache'
+    CELERY_RESULT_EXTENDED = True
+    CELERYD_TIME_LIMIT = 1200
 
 
 class DevelopmentConfiguration(BaseConfiguration):

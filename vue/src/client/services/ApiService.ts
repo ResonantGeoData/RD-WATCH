@@ -87,6 +87,24 @@ export class ApiService {
           }
         });
       }
+
+      /**
+   * @param id
+   * @returns boolean
+   * @throws ApiError
+   */
+      public static cancelSiteObservationImageTask(
+        id: number,
+      ): CancelablePromise<boolean> {
+        return __request(OpenAPI, {
+          method: "PUT",
+          url: "/api/observations/{id}/cancel-generate-images",
+          path: {
+            id: id,
+          },
+        });
+      }
+
   
   /**
    * @returns ModelRunList

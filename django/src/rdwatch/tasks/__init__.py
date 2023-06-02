@@ -3,12 +3,12 @@ import logging
 from datetime import datetime, timedelta
 from urllib.error import URLError
 
-from celery import shared_task
 from PIL import Image
 from pyproj import Transformer
 
 from django.core.files import File
 
+from rdwatch.celery import app
 from rdwatch.models import SatelliteFetching, SiteImage, SiteObservation
 from rdwatch.utils.raster_tile import get_raster_bbox
 from rdwatch.utils.satellite_bands import get_bands
@@ -120,9 +120,9 @@ def fetch_boundbox_image(
     }
 
 
-@shared_task
+@app.task(bind=True)
 def get_siteobservations_images(
-    site_eval_id: int, baseConstellation='WV', force=False
+    self, site_eval_id: int, baseConstellation='WV', force=False
 ) -> None:
     site_observations = SiteObservation.objects.filter(siteeval=site_eval_id)
     transformer = Transformer.from_crs('EPSG:3857', 'EPSG:4326')
@@ -133,7 +133,19 @@ def get_siteobservations_images(
     matchConstellation = ''
     baseSiteEval = None
     # First we gather all images that match observations
+    count = 0
     for observation in site_observations.iterator():
+        count += 1
+        self.update_state(
+            state='PROGRESS',
+            meta={
+                'current': count,
+                'total': site_observations.count() + 1,
+                'mode': 'Site Observations',
+                'siteEvalId': site_eval_id,
+            },
+        )
+
         min_time = min(min_time, observation.timestamp)
         max_time = max(max_time, observation.timestamp)
         mercator: tuple[float, float, float, float] = observation.geom.extent
@@ -204,12 +216,31 @@ def get_siteobservations_images(
     captures = get_range_captures(
         max_bbox, timestamp, matchConstellation, timebuffer, worldView
     )
+    self.update_state(
+        state='PROGRESS',
+        meta={
+            'current': 0,
+            'total': 0,
+            'mode': 'Searching All Images',
+            'siteEvalId': site_eval_id,
+        },
+    )
     count = 0
     for (
         capture
     ) in (
         captures
     ):  # Now we go through the list and add in a timestmap if it doesn't exist
+        self.update_state(
+            state='PROGRESS',
+            meta={
+                'current': count,
+                'total': len(captures) + 1,
+                'mode': 'Image Captures',
+                'siteEvalId': site_eval_id,
+            },
+        )
+
         if capture.timestamp not in found_timestamps.keys():
             # we need to add a new image into the structure
             bytes = None
@@ -264,4 +295,5 @@ def get_siteobservations_images(
                     )
     fetching_task = SatelliteFetching.objects.get(siteeval_id=site_eval_id)
     fetching_task.status = SatelliteFetching.Status.COMPLETE
+    fetching_task.celery_id = ''
     fetching_task.save()

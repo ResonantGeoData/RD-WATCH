@@ -3,7 +3,7 @@ from datetime import datetime
 from celery.result import AsyncResult
 
 from django.contrib.gis.db.models.aggregates import Collect
-from django.contrib.gis.db.models.functions import Area
+from django.contrib.gis.db.models.functions import Area, Transform
 from django.contrib.postgres.aggregates import JSONBAgg
 from django.db import transaction
 from django.db.models import Count, F, Max, Min, RowRange, Window
@@ -71,7 +71,7 @@ def site_observations(request: HttpRequest, pk: int):
                         max=ExtractEpoch('timemax'),
                     ),
                     bbox=BoundingBox('geom'),
-                    area=Area('geom'),
+                    area=Area(Transform('geom', srid=6933)),
                 )
             ),
         )

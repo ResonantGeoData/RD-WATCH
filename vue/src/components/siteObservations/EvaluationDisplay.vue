@@ -172,6 +172,26 @@ const stopLooping = () => {
 const isRunning = computed(() => {
   return !!(props.siteObservation.job && props.siteObservation.job.status === 'Running');
 });
+
+const cancelTask = async (siteId: number) => {
+  await ApiService.cancelSiteObservationImageTask(siteId);
+  if (state.loopingInterval !== null) {
+    clearInterval(state.loopingInterval);
+  }
+}
+const progressInfo = computed(() => {
+  if (isRunning.value) {
+    if (props.siteObservation.job?.celery?.info) {
+      const state = {
+        title: props.siteObservation.job.celery.info.mode,
+        current:props.siteObservation.job.celery.info.current,
+        total: props.siteObservation.job.celery.info.total,
+      }
+      return state;
+    }
+  }
+  return null
+})
 </script>
 
 <template>
@@ -356,6 +376,42 @@ const isRunning = computed(() => {
           height="8"
           indeterminate
         />
+        <div
+          v-if="isRunning && progressInfo"
+          class="px-2 text-sm col-span-4"
+          style="width: 100%"
+        >
+          <b>Downloading Images
+            <span
+              v-if="progressInfo !== null"
+              style="font-size: 0.75em"
+            >  ({{ progressInfo.title }})</span>
+          </b>
+          <div v-if="progressInfo !== null && progressInfo.total !== 0">
+            {{ progressInfo.current }} of {{ progressInfo.total }}
+          </div>
+          <v-progress-linear
+            v-if="progressInfo !== null && progressInfo.current === 0 && progressInfo.total === 0"
+            color="primary"
+            height="8"
+            indeterminate
+          />
+          <v-progress-linear
+            v-else-if="progressInfo !== null"
+            color="primary"
+            height="8"
+            :model-value="(progressInfo.total / progressInfo.current) * 100.0 "
+            indeterminate
+          />
+
+          <v-btn
+            size="small"
+            color="error"
+            @click="cancelTask(siteObservation.id)"
+          >
+            Cancel
+          </v-btn>
+        </div>
       </v-row>
       <v-row
         dense

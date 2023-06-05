@@ -20,7 +20,7 @@ const selectedRegion: Ref<number | undefined> = ref(props.modelValue?.id);
 const regionItems: Ref<{title: string; value: number}[]> = ref([]);
 watchEffect(async () => {
   const regionList = await ApiService.getRegions();
-  const regionResults = regionList["results"];
+  const regionResults = regionList.items;
   regionResults.sort((a, b) => (a.name > b.name ? 1 : -1));
   regions.value = regionResults;
   regionItems.value = regionResults.map((item) => ({title: item.name, value: item.id}));
@@ -29,7 +29,6 @@ watchEffect(async () => {
       generatedMap[item.id] = item.name;
   })
   state.regionMap = generatedMap;
-  console.log('Region grabbing');
 });
 
 watch(selectedRegion, (val) => {

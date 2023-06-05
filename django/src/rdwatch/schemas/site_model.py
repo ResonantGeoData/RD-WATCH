@@ -64,6 +64,16 @@ class SiteFeature(Schema):
             return v
         return datetime.strptime(v, '%Y-%m-%d')
 
+    @validator('score', pre=True, always=True)
+    def parse_score(cls, v: float | None) -> float:
+        """
+        Score is an optional field, and defaults to 1.0 if one isn't provided
+        https://smartgitlab.com/TE/standards/-/wikis/Site-Model-Specification#score-float-optional
+        """
+        if v is None:
+            return 1.0
+        return v
+
     @property
     def site_number(self) -> int:
         return int(self.site_id[8:])
@@ -71,7 +81,7 @@ class SiteFeature(Schema):
 
 class ObservationFeature(Schema):
     type: Literal['observation']
-    observation_date: datetime | None
+    observation_date: datetime
     source: str | None
     sensor_name: Literal['Landsat 8', 'Sentinel-2', 'WorldView', 'Planet'] | None
     current_phase: list[
@@ -113,9 +123,7 @@ class ObservationFeature(Schema):
         return val.split(', ')
 
     @validator('observation_date', pre=True)
-    def parse_dates(cls, v: str | None) -> datetime | None:
-        if v is None:
-            return v
+    def parse_dates(cls, v: str) -> datetime:
         return datetime.strptime(v, '%Y-%m-%d')
 
     @root_validator
@@ -134,6 +142,16 @@ class ObservationFeature(Schema):
     # Optional fields
     score: float | None
     misc_info: dict[Any, Any] | None
+
+    @validator('score', pre=True, always=True)
+    def parse_score(cls, v: float | None) -> float:
+        """
+        Score is an optional field, and defaults to 1.0 if one isn't provided
+        https://smartgitlab.com/TE/standards/-/wikis/Site-Model-Specification#score-float-optional-1
+        """
+        if v is None:
+            return 1.0
+        return v
 
 
 class Feature(Schema):

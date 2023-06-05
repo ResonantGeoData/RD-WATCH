@@ -11,22 +11,7 @@ concurrency:
   cancel-in-progress: true
 jobs:
   build:
-    strategy:
-      matrix:
-        include:
-          - image-name: rdwatch
-            context: "."
-            target:
-          - image-name: builder
-            context: "."
-            target: builder
-          - image-name: postgresql
-            context: docker/services/postgresql
-            target:
-          - image-name: unit-reloader
-            context: docker/services/debug/unit-reloader
-            target:
-    name: Build [${{ matrix.image-name }}]
+    name: Build [rdwatch]
     runs-on: ubuntu-latest
     steps:
       - name: Checkout repository
@@ -52,11 +37,10 @@ jobs:
         with:
           cache-from: type=gha
           cache-to: type=gha,mode=max
-          context: ${{ matrix.context }}
+          context: .
           platforms: linux/amd64,linux/arm64
           push: true
-          tags: ${{ steps.repo-slug.outputs.result }}/${{ matrix.image-name }}:latest
-          target: ${{ matrix.target }}
+          tags: ${{ steps.repo-slug.outputs.result }}/rdwatch:latest
   publish-cli:
     name: Build [rdwatch-cli]
     runs-on: ubuntu-latest

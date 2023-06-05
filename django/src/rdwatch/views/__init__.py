@@ -1,9 +1,12 @@
 from .model_run import ModelRunViewSet
-from .region import RegionViewSet
 from .server_status import RetrieveServerStatus
 from .site_evaluation import site_evaluations
 from .site_model import post_region_model, post_site_model
-from .site_observation import get_site_observation_images, site_observations
+from .site_observation import (
+    cancel_site_observation_images,
+    get_site_observation_images,
+    site_observations,
+)
 from .tile import (
     all_satellite_timestamps,
     satelliteimage_raster_bbox,
@@ -17,7 +20,6 @@ from .tile import (
 
 __all__ = [
     'ModelRunViewSet',
-    'RegionViewSet',
     'RetrieveServerStatus',
     'site_evaluations',
     'post_region_model',
@@ -32,4 +34,5 @@ __all__ = [
     'all_satellite_timestamps',
     'vector_tile',
     'get_site_observation_images',
+    'cancel_site_observation_images',
 ]

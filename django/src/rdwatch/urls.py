@@ -8,7 +8,6 @@ from rdwatch.api import api
 
 router = routers.SimpleRouter(trailing_slash=False)
 router.register(r'model-runs', views.ModelRunViewSet, basename='model-runs')
-router.register(r'regions', views.RegionViewSet, basename='regions')
 
 urlpatterns = [
     path('', api.urls),
@@ -52,6 +51,10 @@ urlpatterns = [
     path(
         'observations/<int:pk>/generate-images',
         views.get_site_observation_images,
+    ),
+    path(
+        'observations/<int:pk>/cancel-generate-images',
+        views.cancel_site_observation_images,
     ),
 ]
 

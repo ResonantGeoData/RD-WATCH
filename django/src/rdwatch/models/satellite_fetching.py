@@ -22,6 +22,12 @@ class SatelliteFetching(models.Model):
         help_text='Fetching Status',
         choices=Status.choices,
     )
+    celery_id = models.CharField(
+        max_length=255,  # If we need future states
+        blank=True,
+        help_text='Celery Task Id',
+    )
+
     error = models.TextField(blank=True, help_text='Error text if an error occurs')
 
     def __str__(self):

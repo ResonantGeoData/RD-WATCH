@@ -4,7 +4,7 @@ from datetime import datetime
 from typing import Annotated, Any, Literal
 
 from ninja import Field, Schema
-from pydantic import constr, validator
+from pydantic import confloat, constr, validator
 
 from django.contrib.gis.gdal import GDALException
 from django.contrib.gis.geos import GEOSGeometry, Polygon
@@ -82,7 +82,7 @@ class SiteSummaryFeature(Schema):
 
     # Optional fields
     comments: str | None
-    score: float | None
+    score: confloat(ge=0.0, le=1.0) | None
     validated: Literal['True', 'False'] | None
     annotation_cache: dict[Any, Any] | None
 

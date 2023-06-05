@@ -96,7 +96,7 @@ async function handleClick() {
           mdi-check-decagram
         </v-icon>
         <div
-          class="float-right mt-1 rounded bg-gray-400 pl-1 pr-1 group-open:bg-gray-100"
+          class="float-right rounded bg-gray-400 pl-1 pr-1 group-open:bg-gray-100"
         >
           {{ modelRun.performer.short_code }}
         </div>

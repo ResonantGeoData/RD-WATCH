@@ -209,12 +209,14 @@ const progressInfo = computed(() => {
         </v-col>
         <v-col>
           <span>
-            <v-icon
+            <v-btn
+              variant="text"
+              density="compact"
               :color="imagesActive ? 'rgb(37, 99, 235)': 'black'"
               :disabled="!hasImages"
+              icon="mdi-image"
               @click="hasImages && toggleImages(siteObservation)"
-            >
-              mdi-image</v-icon>
+            />
           </span>
         </v-col>
         <v-spacer />
@@ -370,12 +372,6 @@ const progressInfo = computed(() => {
         align="center"
         class="my-4"
       >
-        <b>Downloading Images</b>
-        <v-progress-linear
-          color="primary"
-          height="8"
-          indeterminate
-        />
         <div
           v-if="isRunning && progressInfo"
           class="px-2 text-sm col-span-4"
@@ -497,7 +493,7 @@ const progressInfo = computed(() => {
         <v-icon
           size="40"
           :disabled="!currentClosestTimestamp.prev"
-          color="rgb(37, 99, 235)"
+          :color="currentClosestTimestamp.prev ? 'rgb(37, 99, 235)' : 'gray'"
           @click="goToTimestamp(-1)"
         >
           mdi-chevron-left
@@ -512,7 +508,7 @@ const progressInfo = computed(() => {
         <v-icon
           size="40"
           :disabled="!currentClosestTimestamp.next"
-          color="rgb(37, 99, 235)"
+          :color="currentClosestTimestamp.next ? 'rgb(37, 99, 235)' : 'gray'"
           @click="goToTimestamp(1)"
         >
           mdi-chevron-right

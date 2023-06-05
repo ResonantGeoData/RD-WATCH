@@ -222,7 +222,7 @@ watch(hiddenCanvas, () => {
 <template>
   <v-card
     variant="outlined"
-    class="mb-5"
+    class="mb-2 settings-card"
     width="350"
   >
     <v-container dense>
@@ -486,5 +486,9 @@ watch(hiddenCanvas, () => {
 }
 .img-pixelated {
   image-rendering: crisp-edges;
+}
+.settings-card {
+  overflow-y: auto;
+  max-height: calc(100vh - 250px);
 }
 </style>

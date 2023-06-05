@@ -109,23 +109,25 @@ onMounted(() => {
       </v-row>
       <v-row dense>
         <v-spacer />
-        <v-icon
+        <v-btn
+          variant="text"
+          density="compact"
+          class="pa-0 ma-0"
           :class="{
             'animate-flicker': state.satellite.loadingSatelliteImages,
           }"
           :color="imagesOn ? 'rgb(37, 99, 235)' : 'black'"
           :disabled="selectedRegion === null || (filteredSatelliteTimeList.length === 0 && state.satellite.satelliteSources.length !== 0)" 
-
+          icon="mdi-image"
           @click="imagesOn = selectedRegion !== null && (filteredSatelliteTimeList.length !== 0 || state.satellite.satelliteSources.length === 0) ? !imagesOn : imagesOn"
-        >
-          mdi-image
-        </v-icon>
-        <v-icon 
+        />
+        <v-btn
           :color="expandSettings ? 'rgb(37, 99, 235)' : 'gray'"
+          variant="text"
+          density="compact"
+          icon="mdi-cog"
           @click="expandSettings = !expandSettings"
-        >
-          mdi-cog
-        </v-icon>
+        />
       </v-row>
       <v-row
         dense

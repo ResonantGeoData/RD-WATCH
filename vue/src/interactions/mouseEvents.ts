@@ -28,7 +28,7 @@ const popupLogic = (map: ShallowRef<null | Map>) => {
   const popup = new Popup({
     closeButton: false,
     closeOnClick: false,
-    maxWidth: '400px',
+    maxWidth: '600px',
   });
   let insideObservation = false;
   const drawPopup = (e: MapLayerMouseEvent) => {
@@ -81,12 +81,14 @@ const popupLogic = (map: ShallowRef<null | Map>) => {
                       `rgba(0,0,0,0)`
                     );
                   }
+                  const area = Math.round(item.properties.area).toLocaleString('en-US');
+                  const areaStr = `<div class='badge'>Area: ${area } m²`;
                   const scoreStyle = `style="background-color:${calculateScoreColor(
                     score.toFixed(2)
                   )};color: black; font-weight:bolder; opacity: 1.0 !important;"`;
                   html = `${html}<li>${groundtruth}<div class='badge' ${fillString}>SiteId:${regionName}_${String(id).padStart(4, '0')}</div> <div class='badge' ${scoreStyle}>Score:${score.toFixed(
                     2
-                    )}</div></li>`;
+                    )}</div> ${areaStr}</li>`;
                   }
               }
             }

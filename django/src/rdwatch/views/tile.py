@@ -4,6 +4,7 @@ from urllib.parse import urlencode
 
 import mercantile
 
+from django.contrib.gis.db.models.functions import Area, Transform
 from django.db import connection
 from django.db.models import (
     BooleanField,
@@ -111,6 +112,7 @@ def vector_tile(
             configuration_id=F('siteeval__configuration_id'),
             site_number=F('siteeval__number'),
             label=F('label_id'),
+            area=Area(Transform('geom', srid=6933)),
             timemin=ExtractEpoch('timestamp'),
             timemax=ExtractEpoch(
                 Window(

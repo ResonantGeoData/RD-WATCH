@@ -1,7 +1,7 @@
 from typing_extensions import Self
 
 from django.contrib.gis.db.models import PolygonField
-from django.contrib.gis.geos import MultiPolygon
+from django.contrib.gis.geos import MultiPolygon, Polygon
 from django.contrib.postgres.indexes import GistIndex
 from django.db import models
 
@@ -91,9 +91,15 @@ class SiteObservation(models.Model):
 
             constellation = constellation_map.get(feature.properties.sensor_name, None)
 
-            assert isinstance(feature.geometry, MultiPolygon)
+            assert isinstance(feature.geometry, Polygon | MultiPolygon)
 
-            for i, polygon in enumerate(feature.geometry):
+            geometry = (
+                feature.geometry
+                if isinstance(feature.geometry, MultiPolygon)
+                else MultiPolygon([feature.geometry])
+            )
+
+            for i, polygon in enumerate(geometry):
                 if feature.properties.current_phase:
                     phase = feature.properties.current_phase[i]
                 else:

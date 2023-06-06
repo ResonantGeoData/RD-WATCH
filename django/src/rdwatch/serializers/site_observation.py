@@ -12,6 +12,7 @@ class SiteObservationSerializer(serializers.Serializer):
     timerange = TimeRangeSerializer()
     timestamp = serializers.IntegerField()  # type: ignore
     bbox = BoundingBoxSerializer()
+    area = serializers.FloatField()
 
 
 class SiteObservationListSerializer(serializers.Serializer):

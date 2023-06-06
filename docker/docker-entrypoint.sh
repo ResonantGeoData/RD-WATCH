@@ -21,7 +21,6 @@ if [ "$1" = "unitd" ]; then
   fi
 fi
 
-poetry install --directory /app/django --only main
 poetry run --directory /app/django /app/django/src/manage.py migrate
 poetry run --directory /app/django /app/django/src/manage.py loaddata lookups
 

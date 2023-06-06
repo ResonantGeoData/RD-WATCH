@@ -4,7 +4,7 @@ from datetime import datetime
 from typing import Annotated, Any, Literal
 
 from ninja import Field, Schema
-from pydantic import constr, root_validator, validator
+from pydantic import confloat, constr, root_validator, validator
 
 from django.contrib.gis.gdal import GDALException
 from django.contrib.gis.geos import GEOSGeometry
@@ -13,9 +13,9 @@ from django.contrib.gis.geos import GEOSGeometry
 class SiteFeature(Schema):
     type: Literal['site']
     region_id: constr(regex=r'^[A-Z]{2}_[RCST][\dx]{3}$')
-    site_id: str
+    site_id: constr(regex=r'^[A-Z]{2}_([RST]\d{3}|C[0-7]\d{2}|[RC][Xx]{3})_\d{4}$')
     version: constr(regex=r'^\d+\.\d+\.\d+$')
-    mgrs: constr(regex=r'^\d\d[A-Za-z]{3}$')
+    mgrs: constr(regex=r'^\d{2}[A-Z]{3}$')
     status: Literal[
         'positive_annotated',
         'positive_partial',
@@ -49,14 +49,14 @@ class SiteFeature(Schema):
     ]
 
     # Optional fields
-    score: float | None
+    score: confloat(ge=0.0, le=1.0) | None
     validated: Literal['True', 'False'] | None
     predicted_phase_transition: Literal[
         'Active Construction',
         'Post Construction',
     ] | None
     predicted_phase_transition_date: str | None
-    misc_info: dict[Any, Any] | None
+    misc_info: dict[str, Any] | None
 
     @validator('start_date', 'end_date', pre=True)
     def parse_dates(cls, v: str | None) -> datetime | None:
@@ -123,7 +123,9 @@ class ObservationFeature(Schema):
         return val.split(', ')
 
     @validator('observation_date', pre=True)
-    def parse_dates(cls, v: str) -> datetime:
+    def parse_dates(cls, v: Any) -> datetime:
+        if not isinstance(v, str):
+            raise ValueError('"observation_date" must be a valid date string.')
         return datetime.strptime(v, '%Y-%m-%d')
 
     @root_validator
@@ -140,8 +142,8 @@ class ObservationFeature(Schema):
         return values
 
     # Optional fields
-    score: float | None
-    misc_info: dict[Any, Any] | None
+    score: confloat(ge=0.0, le=1.0) | None
+    misc_info: dict[str, Any] | None
 
     @validator('score', pre=True, always=True)
     def parse_score(cls, v: float | None) -> float:
@@ -181,11 +183,6 @@ class Feature(Schema):
             and values['geometry'].geom_type != 'Polygon'
         ):
             raise ValueError('Site geometry must be of type "Polygon"')
-        if (
-            isinstance(values['properties'], ObservationFeature)
-            and values['geometry'].geom_type != 'MultiPolygon'
-        ):
-            raise ValueError('Observation geometry must be of type "MultiPolygon"')
         return values
 
 

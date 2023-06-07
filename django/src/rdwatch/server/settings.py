@@ -31,6 +31,8 @@ class BaseConfiguration(Configuration):
         'django_extensions',
         'rdwatch',
         'django_celery_results',
+        # Maybe conditionally add Scoring
+        'rdwatch_scoring',
     ]
 
     MIDDLEWARE = [
@@ -63,14 +65,25 @@ class BaseConfiguration(Configuration):
         environ_prefix=_environ_prefix,
     )
 
-    DATABASES = values.DatabaseURLValue(
+    DB_val = values.DatabaseURLValue(
+        alias='default',
         environ_name='POSTGRESQL_URI',
         environ_prefix=_environ_prefix,
         environ_required=True,
         # Additional kwargs to DatabaseURLValue are passed to dj-database-url
         engine='django.contrib.gis.db.backends.postgis',
-        conn_max_age=None,
     )
+    scoring_val = values.DatabaseURLValue(
+        'postgres://scoring:secretkey@scoredb:5432/scoring',
+        alias='scoringdb',
+        engine='django.contrib.gis.db.backends.postgis',
+    )
+    db_dict = DB_val.value
+    scoring_dict = scoring_val.value
+
+    # NOTE - CHANGE so an environment variable can add this in
+    db_dict.update(scoring_dict)
+    DATABASES = db_dict
 
     # Set to same value allowed by NGINX Unit server in `settings.http.max_body_size`
     # (in /docker/nginx.json)
@@ -92,6 +105,8 @@ class BaseConfiguration(Configuration):
     CELERY_CACHE_BACKEND = 'django-cache'
     CELERY_RESULT_EXTENDED = True
     CELERYD_TIME_LIMIT = 1200
+    # Make this conditional based on environment variable as well
+    DATABASE_ROUTERS = ['rdwatch_scoring.router.ScoringRouter']
 
 
 class DevelopmentConfiguration(BaseConfiguration):

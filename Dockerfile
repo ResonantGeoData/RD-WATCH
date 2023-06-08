@@ -24,8 +24,7 @@ RUN echo "deb [signed-by=/usr/share/keyrings/nginx.gpg] http://packages.nginx.or
  && usermod --lock rdwatch \
  && usermod --append --groups rdwatch unit
 RUN python3 -m pip install poetry==1.4.2
-RUN poetry config virtualenvs.in-project false \
- && poetry config virtualenvs.path /poetry/venvs
+RUN poetry config virtualenvs.in-project true
 WORKDIR /app
 EXPOSE 80
 ENTRYPOINT [ "/docker-entrypoint.sh" ]
@@ -41,7 +40,6 @@ CMD [ \
 # Base builder
 FROM base as builder
 COPY docker/keyrings/nodesource.gpg /usr/share/keyrings/nodesource.gpg
-RUN mkdir -p /poetry/venvs
 RUN apt-get update \
  && apt-get install --no-install-recommends --yes \
       build-essential \
@@ -53,8 +51,7 @@ RUN apt-get update \
       python3-dev \
  && rm -rf /var/lib/apt/lists/* \
  && poetry config installer.parallel true \
- && poetry config virtualenvs.in-project false \
- && poetry config virtualenvs.path /poetry/venvs
+ && poetry config virtualenvs.in-project true
 
 FROM builder as vue-builder
 WORKDIR /app/vue
@@ -104,10 +101,6 @@ RUN chmod -R u=rX,g=rX,o= .
 
 # Final image
 FROM base
-COPY --from=django-builder \
-     --chown=rdwatch:rdwatch \
-     /poetry/venvs \
-     /poetry/venvs
 COPY --from=django-dist \
      --chown=rdwatch:rdwatch \
      /app/django \

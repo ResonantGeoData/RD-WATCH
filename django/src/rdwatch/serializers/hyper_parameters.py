@@ -10,6 +10,8 @@ class HyperParametersWriteSerializer(serializers.Serializer):
     performer = serializers.CharField()
     title = serializers.CharField(max_length=1000)
     parameters = serializers.JSONField(default=dict)
+    evaluation = serializers.IntegerField(required=False)
+    evaluation_run = serializers.IntegerField(required=False)
 
     def validate_performer(self, value: str) -> lookups.Performer:
         try:
@@ -29,6 +31,8 @@ class HyperParametersDetailSerializer(serializers.Serializer):
     timestamp = serializers.IntegerField(allow_null=True)
     timerange = TimeRangeSerializer(allow_null=True)
     bbox = serializers.JSONField(allow_null=True)
+    evaluation = serializers.IntegerField(allow_null=True)
+    evaluation_run = serializers.IntegerField(allow_null=True)
 
 
 class HyperParametersListSerializer(serializers.Serializer):

@@ -138,6 +138,8 @@ def get_queryset():
                 parameters='parameters',
                 numsites=Count('evaluations__pk', distinct=True),
                 score=Avg('evaluations__score'),
+                evaluation='evaluation',
+                evaluation_run='evaluation_run',
                 timestamp=ExtractEpoch(Max('evaluations__timestamp')),
                 timerange=TimeRangeJSON('evaluations__observations__timestamp'),
                 bbox=Case(
@@ -165,6 +167,8 @@ class ModelRunViewSet(viewsets.ViewSet):
             title=write_serializer.validated_data['title'],
             performer=write_serializer.validated_data['performer'],
             parameters=write_serializer.validated_data['parameters'],
+            evaluation=write_serializer.validated_data['evaluation'],
+            evaluation_run=write_serializer.validated_data['evaluation_run'],
         )
         detail_serializer = HyperParametersDetailSerializer(
             {

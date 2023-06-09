@@ -48,6 +48,12 @@ class SiteEvaluation(models.Model):
     score = models.FloatField(
         help_text='Score of site footprint',
     )
+    version = models.CharField(
+        max_length=255,
+        blank=True,
+        null=True,
+        help_text='Version of annotations',
+    )
 
     @classmethod
     def bulk_create_from_site_model(
@@ -67,6 +73,7 @@ class SiteEvaluation(models.Model):
             site_eval = cls.objects.create(
                 configuration=configuration,
                 region=region,
+                version=site_feature.properties.version,
                 number=site_feature.properties.site_number,
                 timestamp=datetime.now(),
                 geom=site_feature.geometry,

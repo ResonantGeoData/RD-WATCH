@@ -73,15 +73,18 @@ class BaseConfiguration(Configuration):
         # Additional kwargs to DatabaseURLValue are passed to dj-database-url
         engine='django.contrib.gis.db.backends.postgis',
     )
+    # NOTE - CHANGE so an environment variable can add this in
     scoring_val = values.DatabaseURLValue(
-        'postgres://scoring:secretkey@scoredb:5432/scoring',
         alias='scoringdb',
+        environ_name='POSTGRESQL_SCORING_URI',
+        environ_prefix=_environ_prefix,
+        environ_required=True,
+        # Additional kwargs to DatabaseURLValue are passed to dj-database-url
         engine='django.contrib.gis.db.backends.postgis',
     )
     db_dict = DB_val.value
     scoring_dict = scoring_val.value
 
-    # NOTE - CHANGE so an environment variable can add this in
     db_dict.update(scoring_dict)
     DATABASES = db_dict
 

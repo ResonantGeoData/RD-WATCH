@@ -3,8 +3,6 @@ import { computed, nextTick, onMounted, ref, watch } from "vue";
 import type { Ref } from "vue";
 import { state } from "../store";
 import { addPattern } from "../interactions/fillPatterns";
-import { InformationCircleIcon } from "@heroicons/vue/24/solid";
-
 
 const autoZoom = computed({
   get() {
@@ -121,10 +119,8 @@ const worldViewImagery = computed({
   },
 });
 
-
 const patternDensity: Ref<number> = ref(1);
 const patternDensityIndex = ref([64, 128, 256, 512, 1024])
-
 
 const drawCanvasPattern = () => {
   if (hiddenCanvas.value) {
@@ -224,230 +220,275 @@ watch(hiddenCanvas, () => {
 </script>
 
 <template>
-  <div class="gap-2 border-t border-gray-300 bg-gray-100 p-2">
-    <canvas
-      ref="hiddenCanvas"
-      style="display: none"
-      :width="patternDensityIndex[patternDensity]"
-      :height="patternDensityIndex[patternDensity]"
-    />
-    <div class="grid grid-cols-8 gap-4">
-      <h4 class="col-span-7">
-        Settings
-      </h4>
-      <InformationCircleIcon
-        class="hover h-5 text-blue-600"
-        data-tip="Information"
-        @click="expandInfo = !expandInfo"
+  <v-card
+    variant="outlined"
+    class="mb-2 settings-card"
+    width="350"
+  >
+    <v-container dense>
+      <canvas
+        ref="hiddenCanvas"
+        style="display: none"
+        :width="patternDensityIndex[patternDensity]"
+        :height="patternDensityIndex[patternDensity]"
       />
-    </div>
-    <div
-      v-if="expandInfo"
-      style="font-size: 0.75em"
-    >
-      <div class="grid-cols-4">
-        <div style="font-weight: bold">
-          Date:
-        </div>
-        <span> {{ info.date }}</span>
-      </div>
-      <div class="grid-cols-4">
-        <div style="font-weight: bold">
-          Hash:
-        </div>
-        <span> {{ info.hash }}</span>
-      </div>
-    </div>
-    <div class="form-control">
-      <label class="label cursor-pointer">
-        <span class="label-text">Auto Zoom:</span>
-        <input
-          v-model="autoZoom"
-          type="checkbox"
-          class="checkbox-primary checkbox"
+      <v-row
+        dense
+      >
+        <h4>
+          Settings
+        </h4>
+        <v-spacer />
+        <v-icon
+          size="small"
+          :color="expandInfo ? 'rgb(37, 99, 235)' : 'black'"
+          @click="expandInfo = !expandInfo"
         >
-      </label>
-    </div>
-    <div class="form-control">
-      <label class="label cursor-pointer">
-        <span class="label-text">Images:</span>
-        <input
-          v-model="imagesOn"
-          :disabled="state.satellite.satelliteTimeList.length === 0"
+          mdi-information
+        </v-icon>
+      </v-row>
+      <v-row
+        v-if="expandInfo"
+        dense
+        style="font-size: 0.75em"
+      >
+        <v-col>
+          <div style="font-weight: bold">
+            Date:
+          </div>
+          <span> {{ info.date }}</span>
+        </v-col>
+        <v-col>
+          <div style="font-weight: bold">
+            Hash:
+          </div>
+          <span> {{ info.hash }}</span>
+        </v-col>
+      </v-row>
+      <v-row dense>
+        <v-col cols="8">
+          <v-checkbox
+            v-model="autoZoom"
+            label="Auto Zoom"
+            density="compact"
+          />
+        </v-col>
+      </v-row>
+      <v-row dense>
+        <v-col cols="8">
+          <v-checkbox
+            v-model="imagesOn"
+            label="Images"
+            density="compact"
+            :disabled="state.satellite.satelliteTimeList.length === 0"
+          />
+        </v-col>
+      </v-row>
+      <v-row
+        v-if="imagesOn"
+        dense
+      >
+        <v-col cols="8">
+          <v-checkbox
+            v-model="S2Imagery"
+            label="S2 Imagery"
+            density="compact"
+          />
+        </v-col>
+      </v-row>
+      <v-row 
+        v-if="imagesOn"
+        dense
+      >
+        <v-col cols="8">
+          <v-checkbox
+            v-model="worldViewImagery"
+            label="WorldView Imagery"
+            density="compact"
+          />
+        </v-col>
+      </v-row>
 
-          type="checkbox"
-          class="checkbox-primary checkbox"
-        >
-      </label>
-    </div>
-    <div
-      v-if="imagesOn"
-      class="form-control"
-    >
-      <label class="label cursor-pointer">
-        <span class="label-text">Image Opacity:</span>
-        <input
-          v-model.number="imageOpacity"
-          min="0"
-          max="1"
-          step="0.1"
-          class="chrome-range w-full"
-          type="range"
-        >
-      </label>
-    </div>
-    <div class="form-control">
-      <label class="label cursor-pointer">
-        <span class="label-text">S2 Imagery:</span>
-        <input
-          v-model="S2Imagery"
-          type="checkbox"
-          class="checkbox-primary checkbox"
-        >
-      </label>
-    </div>
-    <div class="form-control">
-      <label class="label cursor-pointer">
-        <span class="label-text">WorldView Imagery:</span>
-        <input
-          v-model="worldViewImagery"
-          type="checkbox"
-          class="checkbox-primary checkbox"
-        >
-      </label>
-    </div>
-    <div
-      v-if="imagesOn"
-      class="form-control"
-    >
-      <label class="label cursor-pointer">
-        <span class="label-text">Cloud Cover:</span>
-        <input
-          v-model.number="cloudCover"
-          :disabled="state.satellite.loadingSatelliteImages"
-          min="0"
-          max="100"
-          step="20"
-          class="chrome-range w-full"
-          type="range"
-        >
-        <span class="label-text pl-2">&lt;{{ cloudCover }}%</span>
-      </label>
-    </div>
+      <v-row
+        v-if="imagesOn"
+        dense
+        align="center"
+        justify="center"
+      >
+        <v-col cols="4">
+          <span>Image Opacity:</span>
+        </v-col>
+        <v-col cols="6">
+          <v-slider
+            v-model.number="imageOpacity"
+            min="0"
+            max="1"
+            step="0.1"
+            color="primary"
+            density="compact"
+            class="mt-5"
+          />
+        </v-col>
+        <v-col cols="2">
+          <span class="">{{ (imageOpacity * 100).toFixed(0) }}%</span>
+        </v-col>
+      </v-row>
+      <v-row
+        v-if="imagesOn"
+        dense
+        align="center"
+        justify="center"
+      >
+        <v-col>
+          <span class="label">Cloud Cover:</span>
+        </v-col>
+        <v-col cols="6">
+          <v-slider
+            v-model.number="cloudCover"
+            :disabled="state.satellite.loadingSatelliteImages"
+            min="0"
+            max="100"
+            step="20"
+            color="primary"
+            density="compact"
+            class="mt-5"
+          />
+        </v-col>
+        <v-col cols="2">
+          <span class="label">&lt;{{ cloudCover }}%</span>
+        </v-col>
+      </v-row>
 
 
 
-    <div class="form-control">
-      <label class="label cursor-pointer">
-        <img
-          ref="siteOutlineImg"
-          height="32"
-          width="32"
-        >
-        <span class="label-text">Site Outline:</span>
-        <input
-          v-model="showSiteOutline"
-          type="checkbox"
-          class="checkbox-primary checkbox"
-        >
-      </label>
-    </div>
-    <div class="form-control">
-      <label class="label cursor-pointer">
-        <div
-          :style="{
-            border: '1px solid grey',
-            height: '32px',
-            width: '32px'
-          }"
-        />
-        <span class="label-text">Region Polygon:</span>
-        <input
-          v-model="showRegionPolygon"
-          type="checkbox"
-          class="checkbox-primary checkbox"
-        >
-      </label>
-    </div>
-    <div class="form-control">
-      <label class="label cursor-pointer">
-        <img
-          ref="groundImg"
-          class="img-pixelated"
-          height="32"
-          width="32"
-        >
-        <span class="label-text">Ground Truth Pattern:</span>
-        <input
-          v-model="groundTruthPattern"
-          type="checkbox"
-          class="checkbox-primary checkbox"
-        >
-      </label>
-    </div>
-    <div class="form-control">
-      <label class="label cursor-pointer">
-        <img
-          ref="performerImg"
-          height="32"
-          width="32"
-        >
-        <span class="label-text">Performer Pattern:</span>
-        <input
-          v-model="otherPattern"
-          type="checkbox"
-          class="checkbox-primary checkbox"
-        >
-      </label>
-    </div>
-    <div class="form-control">
-      <label class="label cursor-pointer">
-        <span class="label-text">Pattern Thickness:</span>
-        <input
-          v-model="patternThickness"
-          type="range"
-          min="1"
-          max="16"
-          step="1"
-          class="range range-primary"
-        >
-      </label>
-    </div>
-    <div class="form-control">
-      <label class="label cursor-pointer">
-        <span class="label-text">Pattern Opacity:</span>
-        <input
-          v-model="patternOpacity"
-          type="range"
-          min="0"
-          max="1"
-          step="0.1"
-          class="range range-primary"
-        >
-      </label>
-    </div>
-    <div class="form-control">
-      <label class="label cursor-pointer">
-        <span class="label-text">Pattern Density:</span>
-        <input
-          v-model="patternDensity"
-          type="range"
-          min="0"
-          max="4"
-          step="1"
-          class="range range-primary"
-        >
-      </label>
-    </div>
-  </div>
+      <v-row dense>
+        <v-col cols="8">
+          <v-checkbox
+            v-model="showSiteOutline"
+            label="Site Outline:"
+            density="compact"
+          />
+        </v-col>
+        <v-col>
+          <img
+            ref="siteOutlineImg"
+            height="32"
+            width="32"
+          >
+        </v-col>
+      </v-row>
+      <v-row dense>
+        <v-col cols="8">
+          <v-checkbox
+            v-model="showRegionPolygon"
+            label="Region Polygon:"
+            density="compact"
+          />
+        </v-col>
+        <v-col>
+          <div
+            :style="{
+              border: '1px solid grey',
+              height: '32px',
+              width: '32px'
+            }"
+          />
+        </v-col>
+      </v-row>
+      <v-row dense>
+        <v-col cols="8">
+          <v-checkbox
+            v-model="groundTruthPattern"
+            label="Ground Truth Pattern:"
+            density="compact"
+          />
+        </v-col>
+        <v-col>
+          <img
+            ref="groundImg"
+            class="img-pixelated"
+            height="32"
+            width="32"
+          >
+        </v-col>
+      </v-row>
+      <v-row dense>
+        <v-col cols="8">
+          <v-checkbox
+            v-model="otherPattern"
+            label="PerformerPattern:"
+            density="compact"
+          />
+        </v-col>
+        <v-col>
+          <img
+            ref="performerImg"
+            height="32"
+            width="32"
+          >
+        </v-col>
+      </v-row>
+      <v-row dense>
+        <v-col cols="4">
+          <span>Pattern Thickness:</span>
+        </v-col>
+        <v-col>
+          <v-slider
+            v-model.number="patternThickness"
+            min="1"
+            max="16"
+            step="1"
+            color="primary"
+            density="compact"
+            class="mt-5"
+          />
+        </v-col>
+      </v-row>
+      <v-row dense>
+        <v-col cols="4">
+          <span>Pattern Opacity:</span>
+        </v-col>
+        <v-col>
+          <v-slider
+            v-model.number="patternOpacity"
+            min="0"
+            max="1"
+            step="0.1"
+            color="primary"
+            density="compact"
+            class="mt-5"
+          />
+        </v-col>
+      </v-row>
+      <v-row dense>
+        <v-col cols="4">
+          <span>Pattern Density:</span>
+        </v-col>
+        <v-col>
+          <v-slider
+            v-model.number="patternDensity"
+            min="0"
+            max="4"
+            step="1"
+            color="primary"
+            density="compact"
+            class="mt-5"
+          />
+        </v-col>
+      </v-row>
+    </v-container>
+  </v-card>
 </template>
 
 <style scoped>
 .hover:hover {
   cursor: pointer;
 }
-
 .img-pixelated {
   image-rendering: crisp-edges;
+}
+.settings-card {
+  overflow-y: auto;
+  max-height: calc(100vh - 250px);
 }
 </style>

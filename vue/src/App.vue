@@ -6,7 +6,24 @@ import EvaluationsSideBar from "./components/siteObservations/EvaluationsSideBar
 </script>
 
 <template>
-  <SideBar />
-  <evaluations-side-bar />
-  <MapLibre />
+  <v-app id="RGD">
+    <v-navigation-drawer
+      location="left"
+      width="400"
+      sticky
+      style="max-height:100vh;"
+    >
+      <SideBar />
+    </v-navigation-drawer>
+    <v-main style="z-index:1">
+      <MapLibre />
+    </v-main>
+    <v-navigation-drawer
+      location="right"
+      width="400"
+      sticky
+    >
+      <EvaluationsSideBar />
+    </v-navigation-drawer>
+  </v-app>
 </template>

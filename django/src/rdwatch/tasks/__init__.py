@@ -2,6 +2,7 @@ import io
 import logging
 from datetime import datetime, timedelta
 
+from celery import shared_task
 from pyproj import Transformer
 
 from django.core.files import File
@@ -200,3 +201,10 @@ def get_siteobservations_images(
     fetching_task.status = SatelliteFetching.Status.COMPLETE
     fetching_task.celery_id = ''
     fetching_task.save()
+
+
+@shared_task
+def delete_temp_model_runs_task() -> None:
+    """Delete all model runs that are due to be deleted."""
+    print('Test')
+    # TODO: implement this

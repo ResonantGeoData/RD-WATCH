@@ -1,4 +1,5 @@
 import os
+from datetime import timedelta
 
 from configurations import Configuration, values
 
@@ -92,6 +93,13 @@ class BaseConfiguration(Configuration):
     CELERY_CACHE_BACKEND = 'django-cache'
     CELERY_RESULT_EXTENDED = True
     CELERYD_TIME_LIMIT = 1200
+
+    CELERY_BEAT_SCHEDULE = {
+        'delete-temp-model-runs-beat': {
+            'task': 'rdwatch.tasks.delete_temp_model_runs_task',
+            'schedule': timedelta(seconds=60),
+        },
+    }
 
 
 class DevelopmentConfiguration(BaseConfiguration):

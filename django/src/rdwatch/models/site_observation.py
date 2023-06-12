@@ -98,7 +98,6 @@ class SiteObservation(models.Model):
                 if isinstance(feature.geometry, MultiPolygon)
                 else MultiPolygon([feature.geometry])
             )
-
             for i, polygon in enumerate(geometry):
                 if feature.properties.current_phase:
                     phase = feature.properties.current_phase[i]

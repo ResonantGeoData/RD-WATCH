@@ -24,6 +24,22 @@ export interface QueryArguments {
   limit?: number;
 }
 
+export interface ScoringResults {
+  region_name: string;
+  evaluationId: number;
+  evaluation_run: number;
+  performer: string;
+  evaluation_uuid: string;
+  unionArea: number;
+  statusAnnotated: string;
+  temporalIOU: {
+    site_preparation: number;
+    active_construction: number;
+    post_construction: number;
+
+  }
+}
+
 export class ApiService {
   /**
    * @returns ServerStatus
@@ -281,4 +297,19 @@ export class ApiService {
       }
     });
   }
+
+  public static getScoring(
+    configurationId: number,
+    regionId: number,
+    siteNumber: number,
+    version: string
+  ): CancelablePromise<ScoringResults>
+  {
+    return __request(OpenAPI, {
+      method: "GET",
+      url: "/api/scores/",
+      query: { configurationId, regionId, siteNumber, version },
+    });
+  }
 }
+

@@ -1,11 +1,10 @@
-import { defineConfig, loadEnv } from "vite";
+import { defineConfig } from "vite";
 import vue from "@vitejs/plugin-vue";
 import { execSync } from "child_process";
 
-export default defineConfig(({ mode }) => {
+export default defineConfig(() => {
   // Load env file based on `mode` in the current working directory.
   // Set the third parameter to '' to load all env regardless of the `VITE_` prefix.
-  const env = loadEnv(mode, process.cwd(), "");
   const commitDate = execSync("git log -1 --format=%cI").toString().trimEnd();
   const branchName = execSync("git rev-parse --abbrev-ref HEAD")
     .toString()

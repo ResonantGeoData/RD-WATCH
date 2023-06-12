@@ -1,7 +1,6 @@
 <script setup lang="ts">
-import FilterSelect from "../FilterSelect.vue";
 import { ref, watch, watchEffect } from "vue";
-import { ApiService } from "../../client";
+import { ApiService, PerformerList } from "../../client";
 import type { Ref } from "vue";
 import type { Performer } from "../../client";
 
@@ -15,24 +14,45 @@ const emit = defineEmits<{
   (e: "update:modelValue", performer: SelectedPerformer): void;
 }>();
 
-const performers: Ref<Performer[]> = ref([]);
-const selectedPerformer: Ref<SelectedPerformer> = ref(props.modelValue);
-
+const performers: Ref<{value: number; title: string}[]> = ref([]);
+const selectedPerformer: Ref<number | undefined> = ref(props.modelValue?.id);
+const performerList: Ref<PerformerList | null> = ref(null);
 watchEffect(async () => {
-  const performerList = await ApiService.getPerformers();
-  const performerResults = performerList.items
-  performerResults.sort((a, b) => (a.team_name > b.team_name ? 1 : -1));
-  performers.value = performerResults;
+  performerList.value = await ApiService.getPerformers();
+  const performerResults = performerList.value.items
+  performerResults.sort((a, b) => (a.team_name > b.team_name ? 1 : -1))
+  performers.value = performerResults.map((item) => ({title: item.team_name, value: item.id }));
 });
 
-watch(selectedPerformer, (val) => emit("update:modelValue", val));
+watch(selectedPerformer, (val) => {
+  if (performerList.value !== null) {
+    const newPerformer = performerList.value.items.find((item) => item.id === val);
+    if (newPerformer) {
+      emit("update:modelValue", newPerformer);
+      return;
+    }
+  }
+  emit("update:modelValue", null);
+});
 </script>
 
 <template>
-  <FilterSelect
+  <v-select
     v-model="selectedPerformer"
+    clearable
+    persistent-clear
+    density="compact"
+    variant="outlined"
     :label="`Performer (${performers.length})`"
-    :options="performers"
-    value-key="team_name"
+    :placeholder="`Performer (${performers.length})`"
+    :items="performers"
+    single-line
+    class="dropdown"
   />
 </template>
+
+<style scoped>
+.dropdown {
+  max-width:180px;
+}
+</style>

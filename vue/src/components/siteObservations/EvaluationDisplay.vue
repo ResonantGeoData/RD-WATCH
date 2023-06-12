@@ -3,9 +3,7 @@ import { computed, onBeforeMount, onBeforeUnmount } from "vue";
 import { ApiService } from "../../client";
 import { ImageBBox, SiteObservationImage, getSiteObservationDetails, state } from "../../store";
 import { SiteObservation } from "../../store";
-import { ArrowPathIcon, ChevronLeftIcon, ChevronRightIcon, XMarkIcon } from "@heroicons/vue/24/solid";
 import { imageFilter } from "../../mapstyle/images";
-import { PhotoIcon } from "@heroicons/vue/24/solid";
 
 const props = defineProps<{
   siteObservation: SiteObservation;
@@ -100,6 +98,7 @@ const hasImages = computed(() => props.siteObservation.imageCounts.WV.loaded > 0
 const canGetImages = computed(() => ({
   WV: props.siteObservation.imageCounts.WV.total,
   S2: props.siteObservation.imageCounts.S2.total,
+  L8: props.siteObservation.imageCounts.L8.total,
 }));
 const currentClosestTimestamp = computed(() => {
   const observation = state.enabledSiteObservations.find((item) => item.id === props.siteObservation.id);
@@ -196,100 +195,158 @@ const progressInfo = computed(() => {
 </script>
 
 <template>
-  <details
-    class="relative rounded-lg border-2 border-gray-50 open:border-blue-600 hover:border-gray-200 siteevaldisplay"
-  >
-    <summary
-      class="list-none bg-gray-50 p-2"
-    >
-      <div class="grid grid-cols-3">
-        <div class="col-span-3">
-          <div class="grid grid-cols-3">
-            <span class="model-title">
-              SiteId: {{ siteObservation.id }}
-            </span>
-            <span>
-              <PhotoIcon 
-                class="h-5 mt-0.5"
-                :class="{
-                  'text-blue-600': imagesActive,
-                  'hover': hasImages,
-                  'text-gray-400': !hasImages,
-                }"
-                @click="hasImages && toggleImages(siteObservation)"
-              />
-            </span>
-            <span class="grid grid-cols-2 justify-self-end">
-              <ArrowPathIcon
-                class="icon h-5 text-blue-600"
-                data-tip="Refresh"
-                @click="refresh()"
-              />
+  <v-card class="siteevaldisplay">
+    <v-card-text>
+      <v-row
+        dense
+        justify="center"
+        align="center"
+      >
+        <v-col>
+          <span class="model-title">
+            SiteId: {{ siteObservation.id }}
+          </span>
+        </v-col>
+        <v-col>
+          <span>
+            <v-btn
+              variant="text"
+              density="compact"
+              :color="imagesActive ? 'rgb(37, 99, 235)': 'black'"
+              :disabled="!hasImages"
+              icon="mdi-image"
+              @click="hasImages && toggleImages(siteObservation)"
+            />
+          </span>
+        </v-col>
+        <v-spacer />
+        <v-col class="pl-10">
+          <v-icon 
+            size="large"
+            color="rgb(37, 99, 235)"
+            class="mr-2"
+            @click="refresh()"
+          >
+            mdi-sync
+          </v-icon>
 
-              <XMarkIcon
-                class="icon h-5 text-red-600 "
-                data-tip="Close"
-                @click="close()"
-              />
-            </span>
-          </div>
-        </div>
-        <div class="col-span-4 text-sm font-light">
-          <div class="grid grid-cols-4 ">
-            <div class="justify-self-center">
-              Source
-            </div>
-            <div class="justify-self-center">
-              Cached
-            </div>
-            <div class="justify-self-center">
-              Obs
-            </div>
-            <div class="justify-self-center">
-              Non-Obs
-            </div>
-          </div>
-          <div class="grid grid-cols-4 ">
-            <b class="justify-self-center">L8</b>
-            <b class="justify-self-center">{{ siteObservation.imageCounts.L8.loaded }}</b>
-            <b class="justify-self-center">{{ siteObservation.imageCounts.L8.total }}</b>
-            <b class="justify-self-center">{{ siteObservation.imageCounts.L8.loaded !== 0 ?Math.max(siteObservation.imageCounts.L8.loaded - siteObservation.imageCounts.L8.total, 0) : '-' }}</b>
-          </div>
-          <div class="grid grid-cols-4 ">
-            <b class="justify-self-center">S2</b>
-            <b class="justify-self-center">{{ siteObservation.imageCounts.S2.loaded }}</b>
-            <b class="justify-self-center">{{ siteObservation.imageCounts.S2.total }}</b>
-            <b class="justify-self-center">{{ siteObservation.imageCounts.S2.loaded !== 0 ?Math.max(siteObservation.imageCounts.S2.loaded - siteObservation.imageCounts.S2.total, 0) : '-' }}</b>
-          </div>
-          <div class="grid grid-cols-4 ">
-            <b class="justify-self-center">WV</b>
-            <b class="justify-self-center">{{ siteObservation.imageCounts.WV.loaded }}</b>
-            <b class="justify-self-center">{{ siteObservation.imageCounts.WV.total }}</b>
-            <b class="justify-self-center">{{ siteObservation.imageCounts.WV.loaded !== 0 ?Math.max(siteObservation.imageCounts.WV.loaded - siteObservation.imageCounts.WV.total, 0) : '-' }}</b>
-          </div>
-        </div>
-        <div
-          class="col-span-1 text-sm font-light text-gray-600"
-        >
+          <v-icon
+            size="large"
+            color="red"
+            @click="close()"
+          >
+            mdi-close
+          </v-icon>
+        </v-col>
+      </v-row>
+      <v-row
+        dense
+        justify="center"
+        align="center"
+      >
+        <v-col cols="3">
+          Source
+        </v-col>
+        <v-col cols="3">
+          Cached
+        </v-col>
+        <v-col cols="3">
+          Obs
+        </v-col>
+        <v-col cols="3">
+          Non-Obs
+        </v-col>
+      </v-row>
+      <v-row
+        dense
+        justify="center"
+        align="center"
+      >
+        <v-col cols="3">
+          <b>L8</b>
+        </v-col>
+        <v-col cols="3">
+          <b>{{ siteObservation.imageCounts.L8.loaded }}</b>
+        </v-col>
+        <v-col cols="3">
+          <b>{{ siteObservation.imageCounts.L8.total }}</b>
+        </v-col>
+        <v-col cols="3">
+          <b>{{ siteObservation.imageCounts.L8.loaded !== 0 ?Math.max(siteObservation.imageCounts.L8.loaded - siteObservation.imageCounts.L8.total, 0) : '-' }}</b>
+        </v-col>
+      </v-row>
+      <v-row
+        dense
+        justify="center"
+        align="center"
+      >
+        <v-col cols="3">
+          <b>S2</b>
+        </v-col>
+        <v-col cols="3">
+          <b>{{ siteObservation.imageCounts.S2.loaded }}</b>
+        </v-col>
+        <v-col cols="3">
+          <b>{{ siteObservation.imageCounts.S2.total }}</b>
+        </v-col>
+        <v-col cols="3">
+          <b>{{ siteObservation.imageCounts.S2.loaded !== 0 ?Math.max(siteObservation.imageCounts.S2.loaded - siteObservation.imageCounts.S2.total, 0) : '-' }}</b>
+        </v-col>
+      </v-row>
+      <v-row
+        dense
+        justify="center"
+        align="center"
+      >
+        <v-col cols="3">
+          <b>WV</b>
+        </v-col>
+        <v-col cols="3">
+          <b>{{ siteObservation.imageCounts.WV.loaded }}</b>
+        </v-col>
+        <v-col cols="3">
+          <b>{{ siteObservation.imageCounts.WV.total }}</b>
+        </v-col>
+        <v-col cols="3">
+          <b>{{ siteObservation.imageCounts.WV.loaded !== 0 ?Math.max(siteObservation.imageCounts.WV.loaded - siteObservation.imageCounts.WV.total, 0) : '-' }}</b>
+        </v-col>
+      </v-row>
+      
+      <v-row
+        dense
+        justify="center"
+        align="center"
+      >
+        <div>
           score:
         </div>
-        <div class="col-span-3 text-sm font-light">
+        <div>
           {{ siteObservation.score.min.toFixed(2) }} to {{ siteObservation.score.max.toFixed(2) }} 
         </div>
-        <div
-          class="col-span-1 text-sm font-light text-gray-600"
-        >
+        <v-spacer />
+      </v-row>
+      <v-row
+        dense
+        justify="center"
+        align="center"
+      >
+        <div>
           average:
         </div>
-        <div class="col-span-3 text-sm font-light ">
+        <div c>
           {{ siteObservation.score.average.toFixed(2) }}
         </div>
-        <div
-          class="col-span-1 text-sm font-light text-gray-600 "
-        >
+        <v-spacer />
+      </v-row>
+      <v-row
+        dense
+        justify="center"
+        align="center"
+      >
+        <div>
           dates:
         </div>
-        <div class="col-span-3 text-sm font-light">
+        <div>
           {{
             siteObservation.timerange === null
               ? "--"
@@ -306,6 +363,15 @@ const progressInfo = computed(() => {
               )}`
           }}
         </div>
+        <v-spacer />
+      </v-row>
+      <v-row
+        v-if="isRunning"
+        dense
+        justify="center"
+        align="center"
+        class="my-4"
+      >
         <div
           v-if="isRunning && progressInfo"
           class="px-2 text-sm col-span-4"
@@ -320,106 +386,136 @@ const progressInfo = computed(() => {
           <div v-if="progressInfo !== null && progressInfo.total !== 0">
             {{ progressInfo.current }} of {{ progressInfo.total }}
           </div>
-          <progress
+          <v-progress-linear
             v-if="progressInfo !== null && progressInfo.current === 0 && progressInfo.total === 0"
-            class="progress progress-primary"
+            color="primary"
+            height="8"
+            indeterminate
           />
-          <progress
+          <v-progress-linear
             v-else-if="progressInfo !== null"
-            :value="progressInfo.current"
-            :max="progressInfo.total"
-            class="progress progress-primary"
+            color="primary"
+            height="8"
+            :model-value="(progressInfo.total / progressInfo.current) * 100.0 "
+            indeterminate
           />
-          <button
-            class="btn-error btn-xs m-1"
+
+          <v-btn
+            size="small"
+            color="error"
             @click="cancelTask(siteObservation.id)"
           >
             Cancel
-          </button>
+          </v-btn>
         </div>
-        <div class="col-span-4 text-sm font-light text-gray-600">
-          <button
-            class="btn-accent btn-xs m-1"
-            :class="{'btn-disabled': canGetImages.WV === 0 || isRunning}"
-            @click="getImages(siteObservation.id, 'WV')"
-          >
-            Get WV
-          </button>
-          <button
-            class="btn-accent btn-xs m-1"
-            :class="{'btn-disabled': canGetImages.S2 === 0 || isRunning }"
-            @click="getImages(siteObservation.id, 'S2')"
-          >
-            Get S2
-          </button>
-          <button
-            v-if="false"
-            class="btn-accent btn-xs m-1"
-            @click="getImages(siteObservation.id, 'L8')"
-          >
-            Get L8
-          </button>
+      </v-row>
+      <v-row
+        dense
+        justify="center"
+        align="center"
+      >
+        <v-btn
+          size="x-small"
+          color="secondary"
+          :disabled="canGetImages.WV === 0 || isRunning"
+          class="mx-1"
+          @click="getImages(siteObservation.id, 'WV')"
+        >
+          Get WV
+        </v-btn>
+        <v-btn
+          size="x-small"
+          color="secondary"
+          :disabled="canGetImages.S2 === 0 || isRunning"
+          class="mx-1"
+          @click="getImages(siteObservation.id, 'S2')"
+        >
+          Get S2
+        </v-btn>
+        <v-btn
+          v-if="false"
+          size="x-small"
+          color="secondary"
+          :disabled="canGetImages.L8 === 0 || isRunning"
+          class="mx-1"
+          @click="getImages(siteObservation.id, 'L8')"
+        >
+          Get L8
+        </v-btn>
 
-          <span v-if="imagesActive">
-            <button
-              v-if="state.loopingId !== siteObservation.id"
-              class="btn-success btn-xs m-1 ml-2"
-              @click="startLooping()"
-            >
-              Play
-            </button>
-            <button
-              v-else
-              class="btn-error btn-xs m-1 ml-2"
-              @click="stopLooping()"
-            >
-              Stop
-            </button>
-          </span>
-        </div>
-        <div
+        <span v-if="imagesActive">
+          <v-btn
+            v-if="state.loopingId !== siteObservation.id"
+            size="x-small"
+            color="primary"
+            class="mx-1"
+            @click="startLooping"
+          >Play</v-btn>
+          <v-btn
+            v-if="state.loopingId !== siteObservation.id"
+            size="x-small"
+            color="primary"
+            class="mx-1"
+            @click="stopLooping"
+          >Stop</v-btn>
+        </span>
+        <v-spacer />
+      </v-row>
+      <v-row
+        dense
+        justify="center"
+        align="center"
+        class="details"
+      >
+        <v-col
           v-if="currentClosestTimestamp"
-          class="col-span-1 text-xs font-light justify-self-left"
         >
-          Filter: {{ currentClosestTimestamp.filteredTotal }} of {{ currentClosestTimestamp.total }}
-        </div>
-        <div
+          <b>Filter:</b> {{ currentClosestTimestamp.filteredTotal }} of {{ currentClosestTimestamp.total }}
+        </v-col>
+        <v-col
           v-if="currentClosestTimestamp"
-          class="col-span-1 text-xs font-light justify-self-center"
         >
-          Cloud: {{ currentClosestTimestamp.cloudCover }}%
-        </div>
-        <div
+          <b>Cloud:</b> {{ currentClosestTimestamp.cloudCover }}%
+        </v-col>
+        <v-col
           v-if="currentClosestTimestamp && currentClosestTimestamp.percentBlack !== undefined && currentClosestTimestamp.percentBlack !== null"
-          class="col-span-1 text-xs font-light justify-self-end"
         >
-          NoData: {{ currentClosestTimestamp.percentBlack.toFixed(0) }}%
-        </div>
+          <b>>NoData:</b> {{ currentClosestTimestamp.percentBlack.toFixed(0) }}%
+        </v-col>
+      </v-row>
 
-        <div 
-          v-if="imagesActive && currentClosestTimestamp"
-          class="col-span-4 grid grid-flow-col"
+      <v-row
+        v-if="imagesActive && currentClosestTimestamp"
+        dense
+        justify="center"
+        align="center"
+      >
+        <v-icon
+          size="40"
+          :disabled="!currentClosestTimestamp.prev"
+          :color="currentClosestTimestamp.prev ? 'rgb(37, 99, 235)' : 'gray'"
+          @click="goToTimestamp(-1)"
         >
-          <ChevronLeftIcon
-            class="h-10 text-blue-600"
-            :class="{'icon': currentClosestTimestamp.prev, 'text-gray-600': !currentClosestTimestamp.prev}"
-            @click="goToTimestamp(-1)"
-          />
-          <span
-            v-if="currentClosestTimestamp"
-            class="justify-self-center self-center timedisplay"
-          >
-            {{ currentClosestTimestamp.time }} - {{ currentClosestTimestamp.type }}{{ currentClosestTimestamp.siteobs !== null ? '*': '' }}
-          </span>
-          <ChevronRightIcon
-            class="h-10 text-blue-600 "
-            :class="{'icon': currentClosestTimestamp.next, 'text-gray-600': !currentClosestTimestamp.next}"
-            @click="goToTimestamp(1)"
-          />
-        </div>
-      </div>
-    </summary>
-  </details>
+          mdi-chevron-left
+        </v-icon>
+
+        <span
+          v-if="currentClosestTimestamp"
+          class="timedisplay"
+        >
+          {{ currentClosestTimestamp.time }} - {{ currentClosestTimestamp.type }}{{ currentClosestTimestamp.siteobs !== null ? '*': '' }}
+        </span>
+        <v-icon
+          size="40"
+          :disabled="!currentClosestTimestamp.next"
+          :color="currentClosestTimestamp.next ? 'rgb(37, 99, 235)' : 'gray'"
+          @click="goToTimestamp(1)"
+        >
+          mdi-chevron-right
+        </v-icon>
+      </v-row>
+    </v-card-text>
+  </v-card>
 </template>
 
 <style scoped>
@@ -450,6 +546,9 @@ const progressInfo = computed(() => {
 }
 .hover:hover {
   cursor: pointer;
+}
+.details {
+  font-size: 0.75em;
 }
 
 </style>

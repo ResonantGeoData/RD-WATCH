@@ -3,7 +3,6 @@ import ModelRunList from "./ModelRunList.vue";
 import TimeSlider from "./TimeSlider.vue";
 import PerformerFilter from "./filters/PerformerFilter.vue";
 import RegionFilter from "./filters/RegionFilter.vue";
-import { Cog6ToothIcon, PhotoIcon } from "@heroicons/vue/24/solid";
 import SettingsPanel from "./SettingsPanel.vue";
 import { filteredSatelliteTimeList, state } from "../store";
 import { computed, onMounted, ref, watch } from "vue";
@@ -77,54 +76,83 @@ onMounted(() => {
 </script>
 
 <template>
-  <div class="fixed h-screen w-200 pt-2 pb-2 pl-2">
-    <div
-      class="flex h-full flex-col overflow-hidden rounded-xl bg-white drop-shadow-2xl"
-    >
-      <div class="bg-gray-100 p-4 text-center text-sm font-light">
+  <v-card
+    class="pa-5 overflow-y-hidden"
+    style="max-height:100vh; min-height:100vh;"
+  >
+    <div>
+      <v-row
+        dense
+      >
         <img
           class="mx-auto pb-4"
           src="../assets/logo.svg"
           alt="Resonant GeoData"
           draggable="false"
         >
+      </v-row>
+      <v-row>
         <TimeSlider
           :min="timemin"
           :max="Math.floor(Date.now() / 1000)"
         />
-        {{ new Date(state.timestamp * 1000).toLocaleString() }}
-      </div>
-      <div>
+      </v-row>
+      <v-row
+        align="center"
+        justify="center"
+      >
         <div
-          class="sample flex flex-nowrap items-stretch gap-2 border-t border-gray-300 bg-gray-100 p-2"
+          style="min-width:185px; max-width: 185px;"
         >
-          <PerformerFilter
-            v-model="selectedPerformer"
-            class="customfilter"
-          />
-          <RegionFilter v-model="selectedRegion" />
-          <span class="h5 grow" />
-          <PhotoIcon 
-            class="h-5 mt-0.5"
-            :class="{
-              'animate-flicker': state.satellite.loadingSatelliteImages,
-              'text-blue-600': imagesOn,
-              'hover': selectedRegion !== null && (filteredSatelliteTimeList.length !== 0 || state.satellite.satelliteSources.length === 0),
-              'text-gray-400': selectedRegion === null || (filteredSatelliteTimeList.length === 0 && state.satellite.satelliteSources.length !== 0),
-            }"
-            @click="imagesOn = selectedRegion !== null && (filteredSatelliteTimeList.length !== 0 || state.satellite.satelliteSources.length === 0) ? !imagesOn : imagesOn"
-          />
-          <span class="h5 grow" />
-          <Cog6ToothIcon
-            class="hover h-5 text-blue-600 mt-0.5"
-            @click="expandSettings = !expandSettings"
-          />
+          {{ new Date(state.timestamp * 1000).toLocaleString() }}
         </div>
-        <SettingsPanel v-if="expandSettings" />
-      </div>
-
+      </v-row>
+      <v-row dense>
+        <v-spacer />
+        <v-btn
+          variant="text"
+          density="compact"
+          class="pa-0 ma-0"
+          :class="{
+            'animate-flicker': state.satellite.loadingSatelliteImages,
+          }"
+          :color="imagesOn ? 'rgb(37, 99, 235)' : 'black'"
+          :disabled="selectedRegion === null || (filteredSatelliteTimeList.length === 0 && state.satellite.satelliteSources.length !== 0)" 
+          icon="mdi-image"
+          @click="imagesOn = selectedRegion !== null && (filteredSatelliteTimeList.length !== 0 || state.satellite.satelliteSources.length === 0) ? !imagesOn : imagesOn"
+        />
+        <v-btn
+          :color="expandSettings ? 'rgb(37, 99, 235)' : 'gray'"
+          variant="text"
+          density="compact"
+          icon="mdi-cog"
+          @click="expandSettings = !expandSettings"
+        />
+      </v-row>
+      <v-row
+        dense
+        class="mt-3"
+      >
+        <PerformerFilter
+          v-model="selectedPerformer"
+          class="pr-2"
+          cols="6"
+        />
+        <RegionFilter
+          v-model="selectedRegion"
+          cols="6"
+        />
+      </v-row>
+      <SettingsPanel v-if="expandSettings" />
+    </div>
+    <v-row
+      v-if="!expandSettings"
+      dense
+      class="modelRuns"
+    >
       <ModelRunList
         :filters="queryFilters"
+        class="flex-grow-1"
         @next-page="nextPage"
         @update:timerange="
           (timerange) => {
@@ -135,23 +163,15 @@ onMounted(() => {
           }
         "
       />
-    </div>
-  </div>
+    </v-row>
+  </v-card>
 </template>
 
 <style scoped>
-.sample {
-  z-index: 999;
-}
-
-.customfilter {
-  max-width: 40%;
-}
 
 .hover:hover {
   cursor: pointer;
 }
-
 @keyframes flicker-animation {
   0% { opacity: 1; }
   50% { opacity: 0; }

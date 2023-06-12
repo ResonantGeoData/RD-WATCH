@@ -33,60 +33,81 @@ const cloudFilter = computed({
 </script>
 
 <template>
-  <div class="col-span-4">
-    <div class="form-control">
-      <label class="label cursor-pointer">
-        <span class="label-text">Cloud Cover:</span>
-        <input
+  <div style="border: 1px solid black; padding:5px">
+    <v-row
+      dense
+      justify="center"
+      align="center"
+    >
+      <v-col cols="3">
+        <span>Cloud Cover:</span>
+      </v-col>
+      <v-col cols="7">
+        <v-slider
           v-model.number="cloudFilter"
-          type="range"
           min="0"
           max="100"
           step="1"
-          class="range range-primary"
-        >
+          color="primary"
+          density="compact"
+          class="mt-5"
+        />
+      </v-col>
+      <v-col>
         <span class="pl-2">
           {{ cloudFilter }}%
         </span>
-
-      </label>
-    </div>
-  </div>
-  <div class="col-span-4">
-    <div class="form-control">
-      <label class="label cursor-pointer">
-        <span class="label-text">NoData:</span>
-        <input
+      </v-col>
+    </v-row>
+    <v-row
+      dense
+      justify="center"
+      align="center"
+    >
+      <v-col cols="3">
+        <span>NoData:</span>
+      </v-col>
+      <v-col cols="7">
+        <v-slider
           v-model.number="percentBlackFilter"
-          type="range"
           min="0"
           max="100"
           step="1"
-          class="range range-primary"
-        >
+          color="primary"
+          density="compact"
+          class="mt-5"
+        />
+      </v-col>
+      <v-col>
         <span class="pl-2">
           {{ percentBlackFilter }}%
         </span>
-
-      </label>
-    </div>
-  </div>
-  <div class="col-span-4">
-    <div class="form-control">
-      <label class="label cursor-pointer">
-        <span class="label-text">Image Opacity:</span>
-        <input
+      </v-col>
+    </v-row>
+    <v-row
+      dense
+      justify="center"
+      align="center"
+    >
+      <v-col cols="3">
+        <span>Image Opacity:</span>
+      </v-col>
+      <v-col cols="7">
+        <v-slider
           v-model.number="imageOpacity"
-          type="range"
           min="0"
-          max="1"
-          step=".05"
-          class="range range-primary"
-        >
+          max="100"
+          step="1"
+          color="primary"
+          density="compact"
+          class="mt-5"
+        />
+      </v-col>
+      <v-col>
         <span class="pl-2">
-          {{ imageOpacity*100 }}%
+          {{ percentBlackFilter }}%
         </span>
-      </label>
-    </div>
+      </v-col>
+    </v-row>
   </div>
 </template>

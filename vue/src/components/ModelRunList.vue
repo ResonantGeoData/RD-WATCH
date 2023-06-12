@@ -28,7 +28,7 @@ const emit = defineEmits<{
 }>();
 
 const modelRuns: Ref<KeyedModelRun[]> = ref([]);
-const openedModelRuns: Ref<Set<KeyedModelRun["key"]>> = ref(new Set());
+const openedModelRuns: Ref<Set<KeyedModelRun["key"]>> = ref(new Set<KeyedModelRun["key"]>());
 const resultsBoundingBox = ref({
   xmin: -180,
   ymin: -90,

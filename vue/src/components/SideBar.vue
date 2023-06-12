@@ -77,8 +77,8 @@ onMounted(() => {
 
 <template>
   <v-card
-    class="pa-5"
-    style="max-height:100vh; min-height:100vh; overflow-y: hidden;"
+    class="pa-5 overflow-y-hidden"
+    style="max-height:100vh; min-height:100vh;"
   >
     <div>
       <v-row
@@ -152,7 +152,7 @@ onMounted(() => {
     >
       <ModelRunList
         :filters="queryFilters"
-        style="flex-grow: 1;"
+        class="flex-grow-1"
         @next-page="nextPage"
         @update:timerange="
           (timerange) => {

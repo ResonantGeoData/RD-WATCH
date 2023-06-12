@@ -80,7 +80,7 @@ A single Django application (`rdwatch`) for the backend. Source code is in the [
 The Vue-based SPA frontend. Source code is in the ["vue"](https://github.com/ResonantGeoData/RD-WATCH/tree/phase-ii/vue) folder.
 
 - [Vue 3](https://vuejs.org/guide/introduction.html)
-- [TailwindCSS](https://tailwindcss.com/docs)
+- [Vuetify](https://vuetifyjs.com/en/)
 - [MapLibre GL JS](https://maplibre.org/maplibre-gl-js-docs/api/)
 - [npm](https://docs.npmjs.com/) for dependency management
 

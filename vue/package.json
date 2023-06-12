@@ -19,7 +19,6 @@
   "dependencies": {
     "@fontsource/inter": "^4.5.12",
     "@fontsource/iosevka": "^4.5.4",
-    "@heroicons/vue": "^2.0.13",
     "lodash": "^4.17.21",
     "maplibre-gl": "^2.1.9",
     "vue": "^3.2.37",
@@ -44,7 +43,6 @@
     "stylelint-config-html": "^1.1.0",
     "stylelint-config-recommended-vue": "^1.4.0",
     "stylelint-config-standard": "^26.0.0",
-    "tailwindcss": "^3.1.6",
     "typescript": "^4.6.4",
     "vite": "^3.0.0",
     "vite-plugin-vuetify": "^1.0.2",

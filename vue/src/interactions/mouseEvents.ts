@@ -82,7 +82,6 @@ const popupLogic = (map: ShallowRef<null | Map>) => {
                   htmlMap[id] = true;
                   }
                   const area = Math.round(item.properties.area).toLocaleString('en-US');
-                  console.log(item.properties);
                   popupData.push({
                     siteId: `${regionName}_${String(id).padStart(4, '0')}`,
                     score,

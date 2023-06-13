@@ -80,7 +80,7 @@ const popupLogic = (map: ShallowRef<null | Map>) => {
       );
       popup.setLngLat(coordinates).setHTML('<div id="popup-content"></div>').addTo(map.value);
       nextTick(() => {
-        if (app != null) {
+        if (app !== null) {
           app.unmount();
           app = null;
         }

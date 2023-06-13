@@ -17,6 +17,7 @@ env:
   RDWATCH_MINIO_STORAGE_ACCESS_KEY: rdwatch
   RDWATCH_MINIO_STORAGE_SECRET_KEY: ff07f533a59fed1349a4fc49941d02ff22514f6dbf6086a44ea0c0a8952e8644
   RDWATCH_STORAGE_BUCKET_NAME: rdwatch
+  RDWATCH_POSTGRESQL_SCORING_URI:  postgresql://scoring:ff07f533a59fed1349a4fc49941d02ff22514f6dbf6086a44ea0c0a8952e8644@scoredb:5432/scoring
   # These values are required by the RD-WATCH Django app,
   # so we use placeholder values here
   RDWATCH_SMART_STAC_URL: http://example.com

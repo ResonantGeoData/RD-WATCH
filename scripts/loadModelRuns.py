@@ -6,6 +6,9 @@ from glob import glob
 
 import requests
 
+# TODO: Parameterize
+rgd_endpoint = 'http://localhost:8000'
+
 
 def main():
     parser = argparse.ArgumentParser(
@@ -50,8 +53,6 @@ def upload_to_rgd(region_id,
                   eval_num=0,
                   eval_run_num=0,
                   ):
-    # TODO: Parameterize
-    rgd_endpoint = 'http://localhost:8000'
 
     # Check that our run doesn't already exist
     model_run_results_url = f"{rgd_endpoint}/api/model-runs"

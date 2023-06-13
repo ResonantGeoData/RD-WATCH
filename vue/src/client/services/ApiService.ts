@@ -33,9 +33,9 @@ export interface ScoringResults {
   unionArea: number;
   statusAnnotated: string;
   temporalIOU: {
-    site_preparation: number;
-    active_construction: number;
-    post_construction: number;
+    site_preparation: string;
+    active_construction: string;
+    post_construction: string;
 
   }
 }

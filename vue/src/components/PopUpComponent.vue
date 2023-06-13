@@ -28,6 +28,7 @@ const data: PopUpData[] = [];
       :key="item.siteId"
       dense
       align="center"
+      justify="center"
       class="ma-5"
     >
       <v-chip
@@ -62,50 +63,71 @@ const data: PopUpData[] = [];
       <v-row
         v-if="item.unionArea && item.temporalIOU"
         class="pa-5"
+        align="center"
+        justify="center"
       >
-      <h6>Scoring:</h6>
+        <h6>Scoring:</h6>
         <v-chip
           label
           color="black"
           variant="elevated"
+          size="small"
           class="mx-2"
         >
-          Union Area: {{ item.unionArea }}
+          Union Area: {{ item.unionArea.toFixed(6) }}
         </v-chip>
         <v-chip
           label
           color="black"
           variant="elevated"
+          size="small"
           class="mx-2"
         >
           Status: {{ item.annotatedStatus }}
         </v-chip>
+      </v-row>
+      <v-row
+        v-if="item.temporalIOU
+          && (
+            item.temporalIOU.active_construction !== null ||
+            item.temporalIOU.post_construction !== null ||
+            item.temporalIOU.site_preparation !== null
+          )"
+        align="center"
+        justify="center"
+      >
+        <h6> Temporal IOU:</h6>
         <v-chip
-          v-if="item.temporalIOU"
+          v-if="item.temporalIOU && item.temporalIOU.site_preparation !== null"
           label
           color="black"
           variant="elevated"
+          size="small"
           class="mx-2"
         >
-          Active: {{ item.temporalIOU.active_construction }}
-        </v-chip>
-        <v-chip
-          label
-          color="black"
-          variant="elevated"
-          class="mx-2"
-        >
-          Post: {{ item.temporalIOU?.post_construction }}
-        </v-chip>
-        <v-chip
-          label
-          color="black"
-          variant="elevated"
-          class="mx-2"
-        >
-          Prep: {{ item.temporalIOU?.site_preparation }}
+          Prep: {{ parseFloat(item.temporalIOU.site_preparation).toFixed(6) }}
         </v-chip>
 
+        <v-chip
+          v-if="item.temporalIOU && item.temporalIOU.active_construction !== null"
+          label
+          color="black"
+          variant="elevated"
+          size="small"
+          class="mx-2"
+        >
+          Active: {{ parseFloat(item.temporalIOU.active_construction).toFixed(6) }}
+        </v-chip>
+        <v-chip
+          v-if="item.temporalIOU && item.temporalIOU.post_construction !== null"
+          label
+          color="black"
+          variant="elevated"
+          size="small"
+          class="mx-2"
+        >
+          Post: {{ parseFloat(item.temporalIOU.post_construction).toFixed(6) }}
+        </v-chip>
       </v-row>
     </v-row>
   </v-card>

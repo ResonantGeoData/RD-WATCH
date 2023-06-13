@@ -10,6 +10,7 @@ import * as components from 'vuetify/components'
 import * as directives from 'vuetify/directives'
 import '@mdi/font/css/materialdesignicons.css' // Ensure you are using css-loader
 import { ApiService, ScoringResults } from "../client/services/ApiService";
+import { CancelablePromise } from "../client";
 
 const vuetify = createVuetify({
   components,
@@ -53,6 +54,9 @@ const calculateScoreColor = (score: number) => {
   }
   return "black";
 };
+
+let scoringRequest:  CancelablePromise<ScoringResults> | undefined;
+
 
 const popupLogic = async (map: ShallowRef<null | Map>) => {
   const popup = new Popup({
@@ -118,11 +122,13 @@ const popupLogic = async (map: ShallowRef<null | Map>) => {
         const data = popupData[i];
         if (!data.groundTruth) {
           const scoreData = baseScores[i];
-          const results = await ApiService.getScoring(scoreData.configurationId, scoreData.regionId, scoreData.siteNumber, scoreData.version);
+          scoringRequest = ApiService.getScoring(scoreData.configurationId, scoreData.regionId, scoreData.siteNumber, scoreData.version);
+          const results = await scoringRequest;
           if (results) {
             popupData[i].annotatedStatus = results.statusAnnotated;
             popupData[i].temporalIOU = results.temporalIOU;
             popupData[i].unionArea = results.unionArea;
+            scoringRequest = undefined;
           }
         }
       }
@@ -152,6 +158,10 @@ const popupLogic = async (map: ShallowRef<null | Map>) => {
       }
       map.value.getCanvas().style.cursor = "";
       popup.remove();
+      if (scoringRequest !== undefined) {
+        scoringRequest.cancel();
+        scoringRequest = undefined;
+      }
     }
   };
   const clickObservation = async (e: MapLayerMouseEvent) => {

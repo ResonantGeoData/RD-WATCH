@@ -3,23 +3,19 @@ import logging
 from ninja import Schema
 from ninja.pagination import RouterPaginated
 
+# Create your views here.
+from django.http import HttpRequest, HttpResponse, HttpResponseBadRequest
 
 from rdwatch.models import HyperParameters, Region
 from rdwatch.views.region import RegionSchema
-from rdwatch.models.lookups import Performer
-# Create your views here.
-from django.http import (
-    HttpRequest,
-    HttpResponseBadRequest,
-    HttpResponse,
-)
 
-from .models import Observation, EvaluationRun, Site, EvaluationActivityClassificationTemporalIou
+from .models import EvaluationActivityClassificationTemporalIou, EvaluationRun, Site
 
 logger = logging.getLogger(__name__)
 
 
 router = RouterPaginated()
+
 
 class TemporalSchema(Schema):
     site_preparation: str = None
@@ -36,7 +32,6 @@ class ResponseSchema(Schema):
     unionArea: float = None
     statusAnnotated: str = None
     temporalIOU: TemporalSchema = None
-
 
 
 @router.get('/', response=ResponseSchema)
@@ -59,21 +54,38 @@ def list_regions(request: HttpRequest):
     evaluation_run = configuration.evaluation_run
     region_name = RegionSchema.resolve_name(Region.objects.filter(pk=regionId).first())
 
-    evaluation = EvaluationRun.objects.filter(evaluation_run_number=evaluation_run, evaluation_number=evaluationId, region=region_name).first()
+    evaluation = EvaluationRun.objects.filter(
+        evaluation_run_number=evaluation_run,
+        evaluation_number=evaluationId,
+        region=region_name,
+    ).first()
     if evaluation:
         evaluationUUID = evaluation.uuid
         # Now we can get the SiteId information for this evaluationId
-        generatedSiteId = f'{region_name}_{siteNumber.zfill(4)}_{performer_name}_{version}'
+        generatedSiteId = (
+            f'{region_name}_{siteNumber.zfill(4)}_{performer_name}_{version}'
+        )
         logger.warning(generatedSiteId)
-        siteObj = Site.objects.filter(site_id=generatedSiteId, evaluation_run_uuid=evaluationUUID).first()
+        siteObj = Site.objects.filter(
+            site_id=generatedSiteId, evaluation_run_uuid=evaluationUUID
+        ).first()
         unionArea = siteObj.union_area
         status_annotated = siteObj.status_annotated
-        temporalIOU = EvaluationActivityClassificationTemporalIou.objects.filter(site_proposal=generatedSiteId, evaluation_run_uuid=evaluationUUID, activity_type='overall').first()
+        temporalIOU = EvaluationActivityClassificationTemporalIou.objects.filter(
+            site_proposal=generatedSiteId,
+            evaluation_run_uuid=evaluationUUID,
+            activity_type='overall',
+        ).first()
+        tempDict = {
+            'site_preparation': None,
+            'active_construction': None,
+            'post_construction': None,
+        }
         if temporalIOU:
             tempDict = {
-                'site_preparation': temporalIOU.site_preparation,
-                'active_construction': temporalIOU.active_construction,
-                'post_construction': temporalIOU.post_construction,
+                'site_preparation': (temporalIOU.site_preparation),
+                'active_construction': (temporalIOU.active_construction),
+                'post_construction': (temporalIOU.post_construction),
             }
         return {
             'region_name': region_name,

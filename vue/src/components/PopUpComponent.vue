@@ -1,20 +1,18 @@
-<script setup lang="ts">
-interface PopUpData {
-  siteId: string;
-  siteColor: string;
-  score: number;
-  groundTruth: boolean;
-  scoreColor: string;
-  area: string;
-}
 
-const data: PopUpData[] = [];
+
+<script setup lang="ts">
+import { PopUpData } from '../interactions/popUpType';
+const props = defineProps<{
+  data:PopUpData[]
+}>();
+
 </script>
 
 <template>
   <v-card dense>
+    <div>POPUP</div>
     <v-row
-      v-for="item in data"
+      v-for="item in props.data"
       :key="item.siteId"
       dense
       align="center"

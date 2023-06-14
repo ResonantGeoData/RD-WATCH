@@ -51,7 +51,7 @@ RUN apt-get update \
       python3-dev \
       python3.10-venv \
  && rm -rf /var/lib/apt/lists/* \
- && poetry config installer.parallel true 
+ && poetry config installer.parallel true
 
 FROM builder as vue-builder
 WORKDIR /app/vue
@@ -61,7 +61,7 @@ RUN npm ci
 FROM builder AS django-builder
 WORKDIR /app/django
 RUN python3 -m venv /poetry/venvs/rdwatch
-ENV PATH="/poetry/venvs/rdwatch/bin:$PATH" 
+ENV PATH="/poetry/venvs/rdwatch/bin:$PATH"
 ENV VIRTUAL_ENV=/poetry/venvs/rdwatch
 COPY django/pyproject.toml django/poetry.lock /app/django/
 RUN mkdir /app/django/src \
@@ -76,7 +76,7 @@ RUN mkdir /app/django/src \
 FROM builder AS dev
 WORKDIR /app/django
 RUN python3 -m venv /poetry/venvs/rdwatch
-ENV PATH="/poetry/venvs/rdwatch/bin:$PATH" 
+ENV PATH="/poetry/venvs/rdwatch/bin:$PATH"
 ENV VIRTUAL_ENV=/poetry/venvs/rdwatch
 COPY django/pyproject.toml django/poetry.lock /app/django/
 RUN mkdir /app/django/src \
@@ -107,6 +107,10 @@ RUN chmod -R u=rX,g=rX,o= .
 
 # Final image
 FROM base
+COPY --from=django-builder \
+     --chown=rdwatch:rdwatch \
+     /poetry/venvs \
+     /poetry/venvs
 COPY --from=django-dist \
      --chown=rdwatch:rdwatch \
      /app/django \

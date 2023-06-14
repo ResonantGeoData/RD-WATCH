@@ -97,7 +97,7 @@ class BaseConfiguration(Configuration):
     CELERY_BEAT_SCHEDULE = {
         'delete-temp-model-runs-beat': {
             'task': 'rdwatch.tasks.delete_temp_model_runs_task',
-            'schedule': timedelta(seconds=60),
+            'schedule': timedelta(hours=1),
         },
     }
 

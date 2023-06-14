@@ -24,7 +24,6 @@ RUN echo "deb [signed-by=/usr/share/keyrings/nginx.gpg] http://packages.nginx.or
  && usermod --lock rdwatch \
  && usermod --append --groups rdwatch unit
 RUN python3 -m pip install poetry==1.4.2
-RUN poetry config virtualenvs.in-project true
 WORKDIR /app
 EXPOSE 80
 ENTRYPOINT [ "/docker-entrypoint.sh" ]

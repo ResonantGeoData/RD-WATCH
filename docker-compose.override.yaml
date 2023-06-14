@@ -32,7 +32,7 @@ services:
       - redis-master
       - minio
 
-  celery:
+  celery_worker:
     build:
       dockerfile: Dockerfile
       target: dev
@@ -79,3 +79,25 @@ services:
 
 volumes:
   postgresql-scoring-data:
+
+  celery_beat:
+    build:
+      dockerfile: Dockerfile
+      target: dev
+    command: [
+      "poetry", "run",
+      "--directory", "/app/django",
+      "celery",
+      "--app", "rdwatch.celery",
+      "beat",
+      "--loglevel", "INFO",
+    ]
+    env_file:
+      - .env
+      - ./dev/.env.docker-compose
+    environment:
+      RDWATCH_POSTGRESQL_URI: "postgresql://rdwatch:secretkey@postgresql:5432/rdwatch"
+      RDWATCH_REDIS_URI: "redis://:secretkey@redis-master:6379"
+      RDWATCH_CELERY_BROKER_URL: amqp://rdwatch:secretkey@rabbitmq:5672/
+    volumes:
+      - ./django:/app/django

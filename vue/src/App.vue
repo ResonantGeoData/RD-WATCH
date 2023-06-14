@@ -12,6 +12,7 @@ import EvaluationsSideBar from "./components/siteObservations/EvaluationsSideBar
       width="400"
       sticky
       style="max-height:100vh;"
+      permanent
     >
       <SideBar />
     </v-navigation-drawer>
@@ -22,6 +23,7 @@ import EvaluationsSideBar from "./components/siteObservations/EvaluationsSideBar
       location="right"
       width="400"
       sticky
+      permanent
     >
       <EvaluationsSideBar />
     </v-navigation-drawer>

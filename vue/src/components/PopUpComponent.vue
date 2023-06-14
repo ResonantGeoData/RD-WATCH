@@ -1,30 +1,18 @@
+
+
 <script setup lang="ts">
-import { Ref, onMounted, ref, watch } from "vue";
-import { ApiService, ScoringResults } from "../client/services/ApiService";
-import { union } from "lodash";
-
-interface PopUpData {
-  siteId: string;
-  siteColor: string;
-  score: number;
-  groundTruth: boolean;
-  scoreColor: string;
-  area: string;
-  annotatedStatus?: ScoringResults['statusAnnotated'];
-  unionArea?: ScoringResults['unionArea'];
-  temporalIOU?: ScoringResults['temporalIOU'];
-}
-
-const data: PopUpData[] = [];
-
-
+import { PopUpData } from '../interactions/popUpType';
+const props = defineProps<{
+  data:PopUpData[]
+}>();
 
 </script>
 
 <template>
   <v-card dense>
+    <div>POPUP</div>
     <v-row
-      v-for="item in data"
+      v-for="item in props.data"
       :key="item.siteId"
       dense
       align="center"

@@ -1,7 +1,8 @@
 import { createApp } from "vue";
 import "./index.css";
 import App from "./App.vue";
-
+import PopupComponent from "./components/PopUpComponent.vue";
+import { PopUpData } from './interactions/popUpType';
 import 'vuetify/styles'
 import { createVuetify } from 'vuetify'
 import * as components from 'vuetify/components'
@@ -14,3 +15,10 @@ const vuetify = createVuetify({
 })
 
 createApp(App).use(vuetify).mount('#app')
+
+
+const createPopup = (data: PopUpData[]) =>  {
+return createApp(PopupComponent, {data}).use(vuetify);
+}
+
+export default createPopup;

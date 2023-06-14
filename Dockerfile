@@ -49,9 +49,9 @@ RUN apt-get update \
       nodejs \
       npm \
       python3-dev \
+      python3.10-venv \
  && rm -rf /var/lib/apt/lists/* \
- && poetry config installer.parallel true \
- && poetry config virtualenvs.in-project true
+ && poetry config installer.parallel true 
 
 FROM builder as vue-builder
 WORKDIR /app/vue
@@ -60,6 +60,9 @@ RUN npm ci
 
 FROM builder AS django-builder
 WORKDIR /app/django
+RUN python3 -m venv /poetry/venvs/rdwatch
+ENV PATH="/poetry/venvs/rdwatch/bin:$PATH" 
+ENV VIRTUAL_ENV=/poetry/venvs/rdwatch
 COPY django/pyproject.toml django/poetry.lock /app/django/
 RUN mkdir /app/django/src \
  && mkdir /app/django/src/rdwatch \
@@ -72,6 +75,9 @@ RUN mkdir /app/django/src \
 # For use in a development environment.
 FROM builder AS dev
 WORKDIR /app/django
+RUN python3 -m venv /poetry/venvs/rdwatch
+ENV PATH="/poetry/venvs/rdwatch/bin:$PATH" 
+ENV VIRTUAL_ENV=/poetry/venvs/rdwatch
 COPY django/pyproject.toml django/poetry.lock /app/django/
 RUN mkdir /app/django/src \
  && mkdir /app/django/src/rdwatch \

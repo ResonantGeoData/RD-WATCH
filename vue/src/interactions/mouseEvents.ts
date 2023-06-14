@@ -1,28 +1,11 @@
-import { App, Ref, createApp, defineComponent, nextTick, ref } from "vue";
+import { App, Ref,   nextTick, ref } from "vue";
 import { Color, Map, MapLayerMouseEvent, Popup } from "maplibre-gl";
 import { ShallowRef } from "vue";
 import { getSiteObservationDetails, selectedObservationList, state } from "../store";
-import PopUpComponent from '../components/PopUpComponent.vue'
+import  createPopup from '../main';
+import { PopUpData } from '../interactions/popUpType';
 
-import 'vuetify/styles'
-import { createVuetify } from 'vuetify'
-import * as components from 'vuetify/components'
-import * as directives from 'vuetify/directives'
-import '@mdi/font/css/materialdesignicons.css' // Ensure you are using css-loader
 
-const vuetify = createVuetify({
-  components,
-  directives,
-})
-
-interface PopUpData {
-  siteId: string;
-  siteColor: string;
-  score: number;
-  groundTruth: boolean;
-  scoreColor: string;
-  area: string;
-}
 
   const hoveredInfo: Ref<{region: string[], siteId: number[]}> = ref({region: [], siteId:[]});
 
@@ -96,21 +79,14 @@ const popupLogic = (map: ShallowRef<null | Map>) => {
         }
       );
       popup.setLngLat(coordinates).setHTML('<div id="popup-content"></div>').addTo(map.value);
-      const MyNewPopup = defineComponent({
-        extends: PopUpComponent,
-        setup() {
-          return { data: popupData }
-        },
-      })
       nextTick(() => {
         if (app !== null) {
           app.unmount();
           app = null;
         }
-        app = createApp(MyNewPopup).use(vuetify)
+        app = createPopup(popupData);
         app.mount('#popup-content');
-      })
-      
+      });
     } else if (map.value) {
       hoveredInfo.value.region = [];
       hoveredInfo.value.siteId = [];

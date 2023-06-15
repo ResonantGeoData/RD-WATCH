@@ -129,13 +129,19 @@ export const buildRegionFilter = (
 
 const rdwatchtiles = "rdwatchtiles";
 const urlRoot = `${location.protocol}//${location.host}`;
-const observationWidth: DataDrivenPropertyValueSpecification<number> = [
+
+
+const buildObservationThick = (filters: MapFilters): DataDrivenPropertyValueSpecification<number>  => {
   // If this observation is a grouth truth, make the width 4. Otherwise, make it 2.
-  "case",
+ return[ "case",
   ["get", "groundtruth"],
   4,
+  ["==", ["get", "siteeval_id"],
+  filters.hoverSiteId ? filters.hoverSiteId : ''],
+  6,
   2,
 ];
+}
 
 const buildObservationFill = (
   timestamp: number,
@@ -182,7 +188,7 @@ export const layers = (
     "source-layer": "observations",
     paint: {
       "line-color": annotationColors,
-      "line-width": observationWidth,
+      "line-width": buildObservationThick(filters),
     },
     filter: buildObservationFilter(timestamp, filters),
   },

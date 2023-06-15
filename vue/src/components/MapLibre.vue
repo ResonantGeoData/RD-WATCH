@@ -70,7 +70,7 @@ const throttledSetSatelliteTimeStamp = throttle(setSatelliteTimeStamp, 300);
 
 
 watch([() => state.timestamp, () => state.filters, () => state.satellite,
-() => state.satellite.satelliteSources, () => state.enabledSiteObservations], () => {
+() => state.satellite.satelliteSources, () => state.enabledSiteObservations, () => state.filters.hoverSiteId], () => {
   if (state.satellite.satelliteImagesOn) {
     throttledSetSatelliteTimeStamp(state, filteredSatelliteTimeList.value);
   }

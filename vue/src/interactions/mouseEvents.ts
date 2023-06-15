@@ -63,6 +63,7 @@ const popupLogic = async (map: ShallowRef<null | Map>) => {
           }
         ) => {
           if (item.properties && item.properties.id) {
+            console.log(item.properties);
             const id = item.properties.site_number;
             const regionName = state.regionMap[item.properties.region_id]
             const score = item.properties.score;
@@ -143,8 +144,15 @@ const popupLogic = async (map: ShallowRef<null | Map>) => {
       const feature = e.features[0];
       if (feature.properties) {
         const siteId = feature.properties.siteeval_id;
+        const scoringBase = {
+          regionId: feature.properties.region_id as number,
+          configurationId: feature.properties.configuration_id as number,
+          siteNumber: feature.properties.site_number as number,
+          version: feature.properties.version,
+        }
+
         if (siteId && !selectedObservationList.value.includes(siteId)) {
-          await getSiteObservationDetails(siteId);
+          await getSiteObservationDetails(siteId, scoringBase);
         }
       }
     }

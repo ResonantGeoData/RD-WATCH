@@ -120,7 +120,9 @@ onUnmounted(() => {
         :key="`siteObs_${item.id}`"
         :site-observation="item"
         class="siteObs"
-        :class="{ outlined: hoveredInfo.siteId.includes(item.id) }"
+        :class="{ outlined: hoveredInfo.siteId.includes(item.id), evalhovered: state.filters.hoverSiteId === item.id }"
+        @mouseenter="state.filters.hoverSiteId = item.id"
+        @mouseleave="state.filters.hoverSiteId = -1"
       />
     </div>
   </v-card>
@@ -135,6 +137,9 @@ onUnmounted(() => {
   border: 3px solid transparent;
   max-height: calc(100vh - 10px);
 
+}
+.evalhovered {
+  border: 3px solid orange;
 }
 .outlined {
   background-color: orange;

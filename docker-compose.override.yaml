@@ -77,9 +77,6 @@ services:
     ports:
       - 5433:5432
 
-volumes:
-  postgresql-scoring-data:
-
   celery_beat:
     build:
       dockerfile: Dockerfile
@@ -101,3 +98,6 @@ volumes:
       RDWATCH_CELERY_BROKER_URL: amqp://rdwatch:secretkey@rabbitmq:5672/
     volumes:
       - ./django:/app/django
+
+volumes:
+  postgresql-scoring-data:

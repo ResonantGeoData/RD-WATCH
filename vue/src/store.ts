@@ -10,6 +10,7 @@ export interface MapFilters {
   groundTruthPattern?: boolean;
   otherPattern?: boolean;
   showRegionPolygon?: boolean;
+  hoverSiteId?: number;
 }
 
 export interface SatelliteTimeStamp {
@@ -48,6 +49,13 @@ export interface SiteObservationImage {
   disabled?: boolean;
 }
 
+export interface ScoringBase {
+  regionId: number;
+  configurationId: number;
+  siteNumber: number;
+  version: string;
+}
+
 export interface EnabledSiteObservations {
   id: number;
   images: SiteObservationImage[];
@@ -70,6 +78,7 @@ export interface SiteObservationJob {
 
 export interface SiteObservation {
   id: number;
+  scoringBase: ScoringBase;
   timerange: {
     min: number;
     max: number;
@@ -188,7 +197,7 @@ export const selectedObservationList = computed(() => {
 })
 
 
-export const getSiteObservationDetails = async (siteId: string) => {
+export const getSiteObservationDetails = async (siteId: string, scoringBase: ScoringBase) => {
   const data = await ApiService.getSiteObservations(siteId);
   const { results } = data;
   const { images } = data;
@@ -227,6 +236,7 @@ export const getSiteObservationDetails = async (siteId: string) => {
   const foundIndex = state.selectedObservations.findIndex((item) => item.id === numId);
   const obsData =  {
   id: numId,
+  scoringBase,
   timerange: data.timerange,
   imagesLoaded: false,
   imagesActive: false,

@@ -132,7 +132,7 @@ const changeTimstamp = ({dir, loop}: {dir: number, loop: boolean}) => {
       >
         <v-col>
           <span class="model-title">
-            SiteId: {{ siteObservation.id }}
+            {{ `${state.regionMap[siteObservation.scoringBase.regionId]}_${siteObservation.scoringBase.siteNumber.toString().padStart(4, '0')}` }}
           </span>
         </v-col>
         <v-col>

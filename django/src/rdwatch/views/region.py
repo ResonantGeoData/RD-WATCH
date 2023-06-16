@@ -13,11 +13,15 @@ class RegionSchema(Schema):
     name: str
 
     @staticmethod
-    def resolve_name(obj: Region) -> str:
-        country = obj.country
-        classification: str = obj.classification.slug
-        number = obj.number
-
+    def resolve_name(obj: Region | str) -> str:
+        if isinstance(obj, Region):
+            country = obj.country
+            classification = obj.classification.slug
+            number = obj.number
+        else:
+            country = obj['country']
+            classification = obj['classification']['slug']
+            number = obj['number']
         country_numeric = str(country).zfill(3)
         country_code = iso3166.countries_by_numeric[country_numeric].alpha2
         region_number = 'xxx' if number is None else str(number).zfill(3)

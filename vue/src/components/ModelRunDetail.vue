@@ -1,6 +1,8 @@
 <script setup lang="ts">
 import TimeSlider from "./TimeSlider.vue";
-import type { ModelRun } from "../client";
+import { ApiService, ModelRun } from "../client";
+import { state } from "../store";
+import { ref } from "vue";
 
 const props = defineProps<{
   modelRun: ModelRun;
@@ -13,6 +15,17 @@ const emit = defineEmits<{
 
 async function handleClick() {
   emit("toggle");
+}
+
+const useScoring = ref(false);
+
+async function getScoringColoring() {
+  if (!useScoring.value) { // inverted value because of the delay
+    const results = await ApiService.getScoreColoring(props.modelRun.id, props.modelRun.region?.id || 0)
+    state.filters = { ...state.filters, scoringColoring: results };
+  } else {
+    state.filters = { ...state.filters, scoringColoring: null };
+  }
 }
 </script>
 
@@ -96,10 +109,17 @@ async function handleClick() {
           mdi-check-decagram
         </v-icon>
         <div
-          class="float-right rounded bg-gray-400 pl-1 pr-1 group-open:bg-gray-100"
+          class="float-right "
         >
           {{ modelRun.performer.short_code }}
         </div>
+      </v-row>
+      <v-row
+        v-if="modelRun.hasScores && props.open"
+        dense
+      >
+        <input v-model="useScoring" @click.stop="getScoringColoring()" type="checkbox">
+        <span class="ml-2"> Scoring Coloring</span>
       </v-row>
     </v-card-text>
     <v-card-actions v-if="open">

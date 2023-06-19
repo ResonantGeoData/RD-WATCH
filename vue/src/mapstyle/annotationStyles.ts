@@ -1,4 +1,5 @@
 import { DataDrivenPropertyValueSpecification, FormattedSpecification } from "maplibre-gl";
+import { MapFilters } from "../store";
 
 export interface AnnotationStyle {
     id: number;
@@ -122,14 +123,32 @@ const styles: AnnotationStyle[] = [
     },
 ]
 
-const getAnnotationColor = () => {
+const getAnnotationColor = (filters: MapFilters) => {
     const result = [];
     result.push('case');
+    //console.log(filters);
+    if (filters.scoringColoring) {
+        Object.entries(filters.scoringColoring).forEach(([key, value]) => {
+            //console.log(`key:${key} - value: ${value}`);
+            const splits = key.split('_').map((item) => parseInt(item));
+            //console.log(splits);
+            if (splits.length === 4) {
+                result.push(['all',
+                    ['==', ['get', 'configuration_id'], splits[0]],
+                    ['==', ['get', 'region_id'], splits[1]],
+                    ['==', ['get', 'performer_id'], splits[2]],
+                    ['==', ['get', 'site_number'], splits[3]],
+                ]);
+                result.push(value);
+            }
+        });
+    }
     styles.forEach((item) => {
         result.push(['==', ['get', 'label'], item.id]);
         result.push(item.color);
     });
     result.push(defaultAnnotationColor);
+    //console.log(result);
     return result as DataDrivenPropertyValueSpecification<string>;
 }
 
@@ -144,12 +163,34 @@ const getText = (textType: AnnotationStyle['labelType']) => {
     return result as DataDrivenPropertyValueSpecification<FormattedSpecification>;
 }
 
-const annotationColors = getAnnotationColor();
+const annotationColors = getAnnotationColor;
 const observationText = getText('observation')
 const siteText = getText('sites');
+
+const createAnnotationLegend = () => {
+    const observationLegend: {color: string, name: string}[] = [];
+    const siteLegend: {color: string, name: string}[] = [];
+    styles.forEach((item) => {
+        if (item.labelType === 'observation'){
+            observationLegend.push({color: item.color, name: item.label})
+        }
+        if (item.labelType === 'sites'){
+            siteLegend.push({color: item.color, name: item.label})
+        }
+    });
+    const scoringLegend = [
+        { name:'Ignore', color:'lightsalmon' },
+        { name:'Positive Match', color:'orange' },
+        { name:'Partially Wrong', color:'aquamarine' },
+        { name:'Completely Wrong', color:'magenta' },
+    ]
+    return { observationLegend, scoringLegend, siteLegend }
+}
+const annotationLegend = createAnnotationLegend();
 
 export {
     annotationColors,
     observationText,
+    annotationLegend,
     siteText,
 }

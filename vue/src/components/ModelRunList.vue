@@ -44,7 +44,6 @@ let request: CancelablePromise<ModelRunList> | undefined;
 async function loadMore() {
   loading.value = true;
   if (request !== undefined) {
-    console.log("Cancelling request");
     request.cancel();
   }
   request = ApiService.getModelRuns({
@@ -186,6 +185,24 @@ async function getSatelliteTimestamps(modelRun: ModelRunList, force=false) {
   state.satellite.satelliteBounds = modelRun.bbox?.coordinates[0] as [];
 }
 
+async function checkScores(modelRun: KeyedModelRun)  {
+  let hasScores = false;
+  try {
+    hasScores = await ApiService.hasScores(modelRun.id, modelRun.region?.id || 0)
+  } catch (err) {
+    hasScores = false;
+  }
+  const foundIndex = modelRuns.value.findIndex((item) => item === modelRun);
+  if (hasScores) {
+    // Do something to set the value on the keyed Model run
+    if (foundIndex !== -1) {
+      modelRuns.value[foundIndex].hasScores = true;
+    }
+  } else {
+    modelRuns.value[foundIndex].hasScores = undefined;
+  }
+}
+
 function handleToggle(modelRun: KeyedModelRun) {
   if (openedModelRuns.value.has(modelRun.key)) {
     openedModelRuns.value.delete(modelRun.key);
@@ -210,13 +227,18 @@ function handleToggle(modelRun: KeyedModelRun) {
       ...state.filters,
       configuration_id: Array.from(configurationIds),
       region_id: Array.from(regionIds),
+      scoringColoring: null,
     };
   } else {
     state.filters = {
       ...state.filters,
       configuration_id: undefined,
+      scoringColoring: null,
     };
     updateCameraBounds(false);
+  }
+  if (modelRun.hasScores === undefined && modelRun.performer.short_code !== 'TE') {
+    checkScores(modelRun);
   }
 }
 
@@ -241,6 +263,7 @@ watch([() => props.filters.region, () => props.filters.performer], () => {
   state.filters = {
     ...state.filters,
     configuration_id: [],
+    scoringColoring: null,
   };
 });
 </script>

@@ -1,6 +1,5 @@
 <script setup lang="ts">
-import { computed, onBeforeMount, onBeforeUnmount } from "vue";
-import { ApiService } from "../../client";
+import { computed } from "vue";
 import { ImageBBox, SiteObservationImage, getSiteObservationDetails, state } from "../../store";
 import { SiteObservation } from "../../store";
 import { imageFilter } from "../../mapstyle/images";
@@ -135,7 +134,7 @@ const changeTimstamp = ({dir, loop}: {dir: number, loop: boolean}) => {
             {{ `${state.regionMap[siteObservation.scoringBase.regionId]}_${siteObservation.scoringBase.siteNumber.toString().padStart(4, '0')}` }}
           </span>
         </v-col>
-        <v-col>
+        <v-col cols="1">
           <span>
             <v-btn
               variant="text"
@@ -148,7 +147,7 @@ const changeTimstamp = ({dir, loop}: {dir: number, loop: boolean}) => {
           </span>
         </v-col>
         <v-spacer />
-        <v-col class="pl-10">
+        <v-col class="pl-4">
           <v-icon 
             size="large"
             color="rgb(37, 99, 235)"
@@ -181,7 +180,10 @@ const changeTimstamp = ({dir, loop}: {dir: number, loop: boolean}) => {
             />
           </v-expansion-panel-text>
         </v-expansion-panel>
-        <v-expansion-panel v-if="siteObservation.scoringBase.version" key="Scoring">
+        <v-expansion-panel
+          v-if="siteObservation.scoringBase.version"
+          key="Scoring"
+        >
           <v-expansion-panel-title>Scoring</v-expansion-panel-title>
           <v-expansion-panel-text>
             <evaluation-scoring

@@ -3,7 +3,6 @@ import { computed, onBeforeMount, onBeforeUnmount } from "vue";
 import { ApiService } from "../../client";
 import { getSiteObservationDetails, state } from "../../store";
 import { SiteObservation } from "../../store";
-import { imageFilter } from "../../mapstyle/images";
 
 const props = defineProps<{
   siteObservation: SiteObservation;
@@ -44,7 +43,7 @@ onBeforeUnmount(() => {
 const getImages = async (id:number, constellation: 'WV' | 'S2' | 'L8' = 'WV')  => {
     await ApiService.getObservationImages(id.toString(), constellation);
     // Now we get the results to see if the service is running
-    await getSiteObservationDetails(props.siteObservation.id.toString());
+    await getSiteObservationDetails(props.siteObservation.id.toString(), props.siteObservation.scoringBase);
     // The props should be updated now we start an interval to update until we exist, deselect or other
     if (loopingInterval !== null) {
       clearInterval(loopingInterval);

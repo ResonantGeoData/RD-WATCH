@@ -175,7 +175,7 @@ export const layers = (
     source: rdwatchtiles,
     "source-layer": "observations",
     paint: {
-      "fill-color": annotationColors,
+      "fill-color": (annotationColors(filters)),
       "fill-opacity": 1,
       "fill-pattern": buildObservationFill(timestamp, filters),
     },
@@ -187,7 +187,7 @@ export const layers = (
     source: rdwatchtiles,
     "source-layer": "observations",
     paint: {
-      "line-color": annotationColors,
+      "line-color": annotationColors(filters),
       "line-width": buildObservationThick(filters),
     },
     filter: buildObservationFilter(timestamp, filters),
@@ -207,7 +207,7 @@ export const layers = (
       "text-field": observationText,
     },
     paint: {
-      "text-color": annotationColors,
+      "text-color": annotationColors(filters),
     },
     filter: buildObservationFilter(timestamp, filters),
   },
@@ -217,7 +217,7 @@ export const layers = (
     source: rdwatchtiles,
     "source-layer": "regions",
     paint: {
-      "line-color": annotationColors,
+      "line-color": annotationColors(filters),
       "line-width": 2,
     },
     filter: buildRegionFilter(filters),
@@ -228,7 +228,7 @@ export const layers = (
     source: rdwatchtiles,
     "source-layer": "sites",
     paint: {
-      "line-color": annotationColors,
+      "line-color": annotationColors(filters),
       "line-width": 2,
     },
     filter: buildSiteFilter(timestamp, filters),
@@ -248,7 +248,7 @@ export const layers = (
       "text-field": siteText,
     },
     paint: {
-      "text-color": annotationColors,
+      "text-color": annotationColors(filters),
     },
     filter: buildSiteFilter(timestamp, filters),
   },

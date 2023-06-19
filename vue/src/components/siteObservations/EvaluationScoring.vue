@@ -1,9 +1,7 @@
 <script setup lang="ts">
-import { Ref, computed, onBeforeMount, onBeforeUnmount, ref, } from "vue";
+import { Ref, ref, } from "vue";
 import { ApiService } from "../../client";
-import { getSiteObservationDetails, state } from "../../store";
 import { SiteObservation } from "../../store";
-import { imageFilter } from "../../mapstyle/images";
 
 const props = defineProps<{
   siteObservation: SiteObservation;

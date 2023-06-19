@@ -25,6 +25,7 @@ watch(selectedPerformer, (val) => {
   state.filters = {
     ...state.filters,
     performer_id: val?.id === undefined ? undefined : [val.id],
+    scoringColoring: null,
   };
 });
 watch(selectedRegion, (val) => {
@@ -37,10 +38,11 @@ watch(selectedRegion, (val) => {
   state.filters = {
     ...state.filters,
     region_id: val?.id === undefined ? undefined : [val.id],
+    scoringColoring: null,
   };
 });
 watch(showSiteOutline, (val) => {
-  state.filters = { ...state.filters, showSiteOutline: val };
+  state.filters = { ...state.filters, showSiteOutline: val, scoringColoring: null };
 });
 const expandSettings = ref(false);
 
@@ -127,6 +129,13 @@ onMounted(() => {
           density="compact"
           icon="mdi-cog"
           @click="expandSettings = !expandSettings"
+        />
+        <v-btn
+          :color="state.mapLegend ? 'rgb(37, 99, 235)' : 'gray'"
+          variant="text"
+          density="compact"
+          icon="mdi-map-legend"
+          @click="state.mapLegend = !state.mapLegend"
         />
       </v-row>
       <v-row

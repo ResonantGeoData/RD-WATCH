@@ -311,5 +311,29 @@ export class ApiService {
       query: { configurationId, regionId, siteNumber, version },
     });
   }
+
+  public static hasScores(
+    configurationId: number,
+    regionId: number,
+  ): CancelablePromise<boolean>
+  {
+    return __request(OpenAPI, {
+      method: "GET",
+      url: "/api/scores/has_scores",
+      query: { configurationId, regionId },
+    });
+  }
+  public static getScoreColoring(
+    configurationId: number,
+    regionId: number,
+  ): CancelablePromise<Record<string, string>>
+  {
+    return __request(OpenAPI, {
+      method: "GET",
+      url: "/api/scores/region_scoring_colors",
+      query: { configurationId, regionId },
+    });
+  }
+
 }
 

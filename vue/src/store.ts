@@ -11,6 +11,7 @@ export interface MapFilters {
   otherPattern?: boolean;
   showRegionPolygon?: boolean;
   hoverSiteId?: number;
+  scoringColoring?: Record<string, string> | null;
 }
 
 export interface SatelliteTimeStamp {
@@ -127,6 +128,7 @@ export const state = reactive<{
   };
   bbox: { xmin: number; ymin: number; xmax: number; ymax: number };
   filters: MapFilters;
+  mapLegend: boolean;
   satellite: SatelliteData;
   patterns: {
     patternThickness: number;
@@ -154,6 +156,7 @@ export const state = reactive<{
     groundTruthPattern: false,
     otherPattern: false,
   },
+  mapLegend: false,
   satellite: {
     satelliteImagesOn: false,
     satelliteTimeList:[],

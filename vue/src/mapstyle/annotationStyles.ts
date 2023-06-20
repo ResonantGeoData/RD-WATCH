@@ -34,14 +34,14 @@ const styles: AnnotationStyle[] = [
     {
         id: 4,
         color: '#FFA100',
-        label: '',
-        labelType: ''
+        label: 'unknown',
+        labelType: 'observation'
     },
     {
         id: 5,
         color: '#228b22',
-        label: '',
-        labelType: ''
+        label: 'no_activity',
+        labelType: 'observation'
     },
     {
         id: 6,
@@ -126,21 +126,21 @@ const styles: AnnotationStyle[] = [
 const getAnnotationColor = (filters: MapFilters) => {
     const result = [];
     result.push('case');
-    //console.log(filters);
     if (filters.scoringColoring) {
-        Object.entries(filters.scoringColoring).forEach(([key, value]) => {
-            //console.log(`key:${key} - value: ${value}`);
-            const splits = key.split('_').map((item) => parseInt(item));
-            //console.log(splits);
-            if (splits.length === 4) {
-                result.push(['all',
-                    ['==', ['get', 'configuration_id'], splits[0]],
-                    ['==', ['get', 'region_id'], splits[1]],
-                    ['==', ['get', 'performer_id'], splits[2]],
-                    ['==', ['get', 'site_number'], splits[3]],
-                ]);
-                result.push(value);
-            }
+        const baseScore = Object.values(filters.scoringColoring)
+        baseScore.forEach((base) => {
+            Object.entries(base).forEach(([key, value]) => {
+                const splits = key.split('_').map((item) => parseInt(item));
+                if (splits.length === 4) {
+                    result.push(['all',
+                        ['==', ['get', 'configuration_id'], splits[0]],
+                        ['==', ['get', 'region_id'], splits[1]],
+                        ['==', ['get', 'performer_id'], splits[2]],
+                        ['==', ['get', 'site_number'], splits[3]],
+                    ]);
+                    result.push(value);
+                }
+            });
         });
     }
     styles.forEach((item) => {

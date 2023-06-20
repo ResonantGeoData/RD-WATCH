@@ -45,13 +45,11 @@ const popupLogic = async (map: ShallowRef<null | Map>) => {
     closeOnClick: false,
     maxWidth: '600px',
   });
-  let insideObservation = false;
   const drawPopup = async (e: MapLayerMouseEvent) => {
     if (e.features && e.features[0]?.properties && map.value) {
       const coordinates = e.lngLat;
       const ids = [];
       const htmlMap: Record<string, boolean> = {};
-      insideObservation = true;
       hoveredInfo.value.region = [];
       hoveredInfo.value.siteId = [];
       const popupData: PopUpData[] = [];
@@ -63,7 +61,6 @@ const popupLogic = async (map: ShallowRef<null | Map>) => {
           }
         ) => {
           if (item.properties && item.properties.id) {
-            console.log(item.properties);
             const id = item.properties.site_number;
             const regionName = state.regionMap[item.properties.region_id]
             const score = item.properties.score;
@@ -126,7 +123,6 @@ const popupLogic = async (map: ShallowRef<null | Map>) => {
     } else if (map.value) {
       hoveredInfo.value.region = [];
       hoveredInfo.value.siteId = [];
-      insideObservation = false;
       if (app !== null) {
         app.unmount();
         app = null;

@@ -81,7 +81,3 @@ retrieveScoring();
     
   </span>
 </template>
-
-<style scoped>
-
-</style>

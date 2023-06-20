@@ -269,7 +269,3 @@ const progressInfo = computed(() => {
     </v-row>
   </span>
 </template>
-
-<style scoped>
-
-</style>

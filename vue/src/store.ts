@@ -11,7 +11,7 @@ export interface MapFilters {
   otherPattern?: boolean;
   showRegionPolygon?: boolean;
   hoverSiteId?: number;
-  scoringColoring?: Record<string, string> | null;
+  scoringColoring?: Record<string, Record<string, string>> | null;
 }
 
 export interface SatelliteTimeStamp {

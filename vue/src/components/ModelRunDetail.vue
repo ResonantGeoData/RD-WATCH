@@ -22,9 +22,22 @@ const useScoring = ref(false);
 async function getScoringColoring() {
   if (!useScoring.value) { // inverted value because of the delay
     const results = await ApiService.getScoreColoring(props.modelRun.id, props.modelRun.region?.id || 0)
-    state.filters = { ...state.filters, scoringColoring: results };
+    let tempResults = state.filters.scoringColoring;
+    if (!tempResults) {
+      tempResults = {};
+    }
+    if (tempResults !== undefined && tempResults !== null)  {
+      tempResults[`${props.modelRun.id}_${props.modelRun.region?.id || 0}`] = results;
+    }
+    state.filters = { ...state.filters, scoringColoring: tempResults };
   } else {
-    state.filters = { ...state.filters, scoringColoring: null };
+    let tempResults = state.filters.scoringColoring;
+    if (tempResults) {
+      if (Object.keys(tempResults).includes(`${props.modelRun.id}_${props.modelRun.region?.id || 0}`)) {
+        delete tempResults[`${props.modelRun.id}_${props.modelRun.region?.id || 0}`];
+      }
+    }
+    state.filters = { ...state.filters, scoringColoring: tempResults };
   }
 }
 </script>
@@ -118,7 +131,11 @@ async function getScoringColoring() {
         v-if="modelRun.hasScores && props.open"
         dense
       >
-        <input v-model="useScoring" @click.stop="getScoringColoring()" type="checkbox">
+        <input
+          v-model="useScoring"
+          type="checkbox"
+          @click.stop="getScoringColoring()"
+        >
         <span class="ml-2"> Scoring Coloring</span>
       </v-row>
     </v-card-text>

@@ -1,7 +1,10 @@
+from django_extensions.db.models import CreationDateTimeField
+
 from django.db import models
 
 
 class HyperParameters(models.Model):
+    created = CreationDateTimeField()
     title = models.CharField(max_length=1000)
     performer = models.ForeignKey(
         to='Performer',
@@ -12,6 +15,11 @@ class HyperParameters(models.Model):
     parameters = models.JSONField(
         help_text='The hyper parameters for an ML task',
         db_index=True,
+    )
+    expiration_time = models.DurationField(
+        null=True,
+        blank=True,
+        help_text='Time relative to creation that this model run should be deleted.',
     )
 
     def __str__(self):

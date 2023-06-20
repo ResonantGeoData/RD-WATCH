@@ -10,6 +10,9 @@ class HyperParametersWriteSerializer(serializers.Serializer):
     performer = serializers.CharField()
     title = serializers.CharField(max_length=1000)
     parameters = serializers.JSONField(default=dict)
+    expiration_time = serializers.IntegerField(
+        min_value=0, max_value=24 * 365, required=False
+    )
 
     def validate_performer(self, value: str) -> lookups.Performer:
         try:

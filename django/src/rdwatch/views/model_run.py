@@ -1,3 +1,5 @@
+from datetime import timedelta
+
 import django_filters
 import iso3166
 
@@ -165,6 +167,9 @@ class ModelRunViewSet(viewsets.ViewSet):
             title=write_serializer.validated_data['title'],
             performer=write_serializer.validated_data['performer'],
             parameters=write_serializer.validated_data['parameters'],
+            expiration_time=timedelta(
+                hours=write_serializer.validated_data['expiration_time']
+            ),
         )
         detail_serializer = HyperParametersDetailSerializer(
             {

@@ -39,6 +39,8 @@ class HyperParametersDetailSerializer(serializers.Serializer):
     timestamp = serializers.IntegerField(allow_null=True)
     timerange = TimeRangeSerializer(allow_null=True)
     bbox = serializers.JSONField(allow_null=True)
+    created = serializers.DateTimeField()
+    expiration_time = serializers.CharField(allow_null=True)
 
 
 class HyperParametersListSerializer(serializers.Serializer):

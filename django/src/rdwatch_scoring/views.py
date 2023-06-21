@@ -59,7 +59,7 @@ def get_site_scoring_color(evaluation_run_uid, activity_type, generatedSiteId):
             }:
                 sm_color = 'orange'
             else:
-                sm_color = 'aquamarine'
+                sm_color = '#66CCAA'
         # only negative matches (completely wrong)
         elif set(match_statuses) & {
             'positive_excluded',

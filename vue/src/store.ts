@@ -179,7 +179,7 @@ export const state = reactive<{
     observationSources: ['S2', 'WV'],
     cloudCoverFilter: 70,
     percentBlackFilter: 70,
-    imageOpacity: 1.0,
+    imageOpacity: 100.0,
   },
   loopingInterval: null,
   loopingId: null,

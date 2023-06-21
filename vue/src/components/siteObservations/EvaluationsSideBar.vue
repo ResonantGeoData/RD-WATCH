@@ -72,49 +72,51 @@ onUnmounted(() => {
 <template>
   <v-card
     v-if="state.selectedObservations.length"
-    class="pa-5 site-eval-card"
+    class="px-5 pb-5 site-eval-card"
   >
-    <v-row>
-      <h1 class="mx-4 mt-2">
-        Selected Evaluations
-      </h1>
-    </v-row>
-    <v-row>
-      <v-checkbox
-        v-model="S2Imagery"
-        label="S2"
-        density="compact"
-        class="mx-2"
-      />
-      <v-checkbox
-        v-model="WVImagery"
-        label="WV"
-        density="compact"
-        class="mx-2"
-      />
+    <span class="eval-controls">
+      <v-row style="background-color: white;">
+        <h1 class="mx-4 mt-2">
+          Selected Evaluations
+        </h1>
+      </v-row>
+      <v-row style="background-color: white;">
+        <v-checkbox
+          v-model="S2Imagery"
+          label="S2"
+          density="compact"
+          class="mx-2"
+        />
+        <v-checkbox
+          v-model="WVImagery"
+          label="WV"
+          density="compact"
+          class="mx-2"
+        />
 
 
 
-      <v-btn
-        size="small"
-        @click="clearAll()"
-      >
-        Clear All
-      </v-btn>
-      <v-spacer />
-      <v-icon
-        :color="expandSettings ? 'rgb(37, 99, 235)' : 'black'"
-        @click="expandSettings = !expandSettings"
-      >
-        mdi-cog
-      </v-icon>
-    </v-row>
-    <div class="px-5">
-      <site-eval-settings
-        v-if="expandSettings"
-      />
-    </div>
-    <div style="overflow-y:auto">
+        <v-btn
+          size="small"
+          @click="clearAll()"
+        >
+          Clear All
+        </v-btn>
+        <v-spacer />
+        <v-icon
+          :color="expandSettings ? 'rgb(37, 99, 235)' : 'black'"
+          @click="expandSettings = !expandSettings"
+        >
+          mdi-cog
+        </v-icon>
+      </v-row>
+      <div class="px-5">
+        <site-eval-settings
+          v-if="expandSettings"
+        />
+      </div>
+    </span>
+    <div style="overflow-y:auto" class="pt-5">
       <evaluation-display
         v-for="item in state.selectedObservations"
         :key="`siteObs_${item.id}`"
@@ -157,6 +159,13 @@ onUnmounted(() => {
 }
 
 .site-eval-card{
-  min-height: 100vh;
+  overflow-y:auto;
+  background-color: white;
+}
+.eval-controls {
+  position:sticky;
+  top:0px;
+  z-index:2;
+  background-color: white;
 }
 </style>

@@ -277,7 +277,7 @@ const changeTimstamp = ({dir, loop}: {dir: number, loop: boolean}) => {
         align="center"
       >
         <v-icon
-          size="40"
+          size="35"
           :disabled="!currentClosestTimestamp.prev"
           :color="currentClosestTimestamp.prev ? 'rgb(37, 99, 235)' : 'gray'"
           @click="goToTimestamp(-1)"
@@ -292,7 +292,7 @@ const changeTimstamp = ({dir, loop}: {dir: number, loop: boolean}) => {
           {{ currentClosestTimestamp.time }} - {{ currentClosestTimestamp.type }}{{ currentClosestTimestamp.siteobs !== null ? '*': '' }}
         </span>
         <v-icon
-          size="40"
+          size="35"
           :disabled="!currentClosestTimestamp.next"
           :color="currentClosestTimestamp.next ? 'rgb(37, 99, 235)' : 'gray'"
           @click="goToTimestamp(1)"
@@ -334,7 +334,7 @@ const changeTimstamp = ({dir, loop}: {dir: number, loop: boolean}) => {
   cursor: pointer;
 }
 .details {
-  font-size: 0.75em;
+  font-size: 0.70em;
 }
 
 </style>

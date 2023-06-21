@@ -180,8 +180,8 @@ const createAnnotationLegend = () => {
     });
     const scoringLegend = [
         { name:'Ignore', color:'lightsalmon' },
-        { name:'Positive Match', color:'orange' },
-        { name:'Partially Wrong', color:'aquamarine' },
+        { name:'Positive Match', color:'#66CCAA' },
+        { name:'Partially Wrong', color:'orange' },
         { name:'Completely Wrong', color:'magenta' },
     ]
     return { observationLegend, scoringLegend, siteLegend }

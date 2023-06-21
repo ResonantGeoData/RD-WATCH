@@ -36,6 +36,9 @@ async function getScoringColoring() {
       if (Object.keys(tempResults).includes(`${props.modelRun.id}_${props.modelRun.region?.id || 0}`)) {
         delete tempResults[`${props.modelRun.id}_${props.modelRun.region?.id || 0}`];
       }
+      if (Object.values(tempResults).length === 0) {
+        tempResults = null;
+      }
     }
     state.filters = { ...state.filters, scoringColoring: tempResults };
   }

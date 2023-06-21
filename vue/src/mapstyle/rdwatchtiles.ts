@@ -134,11 +134,11 @@ const urlRoot = `${location.protocol}//${location.host}`;
 const buildObservationThick = (filters: MapFilters): DataDrivenPropertyValueSpecification<number>  => {
   // If this observation is a grouth truth, make the width 4. Otherwise, make it 2.
  return[ "case",
+ ["==", ["get", "siteeval_id"],
+ filters.hoverSiteId ? filters.hoverSiteId : ''],
+ 6,
   ["get", "groundtruth"],
   4,
-  ["==", ["get", "siteeval_id"],
-  filters.hoverSiteId ? filters.hoverSiteId : ''],
-  6,
   2,
 ];
 }

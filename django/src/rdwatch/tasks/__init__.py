@@ -215,11 +215,15 @@ def get_siteobservations_images(
 @shared_task
 def delete_temp_model_runs_task() -> None:
     """Delete all model runs that are due to be deleted."""
-    model_runs_to_delete = HyperParameters.objects.alias(
-        delete_at=ExpressionWrapper(
-            F('created') + F('expiration_time'), output_field=DateTimeField()
+    model_runs_to_delete = (
+        HyperParameters.objects.filter(expiration_time__isnull=False)
+        .alias(
+            delete_at=ExpressionWrapper(
+                F('created') + F('expiration_time'), output_field=DateTimeField()
+            )
         )
-    ).filter(delete_at__lte=timezone.now())
+        .filter(delete_at__lte=timezone.now())
+    )
 
     with transaction.atomic():
         SiteObservation.objects.filter(

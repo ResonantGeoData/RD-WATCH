@@ -19,15 +19,23 @@ def test_model_run_auto_delete() -> None:
             performer=lookups.Performer.objects.all().first(),
             expiration_time=timedelta(hours=1),
         )
-    model_run_to_not_delete = HyperParameters.objects.create(
+    not_expired_model_run = HyperParameters.objects.create(
         title='test2',
         parameters={},
         performer=lookups.Performer.objects.all().first(),
         expiration_time=timedelta(hours=2),
     )
-    assert HyperParameters.objects.count() == 2
+    model_run_with_no_expiration = HyperParameters.objects.create(
+        title='test3',
+        parameters={},
+        performer=lookups.Performer.objects.all().first(),
+    )
+    assert HyperParameters.objects.count() == 3
 
     delete_temp_model_runs_task()
 
-    assert HyperParameters.objects.count() == 1
-    assert HyperParameters.objects.first() == model_run_to_not_delete
+    assert HyperParameters.objects.count() == 2
+    assert list(HyperParameters.objects.all()) == [
+        not_expired_model_run,
+        model_run_with_no_expiration,
+    ]

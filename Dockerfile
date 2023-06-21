@@ -14,6 +14,7 @@ RUN echo "deb [signed-by=/usr/share/keyrings/nginx.gpg] http://packages.nginx.or
       netcat-openbsd \
       python3-cachecontrol \
       python3-pip \
+      python3.10-venv \
       tzdata \
       unit \
       unit-python3.10 \
@@ -24,7 +25,9 @@ RUN echo "deb [signed-by=/usr/share/keyrings/nginx.gpg] http://packages.nginx.or
  && usermod --lock rdwatch \
  && usermod --append --groups rdwatch unit
 RUN python3 -m pip install poetry==1.4.2
-RUN poetry config virtualenvs.in-project true
+RUN python3 -m venv /poetry/venvs/rdwatch
+ENV PATH="/poetry/venvs/rdwatch/bin:$PATH"
+ENV VIRTUAL_ENV=/poetry/venvs/rdwatch
 WORKDIR /app
 EXPOSE 80
 ENTRYPOINT [ "/docker-entrypoint.sh" ]
@@ -49,9 +52,8 @@ RUN apt-get update \
       nodejs \
       npm \
       python3-dev \
-      python3.10-venv \
  && rm -rf /var/lib/apt/lists/* \
- && poetry config installer.parallel true 
+ && poetry config installer.parallel true
 
 FROM builder as vue-builder
 WORKDIR /app/vue
@@ -60,9 +62,6 @@ RUN npm ci
 
 FROM builder AS django-builder
 WORKDIR /app/django
-RUN python3 -m venv /poetry/venvs/rdwatch
-ENV PATH="/poetry/venvs/rdwatch/bin:$PATH" 
-ENV VIRTUAL_ENV=/poetry/venvs/rdwatch
 COPY django/pyproject.toml django/poetry.lock /app/django/
 RUN mkdir /app/django/src \
  && mkdir /app/django/src/rdwatch \
@@ -75,9 +74,6 @@ RUN mkdir /app/django/src \
 # For use in a development environment.
 FROM builder AS dev
 WORKDIR /app/django
-RUN python3 -m venv /poetry/venvs/rdwatch
-ENV PATH="/poetry/venvs/rdwatch/bin:$PATH" 
-ENV VIRTUAL_ENV=/poetry/venvs/rdwatch
 COPY django/pyproject.toml django/poetry.lock /app/django/
 RUN mkdir /app/django/src \
  && mkdir /app/django/src/rdwatch \
@@ -107,6 +103,10 @@ RUN chmod -R u=rX,g=rX,o= .
 
 # Final image
 FROM base
+COPY --from=django-builder \
+     --chown=rdwatch:rdwatch \
+     /poetry/venvs \
+     /poetry/venvs
 COPY --from=django-dist \
      --chown=rdwatch:rdwatch \
      /app/django \

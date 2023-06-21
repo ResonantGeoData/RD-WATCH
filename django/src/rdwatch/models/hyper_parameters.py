@@ -1,7 +1,10 @@
+from django_extensions.db.models import CreationDateTimeField
+
 from django.db import models
 
 
 class HyperParameters(models.Model):
+    created = CreationDateTimeField()
     title = models.CharField(max_length=1000)
     performer = models.ForeignKey(
         to='Performer',
@@ -15,6 +18,11 @@ class HyperParameters(models.Model):
     )
     evaluation = models.IntegerField(blank=True, null=True)
     evaluation_run = models.IntegerField(blank=True, null=True)
+    expiration_time = models.DurationField(
+        null=True,
+        blank=True,
+        help_text='Time relative to creation that this model run should be deleted.',
+    )
 
     def __str__(self):
         return self.pk

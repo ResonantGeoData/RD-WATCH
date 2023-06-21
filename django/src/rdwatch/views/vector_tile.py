@@ -1,3 +1,5 @@
+from ninja import Router
+
 from django.contrib.gis.db.models.functions import Area, Transform
 from django.db import connection
 from django.db.models import (
@@ -18,16 +20,11 @@ from django.http import HttpRequest, HttpResponse
 from rdwatch.db.functions import ExtractEpoch, GroupExcludeRowRange
 from rdwatch.models import Region, SiteEvaluation, SiteObservation
 
+router = Router()
 
-def vector_tile(
-    request: HttpRequest,
-    z: int | None = None,
-    x: int | None = None,
-    y: int | None = None,
-):
-    if z is None or x is None or y is None:
-        raise ValueError()
 
+@router.get('/{z}/{x}/{y}.pbf')
+def vector_tile(request: HttpRequest, z: int, x: int, y: int):
     envelope = Func(z, x, y, function='ST_TileEnvelope')
     intersects = Q(
         Func(

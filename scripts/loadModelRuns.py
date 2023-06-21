@@ -42,6 +42,10 @@ def main():
                         default=0,
                         type=int,
                         help="Evaluation  Run Number")
+    parser.add_argument('--expiration_time',
+                        default=0,
+                        type=int,
+                        help="expiration time in hours")                
     upload_to_rgd(**vars(parser.parse_args()))
 
 
@@ -52,6 +56,7 @@ def upload_to_rgd(region_id,
                   performer_shortcode="TE",
                   eval_num=0,
                   eval_run_num=0,
+                  expiration_time = 0
                   ):
 
     # Check that our run doesn't already exist
@@ -79,11 +84,14 @@ def upload_to_rgd(region_id,
         model_run_id = model_run['id']
     else:
         post_model_url = f"{rgd_endpoint}/api/model-runs"
+
         post_model_data = {"performer": performer_shortcode,
                            "title": title,
                            "evaluation": eval_num,
                            "evaluation_run": eval_run_num,
                            "region": {"name": region_id}}
+        if expiration_time != 0:
+            post_model_data['expiration_time'] = expiration_time        
         if title == "Ground Truth":
             post_model_data["parameters"] = {"ground_truth": True}
 
@@ -92,7 +100,6 @@ def upload_to_rgd(region_id,
             json=post_model_data,
             headers={"Content-Type": "application/json"},
             cookies=cookies)
-
         model_run_id = post_model_result.json()['id']
 
     post_site_url =\

@@ -1,3 +1,5 @@
+from datetime import timedelta
+
 from rest_framework import serializers
 
 from rdwatch.models import lookups
@@ -19,6 +21,11 @@ class HyperParametersWriteSerializer(serializers.Serializer):
             return lookups.Performer.objects.get(slug=value.upper())
         except lookups.Performer.DoesNotExist:
             raise serializers.ValidationError(f"Invalid performer '{value}'")
+
+    def validate_expiration_time(self, value: int | None) -> timedelta | None:
+        if value is not None:
+            return timedelta(hours=value)
+        return value
 
 
 class HyperParametersDetailSerializer(serializers.Serializer):

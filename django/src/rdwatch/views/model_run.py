@@ -112,6 +112,8 @@ def get_queryset():
             json=JSONObject(
                 id='pk',
                 title='title',
+                created='created',
+                expiration_time='expiration_time',
                 performer=Subquery(  # prevents including "performer" in slow GROUP BY
                     lookups.Performer.objects.filter(
                         pk=OuterRef('performer_id')
@@ -162,9 +164,7 @@ class ModelRunViewSet(viewsets.ViewSet):
         write_serializer = HyperParametersWriteSerializer(data=request.data)
         write_serializer.is_valid(raise_exception=True)
         hyper_parameters = HyperParameters.objects.create(
-            title=write_serializer.validated_data['title'],
-            performer=write_serializer.validated_data['performer'],
-            parameters=write_serializer.validated_data['parameters'],
+            **write_serializer.validated_data
         )
         detail_serializer = HyperParametersDetailSerializer(
             {
@@ -177,6 +177,8 @@ class ModelRunViewSet(viewsets.ViewSet):
                 },
                 'parameters': hyper_parameters.parameters,
                 'numsites': 0,
+                'created': hyper_parameters.created,
+                'expiration_time': hyper_parameters.expiration_time,
             }
         )
         return Response(data=detail_serializer.data, status=200)

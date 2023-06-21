@@ -6,9 +6,18 @@ from celery import shared_task
 from pyproj import Transformer
 
 from django.core.files import File
+from django.db import transaction
+from django.db.models import DateTimeField, ExpressionWrapper, F
+from django.utils import timezone
 
 from rdwatch.celery import app
-from rdwatch.models import SatelliteFetching, SiteImage, SiteObservation
+from rdwatch.models import (
+    HyperParameters,
+    SatelliteFetching,
+    SiteEvaluation,
+    SiteImage,
+    SiteObservation,
+)
 from rdwatch.utils.images import (
     fetch_boundbox_image,
     get_max_bbox,
@@ -206,5 +215,19 @@ def get_siteobservations_images(
 @shared_task
 def delete_temp_model_runs_task() -> None:
     """Delete all model runs that are due to be deleted."""
-    print('Test')
-    # TODO: implement this
+    model_runs_to_delete = (
+        HyperParameters.objects.filter(expiration_time__isnull=False)
+        .alias(
+            delete_at=ExpressionWrapper(
+                F('created') + F('expiration_time'), output_field=DateTimeField()
+            )
+        )
+        .filter(delete_at__lte=timezone.now())
+    )
+
+    with transaction.atomic():
+        SiteObservation.objects.filter(
+            siteeval__configuration__in=model_runs_to_delete
+        ).delete()
+        SiteEvaluation.objects.filter(configuration__in=model_runs_to_delete).delete()
+        model_runs_to_delete.delete()

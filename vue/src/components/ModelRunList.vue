@@ -11,12 +11,10 @@ import { computed, ref, watch, watchEffect } from "vue";
 import type { Ref } from "vue";
 import { ApiService } from "../client";
 import { filteredSatelliteTimeList, state } from "../store";
+import type { KeyedModelRun } from '../store'
 import { LngLatBounds } from "maplibre-gl";
 import { hoveredInfo } from "../interactions/mouseEvents";
 const limit = 10;
-interface KeyedModelRun extends ModelRun {
-  key: string;
-}
 
 const props = defineProps<{
   filters: QueryArguments;
@@ -27,8 +25,6 @@ const emit = defineEmits<{
   (e: "nextPage"): void;
 }>();
 
-const modelRuns: Ref<KeyedModelRun[]> = ref([]);
-const openedModelRuns: Ref<Set<KeyedModelRun["key"]>> = ref(new Set<KeyedModelRun["key"]>());
 const resultsBoundingBox = ref({
   xmin: -180,
   ymin: -90,
@@ -63,7 +59,7 @@ async function loadMore() {
     const keyedModelRunResults = modelRunResults.map((val, i) => {
       return {
         ...val,
-        key: `${val.id}|${i + modelRuns.value.length}`,
+        key: `${val.id}|${i + state.modelRuns.length}`,
       };
     });
 
@@ -96,9 +92,9 @@ async function loadMore() {
     // meaning we would need to clear out any existing results.
     // To account for this, just set the array to the results directly instead of concatenating.
     if (props.filters.page === 1) {
-      modelRuns.value = keyedModelRunResults;
+      state.modelRuns = keyedModelRunResults;
     } else {
-      modelRuns.value = modelRuns.value.concat(keyedModelRunResults);
+      state.modelRuns = state.modelRuns.concat(keyedModelRunResults);
     }
     emit("update:timerange", modelRunList["timerange"]);
   } catch (e) {
@@ -115,10 +111,10 @@ async function loadMore() {
  */
 function updateCameraBounds(filtered = true) {
   const bounds = new LngLatBounds();
-  let list = modelRuns.value;
+  let list = state.modelRuns;
   if (filtered) {
-    list = modelRuns.value.filter((modelRun) =>
-      openedModelRuns.value.has(modelRun.key)
+    list = state.modelRuns.filter((modelRun) =>
+      state.openedModelRuns.has(modelRun.key)
     );
   }
   if (
@@ -192,31 +188,31 @@ async function checkScores(modelRun: KeyedModelRun)  {
   } catch (err) {
     hasScores = false;
   }
-  const foundIndex = modelRuns.value.findIndex((item) => item === modelRun);
+  const foundIndex = state.modelRuns.findIndex((item) => item === modelRun);
   if (hasScores) {
     // Do something to set the value on the keyed Model run
     if (foundIndex !== -1) {
-      modelRuns.value[foundIndex].hasScores = true;
+      state.modelRuns[foundIndex].hasScores = true;
     }
   } else {
-    modelRuns.value[foundIndex].hasScores = undefined;
+    state.modelRuns[foundIndex].hasScores = undefined;
   }
 }
 
 function handleToggle(modelRun: KeyedModelRun) {
-  if (openedModelRuns.value.has(modelRun.key)) {
-    openedModelRuns.value.delete(modelRun.key);
+  if (state.openedModelRuns.has(modelRun.key)) {
+    state.openedModelRuns.delete(modelRun.key);
   } else {
-    openedModelRuns.value.add(modelRun.key);
+    state.openedModelRuns.add(modelRun.key);
   }
 
-  if (openedModelRuns.value.size > 0) {
+  if (state.openedModelRuns.size > 0) {
     // Only move camera if we're *not* currently filtering by region
     updateCameraBounds();
     const configurationIds: Set<number> = new Set();
     const regionIds: Set<number> = new Set();
-    modelRuns.value
-      .filter((modelRun) => openedModelRuns.value.has(modelRun.key))
+    state.modelRuns
+      .filter((modelRun) => state.openedModelRuns.has(modelRun.key))
       .map((modelRun) => {
         configurationIds.add(modelRun.id);
         if (modelRun.region) {
@@ -248,7 +244,7 @@ async function handleScroll(event: Event) {
   // If the user has scrolled to the bottom of the list AND there are still more model runs to
   // fetch, bump the current page to trigger the loadMore function via a watcher.
   const heightPosCheck = Math.floor(target.scrollHeight - target.scrollTop) <= target.clientHeight;
-  if (!loading.value && heightPosCheck && modelRuns.value.length < totalModelRuns.value) {
+  if (!loading.value && heightPosCheck && state.modelRuns.length < totalModelRuns.value) {
     if (props.filters.page !== undefined && Math.ceil(totalModelRuns.value / limit) > props.filters.page ) {
       emit("nextPage");
     }
@@ -259,7 +255,7 @@ const hasSatelliteImages = computed(() => filteredSatelliteTimeList.value.length
 
 watchEffect(loadMore);
 watch([() => props.filters.region, () => props.filters.performer], () => {
-  openedModelRuns.value.clear();
+  state.openedModelRuns.clear();
   state.filters = {
     ...state.filters,
     configuration_id: [],
@@ -346,7 +342,7 @@ watch([() => props.filters.region, () => props.filters.performer], () => {
             stroke-width="2"
             d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"
           /></svg>
-          <span>    Region is Too Large to efficiently get Images: 
+          <span>    Region is Too Large to efficiently get Images:
           </span>
           <div class="flex-none">
             <button
@@ -364,10 +360,10 @@ watch([() => props.filters.region, () => props.filters.performer], () => {
       @scroll="handleScroll"
     >
       <ModelRunDetail
-        v-for="modelRun in modelRuns"
+        v-for="modelRun in state.modelRuns"
         :key="modelRun.key"
         :model-run="modelRun"
-        :open="openedModelRuns.has(modelRun.key)"
+        :open="state.openedModelRuns.has(modelRun.key)"
         :class="{
           outlined: hoveredInfo.region.includes(
             `${modelRun.id}_${modelRun.region?.id}_${modelRun.performer.id}`

@@ -8,7 +8,7 @@ import type {
   LayerSpecification,
   SourceSpecification,
 } from "maplibre-gl";
-import type { MapFilters } from "../store";
+import type { KeyedModelRun, MapFilters } from "../store";
 
 import { annotationColors, observationText, siteText } from "./annotationStyles";
 
@@ -127,7 +127,6 @@ export const buildRegionFilter = (
   return filter;
 };
 
-const rdwatchtiles = "rdwatchtiles";
 const urlRoot = `${location.protocol}//${location.host}`;
 
 
@@ -157,99 +156,108 @@ const buildObservationFill = (
   ];
 };
 
-const source: SourceSpecification = {
-  type: "vector",
-  tiles: [`${urlRoot}/api/vector-tile/{z}/{x}/{y}.pbf`],
-  minzoom: 0,
-  maxzoom: 14,
+export const buildSourceFilter = (modelRuns: KeyedModelRun[]) => {
+  const results: Record<string, SourceSpecification> = {};
+  modelRuns.forEach((item) => {
+    const source = `vectorTileSource_${item.id}`;
+    results[source] = {
+      type: "vector",
+      tiles: [`${urlRoot}/api/model-runs/${item.id}/vector-tile/{z}/{x}/{y}.pbf/`],
+      minzoom: 0,
+      maxzoom: 14,
+    };
+  });
+  return results;
 };
-export const sources = { rdwatchtiles: source };
 
-export const layers = (
-  timestamp: number,
-  filters: MapFilters
-): LayerSpecification[] => [
-  {
-    id: "observations-fill",
-    type: "fill",
-    source: rdwatchtiles,
-    "source-layer": "observations",
-    paint: {
-      "fill-color": (annotationColors(filters)),
-      "fill-opacity": 1,
-      "fill-pattern": buildObservationFill(timestamp, filters),
-    },
-    filter: buildObservationFilter(timestamp, filters),
-  },
-  {
-    id: "observations-outline",
-    type: "line",
-    source: rdwatchtiles,
-    "source-layer": "observations",
-    paint: {
-      "line-color": annotationColors(filters),
-      "line-width": buildObservationThick(filters),
-    },
-    filter: buildObservationFilter(timestamp, filters),
-  },
-  {
-    id: "observations-text",
-    type: "symbol",
-    source: rdwatchtiles,
-    "source-layer": "observations",
-    layout: {
-      "text-anchor": "center",
-      "text-font": ["Roboto Regular"],
-      "text-max-width": 5,
-      "text-size": 12,
-      "text-allow-overlap": true,
-      "text-offset": buildTextOffset('observation', filters),
-      "text-field": observationText,
-    },
-    paint: {
-      "text-color": annotationColors(filters),
-    },
-    filter: buildObservationFilter(timestamp, filters),
-  },
-  {
-    id: "regions-outline",
-    type: "line",
-    source: rdwatchtiles,
-    "source-layer": "regions",
-    paint: {
-      "line-color": annotationColors(filters),
-      "line-width": 2,
-    },
-    filter: buildRegionFilter(filters),
-  },
-  {
-    id: "sites-outline",
-    type: "line",
-    source: rdwatchtiles,
-    "source-layer": "sites",
-    paint: {
-      "line-color": annotationColors(filters),
-      "line-width": 2,
-    },
-    filter: buildSiteFilter(timestamp, filters),
-  },
-  {
-    id: "sites-text",
-    type: "symbol",
-    source: rdwatchtiles,
-    "source-layer": "sites",
-    layout: {
-      "text-anchor": "center",
-      "text-font": ["Roboto Regular"],
-      "text-max-width": 5,
-      "text-size": 12,
-      "text-allow-overlap": true,
-      "text-offset": buildTextOffset('site', filters),
-      "text-field": siteText,
-    },
-    paint: {
-      "text-color": annotationColors(filters),
-    },
-    filter: buildSiteFilter(timestamp, filters),
-  },
-];
+export const buildLayerFilter = (timestamp: number, filters: MapFilters, modelRuns: KeyedModelRun[]): LayerSpecification[] => {
+  let results: LayerSpecification[] = [];
+  modelRuns.forEach((item) => {
+      results = results.concat([
+        {
+          id: `observations-fill-${item.id}`,
+          type: "fill",
+          source: `vectorTileSource_${item.id}`,
+          "source-layer": `observations-${item.id}`,
+          paint: {
+            "fill-color": annotationColors(filters),
+            "fill-opacity": 1,
+            "fill-pattern": buildObservationFill(timestamp, filters),
+          },
+          filter: buildObservationFilter(timestamp, filters),
+        },
+        {
+          id: `observations-outline-${item.id}`,
+          type: "line",
+          source: `vectorTileSource_${item.id}`,
+          "source-layer": `observations-${item.id}`,
+          paint: {
+            "line-color": annotationColors(filters),
+            "line-width": buildObservationThick(filters),
+          },
+          filter: buildObservationFilter(timestamp, filters),
+        },
+        {
+          id: `observations-text-${item.id}`,
+          type: "symbol",
+          source: `vectorTileSource_${item.id}`,
+          "source-layer": `observations-${item.id}`,
+          layout: {
+            "text-anchor": "center",
+            "text-font": ["Roboto Regular"],
+            "text-max-width": 5,
+            "text-size": 12,
+            "text-allow-overlap": true,
+            "text-offset": buildTextOffset('observation', filters),
+            "text-field": observationText,
+          },
+          paint: {
+            "text-color": annotationColors(filters),
+          },
+          filter: buildObservationFilter(timestamp, filters),
+        },
+        {
+          id: `regions-outline-${item.id}`,
+          type: "line",
+          source: `vectorTileSource_${item.id}`,
+          "source-layer": `regions-${item.id}`,
+          paint: {
+            "line-color": annotationColors(filters),
+            "line-width": 2,
+          },
+          filter: buildRegionFilter(filters),
+        },
+        {
+          id: `sites-outline-${item.id}`,
+          type: "line",
+          source: `vectorTileSource_${item.id}`,
+          "source-layer": `sites-${item.id}`,
+          paint: {
+            "line-color": annotationColors(filters),
+            "line-width": 2,
+          },
+          filter: buildSiteFilter(timestamp, filters),
+        },
+        {
+          id: `sites-text-${item.id}`,
+          type: "symbol",
+          source: `vectorTileSource_${item.id}`,
+          "source-layer": `sites-${item.id}`,
+          layout: {
+            "text-anchor": "center",
+            "text-font": ["Roboto Regular"],
+            "text-max-width": 5,
+            "text-size": 12,
+            "text-allow-overlap": true,
+            "text-offset": buildTextOffset('site', filters),
+            "text-field": siteText,
+          },
+          paint: {
+            "text-color": annotationColors(filters),
+          },
+          filter: buildSiteFilter(timestamp, filters),
+        },
+      ])
+  });
+  return results;
+}

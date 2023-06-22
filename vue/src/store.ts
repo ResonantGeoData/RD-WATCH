@@ -1,6 +1,6 @@
 import { computed, reactive } from "vue";
 
-import { ApiService, Region } from "./client";
+import { ApiService, ModelRun, Region } from "./client";
 
 export interface MapFilters {
   configuration_id?: number[];
@@ -120,6 +120,10 @@ export interface siteObsSatSettings {
   imageOpacity: number;
 }
 
+export interface KeyedModelRun extends ModelRun {
+  key: string;
+}
+
 export const state = reactive<{
   timestamp: number;
   timeMin: number;
@@ -140,6 +144,8 @@ export const state = reactive<{
   siteObsSatSettings: siteObsSatSettings,
   loopingInterval: NodeJS.Timeout | null,
   loopingId: number | null,
+  modelRuns: KeyedModelRun[],
+  openedModelRuns: Set<KeyedModelRun["key"]>
 }>({
   timestamp: Math.floor(Date.now() / 1000),
   timeMin: new Date(0).valueOf(),
@@ -183,6 +189,8 @@ export const state = reactive<{
   },
   loopingInterval: null,
   loopingId: null,
+  modelRuns: [],
+  openedModelRuns: new Set<KeyedModelRun["key"]>(),
 });
 
 export const filteredSatelliteTimeList = computed(() => {
@@ -208,7 +216,7 @@ export const getSiteObservationDetails = async (siteId: string, scoringBase: Sco
     .sort((a, b) => (a.timestamp - b.timestamp));
   const S2List = images.results.filter((item) => item.source === 'S2' && item.image !== null).sort((a, b) => (a.timestamp - b.timestamp));
 
-  const L8 = { 
+  const L8 = {
     total: results.filter((item) => item.constellation === 'L8').length,
     loaded:images.results.filter((item) => item.source === 'L8').length,
     unmatched: null,
@@ -220,7 +228,7 @@ export const getSiteObservationDetails = async (siteId: string, scoringBase: Sco
     images: S2List,
     unmatched: null,
   };
-  const WV = { 
+  const WV = {
     total: results.filter((item) => item.constellation === 'WV').length,
     loaded:worldViewList.length,
     images: worldViewList,

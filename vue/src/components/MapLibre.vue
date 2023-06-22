@@ -42,13 +42,14 @@ onMounted(() => {
     map.value = markRaw(
       new Map({
         container: mapContainer.value,
-        style: style(state.timestamp,  {
+        style: style(state.timestamp, {
           groundTruthPattern: false,
           otherPattern: false,
         },
-        state.satellite,
-        state.enabledSiteObservations,
-        state.siteObsSatSettings,
+          state.satellite,
+          state.enabledSiteObservations,
+          state.siteObsSatSettings,
+          state.modelRuns.filter((m) => state.openedModelRuns.has(m.key))
         ),
         bounds: [
           [state.bbox.xmin, state.bbox.ymin],
@@ -70,22 +71,33 @@ const throttledSetSatelliteTimeStamp = throttle(setSatelliteTimeStamp, 300);
 
 
 watch([() => state.timestamp, () => state.filters, () => state.satellite, () => state.filters.scoringColoring,
-() => state.satellite.satelliteSources, () => state.enabledSiteObservations, () => state.filters.hoverSiteId], () => {
+  () => state.satellite.satelliteSources, () => state.enabledSiteObservations, () => state.filters.hoverSiteId,
+  () => state.modelRuns, () => state.openedModelRuns], () => {
+
   if (state.satellite.satelliteImagesOn) {
     throttledSetSatelliteTimeStamp(state, filteredSatelliteTimeList.value);
   }
+
+  const openedModelRuns = state.modelRuns.filter((m) => state.openedModelRuns.has(m.key));
+
+  map.value?.setStyle(
+    style(state.timestamp, state.filters, state.satellite, state.enabledSiteObservations, state.siteObsSatSettings, openedModelRuns),
+  );
+
   const siteFilter = buildSiteFilter(state.timestamp, state.filters);
   const observationFilter = buildObservationFilter(
     state.timestamp,
     state.filters
   );
-  setFilter("sites-outline", siteFilter);
-  setFilter("observations-fill", observationFilter);
-  setFilter("observations-outline", observationFilter);
-  setFilter("observations-text", observationFilter);
-  map.value?.setStyle(
-  style(state.timestamp, state.filters, state.satellite, state.enabledSiteObservations, state.siteObsSatSettings),
-  );
+
+  openedModelRuns.forEach(modelRun => {
+    setFilter(`sites-outline-${modelRun.id}`, siteFilter);
+    setFilter(`observations-fill-${modelRun.id}`, observationFilter);
+    setFilter(`observations-outline-${modelRun.id}`, observationFilter);
+    setFilter(`observations-text-${modelRun.id}`, observationFilter);
+  })
+
+
 });
 
 watch(

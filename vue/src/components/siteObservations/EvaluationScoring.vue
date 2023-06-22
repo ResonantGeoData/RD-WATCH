@@ -1,11 +1,14 @@
 <script setup lang="ts">
-import { Ref, ref, } from "vue";
+import { Ref, onMounted, ref, } from "vue";
 import { ApiService } from "../../client";
 import { annotationLegend } from "../../mapstyle/annotationStyles";
 import { SiteObservation } from "../../store";
 
 const props = defineProps<{
   siteObservation: SiteObservation;
+}>();
+const emit = defineEmits<{
+  (e: "no-score"): void;
 }>();
 
 
@@ -15,11 +18,15 @@ const statusAnnotated: Ref<null | string> = ref(null);
 const color: Ref<null | string> = ref(null);
 const retrieveScoring = async () => {
     const scoreData = props.siteObservation.scoringBase;
+    try {
     const scoringRequest = await ApiService.getScoringDetails(scoreData.configurationId, scoreData.regionId, scoreData.siteNumber, scoreData.version);
     unionArea.value = scoringRequest.unionArea;
     temporalIOU.value = scoringRequest.temporalIOU;
     statusAnnotated.value = scoringRequest.statusAnnotated;
     color.value = scoringRequest.color || null;
+    } catch {
+      emit('no-score');
+    }
 }
 const getScoringLabel = (sampleColor: string) => {
   const index = annotationLegend.scoringLegend.findIndex((item) => item.color === sampleColor);
@@ -39,8 +46,7 @@ function standardize_color(str: string){
     canvas.remove();
     return result;
 }
-
-retrieveScoring();
+onMounted(() => retrieveScoring())
 
 </script>
 

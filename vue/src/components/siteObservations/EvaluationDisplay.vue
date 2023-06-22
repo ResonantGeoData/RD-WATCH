@@ -1,10 +1,11 @@
 <script setup lang="ts">
-import { computed } from "vue";
+import { computed, ref } from "vue";
 import { ImageBBox, SiteObservationImage, getSiteObservationDetails, state } from "../../store";
 import { SiteObservation } from "../../store";
 import { imageFilter } from "../../mapstyle/images";
 import EvaluationImages from "./EvaluationImages.vue";
 import EvaluationScoring from "./EvaluationScoring.vue";
+import { ApiService } from "../../client";
 
 const props = defineProps<{
   siteObservation: SiteObservation;
@@ -114,6 +115,16 @@ const goToTimestamp = (dir: number, loop = false) => {
     }
   }
 }
+const noScore = ref(false);
+const hasScore = async () => {
+  try {
+    const result = await ApiService.hasScores(props.siteObservation.scoringBase.configurationId, props.siteObservation.scoringBase.regionId)
+    noScore.value = !result;
+  } catch {
+    noScore.value = true;
+  }
+}
+hasScore();
 
 const changeTimstamp = ({dir, loop}: {dir: number, loop: boolean}) => {
   goToTimestamp(dir, loop);
@@ -181,13 +192,14 @@ const changeTimstamp = ({dir, loop}: {dir: number, loop: boolean}) => {
           </v-expansion-panel-text>
         </v-expansion-panel>
         <v-expansion-panel
-          v-if="siteObservation.scoringBase.version"
+          v-if="siteObservation.scoringBase.version && !noScore"
           key="Scoring"
         >
           <v-expansion-panel-title>Scoring</v-expansion-panel-title>
           <v-expansion-panel-text>
             <evaluation-scoring
               :site-observation="siteObservation"
+              @no-score="noScore=true"
             />
           </v-expansion-panel-text>
         </v-expansion-panel>

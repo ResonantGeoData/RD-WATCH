@@ -10,14 +10,13 @@ const props = defineProps<{
 
 <template>
   <v-card dense>
-    <div>POPUP</div>
     <v-row
       v-for="item in props.data"
       :key="item.siteId"
       dense
       align="center"
       justify="center"
-      class="ma-5"
+      class="my-2"
     >
       <v-chip
         label
@@ -48,75 +47,16 @@ const props = defineProps<{
       >
         Area: {{ item.area }}m²
       </v-chip>
-      <v-row
-        v-if="item.unionArea && item.temporalIOU"
-        class="pa-5"
-        align="center"
-        justify="center"
+      <v-chip
+        v-if="item.timestamp"
+        label
+        variant="elevated"
+        class="mx-2"
       >
-        <h6>Scoring:</h6>
-        <v-chip
-          label
-          color="black"
-          variant="elevated"
-          size="small"
-          class="mx-2"
-        >
-          Union Area: {{ item.unionArea.toFixed(6) }}
-        </v-chip>
-        <v-chip
-          label
-          color="black"
-          variant="elevated"
-          size="small"
-          class="mx-2"
-        >
-          Status: {{ item.annotatedStatus }}
-        </v-chip>
-      </v-row>
-      <v-row
-        v-if="item.temporalIOU
-          && (
-            item.temporalIOU.active_construction !== null ||
-            item.temporalIOU.post_construction !== null ||
-            item.temporalIOU.site_preparation !== null
-          )"
-        align="center"
-        justify="center"
-      >
-        <h6> Temporal IOU:</h6>
-        <v-chip
-          v-if="item.temporalIOU && item.temporalIOU.site_preparation !== null"
-          label
-          color="black"
-          variant="elevated"
-          size="small"
-          class="mx-2"
-        >
-          Prep: {{ parseFloat(item.temporalIOU.site_preparation).toFixed(6) }}
-        </v-chip>
-
-        <v-chip
-          v-if="item.temporalIOU && item.temporalIOU.active_construction !== null"
-          label
-          color="black"
-          variant="elevated"
-          size="small"
-          class="mx-2"
-        >
-          Active: {{ parseFloat(item.temporalIOU.active_construction).toFixed(6) }}
-        </v-chip>
-        <v-chip
-          v-if="item.temporalIOU && item.temporalIOU.post_construction !== null"
-          label
-          color="black"
-          variant="elevated"
-          size="small"
-          class="mx-2"
-        >
-          Post: {{ parseFloat(item.temporalIOU.post_construction).toFixed(6) }}
-        </v-chip>
-      </v-row>
+        <v-icon size="x-small">
+          mdi-clock
+        </v-icon>: {{ item.timestamp.substring(0,10) }}
+      </v-chip>
     </v-row>
   </v-card>
 </template>

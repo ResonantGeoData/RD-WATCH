@@ -26,8 +26,8 @@ export interface QueryArguments {
 
 export interface ScoringResults {
   region_name: string;
-  evaluationId: number;
-  evaluation_run: number;
+  evaluationId?: number;
+  evaluation_run?: number;
   performer: string;
   evaluation_uuid: string;
   unionArea: number;
@@ -38,6 +38,7 @@ export interface ScoringResults {
     post_construction: string;
 
   }
+  color?: string;
 }
 
 export class ApiService {
@@ -298,7 +299,7 @@ export class ApiService {
     });
   }
 
-  public static getScoring(
+  public static getScoringDetails(
     configurationId: number,
     regionId: number,
     siteNumber: number,
@@ -307,7 +308,7 @@ export class ApiService {
   {
     return __request(OpenAPI, {
       method: "GET",
-      url: "/api/scores/",
+      url: "/api/scores/scoring_details",
       query: { configurationId, regionId, siteNumber, version },
     });
   }

@@ -1,4 +1,3 @@
-import { ScoringResults } from "../client/services/ApiService";
 
 export interface PopUpData {
     siteId: string;
@@ -7,7 +6,5 @@ export interface PopUpData {
     groundTruth: boolean;
     scoreColor: string;
     area: string;
-    annotatedStatus?: ScoringResults['statusAnnotated'];
-    unionArea?: ScoringResults['unionArea'];
-    temporalIOU?: ScoringResults['temporalIOU'];  
+    timestamp?: string;
   }  

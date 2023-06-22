@@ -148,7 +148,6 @@ const getAnnotationColor = (filters: MapFilters) => {
         result.push(item.color);
     });
     result.push(defaultAnnotationColor);
-    //console.log(result);
     return result as DataDrivenPropertyValueSpecification<string>;
 }
 

@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { Ref, ref, } from "vue";
 import { ApiService } from "../../client";
+import { annotationLegend } from "../../mapstyle/annotationStyles";
 import { SiteObservation } from "../../store";
 
 const props = defineProps<{
@@ -11,13 +12,34 @@ const props = defineProps<{
 const unionArea: Ref<null | number> = ref(null);
 const temporalIOU: Ref<null | {site_preparation: string; active_construction: string; post_construction: string}> = ref(null);
 const statusAnnotated: Ref<null | string> = ref(null);
+const color: Ref<null | string> = ref(null);
 const retrieveScoring = async () => {
     const scoreData = props.siteObservation.scoringBase;
-    const scoringRequest = await ApiService.getScoring(scoreData.configurationId, scoreData.regionId, scoreData.siteNumber, scoreData.version);
+    const scoringRequest = await ApiService.getScoringDetails(scoreData.configurationId, scoreData.regionId, scoreData.siteNumber, scoreData.version);
     unionArea.value = scoringRequest.unionArea;
     temporalIOU.value = scoringRequest.temporalIOU;
     statusAnnotated.value = scoringRequest.statusAnnotated;
+    color.value = scoringRequest.color || null;
 }
+const getScoringLabel = (sampleColor: string) => {
+  const index = annotationLegend.scoringLegend.findIndex((item) => item.color === sampleColor);
+  if (index !== -1) {
+    return annotationLegend.scoringLegend[index].name;
+  }
+  return '';
+}
+function standardize_color(str: string){
+  const canvas = document.createElement('canvas')
+    const ctx = canvas.getContext('2d');
+    let result = ''
+    if (ctx){
+    ctx.fillStyle = str;
+    result = ctx.fillStyle;
+    }
+    canvas.remove();
+    return result;
+}
+
 retrieveScoring();
 
 </script>
@@ -30,15 +52,29 @@ retrieveScoring();
       align="center"
     >
       <v-col v-if="unionArea">
-        <span> Union Area:</span>
+        <b> Union Area:</b>
         <span> {{ unionArea?.toFixed(6) }}</span>
       </v-col>
       <v-col v-if="statusAnnotated">
-        <span> Status:</span>
+        <b> Status:</b>
         <span> {{ statusAnnotated }}</span>
-      </v-col>
-      
+      </v-col>      
     </v-row>
+    <v-row
+      v-if="color"
+      dense
+      justify="center"
+      align="center"
+    >
+      <v-col v-if="unionArea">
+        <b> Scoring Status:</b>
+        <v-chip
+          :color="standardize_color(color)"
+          class="mx-2"
+        > {{ getScoringLabel(color) }}</v-chip>
+      </v-col>
+    </v-row>
+
     <h3
       v-if="temporalIOU"
       class="mt-3"

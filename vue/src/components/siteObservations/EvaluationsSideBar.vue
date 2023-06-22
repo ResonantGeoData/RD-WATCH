@@ -116,7 +116,10 @@ onUnmounted(() => {
         />
       </div>
     </span>
-    <div style="overflow-y:auto" class="pt-5">
+    <div
+      style="overflow-y:auto"
+      class="pt-5"
+    >
       <evaluation-display
         v-for="item in state.selectedObservations"
         :key="`siteObs_${item.id}`"

@@ -5,17 +5,6 @@ import { getSiteObservationDetails, selectedObservationList, state } from "../st
 import  createPopup from '../main';
 import { PopUpData } from '../interactions/popUpType';
 
-import { ApiService, ScoringResults } from "../client/services/ApiService";
-import { CancelablePromise } from "../client";
-
-
-interface BaseScores {
-  regionId: number;
-  configurationId: number;
-  siteNumber: number;
-  version: string;
-}
-
 
   const hoveredInfo: Ref<{region: string[], siteId: number[]}> = ref({region: [], siteId:[]});
 
@@ -36,14 +25,11 @@ const calculateScoreColor = (score: number) => {
   return "black";
 };
 
-let scoringRequest:  CancelablePromise<ScoringResults> | undefined;
-
-
 const popupLogic = async (map: ShallowRef<null | Map>) => {
   const popup = new Popup({
     closeButton: false,
     closeOnClick: false,
-    maxWidth: '600px',
+    maxWidth: '700px',
   });
   const drawPopup = async (e: MapLayerMouseEvent) => {
     if (e.features && e.features[0]?.properties && map.value) {
@@ -53,7 +39,6 @@ const popupLogic = async (map: ShallowRef<null | Map>) => {
       hoveredInfo.value.region = [];
       hoveredInfo.value.siteId = [];
       const popupData: PopUpData[] = [];
-      const baseScores: BaseScores[] = []
       e.features.forEach(
         (
           item: GeoJSON.GeoJsonProperties & {
@@ -77,19 +62,13 @@ const popupLogic = async (map: ShallowRef<null | Map>) => {
                   htmlMap[id] = true;
                   }
                   const area = Math.round(item.properties.area).toLocaleString('en-US');
-                  const scoringBase = {
-                    regionId: item.properties.region_id as number,
-                    configurationId: item.properties.configuration_id as number,
-                    siteNumber: item.properties.site_number as number,
-                    version: item.properties.version,
-                  }
-                  baseScores.push(scoringBase);
                   popupData.push({
                     siteId: `${regionName}_${String(id).padStart(4, '0')}`,
                     score,
                     groundTruth: item.properties.groundtruth,
                     siteColor: `rgb(${fillColor.r *255}, ${fillColor.g * 255}, ${fillColor.b * 255})`,
                     scoreColor: calculateScoreColor(score),
+                    timestamp: item.properties.timestamp,
                     area,                  
                 })    
               }
@@ -97,20 +76,6 @@ const popupLogic = async (map: ShallowRef<null | Map>) => {
           }
         }
       );
-      for (let i = 0; i < popupData.length; i+=1) {
-        const data = popupData[i];
-        if (!data.groundTruth) {
-          const scoreData = baseScores[i];
-          scoringRequest = ApiService.getScoring(scoreData.configurationId, scoreData.regionId, scoreData.siteNumber, scoreData.version);
-          const results = await scoringRequest;
-          if (results) {
-            popupData[i].annotatedStatus = results.statusAnnotated;
-            popupData[i].temporalIOU = results.temporalIOU;
-            popupData[i].unionArea = results.unionArea;
-            scoringRequest = undefined;
-          }
-        }
-      }
       popup.setLngLat(coordinates).setHTML('<div id="popup-content"></div>').addTo(map.value);
       nextTick(() => {
         if (app !== null) {
@@ -129,10 +94,6 @@ const popupLogic = async (map: ShallowRef<null | Map>) => {
       }
       map.value.getCanvas().style.cursor = "";
       popup.remove();
-      if (scoringRequest !== undefined) {
-        scoringRequest.cancel();
-        scoringRequest = undefined;
-      }
     }
   };
   const clickObservation = async (e: MapLayerMouseEvent) => {

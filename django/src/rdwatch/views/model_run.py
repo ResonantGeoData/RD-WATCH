@@ -166,11 +166,6 @@ class ModelRunViewSet(viewsets.ViewSet):
         write_serializer = HyperParametersWriteSerializer(data=request.data)
         write_serializer.is_valid(raise_exception=True)
         hyper_parameters = HyperParameters.objects.create(
-            title=write_serializer.validated_data['title'],
-            performer=write_serializer.validated_data['performer'],
-            parameters=write_serializer.validated_data['parameters'],
-            evaluation=write_serializer.validated_data['evaluation'],
-            evaluation_run=write_serializer.validated_data['evaluation_run'],
             **write_serializer.validated_data
         )
         detail_serializer = HyperParametersDetailSerializer(
@@ -186,6 +181,8 @@ class ModelRunViewSet(viewsets.ViewSet):
                 'numsites': 0,
                 'created': hyper_parameters.created,
                 'expiration_time': hyper_parameters.expiration_time,
+                'evaluation': hyper_parameters.evaluation,
+                'evaluation_run': hyper_parameters.evaluation_run,
             }
         )
         return Response(data=detail_serializer.data, status=200)

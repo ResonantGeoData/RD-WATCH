@@ -1,12 +1,9 @@
 from django.urls import path
-from rest_framework import routers
 from rest_framework.renderers import CoreJSONRenderer
 from rest_framework.schemas import get_schema_view
 
 from rdwatch import views
 from rdwatch.api import api
-
-router = routers.SimpleRouter(trailing_slash=False)
 
 urlpatterns = [
     path('', api.urls),
@@ -55,5 +52,3 @@ urlpatterns = [
         views.cancel_site_observation_images,
     ),
 ]
-
-urlpatterns += router.urls

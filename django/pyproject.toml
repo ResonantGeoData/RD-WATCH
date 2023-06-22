@@ -21,6 +21,7 @@ classifiers = [
 ]
 packages = [
   { include = "rdwatch", from = "src" },
+  { include = "rdwatch_scoring", from = "src"},
 ]
 
 [tool.poetry.dependencies]

@@ -77,7 +77,7 @@ def site_model_json() -> dict[str, Any]:
     }
 
 
-@pytest.mark.django_db
+@pytest.mark.django_db(databases=['default'])
 def test_site_model_ingest(
     site_model_json: dict[str, Any],
     test_client: TestClient,
@@ -93,7 +93,7 @@ def test_site_model_ingest(
     assert res.json() == SiteEvaluation.objects.first().id, res.json()
 
 
-@pytest.mark.django_db
+@pytest.mark.django_db(databases=['default'])
 def test_site_model_ingest_missing_scores(
     site_model_json: dict[str, Any],
     test_client: TestClient,
@@ -120,7 +120,7 @@ def test_site_model_ingest_missing_scores(
     assert all(eval.score == 1.0 for eval in SiteEvaluation.objects.all())
 
 
-@pytest.mark.django_db
+@pytest.mark.django_db(databases=['default'])
 def test_site_model_ingest_malformed_geometry(
     test_client: TestClient,
     hyper_parameters: HyperParameters,

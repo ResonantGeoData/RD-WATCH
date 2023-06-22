@@ -9,7 +9,7 @@ from rdwatch.models import HyperParameters, lookups
 from rdwatch.tasks import delete_temp_model_runs_task
 
 
-@pytest.mark.django_db
+@pytest.mark.django_db(databases=['default'])
 def test_model_run_auto_delete() -> None:
     # Create a model run with expiration time of an hour ago
     with freeze_time(timezone.now() - timedelta(hours=2)):

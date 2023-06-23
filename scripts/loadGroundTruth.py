@@ -37,6 +37,7 @@ def main():
 
 def upload_to_rgd(baseDir, skip_regions, rgd_auth_cookie, expiration_time):
     check_vals = [("site_models", "site-model")]
+    cookies = None
     if not skip_regions:
         check_vals.append(("region_models", "region-model"))
     if rgd_auth_cookie:

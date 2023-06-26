@@ -63,7 +63,7 @@ def upload_to_rgd(baseDir, skip_regions, rgd_auth_cookie, expiration_time):
 
                 res = requests.post(
                     f"{rgd_endpoint}/api/model-runs",
-                    data=post_model_data,
+                    json=post_model_data,
                     headers={"Content-Type": "application/json"},
                     cookies=cookies,
                 )

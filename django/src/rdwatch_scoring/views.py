@@ -93,13 +93,13 @@ class EvaluationResponseSchema(Schema):
 
 # If the combination of configurationId and regionId has scoring
 @router.get('/has_scores')
-def has_scores(request: HttpRequest, configuration_id: int, region_id: int):
+def has_scores(request: HttpRequest, configurationId: int, regionId: int):
     # from the hyper parameters we need the evaluation and evaluation_run Ids
-    configuration = get_object_or_404(HyperParameters, pk=configuration_id)
+    configuration = get_object_or_404(HyperParameters, pk=configurationId)
     evaluationId = configuration.evaluation
     performer_name = configuration.performer.slug.lower()
     evaluation_run = configuration.evaluation_run
-    region_name = RegionSchema.resolve_name(Region.objects.filter(pk=region_id).first())
+    region_name = RegionSchema.resolve_name(Region.objects.filter(pk=regionId).first())
 
     return EvaluationRun.objects.filter(
         evaluation_run_number=evaluation_run,
@@ -111,13 +111,13 @@ def has_scores(request: HttpRequest, configuration_id: int, region_id: int):
 
 # Region scoring Map
 @router.get('/region_scoring_colors')
-def region_color_map(request: HttpRequest, configuration_id: int, region_id: int):
+def region_color_map(request: HttpRequest, configurationId: int, regionId: int):
     # from the hyper parameters we need the evaluation and evaluation_run Ids
-    configuration = HyperParameters.objects.filter(pk=configuration_id).first()
+    configuration = HyperParameters.objects.filter(pk=configurationId).first()
     evaluationId = configuration.evaluation
     performer_name = configuration.performer.slug.lower()
     evaluation_run = configuration.evaluation_run
-    region_name = RegionSchema.resolve_name(Region.objects.filter(pk=region_id).first())
+    region_name = RegionSchema.resolve_name(Region.objects.filter(pk=regionId).first())
 
     evaluation = EvaluationRun.objects.filter(
         evaluation_run_number=evaluation_run,
@@ -141,7 +141,7 @@ def region_color_map(request: HttpRequest, configuration_id: int, region_id: int
                 )
             )
             colorMappers[
-                f'{configuration_id}_{region_id}_{configuration.performer.id}_{site_number}'  # noqa: E501
+                f'{configurationId}_{regionId}_{configuration.performer.id}_{site_number}'  # noqa: E501
             ] = get_site_scoring_color(evaluationUUID, 'overall', site.site_id)
 
     return colorMappers
@@ -152,17 +152,17 @@ def region_color_map(request: HttpRequest, configuration_id: int, region_id: int
 @router.get('/scoring_details', response=EvaluationResponseSchema)
 def list_regions(
     request: HttpRequest,
-    configuration_id: int,
-    region_id: int,
+    configurationId: int,
+    regionId: int,
     siteNumber: int,
     version: str,
 ):
     # from the hyper parameters we need the evaluation and evaluation_run Ids
-    configuration = HyperParameters.objects.filter(pk=configuration_id).first()
+    configuration = HyperParameters.objects.filter(pk=configurationId).first()
     evaluationId = configuration.evaluation
     performer_name = configuration.performer.slug.lower()
     evaluation_run = configuration.evaluation_run
-    region_name = RegionSchema.resolve_name(Region.objects.filter(pk=region_id).first())
+    region_name = RegionSchema.resolve_name(Region.objects.filter(pk=regionId).first())
 
     evaluation = get_object_or_404(
         EvaluationRun,
@@ -173,7 +173,9 @@ def list_regions(
     )
     evaluationUUID = evaluation.uuid
     # Now we can get the SiteId information for this evaluationId
-    generatedSiteId = f'{region_name}_{siteNumber.zfill(4)}_{performer_name}_{version}'
+    generatedSiteId = (
+        f'{region_name}_{str(siteNumber).zfill(4)}_{performer_name}_{version}'
+    )
     logger.warning(generatedSiteId)
     siteObj = Site.objects.filter(
         site_id=generatedSiteId, evaluation_run_uuid=evaluationUUID

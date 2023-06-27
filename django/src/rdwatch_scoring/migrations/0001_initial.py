@@ -8,7 +8,9 @@ from django.db import migrations, models
 class Migration(migrations.Migration):
     initial = True
 
-    dependencies = []
+    dependencies = [
+        ('rdwatch', '0010_hyperparameters_evaluation_and_more'),
+    ]
 
     operations = [
         migrations.CreateModel(

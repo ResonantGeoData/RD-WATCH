@@ -153,18 +153,7 @@ def region_color_map(request: HttpRequest, configuration_id: int, region_id: int
 # Gets the basic scoring information based on the
 # configurationId, regionId SiteNumber and Version
 @router.get('/scoring_details', response=EvaluationResponseSchema)
-def list_regions(request: HttpRequest):
-    if (
-        'configurationId' not in request.GET
-        or 'regionId' not in request.GET
-        or 'siteNumber' not in request.GET
-        or 'version' not in request.GET
-    ):
-        return HttpResponseBadRequest()
-    configId = request.GET['configurationId']
-    regionId = request.GET['regionId']
-    siteNumber = request.GET['siteNumber']
-    version = request.GET['version']
+def list_regions(request: HttpRequest, configuration_id: int, region_id: int, siteNumber: int, version: str):
     # from the hyper parameters we need the evaluation and evaluation_run Ids
     configuration = HyperParameters.objects.filter(pk=configId).first()
     evaluationId = configuration.evaluation

@@ -157,54 +157,53 @@ def list_regions(request: HttpRequest, configuration_id: int, region_id: int, si
     evaluation_run = configuration.evaluation_run
     region_name = RegionSchema.resolve_name(Region.objects.filter(pk=regionId).first())
 
-    evaluation = EvaluationRun.objects.filter(
+    evaluation = get_object_or_404(
+        EvaluationRun,
         evaluation_run_number=evaluation_run,
         evaluation_number=evaluationId,
         region=region_name,
         performer=performer_name,
+    )
+    evaluationUUID = evaluation.uuid
+    # Now we can get the SiteId information for this evaluationId
+    generatedSiteId = (
+        f'{region_name}_{siteNumber.zfill(4)}_{performer_name}_{version}'
+    )
+    logger.warning(generatedSiteId)
+    siteObj = Site.objects.filter(
+        site_id=generatedSiteId, evaluation_run_uuid=evaluationUUID
     ).first()
-    if evaluation:
-        evaluationUUID = evaluation.uuid
-        # Now we can get the SiteId information for this evaluationId
-        generatedSiteId = (
-            f'{region_name}_{siteNumber.zfill(4)}_{performer_name}_{version}'
-        )
-        logger.warning(generatedSiteId)
-        siteObj = Site.objects.filter(
-            site_id=generatedSiteId, evaluation_run_uuid=evaluationUUID
-        ).first()
-        unionArea = siteObj.union_area
-        status_annotated = siteObj.status_annotated
-        temporalIOU = EvaluationActivityClassificationTemporalIou.objects.filter(
-            site_proposal=generatedSiteId,
-            evaluation_run_uuid=evaluationUUID,
-            activity_type='overall',
-        ).first()
+    unionArea = siteObj.union_area
+    status_annotated = siteObj.status_annotated
+    temporalIOU = EvaluationActivityClassificationTemporalIou.objects.filter(
+        site_proposal=generatedSiteId,
+        evaluation_run_uuid=evaluationUUID,
+        activity_type='overall',
+    ).first()
+    tempDict = {
+        'site_preparation': None,
+        'active_construction': None,
+        'post_construction': None,
+    }
+    if temporalIOU:
         tempDict = {
-            'site_preparation': None,
-            'active_construction': None,
-            'post_construction': None,
+            'site_preparation': (temporalIOU.site_preparation),
+            'active_construction': (temporalIOU.active_construction),
+            'post_construction': (temporalIOU.post_construction),
         }
-        if temporalIOU:
-            tempDict = {
-                'site_preparation': (temporalIOU.site_preparation),
-                'active_construction': (temporalIOU.active_construction),
-                'post_construction': (temporalIOU.post_construction),
-            }
-        # To understand the color associated with it you need
-        # to grab the proposals these are the site_truth_matched
-        # table from the evaluation_broad_area_search_proposal
-        sm_color = get_site_scoring_color(evaluationUUID, 'overall', generatedSiteId)
+    # To understand the color associated with it you need
+    # to grab the proposals these are the site_truth_matched
+    # table from the evaluation_broad_area_search_proposal
+    sm_color = get_site_scoring_color(evaluationUUID, 'overall', generatedSiteId)
 
-        return {
-            'region_name': region_name,
-            'evaluationId': evaluationId,
-            'evaluation_run': evaluation_run,
-            'performer': performer_name,
-            'evaluation_uuid': evaluationUUID,
-            'unionArea': unionArea,
-            'statusAnnotated': status_annotated,
-            'temporalIOU': tempDict,
-            'color': sm_color,
-        }
-    return HttpResponse('Scoring not Found', status=404)
+    return {
+        'region_name': region_name,
+        'evaluationId': evaluationId,
+        'evaluation_run': evaluation_run,
+        'performer': performer_name,
+        'evaluation_uuid': evaluationUUID,
+        'unionArea': unionArea,
+        'statusAnnotated': status_annotated,
+        'temporalIOU': tempDict,
+        'color': sm_color,
+    }

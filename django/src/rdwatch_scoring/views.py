@@ -98,7 +98,7 @@ def has_scores(request: HttpRequest):
     configId = request.GET['configurationId']
     regionId = request.GET['regionId']
     # from the hyper parameters we need the evaluation and evaluation_run Ids
-    configuration = HyperParameters.objects.filter(pk=configId).first()
+    configuration = get_object_or_404(HyperParameters, pk=config_id)
     evaluationId = configuration.evaluation
     performer_name = configuration.performer.slug.lower()
     evaluation_run = configuration.evaluation_run

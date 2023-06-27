@@ -66,6 +66,8 @@ COPY django/pyproject.toml django/poetry.lock /app/django/
 RUN mkdir /app/django/src \
  && mkdir /app/django/src/rdwatch \
  && touch /app/django/src/rdwatch/__init__.py \
+&& mkdir /app/django/src/rdwatch_scoring \
+ && touch /app/django/src/rdwatch_scoring/__init__.py \
  && touch /app/django/README.md \
  && poetry install --only main
 
@@ -78,6 +80,8 @@ COPY django/pyproject.toml django/poetry.lock /app/django/
 RUN mkdir /app/django/src \
  && mkdir /app/django/src/rdwatch \
  && touch /app/django/src/rdwatch/__init__.py \
+ && mkdir /app/django/src/rdwatch_scoring \
+ && touch /app/django/src/rdwatch_scoring/__init__.py \
  && touch /app/django/README.md \
  && poetry install --with dev
 
@@ -96,7 +100,7 @@ RUN chmod -R u=rX,g=rX,o= /app/vue/dist
 #    editable source is in /app/django/src/rdwatch
 #    virtual environment is in /app/django/.venv
 FROM django-builder AS django-dist
-COPY django/src/rdwatch /app/django/src/rdwatch
+COPY django/src /app/django/src
 COPY django/src/manage.py /app/django/src/manage.py
 RUN chmod -R u=rX,g=rX,o= .
 

@@ -24,7 +24,7 @@ class ScoringRouter:
 
     def allow_relation(self, obj1, obj2, **hints):
         """
-        Allow relations if a model in the scorin apps is
+        Allow relations if a model in the scoring app is
         involved.
         """
         if (

@@ -21,6 +21,9 @@ The following JSON is an example of data to be used to create a `model-run`:
   "performer": "KIT",
   // a human-readable title
   "title": "Ingestion 3.2",
+  // number of hours after upload when this model run should be automatically deleted.
+  // exclude this field if you want the model run to remain in the database permanently.
+  "expiration_time": 2,
   // can be any JSON that helps keep track of what this model-run is
   "parameters": {
     "any": "data"
@@ -57,7 +60,9 @@ You'll get the newly created `model-run` as a response:
   "score": null,
   "timestamp": null,
   "timerange": null,
-  "bbox": null
+  "bbox": null,
+  "created": "<creation_datetime>",
+  "expiration_time": "01:00:00"
 }
 ```
 

@@ -4,4 +4,4 @@ from .views import router as scores
 
 api = NinjaAPI()
 
-api.add_router('/scores', scores)
+api.add_router('/scores/', scores)

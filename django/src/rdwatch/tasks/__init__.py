@@ -181,6 +181,7 @@ def get_siteobservations_images(
                 existing.image.delete()
                 existing.cloudcover = cloudcover
                 existing.image = image
+                existing.percent_black = percent_black
                 existing.save()
             else:
                 SiteImage.objects.create(
@@ -188,24 +189,9 @@ def get_siteobservations_images(
                     timestamp=capture.timestamp,
                     image=image,
                     cloudcover=cloudcover,
+                    percent_black=percent_black,
                     source=baseConstellation,
                 )
-                if found.exists():
-                    existing = found.first()
-                    existing.image.delete()
-                    existing.cloudcover = cloudcover
-                    existing.image = image
-                    existing.percent_black = percent_black
-                    existing.save()
-                else:
-                    SiteImage.objects.create(
-                        siteeval=baseSiteEval,
-                        timestamp=capture.timestamp,
-                        image=image,
-                        cloudcover=cloudcover,
-                        percent_black=percent_black,
-                        source=baseConstellation,
-                    )
     fetching_task = SatelliteFetching.objects.get(siteeval_id=site_eval_id)
     fetching_task.status = SatelliteFetching.Status.COMPLETE
     fetching_task.celery_id = ''

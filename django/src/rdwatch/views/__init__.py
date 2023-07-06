@@ -17,6 +17,7 @@ from .site_observation import (
     site_observations,
 )
 from .vector_tile import vector_tile
+from .site_image import site_images
 
 __all__ = [
     'ModelRunViewSet',
@@ -25,6 +26,7 @@ __all__ = [
     'post_region_model',
     'post_site_model',
     'site_observations',
+    'site_images',
     'satelliteimage_raster_tile',
     'satelliteimage_raster_bbox',
     'satelliteimage_time_list',

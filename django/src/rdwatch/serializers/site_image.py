@@ -2,6 +2,7 @@ from django.core.files.storage import default_storage
 from rest_framework import serializers
 
 from rdwatch.models import SiteImage
+from rdwatch.serializers import BoundingBoxSerializer
 
 
 class SiteImageSerializer(serializers.Serializer):
@@ -11,6 +12,8 @@ class SiteImageSerializer(serializers.Serializer):
     image = serializers.SerializerMethodField()
     siteobs_id = serializers.IntegerField()
     percent_black = serializers.FloatField()
+    bbox = BoundingBoxSerializer()
+    image_dimensions = serializers.ListField(child=serializers.IntegerField())
 
     class Meta:
         model = SiteImage
@@ -21,6 +24,8 @@ class SiteImageSerializer(serializers.Serializer):
             'image',
             'siteobs_id',
             'percent_black',
+            'bbox'
+            'image_dimensions'
         ]
 
     def get_image(self, obj):

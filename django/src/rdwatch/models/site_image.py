@@ -1,6 +1,8 @@
 from django.contrib.postgres.indexes import GistIndex
 from django.db import models
 from django.dispatch import receiver
+from django.contrib.gis.db.models import PolygonField
+from django.contrib.postgres.fields import ArrayField
 
 
 class SiteImage(models.Model):
@@ -26,6 +28,14 @@ class SiteImage(models.Model):
     source = models.CharField(
         max_length=2, blank=True, help_text='WV, S2, L8 imagery source'
     )
+    image_bbox = PolygonField(
+        help_text='Image Bounding Box',
+        srid=4326,
+        spatial_index=True,
+        null=True,
+        blank=True,
+    )
+    image_dimensions = ArrayField(models.IntegerField(), size=2, null=True)
 
     def __str__(self):
         time = self.timestamp.isoformat()

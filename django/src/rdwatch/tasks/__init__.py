@@ -1,6 +1,7 @@
 import io
 import logging
 from datetime import datetime, timedelta
+from django.contrib.gis.geos import GEOSGeometry
 
 from celery import shared_task
 from pyproj import Transformer
@@ -9,6 +10,8 @@ from django.core.files import File
 from django.db import transaction
 from django.db.models import DateTimeField, ExpressionWrapper, F
 from django.utils import timezone
+from django.contrib.gis.geos import Polygon
+from PIL import Image
 
 from rdwatch.celery import app
 from rdwatch.models import (
@@ -33,9 +36,43 @@ from rdwatch.utils.worldview_processed.raster_tile import (
 logger = logging.getLogger(__name__)
 
 
+def is_inside_range(timestamps: list[datetime], check_timestamp: datetime, days_range):
+    for timestamp in timestamps:
+        time_difference = check_timestamp - timestamp
+        if time_difference.days <= days_range:
+            logger.warning(f'Skipping Timestamp because difference is: {time_difference.days}')
+            return True
+    return False
+
+'''
+    Can be used with the below data to convert GeoSpatial Cooridnates to Pixel Coordinates.
+    transformed_polygon = observation.geom.transform(4326, clone=True)
+    logger.warning(transformed_polygon)
+    image = Image.open(io.BytesIO(bytes))
+    normalized_poly = convert_polygon(transformed_polygon, max_bbox, image.width, image.height)
+'''
+def convert_polygon(polygon: Polygon, bbox: tuple[float, float, float, float], image_width: int, image_height: int):
+    box_width = bbox[2] - bbox[0]
+    box_height = bbox[3] - bbox[1]
+    logger.warning(f'box_width: {box_width} box_height: {box_height} image {image_width},{image_height}') 
+    normalized_polygon = []
+    wkt = 'POLYGON (('
+    for point in polygon:
+        normalized_x = (point.x - bbox[0]) / box_width
+        normalized_y = (point.y - bbox[1]) / box_height
+        image_x = normalized_x * image_width
+        image_y = image_height - (normalized_y * image_height)
+        normalized_polygon.append((image_x, image_y))
+    for points in normalized_polygon:
+        for index in range(len(points[0])):
+            wkt = f'{wkt}{points[0][index]} {points[1][index]}, '
+    wkt = wkt[:-2] + '))'
+
+    return wkt
+
 @app.task(bind=True)
 def get_siteobservations_images(
-    self, site_eval_id: int, baseConstellation='WV', force=False
+    self, site_eval_id: int, baseConstellation='WV', force=False, dayRange=14, NoDataLimit=50
 ) -> None:
     site_observations = SiteObservation.objects.filter(siteeval=site_eval_id)
     transformer = Transformer.from_crs('EPSG:3857', 'EPSG:4326')
@@ -58,7 +95,6 @@ def get_siteobservations_images(
                 'siteEvalId': site_eval_id,
             },
         )
-
         min_time = min(min_time, observation.timestamp)
         max_time = max(max_time, observation.timestamp)
         mercator: tuple[float, float, float, float] = observation.geom.extent
@@ -68,6 +104,7 @@ def get_siteobservations_images(
         bbox = [tempbox[1], tempbox[0], tempbox[3], tempbox[2]]
         bbox = scale_bbox(bbox, 1.2)
         max_bbox = get_max_bbox(bbox, max_bbox)
+
         timestamp = observation.timestamp
         constellation = observation.constellation
         # We need to grab the image for this timerange and type
@@ -80,8 +117,13 @@ def get_siteobservations_images(
                 timestamp=observation.timestamp,
                 source=baseConstellation,
             )
+            if baseConstellation == 'S2' and dayRange > -1 and is_inside_range(found_timestamps.keys(), observation.timestamp, dayRange):
+                logger.warning(f'Skipping Timestamp: {timestamp}')
+                count += 1
+                continue
             if found.exists() and not force:
                 found_timestamps[observation.timestamp] = True
+                count += 1
                 continue
             results = fetch_boundbox_image(
                 bbox, timestamp, constellation, baseConstellation == 'WV'
@@ -96,10 +138,14 @@ def get_siteobservations_images(
             if bytes is None:
                 logger.warning(f'COULD NOT FIND ANY IMAGE FOR TIMESTAMP: {timestamp}')
                 continue
-            found_timestamps[found_timestamp] = True
+            if dayRange != -1 and percent_black < NoDataLimit:
+                found_timestamps[found_timestamp] = True
+            elif dayRange == -1:
+                found_timestamps[found_timestamp] = True
             # logger.warning(f'Retrieved Image with timestamp: {timestamp}')
             output = f'tile_image_{observation.id}.jpg'
             image = File(io.BytesIO(bytes), name=output)
+            imageObj = Image.open(io.BytesIO(bytes))
             if image is None:  # No null/None images should be set
                 continue
             if found.exists():
@@ -108,6 +154,8 @@ def get_siteobservations_images(
                 existing.cloudcover = cloudcover
                 existing.image = image
                 existing.percent_black = percent_black
+                existing.image_bbox = Polygon.from_bbox(max_bbox)
+                existing.image_dimensions = [imageObj.width, imageObj.height]
                 existing.save()
             else:
                 SiteImage.objects.create(
@@ -118,6 +166,8 @@ def get_siteobservations_images(
                     cloudcover=cloudcover,
                     source=baseConstellation,
                     percent_black=percent_black,
+                    image_bbox=Polygon.from_bbox(max_bbox),
+                    image_dimensions=[imageObj.width, imageObj.height],
                 )
 
     # Now we need to go through and find all other images
@@ -153,14 +203,17 @@ def get_siteobservations_images(
                 'siteEvalId': site_eval_id,
             },
         )
+        if baseConstellation == 'S2' and dayRange > -1 and is_inside_range(found_timestamps.keys(), capture.timestamp, dayRange):
+            count += 1
+            continue
 
         if capture.timestamp not in found_timestamps.keys():
             # we need to add a new image into the structure
             bytes = None
             if worldView:
-                bytes = get_worldview_processed_visual_bbox(capture, bbox)
+                bytes = get_worldview_processed_visual_bbox(capture, max_bbox)
             else:
-                bytes = get_raster_bbox(capture.uri, bbox)
+                bytes = get_raster_bbox(capture.uri, max_bbox)
             if bytes is None:
                 logger.warning(f'COULD NOT FIND ANY IMAGE FOR TIMESTAMP: {timestamp}')
                 continue
@@ -169,6 +222,7 @@ def get_siteobservations_images(
             count += 1
             output = f'tile_image_{observation.siteeval}_nonobs_{count}.jpg'
             image = File(io.BytesIO(bytes), name=output)
+            imageObj = Image.open(io.BytesIO(bytes))
             if image is None:  # No null/None images should be set
                 continue
             found = SiteImage.objects.filter(
@@ -176,12 +230,17 @@ def get_siteobservations_images(
                 timestamp=capture.timestamp,
                 source=baseConstellation,
             )
+            if dayRange != -1 and percent_black < NoDataLimit:
+                found_timestamps[capture.timestamp] = True
+            elif dayRange == -1:
+                found_timestamps[capture.timestamp] = True
             if found.exists():
                 existing = found.first()
                 existing.image.delete()
                 existing.cloudcover = cloudcover
                 existing.image = image
-                existing.percent_black = percent_black
+                existing.image_bbox = Polygon.from_bbox(max_bbox)
+                existing.image_dimensions = [imageObj.width, imageObj.height]
                 existing.save()
             else:
                 SiteImage.objects.create(
@@ -191,6 +250,8 @@ def get_siteobservations_images(
                     cloudcover=cloudcover,
                     percent_black=percent_black,
                     source=baseConstellation,
+                    image_bbox=Polygon.from_bbox(max_bbox),
+                    image_dimensions=[imageObj.width, imageObj.height],
                 )
     fetching_task = SatelliteFetching.objects.get(siteeval_id=site_eval_id)
     fetching_task.status = SatelliteFetching.Status.COMPLETE

@@ -4,6 +4,7 @@ import { ApiService } from "../../client";
 import { ImageBBox, SiteObservationImage, getSiteObservationDetails, state } from "../../store";
 import { SiteObservation } from "../../store";
 import { imageFilter } from "../../mapstyle/images";
+import ImageViewer from "../ImageViewer/ImageViewer.vue";
 
 const props = defineProps<{
   siteObservation: SiteObservation;
@@ -119,7 +120,7 @@ const currentClosestTimestamp = computed(() => {
         next = false;
       }
       return {
-        time: `${new Date(closest * 1000).toLocaleDateString()} ${new Date(closest * 1000).toLocaleTimeString()}`, 
+        time: `${new Date(closest * 1000).toLocaleDateString()}`, 
         type: observation.images[rootIndex].source,
         prev,
         next,
@@ -513,6 +514,9 @@ const progressInfo = computed(() => {
         >
           mdi-chevron-right
         </v-icon>
+      </v-row>
+      <v-row>
+        <image-viewer :siteEvalId="siteObservation.id" />
       </v-row>
     </v-card-text>
   </v-card>

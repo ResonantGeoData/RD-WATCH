@@ -516,7 +516,7 @@ const progressInfo = computed(() => {
         </v-icon>
       </v-row>
       <v-row>
-        <image-viewer :siteEvalId="siteObservation.id" />
+        <image-viewer :site-eval-id="siteObservation.id" />
       </v-row>
     </v-card-text>
   </v-card>

@@ -9,10 +9,10 @@ from .region import RegionSerializer
 from .site_evaluation import SiteEvaluationListSerializer, SiteEvaluationSerializer
 from .site_image import SiteImageListSerializer, SiteImageSerializer
 from .site_observation import (
-    SiteObservationListSerializer,
-    SiteObservationSerializer,
     SiteObservationGeomListSerializer,
     SiteObservationGeomSerializer,
+    SiteObservationListSerializer,
+    SiteObservationSerializer,
 )
 
 __all__ = [

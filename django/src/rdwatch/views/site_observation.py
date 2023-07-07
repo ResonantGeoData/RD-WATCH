@@ -3,10 +3,10 @@ from datetime import datetime
 from celery.result import AsyncResult
 
 from django.contrib.gis.db.models.aggregates import Collect
-from django.contrib.gis.db.models.functions import Area, Transform, AsGeoJSON
+from django.contrib.gis.db.models.functions import Area, Transform
 from django.contrib.postgres.aggregates import JSONBAgg
 from django.db import transaction
-from django.db.models import Count, F, Max, Min, RowRange, Window, IntegerField
+from django.db.models import Count, F, Max, Min, RowRange, Window
 from django.db.models.functions import JSONObject  # type: ignore
 from django.http import HttpRequest
 from rest_framework import status
@@ -15,7 +15,6 @@ from rest_framework.exceptions import NotFound
 from rest_framework.generics import get_object_or_404
 from rest_framework.response import Response
 from rest_framework.schemas.openapi import AutoSchema
-from django.contrib.postgres.aggregates import ArrayAgg
 
 from rdwatch.db.functions import BoundingBox, ExtractEpoch
 from rdwatch.models import SatelliteFetching, SiteEvaluation, SiteImage, SiteObservation
@@ -92,7 +91,7 @@ def site_observations(request: HttpRequest, pk: int):
                     source='source',
                     siteobs_id='siteobs_id',
                     bbox=BoundingBox('image_bbox'),
-                    image_dimensions='image_dimensions'
+                    image_dimensions='image_dimensions',
                 )
             ),
         )

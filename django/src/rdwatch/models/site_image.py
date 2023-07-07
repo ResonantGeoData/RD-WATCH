@@ -1,8 +1,8 @@
+from django.contrib.gis.db.models import PolygonField
+from django.contrib.postgres.fields import ArrayField
 from django.contrib.postgres.indexes import GistIndex
 from django.db import models
 from django.dispatch import receiver
-from django.contrib.gis.db.models import PolygonField
-from django.contrib.postgres.fields import ArrayField
 
 
 class SiteImage(models.Model):

@@ -48,7 +48,7 @@ export const style = (
     ...naturalearthLayers,
     ...openmaptilesLayers,
     ...satelliteLayers(timestamp, satellite),
-    ...buildImageLayerFilter(timestamp, enabledSiteObservations, settings, map),
+    ...buildImageLayerFilter(timestamp, enabledSiteObservations, settings),
     ...rdwatchtilesLayers(timestamp, filters),
   ],
 });

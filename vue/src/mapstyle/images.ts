@@ -1,6 +1,6 @@
 import { EnabledSiteObservations, ImageBBox, SiteObservationImage, siteObsSatSettings } from '../store';
 import type { LayerSpecification, SourceSpecification } from "maplibre-gl";
-import { Map, ImageSource } from "maplibre-gl";
+import { ImageSource, Map } from "maplibre-gl";
 
 
 

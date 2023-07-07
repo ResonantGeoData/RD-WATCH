@@ -1,17 +1,16 @@
 import io
 import logging
 from datetime import datetime, timedelta
-from django.contrib.gis.geos import GEOSGeometry
 
 from celery import shared_task
+from PIL import Image
 from pyproj import Transformer
 
+from django.contrib.gis.geos import Polygon
 from django.core.files import File
 from django.db import transaction
 from django.db.models import DateTimeField, ExpressionWrapper, F
 from django.utils import timezone
-from django.contrib.gis.geos import Polygon
-from PIL import Image
 
 from rdwatch.celery import app
 from rdwatch.models import (
@@ -40,39 +39,21 @@ def is_inside_range(timestamps: list[datetime], check_timestamp: datetime, days_
     for timestamp in timestamps:
         time_difference = check_timestamp - timestamp
         if time_difference.days <= days_range:
-            logger.warning(f'Skipping Timestamp because difference is: {time_difference.days}')
+            logger.warning(
+                f'Skipping Timestamp because difference is: {time_difference.days}'
+            )
             return True
     return False
 
-'''
-    Can be used with the below data to convert GeoSpatial Cooridnates to Pixel Coordinates.
-    transformed_polygon = observation.geom.transform(4326, clone=True)
-    logger.warning(transformed_polygon)
-    image = Image.open(io.BytesIO(bytes))
-    normalized_poly = convert_polygon(transformed_polygon, max_bbox, image.width, image.height)
-'''
-def convert_polygon(polygon: Polygon, bbox: tuple[float, float, float, float], image_width: int, image_height: int):
-    box_width = bbox[2] - bbox[0]
-    box_height = bbox[3] - bbox[1]
-    logger.warning(f'box_width: {box_width} box_height: {box_height} image {image_width},{image_height}') 
-    normalized_polygon = []
-    wkt = 'POLYGON (('
-    for point in polygon:
-        normalized_x = (point.x - bbox[0]) / box_width
-        normalized_y = (point.y - bbox[1]) / box_height
-        image_x = normalized_x * image_width
-        image_y = image_height - (normalized_y * image_height)
-        normalized_polygon.append((image_x, image_y))
-    for points in normalized_polygon:
-        for index in range(len(points[0])):
-            wkt = f'{wkt}{points[0][index]} {points[1][index]}, '
-    wkt = wkt[:-2] + '))'
-
-    return wkt
 
 @app.task(bind=True)
 def get_siteobservations_images(
-    self, site_eval_id: int, baseConstellation='WV', force=False, dayRange=14, NoDataLimit=50
+    self,
+    site_eval_id: int,
+    baseConstellation='WV',
+    force=False,
+    dayRange=14,
+    NoDataLimit=50,
 ) -> None:
     site_observations = SiteObservation.objects.filter(siteeval=site_eval_id)
     transformer = Transformer.from_crs('EPSG:3857', 'EPSG:4326')
@@ -117,7 +98,13 @@ def get_siteobservations_images(
                 timestamp=observation.timestamp,
                 source=baseConstellation,
             )
-            if baseConstellation == 'S2' and dayRange > -1 and is_inside_range(found_timestamps.keys(), observation.timestamp, dayRange):
+            if (
+                baseConstellation == 'S2'
+                and dayRange > -1
+                and is_inside_range(
+                    found_timestamps.keys(), observation.timestamp, dayRange
+                )
+            ):
                 logger.warning(f'Skipping Timestamp: {timestamp}')
                 count += 1
                 continue
@@ -203,7 +190,11 @@ def get_siteobservations_images(
                 'siteEvalId': site_eval_id,
             },
         )
-        if baseConstellation == 'S2' and dayRange > -1 and is_inside_range(found_timestamps.keys(), capture.timestamp, dayRange):
+        if (
+            baseConstellation == 'S2'
+            and dayRange > -1
+            and is_inside_range(found_timestamps.keys(), capture.timestamp, dayRange)
+        ):
             count += 1
             continue
 

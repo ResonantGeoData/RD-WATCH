@@ -24,8 +24,7 @@ class SiteImageSerializer(serializers.Serializer):
             'image',
             'siteobs_id',
             'percent_black',
-            'bbox'
-            'image_dimensions'
+            'bbox' 'image_dimensions',
         ]
 
     def get_image(self, obj):

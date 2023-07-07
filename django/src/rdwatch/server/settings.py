@@ -36,6 +36,30 @@ class BaseConfiguration(Configuration):
         'rdwatch_scoring',
     ]
 
+    @property
+    def DATABASES(self):
+        DB_val = values.DatabaseURLValue(
+            alias='default',
+            environ_name='POSTGRESQL_URI',
+            environ_prefix=_environ_prefix,
+            environ_required=True,
+            # Additional kwargs to DatabaseURLValue are passed to dj-database-url
+            engine='django.contrib.gis.db.backends.postgis',
+        )
+        db_dict = DB_val.value
+        if os.environ['RDWATCH_POSTGRESQL_SCORING_URI'] is not None:
+            scoring_val = values.DatabaseURLValue(
+                alias='scoringdb',
+                environ_name='POSTGRESQL_SCORING_URI',
+                environ_prefix=_environ_prefix,
+                environ_required=True,
+                # Additional kwargs to DatabaseURLValue are passed to dj-database-url
+                engine='django.contrib.gis.db.backends.postgis',
+            )
+            scoring_dict = scoring_val.value
+            db_dict.update(scoring_dict)
+        return db_dict
+
     MIDDLEWARE = [
         'django.middleware.common.CommonMiddleware',
         'django.middleware.clickjacking.XFrameOptionsMiddleware',
@@ -65,29 +89,6 @@ class BaseConfiguration(Configuration):
         environ_required=True,
         environ_prefix=_environ_prefix,
     )
-
-    DB_val = values.DatabaseURLValue(
-        alias='default',
-        environ_name='POSTGRESQL_URI',
-        environ_prefix=_environ_prefix,
-        environ_required=True,
-        # Additional kwargs to DatabaseURLValue are passed to dj-database-url
-        engine='django.contrib.gis.db.backends.postgis',
-    )
-    # NOTE - CHANGE so an environment variable can add this in
-    scoring_val = values.DatabaseURLValue(
-        alias='scoringdb',
-        environ_name='POSTGRESQL_SCORING_URI',
-        environ_prefix=_environ_prefix,
-        environ_required=True,
-        # Additional kwargs to DatabaseURLValue are passed to dj-database-url
-        engine='django.contrib.gis.db.backends.postgis',
-    )
-    db_dict = DB_val.value
-    scoring_dict = scoring_val.value
-
-    db_dict.update(scoring_dict)
-    DATABASES = db_dict
 
     # Set to same value allowed by NGINX Unit server in `settings.http.max_body_size`
     # (in /docker/nginx.json)

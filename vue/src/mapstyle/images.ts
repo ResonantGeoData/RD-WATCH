@@ -1,5 +1,6 @@
 import { EnabledSiteObservations, ImageBBox, SiteObservationImage, siteObsSatSettings } from '../store';
 import type { LayerSpecification, SourceSpecification } from "maplibre-gl";
+import { Map, ImageSource } from "maplibre-gl";
 
 
 
@@ -40,20 +41,54 @@ function scaleBoundingBox(bbox: ImageBBox, scale: number) {
     return [[newX1, newY1], [newX2, newY1], [newX2, newY2],  [newX1, newY2]] as ImageBBox;
   }
 
+
+export const updateImageMapSources =  (
+    timestamp: number,
+    enabledSiteObservations: EnabledSiteObservations[],
+    settings: siteObsSatSettings,
+    map?: Map | null,
+) => {
+    enabledSiteObservations.forEach((item) => {
+        const source  = `siteImageSource_${item.id}`;
+        if (map) {
+            const mapSource = map.getSource(source) as ImageSource;
+            mapSource.updateImage({
+                url: getClosestTimestamp(item.id, timestamp, enabledSiteObservations, settings),
+                coordinates: scaleBoundingBox(item.bbox, 1.2),    
+            });
+        }
+    });
+}
 export const buildImageSourceFilter = (
     timestamp: number,
     enabledSiteObservations: EnabledSiteObservations[],
     settings: siteObsSatSettings,
+    map?: Map | null,
 ) => {
     const results: Record<string, SourceSpecification> = {};
     enabledSiteObservations.forEach((item) => {
         const source  = `siteImageSource_${item.id}`;
-        results[source] = 
-        {
-            type: 'image',
-            url: getClosestTimestamp(item.id, timestamp, enabledSiteObservations, settings),
-            coordinates: scaleBoundingBox(item.bbox, 1.2),
+        let update = false;
+        if (map) {
+            const mapSource = map.getSource(source) as ImageSource;
+            if (mapSource) {
+                results[source] = 
+                {
+                    type: 'image',
+                    url: mapSource.url,
+                    coordinates: mapSource.coordinates,
+                }
+                update = true; 
+            }
         }
+        if (!update) {
+            results[source] = 
+            {
+                type: 'image',
+                url: getClosestTimestamp(item.id, timestamp, enabledSiteObservations, settings),
+                coordinates: scaleBoundingBox(item.bbox, 1.2),
+            }
+        } 
     });
     return results;
 }

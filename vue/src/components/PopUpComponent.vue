@@ -10,7 +10,6 @@ const props = defineProps<{
 
 <template>
   <v-card dense>
-    <div>POPUP</div>
     <v-row
       v-for="item in props.data"
       :key="item.siteId"

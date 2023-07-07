@@ -14,12 +14,17 @@ interface PixelPoly {
 }
 
 
-const images: Ref<EvaluationImage[]> = ref([]);
-const polygons: Ref<EvaluationGeoJSON[]> = ref([]);
 const currentImage = ref(0);
 const imageRef: Ref<HTMLImageElement | null> = ref(null);
 const canvasRef: Ref<HTMLCanvasElement | null> = ref(null);
-const pixelPolys: Ref<PixelPoly[]> = ref([]);
+const baseImageSources = ref(['S2', 'WV'])
+const baseObs = ref(['observations', 'non-observations'])
+const filterSettings = ref(false);
+const combinedImages: Ref<{image: EvaluationImage; poly: PixelPoly}[]> = ref([]);
+const imageSourcesFilter: Ref<EvaluationImage['source'][]> = ref(['S2', 'WV']);
+const percentBlackFilter: Ref<number> = ref(100);
+const cloudFilter: Ref<number> = ref(100);
+const siteObsFilter: Ref<('observations' | 'non-observations')[]> = ref(['observations', 'non-observations'])
 const displayImage = ref(false);
 const getClosestPoly = (timestamp: number, polys: EvaluationGeoJSON[]) => {
     let found = polys[0];
@@ -33,8 +38,31 @@ const getClosestPoly = (timestamp: number, polys: EvaluationGeoJSON[]) => {
     return found;
 }
 
+const filteredImages = computed(() => {
+  return combinedImages.value.filter((item) => {
+    let add = true;
+    if (!imageSourcesFilter.value.includes(item.image.source)) {
+      add = false;
+    }
+    if (siteObsFilter.value.includes('observations') && siteObsFilter.value.length ===1 && item.image.siteobs_id === null) {
+      add = false;      
+    }
+    if (siteObsFilter.value.includes('non-observations') && siteObsFilter.value.length ===1 && item.image.siteobs_id !== null) {
+      add = false;      
+    }
+    if (item.image.percent_black > percentBlackFilter.value) {
+      add = false;
+    }
+    if (item.image.cloudcover > cloudFilter.value) {
+      add = false;
+    }
+    return add;
+  })
+
+})
+
 const currentTimestamp = computed(() => {
-    const time = images.value[currentImage.value].timestamp;
+    const time = combinedImages.value[currentImage.value].image.timestamp;
     return new Date(time * 1000).toLocaleDateString()
 })
 
@@ -49,16 +77,18 @@ function createCanvas(width: number, height: number){
 
 
 const getImageData = async () => {
+    combinedImages.value = [];
+    currentImage.value = 0;
     const data =  await ApiService.getEvaluationImages(props.siteEvalId);
-    images.value = data.images.results.sort((a, b) => a.timestamp - b.timestamp);
-    polygons.value = data.geoJSON.results;
+    const images = data.images.results.sort((a, b) => a.timestamp - b.timestamp);
+    const polygons = data.geoJSON.results;
     if (imageRef.value !== null) {
-        imageRef.value.src = images.value[currentImage.value].image;
+        imageRef.value.src = images[currentImage.value].image;
     }
     // Lets process the polygons to get them in pixel space.
     // For each polygon we need to convert it to the proper image sizing result.
-    images.value.forEach((image) => {
-        const closestPoly = getClosestPoly(image.timestamp, polygons.value);
+    images.forEach((image) => {
+        const closestPoly = getClosestPoly(image.timestamp, polygons);
         // Now we convert the coordinates to 
         const bboxWidth = image.bbox.xmax - image.bbox.xmin;
         const bboxHeight = image.bbox.ymax - image.bbox.ymin;
@@ -72,8 +102,7 @@ const getImageData = async () => {
             const image_y = normalize_y * imageHeight;
             imageNormalizePoly.push({x: image_x, y: image_y});
         })
-        pixelPolys.value.push({coords: imageNormalizePoly, label: closestPoly.label});
-
+        combinedImages.value.push({ image: image, poly: {coords: imageNormalizePoly, label: closestPoly.label} });
     })
 
 }
@@ -120,18 +149,24 @@ const drawData = (canvas: HTMLCanvasElement, image: EvaluationImage, poly:PixelP
 watch(displayImage, async () => {
     if (displayImage.value) {
         await getImageData();
-        if (currentImage.value < images.value.length && canvasRef.value !== null) {
-            drawData(canvasRef.value, images.value[currentImage.value], pixelPolys.value[currentImage.value])
+        if (currentImage.value < filteredImages.value.length && canvasRef.value !== null) {
+            drawData(canvasRef.value, filteredImages.value[currentImage.value].image, filteredImages.value[currentImage.value].poly)
         }
     }
-})
+});
 
-watch([currentImage, imageRef], () => {
-    if (currentImage.value < images.value.length && imageRef.value !== null) {
-        imageRef.value.src = images.value[currentImage.value].image;
+watch([percentBlackFilter, cloudFilter, siteObsFilter, imageSourcesFilter], () => {
+  if (currentImage.value > filteredImages.value.length) {
+    currentImage.value = 0;
+  }
+});
+
+watch([currentImage, imageRef, filteredImages], () => {
+    if (currentImage.value < filteredImages.value.length && imageRef.value !== null) {
+        imageRef.value.src = filteredImages.value[currentImage.value].image.image;
     }
-    if (currentImage.value < images.value.length && canvasRef.value !== null) {
-        drawData(canvasRef.value, images.value[currentImage.value], pixelPolys.value[currentImage.value])
+    if (currentImage.value < filteredImages.value.length && canvasRef.value !== null) {
+        drawData(canvasRef.value, filteredImages.value[currentImage.value].image, filteredImages.value[currentImage.value].poly)
     }
 
 });
@@ -148,7 +183,9 @@ watch([currentImage, imageRef], () => {
       v-model="displayImage"
       width="800"
     >
-      <v-card v-if="images.length" class="pa-4">
+      <v-card
+        class="pa-4"
+      >
         <v-row dense>
           <v-spacer />
           <v-icon @click="displayImage = false">
@@ -156,18 +193,125 @@ watch([currentImage, imageRef], () => {
           </v-icon>
         </v-row>
         <v-card-title> Site Image Display</v-card-title>
-        <canvas ref="canvasRef" />
-        <v-row dense>
-          <v-spacer />
+        <v-row
+          dense
+          class="my-1"
+        >
+          <v-icon @click="filterSettings = !filterSettings">
+            mdi-filter
+          </v-icon>
           <div>
-            {{ currentTimestamp }}
+            Displaying {{ filteredImages.length }} of {{ combinedImages.length }} images
           </div>
+        </v-row>
+        <div v-if="filterSettings">
+          <v-row dense>
+            <v-select
+              v-model="siteObsFilter"
+              label="Site Observations"
+              :items="baseObs"
+              multiple
+              closable-chips	
+              chips
+              class="mx-2"
+            />
+            <v-select
+              v-model="imageSourcesFilter"
+              label="Sources"
+              :items="baseImageSources"
+              multiple
+              closable-chips	
+              chips
+              class="mx-2"
+            />
+          </v-row>
+          <v-row
+            dense
+            justify="center"
+            align="center"
+          >
+            <v-col cols="3">
+              <span>Cloud Cover:</span>
+            </v-col>
+            <v-col cols="7">
+              <v-slider
+                v-model.number="cloudFilter"
+                min="0"
+                max="100"
+                step="1"
+                color="primary"
+                density="compact"
+                class="mt-5"
+              />
+            </v-col>
+            <v-col>
+              <span class="pl-2">
+                {{ cloudFilter }}%
+              </span>
+            </v-col>
+          </v-row>
+          <v-row
+            dense
+            justify="center"
+            align="center"
+          >
+            <v-col cols="3">
+              <span>NoData:</span>
+            </v-col>
+            <v-col cols="7">
+              <v-slider
+                v-model.number="percentBlackFilter"
+                min="0"
+                max="100"
+                step="1"
+                color="primary"
+                density="compact"
+                class="mt-5"
+              />
+            </v-col>
+            <v-col>
+              <span class="pl-2">
+                {{ percentBlackFilter }}%
+              </span>
+            </v-col>
+          </v-row>
+        </div>
+        <canvas
+          v-if="filteredImages.length"
+          ref="canvasRef"
+        />
+        <v-row
+          v-if="filteredImages.length && filteredImages[currentImage]"
+          dense
+          class="mt-2"
+        >
+          <v-col>
+            <div v-if="filteredImages[currentImage].image.siteobs_id !== null">
+              Site Observation
+            </div>
+            <div v-else>
+              Non Site Observation
+            </div>
+          </v-col>
           <v-spacer />
+          <v-col class="text-center">
+            <div>
+              <div>{{ filteredImages[currentImage].image.source }}</div>
+              <div>{{ currentTimestamp }}</div>
+            </div>
+          </v-col>
+          <v-spacer />
+          <v-col class="text-right">
+            <div>
+              <div>NODATA: {{ filteredImages[currentImage].image.percent_black.toFixed(0) }}%</div>
+              <div>Cloud: {{ filteredImages[currentImage].image.cloudcover.toFixed(0) }}%</div>
+            </div>
+          </v-col>
         </v-row>
         <v-slider
           v-model="currentImage"
           min="0"
-          :max="images.length"
+          :max="filteredImages.length - 1"
           step="1"
         />
       </v-card>

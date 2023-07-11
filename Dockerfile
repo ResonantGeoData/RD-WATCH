@@ -66,7 +66,7 @@ COPY django/pyproject.toml django/poetry.lock /app/django/
 RUN mkdir /app/django/src \
  && mkdir /app/django/src/rdwatch \
  && touch /app/django/src/rdwatch/__init__.py \
-&& mkdir /app/django/src/rdwatch_scoring \
+ && mkdir /app/django/src/rdwatch_scoring \
  && touch /app/django/src/rdwatch_scoring/__init__.py \
  && touch /app/django/README.md \
  && poetry install --only main

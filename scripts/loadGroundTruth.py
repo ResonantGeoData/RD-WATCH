@@ -74,7 +74,7 @@ def upload_to_rgd(baseDir, skip_regions, rgd_auth_cookie, expiration_time):
 
             print(f"  Posting {file}...")
             res = requests.post(
-                f"{rgd_endpoint}/api/model-runs/{model_run_id}/{endpoint}",
+                f"{rgd_endpoint}/api/model-runs/{model_run_id}/{endpoint}/",
                 data=file.read_text(),
                 headers={"Content-Type": "application/json"},
                 cookies=cookies,

@@ -36,7 +36,7 @@ def list_regions(request: HttpRequest):
     return Region.objects.all().select_related('classification')
 
 
-@router.get('/{id}', response=RegionSchema)
+@router.get('/{id}/', response=RegionSchema)
 def get_performer(request: HttpRequest, id: int):
     return get_object_or_404(
         Region.objects.all().select_related('classification'), id=id

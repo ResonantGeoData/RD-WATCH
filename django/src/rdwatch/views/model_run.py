@@ -256,7 +256,7 @@ def list_model_runs(
     return 200, aggregate
 
 
-@router.get('/{id}', response={200: HyperParametersDetailSchema})
+@router.get('/{id}/', response={200: HyperParametersDetailSchema})
 def get_model_run(request: HttpRequest, id: int):
     values = get_queryset().filter(id=id).values_list('json', flat=True)
 
@@ -277,7 +277,7 @@ def get_model_run(request: HttpRequest, id: int):
 
 
 @router.post(
-    '/{hyper_parameters_id}/site-model',
+    '/{hyper_parameters_id}/site-model/',
     response={201: int},
 )
 def post_site_model(
@@ -293,7 +293,7 @@ def post_site_model(
 
 
 @router.post(
-    '/{hyper_parameters_id}/region-model',
+    '/{hyper_parameters_id}/region-model/',
     response={201: list[int]},
 )
 def post_region_model(

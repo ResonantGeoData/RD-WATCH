@@ -69,12 +69,10 @@ class SiteEvaluation(models.Model):
             label = lookups.ObservationLabel.objects.get(
                 slug=site_feature.properties.status
             )
-            if hasattr(site_feature.properties, 'version'):
-                version = site_feature.properties.version
             site_eval = cls.objects.create(
                 configuration=configuration,
                 region=region,
-                version=version,
+                version=site_feature.properties.version,
                 number=site_feature.properties.site_number,
                 timestamp=datetime.now(),
                 geom=site_feature.geometry,

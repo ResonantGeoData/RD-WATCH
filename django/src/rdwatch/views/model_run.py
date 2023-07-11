@@ -52,8 +52,8 @@ class ModelRunFilterSchema(FilterSchema):
         number = None if numstr[1:] == 'xxx' else int(numstr[1:])
         return (
             Q(region_country=country)
-            | Q(region_class_slug=classification_slug)
-            | Q(region_number=number)
+            & Q(region_class_slug=classification_slug)
+            & Q(region_number=number)
         )
 
 

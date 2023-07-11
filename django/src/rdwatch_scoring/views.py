@@ -92,7 +92,7 @@ class EvaluationResponseSchema(Schema):
 
 
 # If the combination of configurationId and regionId has scoring
-@router.get('/has_scores')
+@router.get('/has-scores')
 def has_scores(request: HttpRequest, configurationId: int, regionId: int):
     # from the hyper parameters we need the evaluation and evaluation_run Ids
     configuration = get_object_or_404(HyperParameters.objects.select_related('performer'), pk=configurationId)

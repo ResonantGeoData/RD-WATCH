@@ -134,7 +134,7 @@ def region_color_map(request: HttpRequest, configurationId: int, regionId: int):
             originator=performer_name,
         )
         colorMappers = {}
-        for _i, site in enumerate(site_list):
+        for site in site_list:
             site_number = int(
                 site.site_id.replace(f'{region_name}_', '').replace(
                     f'_{performer_name}_{site.version}', ''

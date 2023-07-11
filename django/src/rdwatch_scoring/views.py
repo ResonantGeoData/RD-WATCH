@@ -149,7 +149,7 @@ def region_color_map(request: HttpRequest, configurationId: int, regionId: int):
 
 # Gets the basic scoring information based on the
 # configurationId, regionId SiteNumber and Version
-@router.get('/scoring_details', response=EvaluationResponseSchema)
+@router.get('/details')
 def list_regions(
     request: HttpRequest,
     configurationId: int,

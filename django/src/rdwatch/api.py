@@ -12,6 +12,4 @@ api = NinjaAPI()
 api.add_router('/performers/', performer_router)
 api.add_router('/regions/', region_router)
 api.add_router('/model-runs/', site_model_router)
-# Note lets not use this, try to implement it in the rdwatch_scoring app
-api.add_router('/scores/', scores)
 api.add_router('/vector-tile/', vector_tile_router)

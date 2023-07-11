@@ -1,7 +1,12 @@
-import django_filters
-import iso3166
+from datetime import datetime, timedelta
 
-from django.db import transaction
+import iso3166
+from ninja import Field, FilterSchema, Query, Schema
+from ninja.errors import ValidationError
+from ninja.pagination import RouterPaginated
+from ninja.schema import validator
+from pydantic import constr  # type: ignore
+
 from django.db.models import (
     Avg,
     Case,
@@ -15,13 +20,9 @@ from django.db.models import (
     Subquery,
     When,
 )
-from django.db.models.functions import Coalesce, JSONObject  # type: ignore
-from rest_framework import viewsets
-from rest_framework.exceptions import NotFound, ValidationError
-from rest_framework.request import Request
-from rest_framework.response import Response
-from rest_framework.settings import api_settings
-from rest_framework.utils.urls import replace_query_param
+from django.db.models.functions import Coalesce, JSONObject
+from django.http import Http404, HttpRequest
+from django.shortcuts import get_object_or_404
 
 from rdwatch.db.functions import (
     AggregateArraySubquery,
@@ -29,63 +30,73 @@ from rdwatch.db.functions import (
     ExtractEpoch,
     TimeRangeJSON,
 )
-from rdwatch.models import HyperParameters, Region, lookups
-from rdwatch.serializers import (
-    HyperParametersDetailSerializer,
-    HyperParametersListSerializer,
-    HyperParametersWriteSerializer,
-)
+from rdwatch.models import HyperParameters, Region, SiteEvaluation, lookups
+from rdwatch.schemas import RegionModel, SiteModel
+from rdwatch.schemas.common import TimeRangeSchema
+from rdwatch.views.performer import PerformerSchema
+from rdwatch.views.region import RegionSchema
+
+router = RouterPaginated()
 
 
-class ModelRunFilter(django_filters.FilterSet):
-    performer = django_filters.CharFilter(method='filter_performer')
-    region = django_filters.CharFilter(method='filter_region')
-    groundtruth = django_filters.BooleanFilter(method='filter_groundtruth')
+class ModelRunFilterSchema(FilterSchema):
+    performer: str | None = Field(q='performer_slug')
+    region: str | None
 
-    class Meta:
-        model = HyperParameters
-        fields: list[str] = []
-
-    def filter_performer(self, queryset, name, value):
-        if self.form.cleaned_data.get('groundtruth', False):
-            queryset = queryset.alias(
-                min_score=Min('evaluations__score'),
-                performer_slug=F('performer__slug'),
-            )
-            return queryset.filter(
-                (Q(performer_slug='TE') & Q(min_score=1)) | Q(performer_slug=value)
-            )
-        else:
-            queryset = queryset.alias(performer_slug=F('performer__slug'))
-            return queryset.filter(performer_slug__iexact=value)
-
-    def filter_groundtruth(self, queryset, name, value):
-        if self.form.cleaned_data['performer'] is None:
-            queryset = queryset.alias(
-                min_score=Min('evaluations__score'),
-                performer_slug=F('performer__slug'),
-            )
-            if value:
-                return queryset.filter(performer_slug__iexact='TE', min_score=1)
-            else:
-                return queryset.exclude(performer_slug__iexact='TE', min_score=1)
-        else:
-            return queryset
-
-    def filter_region(self, queryset, name, value):
+    def filter_region(self, value: str | None) -> Q:
+        if value is None:
+            return Q()
         countrystr, numstr = value.split('_')
         country = iso3166.countries_by_alpha2[countrystr].numeric
         classification_slug = numstr[0]
         number = None if numstr[1:] == 'xxx' else int(numstr[1:])
-        return queryset.alias(
-            region_country=F('evaluations__region__country'),
-            region_class_slug=F('evaluations__region__classification__slug'),
-            region_number=F('evaluations__region__number'),
-        ).filter(
-            region_country=country,
-            region_class_slug=classification_slug,
-            region_number=number,
+        return (
+            Q(region_country=country)
+            | Q(region_class_slug=classification_slug)
+            | Q(region_number=number)
         )
+
+
+class HyperParametersWriteSchema(Schema):
+    performer: str
+    title: constr(max_length=1000)
+    parameters: dict
+    expiration_time: int | None
+
+    @validator('performer')
+    def validate_performer(cls, v: str) -> lookups.Performer:
+        try:
+            return lookups.Performer.objects.get(slug=v.upper())
+        except lookups.Performer.DoesNotExist:
+            raise ValueError(f"Invalid performer '{v}'")
+
+    @validator('expiration_time')
+    def validate_expiration_time(cls, v: int | None) -> timedelta | None:
+        if v is not None:
+            return timedelta(hours=v)
+        return v
+
+
+class HyperParametersDetailSchema(Schema):
+    id: int
+    title: str
+    region: RegionSchema | None
+    performer: PerformerSchema
+    parameters: dict
+    numsites: int
+    score: float | None
+    timestamp: int | None
+    timerange: TimeRangeSchema | None
+    bbox: dict | None
+    created: datetime
+    expiration_time: str | None
+
+
+class HyperParametersListSchema(Schema):
+    count: int
+    timerange: TimeRangeSchema | None
+    bbox: dict | None
+    results: list[HyperParametersDetailSchema]
 
 
 def get_queryset():
@@ -158,96 +169,140 @@ def get_queryset():
     )
 
 
-class ModelRunViewSet(viewsets.ViewSet):
-    @transaction.atomic
-    def create(self, request: Request):
-        write_serializer = HyperParametersWriteSerializer(data=request.data)
-        write_serializer.is_valid(raise_exception=True)
-        hyper_parameters = HyperParameters.objects.create(
-            **write_serializer.validated_data
+@router.post('/', response={200: HyperParametersDetailSchema}, exclude_none=True)
+def create_model_run(
+    request: HttpRequest,
+    hyper_parameters_data: HyperParametersWriteSchema,
+):
+    hyper_parameters = HyperParameters.objects.create(
+        title=hyper_parameters_data.title,
+        performer=hyper_parameters_data.performer,
+        parameters=hyper_parameters_data.parameters,
+        expiration_time=hyper_parameters_data.expiration_time,
+    )
+    return 200, {
+        'id': hyper_parameters.pk,
+        'title': hyper_parameters.title,
+        'performer': {
+            'id': hyper_parameters.performer.pk,
+            'team_name': hyper_parameters.performer.description,
+            'short_code': hyper_parameters.performer.slug,
+        },
+        'parameters': hyper_parameters.parameters,
+        'numsites': 0,
+        'created': hyper_parameters.created,
+        'expiration_time': str(hyper_parameters.expiration_time),
+    }
+
+
+@router.get('/', response={200: HyperParametersListSchema})
+def list_model_runs(
+    request: HttpRequest,
+    filters: ModelRunFilterSchema = Query(...),  # noqa: B008
+    limit: int = 25,
+    page: int = 1,
+):
+    queryset = get_queryset()
+    queryset = filters.filter(
+        queryset.alias(
+            min_score=Min('evaluations__score'),
+            performer_slug=F('performer__slug'),
+            region_country=F('evaluations__region__country'),
+            region_class_slug=F('evaluations__region__classification__slug'),
+            region_number=F('evaluations__region__number'),
         )
-        detail_serializer = HyperParametersDetailSerializer(
-            {
-                'id': hyper_parameters.pk,
-                'title': hyper_parameters.title,
-                'performer': {
-                    'id': hyper_parameters.performer.pk,
-                    'team_name': hyper_parameters.performer.description,
-                    'short_code': hyper_parameters.performer.slug,
-                },
-                'parameters': hyper_parameters.parameters,
-                'numsites': 0,
-                'created': hyper_parameters.created,
-                'expiration_time': hyper_parameters.expiration_time,
+    )
+
+    if page < 1 or (not limit and page != 1):
+        raise ValidationError(f"Invalid page '{page}'")
+
+    # Calculate total number of model runs prior to paginating queryset
+    total_model_run_count = queryset.count()
+
+    subquery = queryset[(page - 1) * limit : page * limit] if limit else queryset
+    aggregate = queryset.defer('json').aggregate(
+        timerange=TimeRangeJSON('evaluations__observations__timestamp'),
+        results=AggregateArraySubquery(subquery.values('json')),
+    )
+
+    aggregate['count'] = total_model_run_count
+
+    # TODO: use a resolver instead.
+    # Temporary until https://github.com/vitalik/django-ninja/issues/610 is fixed
+    for result in aggregate['results']:
+        if result['region']:
+            result['region'] = {
+                'name': RegionSchema.resolve_name(result['region']),
+                'id': result['region']['id'],
             }
-        )
-        return Response(data=detail_serializer.data, status=200)
 
-    def retrieve(self, request: Request, pk: int):
-        values = get_queryset().filter(pk=pk).values_list('json', flat=True)
-        if not values:
-            raise NotFound()
-        serializer = HyperParametersDetailSerializer(values[0])
-        return Response(data=serializer.data)
-
-    def list(self, request: Request):
-        queryset = ModelRunFilter(
-            request.query_params,
-            queryset=get_queryset(),
-        ).qs
-
-        limit = request.query_params.get('limit', api_settings.PAGE_SIZE or 25)
-        if isinstance(limit, str):
-            if not limit.isdigit():
-                raise ValidationError({'limit': f"Invalid limit '{limit}'"})
-            limit = int(limit)
-        page = request.query_params.get('page', 1)
-        if isinstance(page, str):
-            if (
-                not page.isdigit()
-                or page == '0'
-                or (not limit and not (page == 1 or page == '1'))
-            ):
-                raise ValidationError({'page': f"Invalid page '{page}'"})
-            page = int(page)
-
-        # Calculate total number of model runs prior to paginating queryset
-        total_model_run_count = queryset.count()
-
-        subquery = queryset[(page - 1) * limit : page * limit] if limit else queryset
-        aggregate = queryset.defer('json').aggregate(
-            timerange=TimeRangeJSON('evaluations__observations__timestamp'),
-            results=AggregateArraySubquery(subquery.values('json')),
-        )
-
-        aggregate['count'] = total_model_run_count
-
-        # Only bother calculating the entire bounding box of this model run
-        # list if the user has specified a region. We don't want to overload
-        # PostGIS by making it calculate a bounding box for every polygon in
-        # the database.
-        if 'region' in request.query_params:
-            aggregate |= queryset.defer('json').aggregate(
-                # Use the region polygon for the bbox if it exists.
-                # Otherwise, fall back on the site polygon.
-                bbox=Coalesce(
-                    BoundingBoxGeoJSON('evaluations__region__geom'),
-                    BoundingBoxGeoJSON('evaluations__geom'),
-                )
+    # Only bother calculating the entire bounding box of this model run
+    # list if the user has specified a region. We don't want to overload
+    # PostGIS by making it calculate a bounding box for every polygon in
+    # the database.
+    if filters.region is not None:
+        aggregate |= queryset.defer('json').aggregate(
+            # Use the region polygon for the bbox if it exists.
+            # Otherwise, fall back on the site polygon.
+            bbox=Coalesce(
+                BoundingBoxGeoJSON('evaluations__region__geom'),
+                BoundingBoxGeoJSON('evaluations__geom'),
             )
-
-        if aggregate['count'] > 0 and not aggregate['results']:
-            raise NotFound({'page': f"Invalid page '{page}'"})
-        aggregate['next'] = (
-            replace_query_param(request.build_absolute_uri(), 'page', page + 1)
-            if limit and page * limit < aggregate['count']
-            else None
-        )
-        aggregate['previous'] = (
-            replace_query_param(request.build_absolute_uri(), 'page', page - 1)
-            if limit and page > 1
-            else None
         )
 
-        serializer = HyperParametersListSerializer(aggregate)
-        return Response(data=serializer.data)
+    if aggregate['count'] > 0 and not aggregate['results']:
+        raise ValidationError({'page': f"Invalid page '{page}'"})
+
+    return 200, aggregate
+
+
+@router.get('/{id}/', response={200: HyperParametersDetailSchema})
+def get_model_run(request: HttpRequest, id: int):
+    values = get_queryset().filter(id=id).values_list('json', flat=True)
+
+    if not values.exists():
+        raise Http404()
+
+    model_run = values[0]
+
+    # TODO: use a resolver instead.
+    # Temporary until https://github.com/vitalik/django-ninja/issues/610 is fixed
+    if model_run['region']:
+        model_run['region'] = {
+            'name': RegionSchema.resolve_name(model_run['region']),
+            'id': model_run['region']['id'],
+        }
+
+    return 200, model_run
+
+
+@router.post(
+    '/{hyper_parameters_id}/site-model/',
+    response={201: int},
+)
+def post_site_model(
+    request: HttpRequest,
+    hyper_parameters_id: int,
+    site_model: SiteModel,
+):
+    hyper_parameters = get_object_or_404(HyperParameters, pk=hyper_parameters_id)
+    site_evaluation = SiteEvaluation.bulk_create_from_site_model(
+        site_model, hyper_parameters
+    )
+    return 201, site_evaluation.id
+
+
+@router.post(
+    '/{hyper_parameters_id}/region-model/',
+    response={201: list[int]},
+)
+def post_region_model(
+    request: HttpRequest,
+    hyper_parameters_id: int,
+    region_model: RegionModel,
+):
+    hyper_parameters = get_object_or_404(HyperParameters, pk=hyper_parameters_id)
+    site_evaluations = SiteEvaluation.bulk_create_from_from_region_model(
+        region_model, hyper_parameters
+    )
+    return 201, [eval.id for eval in site_evaluations]

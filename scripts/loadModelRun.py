@@ -83,7 +83,7 @@ def upload_to_rgd(
     if existing_model_run is not None:
         model_run_id = model_run["id"]
     else:
-        post_model_url = f"{rgd_endpoint}/api/model-runs"
+        post_model_url = f"{rgd_endpoint}/api/model-runs/"
 
         post_model_data = {
             "performer": performer_shortcode,

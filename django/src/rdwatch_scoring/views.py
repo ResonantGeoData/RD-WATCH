@@ -95,7 +95,7 @@ class EvaluationResponseSchema(Schema):
 @router.get('/has_scores')
 def has_scores(request: HttpRequest, configurationId: int, regionId: int):
     # from the hyper parameters we need the evaluation and evaluation_run Ids
-    configuration = get_object_or_404(HyperParameters, pk=configurationId)
+    configuration = get_object_or_404(HyperParameters.objects.select_related('performer'), pk=configurationId)
     evaluationId = configuration.evaluation
     performer_name = configuration.performer.slug.lower()
     evaluation_run = configuration.evaluation_run

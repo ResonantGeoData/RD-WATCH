@@ -14,6 +14,7 @@ class SiteImageSerializer(serializers.Serializer):
     percent_black = serializers.FloatField()
     bbox = BoundingBoxSerializer()
     image_dimensions = serializers.ListField(child=serializers.IntegerField())
+    aws_location = serializers.CharField()
 
     class Meta:
         model = SiteImage
@@ -24,7 +25,9 @@ class SiteImageSerializer(serializers.Serializer):
             'image',
             'siteobs_id',
             'percent_black',
-            'bbox' 'image_dimensions',
+            'bbox',
+            'image_dimensions',
+            'aws_location',
         ]
 
     def get_image(self, obj):

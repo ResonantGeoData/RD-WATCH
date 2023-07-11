@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { computed, onUnmounted, ref } from "vue";
+import { Ref, onUnmounted, ref } from "vue";
 import { EnabledSiteObservations, SiteObservationImage, state } from '../../store'
 import EvaluationDisplay from "./EvaluationDisplay.vue";
 import SiteEvalSettings from "./SiteEvalSettings.vue";
@@ -30,36 +30,16 @@ const updateSources = () => {
   });
   state.enabledSiteObservations = newObservations;
 }
-const S2Imagery = computed({
-  get() {
-    return state.siteObsSatSettings.observationSources.includes('S2');
-  },
-  set(val: boolean) {
-    if (val && !state.siteObsSatSettings.observationSources.includes('S2')) {
-      state.siteObsSatSettings.observationSources.push('S2');
-    }
-    if (!val && state.siteObsSatSettings.observationSources.includes('S2')) {
-      const index = state.siteObsSatSettings.observationSources.findIndex((item) => item === 'S2');
-      state.siteObsSatSettings.observationSources.splice(index, 1);
-    }
-    updateSources();
-  },
-});
-const WVImagery = computed({
-  get() {
-    return state.siteObsSatSettings.observationSources.includes('WV');
-  },
-  set(val: boolean) {
-    if (val && !state.siteObsSatSettings.observationSources.includes('WV')) {
-      state.siteObsSatSettings.observationSources.push('WV');
-    }
-    if (!val && state.siteObsSatSettings.observationSources.includes('WV')) {
-      const index = state.siteObsSatSettings.observationSources.findIndex((item) => item === 'WV');
-      state.siteObsSatSettings.observationSources.splice(index, 1);
-    }
-    updateSources();
-  },
-});
+
+const baseSources: Ref<('S2' |'WV' | 'L8')[]> = ref(['S2', 'WV', 'L8'])
+
+const sources: Ref<('S2' |'WV' | 'L8')[]> = ref(['S2', 'WV', 'L8']);
+const updateSatSources = () => {
+  console.log('Updating Sources');
+  state.siteObsSatSettings = {...state.siteObsSatSettings, observationSources: sources.value };
+  updateSources();
+  console.log(state.siteObsSatSettings.observationSources);
+};
 
 onUnmounted(() => {
   if (state.loopingInterval !== null) {
@@ -79,22 +59,8 @@ onUnmounted(() => {
         Selected Evaluations
       </h1>
     </v-row>
+
     <v-row>
-      <v-checkbox
-        v-model="S2Imagery"
-        label="S2"
-        density="compact"
-        class="mx-2"
-      />
-      <v-checkbox
-        v-model="WVImagery"
-        label="WV"
-        density="compact"
-        class="mx-2"
-      />
-
-
-
       <v-btn
         size="small"
         @click="clearAll()"
@@ -109,6 +75,24 @@ onUnmounted(() => {
         mdi-cog
       </v-icon>
     </v-row>
+    <v-row
+      dense
+      class="pt-2"
+    >
+      <v-select
+        v-model="sources"
+        :items="baseSources"
+        label="Sources"
+        multiple
+        density="compact"
+        closable-chips	
+        chips
+        class="mx-2"
+        width="150"
+        @update:model-value="updateSatSources()"
+      />
+    </v-row>
+
     <div class="px-5">
       <site-eval-settings
         v-if="expandSettings"

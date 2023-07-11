@@ -1,7 +1,6 @@
 <script setup lang="ts">
-import { Ref, computed, onBeforeMount, onBeforeUnmount, onMounted, ref, render, watch, } from "vue";
+import { Ref, computed, ref, watch, } from "vue";
 import { ApiService } from "../../client";
-import { ImageBBox, SiteObservationImage, getSiteObservationDetails, state } from "../../store";
 import {EvaluationGeoJSON, EvaluationImage } from "../../types";
 import { getColorFromLabel } from '../../mapstyle/annotationStyles';
 const props = defineProps<{
@@ -21,7 +20,7 @@ const baseImageSources = ref(['S2', 'WV'])
 const baseObs = ref(['observations', 'non-observations'])
 const filterSettings = ref(false);
 const combinedImages: Ref<{image: EvaluationImage; poly: PixelPoly}[]> = ref([]);
-const imageSourcesFilter: Ref<EvaluationImage['source'][]> = ref(['S2', 'WV']);
+const imageSourcesFilter: Ref<EvaluationImage['source'][]> = ref(['S2', 'WV', 'L8']);
 const percentBlackFilter: Ref<number> = ref(100);
 const cloudFilter: Ref<number> = ref(100);
 const siteObsFilter: Ref<('observations' | 'non-observations')[]> = ref(['observations', 'non-observations'])
@@ -285,13 +284,26 @@ watch([currentImage, imageRef, filteredImages], () => {
           dense
           class="mt-2"
         >
-          <v-col>
+          <v-col cols="3">
             <div v-if="filteredImages[currentImage].image.siteobs_id !== null">
               Site Observation
             </div>
             <div v-else>
               Non Site Observation
             </div>
+            <v-tooltip
+              open-delay="50"
+              bottom
+            >
+              <template #activator="{ props }">
+                <v-icon v-bind="props">
+                  mdi-information
+                </v-icon>
+              </template>
+              <span>
+                {{ filteredImages[currentImage].image.aws_location }}
+              </span>
+            </v-tooltip>
           </v-col>
           <v-spacer />
           <v-col class="text-center">
@@ -301,7 +313,10 @@ watch([currentImage, imageRef, filteredImages], () => {
             </div>
           </v-col>
           <v-spacer />
-          <v-col class="text-right">
+          <v-col
+            class="text-right"
+            cols="3"
+          >
             <div>
               <div>NODATA: {{ filteredImages[currentImage].image.percent_black.toFixed(0) }}%</div>
               <div>Cloud: {{ filteredImages[currentImage].image.cloudcover.toFixed(0) }}%</div>

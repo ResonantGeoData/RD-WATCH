@@ -36,6 +36,11 @@ class SiteImage(models.Model):
         blank=True,
     )
     image_dimensions = ArrayField(models.IntegerField(), size=2, null=True)
+    aws_location = models.CharField(
+        max_length=2048,
+        blank=True,
+        help_text='S3 Link to base file used to download this image',
+    )
 
     def __str__(self):
         time = self.timestamp.isoformat()

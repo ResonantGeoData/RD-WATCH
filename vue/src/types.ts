@@ -9,6 +9,7 @@ export interface EvaluationImage {
     percent_black: number;
     bbox: { xmin: number; ymin: number; xmax: number; ymax: number };
     image_dimensions: [number, number];
+    aws_location: string;
 }
 
 export interface EvaluationGeoJSON {

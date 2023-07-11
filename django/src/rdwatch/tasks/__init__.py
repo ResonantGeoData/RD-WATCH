@@ -20,6 +20,7 @@ from rdwatch.models import (
     SiteImage,
     SiteObservation,
 )
+from rdwatch.models.lookups import Constellation
 from rdwatch.utils.images import (
     fetch_boundbox_image,
     get_max_bbox,
@@ -38,7 +39,7 @@ logger = logging.getLogger(__name__)
 def is_inside_range(timestamps: list[datetime], check_timestamp: datetime, days_range):
     for timestamp in timestamps:
         time_difference = check_timestamp - timestamp
-        if time_difference.days <= days_range:
+        if abs(time_difference.days) <= days_range:
             logger.warning(
                 f'Skipping Timestamp because difference is: {time_difference.days}'
             )
@@ -55,7 +56,13 @@ def get_siteobservations_images(
     dayRange=14,
     NoDataLimit=50,
 ) -> None:
-    site_observations = SiteObservation.objects.filter(siteeval=site_eval_id)
+    constellationObj = Constellation.objects.filter(slug=baseConstellation).first()
+    site_observations = SiteObservation.objects.filter(
+        siteeval=site_eval_id
+    )  # need a full list for min/max times
+    site_obs_count = SiteObservation.objects.filter(
+        siteeval=site_eval_id, constellation_id=constellationObj.pk
+    ).count()
     transformer = Transformer.from_crs('EPSG:3857', 'EPSG:4326')
     found_timestamps = {}
     min_time = datetime.max
@@ -71,7 +78,7 @@ def get_siteobservations_images(
             state='PROGRESS',
             meta={
                 'current': count,
-                'total': site_observations.count() + 1,
+                'total': site_obs_count + 1,
                 'mode': 'Site Observations',
                 'siteEvalId': site_eval_id,
             },
@@ -99,7 +106,7 @@ def get_siteobservations_images(
                 source=baseConstellation,
             )
             if (
-                baseConstellation == 'S2'
+                (baseConstellation == 'S2' or baseConstellation == 'L8')
                 and dayRange > -1
                 and is_inside_range(
                     found_timestamps.keys(), observation.timestamp, dayRange
@@ -141,6 +148,7 @@ def get_siteobservations_images(
                 existing.cloudcover = cloudcover
                 existing.image = image
                 existing.percent_black = percent_black
+                existing.aws_location = results['uri']
                 existing.image_bbox = Polygon.from_bbox(max_bbox)
                 existing.image_dimensions = [imageObj.width, imageObj.height]
                 existing.save()
@@ -150,6 +158,7 @@ def get_siteobservations_images(
                     siteobs=observation,
                     timestamp=observation.timestamp,
                     image=image,
+                    aws_location=results['uri'],
                     cloudcover=cloudcover,
                     source=baseConstellation,
                     percent_black=percent_black,
@@ -163,6 +172,13 @@ def get_siteobservations_images(
     timestamp = (min_time + timedelta(days=30)) + timebuffer
     # Now we get a list of all the timestamps and captures that fall in this range.
     worldView = baseConstellation == 'WV'
+    if matchConstellation == '':
+        matchConstellation = Constellation.objects.filter(
+            slug=baseConstellation
+        ).first()
+        logger.warning(
+            f'Utilizing Constellation: {matchConstellation} - {matchConstellation.slug}'
+        )
     captures = get_range_captures(
         max_bbox, timestamp, matchConstellation, timebuffer, worldView
     )
@@ -175,6 +191,10 @@ def get_siteobservations_images(
             'siteEvalId': site_eval_id,
         },
     )
+    if (
+        baseSiteEval is None
+    ):  # We need to grab the siteEvaluation directly for a reference
+        baseSiteEval = SiteEvaluation.objects.filter(pk=site_eval_id).first()
     count = 0
     for (
         capture
@@ -190,15 +210,16 @@ def get_siteobservations_images(
                 'siteEvalId': site_eval_id,
             },
         )
+        capture_timestamp = capture.timestamp.replace(microsecond=0)
         if (
-            baseConstellation == 'S2'
+            (baseConstellation == 'S2' or baseConstellation == 'L8')
             and dayRange > -1
-            and is_inside_range(found_timestamps.keys(), capture.timestamp, dayRange)
+            and is_inside_range(found_timestamps.keys(), capture_timestamp, dayRange)
         ):
             count += 1
             continue
 
-        if capture.timestamp not in found_timestamps.keys():
+        if capture_timestamp not in found_timestamps.keys():
             # we need to add a new image into the structure
             bytes = None
             if worldView:
@@ -218,25 +239,27 @@ def get_siteobservations_images(
                 continue
             found = SiteImage.objects.filter(
                 siteeval=baseSiteEval,
-                timestamp=capture.timestamp,
+                timestamp=capture_timestamp,
                 source=baseConstellation,
             )
             if dayRange != -1 and percent_black < NoDataLimit:
-                found_timestamps[capture.timestamp] = True
+                found_timestamps[capture_timestamp] = True
             elif dayRange == -1:
-                found_timestamps[capture.timestamp] = True
+                found_timestamps[capture_timestamp] = True
             if found.exists():
                 existing = found.first()
                 existing.image.delete()
                 existing.cloudcover = cloudcover
                 existing.image = image
+                existing.aws_location = capture.uri
                 existing.image_bbox = Polygon.from_bbox(max_bbox)
                 existing.image_dimensions = [imageObj.width, imageObj.height]
                 existing.save()
             else:
                 SiteImage.objects.create(
                     siteeval=baseSiteEval,
-                    timestamp=capture.timestamp,
+                    timestamp=capture_timestamp,
+                    aws_location=capture.uri,
                     image=image,
                     cloudcover=cloudcover,
                     percent_black=percent_black,

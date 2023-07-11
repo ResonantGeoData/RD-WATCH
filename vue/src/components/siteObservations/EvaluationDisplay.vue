@@ -67,6 +67,9 @@ const toggleImages = (siteObs: SiteObservation, off= false) => {
             if (siteObs.imageCounts.S2.images && state.siteObsSatSettings.observationSources.includes('S2')) {
               imageList = [...imageList, ...siteObs.imageCounts.S2.images]
             }
+            if (siteObs.imageCounts.L8.images && state.siteObsSatSettings.observationSources.includes('L8')) {
+              imageList = [...imageList, ...siteObs.imageCounts.L8.images]
+            }
             tempArr.push({
                 id: siteObs.id,
                 timestamp: siteObs.timerange.min,
@@ -96,11 +99,6 @@ const close = () => {
 }
 const imagesActive = computed(() => state.enabledSiteObservations.findIndex((item) => item.id === props.siteObservation.id) !== -1);
 const hasImages = computed(() => props.siteObservation.imageCounts.WV.loaded > 0 || props.siteObservation.imageCounts.S2.loaded > 0);
-const canGetImages = computed(() => ({
-  WV: props.siteObservation.imageCounts.WV.total,
-  S2: props.siteObservation.imageCounts.S2.total,
-  L8: props.siteObservation.imageCounts.L8.total,
-}));
 const currentClosestTimestamp = computed(() => {
   const observation = state.enabledSiteObservations.find((item) => item.id === props.siteObservation.id);
   if (observation) {
@@ -418,7 +416,7 @@ const progressInfo = computed(() => {
         <v-btn
           size="x-small"
           color="secondary"
-          :disabled="canGetImages.WV === 0 || isRunning"
+          :disabled="isRunning"
           class="mx-1"
           @click="getImages(siteObservation.id, 'WV')"
         >
@@ -427,17 +425,16 @@ const progressInfo = computed(() => {
         <v-btn
           size="x-small"
           color="secondary"
-          :disabled="canGetImages.S2 === 0 || isRunning"
+          :disabled="isRunning"
           class="mx-1"
           @click="getImages(siteObservation.id, 'S2')"
         >
           Get S2
         </v-btn>
         <v-btn
-          v-if="false"
           size="x-small"
           color="secondary"
-          :disabled="canGetImages.L8 === 0 || isRunning"
+          :disabled="isRunning"
           class="mx-1"
           @click="getImages(siteObservation.id, 'L8')"
         >

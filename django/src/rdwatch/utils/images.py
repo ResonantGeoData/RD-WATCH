@@ -112,4 +112,5 @@ def fetch_boundbox_image(
         'bytes': bytes,
         'cloudcover': closest_capture.cloudcover,
         'timestamp': closest_capture.timestamp,
+        'uri': closest_capture.uri,
     }

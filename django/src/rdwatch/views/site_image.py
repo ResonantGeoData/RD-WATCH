@@ -35,6 +35,7 @@ def site_images(request: HttpRequest, pk: int):
                     siteobs_id='siteobs_id',
                     bbox=BoundingBox('image_bbox'),
                     image_dimensions='image_dimensions',
+                    aws_location='aws_location',
                 )
             ),
         )

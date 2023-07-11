@@ -308,7 +308,7 @@ export class ApiService {
   {
     return __request(OpenAPI, {
       method: "GET",
-      url: "/api/scores/scoring_details",
+      url: "/api/scores/details",
       query: { configurationId, regionId, siteNumber, version },
     });
   }
@@ -320,7 +320,7 @@ export class ApiService {
   {
     return __request(OpenAPI, {
       method: "GET",
-      url: "/api/scores/has_scores",
+      url: "/api/scores/has-scores",
       query: { configurationId, regionId },
     });
   }
@@ -331,7 +331,7 @@ export class ApiService {
   {
     return __request(OpenAPI, {
       method: "GET",
-      url: "/api/scores/region_scoring_colors",
+      url: "/api/scores/region-colors",
       query: { configurationId, regionId },
     });
   }

@@ -74,28 +74,30 @@ def get_site_scoring_color(evaluation_run_uid, activity_type, generatedSiteId):
 
 
 class TemporalSchema(Schema):
-    site_preparation: str = None
-    active_construction: str = None
-    post_construction: str = None
+    site_preparation: str | None = None
+    active_construction: str | None = None
+    post_construction: str | None = None
 
 
 class EvaluationResponseSchema(Schema):
-    region_name: str = None
-    evaluationId: int = None
-    evaluation_run: int = None
-    performer: str = None
-    evaluation_uuid: str = None
-    unionArea: float = None
-    statusAnnotated: str = None
-    temporalIOU: TemporalSchema = None
-    color: str = None
+    region_name: str
+    evaluationId: int
+    evaluation_run: int
+    performer: str
+    evaluation_uuid: str
+    unionArea: float | None = None
+    statusAnnotated: str | None = None
+    temporalIOU: TemporalSchema | None = None
+    color: str
 
 
 # If the combination of configurationId and regionId has scoring
 @router.get('/has-scores')
 def has_scores(request: HttpRequest, configurationId: int, regionId: int):
     # from the hyper parameters we need the evaluation and evaluation_run Ids
-    configuration = get_object_or_404(HyperParameters.objects.select_related('performer'), pk=configurationId)
+    configuration = get_object_or_404(
+        HyperParameters.objects.select_related('performer'), pk=configurationId
+    )
     evaluationId = configuration.evaluation
     performer_name = configuration.performer.slug.lower()
     evaluation_run = configuration.evaluation_run

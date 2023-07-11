@@ -1,7 +1,5 @@
 from ninja import NinjaAPI
 
-from rdwatch_scoring.views import router as scores
-
 from .views.performer import router as performer_router
 from .views.region import router as region_router
 from .views.site_model import router as site_model_router

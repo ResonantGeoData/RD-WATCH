@@ -63,7 +63,6 @@ class SiteEvaluation(models.Model):
 
         site_feature = site_model.site_feature
         assert isinstance(site_feature.properties, SiteFeature)
-        version = ''
         with transaction.atomic():
             region = get_or_create_region(site_feature.properties.region_id)[0]
             label = lookups.ObservationLabel.objects.get(

@@ -47,7 +47,7 @@ class BaseConfiguration(Configuration):
             engine='django.contrib.gis.db.backends.postgis',
         )
         db_dict = DB_val.value
-        if os.environ['RDWATCH_POSTGRESQL_SCORING_URI'] is not None:
+        if 'RDWATCH_POSTGRESQL_SCORING_URI' in os.environ:
             scoring_val = values.DatabaseURLValue(
                 alias='scoringdb',
                 environ_name='POSTGRESQL_SCORING_URI',

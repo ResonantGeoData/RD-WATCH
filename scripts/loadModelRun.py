@@ -107,7 +107,7 @@ def upload_to_rgd(
         )
         model_run_id = post_model_result.json()["id"]
 
-    post_site_url = f"{rgd_endpoint}/api/model-runs/{model_run_id}/site-model"
+    post_site_url = f"{rgd_endpoint}/api/model-runs/{model_run_id}/site-model/"
     print(site_models_glob)
     for site_file in glob(site_models_glob):
         print("Uploading '{}' ..".format(site_file))

@@ -84,7 +84,7 @@ def test_site_model_ingest(
     hyper_parameters: HyperParameters,
 ) -> None:
     res = test_client.post(
-        f'/model-runs/{hyper_parameters.id}/site-model',
+        f'/model-runs/{hyper_parameters.id}/site-model/',
         json=site_model_json,
     )
 
@@ -108,7 +108,7 @@ def test_site_model_ingest_missing_scores(
         del feature['properties']['score']
 
     res = test_client.post(
-        f'/model-runs/{hyper_parameters.id}/site-model',
+        f'/model-runs/{hyper_parameters.id}/site-model/',
         json=site_model_json,
     )
     assert res.status_code == 201
@@ -155,7 +155,7 @@ def test_site_model_ingest_malformed_geometry(
         ],
     }
     res = test_client.post(
-        f'/model-runs/{hyper_parameters.id}/site-model',
+        f'/model-runs/{hyper_parameters.id}/site-model/',
         json=site_model,
     )
 

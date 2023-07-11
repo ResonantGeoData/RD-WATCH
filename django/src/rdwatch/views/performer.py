@@ -25,7 +25,7 @@ def list_performers(request: HttpRequest):
     )
 
 
-@router.get('/{id}', response=PerformerSchema)
+@router.get('/{id}/', response=PerformerSchema)
 def get_performer(request: HttpRequest, id: int):
     return get_object_or_404(
         Performer.objects.defer('description', 'slug').annotate(

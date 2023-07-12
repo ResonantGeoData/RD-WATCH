@@ -106,7 +106,9 @@ def site_observations(request: HttpRequest, pk: int):
             task = AsyncResult(retrieved.celery_id)
             celery_data['state'] = task.state
             celery_data['status'] = task.status
-            celery_data['info'] = task.info
+            celery_data['info'] = (
+                str(task.info) if isinstance(task.info, RuntimeError) else task.info
+            )
 
         output['job'] = {
             'status': retrieved.status,

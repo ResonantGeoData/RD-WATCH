@@ -23,7 +23,7 @@ from rdwatch.models import Region, SiteEvaluation, SiteObservation
 router = Router()
 
 
-@router.get('/{z}/{x}/{y}.pbf')
+@router.get('/{z}/{x}/{y}.pbf/')
 def vector_tile(request: HttpRequest, z: int, x: int, y: int):
     envelope = Func(z, x, y, function='ST_TileEnvelope')
     intersects = Q(

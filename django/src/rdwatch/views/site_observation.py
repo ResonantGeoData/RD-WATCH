@@ -90,6 +90,9 @@ def site_observations(request: HttpRequest, pk: int):
                     percent_black='percent_black',
                     source='source',
                     siteobs_id='siteobs_id',
+                    bbox=BoundingBox('image_bbox'),
+                    image_dimensions='image_dimensions',
+                    aws_location='aws_location',
                 )
             ),
         )

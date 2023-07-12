@@ -6,6 +6,7 @@ import { imageFilter } from "../../mapstyle/images";
 import EvaluationImages from "./EvaluationImages.vue";
 import EvaluationScoring from "./EvaluationScoring.vue";
 import { ApiService } from "../../client";
+import ImageViewer from "../ImageViewer/ImageViewer.vue";
 
 const props = defineProps<{
   siteObservation: SiteObservation;
@@ -30,6 +31,9 @@ const toggleImages = (siteObs: SiteObservation, off= false) => {
             }
             if (siteObs.imageCounts.S2.images && state.siteObsSatSettings.observationSources.includes('S2')) {
               imageList = [...imageList, ...siteObs.imageCounts.S2.images]
+            }
+            if (siteObs.imageCounts.L8.images && state.siteObsSatSettings.observationSources.includes('L8')) {
+              imageList = [...imageList, ...siteObs.imageCounts.L8.images]
             }
             tempArr.push({
                 id: siteObs.id,
@@ -80,7 +84,7 @@ const currentClosestTimestamp = computed(() => {
         next = false;
       }
       return {
-        time: `${new Date(closest * 1000).toLocaleDateString()} ${new Date(closest * 1000).toLocaleTimeString()}`, 
+        time: `${new Date(closest * 1000).toLocaleDateString()}`, 
         type: observation.images[rootIndex].source,
         prev,
         next,
@@ -258,7 +262,66 @@ const changeTimstamp = ({dir, loop}: {dir: number, loop: boolean}) => {
         </div>
         <v-spacer />
       </v-row>
+      <v-row>
+          <v-btn
+            size="small"
+            color="error"
+            @click="cancelTask(siteObservation.id)"
+          >
+            Cancel
+          </v-btn>
+      </v-row>
+      <v-row
+        dense
+        justify="center"
+        align="center"
+      >
+        <v-btn
+          size="x-small"
+          color="secondary"
+          :disabled="isRunning"
+          class="mx-1"
+          @click="getImages(siteObservation.id, 'WV')"
+        >
+          Get WV
+        </v-btn>
+        <v-btn
+          size="x-small"
+          color="secondary"
+          :disabled="isRunning"
+          class="mx-1"
+          @click="getImages(siteObservation.id, 'S2')"
+        >
+          Get S2
+        </v-btn>
+        <v-btn
+          size="x-small"
+          color="secondary"
+          :disabled="isRunning"
+          class="mx-1"
+          @click="getImages(siteObservation.id, 'L8')"
+        >
+          Get L8
+        </v-btn>
 
+        <span v-if="imagesActive">
+          <v-btn
+            v-if="state.loopingId !== siteObservation.id"
+            size="x-small"
+            color="primary"
+            class="mx-1"
+            @click="startLooping"
+          >Play</v-btn>
+          <v-btn
+            v-if="state.loopingId !== siteObservation.id"
+            size="x-small"
+            color="primary"
+            class="mx-1"
+            @click="stopLooping"
+          >Stop</v-btn>
+        </span>
+        <v-spacer />
+      </v-row>
       <v-row
         dense
         justify="center"
@@ -311,6 +374,9 @@ const changeTimstamp = ({dir, loop}: {dir: number, loop: boolean}) => {
         >
           mdi-chevron-right
         </v-icon>
+      </v-row>
+      <v-row>
+        <image-viewer :site-eval-id="siteObservation.id" />
       </v-row>
     </v-card-text>
   </v-card>

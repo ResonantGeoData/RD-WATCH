@@ -85,11 +85,16 @@ def get_bands(
                         defaults={'description': 'top of atmosphere radiance'},
                     )
                 case {'collection': collection}:
-                    if 'collection' in (
-                        'landsat-c2l2-sr',
-                        'sentinel-s2-l2a',
-                        'sentinel-s2-l2a-cogs',
-                    ) or collection.startswith('ta1-s2-acc-'):
+                    if (
+                        collection
+                        in (
+                            'landsat-c2l2-sr',
+                            'sentinel-s2-l2a',
+                            'sentinel-s2-l2a-cogs',
+                        )
+                        or collection.startswith('ta1-s2-acc-')
+                        or collection.startswith('ta1-ls-acc-')
+                    ):
                         level, _ = ProcessingLevel.objects.get_or_create(
                             slug='2A',
                             defaults={'description': 'surface reflectance'},

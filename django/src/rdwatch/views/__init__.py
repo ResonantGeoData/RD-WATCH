@@ -9,6 +9,7 @@ from .satellite_image import (
 )
 from .server_status import RetrieveServerStatus
 from .site_evaluation import site_evaluations
+from .site_image import site_images
 from .site_observation import (
     cancel_site_observation_images,
     get_site_observation_images,
@@ -20,6 +21,7 @@ __all__ = [
     'RetrieveServerStatus',
     'site_evaluations',
     'site_observations',
+    'site_images',
     'satelliteimage_raster_tile',
     'satelliteimage_raster_bbox',
     'satelliteimage_time_list',

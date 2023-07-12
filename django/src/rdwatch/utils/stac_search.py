@@ -1,10 +1,13 @@
 import json
+import logging
 from datetime import datetime, timedelta
 from os import path
 from typing import Literal, TypedDict
 from urllib.request import Request, urlopen
 
 from django.conf import settings
+
+logger = logging.getLogger(__name__)
 
 
 class EOBand(TypedDict, total=False):
@@ -57,12 +60,13 @@ def _fmt_time(time: datetime):
 
 
 COLLECTIONS: dict[str, list[str]] = {
-    'L8': ['landsat-c2l1', 'landsat-c2l2-sr'],
+    'L8': [],
     'S2': [],
 }
 
 if settings.ACCENTURE_VERSION is not None:
     COLLECTIONS['S2'].append(f'ta1-s2-acc-{settings.ACCENTURE_VERSION}')
+    COLLECTIONS['L8'].append(f'ta1-ls-acc-{settings.ACCENTURE_VERSION}')
 
 
 def stac_search(
@@ -92,5 +96,7 @@ def stac_search(
         data=bytes(json.dumps(params), 'utf-8'),
         headers={'x-api-key': settings.SMART_STAC_KEY},
     )
+    logger.warning(request.full_url)
+    logger.warning(params)
     with urlopen(request) as resp:
         return json.loads(resp.read())

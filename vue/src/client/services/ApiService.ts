@@ -15,6 +15,7 @@ import type { CancelablePromise } from "../core/CancelablePromise";
 import { OpenAPI } from "../core/OpenAPI";
 import { request as __request } from "../core/request";
 import { SatelliteTimeStamp } from "../../store";
+import { EvaluationImageResults } from "../../types";
 
 export interface QueryArguments {
   performer?: string;
@@ -336,5 +337,15 @@ export class ApiService {
     });
   }
 
+  public static getEvaluationImages(id: number): CancelablePromise<EvaluationImageResults> {
+    return __request(OpenAPI, {
+      method: "GET",
+      url: "/api/evaluations/images/{id}",
+      path: {
+        id: id,
+      },
+    });
+
+  }
 }
 

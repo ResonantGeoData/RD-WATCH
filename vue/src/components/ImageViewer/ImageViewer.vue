@@ -160,6 +160,15 @@ watch([percentBlackFilter, cloudFilter, siteObsFilter, imageSourcesFilter], () =
   }
 });
 
+const copyURL = async (mytext: string) => {
+    try {
+      await navigator.clipboard.writeText(mytext);
+    } catch($e) {
+      alert('Cannot copy');
+    }
+  }
+
+
 watch([currentImage, imageRef, filteredImages], () => {
     if (currentImage.value < filteredImages.value.length && imageRef.value !== null) {
         imageRef.value.src = filteredImages.value[currentImage.value].image.image;
@@ -296,12 +305,15 @@ watch([currentImage, imageRef, filteredImages], () => {
               bottom
             >
               <template #activator="{ props }">
-                <v-icon v-bind="props">
+                <v-icon
+                  v-bind="props"
+                  @click="copyURL(filteredImages[currentImage].image.aws_location)"
+                >
                   mdi-information
                 </v-icon>
               </template>
               <span>
-                {{ filteredImages[currentImage].image.aws_location }}
+                Click to Copy: {{ filteredImages[currentImage].image.aws_location }}
               </span>
             </v-tooltip>
           </v-col>

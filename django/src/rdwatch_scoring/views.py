@@ -1,4 +1,5 @@
 import logging
+import math
 
 from ninja import Schema
 from ninja.pagination import RouterPaginated
@@ -195,10 +196,25 @@ def list_regions(
         'post_construction': None,
     }
     if temporalIOU:
+        site_preparation = (
+            temporalIOU.site_preparation
+            if not math.isnan(temporalIOU.site_preparation)
+            else 0
+        )
+        active_construction = (
+            temporalIOU.active_construction
+            if not math.isnan(temporalIOU.active_construction)
+            else 0
+        )
+        post_construction = (
+            temporalIOU.post_construction
+            if not math.isnan(temporalIOU.post_construction)
+            else 0
+        )
         tempDict = {
-            'site_preparation': (temporalIOU.site_preparation),
-            'active_construction': (temporalIOU.active_construction),
-            'post_construction': (temporalIOU.post_construction),
+            'site_preparation': (site_preparation),
+            'active_construction': (active_construction),
+            'post_construction': (post_construction),
         }
     # To understand the color associated with it you need
     # to grab the proposals these are the site_truth_matched

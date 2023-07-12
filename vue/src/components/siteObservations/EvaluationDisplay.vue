@@ -262,66 +262,6 @@ const changeTimstamp = ({dir, loop}: {dir: number, loop: boolean}) => {
         </div>
         <v-spacer />
       </v-row>
-      <v-row>
-          <v-btn
-            size="small"
-            color="error"
-            @click="cancelTask(siteObservation.id)"
-          >
-            Cancel
-          </v-btn>
-      </v-row>
-      <v-row
-        dense
-        justify="center"
-        align="center"
-      >
-        <v-btn
-          size="x-small"
-          color="secondary"
-          :disabled="isRunning"
-          class="mx-1"
-          @click="getImages(siteObservation.id, 'WV')"
-        >
-          Get WV
-        </v-btn>
-        <v-btn
-          size="x-small"
-          color="secondary"
-          :disabled="isRunning"
-          class="mx-1"
-          @click="getImages(siteObservation.id, 'S2')"
-        >
-          Get S2
-        </v-btn>
-        <v-btn
-          size="x-small"
-          color="secondary"
-          :disabled="isRunning"
-          class="mx-1"
-          @click="getImages(siteObservation.id, 'L8')"
-        >
-          Get L8
-        </v-btn>
-
-        <span v-if="imagesActive">
-          <v-btn
-            v-if="state.loopingId !== siteObservation.id"
-            size="x-small"
-            color="primary"
-            class="mx-1"
-            @click="startLooping"
-          >Play</v-btn>
-          <v-btn
-            v-if="state.loopingId !== siteObservation.id"
-            size="x-small"
-            color="primary"
-            class="mx-1"
-            @click="stopLooping"
-          >Stop</v-btn>
-        </span>
-        <v-spacer />
-      </v-row>
       <v-row
         dense
         justify="center"

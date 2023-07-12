@@ -223,7 +223,7 @@ const progressInfo = computed(() => {
       <v-btn
         size="x-small"
         color="secondary"
-        :disabled="canGetImages.WV === 0 || isRunning"
+        :disabled="isRunning"
         class="mx-1"
         @click="getImages(siteObservation.id, 'WV')"
       >
@@ -232,17 +232,16 @@ const progressInfo = computed(() => {
       <v-btn
         size="x-small"
         color="secondary"
-        :disabled="canGetImages.S2 === 0 || isRunning"
+        :disabled="isRunning"
         class="mx-1"
         @click="getImages(siteObservation.id, 'S2')"
       >
         Get S2
       </v-btn>
       <v-btn
-        v-if="false"
         size="x-small"
         color="secondary"
-        :disabled="canGetImages.L8 === 0 || isRunning"
+        :disabled="isRunning"
         class="mx-1"
         @click="getImages(siteObservation.id, 'L8')"
       >

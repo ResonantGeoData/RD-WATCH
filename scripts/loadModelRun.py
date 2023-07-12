@@ -89,6 +89,7 @@ def upload_to_rgd(
             "performer": performer_shortcode,
             "title": title,
             "region": {"name": region_id},
+            "parameters": {},
         }
         if expiration_time is not None:
             post_model_data["expiration_time"] = expiration_time

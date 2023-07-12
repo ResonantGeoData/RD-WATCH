@@ -62,6 +62,8 @@ class HyperParametersWriteSchema(Schema):
     title: constr(max_length=1000)
     parameters: dict
     expiration_time: int | None
+    evaluation: int | None = None
+    evaluation_run: int | None = None
 
     @validator('performer')
     def validate_performer(cls, v: str) -> lookups.Performer:
@@ -90,8 +92,8 @@ class HyperParametersDetailSchema(Schema):
     bbox: dict | None
     created: datetime
     expiration_time: str | None = None
-    evaluation: int
-    evaluation_run = int
+    evaluation: int | None = None
+    evaluation_run: int | None = None
 
 
 class HyperParametersListSchema(Schema):
@@ -151,8 +153,6 @@ def get_queryset():
                     output_field=JSONField(),
                 ),
                 parameters='parameters',
-                evaluation='evaluation',
-                evaluation_run='evaluation_run'
                 numsites=Count('evaluations__pk', distinct=True),
                 score=Avg('evaluations__score'),
                 evaluation='evaluation',
@@ -185,6 +185,8 @@ def create_model_run(
         performer=hyper_parameters_data.performer,
         parameters=hyper_parameters_data.parameters,
         expiration_time=hyper_parameters_data.expiration_time,
+        evaluation=hyper_parameters_data.evaluation,
+        evaluation_run=hyper_parameters_data.evaluation_run,
     )
     return 200, {
         'id': hyper_parameters.pk,

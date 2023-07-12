@@ -22,19 +22,22 @@ class BaseConfiguration(Configuration):
     ALLOWED_HOSTS = ['*']
     DEBUG = values.BooleanValue(False, _environ_prefix='RDWATCH_DJANGO')
 
-    INSTALLED_APPS = [
-        'django.contrib.auth',
-        'django.contrib.contenttypes',
-        'django.contrib.gis',
-        'django.contrib.postgres',
-        'django_filters',
-        'rest_framework',
-        'django_extensions',
-        'rdwatch',
-        'django_celery_results',
-        # Maybe conditionally add Scoring
-        'rdwatch_scoring',
-    ]
+    @property
+    def INSTALLED_APPS(self):
+        base_applications = [
+            'django.contrib.auth',
+            'django.contrib.contenttypes',
+            'django.contrib.gis',
+            'django.contrib.postgres',
+            'django_filters',
+            'rest_framework',
+            'django_extensions',
+            'rdwatch',
+            'django_celery_results',
+        ]
+        if 'RDWATCH_POSTGRESQL_SCORING_URI' in os.environ:
+            base_applications.append('rdwatch_scoring')
+        return base_applications
 
     @property
     def DATABASES(self):
@@ -110,8 +113,13 @@ class BaseConfiguration(Configuration):
     CELERY_CACHE_BACKEND = 'django-cache'
     CELERY_RESULT_EXTENDED = True
     CELERYD_TIME_LIMIT = 1200
-    # Make this conditional based on environment variable as well
-    DATABASE_ROUTERS = ['rdwatch_scoring.router.ScoringRouter']
+
+    @property
+    def DATABASE_ROUTERS(self):
+        if 'RDWATCH_POSTGRESQL_SCORING_URI' in os.environ:
+            return ['rdwatch_scoring.router.ScoringRouter']
+        else:
+            return []
 
     CELERY_BEAT_SCHEDULE = {
         'delete-temp-model-runs-beat': {

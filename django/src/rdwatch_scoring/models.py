@@ -19,6 +19,7 @@ class Addr(models.Model):
 
     class Meta:
         managed = False
+        app_label = 'rdwatch_scoring'
         db_table = 'addr'
 
 
@@ -51,6 +52,7 @@ class Addrfeat(models.Model):
 
     class Meta:
         managed = False
+        app_label = 'rdwatch_scoring'
         db_table = 'addrfeat'
 
 
@@ -59,6 +61,7 @@ class AlembicVersion(models.Model):
 
     class Meta:
         managed = False
+        app_label = 'rdwatch_scoring'
         db_table = 'alembic_version'
 
 
@@ -80,6 +83,7 @@ class Bg(models.Model):
 
     class Meta:
         managed = False
+        app_label = 'rdwatch_scoring'
         db_table = 'bg'
 
 
@@ -106,6 +110,7 @@ class County(models.Model):
 
     class Meta:
         managed = False
+        app_label = 'rdwatch_scoring'
         db_table = 'county'
 
 
@@ -117,6 +122,7 @@ class CountyLookup(models.Model):
 
     class Meta:
         managed = False
+        app_label = 'rdwatch_scoring'
         db_table = 'county_lookup'
         unique_together = (('st_code', 'co_code'),)
 
@@ -131,6 +137,7 @@ class CountysubLookup(models.Model):
 
     class Meta:
         managed = False
+        app_label = 'rdwatch_scoring'
         db_table = 'countysub_lookup'
         unique_together = (('st_code', 'co_code', 'cs_code'),)
 
@@ -159,6 +166,7 @@ class Cousub(models.Model):
 
     class Meta:
         managed = False
+        app_label = 'rdwatch_scoring'
         db_table = 'cousub'
 
 
@@ -168,6 +176,7 @@ class DirectionLookup(models.Model):
 
     class Meta:
         managed = False
+        app_label = 'rdwatch_scoring'
         db_table = 'direction_lookup'
 
 
@@ -208,6 +217,7 @@ class Edges(models.Model):
 
     class Meta:
         managed = False
+        app_label = 'rdwatch_scoring'
         db_table = 'edges'
 
 
@@ -224,6 +234,7 @@ class EvaluationActivityClassificationF1(models.Model):
 
     class Meta:
         managed = False
+        app_label = 'rdwatch_scoring'
         db_table = 'evaluation_activity_classification_f1'
 
 
@@ -241,6 +252,7 @@ class EvaluationActivityClassificationMatrix(models.Model):
 
     class Meta:
         managed = False
+        app_label = 'rdwatch_scoring'
         db_table = 'evaluation_activity_classification_matrix'
 
 
@@ -261,6 +273,7 @@ class EvaluationActivityClassificationPhase(models.Model):
 
     class Meta:
         managed = False
+        app_label = 'rdwatch_scoring'
         db_table = 'evaluation_activity_classification_phase'
 
 
@@ -277,6 +290,7 @@ class EvaluationActivityClassificationTemporalError(models.Model):
 
     class Meta:
         managed = False
+        app_label = 'rdwatch_scoring'
         db_table = 'evaluation_activity_classification_temporal_error'
 
 
@@ -293,6 +307,7 @@ class EvaluationActivityClassificationTemporalIou(models.Model):
 
     class Meta:
         managed = False
+        app_label = 'rdwatch_scoring'
         db_table = 'evaluation_activity_classification_temporal_iou'
 
 
@@ -309,6 +324,7 @@ class EvaluationActivityPredictionTemporalError(models.Model):
 
     class Meta:
         managed = False
+        app_label = 'rdwatch_scoring'
         db_table = 'evaluation_activity_prediction_temporal_error'
 
 
@@ -331,6 +347,7 @@ class EvaluationBroadAreaSearchDetection(models.Model):
 
     class Meta:
         managed = False
+        app_label = 'rdwatch_scoring'
         db_table = 'evaluation_broad_area_search_detection'
 
 
@@ -370,6 +387,7 @@ class EvaluationBroadAreaSearchMetric(models.Model):
 
     class Meta:
         managed = False
+        app_label = 'rdwatch_scoring'
         db_table = 'evaluation_broad_area_search_metric'
 
 
@@ -390,6 +408,7 @@ class EvaluationBroadAreaSearchProposal(models.Model):
 
     class Meta:
         managed = False
+        app_label = 'rdwatch_scoring'
         db_table = 'evaluation_broad_area_search_proposal'
 
 
@@ -411,6 +430,7 @@ class EvaluationRun(models.Model):
 
     class Meta:
         managed = False
+        app_label = 'rdwatch_scoring'
         db_table = 'evaluation_run'
         unique_together = (
             (
@@ -502,6 +522,7 @@ class Faces(models.Model):
 
     class Meta:
         managed = False
+        app_label = 'rdwatch_scoring'
         db_table = 'faces'
 
 
@@ -529,6 +550,7 @@ class Featnames(models.Model):
 
     class Meta:
         managed = False
+        app_label = 'rdwatch_scoring'
         db_table = 'featnames'
 
 
@@ -541,6 +563,7 @@ class GeocodeSettings(models.Model):
 
     class Meta:
         managed = False
+        app_label = 'rdwatch_scoring'
         db_table = 'geocode_settings'
 
 
@@ -553,6 +576,7 @@ class GeocodeSettingsDefault(models.Model):
 
     class Meta:
         managed = False
+        app_label = 'rdwatch_scoring'
         db_table = 'geocode_settings_default'
 
 
@@ -568,6 +592,7 @@ class Layer(models.Model):
 
     class Meta:
         managed = False
+        app_label = 'rdwatch_scoring'
         db_table = 'layer'
         unique_together = (
             ('topology', 'layer_id'),
@@ -595,6 +620,7 @@ class LoaderLookuptables(models.Model):
 
     class Meta:
         managed = False
+        app_label = 'rdwatch_scoring'
         db_table = 'loader_lookuptables'
 
 
@@ -612,6 +638,7 @@ class LoaderPlatform(models.Model):
 
     class Meta:
         managed = False
+        app_label = 'rdwatch_scoring'
         db_table = 'loader_platform'
 
 
@@ -624,6 +651,7 @@ class LoaderVariables(models.Model):
 
     class Meta:
         managed = False
+        app_label = 'rdwatch_scoring'
         db_table = 'loader_variables'
 
 
@@ -641,6 +669,7 @@ class Observation(models.Model):
 
     class Meta:
         managed = False
+        app_label = 'rdwatch_scoring'
         db_table = 'observation'
 
 
@@ -666,6 +695,7 @@ class ObservationComparison(models.Model):
 
     class Meta:
         managed = False
+        app_label = 'rdwatch_scoring'
         db_table = 'observation_comparison'
 
 
@@ -678,6 +708,7 @@ class PagcGaz(models.Model):
 
     class Meta:
         managed = False
+        app_label = 'rdwatch_scoring'
         db_table = 'pagc_gaz'
 
 
@@ -690,6 +721,7 @@ class PagcLex(models.Model):
 
     class Meta:
         managed = False
+        app_label = 'rdwatch_scoring'
         db_table = 'pagc_lex'
 
 
@@ -699,6 +731,7 @@ class PagcRules(models.Model):
 
     class Meta:
         managed = False
+        app_label = 'rdwatch_scoring'
         db_table = 'pagc_rules'
 
 
@@ -725,6 +758,7 @@ class Place(models.Model):
 
     class Meta:
         managed = False
+        app_label = 'rdwatch_scoring'
         db_table = 'place'
 
 
@@ -736,6 +770,7 @@ class PlaceLookup(models.Model):
 
     class Meta:
         managed = False
+        app_label = 'rdwatch_scoring'
         db_table = 'place_lookup'
         unique_together = (('st_code', 'pl_code'),)
 
@@ -745,6 +780,7 @@ class Provenance(models.Model):
 
     class Meta:
         managed = False
+        app_label = 'rdwatch_scoring'
         db_table = 'provenance'
 
 
@@ -759,6 +795,7 @@ class Region(models.Model):
 
     class Meta:
         managed = False
+        app_label = 'rdwatch_scoring'
         db_table = 'region'
 
 
@@ -768,6 +805,7 @@ class SecondaryUnitLookup(models.Model):
 
     class Meta:
         managed = False
+        app_label = 'rdwatch_scoring'
         db_table = 'secondary_unit_lookup'
 
 
@@ -794,6 +832,7 @@ class Site(models.Model):
 
     class Meta:
         managed = False
+        app_label = 'rdwatch_scoring'
         db_table = 'site'
 
 
@@ -816,6 +855,7 @@ class State(models.Model):
 
     class Meta:
         managed = False
+        app_label = 'rdwatch_scoring'
         db_table = 'state'
 
 
@@ -827,6 +867,7 @@ class StateLookup(models.Model):
 
     class Meta:
         managed = False
+        app_label = 'rdwatch_scoring'
         db_table = 'state_lookup'
 
 
@@ -837,6 +878,7 @@ class StreetTypeLookup(models.Model):
 
     class Meta:
         managed = False
+        app_label = 'rdwatch_scoring'
         db_table = 'street_type_lookup'
 
 
@@ -860,6 +902,7 @@ class Tabblock(models.Model):
 
     class Meta:
         managed = False
+        app_label = 'rdwatch_scoring'
         db_table = 'tabblock'
 
 
@@ -885,6 +928,7 @@ class Tabblock20(models.Model):
 
     class Meta:
         managed = False
+        app_label = 'rdwatch_scoring'
         db_table = 'tabblock20'
 
 
@@ -896,6 +940,7 @@ class Topology(models.Model):
 
     class Meta:
         managed = False
+        app_label = 'rdwatch_scoring'
         db_table = 'topology'
 
 
@@ -917,6 +962,7 @@ class Tract(models.Model):
 
     class Meta:
         managed = False
+        app_label = 'rdwatch_scoring'
         db_table = 'tract'
 
 
@@ -936,6 +982,7 @@ class Zcta5(models.Model):
 
     class Meta:
         managed = False
+        app_label = 'rdwatch_scoring'
         db_table = 'zcta5'
         unique_together = (('zcta5ce', 'statefp'),)
 
@@ -954,6 +1001,7 @@ class ZipLookup(models.Model):
 
     class Meta:
         managed = False
+        app_label = 'rdwatch_scoring'
         db_table = 'zip_lookup'
 
 
@@ -971,6 +1019,7 @@ class ZipLookupAll(models.Model):
 
     class Meta:
         managed = False
+        app_label = 'rdwatch_scoring'
         db_table = 'zip_lookup_all'
 
 
@@ -983,6 +1032,7 @@ class ZipLookupBase(models.Model):
 
     class Meta:
         managed = False
+        app_label = 'rdwatch_scoring'
         db_table = 'zip_lookup_base'
 
 
@@ -993,6 +1043,7 @@ class ZipState(models.Model):
 
     class Meta:
         managed = False
+        app_label = 'rdwatch_scoring'
         db_table = 'zip_state'
         unique_together = (('zip', 'stusps'),)
 
@@ -1005,5 +1056,6 @@ class ZipStateLoc(models.Model):
 
     class Meta:
         managed = False
+        app_label = 'rdwatch_scoring'
         db_table = 'zip_state_loc'
         unique_together = (('zip', 'stusps', 'place'),)

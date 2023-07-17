@@ -1,12 +1,13 @@
 <script setup lang="ts">
 import SideBar from "./components/SideBar.vue";
 import MapLibre from "./components/MapLibre.vue";
-import EvaluationsSideBar from "./components/siteObservations/EvaluationsSideBar.vue";
-
+import RightBar from "./components/RightBar.vue"
 </script>
 
 <template>
-  <v-app id="RGD">
+  <v-app
+    id="RGD"
+  >
     <v-navigation-drawer
       location="left"
       width="400"
@@ -19,13 +20,6 @@ import EvaluationsSideBar from "./components/siteObservations/EvaluationsSideBar
     <v-main style="z-index:1">
       <MapLibre />
     </v-main>
-    <v-navigation-drawer
-      location="right"
-      width="400"
-      sticky
-      permanent
-    >
-      <EvaluationsSideBar />
-    </v-navigation-drawer>
+    <RightBar />
   </v-app>
 </template>

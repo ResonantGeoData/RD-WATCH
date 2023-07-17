@@ -19,7 +19,10 @@ classifiers = [
   "Framework :: Django :: 4.0",
   "Framework :: Django",
 ]
-packages = [ { include = "rdwatch", from = "src" } ]
+packages = [
+  { include = "rdwatch", from = "src" },
+  { include = "rdwatch_scoring", from = "src"},
+]
 
 [tool.poetry.dependencies]
 python = "~3.10.0"

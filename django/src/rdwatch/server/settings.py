@@ -22,17 +22,46 @@ class BaseConfiguration(Configuration):
     ALLOWED_HOSTS = ['*']
     DEBUG = values.BooleanValue(False, _environ_prefix='RDWATCH_DJANGO')
 
-    INSTALLED_APPS = [
-        'django.contrib.auth',
-        'django.contrib.contenttypes',
-        'django.contrib.gis',
-        'django.contrib.postgres',
-        'django_filters',
-        'rest_framework',
-        'django_extensions',
-        'rdwatch',
-        'django_celery_results',
-    ]
+    @property
+    def INSTALLED_APPS(self):
+        base_applications = [
+            'django.contrib.auth',
+            'django.contrib.contenttypes',
+            'django.contrib.gis',
+            'django.contrib.postgres',
+            'django_filters',
+            'rest_framework',
+            'django_extensions',
+            'rdwatch',
+            'django_celery_results',
+        ]
+        if 'RDWATCH_POSTGRESQL_SCORING_URI' in os.environ:
+            base_applications.append('rdwatch_scoring')
+        return base_applications
+
+    @property
+    def DATABASES(self):
+        DB_val = values.DatabaseURLValue(
+            alias='default',
+            environ_name='POSTGRESQL_URI',
+            environ_prefix=_environ_prefix,
+            environ_required=True,
+            # Additional kwargs to DatabaseURLValue are passed to dj-database-url
+            engine='django.contrib.gis.db.backends.postgis',
+        )
+        db_dict = DB_val.value
+        if 'RDWATCH_POSTGRESQL_SCORING_URI' in os.environ:
+            scoring_val = values.DatabaseURLValue(
+                alias='scoringdb',
+                environ_name='POSTGRESQL_SCORING_URI',
+                environ_prefix=_environ_prefix,
+                environ_required=True,
+                # Additional kwargs to DatabaseURLValue are passed to dj-database-url
+                engine='django.contrib.gis.db.backends.postgis',
+            )
+            scoring_dict = scoring_val.value
+            db_dict.update(scoring_dict)
+        return db_dict
 
     MIDDLEWARE = [
         'django.middleware.common.CommonMiddleware',
@@ -64,15 +93,6 @@ class BaseConfiguration(Configuration):
         environ_prefix=_environ_prefix,
     )
 
-    DATABASES = values.DatabaseURLValue(
-        environ_name='POSTGRESQL_URI',
-        environ_prefix=_environ_prefix,
-        environ_required=True,
-        # Additional kwargs to DatabaseURLValue are passed to dj-database-url
-        engine='django.contrib.gis.db.backends.postgis',
-        conn_max_age=None,
-    )
-
     # Set to same value allowed by NGINX Unit server in `settings.http.max_body_size`
     # (in /docker/nginx.json)
     DATA_UPLOAD_MAX_MEMORY_SIZE = 134217728
@@ -93,6 +113,13 @@ class BaseConfiguration(Configuration):
     CELERY_CACHE_BACKEND = 'django-cache'
     CELERY_RESULT_EXTENDED = True
     CELERYD_TIME_LIMIT = 1200
+
+    @property
+    def DATABASE_ROUTERS(self):
+        if 'RDWATCH_POSTGRESQL_SCORING_URI' in os.environ:
+            return ['rdwatch_scoring.router.ScoringRouter']
+        else:
+            return []
 
     CELERY_BEAT_SCHEDULE = {
         'delete-temp-model-runs-beat': {

@@ -108,7 +108,7 @@ export const buildImageLayerFilter = (
             'source': source,
             'paint': {
                 'raster-fade-duration': 0,
-                "raster-opacity": settings.imageOpacity,
+                "raster-opacity": settings.imageOpacity/100,
 
             }
         });

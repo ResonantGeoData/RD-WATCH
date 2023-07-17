@@ -94,3 +94,56 @@ Services the application requires.
 - [NGINX Unit](https://unit.nginx.org/): serves both the backend and the bundled static assets ([Dockerfile](https://github.com/ResonantGeoData/RD-WATCH/blob/phase-ii/Dockerfile))
 - [PostgreSQL 14](https://www.postgresql.org/docs/14/index.html) and [PostGIS 3.2](http://www.postgis.net/documentation/): data warehouse ([Dockerfile](https://github.com/ResonantGeoData/RD-WATCH/blob/phase-ii/docker/services/postgresql/Dockerfile))
 - [Redis 7](https://redis.io/docs/): caching (and maybe in the future as a job queue) ([Dockerfile](https://github.com/ResonantGeoData/RD-WATCH/blob/phase-ii/docker/services/redis/Dockerfile))
+
+### Ingesting Data
+
+#### Loading Ground Truth Data
+
+Within the ./scripts directory is a python script named `loadGroundTruth.py`.  This file can be used in conjunction with the ground truth annotaitons located in the annotation Repo:
+[Annotation Repo](https://smartgitlab.com/TE/annotations)
+Running a command like `python loadGroundTruth.py ~/AnnotationRepoLocation --skip_region` will load all of the annotations for the ground truth while skipping the regions.
+
+
+#### Loading Single Model Runs
+Within the ./scripts directory is a python script named `loadModelRuns.py`.  This can be used to load a folder filled with geojson data into the system by using a command like:
+
+```
+python loadModelRuns.py 'KR_0001' "./site_models/KR_R001_*.geojson" --title Test_Eval_12 --performer_shortcode 'KIT' --eval_num 12 --eval_run_num 0
+```
+Within this python file at the top is the rgd_endpoint variable which needs to be set to the server URL and port for where RGD is hosted.  By default this assumes running locally with `http://localhost:8000`
+Be sure that the system is up and running before running the commands.
+The above command will load the data in the site_models/KR_R001 files and give it the title 'Test_Eval_12'.  The eval_num and eval_run_num aren't required unless the scoring database is going to be connected to the system.  Within the script there is
+
+### Scoring
+
+The [Metrics and Test Framework](https://smartgitlab.com/TE/metrics-and-test-framework#creating-a-metrics-database) can be used in addition with RGD to display scores from results.
+In development mode a scoring Database is automatically initialized at URI: `postgresql+psycopg2://scoring:secretkey@localhost:5433/scoring`
+
+To score data:
+- Begin by first starting the the score DB using `docker compose up scoredb`
+- After that in the Metrics and Test Framework, copy the `alembic_example.ini` to `alembic.ini` and set the `sqlalchemy.url = postgresql+psycopg2://scoring:secretkey@localhost:5433/scoring`
+- install the scoring code `pip install -e .` from the root of the Metrics and Test Framework Repository
+- run `alembic upgrade head` to make sure the database is configured properly to load results.
+    - Instead of running the above command you can run the following command from inside the RD-WATCH repository `docker compose run --rm django poetry run django-admin migrate rdwatch_scoring --database scoringdb` this will use the django migrations to initialize the database.
+- Execute the scoring code from inside the mtrics and test framework:
+```
+  python -m iarpa_smart_metrics.run_evaluation \
+               --roi KR_R001 \
+               --gt_dir ../annotations/site_models/ \
+               --rm_dir ../KR_R001/region_models/ \
+               --sm_dir ../KR_R001/site_models/ \
+               --output_dir ../KR_R001/output \
+               --eval_num 12 \
+               --eval_run_num 0 \
+               --performer kit \
+               --no-viz \
+               --no-viz-detection-table \
+               --no-viz-comparison-table \
+               --no-viz-associate-metrics \
+               --no-viz-activity-metrics \
+               --sequestered_id KR_R001 \
+               --db_conn_str postgresql+psycopg2://scoring:secretkey@localhost:5433/scoring
+```
+- the rm_dir and sm_dir shgould be your test annotaitons.
+- gt annotations can be retrieved from the [Annotation Repo](https://smartgitlab.com/TE/annotations)
+- be sure to set the val_num and eval_run_num and remember them when ingesting data into RGD.  The region, eval_num, eval_run_num and performer are used to connect data loaded in RGD to the scoring data.

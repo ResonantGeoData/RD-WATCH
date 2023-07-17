@@ -1,6 +1,8 @@
 <script setup lang="ts">
 import TimeSlider from "./TimeSlider.vue";
-import type { ModelRun } from "../client";
+import { ApiService, ModelRun } from "../client";
+import { state } from "../store";
+import { ref } from "vue";
 
 const props = defineProps<{
   modelRun: ModelRun;
@@ -13,6 +15,33 @@ const emit = defineEmits<{
 
 async function handleClick() {
   emit("toggle");
+}
+
+const useScoring = ref(false);
+
+async function getScoringColoring() {
+  if (!useScoring.value) { // inverted value because of the delay
+    const results = await ApiService.getScoreColoring(props.modelRun.id, props.modelRun.region?.id || 0)
+    let tempResults = state.filters.scoringColoring;
+    if (!tempResults) {
+      tempResults = {};
+    }
+    if (tempResults !== undefined && tempResults !== null)  {
+      tempResults[`${props.modelRun.id}_${props.modelRun.region?.id || 0}`] = results;
+    }
+    state.filters = { ...state.filters, scoringColoring: tempResults };
+  } else {
+    let tempResults = state.filters.scoringColoring;
+    if (tempResults) {
+      if (Object.keys(tempResults).includes(`${props.modelRun.id}_${props.modelRun.region?.id || 0}`)) {
+        delete tempResults[`${props.modelRun.id}_${props.modelRun.region?.id || 0}`];
+      }
+      if (Object.values(tempResults).length === 0) {
+        tempResults = null;
+      }
+    }
+    state.filters = { ...state.filters, scoringColoring: tempResults };
+  }
 }
 </script>
 
@@ -96,10 +125,21 @@ async function handleClick() {
           mdi-check-decagram
         </v-icon>
         <div
-          class="float-right rounded bg-gray-400 pl-1 pr-1 group-open:bg-gray-100"
+          class="float-right "
         >
           {{ modelRun.performer.short_code }}
         </div>
+      </v-row>
+      <v-row
+        v-if="modelRun.hasScores && props.open"
+        dense
+      >
+        <input
+          v-model="useScoring"
+          type="checkbox"
+          @click.stop="getScoringColoring()"
+        >
+        <span class="ml-2"> Scoring Coloring</span>
       </v-row>
     </v-card-text>
     <v-card-actions v-if="open">

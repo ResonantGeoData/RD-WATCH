@@ -1,3 +1,4 @@
+
 export interface PopUpData {
     siteId: string;
     siteColor: string;
@@ -5,4 +6,5 @@ export interface PopUpData {
     groundTruth: boolean;
     scoreColor: string;
     area: string;
+    timestamp?: string;
   }  

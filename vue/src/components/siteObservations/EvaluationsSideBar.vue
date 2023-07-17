@@ -52,7 +52,7 @@ onUnmounted(() => {
 <template>
   <v-card
     v-if="state.selectedObservations.length"
-    class="pa-5 site-eval-card"
+    class="px-5 pb-5 site-eval-card"
   >
     <v-row>
       <h1 class="mx-4 mt-2">
@@ -104,7 +104,9 @@ onUnmounted(() => {
         :key="`siteObs_${item.id}`"
         :site-observation="item"
         class="siteObs"
-        :class="{ outlined: hoveredInfo.siteId.includes(item.id) }"
+        :class="{ outlined: hoveredInfo.siteId.includes(item.id), evalhovered: state.filters.hoverSiteId === item.id }"
+        @mouseenter="state.filters.hoverSiteId = item.id"
+        @mouseleave="state.filters.hoverSiteId = -1"
       />
     </div>
   </v-card>
@@ -119,6 +121,9 @@ onUnmounted(() => {
   border: 3px solid transparent;
   max-height: calc(100vh - 10px);
 
+}
+.evalhovered {
+  border: 3px solid orange;
 }
 .outlined {
   background-color: orange;
@@ -136,6 +141,13 @@ onUnmounted(() => {
 }
 
 .site-eval-card{
-  min-height: 100vh;
+  overflow-y:auto;
+  background-color: white;
+}
+.eval-controls {
+  position:sticky;
+  top:0px;
+  z-index:2;
+  background-color: white;
 }
 </style>

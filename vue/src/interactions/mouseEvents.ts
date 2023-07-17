@@ -6,7 +6,6 @@ import  createPopup from '../main';
 import { PopUpData } from '../interactions/popUpType';
 
 
-
   const hoveredInfo: Ref<{region: string[], siteId: number[]}> = ref({region: [], siteId:[]});
 
 let app: App | null = null;
@@ -26,19 +25,17 @@ const calculateScoreColor = (score: number) => {
   return "black";
 };
 
-const popupLogic = (map: ShallowRef<null | Map>) => {
+const popupLogic = async (map: ShallowRef<null | Map>) => {
   const popup = new Popup({
     closeButton: false,
     closeOnClick: false,
-    maxWidth: '600px',
+    maxWidth: '700px',
   });
-  let insideObservation = false;
-  const drawPopup = (e: MapLayerMouseEvent) => {
+  const drawPopup = async (e: MapLayerMouseEvent) => {
     if (e.features && e.features[0]?.properties && map.value) {
       const coordinates = e.lngLat;
       const ids = [];
       const htmlMap: Record<string, boolean> = {};
-      insideObservation = true;
       hoveredInfo.value.region = [];
       hoveredInfo.value.siteId = [];
       const popupData: PopUpData[] = [];
@@ -71,8 +68,9 @@ const popupLogic = (map: ShallowRef<null | Map>) => {
                     groundTruth: item.properties.groundtruth,
                     siteColor: `rgb(${fillColor.r *255}, ${fillColor.g * 255}, ${fillColor.b * 255})`,
                     scoreColor: calculateScoreColor(score),
-                    area,
-                  })    
+                    timestamp: item.properties.timestamp,
+                    area,                  
+                })    
               }
             }
           }
@@ -90,7 +88,6 @@ const popupLogic = (map: ShallowRef<null | Map>) => {
     } else if (map.value) {
       hoveredInfo.value.region = [];
       hoveredInfo.value.siteId = [];
-      insideObservation = false;
       if (app !== null) {
         app.unmount();
         app = null;
@@ -104,8 +101,15 @@ const popupLogic = (map: ShallowRef<null | Map>) => {
       const feature = e.features[0];
       if (feature.properties) {
         const siteId = feature.properties.siteeval_id;
+        const scoringBase = {
+          regionId: feature.properties.region_id as number,
+          configurationId: feature.properties.configuration_id as number,
+          siteNumber: feature.properties.site_number as number,
+          version: feature.properties.version,
+        }
+
         if (siteId && !selectedObservationList.value.includes(siteId)) {
-          await getSiteObservationDetails(siteId);
+          await getSiteObservationDetails(siteId, scoringBase);
         }
       }
     }
@@ -119,11 +123,11 @@ const popupLogic = (map: ShallowRef<null | Map>) => {
     map.value.on("mouseleave", "observations-fill", function (e) {
       drawPopup(e);
     });
-    map.value.on("mousemove", "observations-fill", function (e) {
-      if (insideObservation) {
-        drawPopup(e);
-      }
-    });
+    // map.value.on("mousemove", "observations-fill", function (e) {
+    //   if (insideObservation) {
+    //     drawPopup(e);
+    //   }
+    // });
     map.value.on("click", "observations-fill", function (e) {
       clickObservation(e);
     });

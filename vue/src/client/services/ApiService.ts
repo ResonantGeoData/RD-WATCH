@@ -25,6 +25,23 @@ export interface QueryArguments {
   limit?: number;
 }
 
+export interface ScoringResults {
+  region_name: string;
+  evaluationId?: number;
+  evaluation_run?: number;
+  performer: string;
+  evaluation_uuid: string;
+  unionArea: number;
+  statusAnnotated: string;
+  temporalIOU: {
+    site_preparation: string;
+    active_construction: string;
+    post_construction: string;
+
+  }
+  color?: string;
+}
+
 export class ApiService {
   /**
    * @returns ServerStatus
@@ -293,4 +310,42 @@ export class ApiService {
     });
 
   }
+  public static getScoringDetails(
+    configurationId: number,
+    regionId: number,
+    siteNumber: number,
+    version: string
+  ): CancelablePromise<ScoringResults>
+  {
+    return __request(OpenAPI, {
+      method: "GET",
+      url: "/api/scores/details",
+      query: { configurationId, regionId, siteNumber, version },
+    });
+  }
+
+  public static hasScores(
+    configurationId: number,
+    regionId: number,
+  ): CancelablePromise<boolean>
+  {
+    return __request(OpenAPI, {
+      method: "GET",
+      url: "/api/scores/has-scores",
+      query: { configurationId, regionId },
+    });
+  }
+  public static getScoreColoring(
+    configurationId: number,
+    regionId: number,
+  ): CancelablePromise<Record<string, string>>
+  {
+    return __request(OpenAPI, {
+      method: "GET",
+      url: "/api/scores/region-colors",
+      query: { configurationId, regionId },
+    });
+  }
+
 }
+

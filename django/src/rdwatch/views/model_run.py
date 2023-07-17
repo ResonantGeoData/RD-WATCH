@@ -52,8 +52,8 @@ class ModelRunFilterSchema(FilterSchema):
         number = None if numstr[1:] == 'xxx' else int(numstr[1:])
         return (
             Q(region_country=country)
-            | Q(region_class_slug=classification_slug)
-            | Q(region_number=number)
+            & Q(region_class_slug=classification_slug)
+            & Q(region_number=number)
         )
 
 
@@ -62,6 +62,8 @@ class HyperParametersWriteSchema(Schema):
     title: constr(max_length=1000)
     parameters: dict
     expiration_time: int | None
+    evaluation: int | None = None
+    evaluation_run: int | None = None
 
     @validator('performer')
     def validate_performer(cls, v: str) -> lookups.Performer:
@@ -80,22 +82,24 @@ class HyperParametersWriteSchema(Schema):
 class HyperParametersDetailSchema(Schema):
     id: int
     title: str
-    region: RegionSchema | None
+    region: RegionSchema | None = None
     performer: PerformerSchema
     parameters: dict
     numsites: int
-    score: float | None
-    timestamp: int | None
-    timerange: TimeRangeSchema | None
+    score: float | None = None
+    timestamp: int | None = None
+    timerange: TimeRangeSchema | None = None
     bbox: dict | None
     created: datetime
-    expiration_time: str | None
+    expiration_time: str | None = None
+    evaluation: int | None = None
+    evaluation_run: int | None = None
 
 
 class HyperParametersListSchema(Schema):
     count: int
-    timerange: TimeRangeSchema | None
-    bbox: dict | None
+    timerange: TimeRangeSchema | None = None
+    bbox: dict | None = None
     results: list[HyperParametersDetailSchema]
 
 
@@ -151,6 +155,8 @@ def get_queryset():
                 parameters='parameters',
                 numsites=Count('evaluations__pk', distinct=True),
                 score=Avg('evaluations__score'),
+                evaluation='evaluation',
+                evaluation_run='evaluation_run',
                 timestamp=ExtractEpoch(Max('evaluations__timestamp')),
                 timerange=TimeRangeJSON('evaluations__observations__timestamp'),
                 bbox=Case(
@@ -179,6 +185,8 @@ def create_model_run(
         performer=hyper_parameters_data.performer,
         parameters=hyper_parameters_data.parameters,
         expiration_time=hyper_parameters_data.expiration_time,
+        evaluation=hyper_parameters_data.evaluation,
+        evaluation_run=hyper_parameters_data.evaluation_run,
     )
     return 200, {
         'id': hyper_parameters.pk,

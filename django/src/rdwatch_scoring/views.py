@@ -103,7 +103,8 @@ def has_scores(request: HttpRequest, configurationId: int, regionId: int):
     performer_name = configuration.performer.slug.lower()
     evaluation_run = configuration.evaluation_run
     region_name = RegionSchema.resolve_name(Region.objects.filter(pk=regionId).first())
-
+    if evaluation_run is None or evaluationId is None:
+        return False
     return EvaluationRun.objects.filter(
         evaluation_run_number=evaluation_run,
         evaluation_number=evaluationId,

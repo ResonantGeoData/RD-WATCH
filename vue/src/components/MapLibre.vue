@@ -6,7 +6,7 @@ import {
   buildSiteFilter,
 } from "../mapstyle/rdwatchtiles";
 import { filteredSatelliteTimeList, state } from "../store";
-import { markRaw, onMounted, onUnmounted, shallowRef, watch } from "vue";
+import { markRaw, onMounted, onUnmounted, shallowRef, watch, withDefaults } from "vue";
 import type { FilterSpecification } from "maplibre-gl";
 import type { ShallowRef } from "vue";
 import { popupLogic } from "../interactions/mouseEvents";
@@ -15,6 +15,15 @@ import { setReference } from "../interactions/fillPatterns";
 import { setSatelliteTimeStamp } from "../mapstyle/satellite-image";
 import { throttle } from 'lodash';
 import { updateImageMapSources } from "../mapstyle/images";
+
+interface Props {
+  compact?: boolean
+}
+
+const props = withDefaults(defineProps<Props>(), {
+  compact: false,
+});
+
 
 const mapContainer: ShallowRef<null | HTMLElement> = shallowRef(null);
 const map: ShallowRef<null | Map> = shallowRef(null);
@@ -101,7 +110,7 @@ watch(
 <template>
   <div
     ref="mapContainer"
-    class="map"
+    :class="{map: !compact, compactMap: compact}"
   />
 </template>
 
@@ -112,6 +121,14 @@ watch(
   position: fixed;
   width: 100vw;
   height: 100vh;
+  inset: 0;
+  z-index: -1;
+}
+
+.compactMap {
+  position:fixed;
+  width: 100%;
+  height: 100%;
   inset: 0;
   z-index: -1;
 }

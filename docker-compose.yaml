@@ -66,8 +66,21 @@ services:
       RABBITMQ_DEFAULT_PASS: secretkey
     ports:
       - 5672:5672
+  
+  # Scoring database
+  scoredb:
+    image: postgis/postgis:latest
+    environment:
+      POSTGRES_USER: scoring
+      POSTGRES_DB: scoring
+      POSTGRES_PASSWORD: secretkey
+    volumes:
+      - postgresql-scoring-data:/var/lib/postgresql/data
+    ports:
+      - 5433:5432
 
 volumes:
+  postgresql-scoring-data:
   postgresql-data:
   minio-data:
   redis-master-data:

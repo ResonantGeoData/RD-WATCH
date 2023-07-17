@@ -65,18 +65,6 @@ services:
         condition: service_started
       django:
         condition: service_healthy
-  # scoring database
-  scoredb:
-    image: postgis/postgis:latest
-    environment:
-      POSTGRES_USER: scoring
-      POSTGRES_DB: scoring
-      POSTGRES_PASSWORD: secretkey
-    volumes:
-      - postgresql-scoring-data:/var/lib/postgresql/data
-    ports:
-      - 5433:5432
-
   celery_beat:
     build:
       dockerfile: Dockerfile
@@ -99,5 +87,3 @@ services:
     volumes:
       - ./django:/app/django
 
-volumes:
-  postgresql-scoring-data:

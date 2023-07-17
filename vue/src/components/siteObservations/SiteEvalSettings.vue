@@ -40,7 +40,7 @@ const cloudFilter = computed({
       align="center"
     >
       <v-col cols="3">
-        <span>Cloud Cover:</span>
+        <span class="setting-label">Cloud Cover:</span>
       </v-col>
       <v-col cols="7">
         <v-slider
@@ -54,7 +54,7 @@ const cloudFilter = computed({
         />
       </v-col>
       <v-col>
-        <span class="pl-2">
+        <span class="pl-2 setting-label">
           {{ cloudFilter }}%
         </span>
       </v-col>
@@ -65,7 +65,7 @@ const cloudFilter = computed({
       align="center"
     >
       <v-col cols="3">
-        <span>NoData:</span>
+        <span class="setting-label">NoData:</span>
       </v-col>
       <v-col cols="7">
         <v-slider
@@ -79,7 +79,7 @@ const cloudFilter = computed({
         />
       </v-col>
       <v-col>
-        <span class="pl-2">
+        <span class="pl-2 setting-label">
           {{ percentBlackFilter }}%
         </span>
       </v-col>
@@ -90,7 +90,7 @@ const cloudFilter = computed({
       align="center"
     >
       <v-col cols="3">
-        <span>Image Opacity:</span>
+        <span class="setting-label">Image Opacity:</span>
       </v-col>
       <v-col cols="7">
         <v-slider
@@ -104,10 +104,16 @@ const cloudFilter = computed({
         />
       </v-col>
       <v-col>
-        <span class="pl-2">
-          {{ percentBlackFilter }}%
+        <span class="pl-2 setting-label">
+          {{ imageOpacity }}%
         </span>
       </v-col>
     </v-row>
   </div>
 </template>
+
+<style scoped>
+.setting-label {
+  font-size: 0.85em;
+}
+</style>

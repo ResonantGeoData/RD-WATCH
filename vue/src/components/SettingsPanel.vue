@@ -44,7 +44,7 @@ const showSiteOutline = computed({
     return state.filters.showSiteOutline || false;
   },
   set(val: boolean) {
-    state.filters = { ...state.filters, showSiteOutline: val };
+    state.filters = { ...state.filters, showSiteOutline: val,  };
   },
 });
 

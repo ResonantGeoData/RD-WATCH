@@ -16,4 +16,5 @@ export type ModelRun = {
     max: number;
   } | null;
   bbox: GeoJSON.Polygon | null;
+  hasScores?: boolean;
 };

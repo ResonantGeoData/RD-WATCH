@@ -10,6 +10,8 @@ export interface MapFilters {
   groundTruthPattern?: boolean;
   otherPattern?: boolean;
   showRegionPolygon?: boolean;
+  hoverSiteId?: number;
+  scoringColoring?: Record<string, Record<string, string>> | null;
 }
 
 export interface SatelliteTimeStamp {
@@ -48,6 +50,13 @@ export interface SiteObservationImage {
   disabled?: boolean;
 }
 
+export interface ScoringBase {
+  regionId: number;
+  configurationId: number;
+  siteNumber: number;
+  version: string;
+}
+
 export interface EnabledSiteObservations {
   id: number;
   images: SiteObservationImage[];
@@ -70,6 +79,7 @@ export interface SiteObservationJob {
 
 export interface SiteObservation {
   id: number;
+  scoringBase: ScoringBase;
   timerange: {
     min: number;
     max: number;
@@ -118,6 +128,7 @@ export const state = reactive<{
   };
   bbox: { xmin: number; ymin: number; xmax: number; ymax: number };
   filters: MapFilters;
+  mapLegend: boolean;
   satellite: SatelliteData;
   patterns: {
     patternThickness: number;
@@ -145,6 +156,7 @@ export const state = reactive<{
     groundTruthPattern: false,
     otherPattern: false,
   },
+  mapLegend: false,
   satellite: {
     satelliteImagesOn: false,
     satelliteTimeList:[],
@@ -167,7 +179,7 @@ export const state = reactive<{
     observationSources: ['S2', 'WV'],
     cloudCoverFilter: 70,
     percentBlackFilter: 70,
-    imageOpacity: 1.0,
+    imageOpacity: 100.0,
   },
   loopingInterval: null,
   loopingId: null,
@@ -188,7 +200,7 @@ export const selectedObservationList = computed(() => {
 })
 
 
-export const getSiteObservationDetails = async (siteId: string) => {
+export const getSiteObservationDetails = async (siteId: string, scoringBase: ScoringBase) => {
   const data = await ApiService.getSiteObservations(siteId);
   const { results } = data;
   const { images } = data;
@@ -227,6 +239,7 @@ export const getSiteObservationDetails = async (siteId: string) => {
   const foundIndex = state.selectedObservations.findIndex((item) => item.id === numId);
   const obsData =  {
   id: numId,
+  scoringBase,
   timerange: data.timerange,
   imagesLoaded: false,
   imagesActive: false,

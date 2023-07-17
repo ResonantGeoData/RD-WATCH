@@ -10,13 +10,13 @@ const props = defineProps<{
 
 <template>
   <v-card dense>
-    <div>POPUP</div>
     <v-row
       v-for="item in props.data"
       :key="item.siteId"
       dense
       align="center"
-      class="ma-5"
+      justify="center"
+      class="my-2"
     >
       <v-chip
         label
@@ -46,6 +46,16 @@ const props = defineProps<{
         class="mx-2"
       >
         Area: {{ item.area }}m²
+      </v-chip>
+      <v-chip
+        v-if="item.timestamp"
+        label
+        variant="elevated"
+        class="mx-2"
+      >
+        <v-icon size="x-small">
+          mdi-clock
+        </v-icon>: {{ item.timestamp.substring(0,10) }}
       </v-chip>
     </v-row>
   </v-card>

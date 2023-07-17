@@ -97,6 +97,7 @@ def vector_tile(request: HttpRequest, z: int, x: int, y: int):
             ),
             performer_id=F('siteeval__configuration__performer_id'),
             region_id=F('siteeval__region_id'),
+            version=F('siteeval__version'),
             groundtruth=Case(
                 When(
                     Q(siteeval__configuration__performer__slug='TE')

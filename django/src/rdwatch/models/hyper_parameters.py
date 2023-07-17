@@ -16,6 +16,8 @@ class HyperParameters(models.Model):
         help_text='The hyper parameters for an ML task',
         db_index=True,
     )
+    evaluation = models.IntegerField(blank=True, null=True)
+    evaluation_run = models.IntegerField(blank=True, null=True)
     expiration_time = models.DurationField(
         null=True,
         blank=True,

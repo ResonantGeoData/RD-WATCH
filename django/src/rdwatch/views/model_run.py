@@ -88,19 +88,18 @@ class HyperParametersWriteSchema(Schema):
 class HyperParametersDetailSchema(Schema):
     id: int
     title: str
-    region: RegionSchema | None
+    region: RegionSchema | None = None
     performer: PerformerSchema
     parameters: dict
     numsites: int
-    downloading: int | None
-    score: float | None
-    timestamp: int | None
-    timerange: TimeRangeSchema | None
+    score: float | None = None
+    timestamp: int | None = None
+    timerange: TimeRangeSchema | None = None
     bbox: dict | None
     created: datetime
-    expiration_time: str | None
-    evaluation: int | None
-    evaluation_run: int | None
+    expiration_time: str | None = None
+    evaluation: int | None = None
+    evaluation_run: int | None = None
 
 class EvaluationListSchema(Schema):
     id: int

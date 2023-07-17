@@ -200,6 +200,17 @@ onBeforeUnmount(() => {
         <b class="small">Downloading {{ downloading }} site(s) Images</b>
         <v-progress-linear indeterminate />
       </v-row>
+      <v-row
+        v-if="modelRun.hasScores && props.open"
+        dense
+      >
+        <input
+          v-model="useScoring"
+          type="checkbox"
+          @click.stop="getScoringColoring()"
+        >
+        <span class="ml-2"> Scoring Coloring</span>
+      </v-row>
     </v-card-text>
     <v-card-actions v-if="open && !compact">
       <TimeSlider

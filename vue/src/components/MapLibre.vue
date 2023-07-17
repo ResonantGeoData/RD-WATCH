@@ -97,7 +97,7 @@ watch([() => state.timestamp, () => state.filters, () => state.satellite, () => 
     setFilter(`observations-text-${modelRun.id}`, observationFilter);
   })
 
-
+  popupLogic(map);
 });
 
 watch(

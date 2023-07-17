@@ -69,8 +69,8 @@ const popupLogic = async (map: ShallowRef<null | Map>) => {
                     siteColor: `rgb(${fillColor.r *255}, ${fillColor.g * 255}, ${fillColor.b * 255})`,
                     scoreColor: calculateScoreColor(score),
                     timestamp: item.properties.timestamp,
-                    area,                  
-                })    
+                    area,
+                })
               }
             }
           }
@@ -117,19 +117,16 @@ const popupLogic = async (map: ShallowRef<null | Map>) => {
   }
 
   if (map.value) {
-    map.value.on("mouseenter", "observations-fill", function (e) {
-      drawPopup(e);
-    });
-    map.value.on("mouseleave", "observations-fill", function (e) {
-      drawPopup(e);
-    });
-    // map.value.on("mousemove", "observations-fill", function (e) {
-    //   if (insideObservation) {
-    //     drawPopup(e);
-    //   }
-    // });
-    map.value.on("click", "observations-fill", function (e) {
-      clickObservation(e);
+    state.modelRuns.forEach((m) => {
+      map.value.on("mouseenter", `observations-fill-${m.id}`, function (e) {
+        drawPopup(e);
+      });
+      map.value.on("mouseleave", `observations-fill-${m.id}`, function (e) {
+        drawPopup(e);
+      });
+      map.value.on("click", `observations-fill-${m.id}`, function (e) {
+        clickObservation(e);
+      });
     });
   }
 };

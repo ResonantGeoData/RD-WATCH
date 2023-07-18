@@ -6,7 +6,7 @@ import {
   buildSiteFilter,
 } from "../mapstyle/rdwatchtiles";
 import { filteredSatelliteTimeList, state } from "../store";
-import { markRaw, onMounted, onUnmounted, shallowRef, watch } from "vue";
+import { markRaw, onMounted, onUnmounted, reactive, shallowRef, watch } from "vue";
 import type { FilterSpecification } from "maplibre-gl";
 import type { ShallowRef } from "vue";
 import { popupLogic } from "../interactions/mouseEvents";
@@ -17,6 +17,8 @@ import { throttle } from 'lodash';
 
 const mapContainer: ShallowRef<null | HTMLElement> = shallowRef(null);
 const map: ShallowRef<null | Map> = shallowRef(null);
+
+const modelRunVectorLayers = reactive<Set<number>>(new Set());
 
 function setFilter(layerID: string, filter: FilterSpecification) {
   map.value?.setFilter(layerID, filter, {
@@ -39,6 +41,9 @@ function fitBounds(bbox: typeof state["bbox"]) {
 
 onMounted(() => {
   if (mapContainer.value !== null) {
+    // Add opened model runs to list of vector tile layers
+    state.modelRuns.filter((m) => state.openedModelRuns.has(m.key)).map((m) => m.id).forEach((m) => { modelRunVectorLayers.add(m) })
+
     map.value = markRaw(
       new Map({
         container: mapContainer.value,
@@ -49,7 +54,7 @@ onMounted(() => {
           state.satellite,
           state.enabledSiteObservations,
           state.siteObsSatSettings,
-          state.modelRuns.filter((m) => state.openedModelRuns.has(m.key))
+          Array.from(modelRunVectorLayers),
         ),
         bounds: [
           [state.bbox.xmin, state.bbox.ymin],
@@ -78,10 +83,13 @@ watch([() => state.timestamp, () => state.filters, () => state.satellite, () => 
     throttledSetSatelliteTimeStamp(state, filteredSatelliteTimeList.value);
   }
 
-  const openedModelRuns = state.modelRuns.filter((m) => state.openedModelRuns.has(m.key));
+  const openedModelRunIds = state.modelRuns.filter((m) => state.openedModelRuns.has(m.key)).map((m) => m.id);
+
+  // Add opened model runs to list of vector tile layers
+  openedModelRunIds.forEach((m) => { modelRunVectorLayers.add(m) })
 
   map.value?.setStyle(
-    style(state.timestamp, state.filters, state.satellite, state.enabledSiteObservations, state.siteObsSatSettings, openedModelRuns),
+    style(state.timestamp, state.filters, state.satellite, state.enabledSiteObservations, state.siteObsSatSettings, Array.from(modelRunVectorLayers)),
   );
 
   const siteFilter = buildSiteFilter(state.timestamp, state.filters);
@@ -90,11 +98,11 @@ watch([() => state.timestamp, () => state.filters, () => state.satellite, () => 
     state.filters
   );
 
-  openedModelRuns.forEach(modelRun => {
-    setFilter(`sites-outline-${modelRun.id}`, siteFilter);
-    setFilter(`observations-fill-${modelRun.id}`, observationFilter);
-    setFilter(`observations-outline-${modelRun.id}`, observationFilter);
-    setFilter(`observations-text-${modelRun.id}`, observationFilter);
+  openedModelRunIds.forEach(id => {
+    setFilter(`sites-outline-${id}`, siteFilter);
+    setFilter(`observations-fill-${id}`, observationFilter);
+    setFilter(`observations-outline-${id}`, observationFilter);
+    setFilter(`observations-text-${id}`, observationFilter);
   })
 
   popupLogic(map);

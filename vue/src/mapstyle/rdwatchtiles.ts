@@ -8,7 +8,7 @@ import type {
   LayerSpecification,
   SourceSpecification,
 } from "maplibre-gl";
-import type { KeyedModelRun, MapFilters } from "../store";
+import type { MapFilters } from "../store";
 
 import { annotationColors, observationText, siteText } from "./annotationStyles";
 
@@ -156,13 +156,13 @@ const buildObservationFill = (
   ];
 };
 
-export const buildSourceFilter = (modelRuns: KeyedModelRun[]) => {
+export const buildSourceFilter = (modelRunIds: number[]) => {
   const results: Record<string, SourceSpecification> = {};
-  modelRuns.forEach((item) => {
-    const source = `vectorTileSource_${item.id}`;
+  modelRunIds.forEach((id) => {
+    const source = `vectorTileSource_${id}`;
     results[source] = {
       type: "vector",
-      tiles: [`${urlRoot}/api/model-runs/${item.id}/vector-tile/{z}/{x}/{y}.pbf/`],
+      tiles: [`${urlRoot}/api/model-runs/${id}/vector-tile/{z}/{x}/{y}.pbf/`],
       minzoom: 0,
       maxzoom: 14,
     };
@@ -170,15 +170,15 @@ export const buildSourceFilter = (modelRuns: KeyedModelRun[]) => {
   return results;
 };
 
-export const buildLayerFilter = (timestamp: number, filters: MapFilters, modelRuns: KeyedModelRun[]): LayerSpecification[] => {
+export const buildLayerFilter = (timestamp: number, filters: MapFilters, modelRunIds: number[]): LayerSpecification[] => {
   let results: LayerSpecification[] = [];
-  modelRuns.forEach((item) => {
+  modelRunIds.forEach((id) => {
       results = results.concat([
         {
-          id: `observations-fill-${item.id}`,
+          id: `observations-fill-${id}`,
           type: "fill",
-          source: `vectorTileSource_${item.id}`,
-          "source-layer": `observations-${item.id}`,
+          source: `vectorTileSource_${id}`,
+          "source-layer": `observations-${id}`,
           paint: {
             "fill-color": annotationColors(filters),
             "fill-opacity": 1,
@@ -187,10 +187,10 @@ export const buildLayerFilter = (timestamp: number, filters: MapFilters, modelRu
           filter: buildObservationFilter(timestamp, filters),
         },
         {
-          id: `observations-outline-${item.id}`,
+          id: `observations-outline-${id}`,
           type: "line",
-          source: `vectorTileSource_${item.id}`,
-          "source-layer": `observations-${item.id}`,
+          source: `vectorTileSource_${id}`,
+          "source-layer": `observations-${id}`,
           paint: {
             "line-color": annotationColors(filters),
             "line-width": buildObservationThick(filters),
@@ -198,10 +198,10 @@ export const buildLayerFilter = (timestamp: number, filters: MapFilters, modelRu
           filter: buildObservationFilter(timestamp, filters),
         },
         {
-          id: `observations-text-${item.id}`,
+          id: `observations-text-${id}`,
           type: "symbol",
-          source: `vectorTileSource_${item.id}`,
-          "source-layer": `observations-${item.id}`,
+          source: `vectorTileSource_${id}`,
+          "source-layer": `observations-${id}`,
           layout: {
             "text-anchor": "center",
             "text-font": ["Roboto Regular"],
@@ -217,10 +217,10 @@ export const buildLayerFilter = (timestamp: number, filters: MapFilters, modelRu
           filter: buildObservationFilter(timestamp, filters),
         },
         {
-          id: `regions-outline-${item.id}`,
+          id: `regions-outline-${id}`,
           type: "line",
-          source: `vectorTileSource_${item.id}`,
-          "source-layer": `regions-${item.id}`,
+          source: `vectorTileSource_${id}`,
+          "source-layer": `regions-${id}`,
           paint: {
             "line-color": annotationColors(filters),
             "line-width": 2,
@@ -228,10 +228,10 @@ export const buildLayerFilter = (timestamp: number, filters: MapFilters, modelRu
           filter: buildRegionFilter(filters),
         },
         {
-          id: `sites-outline-${item.id}`,
+          id: `sites-outline-${id}`,
           type: "line",
-          source: `vectorTileSource_${item.id}`,
-          "source-layer": `sites-${item.id}`,
+          source: `vectorTileSource_${id}`,
+          "source-layer": `sites-${id}`,
           paint: {
             "line-color": annotationColors(filters),
             "line-width": 2,
@@ -239,10 +239,10 @@ export const buildLayerFilter = (timestamp: number, filters: MapFilters, modelRu
           filter: buildSiteFilter(timestamp, filters),
         },
         {
-          id: `sites-text-${item.id}`,
+          id: `sites-text-${id}`,
           type: "symbol",
-          source: `vectorTileSource_${item.id}`,
-          "source-layer": `sites-${item.id}`,
+          source: `vectorTileSource_${id}`,
+          "source-layer": `sites-${id}`,
           layout: {
             "text-anchor": "center",
             "text-font": ["Roboto Regular"],

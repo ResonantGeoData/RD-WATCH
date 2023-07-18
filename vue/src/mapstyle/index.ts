@@ -26,7 +26,7 @@ export const style = (
   satellite: SatelliteData,
   enabledSiteObservations: EnabledSiteObservations[],
   settings: siteObsSatSettings,
-  modelRuns: KeyedModelRun[],
+  modelRunIds: number[],
 ): StyleSpecification => ({
   version: 8,
   sources: {
@@ -34,7 +34,7 @@ export const style = (
     ...openmaptilesSources,
     ...buildSatelliteSourceFilter(timestamp, satellite),
     ...buildImageSourceFilter(timestamp, enabledSiteObservations, settings),
-    ...buildRdwatchtilesSources(modelRuns),
+    ...buildRdwatchtilesSources(modelRunIds),
   },
   sprite: `${tileServerURL}/sprites/osm-liberty`,
   glyphs: `${tileServerURL}/fonts/{fontstack}/{range}.pbf`,
@@ -48,6 +48,6 @@ export const style = (
     ...openmaptilesLayers,
     ...satelliteLayers(timestamp, satellite),
     ...buildImageLayerFilter(timestamp, enabledSiteObservations, settings),
-    ...rdwatchtilesLayers(timestamp, filters, modelRuns),
+    ...rdwatchtilesLayers(timestamp, filters, modelRunIds),
   ],
 });

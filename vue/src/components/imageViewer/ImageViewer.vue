@@ -1,16 +1,26 @@
 <script setup lang="ts">
-import { Ref, computed, ref, watch, } from "vue";
+import { Ref, computed, ref, watch, withDefaults } from "vue";
 import { ApiService } from "../../client";
 import {EvaluationGeoJSON, EvaluationImage } from "../../types";
 import { getColorFromLabel } from '../../mapstyle/annotationStyles';
-const props = defineProps<{
+
+interface Props {
   siteEvalId: number;
-}>();
+  dialog?: boolean;
+}
+
+const props = withDefaults(defineProps<Props>(), {
+  dialog: false,
+});
 
 interface PixelPoly {
     coords: {x:number; y:number}[];
     label: string;
 }
+
+const emit = defineEmits<{
+  (e: "close"): void;
+}>();
 
 
 const currentImage = ref(0);
@@ -24,7 +34,6 @@ const imageSourcesFilter: Ref<EvaluationImage['source'][]> = ref(['S2', 'WV', 'L
 const percentBlackFilter: Ref<number> = ref(100);
 const cloudFilter: Ref<number> = ref(100);
 const siteObsFilter: Ref<('observations' | 'non-observations')[]> = ref(['observations', 'non-observations'])
-const displayImage = ref(false);
 const getClosestPoly = (timestamp: number, polys: EvaluationGeoJSON[]) => {
     let found = polys[0];
     for (let i = 0; i < polys.length; i += 1) {
@@ -59,6 +68,8 @@ const filteredImages = computed(() => {
   })
 
 })
+
+
 
 const currentTimestamp = computed(() => {
     const time = combinedImages.value[currentImage.value].image.timestamp;
@@ -132,6 +143,18 @@ const drawData = (canvas: HTMLCanvasElement, image: EvaluationImage, poly:PixelP
         context.lineWidth = 1;
         context.strokeStyle = getColorFromLabel(poly.label);
         context.stroke();
+        // Now scale the canvas to the proper size
+        const ratio = image.image_dimensions[1] / image.image_dimensions[0];
+        const maxHeight = document.documentElement.clientHeight * 0.35;
+        const maxWidth = document.documentElement.clientWidth - 550;
+        let width = maxWidth
+        let height = width * ratio;
+        if (height > maxHeight) {
+          height = maxHeight;
+          width = height / ratio;
+        }
+        context.canvas.style.width = `${width}px`
+        context.canvas.style.height = `${height}px`;
         }
     }
 
@@ -145,20 +168,30 @@ const drawData = (canvas: HTMLCanvasElement, image: EvaluationImage, poly:PixelP
     }
     };
 
-watch(displayImage, async () => {
-    if (displayImage.value) {
-        await getImageData();
-        if (currentImage.value < filteredImages.value.length && canvasRef.value !== null) {
-            drawData(canvasRef.value, filteredImages.value[currentImage.value].image, filteredImages.value[currentImage.value].poly)
-        }
-    }
-});
+const load = async () => {
+  await getImageData();
+  if (currentImage.value < filteredImages.value.length && canvasRef.value !== null) {
+      drawData(canvasRef.value, filteredImages.value[currentImage.value].image, filteredImages.value[currentImage.value].poly)
+  }
+}
+
+watch(() => props.siteEvalId , load);
+load();
 
 watch([percentBlackFilter, cloudFilter, siteObsFilter, imageSourcesFilter], () => {
   if (currentImage.value > filteredImages.value.length) {
     currentImage.value = 0;
   }
 });
+
+const copyURL = async (mytext: string) => {
+    try {
+      await navigator.clipboard.writeText(mytext);
+    } catch($e) {
+      alert('Cannot copy');
+    }
+  }
+
 
 watch([currentImage, imageRef, filteredImages], () => {
     if (currentImage.value < filteredImages.value.length && imageRef.value !== null) {
@@ -174,162 +207,171 @@ watch([currentImage, imageRef, filteredImages], () => {
 </script>
 
 <template>
-  <div>
-    <v-btn @click="displayImage = true">
-      Show Image Viewer
-    </v-btn>
-    <v-dialog
-      v-model="displayImage"
-      width="800"
+  <v-card
+    class="pa-4"
+    :class="{review: !dialog}"
+  >
+    <v-row
+      v-if="dialog"
+      dense
     >
-      <v-card
-        class="pa-4"
+      <v-spacer />
+      <v-icon @click="emit('close')">
+        mdi-close
+      </v-icon>
+    </v-row>
+    <v-card-title> Site Image Display</v-card-title>
+    <v-row
+      dense
+      class="my-1"
+    >
+      <v-icon @click="filterSettings = !filterSettings">
+        mdi-filter
+      </v-icon>
+      <div>
+        Displaying {{ filteredImages.length }} of {{ combinedImages.length }} images
+      </div>
+    </v-row>
+    <div v-if="filterSettings">
+      <v-row dense>
+        <v-select
+          v-model="siteObsFilter"
+          label="Site Observations"
+          :items="baseObs"
+          multiple
+          closable-chips	
+          chips
+          class="mx-2"
+        />
+        <v-select
+          v-model="imageSourcesFilter"
+          label="Sources"
+          :items="baseImageSources"
+          multiple
+          closable-chips	
+          chips
+          class="mx-2"
+        />
+      </v-row>
+      <v-row
+        dense
+        justify="center"
+        align="center"
       >
-        <v-row dense>
-          <v-spacer />
-          <v-icon @click="displayImage = false">
-            mdi-close
-          </v-icon>
-        </v-row>
-        <v-card-title> Site Image Display</v-card-title>
-        <v-row
-          dense
-          class="my-1"
-        >
-          <v-icon @click="filterSettings = !filterSettings">
-            mdi-filter
-          </v-icon>
-          <div>
-            Displaying {{ filteredImages.length }} of {{ combinedImages.length }} images
-          </div>
-        </v-row>
-        <div v-if="filterSettings">
-          <v-row dense>
-            <v-select
-              v-model="siteObsFilter"
-              label="Site Observations"
-              :items="baseObs"
-              multiple
-              closable-chips	
-              chips
-              class="mx-2"
-            />
-            <v-select
-              v-model="imageSourcesFilter"
-              label="Sources"
-              :items="baseImageSources"
-              multiple
-              closable-chips	
-              chips
-              class="mx-2"
-            />
-          </v-row>
-          <v-row
-            dense
-            justify="center"
-            align="center"
-          >
-            <v-col cols="3">
-              <span>Cloud Cover:</span>
-            </v-col>
-            <v-col cols="7">
-              <v-slider
-                v-model.number="cloudFilter"
-                min="0"
-                max="100"
-                step="1"
-                color="primary"
-                density="compact"
-                class="mt-5"
-              />
-            </v-col>
-            <v-col>
-              <span class="pl-2">
-                {{ cloudFilter }}%
-              </span>
-            </v-col>
-          </v-row>
-          <v-row
-            dense
-            justify="center"
-            align="center"
-          >
-            <v-col cols="3">
-              <span>NoData:</span>
-            </v-col>
-            <v-col cols="7">
-              <v-slider
-                v-model.number="percentBlackFilter"
-                min="0"
-                max="100"
-                step="1"
-                color="primary"
-                density="compact"
-                class="mt-5"
-              />
-            </v-col>
-            <v-col>
-              <span class="pl-2">
-                {{ percentBlackFilter }}%
-              </span>
-            </v-col>
-          </v-row>
+        <v-col cols="3">
+          <span>Cloud Cover:</span>
+        </v-col>
+        <v-col cols="7">
+          <v-slider
+            v-model.number="cloudFilter"
+            min="0"
+            max="100"
+            step="1"
+            color="primary"
+            density="compact"
+            class="mt-5"
+          />
+        </v-col>
+        <v-col>
+          <span class="pl-2">
+            {{ cloudFilter }}%
+          </span>
+        </v-col>
+      </v-row>
+      <v-row
+        dense
+        justify="center"
+        align="center"
+      >
+        <v-col cols="3">
+          <span>NoData:</span>
+        </v-col>
+        <v-col cols="7">
+          <v-slider
+            v-model.number="percentBlackFilter"
+            min="0"
+            max="100"
+            step="1"
+            color="primary"
+            density="compact"
+            class="mt-5"
+          />
+        </v-col>
+        <v-col>
+          <span class="pl-2">
+            {{ percentBlackFilter }}%
+          </span>
+        </v-col>
+      </v-row>
+    </div>
+    <v-row>
+      <v-spacer />
+      <canvas
+        v-if="filteredImages.length"
+        ref="canvasRef"
+      />
+      <v-spacer />
+    </v-row>
+    <v-row
+      v-if="filteredImages.length && filteredImages[currentImage]"
+      dense
+      class="mt-2"
+    >
+      <v-col cols="3">
+        <div v-if="filteredImages[currentImage].image.siteobs_id !== null">
+          Site Observation
         </div>
-        <canvas
-          v-if="filteredImages.length"
-          ref="canvasRef"
-        />
-        <v-row
-          v-if="filteredImages.length && filteredImages[currentImage]"
-          dense
-          class="mt-2"
+        <div v-else>
+          Non Site Observation
+        </div>
+        <v-tooltip
+          open-delay="50"
+          bottom
         >
-          <v-col cols="3">
-            <div v-if="filteredImages[currentImage].image.siteobs_id !== null">
-              Site Observation
-            </div>
-            <div v-else>
-              Non Site Observation
-            </div>
-            <v-tooltip
-              open-delay="50"
-              bottom
+          <template #activator="{ props }">
+            <v-icon
+              v-bind="props"
+              @click="copyURL(filteredImages[currentImage].image.aws_location)"
             >
-              <template #activator="{ props }">
-                <v-icon v-bind="props">
-                  mdi-information
-                </v-icon>
-              </template>
-              <span>
-                {{ filteredImages[currentImage].image.aws_location }}
-              </span>
-            </v-tooltip>
-          </v-col>
-          <v-spacer />
-          <v-col class="text-center">
-            <div>
-              <div>{{ filteredImages[currentImage].image.source }}</div>
-              <div>{{ currentTimestamp }}</div>
-            </div>
-          </v-col>
-          <v-spacer />
-          <v-col
-            class="text-right"
-            cols="3"
-          >
-            <div>
-              <div>NODATA: {{ filteredImages[currentImage].image.percent_black.toFixed(0) }}%</div>
-              <div>Cloud: {{ filteredImages[currentImage].image.cloudcover.toFixed(0) }}%</div>
-            </div>
-          </v-col>
-        </v-row>
-        <v-slider
-          v-model="currentImage"
-          min="0"
-          :max="filteredImages.length - 1"
-          step="1"
-        />
-      </v-card>
-    </v-dialog>
-  </div>
+              mdi-information
+            </v-icon>
+          </template>
+          <span>
+            Click to Copy: {{ filteredImages[currentImage].image.aws_location }}
+          </span>
+        </v-tooltip>
+      </v-col>
+      <v-spacer />
+      <v-col class="text-center">
+        <div>
+          <div>{{ filteredImages[currentImage].image.source }}</div>
+          <div>{{ currentTimestamp }}</div>
+        </div>
+      </v-col>
+      <v-spacer />
+      <v-col
+        class="text-right"
+        cols="3"
+      >
+        <div>
+          <div>NODATA: {{ filteredImages[currentImage].image.percent_black.toFixed(0) }}%</div>
+          <div>Cloud: {{ filteredImages[currentImage].image.cloudcover.toFixed(0) }}%</div>
+        </div>
+      </v-col>
+    </v-row>
+    <v-slider
+      v-model="currentImage"
+      min="0"
+      :max="filteredImages.length - 1"
+      step="1"
+    />
+  </v-card>
 </template>
+
+<style scoped>
+.review {
+  min-height: 50vh;
+  max-height: 70vh;
+  overflow-y: auto;
+}
+</style>

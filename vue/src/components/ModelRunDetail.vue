@@ -2,12 +2,17 @@
 import TimeSlider from "./TimeSlider.vue";
 import { ApiService, ModelRun } from "../client";
 import { state } from "../store";
-import { ref } from "vue";
+import { Ref, computed, onBeforeMount, onBeforeUnmount, ref, withDefaults } from "vue";
 
-const props = defineProps<{
+
+interface Props {
   modelRun: ModelRun;
-  open: boolean;
-}>();
+  open?: boolean;
+  compact?: boolean
+}
+const props = withDefaults(defineProps<Props>(), {
+  compact: false,
+});
 
 const emit = defineEmits<{
   (e: "toggle"): void;
@@ -18,6 +23,11 @@ async function handleClick() {
 }
 
 const useScoring = ref(false);
+const downloadImages = ref(false);
+const baseList = ref(['S2', 'WV', 'L8'])
+const selectedSource: Ref<'S2' | 'WV' | 'L8'> = ref('WV');
+
+let loopingInterval: NodeJS.Timeout | null = null;
 
 async function getScoringColoring() {
   if (!useScoring.value) { // inverted value because of the delay
@@ -43,6 +53,43 @@ async function getScoringColoring() {
     state.filters = { ...state.filters, scoringColoring: tempResults };
   }
 }
+const downloading = ref(props.modelRun.downloading);
+
+const updateDownloading = async () => {
+  const data = await ApiService.getModelRun(props.modelRun.id);
+  console.log(data);
+  downloading.value = data.downloading;
+  if (loopingInterval !== null && downloading.value == 0) {
+    clearInterval(loopingInterval);
+    loopingInterval = null;
+  }
+
+}
+const startDownload = () => {
+  ApiService.getModelRunImages(props.modelRun.id.toString(), selectedSource.value )
+  downloadImages.value = false;
+  downloading.value = props.modelRun.numsites;
+  setTimeout(() => {
+  updateDownloading();
+  loopingInterval = setInterval(updateDownloading, 1000);
+  }, 2000)
+}
+
+onBeforeMount(() => {
+  if (loopingInterval !== null) {
+    clearInterval(loopingInterval);
+    loopingInterval = null;
+  }
+  if (props.modelRun.downloading > 0 && loopingInterval === null)
+  loopingInterval = setInterval(updateDownloading, 1000);
+})
+
+onBeforeUnmount(() => {
+  if (loopingInterval !== null) {
+    clearInterval(loopingInterval);
+    loopingInterval = null;
+  }
+})
 </script>
 
 <template>
@@ -87,7 +134,7 @@ async function getScoringColoring() {
           {{ modelRun.numsites }}
         </div>
       </v-row>
-      <v-row dense>
+      <v-row dense v-if="!compact">
         <div>
           average score:
         </div>
@@ -117,6 +164,17 @@ async function getScoringColoring() {
           }}
         </div>
       </v-row>
+      <v-row
+        v-if="!compact && modelRun.hasScores && props.open"
+        dense
+      >
+        <input
+          v-model="useScoring"
+          type="checkbox"
+          @click.stop="getScoringColoring()"
+        >
+        <span class="ml-2"> Scoring Coloring</span>
+      </v-row>
       <v-row dense>
         <v-icon
           v-if="modelRun.performer.short_code === 'TE' && modelRun.score == 1"
@@ -129,6 +187,18 @@ async function getScoringColoring() {
         >
           {{ modelRun.performer.short_code }}
         </div>
+        <v-spacer />
+        <v-btn
+          :disabled="downloading > 0"
+          size="x-small"
+          @click.stop="downloadImages = true"
+        >
+          Get <v-icon>mdi-image</v-icon>
+        </v-btn>
+      </v-row>
+      <v-row v-if="downloading > 0">
+        <b class="small">Downloading {{ downloading }} site(s) Images</b>
+        <v-progress-linear indeterminate />
       </v-row>
       <v-row
         v-if="modelRun.hasScores && props.open"
@@ -142,12 +212,46 @@ async function getScoringColoring() {
         <span class="ml-2"> Scoring Coloring</span>
       </v-row>
     </v-card-text>
-    <v-card-actions v-if="open">
+    <v-card-actions v-if="open && !compact">
       <TimeSlider
         :min="modelRun.timerange?.min || 0"
         :max="modelRun.timerange?.max || 0"
       />
     </v-card-actions>
+    <v-dialog
+      v-model="downloadImages"
+      width="300"
+    >
+      <v-card>
+        <v-card-title>Download Model-Run Images</v-card-title>
+        <v-card-text>
+          <v-select
+            v-model="selectedSource"
+            :items="baseList"
+            label="Source"
+          />
+        </v-card-text>
+        <v-card-actions>
+          <v-row>
+            <v-spacer />
+            <v-btn
+              color="error"
+              class="mx-3"
+              @click="downloadImages = false"
+            >
+              Cancel
+            </v-btn>
+            <v-btn
+              color="success"
+              class="mx-3"
+              @click="startDownload()"
+            >
+              Download
+            </v-btn>
+          </v-row>
+        </v-card-actions>
+      </v-card>
+    </v-dialog>
   </v-card>
 </template>
 

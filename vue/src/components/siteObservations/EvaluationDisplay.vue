@@ -3,10 +3,10 @@ import { computed, ref } from "vue";
 import { ImageBBox, SiteObservationImage, getSiteObservationDetails, state } from "../../store";
 import { SiteObservation } from "../../store";
 import { imageFilter } from "../../mapstyle/images";
-import ImageViewer from "../ImageViewer/ImageViewer.vue";
 import EvaluationImages from "./EvaluationImages.vue";
 import EvaluationScoring from "./EvaluationScoring.vue";
 import { ApiService } from "../../client";
+import ImageViewerButton from "../imageViewer/ImageViewerButton.vue";
 
 const props = defineProps<{
   siteObservation: SiteObservation;
@@ -262,7 +262,6 @@ const changeTimstamp = ({dir, loop}: {dir: number, loop: boolean}) => {
         </div>
         <v-spacer />
       </v-row>
-
       <v-row
         dense
         justify="center"
@@ -317,7 +316,7 @@ const changeTimstamp = ({dir, loop}: {dir: number, loop: boolean}) => {
         </v-icon>
       </v-row>
       <v-row>
-        <image-viewer :site-eval-id="siteObservation.id" />
+        <image-viewer-button :site-eval-id="siteObservation.id" />
       </v-row>
     </v-card-text>
   </v-card>

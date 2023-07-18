@@ -156,6 +156,7 @@ def get_site_observation_images(request: HttpRequest, pk: int):
         else:
             fetching_task = SatelliteFetching.objects.create(
                 siteeval=siteeval,
+                configuration=siteeval.configuration,
                 timestamp=datetime.now(),
                 status=SatelliteFetching.Status.RUNNING,
             )

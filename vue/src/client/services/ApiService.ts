@@ -42,6 +42,14 @@ export interface ScoringResults {
   color?: string;
 }
 
+export interface ModelRunEvaluations {
+  region: Region;
+  evaluations: {
+    number: number,
+    id: number
+  }[];
+}
+
 export class ApiService {
   /**
    * @returns ServerStatus
@@ -105,6 +113,27 @@ export class ApiService {
           }
         });
       }
+      
+      /**
+   * @param id
+   * @returns boolean
+   * @throws ApiError
+   */
+      public static getModelRunImages(
+        id: string,
+        constellation: 'WV' | 'S2' | 'L8' = 'WV'
+      ): CancelablePromise<boolean> {
+        return __request(OpenAPI, {
+          method: "POST",
+          url: "/api/model-runs/{id}/generate-images",
+          path: {
+            id: id,
+          },
+          query: {
+            constellation,
+          }
+        });
+      }
 
       /**
    * @param id
@@ -123,6 +152,22 @@ export class ApiService {
         });
       }
 
+      /**
+   * @param id
+   * @returns boolean
+   * @throws ApiError
+   */
+      public static cancelModelRunsImageTask(
+        id: number,
+      ): CancelablePromise<boolean> {
+        return __request(OpenAPI, {
+          method: "PUT",
+          url: "/api/model-runs/{id}/cancel-generate-images",
+          path: {
+            id: id,
+          },
+        });
+      }
   
   /**
    * @returns ModelRunList
@@ -139,6 +184,22 @@ export class ApiService {
       ),
     });
   }
+
+    /**
+   * @returns EvaluationsList
+   * @throws ApiError
+   */
+    public static getModelRunEvaluations(id: number): CancelablePromise<ModelRunEvaluations> {
+      return __request(OpenAPI, {
+        method: "GET",
+        url: "/api/model-runs/{id}/evaluations",
+        path: {
+          id: id,
+        },
+      });
+    }
+  
+    
 
   /**
    * @param id
@@ -300,16 +361,6 @@ export class ApiService {
     });
   }
 
-  public static getEvaluationImages(id: number): CancelablePromise<EvaluationImageResults> {
-    return __request(OpenAPI, {
-      method: "GET",
-      url: "/api/evaluations/images/{id}",
-      path: {
-        id: id,
-      },
-    });
-
-  }
   public static getScoringDetails(
     configurationId: number,
     regionId: number,
@@ -347,5 +398,15 @@ export class ApiService {
     });
   }
 
+  public static getEvaluationImages(id: number): CancelablePromise<EvaluationImageResults> {
+    return __request(OpenAPI, {
+      method: "GET",
+      url: "/api/evaluations/images/{id}",
+      path: {
+        id: id,
+      },
+    });
+
+  }
 }
 

@@ -7,7 +7,7 @@ import {
   ModelRun,
   QueryArguments,
 } from "../client";
-import { computed, ref, watch, watchEffect } from "vue";
+import { computed, ref, watch, watchEffect, withDefaults } from "vue";
 import type { Ref } from "vue";
 import { ApiService } from "../client";
 import { filteredSatelliteTimeList, state } from "../store";
@@ -18,9 +18,13 @@ interface KeyedModelRun extends ModelRun {
   key: string;
 }
 
-const props = defineProps<{
+interface Props {
   filters: QueryArguments;
-}>();
+  compact?: boolean
+}
+const props = withDefaults(defineProps<Props>(), {
+  compact: false,
+});
 
 const emit = defineEmits<{
   (e: "update:timerange", timerange: ModelRun["timerange"]): void;
@@ -80,7 +84,9 @@ async function loadMore() {
         ymax: bounds.getNorth(),
       };
       resultsBoundingBox.value = bbox;
-      getSatelliteTimestamps(modelRunList)
+      if (!props.compact) {
+          getSatelliteTimestamps(modelRunList)
+      }
       state.bbox = bbox;
     } else if (!state.filters.region_id?.length) {
       const bbox = {
@@ -207,6 +213,9 @@ function handleToggle(modelRun: KeyedModelRun) {
   if (openedModelRuns.value.has(modelRun.key)) {
     openedModelRuns.value.delete(modelRun.key);
   } else {
+    if (props.compact) {
+      openedModelRuns.value.clear();
+    }
     openedModelRuns.value.add(modelRun.key);
   }
 
@@ -270,7 +279,7 @@ watch([() => props.filters.region, () => props.filters.performer], () => {
 
 <template>
   <div>
-    <v-row>
+    <v-row v-if="!compact">
       <v-chip
         v-if="!loading && !loadingSatelliteTimestamps"
         style="font-size: 0.75em"
@@ -360,13 +369,15 @@ watch([() => props.filters.region, () => props.filters.performer], () => {
       </v-alert>
     </div>
     <v-container
-      class="overflow-y-auto p-5 mt-5 modelRuns"
+      class="overflow-y-auto p-5 mt-5"
+      :class="{ modelRuns: !compact, compactModelRuns: compact}"
       @scroll="handleScroll"
     >
       <ModelRunDetail
         v-for="modelRun in modelRuns"
         :key="modelRun.key"
         :model-run="modelRun"
+        :compact="compact"
         :open="openedModelRuns.has(modelRun.key)"
         :class="{
           outlined: hoveredInfo.region.includes(
@@ -382,7 +393,9 @@ watch([() => props.filters.region, () => props.filters.performer], () => {
 <style scoped>
 .modelRuns {
   height: calc(100vh - 250px);
-
+}
+.compactModelRuns {
+  height: calc(100vh - 150px);
 }
 .outlined {
   background-color: orange;

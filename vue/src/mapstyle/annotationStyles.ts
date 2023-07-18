@@ -166,9 +166,6 @@ const annotationColors = getAnnotationColor;
 const observationText = getText('observation')
 const siteText = getText('sites');
 
-const getColorFromLabel = (label: string) => {
-    return styles.find((item) => item.label === label)?.color || 'white';
-}
 const createAnnotationLegend = () => {
     const observationLegend: {color: string, name: string}[] = [];
     const siteLegend: {color: string, name: string}[] = [];
@@ -189,6 +186,9 @@ const createAnnotationLegend = () => {
     return { observationLegend, scoringLegend, siteLegend }
 }
 const annotationLegend = createAnnotationLegend();
+const getColorFromLabel = (label: string) => {
+    return styles.find((item) => item.label === label)?.color || 'white';
+}
 
 export {
     annotationColors,

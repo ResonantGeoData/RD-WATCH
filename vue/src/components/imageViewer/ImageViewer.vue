@@ -3,6 +3,7 @@ import { Ref, computed, ref, watch, withDefaults } from "vue";
 import { ApiService } from "../../client";
 import {EvaluationGeoJSON, EvaluationImage } from "../../types";
 import { getColorFromLabel } from '../../mapstyle/annotationStyles';
+import { state } from '../../store'
 
 interface Props {
   siteEvalId: number;
@@ -14,7 +15,7 @@ const props = withDefaults(defineProps<Props>(), {
 });
 
 interface PixelPoly {
-    coords: {x:number; y:number}[];
+    coords: {x:number; y:number}[][];
     label: string;
 }
 
@@ -22,7 +23,7 @@ const emit = defineEmits<{
   (e: "close"): void;
 }>();
 
-
+const loading = ref(false);
 const currentImage = ref(0);
 const imageRef: Ref<HTMLImageElement | null> = ref(null);
 const canvasRef: Ref<HTMLCanvasElement | null> = ref(null);
@@ -104,17 +105,20 @@ const getImageData = async () => {
         const bboxHeight = image.bbox.ymax - image.bbox.ymin;
         const imageWidth = image.image_dimensions[0];
         const imageHeight = image.image_dimensions[1];
-        const imageNormalizePoly: {x: number, y: number}[] = []
-        closestPoly.geoJSON.coordinates[0].forEach((coord) => {
-            const normalize_x = (coord[0] - image.bbox.xmin) / bboxWidth;
+        const imageNormalizePoly: {x: number, y: number}[][] = []
+        closestPoly.geoJSON.coordinates.forEach((ring) => {
+          imageNormalizePoly.push([]);
+            ring.forEach((coord) => {
+                const normalize_x = (coord[0] - image.bbox.xmin) / bboxWidth;
             const normalize_y = (coord[1] - image.bbox.ymin) / bboxHeight;
             const image_x = normalize_x * imageWidth;
             const image_y = normalize_y * imageHeight;
-            imageNormalizePoly.push({x: image_x, y: image_y});
+            imageNormalizePoly[imageNormalizePoly.length -1].push({x: image_x, y: image_y});
+
+            })
         })
         combinedImages.value.push({ image: image, poly: {coords: imageNormalizePoly, label: closestPoly.label} });
     })
-
 }
 let background: HTMLCanvasElement & { ctx?: CanvasRenderingContext2D | null };
 const drawData = (canvas: HTMLCanvasElement, image: EvaluationImage, poly:PixelPoly) => {
@@ -133,19 +137,20 @@ const drawData = (canvas: HTMLCanvasElement, image: EvaluationImage, poly:PixelP
         canvas.height = image.image_dimensions[1];
         // draw the offscreen canvas
         context.drawImage(background, 0, 0);
-        context.beginPath();
-        context.moveTo(coords[0].x, image.image_dimensions[1] - coords[0].y);
-        coords.forEach(({x, y}) => {
+        coords.forEach((ring) => {
+          context.moveTo(ring[0].x, image.image_dimensions[1] - ring[0].y);
+          ring.forEach(({x, y}) => {
             if (context){
                 context.lineTo(x, image.image_dimensions[1] - y);
             }
+          });
+          context.lineWidth = 1;
+          context.strokeStyle = getColorFromLabel(poly.label);
+          context.stroke();
         });
-        context.lineWidth = 1;
-        context.strokeStyle = getColorFromLabel(poly.label);
-        context.stroke();
         // Now scale the canvas to the proper size
         const ratio = image.image_dimensions[1] / image.image_dimensions[0];
-        const maxHeight = document.documentElement.clientHeight * 0.35;
+        const maxHeight = document.documentElement.clientHeight * 0.34;
         const maxWidth = document.documentElement.clientWidth - 550;
         let width = maxWidth
         let height = width * ratio;
@@ -169,10 +174,12 @@ const drawData = (canvas: HTMLCanvasElement, image: EvaluationImage, poly:PixelP
     };
 
 const load = async () => {
+  loading.value = true;
   await getImageData();
   if (currentImage.value < filteredImages.value.length && canvasRef.value !== null) {
       drawData(canvasRef.value, filteredImages.value[currentImage.value].image, filteredImages.value[currentImage.value].poly)
   }
+  loading.value = false;
 }
 
 watch(() => props.siteEvalId , load);
@@ -199,6 +206,9 @@ watch([currentImage, imageRef, filteredImages], () => {
     }
     if (currentImage.value < filteredImages.value.length && canvasRef.value !== null) {
         drawData(canvasRef.value, filteredImages.value[currentImage.value].image, filteredImages.value[currentImage.value].poly)
+    }
+    if (props.dialog === false && filteredImages.value[currentImage.value]) {
+      state.timestamp = filteredImages.value[currentImage.value].image.timestamp;
     }
 
 });
@@ -307,7 +317,6 @@ watch([currentImage, imageRef, filteredImages], () => {
     <v-row>
       <v-spacer />
       <canvas
-        v-if="filteredImages.length"
         ref="canvasRef"
       />
       <v-spacer />
@@ -360,10 +369,18 @@ watch([currentImage, imageRef, filteredImages], () => {
       </v-col>
     </v-row>
     <v-slider
+      v-if="filteredImages.length && filteredImages[currentImage]"
       v-model="currentImage"
       min="0"
       :max="filteredImages.length - 1"
       step="1"
+    />
+    <v-progress-linear
+      v-if="loading"
+      indeterminate
+      color="primary"
+      height="15"
+      class="mt-4"
     />
   </v-card>
 </template>
@@ -371,7 +388,7 @@ watch([currentImage, imageRef, filteredImages], () => {
 <style scoped>
 .review {
   min-height: 50vh;
-  max-height: 70vh;
+  max-height: 60vh;
   overflow-y: auto;
 }
 </style>

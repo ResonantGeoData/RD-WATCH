@@ -105,6 +105,7 @@ watch(
   () => state.bbox,
   (val) => fitBounds(val)
 );
+
 </script>
 
 <template>
@@ -126,11 +127,12 @@ watch(
 }
 
 .compactMap {
-  position:fixed;
+  position: fixed;
   width: 100%;
-  height: 100%;
-  inset: 0;
+  max-height:50vh;
+  height: 50vh;
   z-index: -1;
+  inset: 0;
 }
 
 .mapboxgl-popup {

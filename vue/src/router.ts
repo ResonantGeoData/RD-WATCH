@@ -1,7 +1,7 @@
 import { createRouter, createWebHashHistory } from "vue-router";
 
 import RGD from './views/RGD.vue';
-import Annotation from './views/Annotation.vue';
+import Annotation from './views/AnnotationViewer.vue';
 
 const routes = [
     { path: '/', component: RGD },

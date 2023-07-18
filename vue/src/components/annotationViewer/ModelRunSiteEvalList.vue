@@ -1,6 +1,6 @@
 <script setup lang="ts">
-import { Ref, computed, ref, watch, } from "vue";
-import { ApiService, ModelRun } from "../../client";
+import { Ref, computed, ref, watch } from "vue";
+import { ApiService } from "../../client";
 import { ModelRunEvaluations } from "../../client/services/ApiService";
 
 const props = defineProps<{
@@ -9,7 +9,7 @@ const props = defineProps<{
 }>();
 
 const emit = defineEmits<{
-  (e: "selected", val: number | null): void;
+  (e: "selected", val: {id: number, bbox: { xmin: number; ymin: number; xmax: number; ymax: number }}): void;
 }>();
 
 const evaluationsList: Ref<ModelRunEvaluations | null> = ref(null);
@@ -28,18 +28,16 @@ watch(() => props.modelRun, () => {
 getSiteEvalIds();
 
 const modifiedList = computed(() => {
-  const modList: {number: number, id: number; name: string}[] = []
+  const modList: {number: number, id: number; name: string, bbox: { xmin: number; ymin: number; xmax: number; ymax: number }, selected:boolean}[] = []
   if (evaluationsList.value?.evaluations) {
     const regionName = evaluationsList.value.region.name;
     evaluationsList.value.evaluations.forEach((item) => {
       const newNum = item.number.toString().padStart(4, '0')
-      modList.push({number: item.number, id: item.id, name: `${regionName}_${newNum}`});
+      modList.push({number: item.number, id: item.id, name: `${regionName}_${newNum}`, bbox: item.bbox, selected: item.id === props.selectedEval});
     });
   }
   return modList;
 });
-
-
 
 
 </script>
@@ -62,10 +60,10 @@ const modifiedList = computed(() => {
         <h3>Site Evaluations:</h3>
         <v-card 
           v-for="item in modifiedList"
-          :key="item.name"
+          :key="`${item.name}_${item.selected}`"
           class="modelRunCard"
-          :class="{selectedCard: props.selectedEval === item.id}"
-          @click="emit('selected', item.id)"
+          :class="{selectedCard: item.selected}"
+          @click="emit('selected', { id: item.id, bbox: item.bbox })"
         >
           <v-card-title class="title">{{ item.name }}</v-card-title>
         </v-card>

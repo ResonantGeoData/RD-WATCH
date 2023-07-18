@@ -47,6 +47,7 @@ export interface ModelRunEvaluations {
   evaluations: {
     number: number,
     id: number
+    bbox: { xmin: number; ymin: number; xmax: number; ymax: number }
   }[];
 }
 
@@ -125,7 +126,7 @@ export class ApiService {
       ): CancelablePromise<boolean> {
         return __request(OpenAPI, {
           method: "POST",
-          url: "/api/model-runs/{id}/generate-images",
+          url: "/api/model-runs/{id}/generate-images/",
           path: {
             id: id,
           },
@@ -145,7 +146,7 @@ export class ApiService {
       ): CancelablePromise<boolean> {
         return __request(OpenAPI, {
           method: "PUT",
-          url: "/api/observations/{id}/cancel-generate-images",
+          url: "/api/observations/{id}/cancel-generate-images/",
           path: {
             id: id,
           },
@@ -162,7 +163,7 @@ export class ApiService {
       ): CancelablePromise<boolean> {
         return __request(OpenAPI, {
           method: "PUT",
-          url: "/api/model-runs/{id}/cancel-generate-images",
+          url: "/api/model-runs/{id}/cancel-generate-images/",
           path: {
             id: id,
           },

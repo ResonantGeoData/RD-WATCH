@@ -1,21 +1,22 @@
 from datetime import datetime, timedelta
 
 import iso3166
+from celery.result import AsyncResult
 from ninja import Field, FilterSchema, Query, Schema
 from ninja.errors import ValidationError
 from ninja.pagination import RouterPaginated
 from ninja.schema import validator
 from pydantic import constr  # type: ignore
-from celery.result import AsyncResult
-from rest_framework.response import Response
 
+from django.contrib.gis import geos
+from django.db import transaction
 from django.db.models import (
     Avg,
     Case,
     Count,
     F,
-    JSONField,
     Func,
+    JSONField,
     Max,
     Min,
     OuterRef,
@@ -26,7 +27,7 @@ from django.db.models import (
 from django.db.models.functions import Coalesce, JSONObject
 from django.http import Http404, HttpRequest
 from django.shortcuts import get_object_or_404
-from django.db import transaction
+from rest_framework.response import Response
 
 from rdwatch.db.functions import (
     AggregateArraySubquery,
@@ -34,14 +35,19 @@ from rdwatch.db.functions import (
     ExtractEpoch,
     TimeRangeJSON,
 )
-from rdwatch.models import HyperParameters, Region, SiteEvaluation, lookups
+from rdwatch.models import (
+    HyperParameters,
+    Region,
+    SatelliteFetching,
+    SiteEvaluation,
+    lookups,
+)
 from rdwatch.schemas import RegionModel, SiteModel
 from rdwatch.schemas.common import TimeRangeSchema
 from rdwatch.views.performer import PerformerSchema
 from rdwatch.views.region import RegionSchema
+from rdwatch.views.site_observation import get_site_observation_images
 
-from rdwatch.views.site_observation import get_site_observation_images, cancel_site_observation_images
-from rdwatch.models import SatelliteFetching
 router = RouterPaginated()
 
 
@@ -92,6 +98,7 @@ class HyperParametersDetailSchema(Schema):
     performer: PerformerSchema
     parameters: dict
     numsites: int
+    downloading: int | None = None
     score: float | None = None
     timestamp: int | None = None
     timerange: TimeRangeSchema | None = None
@@ -101,10 +108,12 @@ class HyperParametersDetailSchema(Schema):
     evaluation: int | None = None
     evaluation_run: int | None = None
 
+
 class EvaluationListSchema(Schema):
     id: int
     siteNumber: int
     region: RegionSchema | None
+
 
 class HyperParametersListSchema(Schema):
     count: int
@@ -115,7 +124,9 @@ class HyperParametersListSchema(Schema):
 
 def get_queryset():
     return (
-        HyperParameters.objects.select_related('evaluations', 'performer', 'satellitefetching')
+        HyperParameters.objects.select_related(
+            'evaluations', 'performer', 'satellitefetching'
+        )
         # Get minimum score and performer so that we can tell which runs
         # are ground truth
         .alias(min_score=Min('evaluations__score'), performer_slug=F('performer__slug'))
@@ -163,9 +174,12 @@ def get_queryset():
                     output_field=JSONField(),
                 ),
                 downloading=Subquery(
-                    SatelliteFetching.objects.filter(configuration=OuterRef('pk'), status=SatelliteFetching.Status.RUNNING).annotate(
-                            count=Func(F('id'), function='Count')
-                        ).values('count')
+                    SatelliteFetching.objects.filter(
+                        configuration=OuterRef('pk'),
+                        status=SatelliteFetching.Status.RUNNING,
+                    )
+                    .annotate(count=Func(F('id'), function='Count'))
+                    .values('count')
                 ),
                 parameters='parameters',
                 numsites=Count('evaluations__pk', distinct=True),
@@ -188,6 +202,7 @@ def get_queryset():
             )
         )
     )
+
 
 @router.post('/', response={200: HyperParametersDetailSchema}, exclude_none=True)
 def create_model_run(
@@ -330,7 +345,7 @@ def post_region_model(
     return 201, [eval.id for eval in site_evaluations]
 
 
-@router.post('/{hyper_parameters_id}/generate-images')
+@router.post('/{hyper_parameters_id}/generate-images/')
 def generate_images(request: HttpRequest, hyper_parameters_id: int):
     siteEvaluations = SiteEvaluation.objects.filter(configuration=hyper_parameters_id)
 
@@ -339,9 +354,9 @@ def generate_images(request: HttpRequest, hyper_parameters_id: int):
 
     return Response(status=202)
 
-@router.post('/{hyper_parameters_id}/cancel-generate-images')
-def cancel_generate_images(request: HttpRequest, hyper_parameters_id: int):
 
+@router.put('/{hyper_parameters_id}/cancel-generate-images/')
+def cancel_generate_images(request: HttpRequest, hyper_parameters_id: int):
     siteEvaluations = SiteEvaluation.objects.filter(configuration=hyper_parameters_id)
 
     for eval in siteEvaluations:
@@ -365,9 +380,11 @@ def cancel_generate_images(request: HttpRequest, hyper_parameters_id: int):
 
     return Response(status=202)
 
+
 def get_region(hyper_parameters_id: int):
     return (
-        HyperParameters.objects.select_related('evaluations').filter(pk=hyper_parameters_id)
+        HyperParameters.objects.select_related('evaluations')
+        .filter(pk=hyper_parameters_id)
         .alias(
             region_id=F('evaluations__region_id'),
         )
@@ -388,11 +405,24 @@ def get_region(hyper_parameters_id: int):
         )
     )
 
+
 def get_evaluations(hyper_parameters_id: int):
     data = []
-    results = SiteEvaluation.objects.filter(configuration=hyper_parameters_id).order_by('number')
+    results = SiteEvaluation.objects.filter(configuration=hyper_parameters_id).order_by(
+        'number'
+    )
     for eval in results:
-        data.append({"number": eval.number, "id": eval.pk})
+        transformed_polygon = eval.geom.transform(
+            geos.GEOSGeometry('POINT(0 0)', srid=4326).srid, clone=True
+        )
+        xmin, ymin, xmax, ymax = transformed_polygon.extent
+        data.append(
+            {
+                'number': eval.number,
+                'id': eval.pk,
+                'bbox': {'xmin': xmin, 'ymin': ymin, 'xmax': xmax, 'ymax': ymax},
+            }
+        )
     return data
 
 

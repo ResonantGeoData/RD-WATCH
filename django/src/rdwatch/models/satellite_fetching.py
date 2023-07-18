@@ -18,7 +18,7 @@ class SatelliteFetching(models.Model):
         on_delete=models.PROTECT,
         help_text='The hyper parameters used this site evaluation.',
         blank=True,
-        null=True
+        null=True,
     )
     timestamp = models.DateTimeField(
         help_text='Start time of the task',

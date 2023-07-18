@@ -51,11 +51,6 @@ const getImages = async (id:number, constellation: 'WV' | 'S2' | 'L8' = 'WV')  =
     }
     loopingInterval = setInterval(checkSiteObs, 1000);
 }
-const canGetImages = computed(() => ({
-  WV: props.siteObservation.imageCounts.WV.total,
-  S2: props.siteObservation.imageCounts.S2.total,
-  L8: props.siteObservation.imageCounts.L8.total,
-}));
 
 const startLooping = () => {
   if (state.loopingInterval !== null) {

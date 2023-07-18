@@ -2,7 +2,7 @@
 import TimeSlider from "./TimeSlider.vue";
 import { ApiService, ModelRun } from "../client";
 import { state } from "../store";
-import { Ref, computed, onBeforeMount, onBeforeUnmount, ref, withDefaults } from "vue";
+import { Ref, onBeforeMount, onBeforeUnmount, ref, withDefaults } from "vue";
 
 
 interface Props {
@@ -73,6 +73,10 @@ const startDownload = () => {
   updateDownloading();
   loopingInterval = setInterval(updateDownloading, 1000);
   }, 2000)
+}
+
+const cancelDownload = () => { 
+  ApiService.cancelModelRunsImageTask(props.modelRun.id);
 }
 
 onBeforeMount(() => {
@@ -199,6 +203,16 @@ onBeforeUnmount(() => {
       <v-row v-if="downloading > 0">
         <b class="small">Downloading {{ downloading }} site(s) Images</b>
         <v-progress-linear indeterminate />
+      </v-row>
+      <v-row v-if="downloading > 0">
+        <v-btn
+          size="x-small"
+          color="error"
+          class="mt-2"
+          @click="cancelDownload()"
+        >
+          Cancel
+        </v-btn>
       </v-row>
       <v-row
         v-if="modelRun.hasScores && props.open"

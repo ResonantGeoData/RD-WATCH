@@ -10,7 +10,11 @@ import type {
 } from "maplibre-gl";
 import type { MapFilters } from "../store";
 
-import { annotationColors, observationText, siteText } from "./annotationStyles";
+import {
+  annotationColors,
+  observationText,
+  siteText,
+} from "./annotationStyles";
 
 // function buildSearchFilters(filters: MapFilters) {
 //   const filter: FilterSpecification = ["all"];
@@ -37,14 +41,17 @@ import { annotationColors, observationText, siteText } from "./annotationStyles"
 //   return filter;
 // }
 
-const buildTextOffset = (type: 'site' | 'observation', filters: MapFilters): [number, number] => {
-  if (filters.showSiteOutline && type === 'site') {
+const buildTextOffset = (
+  type: "site" | "observation",
+  filters: MapFilters
+): [number, number] => {
+  if (filters.showSiteOutline && type === "site") {
     return [0, 0.5];
-  } else if (filters.showSiteOutline && type === 'observation') {
+  } else if (filters.showSiteOutline && type === "observation") {
     return [0, -0.5];
   }
   return [0, 0];
-}
+};
 
 export const buildObservationFilter = (
   timestamp: number,
@@ -117,30 +124,31 @@ export const buildSiteFilter = (
   return filter;
 };
 
-export const buildRegionFilter = (
-  filters: MapFilters
-): FilterSpecification => {
-  const filter: FilterSpecification = [
-    "literal", !!filters.showRegionPolygon,
-  ];
+export const buildRegionFilter = (filters: MapFilters): FilterSpecification => {
+  const filter: FilterSpecification = ["literal", !!filters.showRegionPolygon];
 
   return filter;
 };
 
 const urlRoot = `${location.protocol}//${location.host}`;
 
-
-const buildObservationThick = (filters: MapFilters): DataDrivenPropertyValueSpecification<number>  => {
+const buildObservationThick = (
+  filters: MapFilters
+): DataDrivenPropertyValueSpecification<number> => {
   // If this observation is a grouth truth, make the width 4. Otherwise, make it 2.
- return[ "case",
- ["==", ["get", "siteeval_id"],
- filters.hoverSiteId ? filters.hoverSiteId : ''],
- 6,
-  ["get", "groundtruth"],
-  4,
-  2,
-];
-}
+  return [
+    "case",
+    [
+      "==",
+      ["get", "siteeval_id"],
+      filters.hoverSiteId ? filters.hoverSiteId : "",
+    ],
+    6,
+    ["get", "groundtruth"],
+    4,
+    2,
+  ];
+};
 
 const buildObservationFill = (
   timestamp: number,
@@ -170,94 +178,98 @@ export const buildSourceFilter = (modelRunIds: number[]) => {
   return results;
 };
 
-export const buildLayerFilter = (timestamp: number, filters: MapFilters, modelRunIds: number[]): LayerSpecification[] => {
+export const buildLayerFilter = (
+  timestamp: number,
+  filters: MapFilters,
+  modelRunIds: number[]
+): LayerSpecification[] => {
   let results: LayerSpecification[] = [];
   modelRunIds.forEach((id) => {
-      results = results.concat([
-        {
-          id: `observations-fill-${id}`,
-          type: "fill",
-          source: `vectorTileSource_${id}`,
-          "source-layer": `observations-${id}`,
-          paint: {
-            "fill-color": annotationColors(filters),
-            "fill-opacity": 1,
-            "fill-pattern": buildObservationFill(timestamp, filters),
-          },
-          filter: buildObservationFilter(timestamp, filters),
+    results = results.concat([
+      {
+        id: `observations-fill-${id}`,
+        type: "fill",
+        source: `vectorTileSource_${id}`,
+        "source-layer": `observations-${id}`,
+        paint: {
+          "fill-color": annotationColors(filters),
+          "fill-opacity": 1,
+          "fill-pattern": buildObservationFill(timestamp, filters),
         },
-        {
-          id: `observations-outline-${id}`,
-          type: "line",
-          source: `vectorTileSource_${id}`,
-          "source-layer": `observations-${id}`,
-          paint: {
-            "line-color": annotationColors(filters),
-            "line-width": buildObservationThick(filters),
-          },
-          filter: buildObservationFilter(timestamp, filters),
+        filter: buildObservationFilter(timestamp, filters),
+      },
+      {
+        id: `observations-outline-${id}`,
+        type: "line",
+        source: `vectorTileSource_${id}`,
+        "source-layer": `observations-${id}`,
+        paint: {
+          "line-color": annotationColors(filters),
+          "line-width": buildObservationThick(filters),
         },
-        {
-          id: `observations-text-${id}`,
-          type: "symbol",
-          source: `vectorTileSource_${id}`,
-          "source-layer": `observations-${id}`,
-          layout: {
-            "text-anchor": "center",
-            "text-font": ["Roboto Regular"],
-            "text-max-width": 5,
-            "text-size": 12,
-            "text-allow-overlap": true,
-            "text-offset": buildTextOffset('observation', filters),
-            "text-field": observationText,
-          },
-          paint: {
-            "text-color": annotationColors(filters),
-          },
-          filter: buildObservationFilter(timestamp, filters),
+        filter: buildObservationFilter(timestamp, filters),
+      },
+      {
+        id: `observations-text-${id}`,
+        type: "symbol",
+        source: `vectorTileSource_${id}`,
+        "source-layer": `observations-${id}`,
+        layout: {
+          "text-anchor": "center",
+          "text-font": ["Roboto Regular"],
+          "text-max-width": 5,
+          "text-size": 12,
+          "text-allow-overlap": true,
+          "text-offset": buildTextOffset("observation", filters),
+          "text-field": observationText,
         },
-        {
-          id: `regions-outline-${id}`,
-          type: "line",
-          source: `vectorTileSource_${id}`,
-          "source-layer": `regions-${id}`,
-          paint: {
-            "line-color": annotationColors(filters),
-            "line-width": 2,
-          },
-          filter: buildRegionFilter(filters),
+        paint: {
+          "text-color": annotationColors(filters),
         },
-        {
-          id: `sites-outline-${id}`,
-          type: "line",
-          source: `vectorTileSource_${id}`,
-          "source-layer": `sites-${id}`,
-          paint: {
-            "line-color": annotationColors(filters),
-            "line-width": 2,
-          },
-          filter: buildSiteFilter(timestamp, filters),
+        filter: buildObservationFilter(timestamp, filters),
+      },
+      {
+        id: `regions-outline-${id}`,
+        type: "line",
+        source: `vectorTileSource_${id}`,
+        "source-layer": `regions-${id}`,
+        paint: {
+          "line-color": annotationColors(filters),
+          "line-width": 2,
         },
-        {
-          id: `sites-text-${id}`,
-          type: "symbol",
-          source: `vectorTileSource_${id}`,
-          "source-layer": `sites-${id}`,
-          layout: {
-            "text-anchor": "center",
-            "text-font": ["Roboto Regular"],
-            "text-max-width": 5,
-            "text-size": 12,
-            "text-allow-overlap": true,
-            "text-offset": buildTextOffset('site', filters),
-            "text-field": siteText,
-          },
-          paint: {
-            "text-color": annotationColors(filters),
-          },
-          filter: buildSiteFilter(timestamp, filters),
+        filter: buildRegionFilter(filters),
+      },
+      {
+        id: `sites-outline-${id}`,
+        type: "line",
+        source: `vectorTileSource_${id}`,
+        "source-layer": `sites-${id}`,
+        paint: {
+          "line-color": annotationColors(filters),
+          "line-width": 2,
         },
-      ])
+        filter: buildSiteFilter(timestamp, filters),
+      },
+      {
+        id: `sites-text-${id}`,
+        type: "symbol",
+        source: `vectorTileSource_${id}`,
+        "source-layer": `sites-${id}`,
+        layout: {
+          "text-anchor": "center",
+          "text-font": ["Roboto Regular"],
+          "text-max-width": 5,
+          "text-size": 12,
+          "text-allow-overlap": true,
+          "text-offset": buildTextOffset("site", filters),
+          "text-field": siteText,
+        },
+        paint: {
+          "text-color": annotationColors(filters),
+        },
+        filter: buildSiteFilter(timestamp, filters),
+      },
+    ]);
   });
   return results;
-}
+};

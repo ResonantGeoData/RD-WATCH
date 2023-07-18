@@ -117,7 +117,7 @@ const popupLogic = async (map: ShallowRef<null | Map>) => {
   }
 
   if (map.value) {
-    state.modelRuns.forEach((m) => {
+    for (const m of state.modelRuns) {
       map.value.on("mouseenter", `observations-fill-${m.id}`, function (e) {
         drawPopup(e);
       });
@@ -127,7 +127,7 @@ const popupLogic = async (map: ShallowRef<null | Map>) => {
       map.value.on("click", `observations-fill-${m.id}`, function (e) {
         clickObservation(e);
       });
-    });
+    }
   }
 };
 

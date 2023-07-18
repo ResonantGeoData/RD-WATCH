@@ -17,7 +17,6 @@ urlpatterns = [
         ),
         name='openapi-schema',
     ),
-    path('status', views.RetrieveServerStatus.as_view()),  # type: ignore
     path('satellite-image/timestamps', views.satelliteimage_time_list),
     path('satellite-image/all-timestamps', views.all_satellite_timestamps),
     path(

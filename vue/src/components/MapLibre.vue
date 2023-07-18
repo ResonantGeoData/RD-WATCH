@@ -13,7 +13,7 @@ import { popupLogic } from "../interactions/mouseEvents";
 import { satelliteLoading } from "../interactions/satelliteLoading";
 import { setReference } from "../interactions/fillPatterns";
 import { setSatelliteTimeStamp } from "../mapstyle/satellite-image";
-import { throttle } from 'lodash';
+import { isEqual, throttle } from 'lodash';
 
 const mapContainer: ShallowRef<null | HTMLElement> = shallowRef(null);
 const map: ShallowRef<null | Map> = shallowRef(null);
@@ -77,10 +77,18 @@ const throttledSetSatelliteTimeStamp = throttle(setSatelliteTimeStamp, 300);
 
 watch([() => state.timestamp, () => state.filters, () => state.satellite, () => state.filters.scoringColoring,
 () => state.satellite.satelliteSources, () => state.enabledSiteObservations, () => state.filters.hoverSiteId,
-() => state.modelRuns, () => state.openedModelRuns], () => {
+() => state.modelRuns, () => state.openedModelRuns], (newVals, oldVals) => {
 
   if (state.satellite.satelliteImagesOn) {
     throttledSetSatelliteTimeStamp(state, filteredSatelliteTimeList.value);
+  }
+
+  const newFilters = newVals[1];
+  const oldFilters = oldVals[1];
+
+  // Clear layers on region change
+  if (!isEqual(newFilters.region_id, oldFilters.region_id)) {
+    modelRunVectorLayers.clear();
   }
 
   const openedModelRunIds = state.modelRuns.filter((m) => state.openedModelRuns.has(m.key)).map((m) => m.id);

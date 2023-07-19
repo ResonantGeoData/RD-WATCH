@@ -8,7 +8,7 @@ from ninja.pagination import RouterPaginated
 from ninja.schema import validator
 from pydantic import constr  # type: ignore
 
-from django.contrib.gis import geos
+from django.contrib.postgres.aggregates import JSONBAgg
 from django.db import transaction
 from django.db.models import (
     Avg,
@@ -31,6 +31,7 @@ from rest_framework.response import Response
 
 from rdwatch.db.functions import (
     AggregateArraySubquery,
+    BoundingBox,
     BoundingBoxGeoJSON,
     ExtractEpoch,
     TimeRangeJSON,
@@ -406,24 +407,32 @@ def get_region(hyper_parameters_id: int):
     )
 
 
-def get_evaluations(hyper_parameters_id: int):
-    data = []
-    results = SiteEvaluation.objects.filter(configuration=hyper_parameters_id).order_by(
-        'number'
+def get_image_totals(hyper_parameters_id: int):
+    return (
+        SiteEvaluation.objects.select_related('siteimage')
+        .filter(configuration=hyper_parameters_id)
+        .annotate(
+            json=JSONObject(
+                images=Count('siteimage__pk'),
+                S2=Count(Case(When(siteimage__source='S2', then=1))),
+                WV=Count(Case(When(siteimage__source='WV', then=1))),
+                L8=Count(Case(When(siteimage__source='L8', then=1))),
+            )
+        )
     )
-    for eval in results:
-        transformed_polygon = eval.geom.transform(
-            geos.GEOSGeometry('POINT(0 0)', srid=4326).srid, clone=True
+
+
+def get_evaluations_query(hyper_parameters_id: int):
+    return (
+        SiteEvaluation.objects.select_related('siteimage')
+        .filter(configuration=hyper_parameters_id)
+        .aggregate(
+            evaluations=JSONBAgg(
+                JSONObject(id='pk', number='number', bbox=BoundingBox('geom')),
+                ordering='number',
+            ),
         )
-        xmin, ymin, xmax, ymax = transformed_polygon.extent
-        data.append(
-            {
-                'number': eval.number,
-                'id': eval.pk,
-                'bbox': {'xmin': xmin, 'ymin': ymin, 'xmax': xmax, 'ymax': ymax},
-            }
-        )
-    return data
+    )
 
 
 @router.get('/{hyper_parameters_id}/evaluations')
@@ -432,12 +441,9 @@ def get_modelrun_evaluations(request: HttpRequest, hyper_parameters_id: int):
     if not region.exists():
         raise Http404()
 
-    numbers = get_evaluations(hyper_parameters_id)
-    if len(numbers) == 0:
-        raise Http404()
-
+    query = get_evaluations_query(hyper_parameters_id)
+    image_totals = get_image_totals(hyper_parameters_id).values_list('json', flat=True)
     model_run = region[0]
-
     # TODO: use a resolver instead.
     # Temporary until https://github.com/vitalik/django-ninja/issues/610 is fixed
     if model_run['region']:
@@ -445,5 +451,7 @@ def get_modelrun_evaluations(request: HttpRequest, hyper_parameters_id: int):
             'name': RegionSchema.resolve_name(model_run['region']),
             'id': model_run['region']['id'],
         }
-    model_run['evaluations'] = numbers
-    return 200, model_run
+    query['region'] = model_run['region']
+    if image_totals.exists():
+        query['images'] = image_totals[0]
+    return 200, query

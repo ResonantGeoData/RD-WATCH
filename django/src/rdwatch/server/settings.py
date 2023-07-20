@@ -20,7 +20,7 @@ class BaseConfiguration(Configuration):
     USE_X_FORWARDED_HOST = True
     WSGI_APPLICATION = 'rdwatch.server.application'
     ALLOWED_HOSTS = ['*']
-    DEBUG = values.BooleanValue(False, _environ_prefix='RDWATCH_DJANGO')
+    DEBUG = values.BooleanValue(False, environ_prefix='RDWATCH_DJANGO')
     # Django's docs suggest that STATIC_URL should be a relative path,
     # for convenience serving a site on a subpath.
     STATIC_URL = 'static/'

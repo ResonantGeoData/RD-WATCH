@@ -7,15 +7,15 @@ import {
   sources as openmaptilesSources,
 } from "./openmaptiles";
 import {
-  layers as rdwatchtilesLayers,
-  sources as rdwatchtilesSources,
+  buildSourceFilter as buildRdwatchtilesSources,
+  buildLayerFilter as rdwatchtilesLayers,
 } from "./rdwatchtiles";
 import {
   buildSourceFilter as buildSatelliteSourceFilter,
   layers as satelliteLayers,
 } from "./satellite-image";
 import type { StyleSpecification } from "maplibre-gl";
-import { EnabledSiteObservations, MapFilters, SatelliteData, siteObsSatSettings } from "../store";
+import { EnabledSiteObservations, KeyedModelRun, MapFilters, SatelliteData, siteObsSatSettings } from "../store";
 import { buildImageLayerFilter, buildImageSourceFilter } from "./images";
 import { Map } from "maplibre-gl";
 
@@ -27,15 +27,15 @@ export const style = (
   satellite: SatelliteData,
   enabledSiteObservations: EnabledSiteObservations[],
   settings: siteObsSatSettings,
-  map?: null | Map,
+  modelRunIds: number[],
 ): StyleSpecification => ({
   version: 8,
   sources: {
     ...naturalearthSources,
     ...openmaptilesSources,
     ...buildSatelliteSourceFilter(timestamp, satellite),
-    ...buildImageSourceFilter(timestamp, enabledSiteObservations, settings, map),
-    ...rdwatchtilesSources,
+    ...buildImageSourceFilter(timestamp, enabledSiteObservations, settings),
+    ...buildRdwatchtilesSources(modelRunIds),
   },
   sprite: `${tileServerURL}/sprites/osm-liberty`,
   glyphs: `${tileServerURL}/fonts/{fontstack}/{range}.pbf`,
@@ -49,6 +49,6 @@ export const style = (
     ...openmaptilesLayers,
     ...satelliteLayers(timestamp, satellite),
     ...buildImageLayerFilter(timestamp, enabledSiteObservations, settings),
-    ...rdwatchtilesLayers(timestamp, filters),
+    ...rdwatchtilesLayers(timestamp, filters, modelRunIds),
   ],
 });

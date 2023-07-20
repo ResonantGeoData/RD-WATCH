@@ -1,5 +1,3 @@
-from ninja import Router
-
 from django.contrib.gis.db.models.functions import Area, Transform
 from django.db import connection
 from django.db.models import (
@@ -20,11 +18,11 @@ from django.http import HttpRequest, HttpResponse
 from rdwatch.db.functions import ExtractEpoch, GroupExcludeRowRange
 from rdwatch.models import Region, SiteEvaluation, SiteObservation
 
-router = Router()
+from .model_run import router
 
 
-@router.get('/{z}/{x}/{y}.pbf/')
-def vector_tile(request: HttpRequest, z: int, x: int, y: int):
+@router.get('/{hyper_parameters_id}/vector-tile/{z}/{x}/{y}.pbf/')
+def vector_tile(request: HttpRequest, hyper_parameters_id: int, z: int, x: int, y: int):
     envelope = Func(z, x, y, function='ST_TileEnvelope')
     intersects = Q(
         Func(
@@ -42,7 +40,8 @@ def vector_tile(request: HttpRequest, z: int, x: int, y: int):
     )
 
     evaluations_queryset = (
-        SiteEvaluation.objects.filter(intersects)
+        SiteEvaluation.objects.filter(configuration_id=hyper_parameters_id)
+        .filter(intersects)
         .values()
         .alias(observation_count=Count('observations'))
         .annotate(
@@ -77,7 +76,8 @@ def vector_tile(request: HttpRequest, z: int, x: int, y: int):
     ) = evaluations_queryset.query.sql_with_params()
 
     observations_queryset = (
-        SiteObservation.objects.filter(intersects)
+        SiteObservation.objects.filter(siteeval__configuration_id=hyper_parameters_id)
+        .filter(intersects)
         .values()
         .annotate(
             id=F('pk'),
@@ -114,7 +114,8 @@ def vector_tile(request: HttpRequest, z: int, x: int, y: int):
     ) = observations_queryset.query.sql_with_params()
 
     regions_queryset = (
-        Region.objects.filter(intersects)
+        Region.objects.filter(evaluations__configuration_id=hyper_parameters_id)
+        .filter(intersects)
         .values()
         .annotate(
             id=F('pk'),
@@ -133,22 +134,27 @@ def vector_tile(request: HttpRequest, z: int, x: int, y: int):
             regions AS ({regions_sql})
         SELECT (
             (
-                SELECT ST_AsMVT(evaluations.*, 'sites', 4096, 'mvtgeom', 'id')
+                SELECT ST_AsMVT(evaluations.*, 'sites-%s', 4096, 'mvtgeom', 'id')
                 FROM evaluations
             )
             ||
             (
-                SELECT ST_AsMVT(observations.*, 'observations', 4096, 'mvtgeom', 'id')
+                SELECT ST_AsMVT(observations.*, 'observations-%s', 4096, 'mvtgeom', 'id')
                 FROM observations
             )
             ||
             (
-                SELECT ST_AsMVT(regions.*, 'regions', 4096, 'mvtgeom', 'id')
+                SELECT ST_AsMVT(regions.*, 'regions-%s', 4096, 'mvtgeom', 'id')
                 FROM regions
             )
         )
-    """
-    params = evaluations_params + observations_params + regions_params
+    """  # noqa: E501
+    params = (
+        evaluations_params
+        + observations_params
+        + regions_params
+        + (hyper_parameters_id,) * 3
+    )
 
     with connection.cursor() as cursor:
         cursor.execute(sql, params)

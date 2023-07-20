@@ -6,14 +6,14 @@ import {
   buildSiteFilter,
 } from "../mapstyle/rdwatchtiles";
 import { filteredSatelliteTimeList, state } from "../store";
-import { markRaw, onMounted, onUnmounted, shallowRef, watch, withDefaults } from "vue";
+import { markRaw, onMounted, onUnmounted, reactive, shallowRef, watch, withDefaults } from "vue";
 import type { FilterSpecification } from "maplibre-gl";
 import type { ShallowRef } from "vue";
 import { popupLogic } from "../interactions/mouseEvents";
 import { satelliteLoading } from "../interactions/satelliteLoading";
 import { setReference } from "../interactions/fillPatterns";
 import { setSatelliteTimeStamp } from "../mapstyle/satellite-image";
-import { throttle } from 'lodash';
+import { isEqual, throttle } from 'lodash';
 import { updateImageMapSources } from "../mapstyle/images";
 import { nextTick } from "vue";
 
@@ -25,9 +25,10 @@ const props = withDefaults(defineProps<Props>(), {
   compact: false,
 });
 
-
 const mapContainer: ShallowRef<null | HTMLElement> = shallowRef(null);
 const map: ShallowRef<null | Map> = shallowRef(null);
+
+const modelRunVectorLayers = reactive<Set<number>>(new Set());
 
 function setFilter(layerID: string, filter: FilterSpecification) {
   map.value?.setFilter(layerID, filter, {
@@ -50,16 +51,20 @@ function fitBounds(bbox: typeof state["bbox"]) {
 
 onMounted(() => {
   if (mapContainer.value !== null) {
+    // Add opened model runs to list of vector tile layers
+    state.modelRuns.filter((m) => state.openedModelRuns.has(m.key)).map((m) => m.id).forEach((m) => { modelRunVectorLayers.add(m) })
+
     map.value = markRaw(
       new Map({
         container: mapContainer.value,
-        style: style(state.timestamp,  {
+        style: style(state.timestamp, {
           groundTruthPattern: false,
           otherPattern: false,
         },
-        state.satellite,
-        state.enabledSiteObservations,
-        state.siteObsSatSettings,
+          state.satellite,
+          state.enabledSiteObservations,
+          state.siteObsSatSettings,
+          Array.from(modelRunVectorLayers),
         ),
         bounds: [
           [state.bbox.xmin, state.bbox.ymin],
@@ -81,25 +86,44 @@ const throttledSetSatelliteTimeStamp = throttle(setSatelliteTimeStamp, 300);
 
 
 watch([() => state.timestamp, () => state.filters, () => state.satellite, () => state.filters.scoringColoring,
-() => state.satellite.satelliteSources, () => state.enabledSiteObservations, () => state.filters.hoverSiteId], () => {
+() => state.satellite.satelliteSources, () => state.enabledSiteObservations, () => state.filters.hoverSiteId,
+() => state.modelRuns, () => state.openedModelRuns], (newVals, oldVals) => {
+
   if (state.satellite.satelliteImagesOn) {
     throttledSetSatelliteTimeStamp(state, filteredSatelliteTimeList.value);
   }
+
+  const newFilters = newVals[1];
+  const oldFilters = oldVals[1];
+
+  // Clear layers on region change
+  if (!isEqual(newFilters.region_id, oldFilters.region_id)) {
+    modelRunVectorLayers.clear();
+  }
+
+  const openedModelRunIds = state.modelRuns.filter((m) => state.openedModelRuns.has(m.key)).map((m) => m.id);
+
+  // Add opened model runs to list of vector tile layers
+  openedModelRunIds.forEach((m) => { modelRunVectorLayers.add(m) })
+
+  map.value?.setStyle(
+    style(state.timestamp, state.filters, state.satellite, state.enabledSiteObservations, state.siteObsSatSettings, Array.from(modelRunVectorLayers)),
+  );
+
   const siteFilter = buildSiteFilter(state.timestamp, state.filters);
   const observationFilter = buildObservationFilter(
     state.timestamp,
     state.filters
   );
-  setFilter("sites-outline", siteFilter);
-  setFilter("observations-fill", observationFilter);
-  setFilter("observations-outline", observationFilter);
-  setFilter("observations-text", observationFilter);
-  map.value?.setStyle(
-  style(state.timestamp, state.filters, state.satellite, state.enabledSiteObservations, state.siteObsSatSettings, map.value),
-  );
-  if (state.enabledSiteObservations.length) {
-    updateImageMapSources(state.timestamp, state.enabledSiteObservations, state.siteObsSatSettings, map.value);
-  }
+
+  openedModelRunIds.forEach(id => {
+    setFilter(`sites-outline-${id}`, siteFilter);
+    setFilter(`observations-fill-${id}`, observationFilter);
+    setFilter(`observations-outline-${id}`, observationFilter);
+    setFilter(`observations-text-${id}`, observationFilter);
+  })
+
+  popupLogic(map);
 });
 
 watch(

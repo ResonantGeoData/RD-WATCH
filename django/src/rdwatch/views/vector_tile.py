@@ -1,4 +1,5 @@
 from datetime import datetime, timedelta
+from typing import Literal
 
 from django.contrib.gis.db.models.functions import Area, Transform
 from django.core.cache import cache
@@ -16,8 +17,7 @@ from django.db.models import (
     When,
     Window,
 )
-from django.db.models.functions import Coalesce
-from django.http import HttpRequest, HttpResponse
+from django.http import Http404, HttpRequest, HttpResponse
 
 from rdwatch.db.functions import ExtractEpoch, GroupExcludeRowRange
 from rdwatch.models import HyperParameters, Region, SiteEvaluation, SiteObservation
@@ -25,30 +25,10 @@ from rdwatch.models import HyperParameters, Region, SiteEvaluation, SiteObservat
 from .model_run import router
 
 
-@router.get('/{hyper_parameters_id}/vector-tile/{z}/{x}/{y}.pbf/')
-def vector_tile(request: HttpRequest, hyper_parameters_id: int, z: int, x: int, y: int):
-    # Get latest "created" fields for this model run + its associated
-    # site evalautions/observations
-    timestamps = (
-        SiteObservation.objects.filter(siteeval__configuration_id=hyper_parameters_id)
-        .aggregate(
-            latest_observation=Coalesce(Max('created'), datetime.utcfromtimestamp(0)),
-            latest_eval=Coalesce(
-                Max('siteeval__created'), datetime.utcfromtimestamp(0)
-            ),
-            latest_hyper_parameters=Coalesce(
-                Max('siteeval__configuration__created'), datetime.utcfromtimestamp(0)
-            ),
-        )
-        .values()
-    )
-
-    # Get the latest timestamp out of the three
-    latest_timestamp = max(timestamps)
-
-    # Generate a unique cache key based on the model run ID, vector tile coordinates,
-    # and the latest timestamp
-    cache_key = '|'.join(
+def _get_vector_tile_cache_key(
+    hyper_parameters_id: int, z: int, x: int, y: int, timestamp: datetime
+) -> str:
+    return '|'.join(
         [
             HyperParameters.__name__,
             str(hyper_parameters_id),
@@ -56,8 +36,45 @@ def vector_tile(request: HttpRequest, hyper_parameters_id: int, z: int, x: int, 
             str(z),
             str(x),
             str(y),
-            str(latest_timestamp),
+            str(timestamp),
         ]
+    )
+
+
+@router.get('/{hyper_parameters_id}/vector-tile/{z}/{x}/{y}.pbf/')
+def vector_tile(request: HttpRequest, hyper_parameters_id: int, z: int, x: int, y: int):
+    timestamps: dict[
+        Literal[
+            'latest_evaluation_timestamp',
+            'model_run_timestamp',
+        ],
+        datetime | None,
+    ] = HyperParameters.objects.filter(id=hyper_parameters_id).aggregate(
+        # Get timestamp of most recent site evaluation so we can use it as a cache key
+        latest_evaluation_timestamp=Max('evaluations__timestamp'),
+        # Also include the timestamp of the model run itself. A model
+        # run with no evaluations will use this for the cache key. The
+        # `Max()` aggregation has no effect here, but we need to call
+        # *some* kind of aggregation function in order for the query to
+        # work correctly. This is preferable to making a separate
+        # query/round-trip to the DB in order to check for the model
+        # run's existence.
+        model_run_timestamp=Max('created'),
+    )
+
+    # A null value for the model run timestamp indicates that
+    # this model run doesn't exist.
+    if timestamps['model_run_timestamp'] is None:
+        raise Http404()
+
+    latest_timestamp = (
+        timestamps['latest_evaluation_timestamp'] or timestamps['model_run_timestamp']
+    )
+
+    # Generate a unique cache key based on the model run ID, vector tile coordinates,
+    # and the latest timestamp
+    cache_key = _get_vector_tile_cache_key(
+        hyper_parameters_id, z, x, y, latest_timestamp
     )
 
     tile = cache.get(cache_key)

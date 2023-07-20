@@ -3,7 +3,7 @@ from datetime import timedelta
 
 from configurations import Configuration, values
 
-_environ_prefix = 'RDWATCH'
+_ENVIRON_PREFIX = 'RDWATCH'
 
 
 # With the default "late_binding=False", and "environ_name" is
@@ -78,7 +78,7 @@ class BaseConfiguration(Configuration):
         DB_val = values.DatabaseURLValue(
             alias='default',
             environ_name='POSTGRESQL_URI',
-            environ_prefix=_environ_prefix,
+            environ_prefix=_ENVIRON_PREFIX,
             environ_required=True,
             # Additional kwargs to DatabaseURLValue are passed to dj-database-url
             engine='django.contrib.gis.db.backends.postgis',
@@ -88,7 +88,7 @@ class BaseConfiguration(Configuration):
             scoring_val = values.DatabaseURLValue(
                 alias='scoringdb',
                 environ_name='POSTGRESQL_SCORING_URI',
-                environ_prefix=_environ_prefix,
+                environ_prefix=_ENVIRON_PREFIX,
                 environ_required=True,
                 # Additional kwargs to DatabaseURLValue are passed to dj-database-url
                 engine='django.contrib.gis.db.backends.postgis',
@@ -118,7 +118,7 @@ class BaseConfiguration(Configuration):
 
     CELERY_BROKER_URL = values.Value(
         environ_required=True,
-        environ_prefix=_environ_prefix,
+        environ_prefix=_ENVIRON_PREFIX,
     )
 
     # Set to same value allowed by NGINX Unit server in `settings.http.max_body_size`
@@ -126,14 +126,14 @@ class BaseConfiguration(Configuration):
     DATA_UPLOAD_MAX_MEMORY_SIZE = 134217728
 
     ACCENTURE_VERSION = values.Value(
-        environ_required=True, environ_prefix=_environ_prefix
+        environ_required=True, environ_prefix=_ENVIRON_PREFIX
     )
 
     SMART_STAC_URL = values.URLValue(
-        environ_required=True, environ_prefix=_environ_prefix
+        environ_required=True, environ_prefix=_ENVIRON_PREFIX
     )
     SMART_STAC_KEY = values.SecretValue(
-        environ_required=True, environ_prefix=_environ_prefix
+        environ_required=True, environ_prefix=_ENVIRON_PREFIX
     )
 
     # django-celery-results configuration
@@ -162,13 +162,13 @@ class DevelopmentConfiguration(BaseConfiguration):
 
     DEFAULT_FILE_STORAGE = 'minio_storage.storage.MinioMediaStorage'
     MINIO_STORAGE_ENDPOINT = values.Value(
-        'localhost:9000', environ_prefix=_environ_prefix
+        'localhost:9000', environ_prefix=_ENVIRON_PREFIX
     )
-    MINIO_STORAGE_USE_HTTPS = values.BooleanValue(False, environ_prefix=_environ_prefix)
-    MINIO_STORAGE_ACCESS_KEY = values.SecretValue(environ_prefix=_environ_prefix)
-    MINIO_STORAGE_SECRET_KEY = values.SecretValue(environ_prefix=_environ_prefix)
+    MINIO_STORAGE_USE_HTTPS = values.BooleanValue(False, environ_prefix=_ENVIRON_PREFIX)
+    MINIO_STORAGE_ACCESS_KEY = values.SecretValue(environ_prefix=_ENVIRON_PREFIX)
+    MINIO_STORAGE_SECRET_KEY = values.SecretValue(environ_prefix=_ENVIRON_PREFIX)
     MINIO_STORAGE_MEDIA_BUCKET_NAME = values.Value(
-        environ_prefix=_environ_prefix,
+        environ_prefix=_ENVIRON_PREFIX,
         environ_name='STORAGE_BUCKET_NAME',
         environ_required=True,
     )
@@ -179,12 +179,12 @@ class DevelopmentConfiguration(BaseConfiguration):
 
 
 class ProductionConfiguration(BaseConfiguration):
-    SECRET_KEY = values.Value(environ_required=True, environ_prefix=_environ_prefix)
+    SECRET_KEY = values.Value(environ_required=True, environ_prefix=_ENVIRON_PREFIX)
 
     DEFAULT_FILE_STORAGE = 'storages.backends.s3boto3.S3Boto3Storage'
 
     AWS_STORAGE_BUCKET_NAME = values.Value(
-        environ_prefix=_environ_prefix,
+        environ_prefix=_ENVIRON_PREFIX,
         environ_name='STORAGE_BUCKET_NAME',
         environ_required=True,
     )

@@ -134,6 +134,8 @@ const changeTimstamp = ({dir, loop}: {dir: number, loop: boolean}) => {
   goToTimestamp(dir, loop);
 }
 
+const hasLoadedImages = computed(() => (Object.entries(props.siteObservation.imageCounts).findIndex(([key, data]) => data.loaded > 0) !== -1));
+
 </script>
 
 <template>
@@ -316,7 +318,10 @@ const changeTimstamp = ({dir, loop}: {dir: number, loop: boolean}) => {
         </v-icon>
       </v-row>
       <v-row>
-        <image-viewer-button :site-eval-id="siteObservation.id" />
+        <image-viewer-button
+          v-if="hasLoadedImages"
+          :site-eval-id="siteObservation.id"
+        />
       </v-row>
     </v-card-text>
   </v-card>

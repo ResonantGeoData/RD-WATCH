@@ -132,12 +132,13 @@ watch(
 );
 
 watch(() => props.compact, () => {
-  // Wait for it to resize the renderer
-  setTimeout(() => {
+  // Wait for it to resize the map based on CSS before resizing and fitting
+  nextTick(() => {
     map.value?.resize();
-    fitBounds(state.bbox);
-  }
-    , 300);
+    if (props.compact) {
+      fitBounds(state.bbox);
+    }
+  });
 });
 
 </script>

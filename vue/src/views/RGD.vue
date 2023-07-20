@@ -15,7 +15,6 @@ const props = withDefaults(defineProps<Props>(), {
 });
 
 watch(() => state.regionMap, () => {
-  console.log('changing region')
   if (state.regionMap && props.region) {
     const found = Object.entries(state.regionMap).find(([, key]) => key === props.region);
     if (found) {

@@ -4,8 +4,8 @@ import RGD from './views/RGD.vue';
 import Annotation from './views/AnnotationViewer.vue';
 
 const routes = [
-    { path: '/', component: RGD },
-    { path: '/annotation', component: Annotation }
+    { path: '/:region?/:selected?', component: RGD, props:true, },
+    { path: '/annotation/:region?/:selected?', component: Annotation, props:true, },
 ]
 
 const router = createRouter({

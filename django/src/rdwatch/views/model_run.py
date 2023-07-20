@@ -407,28 +407,27 @@ def get_region(hyper_parameters_id: int):
     )
 
 
-def get_image_totals(hyper_parameters_id: int):
-    return (
-        SiteEvaluation.objects.select_related('siteimage')
-        .filter(configuration=hyper_parameters_id)
-        .annotate(
-            json=JSONObject(
-                images=Count('siteimage__pk'),
-                S2=Count(Case(When(siteimage__source='S2', then=1))),
-                WV=Count(Case(When(siteimage__source='WV', then=1))),
-                L8=Count(Case(When(siteimage__source='L8', then=1))),
-            )
-        )
-    )
-
-
 def get_evaluations_query(hyper_parameters_id: int):
     return (
         SiteEvaluation.objects.select_related('siteimage')
         .filter(configuration=hyper_parameters_id)
+        .annotate(
+            siteimage_count=Count('siteimage'),
+            S2=Count(Case(When(siteimage__source='S2', then=1))),
+            WV=Count(Case(When(siteimage__source='WV', then=1))),
+            L8=Count(Case(When(siteimage__source='L8', then=1))),
+        )
         .aggregate(
             evaluations=JSONBAgg(
-                JSONObject(id='pk', number='number', bbox=BoundingBox('geom')),
+                JSONObject(
+                    id='pk',
+                    number='number',
+                    bbox=BoundingBox('geom'),
+                    images='siteimage_count',
+                    S2='S2',
+                    WV='WV',
+                    L8='L8',
+                ),
                 ordering='number',
             ),
         )
@@ -442,7 +441,6 @@ def get_modelrun_evaluations(request: HttpRequest, hyper_parameters_id: int):
         raise Http404()
 
     query = get_evaluations_query(hyper_parameters_id)
-    image_totals = get_image_totals(hyper_parameters_id).values_list('json', flat=True)
     model_run = region[0]
     # TODO: use a resolver instead.
     # Temporary until https://github.com/vitalik/django-ninja/issues/610 is fixed
@@ -452,6 +450,4 @@ def get_modelrun_evaluations(request: HttpRequest, hyper_parameters_id: int):
             'id': model_run['region']['id'],
         }
     query['region'] = model_run['region']
-    if image_totals.exists():
-        query['images'] = image_totals[0]
     return 200, query

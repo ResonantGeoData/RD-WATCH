@@ -9,12 +9,13 @@ import { computed, onMounted, ref, watch } from "vue";
 import type { Performer, QueryArguments, Region } from "../client";
 import type { Ref } from "vue";
 import { changeTime } from "../interactions/timeStepper";
+import { stat } from "fs";
 
 const timemin = ref(Math.floor(new Date(0).valueOf() / 1000));
 const queryFilters: Ref<QueryArguments> = ref({ page: 1 });
 
 const selectedPerformer: Ref<Performer | null> = ref(null);
-const selectedRegion: Ref<Region | null> = ref(null);
+const selectedRegion: Ref<Region | undefined> = ref(undefined);
 const showSiteOutline: Ref<boolean> = ref(false);
 watch(selectedPerformer, (val) => {
   queryFilters.value = {
@@ -28,9 +29,15 @@ watch(selectedPerformer, (val) => {
     scoringColoring: null,
   };
 });
-watch(selectedRegion, (val) => {
+watch (() => state.filters.region_id, () => {
+  if (state.filters.region_id?.length) {
+    selectedRegion.value = {id:state.filters.region_id[0], name: state.regionMap[state.filters.region_id[0]]}
+  }
+});
+
+const updateRegion = (val?: Region) => {
   queryFilters.value = { ...queryFilters.value, region: val?.name, page: 1 };
-  if (selectedRegion.value === null) {
+  if (selectedRegion.value === undefined) {
     state.satellite.satelliteImagesOn = false;
     state.enabledSiteObservations = [];
     state.selectedObservations = [];
@@ -40,7 +47,7 @@ watch(selectedRegion, (val) => {
     region_id: val?.id === undefined ? undefined : [val.id],
     scoringColoring: null,
   };
-});
+};
 watch(showSiteOutline, (val) => {
   state.filters = { ...state.filters, showSiteOutline: val, scoringColoring: null };
 });
@@ -149,6 +156,7 @@ onMounted(() => {
         />
         <RegionFilter
           v-model="selectedRegion"
+          @update:model-value="updateRegion($event)"
           cols="6"
         />
       </v-row>

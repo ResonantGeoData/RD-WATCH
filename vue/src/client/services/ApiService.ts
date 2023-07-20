@@ -44,7 +44,12 @@ export interface ScoringResults {
 
 export interface ModelRunEvaluations {
   region: Region;
+
   evaluations: {
+    images: number,
+    S2: number,
+    WV: number,
+    L8: number,
     number: number,
     id: number
     bbox: { xmin: number; ymin: number; xmax: number; ymax: number }

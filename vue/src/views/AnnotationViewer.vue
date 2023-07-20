@@ -6,6 +6,15 @@ import ModelRunSiteEvalList from "../components/annotationViewer/ModelRunSiteEva
 import { Ref, computed, ref, watch } from "vue";
 import { state } from "../store";
 
+interface Props {
+  region?: number | string;
+  selected?: number[] | string;
+}
+const props = withDefaults(defineProps<Props>(), {
+  region: undefined,
+  selected:undefined,
+});
+
 
 const selectedModelRun = computed(() => {
     if (state.filters.configuration_id?.length) {
@@ -13,6 +22,19 @@ const selectedModelRun = computed(() => {
     }
     return null;
 });
+
+watch(() => state.regionMap, () => {
+  if (state.regionMap && props.region) {
+    const found = Object.entries(state.regionMap).find(([, key]) => key === props.region);
+    if (found) {
+      state.filters = {
+    ...state.filters,
+    region_id: [parseInt(found[0], 10)],
+    scoringColoring: null,
+  };
+    }
+  }
+})
 
 const selectedEval: Ref<number | null> = ref(null);
 
@@ -39,15 +61,9 @@ watch(selectedModelRun, () => {
     <SideBar />
   </v-navigation-drawer>
   <v-main style="z-index:1">
-    <MapLibre compact />
-    <div
-      v-if="selectedEval === null"
-      style="position:absolute !important; top:45vh !important; height:55vh;width:100%"
-    >
-      Select a SiteId to display the images
-    </div>
+    <MapLibre :compact="selectedEval !== null" />
     <ImageViewer
-      v-else
+      v-if="selectedEval !== null"
       :site-eval-id="selectedEval"
       style="top:40vh !important; height:60vh"
     />

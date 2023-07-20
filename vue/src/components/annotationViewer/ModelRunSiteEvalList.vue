@@ -14,6 +14,17 @@ const emit = defineEmits<{
 
 const evaluationsList: Ref<ModelRunEvaluations | null> = ref(null);
 
+interface ModifiedList {
+  number: number;
+  id: number;
+  name: string;
+  bbox: { xmin: number; ymin: number; xmax: number; ymax: number };
+  selected:boolean;
+  images: number;
+  S2: number;
+  WV: number,
+  L8: number;
+}
 
 const getSiteEvalIds = async () => {
   if (props.modelRun !== null) {
@@ -28,12 +39,22 @@ watch(() => props.modelRun, () => {
 getSiteEvalIds();
 
 const modifiedList = computed(() => {
-  const modList: {number: number, id: number; name: string, bbox: { xmin: number; ymin: number; xmax: number; ymax: number }, selected:boolean}[] = []
+  const modList: ModifiedList[] = []
   if (evaluationsList.value?.evaluations) {
     const regionName = evaluationsList.value.region.name;
     evaluationsList.value.evaluations.forEach((item) => {
       const newNum = item.number.toString().padStart(4, '0')
-      modList.push({number: item.number, id: item.id, name: `${regionName}_${newNum}`, bbox: item.bbox, selected: item.id === props.selectedEval});
+      modList.push(
+        {
+          number: item.number, id: item.id, name: `${regionName}_${newNum}`,
+          bbox: item.bbox,
+          selected: item.id === props.selectedEval,
+          images: item.images,
+          S2: item.S2,
+          WV: item.WV,
+          L8: item.L8,
+        }
+        );
     });
   }
   return modList;
@@ -62,10 +83,28 @@ const modifiedList = computed(() => {
           v-for="item in modifiedList"
           :key="`${item.name}_${item.selected}`"
           class="modelRunCard"
-          :class="{selectedCard: item.selected}"
+          :class="{selectedCard: item.selected, errorCard: item.images === 0}"
           @click="emit('selected', { id: item.id, bbox: item.bbox })"
         >
-          <v-card-title class="title">{{ item.name }}</v-card-title>
+          <v-card-title class="title">
+            {{ item.name }}
+          </v-card-title>
+          <v-card-text>
+            <div v-if="item.images">
+              <v-chip size="x-small">
+                WV: {{ item.WV }}
+              </v-chip>
+              <v-chip size="x-small">
+                S2: {{ item.S2 }}
+              </v-chip>
+              <v-chip size="x-small">
+                L8: {{ item.L8 }}
+              </v-chip>
+            </div>
+            <div v-else>
+              <b> 0 Images Downloaded</b>
+            </div>
+          </v-card-text>
         </v-card>
       </div>
     </v-container>
@@ -85,6 +124,9 @@ const modifiedList = computed(() => {
 }
 .selectedCard{
   background-color: lightblue;
+}
+.errorCard{
+  background-color: lightcoral;
 }
 .model-title {
   max-width: 250px;

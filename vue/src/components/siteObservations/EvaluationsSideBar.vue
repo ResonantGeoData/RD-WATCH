@@ -35,10 +35,8 @@ const baseSources: Ref<('S2' |'WV' | 'L8')[]> = ref(['S2', 'WV', 'L8'])
 
 const sources: Ref<('S2' |'WV' | 'L8')[]> = ref(['S2', 'WV', 'L8']);
 const updateSatSources = () => {
-  console.log('Updating Sources');
   state.siteObsSatSettings = {...state.siteObsSatSettings, observationSources: sources.value };
   updateSources();
-  console.log(state.siteObsSatSettings.observationSources);
 };
 
 onUnmounted(() => {

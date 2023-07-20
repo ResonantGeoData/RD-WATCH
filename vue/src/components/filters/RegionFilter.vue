@@ -4,15 +4,17 @@ import { ref, watch, watchEffect } from "vue";
 import { ApiService } from "../../client";
 import type { Ref } from "vue";
 import type { Region } from "../../client";
+import { useRouter,  } from 'vue-router';
 
-type SelectedRegion = Region | null;
+const router = useRouter();
+
 
 const props = defineProps<{
-  modelValue: SelectedRegion;
+  modelValue?: Region;
 }>();
 
 const emit = defineEmits<{
-  (e: "update:modelValue", region: SelectedRegion): void;
+  (e: "update:modelValue", region?: Region): void;
 }>();
 
 const regions: Ref<Region[]> = ref([]);
@@ -31,15 +33,28 @@ watchEffect(async () => {
   state.regionMap = generatedMap;
 });
 
+watch(() => props.modelValue, () => {
+  if (props.modelValue) {
+    selectedRegion.value = props.modelValue.id;
+  }
+});
+
 watch(selectedRegion, (val) => {
+  let prepend = '/'
+  if (router.currentRoute.value.fullPath.includes('annotation')) {
+    prepend='/annotation/'
+  }
   if (val !== undefined) {
     const found = regions.value.find((item) => item.id === val);
+
     if (found) {
+      router.push(`${prepend}${found.name}`)
       emit("update:modelValue", found);
       return;
     }
   }
-  emit("update:modelValue", null);
+  router.push({path: prepend});
+  emit("update:modelValue", undefined);
 });
 </script>
 

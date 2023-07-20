@@ -15,6 +15,7 @@ import { setReference } from "../interactions/fillPatterns";
 import { setSatelliteTimeStamp } from "../mapstyle/satellite-image";
 import { throttle } from 'lodash';
 import { updateImageMapSources } from "../mapstyle/images";
+import { nextTick } from "vue";
 
 interface Props {
   compact?: boolean
@@ -105,6 +106,15 @@ watch(
   () => state.bbox,
   (val) => fitBounds(val)
 );
+
+watch(() => props.compact, () => {
+  // Wait for it to resize the renderer
+  setTimeout(() => {
+    map.value?.resize();
+    fitBounds(state.bbox);
+  }
+    , 300);
+});
 
 </script>
 

@@ -109,7 +109,7 @@ async function loadMore() {
     emit("update:timerange", modelRunList["timerange"]);
   } catch (e) {
     if (e instanceof CancelError) {
-      console.warn(e);
+      console.log('Request has been cancelled');
     } else {
       throw e;
     }

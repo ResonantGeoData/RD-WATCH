@@ -21,12 +21,19 @@ class BaseConfiguration(Configuration):
     WSGI_APPLICATION = 'rdwatch.server.application'
     ALLOWED_HOSTS = ['*']
     DEBUG = values.BooleanValue(False, _environ_prefix='RDWATCH_DJANGO')
+    # Django's docs suggest that STATIC_URL should be a relative path,
+    # for convenience serving a site on a subpath.
+    STATIC_URL = 'static/'
 
     @property
     def INSTALLED_APPS(self):
         base_applications = [
+            'django.contrib.admin',
             'django.contrib.auth',
             'django.contrib.contenttypes',
+            'django.contrib.sessions',
+            'django.contrib.messages',
+            'django.contrib.staticfiles',
             'django.contrib.gis',
             'django.contrib.postgres',
             'django_filters',
@@ -38,6 +45,33 @@ class BaseConfiguration(Configuration):
         if 'RDWATCH_POSTGRESQL_SCORING_URI' in os.environ:
             base_applications.append('rdwatch_scoring')
         return base_applications
+
+    MIDDLEWARE = [
+        'django.middleware.security.SecurityMiddleware',
+        'django.contrib.sessions.middleware.SessionMiddleware',
+        'django.middleware.common.CommonMiddleware',
+        'django.middleware.csrf.CsrfViewMiddleware',
+        'django.contrib.auth.middleware.AuthenticationMiddleware',
+        'django.contrib.messages.middleware.MessageMiddleware',
+        'django.middleware.clickjacking.XFrameOptionsMiddleware',
+        'rdwatch.middleware.Log500ErrorsMiddleware',
+    ]
+
+    TEMPLATES = [
+        {
+            'BACKEND': 'django.template.backends.django.DjangoTemplates',
+            'DIRS': [],
+            'APP_DIRS': True,
+            'OPTIONS': {
+                'context_processors': [
+                    'django.template.context_processors.debug',
+                    'django.template.context_processors.request',
+                    'django.contrib.auth.context_processors.auth',
+                    'django.contrib.messages.context_processors.messages',
+                ],
+            },
+        },
+    ]
 
     @property
     def DATABASES(self):
@@ -62,12 +96,6 @@ class BaseConfiguration(Configuration):
             scoring_dict = scoring_val.value
             db_dict.update(scoring_dict)
         return db_dict
-
-    MIDDLEWARE = [
-        'django.middleware.common.CommonMiddleware',
-        'django.middleware.clickjacking.XFrameOptionsMiddleware',
-        'rdwatch.middleware.Log500ErrorsMiddleware',
-    ]
 
     REST_FRAMEWORK = {
         'DEFAULT_RENDERER_CLASSES': ['rest_framework.renderers.JSONRenderer'],

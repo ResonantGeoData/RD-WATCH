@@ -24,5 +24,5 @@ class HyperParameters(models.Model):
         help_text='Time relative to creation that this model run should be deleted.',
     )
 
-    def __str__(self):
-        return self.pk
+    def __str__(self) -> str:
+        return str(self.pk)

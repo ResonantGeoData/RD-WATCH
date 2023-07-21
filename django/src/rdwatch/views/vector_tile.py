@@ -38,7 +38,7 @@ def _get_vector_tile_cache_key(
             str(y),
             str(timestamp),
         ]
-    )
+    ).replace(' ', '_')
 
 
 @router.get('/{hyper_parameters_id}/vector-tile/{z}/{x}/{y}.pbf/')

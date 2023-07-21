@@ -106,15 +106,9 @@ class BaseConfiguration(Configuration):
 
     NINJA_PAGINATION_CLASS = 'ninja.pagination.PageNumberPagination'
 
-    CACHES = {
-        'default': {
-            'BACKEND': 'django_redis.cache.RedisCache',
-            'LOCATION': os.environ['RDWATCH_REDIS_URI'],
-            'OPTIONS': {
-                'CLIENT_CLASS': 'rdwatch.redis.CustomRedisCluster',
-            },
-        }
-    }
+    CACHES = values.CacheURLValue(
+        environ_name='REDIS_URI', environ_prefix=_ENVIRON_PREFIX
+    )
 
     CELERY_BROKER_URL = values.Value(
         environ_required=True,

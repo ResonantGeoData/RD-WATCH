@@ -50,7 +50,7 @@ services:
       - ./dev/.env.docker-compose
     environment:
       RDWATCH_POSTGRESQL_URI: "postgresql://rdwatch:secretkey@postgresql:5432/rdwatch"
-      RDWATCH_REDIS_URI: "redis://:redis:6379"
+      RDWATCH_REDIS_URI: "redis://redis:6379"
       RDWATCH_CELERY_BROKER_URL: amqp://rdwatch:secretkey@rabbitmq:5672/
     volumes:
       - ./django:/app/django

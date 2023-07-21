@@ -3,7 +3,7 @@ from datetime import timedelta
 
 from configurations import Configuration, values
 
-_environ_prefix = 'RDWATCH'
+_ENVIRON_PREFIX = 'RDWATCH'
 
 
 # With the default "late_binding=False", and "environ_name" is
@@ -20,13 +20,20 @@ class BaseConfiguration(Configuration):
     USE_X_FORWARDED_HOST = True
     WSGI_APPLICATION = 'rdwatch.server.application'
     ALLOWED_HOSTS = ['*']
-    DEBUG = values.BooleanValue(False, _environ_prefix='RDWATCH_DJANGO')
+    DEBUG = values.BooleanValue(False, environ_prefix='RDWATCH_DJANGO')
+    # Django's docs suggest that STATIC_URL should be a relative path,
+    # for convenience serving a site on a subpath.
+    STATIC_URL = 'static/'
 
     @property
     def INSTALLED_APPS(self):
         base_applications = [
+            'django.contrib.admin',
             'django.contrib.auth',
             'django.contrib.contenttypes',
+            'django.contrib.sessions',
+            'django.contrib.messages',
+            'django.contrib.staticfiles',
             'django.contrib.gis',
             'django.contrib.postgres',
             'django_filters',
@@ -39,12 +46,39 @@ class BaseConfiguration(Configuration):
             base_applications.append('rdwatch_scoring')
         return base_applications
 
+    MIDDLEWARE = [
+        'django.middleware.security.SecurityMiddleware',
+        'django.contrib.sessions.middleware.SessionMiddleware',
+        'django.middleware.common.CommonMiddleware',
+        'django.middleware.csrf.CsrfViewMiddleware',
+        'django.contrib.auth.middleware.AuthenticationMiddleware',
+        'django.contrib.messages.middleware.MessageMiddleware',
+        'django.middleware.clickjacking.XFrameOptionsMiddleware',
+        'rdwatch.middleware.Log500ErrorsMiddleware',
+    ]
+
+    TEMPLATES = [
+        {
+            'BACKEND': 'django.template.backends.django.DjangoTemplates',
+            'DIRS': [],
+            'APP_DIRS': True,
+            'OPTIONS': {
+                'context_processors': [
+                    'django.template.context_processors.debug',
+                    'django.template.context_processors.request',
+                    'django.contrib.auth.context_processors.auth',
+                    'django.contrib.messages.context_processors.messages',
+                ],
+            },
+        },
+    ]
+
     @property
     def DATABASES(self):
         DB_val = values.DatabaseURLValue(
             alias='default',
             environ_name='POSTGRESQL_URI',
-            environ_prefix=_environ_prefix,
+            environ_prefix=_ENVIRON_PREFIX,
             environ_required=True,
             # Additional kwargs to DatabaseURLValue are passed to dj-database-url
             engine='django.contrib.gis.db.backends.postgis',
@@ -54,7 +88,7 @@ class BaseConfiguration(Configuration):
             scoring_val = values.DatabaseURLValue(
                 alias='scoringdb',
                 environ_name='POSTGRESQL_SCORING_URI',
-                environ_prefix=_environ_prefix,
+                environ_prefix=_ENVIRON_PREFIX,
                 environ_required=True,
                 # Additional kwargs to DatabaseURLValue are passed to dj-database-url
                 engine='django.contrib.gis.db.backends.postgis',
@@ -62,12 +96,6 @@ class BaseConfiguration(Configuration):
             scoring_dict = scoring_val.value
             db_dict.update(scoring_dict)
         return db_dict
-
-    MIDDLEWARE = [
-        'django.middleware.common.CommonMiddleware',
-        'django.middleware.clickjacking.XFrameOptionsMiddleware',
-        'rdwatch.middleware.Log500ErrorsMiddleware',
-    ]
 
     REST_FRAMEWORK = {
         'DEFAULT_RENDERER_CLASSES': ['rest_framework.renderers.JSONRenderer'],
@@ -90,7 +118,7 @@ class BaseConfiguration(Configuration):
 
     CELERY_BROKER_URL = values.Value(
         environ_required=True,
-        environ_prefix=_environ_prefix,
+        environ_prefix=_ENVIRON_PREFIX,
     )
 
     # Set to same value allowed by NGINX Unit server in `settings.http.max_body_size`
@@ -98,14 +126,14 @@ class BaseConfiguration(Configuration):
     DATA_UPLOAD_MAX_MEMORY_SIZE = 134217728
 
     ACCENTURE_VERSION = values.Value(
-        environ_required=True, environ_prefix=_environ_prefix
+        environ_required=True, environ_prefix=_ENVIRON_PREFIX
     )
 
     SMART_STAC_URL = values.URLValue(
-        environ_required=True, environ_prefix=_environ_prefix
+        environ_required=True, environ_prefix=_ENVIRON_PREFIX
     )
     SMART_STAC_KEY = values.SecretValue(
-        environ_required=True, environ_prefix=_environ_prefix
+        environ_required=True, environ_prefix=_ENVIRON_PREFIX
     )
 
     # django-celery-results configuration
@@ -134,13 +162,13 @@ class DevelopmentConfiguration(BaseConfiguration):
 
     DEFAULT_FILE_STORAGE = 'minio_storage.storage.MinioMediaStorage'
     MINIO_STORAGE_ENDPOINT = values.Value(
-        'localhost:9000', environ_prefix=_environ_prefix
+        'localhost:9000', environ_prefix=_ENVIRON_PREFIX
     )
-    MINIO_STORAGE_USE_HTTPS = values.BooleanValue(False, environ_prefix=_environ_prefix)
-    MINIO_STORAGE_ACCESS_KEY = values.SecretValue(environ_prefix=_environ_prefix)
-    MINIO_STORAGE_SECRET_KEY = values.SecretValue(environ_prefix=_environ_prefix)
+    MINIO_STORAGE_USE_HTTPS = values.BooleanValue(False, environ_prefix=_ENVIRON_PREFIX)
+    MINIO_STORAGE_ACCESS_KEY = values.SecretValue(environ_prefix=_ENVIRON_PREFIX)
+    MINIO_STORAGE_SECRET_KEY = values.SecretValue(environ_prefix=_ENVIRON_PREFIX)
     MINIO_STORAGE_MEDIA_BUCKET_NAME = values.Value(
-        environ_prefix=_environ_prefix,
+        environ_prefix=_ENVIRON_PREFIX,
         environ_name='STORAGE_BUCKET_NAME',
         environ_required=True,
     )
@@ -151,12 +179,12 @@ class DevelopmentConfiguration(BaseConfiguration):
 
 
 class ProductionConfiguration(BaseConfiguration):
-    SECRET_KEY = values.Value(environ_required=True, environ_prefix=_environ_prefix)
+    SECRET_KEY = values.Value(environ_required=True, environ_prefix=_ENVIRON_PREFIX)
 
     DEFAULT_FILE_STORAGE = 'storages.backends.s3boto3.S3Boto3Storage'
 
     AWS_STORAGE_BUCKET_NAME = values.Value(
-        environ_prefix=_environ_prefix,
+        environ_prefix=_ENVIRON_PREFIX,
         environ_name='STORAGE_BUCKET_NAME',
         environ_required=True,
     )

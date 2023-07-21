@@ -11,38 +11,13 @@ services:
     ports:
       - 5432:5432
 
-  # Redis cluster
-  redis-master:
-    image: bitnami/redis-cluster:latest
+  # Redis
+  redis:
+    image: redis:latest
     volumes:
-      - redis-master-data:/bitnami/redis/data
-    environment:
-      REDIS_PASSWORD: secretkey
-      REDISCLI_AUTH: secretkey
-      REDIS_NODES: redis-master redis-replica-1 redis-replica-2
-      REDIS_CLUSTER_REPLICAS: 0
-      REDIS_CLUSTER_CREATOR: "yes"
-    depends_on:
-      - redis-replica-1
-      - redis-replica-2
+      - redis-data:/redis/data
     ports:
       - 6379:6379
-
-  redis-replica-1:
-    image: bitnami/redis-cluster:latest
-    volumes:
-      - redis-replica-1-data:/bitnami/redis/data
-    environment:
-      REDIS_PASSWORD: secretkey
-      REDIS_NODES: redis-master redis-replica-1 redis-replica-2
-
-  redis-replica-2:
-    image: bitnami/redis-cluster:latest
-    volumes:
-      - redis-replica-2-data:/bitnami/redis/data
-    environment:
-      REDIS_PASSWORD: secretkey
-      REDIS_NODES: redis-master redis-replica-1 redis-replica-2
 
   minio:
     image: minio/minio:latest
@@ -66,7 +41,7 @@ services:
       RABBITMQ_DEFAULT_PASS: secretkey
     ports:
       - 5672:5672
-  
+
   # Scoring database
   scoredb:
     image: postgis/postgis:latest
@@ -83,6 +58,4 @@ volumes:
   postgresql-scoring-data:
   postgresql-data:
   minio-data:
-  redis-master-data:
-  redis-replica-1-data:
-  redis-replica-2-data:
+  redis-data:

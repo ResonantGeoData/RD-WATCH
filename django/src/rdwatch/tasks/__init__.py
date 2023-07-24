@@ -108,7 +108,7 @@ def get_siteobservations_images(
                 source=baseConstellation,
             )
             if (
-                baseConstellation in ('S2, 'L8')
+                baseConstellation in ('S2', 'L8')
                 and dayRange > -1
                 and is_inside_range(
                     found_timestamps.keys(), observation.timestamp, dayRange
@@ -134,7 +134,7 @@ def get_siteobservations_images(
             if bytes is None:
                 logger.warning(f'COULD NOT FIND ANY IMAGE FOR TIMESTAMP: {timestamp}')
                 continue
-            if dayRange != -1 and percent_black < NoDataLimit:
+            if dayRange != -1 and percent_black < no_data_limit:
                 found_timestamps[found_timestamp] = True
             elif dayRange == -1:
                 found_timestamps[found_timestamp] = True
@@ -244,7 +244,7 @@ def get_siteobservations_images(
                 timestamp=capture_timestamp,
                 source=baseConstellation,
             )
-            if dayRange != -1 and percent_black < NoDataLimit:
+            if dayRange != -1 and percent_black < no_data_limit:
                 found_timestamps[capture_timestamp] = True
             elif dayRange == -1:
                 found_timestamps[capture_timestamp] = True

@@ -144,6 +144,7 @@ def get_queryset():
         .alias(
             region_id=F('evaluations__region_id'),
             observation_count=Count('evaluations__observations'),
+            site_eval_config_id=F('evaluations__configuration')
         )
         .annotate(
             json=JSONObject(
@@ -176,7 +177,7 @@ def get_queryset():
                 ),
                 downloading=Subquery(
                     SatelliteFetching.objects.filter(
-                        configuration=OuterRef('pk'),
+                        configuration=OuterRef('site_eval_config_id'),
                         status=SatelliteFetching.Status.RUNNING,
                     )
                     .annotate(count=Func(F('id'), function='Count'))

@@ -13,13 +13,6 @@ class SatelliteFetching(models.Model):
         db_index=True,
         related_name='satellite_fetching',
     )
-    configuration = models.ForeignKey(
-        to='HyperParameters',
-        on_delete=models.PROTECT,
-        help_text='The hyper parameters used this site evaluation.',
-        blank=True,
-        null=True,
-    )
     timestamp = models.DateTimeField(
         help_text='Start time of the task',
     )

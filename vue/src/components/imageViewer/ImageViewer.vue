@@ -92,7 +92,7 @@ const getImageData = async () => {
     currentImage.value = 0;
     const data =  await ApiService.getEvaluationImages(props.siteEvalId);
     const images = data.images.results.sort((a, b) => a.timestamp - b.timestamp);
-    const polygons = data.geoJSON.results;
+    const polygons = data.geoJSON;
     if (imageRef.value !== null) {
         imageRef.value.src = images[currentImage.value].image;
     }

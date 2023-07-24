@@ -23,7 +23,5 @@ export interface EvaluationImageResults {
         count: number;
         results: EvaluationImage[];
     }
-    geoJSON: {
-        results: EvaluationGeoJSON[];
-    }
+    geoJSON: EvaluationGeoJSON[];
 }

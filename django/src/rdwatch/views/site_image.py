@@ -1,26 +1,54 @@
+from ninja import Router, Schema
+
 from django.contrib.gis.db.models.functions import Transform
 from django.contrib.postgres.aggregates import JSONBAgg
+from django.core.files.storage import default_storage
 from django.db.models import Count
 from django.db.models.functions import JSONObject  # type: ignore
 from django.http import HttpRequest
-from rest_framework.decorators import api_view
 from rest_framework.exceptions import NotFound
-from rest_framework.response import Response
 
 from rdwatch.db.functions import BoundingBox, ExtractEpoch
 from rdwatch.models import SiteEvaluation, SiteImage, SiteObservation
-from rdwatch.serializers import (
-    SiteImageListSerializer,
-    SiteObservationGeomListSerializer,
-)
+from rdwatch.schemas.common import BoundingBoxSchema
+
+router = Router()
 
 
-@api_view(['GET'])
-def site_images(request: HttpRequest, pk: int):
-    if not SiteEvaluation.objects.filter(pk=pk).exists():
+class SiteImageSchema(Schema):
+    timestamp: int  # type: ignore
+    source: str
+    cloudcover: float
+    image: str
+    siteobs_id: int | None
+    percent_black: float
+    bbox: BoundingBoxSchema
+    image_dimensions: list[int]
+    aws_location: str
+
+
+class SiteImageListSchema(Schema):
+    count: int
+    results: list[SiteImageSchema]
+
+
+class SiteObsGeomSchema(Schema):
+    timestamp: int
+    geoJSON: dict  # TODO: Replace with pydantics geoJSON
+    label: str
+
+
+class SiteImageResponse(Schema):
+    images: SiteImageListSchema
+    geoJSON: list[SiteObsGeomSchema]
+
+
+@router.get('/{id}/', response=SiteImageResponse)
+def site_images(request: HttpRequest, id: int):
+    if not SiteEvaluation.objects.filter(pk=id).exists():
         raise NotFound()
     image_queryset = (
-        SiteImage.objects.filter(siteeval__id=pk)
+        SiteImage.objects.filter(siteeval__id=id)
         .order_by('timestamp')
         .aggregate(
             count=Count('pk'),
@@ -44,7 +72,7 @@ def site_images(request: HttpRequest, pk: int):
     geom_queryset = (
         SiteObservation.objects.values('timestamp', 'geom')
         .order_by('timestamp')
-        .filter(siteeval__id=pk)
+        .filter(siteeval__id=id)
         .aggregate(
             results=JSONBAgg(
                 JSONObject(
@@ -56,8 +84,10 @@ def site_images(request: HttpRequest, pk: int):
         )
     )
     output = {}
-    image_serializer = SiteImageListSerializer(image_queryset)
-    geom_serializer = SiteObservationGeomListSerializer(geom_queryset)
-    output['images'] = image_serializer.data
-    output['geoJSON'] = geom_serializer.data
-    return Response(output)
+    # lets get the presigned URL for each image
+    for image in image_queryset['results']:
+        image['image'] = default_storage.url(image['image'])
+    output['images'] = image_queryset
+    output['geoJSON'] = geom_queryset['results']
+
+    return output

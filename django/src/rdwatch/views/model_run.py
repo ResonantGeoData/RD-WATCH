@@ -27,7 +27,6 @@ from django.db.models import (
 from django.db.models.functions import Coalesce, JSONObject
 from django.http import Http404, HttpRequest
 from django.shortcuts import get_object_or_404
-from rest_framework.response import Response
 
 from rdwatch.db.functions import (
     AggregateArraySubquery,
@@ -144,7 +143,7 @@ def get_queryset():
         .alias(
             region_id=F('evaluations__region_id'),
             observation_count=Count('evaluations__observations'),
-            evaluation_configuration=F('evaluations__configuration')
+            evaluation_configuration=F('evaluations__configuration'),
         )
         .annotate(
             json=JSONObject(
@@ -178,13 +177,15 @@ def get_queryset():
                 downloading=Coalesce(
                     Subquery(
                         SatelliteFetching.objects.filter(
-                            siteeval__configuration_id=OuterRef('evaluation_configuration'),
+                            siteeval__configuration_id=OuterRef(
+                                'evaluation_configuration'
+                            ),
                             status=SatelliteFetching.Status.RUNNING,
                         )
                         .annotate(count=Func(F('id'), function='Count'))
                         .values('count')
                     ),
-                    0  # Default value when evaluations are None
+                    0,  # Default value when evaluations are None
                 ),
                 parameters='parameters',
                 numsites=Count('evaluations__pk', distinct=True),

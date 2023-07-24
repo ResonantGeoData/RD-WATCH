@@ -1,5 +1,6 @@
 import io
 import logging
+from collections.abc import Iterable
 from datetime import datetime, timedelta
 
 from celery import shared_task
@@ -36,9 +37,9 @@ from rdwatch.utils.worldview_processed.raster_tile import (
 logger = logging.getLogger(__name__)
 
 
-from collections.abc import Iterable
-
-def is_inside_range(timestamps: Iterable[datetime], check_timestamp: datetime, days_range):
+def is_inside_range(
+    timestamps: Iterable[datetime], check_timestamp: datetime, days_range
+):
     for timestamp in timestamps:
         time_difference = check_timestamp - timestamp
         if abs(time_difference.days) <= days_range:

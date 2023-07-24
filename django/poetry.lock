@@ -544,18 +544,6 @@ argon2 = ["argon2-cffi (>=19.1.0)"]
 bcrypt = ["bcrypt"]
 
 [[package]]
-name = "django-cache-url"
-version = "3.4.4"
-description = "Use Cache URLs in your Django application."
-category = "main"
-optional = false
-python-versions = "*"
-files = [
-    {file = "django-cache-url-3.4.4.tar.gz", hash = "sha256:ef2cfacea361ee22e9b67d6ca941db22e0a9eaf892b67ca71cad52c62a17fd36"},
-    {file = "django_cache_url-3.4.4-py2.py3-none-any.whl", hash = "sha256:5ca4760b4580b80e41279bc60d1e5c16a822e4e462265faab0a330701bb0ef9a"},
-]
-
-[[package]]
 name = "django-celery-results"
 version = "2.5.1"
 description = "Celery result backends for Django."
@@ -587,7 +575,6 @@ files = [
 dj-database-url = {version = "*", optional = true, markers = "extra == \"database\""}
 dj-email-url = {version = "*", optional = true, markers = "extra == \"email\""}
 django = ">=3.2"
-django-cache-url = {version = "*", optional = true, markers = "extra == \"cache\""}
 
 [package.extras]
 cache = ["django-cache-url"]
@@ -2270,4 +2257,4 @@ files = [
 [metadata]
 lock-version = "2.0"
 python-versions = "~3.10.0"
-content-hash = "372c8bf7e33964e66c50414ab6d1d1460405194a18037ae1052851fafbe3fccb"
+content-hash = "c9cf856f010827f6845b93fa2af580d3ba857067ab9148ac007439b5c92244f6"

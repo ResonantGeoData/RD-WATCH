@@ -106,7 +106,7 @@ def get_siteobservations_images(
                 source=baseConstellation,
             )
             if (
-                (baseConstellation == 'S2' or baseConstellation == 'L8')
+                baseConstellation in ('S2, 'L8')
                 and dayRange > -1
                 and is_inside_range(
                     found_timestamps.keys(), observation.timestamp, dayRange

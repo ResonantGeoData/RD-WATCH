@@ -56,7 +56,7 @@ def get_siteobservations_images(
     baseConstellation='WV',
     force=False,
     dayRange=14,
-    NoDataLimit=50,
+    no_data_limit=50,
 ) -> None:
     constellationObj = Constellation.objects.filter(slug=baseConstellation).first()
     site_observations = SiteObservation.objects.filter(

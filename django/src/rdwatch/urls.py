@@ -23,7 +23,7 @@ urlpatterns = [
     ),
     path('status', views.RetrieveServerStatus.as_view()),  # type: ignore
     path('evaluations', views.site_evaluations),
-    path('evaluations/images/<int:pk>', views.site_images),
+    path('evaluations/images/<int:pk>/', views.site_images),
     path('evaluations/<int:pk>', views.site_observations),
     path('satellite-image/timestamps', views.satelliteimage_time_list),
     path('satellite-image/all-timestamps', views.all_satellite_timestamps),

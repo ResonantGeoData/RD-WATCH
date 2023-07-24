@@ -144,7 +144,7 @@ def get_queryset():
         .alias(
             region_id=F('evaluations__region_id'),
             observation_count=Count('evaluations__observations'),
-            site_eval_config_id=F('evaluations__configuration')
+            evaluation_configuration=F('evaluations__configuration')
         )
         .annotate(
             json=JSONObject(
@@ -175,13 +175,16 @@ def get_queryset():
                     ),
                     output_field=JSONField(),
                 ),
-                downloading=Subquery(
-                    SatelliteFetching.objects.filter(
-                        configuration=OuterRef('site_eval_config_id'),
-                        status=SatelliteFetching.Status.RUNNING,
-                    )
-                    .annotate(count=Func(F('id'), function='Count'))
-                    .values('count')
+                downloading=Coalesce(
+                    Subquery(
+                        SatelliteFetching.objects.filter(
+                            siteeval__configuration_id=OuterRef('evaluation_configuration'),
+                            status=SatelliteFetching.Status.RUNNING,
+                        )
+                        .annotate(count=Func(F('id'), function='Count'))
+                        .values('count')
+                    ),
+                    0  # Default value when evaluations are None
                 ),
                 parameters='parameters',
                 numsites=Count('evaluations__pk', distinct=True),
@@ -354,7 +357,7 @@ def generate_images(request: HttpRequest, hyper_parameters_id: int):
     for eval in siteEvaluations:
         get_site_observation_images(request, eval.pk)
 
-    return Response(status=202)
+    return 202
 
 
 @router.put('/{hyper_parameters_id}/cancel-generate-images/')
@@ -380,7 +383,7 @@ def cancel_generate_images(request: HttpRequest, hyper_parameters_id: int):
                     fetching_task.celery_id = ''
                     fetching_task.save()
 
-    return Response(status=202)
+    return 202
 
 
 def get_region(hyper_parameters_id: int):

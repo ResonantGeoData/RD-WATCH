@@ -57,7 +57,6 @@ const downloading = ref(props.modelRun.downloading);
 
 const updateDownloading = async () => {
   const data = await ApiService.getModelRun(props.modelRun.id);
-  console.log(data);
   downloading.value = data.downloading;
   if (loopingInterval !== null && downloading.value == 0) {
     clearInterval(loopingInterval);

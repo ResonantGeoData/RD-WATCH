@@ -108,11 +108,9 @@ class BaseConfiguration(Configuration):
 
     CACHES = {
         'default': {
-            'BACKEND': 'django_redis.cache.RedisCache',
+            'BACKEND': 'django.core.cache.backends.redis.RedisCache',
+            'KEY_PREFIX': 'rdwatch',
             'LOCATION': os.environ['RDWATCH_REDIS_URI'],
-            'OPTIONS': {
-                'CLIENT_CLASS': 'rdwatch.redis.CustomRedisCluster',
-            },
         }
     }
 

@@ -8,7 +8,6 @@ from .satellite_image import (
     satelliteimage_visual_time_list,
 )
 from .server_status import RetrieveServerStatus
-from .site_evaluation import site_evaluations
 from .site_observation import (
     cancel_site_observation_images,
     get_site_observation_images,
@@ -18,7 +17,6 @@ from .vector_tile import vector_tile
 
 __all__ = [
     'RetrieveServerStatus',
-    'site_evaluations',
     'site_observations',
     'satelliteimage_raster_tile',
     'satelliteimage_raster_bbox',

@@ -20,13 +20,3 @@ class SiteObservationListSerializer(serializers.Serializer):
     timerange = TimeRangeSerializer()
     bbox = BoundingBoxSerializer()
     results = SiteObservationSerializer(many=True)
-
-
-class SiteObservationGeomSerializer(serializers.Serializer):
-    timestamp = serializers.IntegerField()
-    geoJSON = serializers.JSONField(default=dict)
-    label = serializers.CharField()
-
-
-class SiteObservationGeomListSerializer(serializers.Serializer):
-    results = SiteObservationGeomSerializer(many=True)

@@ -182,7 +182,7 @@ def get_queryset():
                             ),
                             status=SatelliteFetching.Status.RUNNING,
                         )
-                        .annotate(count=Func(F('id'), function='Count'))
+                        .annotate(count=Count('id'))
                         .values('count')
                     ),
                     0,  # Default value when evaluations are None

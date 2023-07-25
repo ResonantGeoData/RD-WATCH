@@ -123,7 +123,9 @@ class ObservationFeature(Schema):
         return val.split(', ')
 
     @validator('observation_date', pre=True)
-    def parse_dates(cls, v: Any) -> datetime:
+    def parse_dates(cls, v: Any) -> datetime | None:
+        if v is None:
+            return None
         if not isinstance(v, str):
             raise ValueError('"observation_date" must be a valid date string.')
         return datetime.strptime(v, '%Y-%m-%d')

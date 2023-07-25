@@ -45,6 +45,7 @@ class SiteObservation(models.Model):
     )
     timestamp = models.DateTimeField(
         help_text="The source image's timestamp",
+        null=True,
     )
 
     def __str__(self):

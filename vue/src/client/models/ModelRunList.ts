@@ -7,7 +7,7 @@ export type ModelRunList = {
   timerange: {
     min: number;
     max: number;
-  };
+  } | null;
   bbox: GeoJSON.Polygon | null;
   results: ModelRun[];
 };

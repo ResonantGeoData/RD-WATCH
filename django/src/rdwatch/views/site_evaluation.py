@@ -27,8 +27,8 @@ class SiteEvaluationSchema(Schema):
     configuration: dict
     performer: PerformerSchema
     score: float
-    timestamp: int
-    timerange: TimeRangeSchema
+    timestamp: int | None
+    timerange: TimeRangeSchema | None
     bbox: BoundingBoxSchema
 
     @staticmethod
@@ -47,7 +47,7 @@ class SiteEvaluationSchema(Schema):
 
 class SiteEvaluationListSchema(Schema):
     count: int
-    timerange: TimeRangeSchema
+    timerange: TimeRangeSchema | None
     bbox: BoundingBoxSchema
     performers: list[str]
     results: list[SiteEvaluationSchema]

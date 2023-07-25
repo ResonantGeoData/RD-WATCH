@@ -69,8 +69,8 @@ def get_siteobservations_images(
     ).count()
     transformer = Transformer.from_crs('EPSG:3857', 'EPSG:4326')
     found_timestamps = {}
-    min_time = datetime.strptime(BaseTime)
-    max_time = datetime.now()
+    min_time = datetime.max
+    max_time = datetime.min
     max_bbox = [float('inf'), float('inf'), float('-inf'), float('-inf')]
     matchConstellation = ''
     baseSiteEval = None
@@ -101,7 +101,8 @@ def get_siteobservations_images(
         timestamp = observation.timestamp
         constellation = observation.constellation
         # We need to grab the image for this timerange and type
-        if str(constellation) == baseConstellation:
+        logger.warning(timestamp)
+        if str(constellation) == baseConstellation and timestamp is not None:
             baseSiteEval = observation.siteeval
             matchConstellation = constellation
             found = SiteImage.objects.filter(
@@ -173,8 +174,19 @@ def get_siteobservations_images(
 
     # Now we need to go through and find all other images
     # that exist in the start/end range of the siteEval
+    logger.warning(min_time)
+    logger.warning(max_time)
+    if min_time == datetime.max:
+        min_time = datetime.strptime(BaseTime, '%Y-%m-%d')
+    if max_time == datetime.min:
+        max_time = datetime.now()
+    logger.warning(f'Checking Time Range')
     timebuffer = ((max_time + timedelta(days=30)) - (min_time - timedelta(days=30))) / 2
     timestamp = (min_time + timedelta(days=30)) + timebuffer
+    logger.warning(timebuffer)
+    logger.warning(timestamp)
+
+
     # Now we get a list of all the timestamps and captures that fall in this range.
     worldView = baseConstellation == 'WV'
     if matchConstellation == '':
@@ -201,6 +213,7 @@ def get_siteobservations_images(
     ):  # We need to grab the siteEvaluation directly for a reference
         baseSiteEval = SiteEvaluation.objects.filter(pk=site_eval_id).first()
     count = 0
+    logger.warning(f'Found {len(captures)} captures')
     for (
         capture
     ) in (

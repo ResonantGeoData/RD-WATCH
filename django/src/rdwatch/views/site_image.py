@@ -33,7 +33,7 @@ class SiteImageListSchema(Schema):
 
 
 class SiteObsGeomSchema(Schema):
-    timestamp: int
+    timestamp: int | None
     geoJSON: dict  # TODO: Replace with pydantics geoJSON
     label: str
 

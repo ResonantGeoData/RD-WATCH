@@ -72,7 +72,11 @@ export const buildObservationFilter = (
       ["get", "region_id"],
       ["literal", filters.region_id?.length ? filters.region_id : [""]],
     ],
-    ["<=", ["get", "timemin"], timestamp],
+    [
+      "any",
+      ["!", ["to-boolean", ["get", "timemin"]]],
+      ["<=", ["get", "timemin"], timestamp],
+    ],
     [
       "any",
       ["!", ["to-boolean", ["get", "timemax"]]],
@@ -109,8 +113,11 @@ export const buildSiteFilter = (
       // observations associated with this model run and that the main site polygon
       // should be rendered regardless of timestamp
       ["get", "site_polygon"],
-      ["<=", ["get", "timemin"], timestamp],
-    ],
+      ["any",
+        ["!", ["to-boolean", ["get", "timemin"]]],
+        ["<=", ["get", "timemin"], timestamp],
+      ],
+      ],
     ["literal", !!filters.showSiteOutline],
   ];
 

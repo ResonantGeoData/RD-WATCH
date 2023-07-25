@@ -83,7 +83,7 @@ export interface SiteObservation {
   timerange: {
     min: number;
     max: number;
-  },
+  } | null,
   imagesLoaded: boolean;
   imageCounts: {
     L8: {total:number, unmatched:number | null, loaded: number, images?: SiteObservationImage[]};

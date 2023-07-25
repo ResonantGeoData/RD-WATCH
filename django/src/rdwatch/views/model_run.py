@@ -15,6 +15,7 @@ from django.db.models import (
     Case,
     Count,
     F,
+    Func,
     JSONField,
     Max,
     Min,

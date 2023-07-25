@@ -33,7 +33,7 @@ class SiteImageListSchema(Schema):
 
 
 class SiteObsGeomSchema(Schema):
-    timestamp: int
+    timestamp: int | None
     geoJSON: dict  # TODO: Replace with pydantics geoJSON
     label: str
 
@@ -41,6 +41,7 @@ class SiteObsGeomSchema(Schema):
 class SiteImageResponse(Schema):
     images: SiteImageListSchema
     geoJSON: list[SiteObsGeomSchema]
+    label: str
 
 
 @router.get('/{id}/', response=SiteImageResponse)
@@ -83,11 +84,12 @@ def site_images(request: HttpRequest, id: int):
             )
         )
     )
+    label = SiteEvaluation.objects.get(pk=id).label
     output = {}
     # lets get the presigned URL for each image
     for image in image_queryset['results']:
         image['image'] = default_storage.url(image['image'])
     output['images'] = image_queryset
     output['geoJSON'] = geom_queryset['results']
-
+    output['label'] = str(label)
     return output

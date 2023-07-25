@@ -9,8 +9,8 @@ class SiteObservationSerializer(serializers.Serializer):
     score = serializers.FloatField()
     constellation = serializers.CharField()
     spectrum = serializers.CharField()
-    timerange = TimeRangeSerializer()
-    timestamp = serializers.IntegerField()  # type: ignore
+    timerange = TimeRangeSerializer(required=False, allow_null=True)
+    timestamp = serializers.IntegerField(required=False, allow_null=True)  # type: ignore
     bbox = BoundingBoxSerializer()
     area = serializers.FloatField()
 

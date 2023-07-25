@@ -81,7 +81,7 @@ class SiteFeature(Schema):
 
 class ObservationFeature(Schema):
     type: Literal['observation']
-    observation_date: datetime
+    observation_date: datetime | None
     source: str | None
     sensor_name: Literal['Landsat 8', 'Sentinel-2', 'WorldView', 'Planet'] | None
     current_phase: list[

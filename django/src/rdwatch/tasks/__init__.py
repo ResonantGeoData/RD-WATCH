@@ -36,6 +36,7 @@ from rdwatch.utils.worldview_processed.raster_tile import (
 
 logger = logging.getLogger(__name__)
 
+BaseTime = '2013-01-01'  # lowest time to use if time is null for observations
 
 def is_inside_range(
     timestamps: Iterable[datetime], check_timestamp: datetime, days_range
@@ -68,8 +69,8 @@ def get_siteobservations_images(
     ).count()
     transformer = Transformer.from_crs('EPSG:3857', 'EPSG:4326')
     found_timestamps = {}
-    min_time = datetime.max
-    max_time = datetime.min
+    min_time = datetime.strptime(BaseTime)
+    max_time = datetime.now()
     max_bbox = [float('inf'), float('inf'), float('-inf'), float('-inf')]
     matchConstellation = ''
     baseSiteEval = None
@@ -86,8 +87,9 @@ def get_siteobservations_images(
                 'siteEvalId': site_eval_id,
             },
         )
-        min_time = min(min_time, observation.timestamp)
-        max_time = max(max_time, observation.timestamp)
+        if observation.timestamp:
+            min_time = min(min_time, observation.timestamp)
+            max_time = max(max_time, observation.timestamp)
         mercator: tuple[float, float, float, float] = observation.geom.extent
         tempbox = transformer.transform_bounds(
             mercator[0], mercator[1], mercator[2], mercator[3]

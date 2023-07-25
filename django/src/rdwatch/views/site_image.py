@@ -3,7 +3,7 @@ from ninja import Router, Schema
 from django.contrib.gis.db.models.functions import Transform
 from django.contrib.postgres.aggregates import JSONBAgg
 from django.core.files.storage import default_storage
-from django.db.models import Count, F
+from django.db.models import Count
 from django.db.models.functions import JSONObject  # type: ignore
 from django.http import HttpRequest
 from rest_framework.exceptions import NotFound

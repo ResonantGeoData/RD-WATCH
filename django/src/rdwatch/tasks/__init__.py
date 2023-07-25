@@ -51,6 +51,19 @@ def is_inside_range(
     return False
 
 
+def is_inside_range(
+    timestamps: Iterable[datetime], check_timestamp: datetime, days_range
+):
+    for timestamp in timestamps:
+        time_difference = check_timestamp - timestamp
+        if abs(time_difference.days) <= days_range:
+            logger.warning(
+                f'Skipping Timestamp because difference is: {time_difference.days}'
+            )
+            return True
+    return False
+
+
 @app.task(bind=True)
 def get_siteobservations_images(
     self,
@@ -87,9 +100,8 @@ def get_siteobservations_images(
                 'siteEvalId': site_eval_id,
             },
         )
-        if observation.timestamp:
-            min_time = min(min_time, observation.timestamp)
-            max_time = max(max_time, observation.timestamp)
+        min_time = min(min_time, observation.timestamp)
+        max_time = max(max_time, observation.timestamp)
         mercator: tuple[float, float, float, float] = observation.geom.extent
         tempbox = transformer.transform_bounds(
             mercator[0], mercator[1], mercator[2], mercator[3]

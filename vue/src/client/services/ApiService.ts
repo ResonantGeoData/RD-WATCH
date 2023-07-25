@@ -15,6 +15,7 @@ import type { CancelablePromise } from "../core/CancelablePromise";
 import { OpenAPI } from "../core/OpenAPI";
 import { request as __request } from "../core/request";
 import { SatelliteTimeStamp } from "../../store";
+import { EvaluationImageResults } from "../../types";
 
 export interface QueryArguments {
   performer?: string;
@@ -39,6 +40,20 @@ export interface ScoringResults {
 
   }
   color?: string;
+}
+
+export interface ModelRunEvaluations {
+  region: Region;
+
+  evaluations: {
+    images: number,
+    S2: number,
+    WV: number,
+    L8: number,
+    number: number,
+    id: number
+    bbox: { xmin: number; ymin: number; xmax: number; ymax: number }
+  }[];
 }
 
 export class ApiService {
@@ -104,6 +119,27 @@ export class ApiService {
           }
         });
       }
+      
+      /**
+   * @param id
+   * @returns boolean
+   * @throws ApiError
+   */
+      public static getModelRunImages(
+        id: string,
+        constellation: 'WV' | 'S2' | 'L8' = 'WV'
+      ): CancelablePromise<boolean> {
+        return __request(OpenAPI, {
+          method: "POST",
+          url: "/api/model-runs/{id}/generate-images/",
+          path: {
+            id: id,
+          },
+          query: {
+            constellation,
+          }
+        });
+      }
 
       /**
    * @param id
@@ -115,13 +151,29 @@ export class ApiService {
       ): CancelablePromise<boolean> {
         return __request(OpenAPI, {
           method: "PUT",
-          url: "/api/observations/{id}/cancel-generate-images",
+          url: "/api/observations/{id}/cancel-generate-images/",
           path: {
             id: id,
           },
         });
       }
 
+      /**
+   * @param id
+   * @returns boolean
+   * @throws ApiError
+   */
+      public static cancelModelRunsImageTask(
+        id: number,
+      ): CancelablePromise<boolean> {
+        return __request(OpenAPI, {
+          method: "PUT",
+          url: "/api/model-runs/{id}/cancel-generate-images/",
+          path: {
+            id: id,
+          },
+        });
+      }
   
   /**
    * @returns ModelRunList
@@ -138,6 +190,22 @@ export class ApiService {
       ),
     });
   }
+
+    /**
+   * @returns EvaluationsList
+   * @throws ApiError
+   */
+    public static getModelRunEvaluations(id: number): CancelablePromise<ModelRunEvaluations> {
+      return __request(OpenAPI, {
+        method: "GET",
+        url: "/api/model-runs/{id}/evaluations",
+        path: {
+          id: id,
+        },
+      });
+    }
+  
+    
 
   /**
    * @param id
@@ -336,5 +404,15 @@ export class ApiService {
     });
   }
 
+  public static getEvaluationImages(id: number): CancelablePromise<EvaluationImageResults> {
+    return __request(OpenAPI, {
+      method: "GET",
+      url: "/api/evaluations/images/{id}",
+      path: {
+        id: id,
+      },
+    });
+
+  }
 }
 

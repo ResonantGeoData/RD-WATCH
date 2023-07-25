@@ -51,11 +51,6 @@ const getImages = async (id:number, constellation: 'WV' | 'S2' | 'L8' = 'WV')  =
     }
     loopingInterval = setInterval(checkSiteObs, 1000);
 }
-const canGetImages = computed(() => ({
-  WV: props.siteObservation.imageCounts.WV.total,
-  S2: props.siteObservation.imageCounts.S2.total,
-  L8: props.siteObservation.imageCounts.L8.total,
-}));
 
 const startLooping = () => {
   if (state.loopingInterval !== null) {
@@ -223,7 +218,7 @@ const progressInfo = computed(() => {
       <v-btn
         size="x-small"
         color="secondary"
-        :disabled="canGetImages.WV === 0 || isRunning"
+        :disabled="isRunning"
         class="mx-1"
         @click="getImages(siteObservation.id, 'WV')"
       >
@@ -232,17 +227,16 @@ const progressInfo = computed(() => {
       <v-btn
         size="x-small"
         color="secondary"
-        :disabled="canGetImages.S2 === 0 || isRunning"
+        :disabled="isRunning"
         class="mx-1"
         @click="getImages(siteObservation.id, 'S2')"
       >
         Get S2
       </v-btn>
       <v-btn
-        v-if="false"
         size="x-small"
         color="secondary"
-        :disabled="canGetImages.L8 === 0 || isRunning"
+        :disabled="isRunning"
         class="mx-1"
         @click="getImages(siteObservation.id, 'L8')"
       >

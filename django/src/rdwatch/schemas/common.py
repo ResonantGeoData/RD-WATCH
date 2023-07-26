@@ -2,8 +2,8 @@ from ninja import Schema
 
 
 class TimeRangeSchema(Schema):
-    min: int
-    max: int
+    min: int | None
+    max: int | None
 
 
 class BoundingBoxSchema(Schema):

@@ -182,7 +182,7 @@ def get_queryset():
                             ),
                             status=SatelliteFetching.Status.RUNNING,
                         )
-                        .annotate(count=Count('id'))
+                        .annotate(count=Func(F('id'), function='Count'))
                         .values('count')
                     ),
                     0,  # Default value when evaluations are None
@@ -351,17 +351,20 @@ def post_region_model(
     return 201, [eval.id for eval in site_evaluations]
 
 
-@router.post('/{hyper_parameters_id}/generate-images/')
+@router.post('/{hyper_parameters_id}/generate-images/', response={202: bool})
 def generate_images(request: HttpRequest, hyper_parameters_id: int):
     siteEvaluations = SiteEvaluation.objects.filter(configuration=hyper_parameters_id)
 
     for eval in siteEvaluations:
         get_site_observation_images(request, eval.pk)
 
-    return 202
+    return 202, True
 
 
-@router.put('/{hyper_parameters_id}/cancel-generate-images/')
+@router.put(
+    '/{hyper_parameters_id}/cancel-generate-images/',
+    response={202: bool, 409: str, 404: str},
+)
 def cancel_generate_images(request: HttpRequest, hyper_parameters_id: int):
     siteEvaluations = SiteEvaluation.objects.filter(configuration=hyper_parameters_id)
 
@@ -379,12 +382,25 @@ def cancel_generate_images(request: HttpRequest, hyper_parameters_id: int):
                 if fetching_task.status == SatelliteFetching.Status.RUNNING:
                     if fetching_task.celery_id != '':
                         task = AsyncResult(fetching_task.celery_id)
-                        task.revoke()
+                        task.revoke(terminate=True)
                     fetching_task.status = SatelliteFetching.Status.COMPLETE
                     fetching_task.celery_id = ''
                     fetching_task.save()
+                else:
+                    return (
+                        409,
+                        f'There is no running task for \
+                            Model Run Id: {hyper_parameters_id}',
+                    )
 
-    return 202
+            else:
+                return (
+                    404,
+                    f'There is no running task for \
+                        Model Run Id: {hyper_parameters_id}',
+                )
+
+    return 202, True
 
 
 def get_region(hyper_parameters_id: int):

@@ -92,7 +92,7 @@ export class ApiService {
   ): CancelablePromise<SiteObservationList> {
     return __request(OpenAPI, {
       method: "GET",
-      url: "/api/evaluations/{id}",
+      url: "/api/observations/{id}",
       path: {
         id: id,
       },
@@ -110,7 +110,7 @@ export class ApiService {
       ): CancelablePromise<boolean> {
         return __request(OpenAPI, {
           method: "POST",
-          url: "/api/observations/{id}/generate-images",
+          url: "/api/observations/{id}/generate-images/",
           path: {
             id: id,
           },

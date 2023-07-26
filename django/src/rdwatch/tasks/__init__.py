@@ -38,18 +38,6 @@ logger = logging.getLogger(__name__)
 
 BaseTime = '2013-01-01'  # lowest time to use if time is null for observations
 
-def is_inside_range(
-    timestamps: Iterable[datetime], check_timestamp: datetime, days_range
-):
-    for timestamp in timestamps:
-        time_difference = check_timestamp - timestamp
-        if abs(time_difference.days) <= days_range:
-            logger.warning(
-                f'Skipping Timestamp because difference is: {time_difference.days}'
-            )
-            return True
-    return False
-
 
 def is_inside_range(
     timestamps: Iterable[datetime], check_timestamp: datetime, days_range
@@ -192,12 +180,8 @@ def get_siteobservations_images(
         min_time = datetime.strptime(BaseTime, '%Y-%m-%d')
     if max_time == datetime.min:
         max_time = datetime.now()
-    logger.warning(f'Checking Time Range')
     timebuffer = ((max_time + timedelta(days=30)) - (min_time - timedelta(days=30))) / 2
     timestamp = (min_time + timedelta(days=30)) + timebuffer
-    logger.warning(timebuffer)
-    logger.warning(timestamp)
-
 
     # Now we get a list of all the timestamps and captures that fall in this range.
     worldView = baseConstellation == 'WV'

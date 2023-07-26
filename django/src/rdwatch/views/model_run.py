@@ -15,6 +15,7 @@ from django.db.models import (
     Case,
     Count,
     F,
+    Func,
     JSONField,
     Max,
     Min,
@@ -181,7 +182,7 @@ def get_queryset():
                             ),
                             status=SatelliteFetching.Status.RUNNING,
                         )
-                        .annotate(count=Count('id'))
+                        .annotate(count=Func(F('id'), function='Count'))
                         .values('count')
                     ),
                     0,  # Default value when evaluations are None
@@ -378,7 +379,7 @@ def cancel_generate_images(request: HttpRequest, hyper_parameters_id: int):
                 if fetching_task.status == SatelliteFetching.Status.RUNNING:
                     if fetching_task.celery_id != '':
                         task = AsyncResult(fetching_task.celery_id)
-                        task.revoke()
+                        task.revoke(terminate=True)
                     fetching_task.status = SatelliteFetching.Status.COMPLETE
                     fetching_task.celery_id = ''
                     fetching_task.save()

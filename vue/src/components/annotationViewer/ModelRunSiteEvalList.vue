@@ -3,7 +3,7 @@ import { Ref, computed, ref, watch } from "vue";
 import { ApiService } from "../../client";
 import { ModelRunEvaluations } from "../../client/services/ApiService";
 
-interface MdoelRunEvaluationDisplay {
+export interface ModelRunEvaluationDisplay {
   number: number;
   id: number;
   name: string;
@@ -25,7 +25,7 @@ const props = defineProps<{
 }>();
 
 const emit = defineEmits<{
-  (e: "selected", val: MdoelRunEvaluationDisplay): void;
+  (e: "selected", val: ModelRunEvaluationDisplay): void;
 }>();
 
 const evaluationsList: Ref<ModelRunEvaluations | null> = ref(null);
@@ -51,7 +51,7 @@ watch(() => props.modelRun, () => {
 getSiteEvalIds();
 
 const modifiedList = computed(() => {
-  const modList: MdoelRunEvaluationDisplay[] = []
+  const modList: ModelRunEvaluationDisplay[] = []
   if (evaluationsList.value?.evaluations) {
     const regionName = evaluationsList.value.region.name;
     evaluationsList.value.evaluations.forEach((item) => {
@@ -90,10 +90,10 @@ const modifiedList = computed(() => {
   >
     <v-container class="overflow-y-auto">
       <div v-if="modelRun === null">
-        Select a Model Run to display Site Evaluations
+        Select a Model Run to display Site Models
       </div>
       <div v-else>
-        <h3>Site Evaluations:</h3>
+        <h3>Site Models:</h3>
         <v-card 
           v-for="item in modifiedList"
           :key="`${item.name}_${item.id}_${item.selected}`"
@@ -119,7 +119,11 @@ const modifiedList = computed(() => {
             <div v-else>
               <b> 0 Images Downloaded</b>
             </div>
-            <v-row dense justify="center" class="pa-2">
+            <v-row
+              dense
+              justify="center"
+              class="pa-2"
+            >
               <v-chip
                 size="small"
                 :color="statusMap[item.status].color"

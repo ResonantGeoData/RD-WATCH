@@ -14,7 +14,6 @@ import { satelliteLoading } from "../interactions/satelliteLoading";
 import { setReference } from "../interactions/fillPatterns";
 import { setSatelliteTimeStamp } from "../mapstyle/satellite-image";
 import { isEqual, throttle } from 'lodash';
-import { updateImageMapSources } from "../mapstyle/images";
 import { nextTick } from "vue";
 
 interface Props {

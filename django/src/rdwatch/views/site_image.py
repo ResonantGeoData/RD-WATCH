@@ -3,7 +3,7 @@ from ninja import Router, Schema
 from django.contrib.gis.db.models.functions import Transform
 from django.contrib.postgres.aggregates import JSONBAgg
 from django.core.files.storage import default_storage
-from django.db.models import Count
+from django.db.models import Count, F
 from django.db.models.functions import JSONObject  # type: ignore
 from django.http import HttpRequest
 from rest_framework.exceptions import NotFound
@@ -41,7 +41,10 @@ class SiteObsGeomSchema(Schema):
 class SiteImageResponse(Schema):
     images: SiteImageListSchema
     geoJSON: list[SiteObsGeomSchema]
+    evaluationGeoJSON: dict
+    status: str | None
     label: str
+    notes: str | None
 
 
 @router.get('/{id}/', response=SiteImageResponse)
@@ -84,12 +87,28 @@ def site_images(request: HttpRequest, id: int):
             )
         )
     )
-    label = SiteEvaluation.objects.get(pk=id).label
+    site_eval_data = (
+        SiteEvaluation.objects.filter(pk=id)
+        .values()
+        .annotate(
+            json=JSONObject(
+                label=F('label__slug'),
+                status=F('status'),
+                evaluationGeoJSON=Transform('geom', srid=4326),
+                notes=F('notes'),
+            )
+        )[0]
+    )
     output = {}
     # lets get the presigned URL for each image
     for image in image_queryset['results']:
         image['image'] = default_storage.url(image['image'])
     output['images'] = image_queryset
     output['geoJSON'] = geom_queryset['results']
-    output['label'] = str(label)
+    output['label'] = site_eval_data['json']['label']
+    output['status'] = site_eval_data['json']['status']
+    output['notes'] = site_eval_data['json']['notes']
+    print(site_eval_data)
+    print(site_eval_data['json']['evaluationGeoJSON'])
+    output['evaluationGeoJSON'] = site_eval_data['json']['evaluationGeoJSON']
     return output

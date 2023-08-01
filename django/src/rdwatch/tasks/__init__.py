@@ -72,6 +72,7 @@ def get_siteobservations_images(
     site_obs_count = SiteObservation.objects.filter(
         siteeval=site_eval_id, constellation_id=constellationObj.pk
     ).count()
+
     transformer = Transformer.from_crs('EPSG:3857', 'EPSG:4326')
     found_timestamps = {}
     min_time = datetime.max
@@ -79,6 +80,16 @@ def get_siteobservations_images(
     max_bbox = [float('inf'), float('inf'), float('-inf'), float('-inf')]
     matchConstellation = ''
     baseSiteEval = None
+    if site_obs_count == 0:
+        baseSiteEval = SiteEvaluation.objects.get(pk=site_eval_id)
+        mercator: tuple[float, float, float, float] = baseSiteEval.geom.extent
+        tempbox = transformer.transform_bounds(
+            mercator[0], mercator[1], mercator[2], mercator[3]
+        )
+        bbox = [tempbox[1], tempbox[0], tempbox[3], tempbox[2]]
+        bbox = scale_bbox(bbox, 1.2)
+        max_bbox = get_max_bbox(bbox, max_bbox)
+
     # First we gather all images that match observations
     count = 0
     for observation in site_observations.iterator():
@@ -181,7 +192,7 @@ def get_siteobservations_images(
     # that exist in the start/end range of the siteEval
     if overrideDates:
         min_time = datetime.strptime(overrideDates[0], '%Y-%m-%d')
-        max_bbox = datetime.strptime(overrideDates[1], '%Y-%m-%d')
+        max_time = datetime.strptime(overrideDates[1], '%Y-%m-%d')
     else:
         if min_time == datetime.max:
             min_time = datetime.strptime(BaseTime, '%Y-%m-%d')
@@ -199,6 +210,15 @@ def get_siteobservations_images(
         logger.warning(
             f'Utilizing Constellation: {matchConstellation} - {matchConstellation.slug}'
         )
+
+    print('Min')
+    print(min_time)
+    print('Max')
+    print(max_time)
+    print('Buffer')
+    print(timebuffer)
+    print('Override')
+    print(overrideDates)
     captures = get_range_captures(
         max_bbox, timestamp, matchConstellation, timebuffer, worldView
     )
@@ -253,7 +273,7 @@ def get_siteobservations_images(
             percent_black = get_percent_black_pixels(bytes)
             cloudcover = capture.cloudcover
             count += 1
-            output = f'tile_image_{observation.siteeval}_nonobs_{count}.jpg'
+            output = f'tile_image_{baseSiteEval.pk}_nonobs_{count}.jpg'
             image = File(io.BytesIO(bytes), name=output)
             imageObj = Image.open(io.BytesIO(bytes))
             if image is None:  # No null/None images should be set

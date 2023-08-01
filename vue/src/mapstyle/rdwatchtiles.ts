@@ -113,12 +113,8 @@ export const buildSiteFilter = (
       // observations associated with this model run and that the main site polygon
       // should be rendered regardless of timestamp
       ["get", "site_polygon"],
-      ["any",
-        ["!", ["to-boolean", ["get", "timemin"]]],
-        ["<=", ["get", "timemin"], timestamp],
+      ["literal", !!filters.showSiteOutline],
       ],
-      ],
-    ["literal", !!filters.showSiteOutline],
   ];
 
   // Add any filters set in the UI

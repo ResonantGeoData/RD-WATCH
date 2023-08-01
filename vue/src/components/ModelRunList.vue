@@ -8,7 +8,6 @@ import {
   QueryArguments,
 } from "../client";
 import { computed, ref, watch, watchEffect, withDefaults } from "vue";
-import type { Ref } from "vue";
 import { ApiService } from "../client";
 import { filteredSatelliteTimeList, state } from "../store";
 import type { KeyedModelRun } from '../store'
@@ -191,7 +190,7 @@ async function getSatelliteTimestamps(modelRun: ModelRunList, force=false) {
 async function checkScores(modelRun: KeyedModelRun)  {
   let hasScores = false;
   try {
-    hasScores = await ApiService.hasScores(modelRun.id, modelRun.region?.id || 0)
+    //hasScores = await ApiService.hasScores(modelRun.id, modelRun.region?.id || 0)
   } catch (err) {
     hasScores = false;
   }

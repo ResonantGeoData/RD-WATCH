@@ -22,7 +22,7 @@ import { state } from '../store';
               class="legend-title"
               :class="{'legend-title-single': !state.filters.scoringColoring}"
             >
-              Site Evaluations
+              Site Models
             </v-card-title>
             <v-card-text>
               <v-row dense>

@@ -14,7 +14,7 @@ interface Props {
   dateRange?: number[] | null
 }
 
-type EditModes = 'SiteEvaluationLabel' | 'StartDate' | 'EndDate' | 'SiteObservationLabel' | 'SiteEvaluationNote' | 'SiteObservationNotes'
+type EditModes = 'SiteEvaluationLabel' | 'StartDate' | 'EndDate' | 'SiteObservationLabel' | 'SiteEvaluationNotes' | 'SiteObservationNotes'
 
 const props = withDefaults(defineProps<Props>(), {
   dialog: false,
@@ -42,6 +42,7 @@ const notes = ref('');
 const siteEvaluationLabel = ref('');
 const startDate: Ref<string|null> = ref(props.dateRange && props.dateRange[0] ? new Date(props.dateRange[0] * 1000).toISOString().split('T')[0] : null);
 const endDate: Ref<string|null> = ref(props.dateRange && props.dateRange[1] ? new Date(props.dateRange[1] * 1000).toISOString().split('T')[0] : null);
+const siteEvaluationNotes = ref('');
 const siteEvaluationUpdated = ref(false)
 const imageRef: Ref<HTMLImageElement | null> = ref(null);
 const canvasRef: Ref<HTMLCanvasElement | null> = ref(null);
@@ -57,7 +58,10 @@ const currentLabel = ref('')
 const currentDate = ref('');
 const labelList = computed(() => styles.filter((item) => item.labelType === 'observation').map((item) => item.label));
 const siteEvaluationList = computed(() => styles.filter((item) => item.labelType === 'sites').map((item) => item.label));
-const getClosestPoly = (timestamp: number, polys: EvaluationGeoJSON[]) => {
+const getClosestPoly = (timestamp: number, polys: EvaluationGeoJSON[], evaluationPoly: EvaluationGeoJSON['geoJSON'], siteEvalLabel: string) => {
+  if (polys.length === 0) {
+    return {geoJSON: evaluationPoly, label:siteEvalLabel};
+  }
     let found = polys[0];
     for (let i = 0; i < polys.length; i += 1) {
         if (timestamp > polys[i].timestamp) {
@@ -123,6 +127,7 @@ const getImageData = async () => {
     const data =  await ApiService.getEvaluationImages(props.siteEvalId);
     const images = data.images.results.sort((a, b) => a.timestamp - b.timestamp);
     const polygons = data.geoJSON;
+    siteEvaluationNotes.value = data.notes || '';
     siteEvaluationLabel.value = data.label;
     if (imageRef.value !== null) {
         imageRef.value.src = images[currentImage.value].image;
@@ -130,7 +135,7 @@ const getImageData = async () => {
     // Lets process the polygons to get them in pixel space.
     // For each polygon we need to convert it to the proper image sizing result.
     images.forEach((image) => {
-        const closestPoly = getClosestPoly(image.timestamp, polygons);
+        const closestPoly = getClosestPoly(image.timestamp, polygons, data.evaluationGeoJSON, data.label);
         // Now we convert the coordinates to 
         const bboxWidth = image.bbox.xmax - image.bbox.xmin;
         const bboxHeight = image.bbox.ymax - image.bbox.ymin;
@@ -177,7 +182,7 @@ const drawData = (canvas: HTMLCanvasElement, image: EvaluationImage, poly:PixelP
           });
           context.lineWidth = 1;
           context.strokeStyle = getColorFromLabel(poly.label);
-          currentLabel.value = poly.label;
+          currentLabel.value = siteEvaluationLabel.value == poly.label ? '' : poly.label;
           context.stroke();
         });
         // Now scale the canvas to the proper size
@@ -281,7 +286,8 @@ const saveSiteEvaluationChanges = () => {
   ApiService.patchSiteEvaluation(props.siteEvalId, {
     label: siteEvaluationLabel.value,
     start_date: startDate.value,
-    end_date: endDate.value
+    end_date: endDate.value,
+    notes: siteEvaluationNotes.value ? siteEvaluationNotes.value : undefined,
   });
   siteEvaluationUpdated.value = false;
 }
@@ -349,6 +355,16 @@ const saveSiteEvaluationChanges = () => {
           <v-icon
             v-if="editMode"
             @click="setEditingMode('SiteEvaluationLabel')"
+          >
+            mdi-pencil
+          </v-icon>
+        </div>
+        <div class="ml-3">
+          <b>Notes:</b>
+          <span> {{ siteEvaluationNotes }}</span>
+          <v-icon
+            v-if="editMode"
+            @click="setEditingMode('SiteEvaluationNotes')"
           >
             mdi-pencil
           </v-icon>
@@ -478,11 +494,9 @@ const saveSiteEvaluationChanges = () => {
       <v-col cols="3">
         <div v-if="filteredImages[currentImage].image.siteobs_id !== null">
           <div>Site Observation</div>
-          <v-btn size="x-small" color="error">Delete</v-btn>
         </div>
         <div v-else>
           <div>Non Site Observation</div>
-          <v-btn size="x-small" color="success">Add</v-btn>
         </div>
         <v-tooltip
           open-delay="50"
@@ -552,17 +566,22 @@ const saveSiteEvaluationChanges = () => {
       class="mt-4"
     />
     <div>
-      <b><v-icon
-        v-if="editMode && filteredImages[currentImage] && filteredImages[currentImage].image.siteobs_id !== null"
+      <v-icon
+        v-if="false && editMode && filteredImages[currentImage] && filteredImages[currentImage].image.siteobs_id !== null"
         @click="setEditingMode('SiteObservationNotes')"
-      >mdi-pencil</v-icon>Notes:</b> <p>{{ notes }}</p>
+      >
+        mdi-pencil
+      </v-icon>Notes:
+      <p>
+        {{ notes }}
+      </p>
     </div>
     <v-dialog
       v-model="editDialog"
       width="400"
     >
       <v-card v-if="currentEditMode === 'SiteEvaluationLabel'">
-        <v-card-title>Edit Site Evaluation Label</v-card-title>
+        <v-card-title>Edit Site Model Label</v-card-title>
         <v-card-text>
           <v-select
             v-model="siteEvaluationLabel"
@@ -594,14 +613,27 @@ const saveSiteEvaluationChanges = () => {
         <v-card>
           <v-card-title>Observation Time</v-card-title>
           <v-card-text>
-            <v-btn
-              color="error"
-              class="mb-2"
-              @click="updateTime(null, 'StartDate')"
+            <v-row
+              dense
+              justify="center"
             >
-              Set Time to Null
-            </v-btn>
-            <br>
+              <v-btn
+                color="error"
+                class="mb-2 mx-1"
+                size="small"
+                @click="updateTime(null, 'StartDate'); editDialog=false"
+              >
+                Set Time to Null
+              </v-btn>
+              <v-btn
+                color="primary"
+                class="mb-2 mx-1"
+                size="small"
+                @click="updateTime(currentDate, 'StartDate'); editDialog=false"
+              >
+                Current: {{ currentDate }}
+              </v-btn>
+            </v-row>
             <v-date-picker
               v-if="startDate !== null"
               :model-value="[startDate ? startDate : new Date()]"
@@ -616,14 +648,27 @@ const saveSiteEvaluationChanges = () => {
         <v-card>
           <v-card-title>Observation Time</v-card-title>
           <v-card-text>
-            <v-btn
-              color="error"
-              class="mb-2"
-              @click="updateTime(null, 'EndDate')"
+            <v-row
+              dense
+              justify="center"
             >
-              Set Time to Null
-            </v-btn>
-            <br>
+              <v-btn
+                color="error"
+                class="mb-2 mx-1"
+                size="small"
+                @click="updateTime(null, 'EndDate'); editDialog=false"
+              >
+                Set Time to Null
+              </v-btn>
+              <v-btn
+                color="primary"
+                class="mb-2 mx-1"
+                size="small"
+                @click="updateTime(currentDate, 'EndDate'); editDialog=false"
+              >
+                Current: {{ currentDate }}
+              </v-btn>
+            </v-row>
             <v-date-picker
               v-if="endDate !== null"
               :model-value="[endDate ? endDate : new Date()]"
@@ -633,6 +678,33 @@ const saveSiteEvaluationChanges = () => {
             />
           </v-card-text>
         </v-card>
+      </v-card>
+      <v-card v-if="currentEditMode === 'SiteEvaluationNotes'">
+        <v-card-title>Edit Site Model Notes</v-card-title>
+        <v-card-text>
+          <v-text-field
+            v-model="siteEvaluationNotes"
+            label="Notes"
+          />
+        </v-card-text>
+        <v-card-actions>
+          <v-row dense>
+            <v-btn
+              color="error"
+              class="mx-3"
+              @click="editDialog = false"
+            >
+              Cancel
+            </v-btn>
+            <v-btn
+              color="success"
+              class="mx-3"
+              @click="editDialog = false; siteEvaluationUpdated = true"
+            >
+              Save
+            </v-btn>
+          </v-row>
+        </v-card-actions>
       </v-card>
     </v-dialog>
   </v-card>

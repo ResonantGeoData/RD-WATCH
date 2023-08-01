@@ -104,8 +104,8 @@ onMounted(() => {
         />
         <RegionFilter
           v-model="selectedRegion"
-          @update:model-value="updateRegion($event)"
           cols="6"
+          @update:model-value="updateRegion($event)"
         />
       </v-row>
     </div>

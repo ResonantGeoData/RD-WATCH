@@ -9,7 +9,6 @@ import { computed, onMounted, ref, watch } from "vue";
 import type { Performer, QueryArguments, Region } from "../client";
 import type { Ref } from "vue";
 import { changeTime } from "../interactions/timeStepper";
-import { stat } from "fs";
 
 const timemin = ref(Math.floor(new Date(0).valueOf() / 1000));
 const queryFilters: Ref<QueryArguments> = ref({ page: 1 });
@@ -156,8 +155,8 @@ onMounted(() => {
         />
         <RegionFilter
           v-model="selectedRegion"
-          @update:model-value="updateRegion($event)"
           cols="6"
+          @update:model-value="updateRegion($event)"
         />
       </v-row>
       <SettingsPanel v-if="expandSettings" />

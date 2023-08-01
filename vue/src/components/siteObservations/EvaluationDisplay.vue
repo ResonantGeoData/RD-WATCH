@@ -5,7 +5,6 @@ import { SiteObservation } from "../../store";
 import { imageFilter } from "../../mapstyle/images";
 import EvaluationImages from "./EvaluationImages.vue";
 import EvaluationScoring from "./EvaluationScoring.vue";
-import { ApiService } from "../../client";
 import ImageViewerButton from "../imageViewer/ImageViewerButton.vue";
 import { timeRangeFormat } from "../../utils";
 const props = defineProps<{
@@ -37,7 +36,7 @@ const toggleImages = (siteObs: SiteObservation, off= false) => {
             }
             tempArr.push({
                 id: siteObs.id,
-                timestamp: siteObs.timerange.min,
+                timestamp: siteObs.timerange ? siteObs.timerange.min : 0,
                 images: imageList,
                 bbox,
             });
@@ -122,8 +121,8 @@ const goToTimestamp = (dir: number, loop = false) => {
 const noScore = ref(false);
 const hasScore = async () => {
   try {
-    //const result = await ApiService.hasScores(props.siteObservation.scoringBase.configurationId, props.siteObservation.scoringBase.regionId)
-    //noScore.value = !result;
+    // const result = await ApiService.hasScores(props.siteObservation.scoringBase.configurationId, props.siteObservation.scoringBase.regionId)
+    // noScore.value = !result;
   } catch {
     noScore.value = true;
   }
@@ -135,7 +134,7 @@ const changeTimstamp = ({dir, loop}: {dir: number, loop: boolean}) => {
 }
 
 
-const hasLoadedImages = computed(() => (Object.entries(props.siteObservation.imageCounts).findIndex(([key, data]) => data.loaded > 0) !== -1));
+const hasLoadedImages = computed(() => (Object.entries(props.siteObservation.imageCounts).findIndex(([,data]) => data.loaded > 0) !== -1));
 
 </script>
 

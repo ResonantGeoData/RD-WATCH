@@ -7,7 +7,7 @@ import EvaluationImages from "./EvaluationImages.vue";
 import EvaluationScoring from "./EvaluationScoring.vue";
 import { ApiService } from "../../client";
 import ImageViewerButton from "../imageViewer/ImageViewerButton.vue";
-
+import { timeRangeFormat } from "../../utils";
 const props = defineProps<{
   siteObservation: SiteObservation;
 }>();
@@ -122,8 +122,8 @@ const goToTimestamp = (dir: number, loop = false) => {
 const noScore = ref(false);
 const hasScore = async () => {
   try {
-    const result = await ApiService.hasScores(props.siteObservation.scoringBase.configurationId, props.siteObservation.scoringBase.regionId)
-    noScore.value = !result;
+    //const result = await ApiService.hasScores(props.siteObservation.scoringBase.configurationId, props.siteObservation.scoringBase.regionId)
+    //noScore.value = !result;
   } catch {
     noScore.value = true;
   }
@@ -134,26 +134,6 @@ const changeTimstamp = ({dir, loop}: {dir: number, loop: boolean}) => {
   goToTimestamp(dir, loop);
 }
 
-const timeRangeFormat = (range: SiteObservation['timerange']) => {
-  if (range === null || (range.max === null && range.min === null)) {
-    return '--'
-  } else {
-    const first = range.min ? `${new Date(range.min * 1000).toLocaleString(
-      "en",
-      {
-        dateStyle: "short",
-      }
-    )}` : 'None'
-    const second = range.max ? `${new Date(range.max * 1000).toLocaleString(
-      "en",
-      {
-        dateStyle: "short",
-      }
-    )}` : 'None'
-    return `${first} - ${second}`
-  }
-  return '--'
-}
 
 const hasLoadedImages = computed(() => (Object.entries(props.siteObservation.imageCounts).findIndex(([key, data]) => data.loaded > 0) !== -1));
 

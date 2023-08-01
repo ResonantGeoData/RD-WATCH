@@ -79,7 +79,7 @@ onMounted(() => {
     <div>
       <v-row>
         <TimeSlider
-          :min="timemin"
+          :min="timemin || 0"
           :max="Math.floor(Date.now() / 1000)"
         />
       </v-row>

@@ -7,15 +7,23 @@ from django.contrib.gis.db.models.aggregates import Collect
 from django.contrib.gis.db.models.functions import Area, Transform
 from django.contrib.postgres.aggregates import JSONBAgg
 from django.db import transaction
-from django.db.models import Count, F, Max, Min, RowRange, Window
+from django.db.models import Count, Max, Min
 from django.db.models.functions import JSONObject  # type: ignore
 from django.http import HttpRequest
+from django.shortcuts import get_object_or_404
 from rest_framework import status
 from rest_framework.exceptions import NotFound
-from rest_framework.generics import get_object_or_404
 
 from rdwatch.db.functions import BoundingBox, ExtractEpoch
-from rdwatch.models import SatelliteFetching, SiteEvaluation, SiteImage, SiteObservation
+from rdwatch.models import (
+    SatelliteFetching,
+    SiteEvaluation,
+    SiteImage,
+    SiteObservation,
+    SiteObservationTracking,
+    lookups,
+)
+from rdwatch.schemas import SiteObservationRequest
 from rdwatch.schemas.common import BoundingBoxSchema, TimeRangeSchema
 from rdwatch.tasks import get_siteobservations_images
 
@@ -29,7 +37,6 @@ class SiteObservationSchema(Schema):
     constellation: str
     spectrum: str | None
     timestamp: int | None
-    timerange: TimeRangeSchema | None
     bbox: BoundingBoxSchema
     area: float
 
@@ -67,6 +74,7 @@ class JobStatusSchema(Schema):
 class SiteObservationsListSchema(Schema):
     count: int
     timerange: TimeRangeSchema | None
+    status: str | None
     bbox: BoundingBoxSchema
     results: list[SiteObservationSchema]
     images: SiteEvaluationImageListSchema
@@ -77,24 +85,19 @@ class SiteObservationsListSchema(Schema):
 def site_observations(request: HttpRequest, evaluation_id: int):
     if not SiteEvaluation.objects.filter(pk=evaluation_id).exists():
         raise NotFound()
+    site_eval_data = SiteEvaluation.objects.filter(pk=evaluation_id).aggregate(
+        timerange=JSONObject(
+            min=ExtractEpoch(Min('start_date')),
+            max=ExtractEpoch(Max('end_date')),
+        ),
+        status='status',
+    )
+    print(site_eval_data)
     queryset = (
         SiteObservation.objects.order_by('timestamp')
         .filter(siteeval__id=evaluation_id)
-        .annotate(
-            timemin=F('timestamp'),
-            timemax=Window(
-                expression=Max('timestamp'),
-                partition_by=[F('siteeval')],
-                frame=RowRange(start=0, end=1),
-                order_by='timestamp',  # type: ignore
-            ),
-        )
         .aggregate(
             count=Count('pk'),
-            timerange=JSONObject(
-                min=ExtractEpoch(Min('timestamp')),
-                max=ExtractEpoch(Max('timestamp')),
-            ),
             bbox=BoundingBox(Collect('geom')),
             results=JSONBAgg(
                 JSONObject(
@@ -104,10 +107,6 @@ def site_observations(request: HttpRequest, evaluation_id: int):
                     constellation='constellation__slug',
                     spectrum='spectrum__slug',
                     timestamp=ExtractEpoch('timestamp'),
-                    timerange=JSONObject(
-                        min=ExtractEpoch('timemin'),
-                        max=ExtractEpoch('timemax'),
-                    ),
                     bbox=BoundingBox('geom'),
                     area=Area(Transform('geom', srid=6933)),
                 )
@@ -138,6 +137,8 @@ def site_observations(request: HttpRequest, evaluation_id: int):
 
     image_queryset
     queryset['images'] = image_queryset
+    queryset['timerange'] = site_eval_data['timerange']
+    queryset['status'] = site_eval_data['status']
     if SatelliteFetching.objects.filter(siteeval=evaluation_id).exists():
         retrieved = SatelliteFetching.objects.filter(siteeval=evaluation_id).first()
         celery_data = {}
@@ -160,10 +161,18 @@ def site_observations(request: HttpRequest, evaluation_id: int):
 
 @router.post('/{evaluation_id}/generate-images/', response={202: bool, 409: str})
 def get_site_observation_images(request: HttpRequest, evaluation_id: int):
-    if 'constellation' not in request.GET:
-        constellation = 'WV'
-    else:
+    constellation = 'WV'
+    dayRange = 14
+    noData = 50
+    overrideDates = None
+    if 'constellation' in request.GET:
         constellation = request.GET['constellation']
+    if 'dayRange' in request.GET:
+        dayRange = request.GET['dayRange']
+    if 'noData' in request.GET:
+        noData = request.GET['noData']
+    if 'overrideDates' in request.GET:
+        overrideDates = request.GET['overrideDates']
 
     # Make sure site evaluation actually exists
     siteeval = get_object_or_404(SiteEvaluation, pk=evaluation_id)
@@ -192,7 +201,14 @@ def get_site_observation_images(request: HttpRequest, evaluation_id: int):
                 timestamp=datetime.now(),
                 status=SatelliteFetching.Status.RUNNING,
             )
-        task_id = get_siteobservations_images.delay(evaluation_id, constellation)
+        task_id = get_siteobservations_images.delay(
+            evaluation_id,
+            constellation,
+            False,
+            dayRange,
+            noData,
+            overrideDates,
+        )
         fetching_task.celery_id = task_id.id
         fetching_task.save()
     return 202, True
@@ -234,3 +250,60 @@ def cancel_site_observation_images(request: HttpRequest, evaluation_id: int):
             )
 
     return 202, True
+
+
+@router.patch('/{id}/')
+def update_site_observation(
+    request: HttpRequest, id: int, data: SiteObservationRequest
+):
+    site_observation = get_object_or_404(SiteObservation, pk=id)
+    # create a copy of it in the history log
+    SiteObservationTracking.objects.create(
+        timestamp=site_observation.timestamp,
+        geom=site_observation.geom,
+        score=site_observation.score,
+        siteval=site_observation.siteeval,
+        notes=site_observation.notes,
+        edited=datetime.now(),
+        observation=site_observation.pk,
+    )
+
+    if data.label:
+        site_observation.label = lookups.ObservationLabel.objects.get(slug=data.label)
+    if data.notes:
+        site_observation.notes = data.notes
+    site_observation.timestamp = data.timestamp
+    if data.spectrum:
+        site_observation.spectrum = data.spectrum
+    if data.constellation:
+        site_observation.constellation = lookups.Constellation.objects.get(
+            slug=data.label
+        )
+
+    site_observation.save()
+
+    return site_observation
+
+
+@router.put('/{evaluation_id}/')
+def add_site_observation(
+    request: HttpRequest, evaluation_id: int, data: SiteObservationRequest
+):
+    site_evaluation = get_object_or_404(SiteEvaluation, pk=evaluation_id)
+
+    if data.label:
+        label = lookups.ObservationLabel.objects.get(slug=data.label)
+
+    if data.constellation:
+        constellation = lookups.Constellation.objects.get(slug=data.label)
+
+    new_site_observation = SiteObservation.objects.create(
+        siteeval=site_evaluation,
+        label=label,
+        score=data.score,
+        geom=data.geom,
+        constellation=constellation,
+        spectrum=None,
+        timestamp=data.timestamp,
+    )
+    return new_site_observation

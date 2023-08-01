@@ -33,7 +33,6 @@ from rdwatch.db.functions import (
     BoundingBox,
     BoundingBoxGeoJSON,
     ExtractEpoch,
-    TimeRangeJSON,
 )
 from rdwatch.models import (
     HyperParameters,
@@ -54,6 +53,13 @@ router = RouterPaginated()
 class ModelRunFilterSchema(FilterSchema):
     performer: str | None = Field(q='performer_slug')
     region: str | None
+    proposal: bool | None
+
+    def filter_proposal(self, value: bool | None) -> Q:
+        if not value:
+            return Q(proposal=None)
+        else:
+            return Q(proposal=value)
 
     def filter_region(self, value: str | None) -> Q:
         if value is None:
@@ -76,6 +82,7 @@ class HyperParametersWriteSchema(Schema):
     expiration_time: int | None
     evaluation: int | None = None
     evaluation_run: int | None = None
+    proposal: bool | None = None
 
     @validator('performer')
     def validate_performer(cls, v: str) -> lookups.Performer:
@@ -107,6 +114,7 @@ class HyperParametersDetailSchema(Schema):
     expiration_time: str | None = None
     evaluation: int | None = None
     evaluation_run: int | None = None
+    proposal: bool = None
 
 
 class EvaluationListSchema(Schema):
@@ -193,7 +201,10 @@ def get_queryset():
                 evaluation='evaluation',
                 evaluation_run='evaluation_run',
                 timestamp=ExtractEpoch(Max('evaluations__timestamp')),
-                timerange=TimeRangeJSON('evaluations__observations__timestamp'),
+                timerange=JSONObject(
+                    min=ExtractEpoch(Min('evaluations__start_date')),
+                    max=ExtractEpoch(Max('evaluations__end_date')),
+                ),
                 bbox=Case(
                     # If there are no site observations associated with this
                     # site evaluation, return the bbox of the site polygon.
@@ -222,6 +233,7 @@ def create_model_run(
         expiration_time=hyper_parameters_data.expiration_time,
         evaluation=hyper_parameters_data.evaluation,
         evaluation_run=hyper_parameters_data.evaluation_run,
+        proposal=hyper_parameters_data.proposal,
     )
     return 200, {
         'id': hyper_parameters.pk,
@@ -264,7 +276,10 @@ def list_model_runs(
 
     subquery = queryset[(page - 1) * limit : page * limit] if limit else queryset
     aggregate = queryset.defer('json').aggregate(
-        timerange=TimeRangeJSON('evaluations__observations__timestamp'),
+        timerange=JSONObject(
+            min=ExtractEpoch(Min('evaluations__start_date')),
+            max=ExtractEpoch(Max('evaluations__end_date')),
+        ),
         results=AggregateArraySubquery(subquery.values('json')),
     )
 
@@ -386,19 +401,6 @@ def cancel_generate_images(request: HttpRequest, hyper_parameters_id: int):
                     fetching_task.status = SatelliteFetching.Status.COMPLETE
                     fetching_task.celery_id = ''
                     fetching_task.save()
-                else:
-                    return (
-                        409,
-                        f'There is no running task for \
-                            Model Run Id: {hyper_parameters_id}',
-                    )
-
-            else:
-                return (
-                    404,
-                    f'There is no running task for \
-                        Model Run Id: {hyper_parameters_id}',
-                )
 
     return 202, True
 
@@ -448,6 +450,9 @@ def get_evaluations_query(hyper_parameters_id: int):
                     S2='S2',
                     WV='WV',
                     L8='L8',
+                    start_date=ExtractEpoch('start_date'),
+                    end_date=ExtractEpoch('end_date'),
+                    status='status',
                 ),
                 ordering='number',
             ),

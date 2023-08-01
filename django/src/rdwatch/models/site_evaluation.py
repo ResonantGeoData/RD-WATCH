@@ -34,6 +34,14 @@ class SiteEvaluation(models.Model):
     timestamp = models.DateTimeField(
         help_text='Time when this evaluation was finished',
     )
+    start_date = models.DateTimeField(
+        help_text='Start date in geoJSON',
+        null=True,
+    )
+    end_date = models.DateTimeField(
+        help_text='end date in geoJSON',
+        null=True,
+    )
     geom = PolygonField(
         help_text="Polygon from this site's Site Feature",
         srid=3857,
@@ -54,6 +62,22 @@ class SiteEvaluation(models.Model):
         null=True,
         help_text='Version of annotations',
     )
+    notes = models.TextField(null=True, blank=True)
+
+    class Status(models.TextChoices):
+        PROPOSAL = (
+            'PROPOSAL'  # proposal is a proposal awaiting Adjudication/Confirmation
+        )
+        APPROVED = 'APPROVED'  # proposal is approved and merged into ground truth
+        REJECTED = 'REJECTED'  # proposal is rejected
+
+    status = models.CharField(
+        max_length=255,  # If we need future states
+        blank=True,
+        null=True,
+        help_text='Fetching Status',
+        choices=Status.choices,
+    )
 
     @classmethod
     def bulk_create_from_site_model(
@@ -68,15 +92,23 @@ class SiteEvaluation(models.Model):
             label = lookups.ObservationLabel.objects.get(
                 slug=site_feature.properties.status
             )
+            status = None
+            if configuration.proposal or site_feature.properties.site_number == 9999:
+                status = SiteEvaluation.Status.PROPOSAL
+                configuration.proposal = True
+                configuration.save()
             site_eval = cls.objects.create(
                 configuration=configuration,
                 region=region,
                 version=site_feature.properties.version,
                 number=site_feature.properties.site_number,
+                start_date=site_feature.properties.start_date,
+                end_date=site_feature.properties.end_date,
                 timestamp=datetime.now(),
                 geom=site_feature.geometry,
                 label=label,
                 score=site_feature.properties.score,
+                status=status,
             )
 
             SiteObservation.bulk_create_from_site_evaluation(site_eval, site_model)
@@ -152,3 +184,30 @@ class SiteEvaluation(models.Model):
                 ),
             ),
         ]
+
+
+class SiteEvaluationTracking(models.Model):
+    edited = models.DateTimeField()
+    evaluation = models.ForeignKey(
+        to='SiteEvaluation',
+        on_delete=models.CASCADE,
+        db_index=True,
+    )
+    start_date = models.DateTimeField(
+        help_text='Start date in geoJSON',
+        null=True,
+    )
+    end_date = models.DateTimeField(
+        help_text='end date in geoJSON',
+        null=True,
+    )
+    label = models.ForeignKey(
+        to='ObservationLabel',
+        on_delete=models.PROTECT,
+        help_text='Site feature classification label',
+        db_index=True,
+    )
+    score = models.FloatField(
+        help_text='Score of site footprint',
+    )
+    notes = models.TextField(null=True, blank=True)

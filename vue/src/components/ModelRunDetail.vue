@@ -3,7 +3,9 @@ import TimeSlider from "./TimeSlider.vue";
 import { ApiService, ModelRun } from "../client";
 import { state } from "../store";
 import { Ref, onBeforeMount, onBeforeUnmount, ref, withDefaults } from "vue";
-
+import { timeRangeFormat } from "../utils";
+import ImagesDownloadDialog from "./ImagesDownloadDialog.vue";
+import { DownloadSettings } from "../client/services/ApiService";
 
 interface Props {
   modelRun: ModelRun;
@@ -24,8 +26,6 @@ async function handleClick() {
 
 const useScoring = ref(false);
 const downloadImages = ref(false);
-const baseList = ref(['S2', 'WV', 'L8'])
-const selectedSource: Ref<'S2' | 'WV' | 'L8'> = ref('WV');
 
 let loopingInterval: NodeJS.Timeout | null = null;
 
@@ -64,8 +64,8 @@ const updateDownloading = async () => {
   }
 
 }
-const startDownload = () => {
-  ApiService.getModelRunImages(props.modelRun.id.toString(), selectedSource.value )
+const startDownload = (data: DownloadSettings) => {
+  ApiService.getModelRunImages(props.modelRun.id.toString(), data )
   downloadImages.value = false;
   downloading.value = props.modelRun.numsites;
   setTimeout(() => {
@@ -137,7 +137,10 @@ onBeforeUnmount(() => {
           {{ modelRun.numsites }}
         </div>
       </v-row>
-      <v-row dense v-if="!compact">
+      <v-row
+        v-if="!compact"
+        dense
+      >
         <div>
           average score:
         </div>
@@ -151,19 +154,7 @@ onBeforeUnmount(() => {
         </div>
         <div>
           {{
-            modelRun.timerange === null
-              ? "--"
-              : `${new Date(modelRun.timerange.min * 1000).toLocaleString(
-                "en",
-                {
-                  dateStyle: "short",
-                }
-              )} - ${new Date(modelRun.timerange.max * 1000).toLocaleString(
-                "en",
-                {
-                  dateStyle: "short",
-                }
-              )}`
+            timeRangeFormat(modelRun.timerange)
           }}
         </div>
       </v-row>
@@ -220,40 +211,11 @@ onBeforeUnmount(() => {
         :max="modelRun.timerange?.max || 0"
       />
     </v-card-actions>
-    <v-dialog
-      v-model="downloadImages"
-      width="300"
-    >
-      <v-card>
-        <v-card-title>Download Model-Run Images</v-card-title>
-        <v-card-text>
-          <v-select
-            v-model="selectedSource"
-            :items="baseList"
-            label="Source"
-          />
-        </v-card-text>
-        <v-card-actions>
-          <v-row>
-            <v-spacer />
-            <v-btn
-              color="error"
-              class="mx-3"
-              @click="downloadImages = false"
-            >
-              Cancel
-            </v-btn>
-            <v-btn
-              color="success"
-              class="mx-3"
-              @click="startDownload()"
-            >
-              Download
-            </v-btn>
-          </v-row>
-        </v-card-actions>
-      </v-card>
-    </v-dialog>
+    <images-download-dialog
+      v-if="downloadImages"
+      @download="startDownload($event)"
+      @cancel="downloadImages = false"
+    />
   </v-card>
 </template>
 

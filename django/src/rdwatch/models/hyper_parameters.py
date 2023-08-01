@@ -23,6 +23,7 @@ class HyperParameters(models.Model):
         blank=True,
         help_text='Time relative to creation that this model run should be deleted.',
     )
+    proposal = models.BooleanField(blank=True, null=True)
 
     def __str__(self) -> str:
         return str(self.pk)

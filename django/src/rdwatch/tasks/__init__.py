@@ -57,11 +57,15 @@ def get_siteobservations_images(
     self,
     site_eval_id: int,
     baseConstellation='WV',
-    force=False,
+    force=False,  # forced downloading found_timestamps again
     dayRange=14,
     no_data_limit=50,
+    overrideDates: None | list[datetime, datetime] = None,
 ) -> None:
     constellationObj = Constellation.objects.filter(slug=baseConstellation).first()
+    # Ensure we are using ints for the DayRange and no_data_limit
+    dayRange = int(dayRange)
+    no_data_limit = int(no_data_limit)
     site_observations = SiteObservation.objects.filter(
         siteeval=site_eval_id
     )  # need a full list for min/max times
@@ -88,8 +92,9 @@ def get_siteobservations_images(
                 'siteEvalId': site_eval_id,
             },
         )
-        min_time = min(min_time, observation.timestamp)
-        max_time = max(max_time, observation.timestamp)
+        if observation.timestamp is not None:
+            min_time = min(min_time, observation.timestamp)
+            max_time = max(max_time, observation.timestamp)
         mercator: tuple[float, float, float, float] = observation.geom.extent
         tempbox = transformer.transform_bounds(
             mercator[0], mercator[1], mercator[2], mercator[3]
@@ -174,12 +179,14 @@ def get_siteobservations_images(
 
     # Now we need to go through and find all other images
     # that exist in the start/end range of the siteEval
-    logger.warning(min_time)
-    logger.warning(max_time)
-    if min_time == datetime.max:
-        min_time = datetime.strptime(BaseTime, '%Y-%m-%d')
-    if max_time == datetime.min:
-        max_time = datetime.now()
+    if overrideDates:
+        min_time = datetime.strptime(overrideDates[0], '%Y-%m-%d')
+        max_bbox = datetime.strptime(overrideDates[1], '%Y-%m-%d')
+    else:
+        if min_time == datetime.max:
+            min_time = datetime.strptime(BaseTime, '%Y-%m-%d')
+        if max_time == datetime.min:
+            max_time = datetime.now()
     timebuffer = ((max_time + timedelta(days=30)) - (min_time - timedelta(days=30))) / 2
     timestamp = (min_time + timedelta(days=30)) + timebuffer
 

@@ -23,6 +23,7 @@ export interface QueryArguments {
   region?: string;
   page?: number;
   limit?: number;
+  proposal?: boolean;
 }
 
 export interface ScoringResults {
@@ -51,10 +52,41 @@ export interface ModelRunEvaluations {
     WV: number,
     L8: number,
     number: number,
+    start_date: number;
+    end_date: number;
     id: number
     bbox: { xmin: number; ymin: number; xmax: number; ymax: number }
+    status: 'PROPOSAL' | 'ACCEPTED' | 'REJECTED'
   }[];
 }
+export interface SiteEvaluationUpdateQuery {
+  label?: string;
+  geom?: GeoJSON.Polygon;
+  score?: number,
+  start_date?: string | null;
+  end_date?: string | null;
+  notes?: string;
+}
+
+export interface SiteObservationUpdateQuery {
+  label?: string;
+  geom?: GeoJSON.Polygon;
+  score?: number,
+  timestamp: string;
+  constellation: string;
+  spectrum?: string;
+  notes?: string;
+
+}
+
+export interface DownloadSettings {
+  constellation: 'S2' | 'WV' | 'L8';
+  dayRange?: number;
+  noData?: number;
+  customDateRange?: [string, string];
+
+}
+
 
 export class ApiService {
   /**
@@ -120,6 +152,7 @@ export class ApiService {
         });
       }
       
+  
       /**
    * @param id
    * @returns boolean
@@ -127,7 +160,7 @@ export class ApiService {
    */
       public static getModelRunImages(
         id: string,
-        constellation: 'WV' | 'S2' | 'L8' = 'WV'
+        data: DownloadSettings
       ): CancelablePromise<boolean> {
         return __request(OpenAPI, {
           method: "POST",
@@ -136,7 +169,7 @@ export class ApiService {
             id: id,
           },
           query: {
-            constellation,
+            ...data,
           }
         });
       }
@@ -414,5 +447,40 @@ export class ApiService {
     });
 
   }
+
+  public static patchSiteEvaluation(id: number, data: SiteEvaluationUpdateQuery): CancelablePromise<boolean> {
+    return __request(OpenAPI, {
+      method: 'PATCH',
+      url: "/api/evaluations/{id}/",
+      path: {
+        id: id,
+      },
+      body: {...data}
+    })
+  }
+
+  public static patchSiteObservation(id: number, data: SiteObservationUpdateQuery): CancelablePromise<boolean> {
+    return __request(OpenAPI, {
+      method: 'PATCH',
+      url: "/api/observations/{id}/",
+      path: {
+        id: id,
+      },
+      body: {...data}
+    })
+  }
+
+  public static addSiteObservation(id: number, data: SiteObservationUpdateQuery): CancelablePromise<boolean> {
+    return __request(OpenAPI, {
+      method: 'PUT',
+      url: "/api/observations/{id}/",
+      path: {
+        id: id,
+      },
+      query: {...data}
+    })
+  }
+
+
 }
 

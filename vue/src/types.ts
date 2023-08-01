@@ -23,5 +23,6 @@ export interface EvaluationImageResults {
         count: number;
         results: EvaluationImage[];
     }
+    label: string;
     geoJSON: EvaluationGeoJSON[];
 }

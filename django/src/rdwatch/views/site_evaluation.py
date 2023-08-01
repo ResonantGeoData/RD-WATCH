@@ -7,13 +7,15 @@ from ninja import Field, FilterSchema, Query, Router, Schema
 from django.contrib.gis.db.models.aggregates import Collect
 from django.contrib.postgres.aggregates import JSONBAgg
 from django.core.paginator import Paginator
-from django.db.models import Count, Max, Min, Q, QuerySet
+from django.db.models import Count, Q, QuerySet
 from django.db.models.functions import JSONObject  # type: ignore
 from django.http import HttpRequest
+from django.shortcuts import get_object_or_404
 from rest_framework.settings import api_settings
 
 from rdwatch.db.functions import BoundingBox, ExtractEpoch
-from rdwatch.models import SiteEvaluation
+from rdwatch.models import SiteEvaluation, SiteEvaluationTracking, lookups
+from rdwatch.schemas import SiteEvaluationRequest
 from rdwatch.schemas.common import BoundingBoxSchema, TimeRangeSchema
 
 from .performer import PerformerSchema
@@ -48,6 +50,7 @@ class SiteEvaluationSchema(Schema):
 class SiteEvaluationListSchema(Schema):
     count: int
     timerange: TimeRangeSchema | None
+    status: str | None
     bbox: BoundingBoxSchema
     performers: list[str]
     results: list[SiteEvaluationSchema]
@@ -90,14 +93,13 @@ def list_site_evaluations(
 
     # Overview
     overview = queryset.annotate(
-        timemin=Min('observations__timestamp'),
-        timemax=Max('observations__timestamp'),
+        timerange=JSONObject(
+            min=ExtractEpoch('start_time'),
+            max=ExtractEpoch('end_date'),
+        ),
+        status='status',
     ).aggregate(
         count=Count('pk'),
-        timerange=JSONObject(
-            min=ExtractEpoch(Min('timemin')),
-            max=ExtractEpoch(Max('timemax')),
-        ),
         bbox=BoundingBox(Collect('geom')),
     )
 
@@ -129,8 +131,8 @@ def list_site_evaluations(
 
     # Results
     results = page.object_list.annotate(  # type: ignore
-        timemin=Min('observations__timestamp'),
-        timemax=Max('observations__timestamp'),
+        timemin='start_date',
+        timemax='end_date',
     ).aggregate(
         results=JSONBAgg(
             JSONObject(
@@ -161,3 +163,30 @@ def list_site_evaluations(
     )
 
     return overview | results
+
+
+@router.patch('/{id}/')
+def patch_site_evaluation(request: HttpRequest, id: int, data: SiteEvaluationRequest):
+    site_evaluation = get_object_or_404(SiteEvaluation, pk=id)
+
+    # create a copy of it in the history log
+    SiteEvaluationTracking.objects.create(
+        score=site_evaluation.score,
+        label=site_evaluation.label,
+        end_date=site_evaluation.end_date,
+        start_date=site_evaluation.start_date,
+        notes=site_evaluation.notes,
+        edited=datetime.now(),
+        evaluation=site_evaluation,
+    )
+
+    if data.label:
+        site_evaluation.label = lookups.ObservationLabel.objects.get(slug=data.label)
+    if data.notes:
+        site_evaluation.notes = data.notes
+    site_evaluation.start_date = data.start_date
+    site_evaluation.end_date = data.end_date
+
+    site_evaluation.save()
+
+    return 200

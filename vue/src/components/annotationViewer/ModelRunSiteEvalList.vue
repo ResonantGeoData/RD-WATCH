@@ -3,28 +3,40 @@ import { Ref, computed, ref, watch } from "vue";
 import { ApiService } from "../../client";
 import { ModelRunEvaluations } from "../../client/services/ApiService";
 
+interface MdoelRunEvaluationDisplay {
+  number: number;
+  id: number;
+  name: string;
+  bbox: { xmin: number; ymin: number; xmax: number; ymax: number };
+  startDate: number,
+  endDate: number,
+  selected:boolean;
+  images: number;
+  S2: number;
+  WV: number,
+  L8: number;
+  status: ModelRunEvaluations['evaluations'][0]['status'];
+}
+
+
 const props = defineProps<{
   modelRun: number | null;
   selectedEval: number | null;
 }>();
 
 const emit = defineEmits<{
-  (e: "selected", val: {id: number, bbox: { xmin: number; ymin: number; xmax: number; ymax: number }}): void;
+  (e: "selected", val: MdoelRunEvaluationDisplay): void;
 }>();
 
 const evaluationsList: Ref<ModelRunEvaluations | null> = ref(null);
 
-interface ModifiedList {
-  number: number;
-  id: number;
-  name: string;
-  bbox: { xmin: number; ymin: number; xmax: number; ymax: number };
-  selected:boolean;
-  images: number;
-  S2: number;
-  WV: number,
-  L8: number;
+const statusMap: Record<ModelRunEvaluations['evaluations'][0]['status'], { name: string, color: string }> = {
+  'PROPOSAL': { name: 'Proposed', color: 'orange'},
+  'REJECTED': { name: 'Rejected', color: 'error'},
+  'ACCEPTED': { name: 'Accepted', color: 'success'},
+  
 }
+
 
 const getSiteEvalIds = async () => {
   if (props.modelRun !== null) {
@@ -39,7 +51,7 @@ watch(() => props.modelRun, () => {
 getSiteEvalIds();
 
 const modifiedList = computed(() => {
-  const modList: ModifiedList[] = []
+  const modList: MdoelRunEvaluationDisplay[] = []
   if (evaluationsList.value?.evaluations) {
     const regionName = evaluationsList.value.region.name;
     evaluationsList.value.evaluations.forEach((item) => {
@@ -50,9 +62,12 @@ const modifiedList = computed(() => {
           bbox: item.bbox,
           selected: item.id === props.selectedEval,
           images: item.images,
+          startDate: item.start_date,
+          endDate: item.end_date,
           S2: item.S2,
           WV: item.WV,
           L8: item.L8,
+          status: item.status,
         }
         );
     });
@@ -81,10 +96,10 @@ const modifiedList = computed(() => {
         <h3>Site Evaluations:</h3>
         <v-card 
           v-for="item in modifiedList"
-          :key="`${item.name}_${item.selected}`"
+          :key="`${item.name}_${item.id}_${item.selected}`"
           class="modelRunCard"
           :class="{selectedCard: item.selected, errorCard: item.images === 0}"
-          @click="emit('selected', { id: item.id, bbox: item.bbox })"
+          @click="emit('selected', item)"
         >
           <v-card-title class="title">
             {{ item.name }}
@@ -104,6 +119,14 @@ const modifiedList = computed(() => {
             <div v-else>
               <b> 0 Images Downloaded</b>
             </div>
+            <v-row dense justify="center" class="pa-2">
+              <v-chip
+                size="small"
+                :color="statusMap[item.status].color"
+              >
+                {{ statusMap[item.status].name }}
+              </v-chip>
+            </v-row>
           </v-card-text>
         </v-card>
       </div>

@@ -16,6 +16,7 @@ const props = withDefaults(defineProps<Props>(), {
   selected:undefined,
 });
 
+const siteEvalList: Ref<typeof ModelRunSiteEvalList | null> = ref(null)
 
 const selectedModelRun = computed(() => {
     if (state.filters.configuration_id?.length) {
@@ -54,6 +55,12 @@ watch(selectedModelRun, () => {
     selectedEval.value = null;
     selectedName.value = null;
 })
+
+const updateSiteModels = () => {
+  if (siteEvalList.value !== null) {
+    siteEvalList.value.getSiteEvalIds();
+  }
+}
 </script>
 
 <template>
@@ -75,10 +82,12 @@ watch(selectedModelRun, () => {
       :date-range="selectedDateRange"
       editable
       style="top:40vh !important; height:60vh"
+      @update-list="updateSiteModels()"
     />
   </v-main>
   <ModelRunSiteEvalList
     v-if="selectedModelRun !== null"
+    ref="siteEvalList"
     :model-run="selectedModelRun"
     :selected-eval="selectedEval"
     @selected="setSelectedEval($event)"

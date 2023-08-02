@@ -43,6 +43,8 @@ export interface ScoringResults {
   color?: string;
 }
 
+export type SiteModelStatus = 'PROPOSAL' | 'APPROVED' | 'REJECTED'
+
 export interface ModelRunEvaluations {
   region: Region;
 
@@ -56,7 +58,7 @@ export interface ModelRunEvaluations {
     end_date: number;
     id: number
     bbox: { xmin: number; ymin: number; xmax: number; ymax: number }
-    status: 'PROPOSAL' | 'ACCEPTED' | 'REJECTED'
+    status: SiteModelStatus
   }[];
 }
 export interface SiteEvaluationUpdateQuery {
@@ -66,6 +68,7 @@ export interface SiteEvaluationUpdateQuery {
   start_date?: string | null;
   end_date?: string | null;
   notes?: string;
+  status?: SiteModelStatus
 }
 
 export interface SiteObservationUpdateQuery {

@@ -10,7 +10,7 @@ from rest_framework.exceptions import NotFound
 
 from rdwatch.db.functions import BoundingBox, ExtractEpoch
 from rdwatch.models import SiteEvaluation, SiteImage, SiteObservation
-from rdwatch.schemas.common import BoundingBoxSchema
+from rdwatch.schemas.common import BoundingBoxSchema, TimeRangeSchema
 
 router = Router()
 
@@ -38,6 +38,12 @@ class SiteObsGeomSchema(Schema):
     label: str
 
 
+class GroundTruthSchema(Schema):
+    timerange: TimeRangeSchema | None = None
+    geoJSON: dict
+    label: str
+
+
 class SiteImageResponse(Schema):
     images: SiteImageListSchema
     geoJSON: list[SiteObsGeomSchema]
@@ -45,12 +51,15 @@ class SiteImageResponse(Schema):
     status: str | None
     label: str
     notes: str | None
+    groundTruth: GroundTruthSchema | None
 
 
 @router.get('/{id}/', response=SiteImageResponse)
 def site_images(request: HttpRequest, id: int):
     if not SiteEvaluation.objects.filter(pk=id).exists():
         raise NotFound()
+    else:
+        site_eval_obj = SiteEvaluation.objects.get(pk=id)
     image_queryset = (
         SiteImage.objects.filter(siteeval__id=id)
         .order_by('timestamp')
@@ -99,6 +108,26 @@ def site_images(request: HttpRequest, id: int):
             )
         )[0]
     )
+    # get the same Region_#### for ground truth if it exists
+    ground_truth = (
+        SiteEvaluation.objects.filter(
+            region=site_eval_obj.region,
+            number=site_eval_obj.number,
+            configuration__performer__slug='TE',
+            score=1,
+        )
+        .values()
+        .annotate(
+            json=JSONObject(
+                label=F('label__slug'),
+                timerange=JSONObject(
+                    min=ExtractEpoch('start_date'),
+                    max=ExtractEpoch('end_date'),
+                ),
+                geoJSON=Transform('geom', srid=4326),
+            )
+        )
+    )
     output = {}
     # lets get the presigned URL for each image
     for image in image_queryset['results']:
@@ -108,7 +137,7 @@ def site_images(request: HttpRequest, id: int):
     output['label'] = site_eval_data['json']['label']
     output['status'] = site_eval_data['json']['status']
     output['notes'] = site_eval_data['json']['notes']
-    print(site_eval_data)
-    print(site_eval_data['json']['evaluationGeoJSON'])
+    if ground_truth.exists():
+        output['groundTruth'] = ground_truth[0]['json']
     output['evaluationGeoJSON'] = site_eval_data['json']['evaluationGeoJSON']
     return output

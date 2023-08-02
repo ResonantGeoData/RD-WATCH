@@ -2,7 +2,7 @@
 import TimeSlider from "./TimeSlider.vue";
 import { ApiService, ModelRun } from "../client";
 import { state } from "../store";
-import { Ref, onBeforeMount, onBeforeUnmount, ref, withDefaults } from "vue";
+import { onBeforeMount, onBeforeUnmount, ref, withDefaults } from "vue";
 import { timeRangeFormat } from "../utils";
 import ImagesDownloadDialog from "./ImagesDownloadDialog.vue";
 import { DownloadSettings } from "../client/services/ApiService";

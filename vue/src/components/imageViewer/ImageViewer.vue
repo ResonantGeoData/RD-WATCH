@@ -1,10 +1,11 @@
 <script setup lang="ts">
 import { Ref, computed, ref, watch, withDefaults } from "vue";
 import { ApiService } from "../../client";
-import {EvaluationGeoJSON, EvaluationImage } from "../../types";
+import {EvaluationGeoJSON, EvaluationImage, EvaluationImageResults } from "../../types";
 import { getColorFromLabel, styles } from '../../mapstyle/annotationStyles';
 import { state } from '../../store'
 import { VDatePicker } from 'vuetify/labs/VDatePicker'
+import { SiteEvaluationUpdateQuery, SiteModelStatus } from "../../client/services/ApiService";
 
 interface Props {
   siteEvalId: number;
@@ -30,6 +31,7 @@ interface PixelPoly {
 
 const emit = defineEmits<{
   (e: "close"): void;
+  (e: "update-list"): void;
 }>();
 
 const loading = ref(false);
@@ -44,18 +46,24 @@ const startDate: Ref<string|null> = ref(props.dateRange && props.dateRange[0] ? 
 const endDate: Ref<string|null> = ref(props.dateRange && props.dateRange[1] ? new Date(props.dateRange[1] * 1000).toISOString().split('T')[0] : null);
 const siteEvaluationNotes = ref('');
 const siteEvaluationUpdated = ref(false)
+const siteStatus: Ref<string | null> = ref(null);
 const imageRef: Ref<HTMLImageElement | null> = ref(null);
 const canvasRef: Ref<HTMLCanvasElement | null> = ref(null);
 const baseImageSources = ref(['S2', 'WV'])
 const baseObs = ref(['observations', 'non-observations'])
 const filterSettings = ref(false);
-const combinedImages: Ref<{image: EvaluationImage; poly: PixelPoly}[]> = ref([]);
+const combinedImages: Ref<{image: EvaluationImage; poly: PixelPoly, groundTruthPoly?: PixelPoly}[]> = ref([]);
 const imageSourcesFilter: Ref<EvaluationImage['source'][]> = ref(['S2', 'WV', 'L8']);
 const percentBlackFilter: Ref<number> = ref(100);
 const cloudFilter: Ref<number> = ref(100);
 const siteObsFilter: Ref<('observations' | 'non-observations')[]> = ref(['observations', 'non-observations'])
+// Ease of display refs
 const currentLabel = ref('')
 const currentDate = ref('');
+// Ground Truth Values
+const hasGroundTruth = ref(false);
+const groundTruth: Ref<EvaluationImageResults['groundTruth'] | null > = ref(null);
+const drawGroundTruth = ref(false);
 const labelList = computed(() => styles.filter((item) => item.labelType === 'observation').map((item) => item.label));
 const siteEvaluationList = computed(() => styles.filter((item) => item.labelType === 'sites').map((item) => item.label));
 const getClosestPoly = (timestamp: number, polys: EvaluationGeoJSON[], evaluationPoly: EvaluationGeoJSON['geoJSON'], siteEvalLabel: string) => {
@@ -129,6 +137,14 @@ const getImageData = async () => {
     const polygons = data.geoJSON;
     siteEvaluationNotes.value = data.notes || '';
     siteEvaluationLabel.value = data.label;
+    siteStatus.value = data.status;
+    if (data.groundTruth) {
+      hasGroundTruth.value = true;
+      groundTruth.value = data.groundTruth;
+    } else {
+      hasGroundTruth.value = false;
+      groundTruth.value = null;
+    }
     if (imageRef.value !== null) {
         imageRef.value.src = images[currentImage.value].image;
     }
@@ -153,11 +169,27 @@ const getImageData = async () => {
 
             })
         })
-        combinedImages.value.push({ image: image, poly: {coords: imageNormalizePoly, label: closestPoly.label} });
+        let groundTruthPoly;
+        if (hasGroundTruth.value && groundTruth.value) {
+          const gtNormalizePoly: {x: number, y: number}[][] = []
+          groundTruth.value.geoJSON.coordinates.forEach((ring) => {
+            gtNormalizePoly.push([]);
+            ring.forEach((coord) => {
+                const normalize_x = (coord[0] - image.bbox.xmin) / bboxWidth;
+              const normalize_y = (coord[1] - image.bbox.ymin) / bboxHeight;
+              const image_x = normalize_x * imageWidth;
+              const image_y = normalize_y * imageHeight;
+              gtNormalizePoly[imageNormalizePoly.length -1].push({x: image_x, y: image_y});
+              })
+              groundTruthPoly = { coords: gtNormalizePoly, label: groundTruth.value?.label}
+          })
+
+        }
+        combinedImages.value.push({ image: image, poly: {coords: imageNormalizePoly, label: closestPoly.label}, groundTruthPoly });
     })
 }
 let background: HTMLCanvasElement & { ctx?: CanvasRenderingContext2D | null };
-const drawData = (canvas: HTMLCanvasElement, image: EvaluationImage, poly:PixelPoly) => {
+const drawData = (canvas: HTMLCanvasElement, image: EvaluationImage, poly:PixelPoly, groundTruthPoly?: PixelPoly) => {
     const context = canvas.getContext('2d');
     const imageObj = new Image();
     imageObj.src = image.image;
@@ -173,6 +205,21 @@ const drawData = (canvas: HTMLCanvasElement, image: EvaluationImage, poly:PixelP
         canvas.height = image.image_dimensions[1];
         // draw the offscreen canvas
         context.drawImage(background, 0, 0);
+        // We draw the ground truth
+        if (groundTruthPoly && drawGroundTruth.value) {
+          groundTruthPoly.coords.forEach((ring) => {
+            context.moveTo(ring[0].x, image.image_dimensions[1] - ring[0].y);
+            ring.forEach(({x, y}) => {
+              if (context){
+                  context.lineTo(x, image.image_dimensions[1] - y);
+              }
+            });
+            context.lineWidth = 4;
+            context.strokeStyle = getColorFromLabel(groundTruthPoly.label);
+            context.stroke();
+          });
+        }
+
         coords.forEach((ring) => {
           context.moveTo(ring[0].x, image.image_dimensions[1] - ring[0].y);
           ring.forEach(({x, y}) => {
@@ -214,7 +261,12 @@ const load = async () => {
   loading.value = true;
   await getImageData();
   if (currentImage.value < filteredImages.value.length && canvasRef.value !== null) {
-      drawData(canvasRef.value, filteredImages.value[currentImage.value].image, filteredImages.value[currentImage.value].poly)
+      drawData(
+        canvasRef.value,
+        filteredImages.value[currentImage.value].image,
+        filteredImages.value[currentImage.value].poly,
+        filteredImages.value[currentImage.value].groundTruthPoly
+        )
   }
   loading.value = false;
 }
@@ -237,12 +289,17 @@ const copyURL = async (mytext: string) => {
   }
 
 
-watch([currentImage, imageRef, filteredImages], () => {
+watch([currentImage, imageRef, filteredImages, drawGroundTruth], () => {
     if (currentImage.value < filteredImages.value.length && imageRef.value !== null) {
         imageRef.value.src = filteredImages.value[currentImage.value].image.image;
     }
     if (currentImage.value < filteredImages.value.length && canvasRef.value !== null) {
-        drawData(canvasRef.value, filteredImages.value[currentImage.value].image, filteredImages.value[currentImage.value].poly)
+        drawData(
+          canvasRef.value,
+          filteredImages.value[currentImage.value].image,
+          filteredImages.value[currentImage.value].poly,
+          filteredImages.value[currentImage.value].groundTruthPoly,
+        )
     }
     if (props.dialog === false && filteredImages.value[currentImage.value]) {
       state.timestamp = filteredImages.value[currentImage.value].image.timestamp;
@@ -292,6 +349,16 @@ const saveSiteEvaluationChanges = () => {
   siteEvaluationUpdated.value = false;
 }
 
+const setSiteModelStatus = async (status: SiteModelStatus) => {
+  if (status) {
+    await ApiService.patchSiteEvaluation(props.siteEvalId, {
+      status
+    });
+    siteStatus.value = status;
+    emit('update-list');
+  }
+}
+
 </script>
 
 <template>
@@ -316,68 +383,148 @@ const saveSiteEvaluationChanges = () => {
       class="edit-title"
     >
       <v-row dense>
-        <h3 class="mr-3">
-          {{ siteEvaluationName }}
-        </h3>
-        <div>
-          <b class="mr-2">Date Range:</b>
-          <span> {{ startDate ? startDate : 'null' }}
+        <v-col>
+          <h3 class="mr-3">
+            {{ siteEvaluationName }}:
+          </h3>
+          <h3 v-if="hasGroundTruth">
+            Ground Truth:
+          </h3>
+        </v-col>
+        <v-col>
+          <div>
+            <b class="mr-1">Date Range:</b>
+            <span> {{ startDate ? startDate : 'null' }}
+              <v-icon
+                v-if="editMode"
+                class="ma-0"
+                @click="setEditingMode('StartDate')"
+              >
+                mdi-pencil
+              </v-icon>
+
+            </span>
+            <span class="mx-1"> to</span>
+            <span> {{ endDate ? endDate : 'null' }}
+              <v-icon
+                v-if="editMode"
+                class="ma-0"
+                @click="setEditingMode('EndDate')"
+              >
+                mdi-pencil
+              </v-icon>
+
+            </span>
+          </div>
+          <div v-if="groundTruth && hasGroundTruth">
+            <b class="mr-1">Date Range:</b>
+            <span> {{ new Date(groundTruth.timerange.min * 1000).toISOString().split('T')[0] }} 
+              <v-icon
+                class="ma-0"
+                color="white"
+              />
+            </span>
+            <span class="mx-1"> to</span>
+            <span> {{ new Date(groundTruth.timerange.max * 1000).toISOString().split('T')[0] }}</span>
+          </div>
+        </v-col>
+        <v-col>
+          <div class="ml-5">
+            <b>Label:</b>
+            <v-chip
+              size="small"
+              :color="getColorFromLabel(siteEvaluationLabel)"
+              class="ml-2"
+            >
+              {{ siteEvaluationLabel }}
+            </v-chip>
             <v-icon
               v-if="editMode"
-              class="ml-2"
-              @click="setEditingMode('StartDate')"
+              @click="setEditingMode('SiteEvaluationLabel')"
             >
               mdi-pencil
             </v-icon>
-
-          </span>
-          <span class="mx-2"> to</span>
-          <span> {{ endDate ? endDate : 'null' }}
+          </div>
+          <div
+            v-if="hasGroundTruth && groundTruth"
+            class="ml-5"
+          >
+            <b>Label:</b>
+            <v-chip
+              size="small"
+              :color="getColorFromLabel(groundTruth.label)"
+              class="ml-2"
+            >
+              {{ groundTruth.label }}
+            </v-chip>
+          </div>
+        </v-col>
+        <v-col>
+          <div class="ml-3">
+            <b>Notes:</b>
+            <span> {{ siteEvaluationNotes }}</span>
             <v-icon
               v-if="editMode"
-              class="ml-2"
-              @click="setEditingMode('EndDate')"
+              @click="setEditingMode('SiteEvaluationNotes')"
             >
               mdi-pencil
             </v-icon>
-
-          </span>
-        </div>
-        <div class="ml-5">
-          <b>Label:</b>
-          <v-chip
-            size="small"
-            :color="getColorFromLabel(siteEvaluationLabel)"
-            class="ml-2"
-          >
-            {{ siteEvaluationLabel }}
-          </v-chip>
-          <v-icon
-            v-if="editMode"
-            @click="setEditingMode('SiteEvaluationLabel')"
-          >
-            mdi-pencil
-          </v-icon>
-        </div>
-        <div class="ml-3">
-          <b>Notes:</b>
-          <span> {{ siteEvaluationNotes }}</span>
-          <v-icon
-            v-if="editMode"
-            @click="setEditingMode('SiteEvaluationNotes')"
-          >
-            mdi-pencil
-          </v-icon>
-        </div>
+          </div>
+          <div v-if="hasGroundTruth">
+            <v-checkbox
+              v-model="drawGroundTruth"
+              density="compact"
+              label="Draw GT"
+            />
+          </div>
+        </v-col>
         <v-spacer />
-        <v-btn
-          v-if="siteEvaluationUpdated"
-          size="small"
-          color="success"
-          @click="saveSiteEvaluationChanges"
-        >
-          Save Changes
-        </v-btn>
+        <v-col>
+          <v-btn
+            v-if="siteEvaluationUpdated"
+            size="small"
+            color="success"
+            @click="saveSiteEvaluationChanges"
+          >
+            Save Changes
+          </v-btn>
+          <v-btn
+            v-if="siteStatus !== 'APPROVED'"
+            size="small"
+            class="mx-1"
+            color="success"
+            @click="setSiteModelStatus('APPROVED')"
+          >
+            Approve
+          </v-btn>
+          <v-btn
+            v-if="siteStatus === 'APPROVED'"
+            size="small"
+            class="mx-1"
+            color="warning"
+            @click="setSiteModelStatus('PROPOSAL')"
+          >
+            Un-Approve
+          </v-btn>
+          <v-btn
+            v-if="siteStatus !== 'REJECTED'"
+            size="small"
+            class="mx-1"
+            color="error"
+            @click="setSiteModelStatus('REJECTED')"
+          >
+            Reject
+          </v-btn>
+          <v-btn
+            v-if="siteStatus === 'REJECTED'"
+            size="small"
+            class="mx-1"
+            color="warning"
+            @click="setSiteModelStatus('PROPOSAL')"
+          >
+            Un-Reject
+          </v-btn>
+        </v-col>
       </v-row>
     </v-card-title>
     <v-row
@@ -565,9 +712,9 @@ const saveSiteEvaluationChanges = () => {
       height="15"
       class="mt-4"
     />
-    <div>
+    <div v-if="false">
       <v-icon
-        v-if="false && editMode && filteredImages[currentImage] && filteredImages[currentImage].image.siteobs_id !== null"
+        v-if="editMode && filteredImages[currentImage] && filteredImages[currentImage].image.siteobs_id !== null"
         @click="setEditingMode('SiteObservationNotes')"
       >
         mdi-pencil

@@ -36,7 +36,7 @@ def main():
         default="TE",
         help='Performer shortcode (default: "TE")',
     )
-    parser.add_argument("--proposal", default=None, type=int, help="These Sites are proposal, will automatically be set to true if Site Number includes 9999")
+    parser.add_argument("--proposal", default=False, action=argparse.BooleanOptionalAction, help="Marks all siteModels as proposals")
     parser.add_argument("--eval_num", default=None, type=int, help="Evaluation Number")
     parser.add_argument(
         "--eval_run_num", default=None, type=int, help="Evaluation  Run Number"

@@ -33,17 +33,18 @@ const evaluationsList: Ref<ModelRunEvaluations | null> = ref(null);
 const statusMap: Record<ModelRunEvaluations['evaluations'][0]['status'], { name: string, color: string }> = {
   'PROPOSAL': { name: 'Proposed', color: 'orange'},
   'REJECTED': { name: 'Rejected', color: 'error'},
-  'ACCEPTED': { name: 'Accepted', color: 'success'},
+  'APPROVED': { name: 'Approved', color: 'success'},
   
 }
-
 
 const getSiteEvalIds = async () => {
   if (props.modelRun !== null) {
     const results = await ApiService.getModelRunEvaluations(props.modelRun);
     evaluationsList.value = results;
   }
-}
+};
+
+defineExpose({ getSiteEvalIds });
 
 watch(() => props.modelRun, () => {
   getSiteEvalIds();
@@ -125,6 +126,7 @@ const modifiedList = computed(() => {
               class="pa-2"
             >
               <v-chip
+                v-if="item.status"
                 size="small"
                 :color="statusMap[item.status].color"
               >

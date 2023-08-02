@@ -87,16 +87,16 @@ class SiteEvaluation(models.Model):
 
         site_feature = site_model.site_feature
         assert isinstance(site_feature.properties, SiteFeature)
+        status = None
+        if configuration.proposal or site_feature.properties.site_number == 9999:
+            status = SiteEvaluation.Status.PROPOSAL
+            configuration.proposal = True
+            configuration.save()
         with transaction.atomic():
             region = get_or_create_region(site_feature.properties.region_id)[0]
             label = lookups.ObservationLabel.objects.get(
                 slug=site_feature.properties.status
             )
-            status = None
-            if configuration.proposal or site_feature.properties.site_number == 9999:
-                status = SiteEvaluation.Status.PROPOSAL
-                configuration.proposal = True
-                configuration.save()
             site_eval = cls.objects.create(
                 configuration=configuration,
                 region=region,

@@ -1,4 +1,5 @@
 from datetime import datetime
+from typing import Literal
 
 from ninja import Schema
 from pydantic import validator
@@ -11,6 +12,7 @@ class SiteEvaluationRequest(Schema):
     start_date: datetime | None
     end_date: datetime | None
     notes: str | None
+    status: Literal['PROPOSAL', 'APPROVED', 'REJECTED'] | None
 
     @validator('start_date', 'end_date', pre=True)
     def parse_dates(cls, v: str | None) -> datetime | None:

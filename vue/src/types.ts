@@ -1,4 +1,4 @@
-import { ModelRunEvaluations } from "./client/services/ApiService";
+import { ModelRunEvaluations, SiteModelStatus } from "./client/services/ApiService";
 import { SiteObservationImage } from "./store";
 
 export interface EvaluationImage {
@@ -25,8 +25,16 @@ export interface EvaluationImageResults {
         results: EvaluationImage[];
     }
     label: string;
-    status: ModelRunEvaluations['evaluations'][0]['status']
+    status: SiteModelStatus
     evaluationGeoJSON: EvaluationGeoJSON['geoJSON']
     geoJSON: EvaluationGeoJSON[];
     notes: null | string;
+    groundTruth?: {
+        timerange: {
+            min: number,
+            max: number,
+        },
+        geoJSON: GeoJSON.Polygon,
+        label: string
+    } | null;
 }

@@ -9,7 +9,7 @@ const props = defineProps<{
 </script>
 
 <template>
-  <v-card dense>
+  <v-card dense style="z-index:1000">
     <v-row
       v-for="item in props.data"
       :key="item.siteId"

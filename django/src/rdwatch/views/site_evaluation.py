@@ -1,5 +1,7 @@
 import sys
 from datetime import datetime
+from django.http import HttpResponse
+from django.contrib.gis.db.models.functions import AsGeoJSON, Envelope, Transform
 
 import iso3166
 from ninja import Field, FilterSchema, Query, Router, Schema
@@ -7,19 +9,36 @@ from ninja import Field, FilterSchema, Query, Router, Schema
 from django.contrib.gis.db.models.aggregates import Collect
 from django.contrib.postgres.aggregates import JSONBAgg
 from django.core.paginator import Paginator
-from django.db.models import Count, Q, QuerySet
+from django.db.models import (
+    Avg,
+    Case,
+    Count,
+    F,
+    Func,
+    JSONField,
+    Max,
+    Min,
+    OuterRef,
+    Q,
+    Subquery,
+    QuerySet,
+    When,
+)
 from django.db.models.functions import JSONObject  # type: ignore
 from django.http import HttpRequest
 from django.shortcuts import get_object_or_404
 from rest_framework.settings import api_settings
+import iso3166
 
 from rdwatch.db.functions import BoundingBox, ExtractEpoch
-from rdwatch.models import SiteEvaluation, SiteEvaluationTracking, lookups
+from rdwatch.models import SiteEvaluation, SiteEvaluationTracking, lookups, Region
 from rdwatch.schemas import SiteEvaluationRequest
 from rdwatch.schemas.common import BoundingBoxSchema, TimeRangeSchema
 
+from rdwatch.utils.tools import getRegion
 from .performer import PerformerSchema
-
+import json
+import tempfile
 router = Router()
 
 
@@ -196,3 +215,86 @@ def patch_site_evaluation(request: HttpRequest, id: int, data: SiteEvaluationReq
     site_evaluation.save()
 
     return 200
+
+def get_region_name(country, number, classification):
+    # Your implementation of getRegion function here
+    # Replace this with the actual implementation of getRegion function
+    return getRegion(country, number, classification)
+
+
+def get_site_model_feature_JSON(id: int, obsevations=False):
+    query = (SiteEvaluation.objects.filter(pk=id).values()
+        .annotate(
+            json=JSONObject(
+                site=JSONObject(
+                    region=JSONObject(
+                        country='region__country',
+                        classification='region__classification__slug',
+                        number='region__number',
+                    ),
+                    number='number',
+                ),
+                configuration='configuration__parameters',
+                version='version',
+                performer=JSONObject(
+                    id='configuration__performer__id',
+                    team_name='configuration__performer__description',
+                    short_code='configuration__performer__slug',
+                ),
+                score='score',
+                status='label__slug',
+                geom=Transform('geom', srid=4326),
+                start_date=('start_date'),
+                end_date=('end_date'),
+            )
+        )
+    )
+    if query.exists():
+        data = query[0]['json']
+
+        # convert to 
+        region = data['site']['region']
+        region_name = getRegion(region['country'], region['number'], region['classification'])
+        site_id = f'{region_name}_{str(data["site"]["number"]).zfill(3)}'
+        version = data['version']
+        output = {
+            "type": "FeatureCollection",
+            "features": [
+                {
+                    "type": "Feature",
+                    "properties": {
+                        "type": "site",
+                        "region_id": region_name,
+                        "site_id": site_id,
+                        "version": version,
+                        "status": data['status'],
+                        "score": data['score'],
+                        "start_date": None if data['start_date'] is None else datetime.fromisoformat(data['start_date']).strftime('%Y-%m-%d'),
+                        "end_date": None if data['end_date'] is None else datetime.fromisoformat(data['end_date']).strftime('%Y-%m-%d'),
+                        "model_content": "annotation",
+                        "originator": data["performer"]["short_code"],
+                    },
+                    "geometry": data['geom']
+                }
+            ]
+        }
+        return output, site_id
+    return None, None
+
+@router.get('/{id}/download')
+def download_annotations(request: HttpRequest, id: int):
+    output, site_id = get_site_model_feature_JSON(id)
+    if output is not None:
+        with tempfile.NamedTemporaryFile(delete=False) as temp_file:
+            json_data = json.dumps(output).encode('utf-8')
+            temp_file.write(json_data)
+
+        # Return the temporary file for download
+        with open(temp_file.name, "rb") as f:
+            response = HttpResponse(f.read(), content_type="application/octet-stream")
+            response["Content-Disposition"] = f"attachment; filename={site_id}.json"
+
+            return response
+    # TODO: Some Better Error response
+    return 500, 'Unable to export data'
+        

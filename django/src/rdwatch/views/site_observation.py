@@ -5,9 +5,11 @@ from ninja import Router, Schema
 
 from django.contrib.gis.db.models.aggregates import Collect
 from django.contrib.gis.db.models.functions import Area, Transform
+from django.core.files.storage import default_storage
+
 from django.contrib.postgres.aggregates import JSONBAgg
 from django.db import transaction
-from django.db.models import Count, Max, Min
+from django.db.models import Count, Max, Min, F, Q
 from django.db.models.functions import JSONObject  # type: ignore
 from django.http import HttpRequest
 from django.shortcuts import get_object_or_404
@@ -74,6 +76,7 @@ class JobStatusSchema(Schema):
 class SiteObservationsListSchema(Schema):
     count: int
     timerange: TimeRangeSchema | None
+    timestamp: int | None
     status: str | None
     bbox: BoundingBoxSchema
     results: list[SiteObservationSchema]
@@ -90,7 +93,6 @@ def site_observations(request: HttpRequest, evaluation_id: int):
             min=ExtractEpoch(Min('start_date')),
             max=ExtractEpoch(Max('end_date')),
         ),
-        status='status',
     )
     print(site_eval_data)
     queryset = (
@@ -135,10 +137,10 @@ def site_observations(request: HttpRequest, evaluation_id: int):
         )
     )
 
-    image_queryset
+    for image in image_queryset['results']:
+        image['image'] = default_storage.url(image['image'])
     queryset['images'] = image_queryset
     queryset['timerange'] = site_eval_data['timerange']
-    queryset['status'] = site_eval_data['status']
     if SatelliteFetching.objects.filter(siteeval=evaluation_id).exists():
         retrieved = SatelliteFetching.objects.filter(siteeval=evaluation_id).first()
         celery_data = {}

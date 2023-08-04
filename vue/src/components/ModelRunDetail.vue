@@ -93,6 +93,13 @@ onBeforeUnmount(() => {
     loopingInterval = null;
   }
 })
+
+const downloadJSON = async () => {
+  const url = `/api/model-runs/${props.modelRun.id}/download`
+  window.location.assign(url)
+
+}
+
 </script>
 
 <template>
@@ -159,6 +166,28 @@ onBeforeUnmount(() => {
         </div>
       </v-row>
       <v-row
+        v-if="modelRun.proposal && modelRun.adjudicated"
+        dense
+      >
+        <div v-if="modelRun.adjudicated.proposed !== 0">
+          <v-chip
+            size="small"
+            color="warning"
+          >
+            {{ modelRun.adjudicated.other }} / {{ modelRun.adjudicated.other + modelRun.adjudicated.proposed }} Adjudicated
+          </v-chip>
+        </div>
+        <div v-else>
+          <v-chip
+            size="small"
+            color="success"
+          >
+            All Proposals Adjudicated
+          </v-chip>
+        </div>
+      </v-row>
+
+      <v-row
         v-if="!compact && modelRun.hasScores && props.open"
         dense
       >
@@ -182,13 +211,35 @@ onBeforeUnmount(() => {
           {{ modelRun.performer.short_code }}
         </div>
         <v-spacer />
-        <v-btn
-          :disabled="downloading > 0"
-          size="x-small"
-          @click.stop="downloadImages = true"
-        >
-          Get <v-icon>mdi-image</v-icon>
-        </v-btn>
+        <v-tooltip>
+          <template #activator="{ props:subProps }">
+            <v-btn
+              size="x-small"
+              v-bind="subProps"
+              class="mx-1"
+              @click.stop="downloadJSON()"
+            >
+              <v-icon size="small">
+                mdi-export
+              </v-icon>
+            </v-btn>
+          </template>
+          <span>Download JSON</span>
+        </v-tooltip>
+        <v-tooltip>
+          <template #activator="{ props:subProps }">
+            <v-btn
+              :disabled="downloading > 0"
+              size="x-small"
+              v-bind="subProps"
+              class="mx-1"
+              @click.stop="downloadImages = true"
+            >
+              Get <v-icon>mdi-image</v-icon>
+            </v-btn>
+          </template>
+          <span> Download Satellite Images</span>
+        </v-tooltip>
       </v-row>
       <v-row v-if="downloading > 0">
         <b class="small">Downloading {{ downloading }} site(s) Images</b>

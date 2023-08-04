@@ -20,4 +20,9 @@ export type ModelRun = {
   hasScores?: boolean;
   created: string;
   expiration_time: string;
+  proposal?: null | 'PROPOSAL' | 'APPROVED';
+  adjudicated?: {
+    proposed: number,
+    other: number
+  } | null;
 };

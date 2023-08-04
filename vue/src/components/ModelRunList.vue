@@ -48,7 +48,7 @@ async function loadMore() {
   request = ApiService.getModelRuns({
     limit,
     ...props.filters,
-    proposal: props.compact, // if compact we are doing proposal adjudication
+    proposal: props.compact ? 'PROPOSAL' : undefined, // if compact we are doing proposal adjudication
   });
   try {
     const modelRunList = await request;

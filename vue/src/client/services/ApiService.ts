@@ -23,7 +23,7 @@ export interface QueryArguments {
   region?: string;
   page?: number;
   limit?: number;
-  proposal?: boolean;
+  proposal?: 'PROPOSAL' | 'APPROVED';
 }
 
 export interface ScoringResults {
@@ -59,6 +59,7 @@ export interface ModelRunEvaluations {
     id: number
     bbox: { xmin: number; ymin: number; xmax: number; ymax: number }
     status: SiteModelStatus
+    timestamp: number;
   }[];
 }
 export interface SiteEvaluationUpdateQuery {
@@ -141,7 +142,7 @@ export class ApiService {
    */
       public static getObservationImages(
         id: string,
-        constellation: 'WV' | 'S2' | 'L8' = 'WV'
+        data: DownloadSettings
       ): CancelablePromise<boolean> {
         return __request(OpenAPI, {
           method: "POST",
@@ -150,7 +151,7 @@ export class ApiService {
             id: id,
           },
           query: {
-            constellation,
+            ...data,
           }
         });
       }

@@ -9,7 +9,7 @@ import { filteredSatelliteTimeList, state } from "../store";
 import { markRaw, onMounted, onUnmounted, reactive, shallowRef, watch, withDefaults } from "vue";
 import type { FilterSpecification } from "maplibre-gl";
 import type { ShallowRef } from "vue";
-import { popupLogic } from "../interactions/mouseEvents";
+import { popupLogic, setPopupEvents } from "../interactions/mouseEvents";
 import { satelliteLoading } from "../interactions/satelliteLoading";
 import { setReference } from "../interactions/fillPatterns";
 import { setSatelliteTimeStamp } from "../mapstyle/satellite-image";
@@ -73,6 +73,7 @@ onMounted(() => {
     );
     map.value.keyboard.disable();
     popupLogic(map);
+    setPopupEvents(map);
     satelliteLoading(map);
     setReference(map);
   }
@@ -122,7 +123,7 @@ watch([() => state.timestamp, () => state.filters, () => state.satellite, () => 
     setFilter(`observations-text-${id}`, observationFilter);
   })
 
-  popupLogic(map);
+  setPopupEvents(map);
 });
 
 watch(

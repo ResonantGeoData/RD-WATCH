@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { Ref, computed, ref, watch } from "vue";
 import { ApiService } from "../../client";
-import { ModelRunEvaluations } from "../../client/services/ApiService";
+import { ModelRunEvaluations, SiteModelStatus } from "../../client/services/ApiService";
 
 export interface ModelRunEvaluationDisplay {
   number: number;
@@ -15,7 +15,8 @@ export interface ModelRunEvaluationDisplay {
   S2: number;
   WV: number,
   L8: number;
-  status: ModelRunEvaluations['evaluations'][0]['status'];
+  status: SiteModelStatus;
+  timestamp: number;
 }
 
 
@@ -30,7 +31,7 @@ const emit = defineEmits<{
 
 const evaluationsList: Ref<ModelRunEvaluations | null> = ref(null);
 
-const statusMap: Record<ModelRunEvaluations['evaluations'][0]['status'], { name: string, color: string }> = {
+const statusMap: Record<SiteModelStatus, { name: string, color: string }> = {
   'PROPOSAL': { name: 'Proposed', color: 'orange'},
   'REJECTED': { name: 'Rejected', color: 'error'},
   'APPROVED': { name: 'Approved', color: 'success'},
@@ -69,12 +70,18 @@ const modifiedList = computed(() => {
           WV: item.WV,
           L8: item.L8,
           status: item.status,
+          timestamp: item.timestamp,
         }
         );
     });
   }
   return modList;
 });
+
+const download = (id: number) => {
+  const url = `/api/evaluations/${id}/download`
+  window.location.assign(url)
+}
 
 
 </script>
@@ -99,27 +106,37 @@ const modifiedList = computed(() => {
           v-for="item in modifiedList"
           :key="`${item.name}_${item.id}_${item.selected}`"
           class="modelRunCard"
-          :class="{selectedCard: item.selected, errorCard: item.images === 0}"
+          :class="{selectedCard: item.selected}"
           @click="emit('selected', item)"
         >
           <v-card-title class="title">
             {{ item.name }}
           </v-card-title>
           <v-card-text>
-            <div v-if="item.images">
-              <v-chip size="x-small">
-                WV: {{ item.WV }}
-              </v-chip>
-              <v-chip size="x-small">
-                S2: {{ item.S2 }}
-              </v-chip>
-              <v-chip size="x-small">
-                L8: {{ item.L8 }}
-              </v-chip>
-            </div>
-            <div v-else>
-              <b> 0 Images Downloaded</b>
-            </div>
+            <v-row
+              dense
+              justify="center"
+            >
+              <div v-if="item.images">
+                <v-chip size="x-small">
+                  WV: {{ item.WV }}
+                </v-chip>
+                <v-chip size="x-small">
+                  S2: {{ item.S2 }}
+                </v-chip>
+                <v-chip size="x-small">
+                  L8: {{ item.L8 }}
+                </v-chip>
+              </div>
+              <div v-else>
+                <v-chip
+                  size="x-small"
+                  color="error"
+                >
+                  No Images Loaded
+                </v-chip>
+              </div>
+            </v-row>
             <v-row
               dense
               justify="center"
@@ -132,6 +149,22 @@ const modifiedList = computed(() => {
               >
                 {{ statusMap[item.status].name }}
               </v-chip>
+            </v-row>
+            <v-row dense>
+              <v-tooltip>
+                <template #activator="{ props:subProps }">
+                  <v-btn
+                    size="x-small"
+                    v-bind="subProps"
+                    @click.stop="download(item.id)"
+                  >
+                    <v-icon size="small">
+                      mdi-export
+                    </v-icon>
+                  </v-btn>
+                </template>
+                <span>Download JSON</span>
+              </v-tooltip>
             </v-row>
           </v-card-text>
         </v-card>

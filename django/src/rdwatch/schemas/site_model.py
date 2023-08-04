@@ -10,6 +10,11 @@ from django.contrib.gis.gdal import GDALException
 from django.contrib.gis.geos import GEOSGeometry
 
 
+class SiteFeatureCache(Schema):
+    originator_file: str
+    timestamp: datetime | None
+    commit_hash: str
+
 class SiteFeature(Schema):
     type: Literal['site']
     region_id: constr(regex=r'^[A-Z]{2}_[RCST][\dx]{3}$')
@@ -51,6 +56,7 @@ class SiteFeature(Schema):
     # Optional fields
     score: confloat(ge=0.0, le=1.0) | None
     validated: Literal['True', 'False'] | None
+    cache: SiteFeatureCache | None
     predicted_phase_transition: Literal[
         'Active Construction',
         'Post Construction',

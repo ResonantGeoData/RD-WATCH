@@ -1,9 +1,10 @@
 <script setup lang="ts">
-import { computed, onBeforeMount, onBeforeUnmount } from "vue";
+import { computed, onBeforeMount, onBeforeUnmount, ref } from "vue";
 import { ApiService } from "../../client";
+import { DownloadSettings } from "../../client/services/ApiService";
 import { getSiteObservationDetails, state } from "../../store";
 import { SiteObservation } from "../../store";
-
+import ImagesDownloadDialog from '../ImagesDownloadDialog.vue'
 const props = defineProps<{
   siteObservation: SiteObservation;
   imagesActive: boolean;
@@ -40,8 +41,9 @@ onBeforeUnmount(() => {
   }
 })
 
-const getImages = async (id:number, constellation: 'WV' | 'S2' | 'L8' = 'WV')  => {
-    await ApiService.getObservationImages(id.toString(), constellation);
+const startDownload = async (data: DownloadSettings) => {
+  const id = props.siteObservation.id
+  await ApiService.getObservationImages(id.toString(), data);
     // Now we get the results to see if the service is running
     await getSiteObservationDetails(props.siteObservation.id.toString(), props.siteObservation.scoringBase);
     // The props should be updated now we start an interval to update until we exist, deselect or other
@@ -50,7 +52,10 @@ const getImages = async (id:number, constellation: 'WV' | 'S2' | 'L8' = 'WV')  =
       loopingInterval = null;
     }
     loopingInterval = setInterval(checkSiteObs, 1000);
+    imageDownloadDialog.value = false;
+
 }
+
 
 const startLooping = () => {
   if (state.loopingInterval !== null) {
@@ -89,7 +94,10 @@ const progressInfo = computed(() => {
     }
   }
   return null
-})
+});
+
+const imageDownloadDialog = ref(false);
+
 </script>
 
 <template>
@@ -215,34 +223,20 @@ const progressInfo = computed(() => {
       justify="center"
       align="center"
     >
-      <v-btn
-        size="x-small"
-        color="secondary"
-        :disabled="isRunning"
-        class="mx-1"
-        @click="getImages(siteObservation.id, 'WV')"
-      >
-        Get WV
-      </v-btn>
-      <v-btn
-        size="x-small"
-        color="secondary"
-        :disabled="isRunning"
-        class="mx-1"
-        @click="getImages(siteObservation.id, 'S2')"
-      >
-        Get S2
-      </v-btn>
-      <v-btn
-        size="x-small"
-        color="secondary"
-        :disabled="isRunning"
-        class="mx-1"
-        @click="getImages(siteObservation.id, 'L8')"
-      >
-        Get L8
-      </v-btn>
-
+      <v-tooltip>
+        <template #activator="{ props:subProps }">
+          <v-btn
+            :disabled="isRunning"
+            size="x-small"
+            v-bind="subProps"
+            class="mx-1"
+            @click.stop="imageDownloadDialog = true"
+          >
+            Get <v-icon>mdi-image</v-icon>
+          </v-btn>
+        </template>
+        <span> Download Satellite Images</span>
+      </v-tooltip>
       <span v-if="imagesActive">
         <v-btn
           v-if="state.loopingId !== siteObservation.id"
@@ -261,5 +255,10 @@ const progressInfo = computed(() => {
       </span>
       <v-spacer />
     </v-row>
+    <images-download-dialog
+      v-if="imageDownloadDialog"
+      @download="startDownload($event)"
+      @cancel="imageDownloadDialog = false"
+    />
   </span>
 </template>

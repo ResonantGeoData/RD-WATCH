@@ -1,7 +1,12 @@
 from datetime import datetime, timedelta
-
+import os
+import zipfile
+import tempfile
 import iso3166
+import json
 from celery.result import AsyncResult
+from django.http import HttpResponse
+
 from ninja import Field, FilterSchema, Query, Schema
 from ninja.errors import ValidationError
 from ninja.pagination import RouterPaginated
@@ -23,6 +28,8 @@ from django.db.models import (
     Q,
     Subquery,
     When,
+    Sum,
+    IntegerField,
 )
 from django.db.models.functions import Coalesce, JSONObject
 from django.http import Http404, HttpRequest
@@ -46,16 +53,16 @@ from rdwatch.schemas.common import TimeRangeSchema
 from rdwatch.views.performer import PerformerSchema
 from rdwatch.views.region import RegionSchema
 from rdwatch.views.site_observation import get_site_observation_images
-
+from rdwatch.views.site_evaluation import get_site_model_feature_JSON
 router = RouterPaginated()
 
 
 class ModelRunFilterSchema(FilterSchema):
     performer: str | None = Field(q='performer_slug')
     region: str | None
-    proposal: bool | None
+    proposal: str | None
 
-    def filter_proposal(self, value: bool | None) -> Q:
+    def filter_proposal(self, value: str | None) -> Q:
         if not value:
             return Q(proposal=None)
         else:
@@ -97,6 +104,9 @@ class HyperParametersWriteSchema(Schema):
             return timedelta(hours=v)
         return v
 
+class HyperParametersAdjudicated(Schema):
+    proposed: int
+    other: int
 
 class HyperParametersDetailSchema(Schema):
     id: int
@@ -114,7 +124,8 @@ class HyperParametersDetailSchema(Schema):
     expiration_time: str | None = None
     evaluation: int | None = None
     evaluation_run: int | None = None
-    proposal: bool = None
+    proposal: str = None
+    adjudicated: HyperParametersAdjudicated | None = None
 
 
 class EvaluationListSchema(Schema):
@@ -152,6 +163,7 @@ def get_queryset():
             region_id=F('evaluations__region_id'),
             observation_count=Count('evaluations__observations'),
             evaluation_configuration=F('evaluations__configuration'),
+            proposal_val=F('proposal')
         )
         .annotate(
             json=JSONObject(
@@ -216,6 +228,29 @@ def get_queryset():
                     ),
                     default=BoundingBoxGeoJSON('evaluations__observations__geom'),
                 ),
+                proposal='proposal_val',
+                adjudicated=Case(
+                    When(
+                        ~Q(proposal_val=None), # Wjen proposal has a value
+                        then=JSONObject(
+                            proposed=Sum(
+                                Case(
+                                    When(evaluations__status='PROPOSAL', then=1),
+                                    default=0,
+                                    output_field=IntegerField()
+                                )
+                            ),
+                            other=Sum(
+                                Case(
+                                    When(~Q(evaluations__status='PROPOSAL') & ~Q(evaluations__status__isnull=True), then=1),
+                                    default=0,
+                                    output_field=IntegerField()
+                                )
+                            )
+                        )
+                    ),
+                    default=None,
+                )
             )
         )
     )
@@ -439,11 +474,13 @@ def get_evaluations_query(hyper_parameters_id: int):
             S2=Count(Case(When(siteimage__source='S2', then=1))),
             WV=Count(Case(When(siteimage__source='WV', then=1))),
             L8=Count(Case(When(siteimage__source='L8', then=1))),
+            time=ExtractEpoch('timestamp'),
         )
         .aggregate(
             evaluations=JSONBAgg(
                 JSONObject(
                     id='pk',
+                    timestamp='time',
                     number='number',
                     bbox=BoundingBox('geom'),
                     images='siteimage_count',
@@ -477,3 +514,29 @@ def get_modelrun_evaluations(request: HttpRequest, hyper_parameters_id: int):
         }
     query['region'] = model_run['region']
     return 200, query
+
+@router.get('/{id}/download')
+def download_annotations(request: HttpRequest, id: int):
+    # Needs to go through the siteEvaluations and download one for each file
+    site_evals = SiteEvaluation.objects.filter(configuration_id=id)
+    model_run_name = HyperParameters.objects.get(pk=id).title
+    with tempfile.TemporaryDirectory() as temp_dir:
+        zip_file_path = os.path.join(temp_dir, "annotations.zip")
+        file_list = []
+        for item in site_evals:
+            print(item)
+            data, site_id = get_site_model_feature_JSON(item.pk)
+            print(site_id)
+            file_name = os.path.join(temp_dir, f"{site_id}.json")
+            with open(file_name, "w") as file:
+                json.dump(data, file)
+            file_list.append({"filename": file_name, "siteId": site_id})
+        with zipfile.ZipFile(zip_file_path, 'w') as zipf:
+            for item in file_list:
+                zipf.write(item['filename'], f"{item['siteId']}.json")
+
+        with open(zip_file_path, 'rb') as file:
+            response = HttpResponse(file.read(), content_type='application/zip')
+            response['Content-Disposition'] = f'attachment; filename="{model_run_name}.zip"'
+            return response
+

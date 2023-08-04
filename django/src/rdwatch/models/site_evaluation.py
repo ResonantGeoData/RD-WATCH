@@ -64,6 +64,8 @@ class SiteEvaluation(models.Model):
     )
     notes = models.TextField(null=True, blank=True)
 
+    validated = models.BooleanField(blank=True, null=True)
+
     class Status(models.TextChoices):
         PROPOSAL = (
             'PROPOSAL'  # proposal is a proposal awaiting Adjudication/Confirmation
@@ -78,6 +80,22 @@ class SiteEvaluation(models.Model):
         help_text='Fetching Status',
         choices=Status.choices,
     )
+    cache_originator_file = models.CharField(
+        max_length=2048,
+        blank=True,
+        null=True,
+        help_text='Name of source file for proposals',
+    )
+    cache_timestamp = models.DateTimeField(
+        help_text='Cache timestamp for proposals',
+        null=True,
+    )
+    cache_commit_hash = models.CharField(
+        max_length=2048,
+        blank=True,
+        null=True,
+        help_text='Hash of the file for proposals',
+    )
 
     @classmethod
     def bulk_create_from_site_model(
@@ -88,15 +106,29 @@ class SiteEvaluation(models.Model):
         site_feature = site_model.site_feature
         assert isinstance(site_feature.properties, SiteFeature)
         status = None
+        modified = False
+        if configuration.ground_truth is False and site_feature.properties.validated and site_feature.properties.originator == 'te':
+            configuration.ground_truth = True
+            modified = True
         if configuration.proposal or site_feature.properties.site_number == 9999:
             status = SiteEvaluation.Status.PROPOSAL
-            configuration.proposal = True
+            configuration.proposal = HyperParameters.ProposalStatus.PROPOSAL
+            modified = True
+        if modified:
             configuration.save()
         with transaction.atomic():
             region = get_or_create_region(site_feature.properties.region_id)[0]
             label = lookups.ObservationLabel.objects.get(
                 slug=site_feature.properties.status
             )
+            cache_originator_file = None
+            cache_timestamp = None
+            cache_commit_hash = None
+            if site_feature.properties.cache:
+                cache_originator_file = site_feature.properties.cache.originator_file
+                cache_timestamp = site_feature.properties.cache.timestamp
+                cache_commit_hash = site_feature.properties.cache.commit_hash
+
             site_eval = cls.objects.create(
                 configuration=configuration,
                 region=region,
@@ -109,6 +141,10 @@ class SiteEvaluation(models.Model):
                 label=label,
                 score=site_feature.properties.score,
                 status=status,
+                validated=site_feature.properties.validated,
+                cache_originator_file=cache_originator_file,
+                cache_timestamp=cache_timestamp,
+                cache_commit_hash=cache_commit_hash,
             )
 
             SiteObservation.bulk_create_from_site_evaluation(site_eval, site_model)

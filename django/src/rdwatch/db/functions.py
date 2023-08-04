@@ -12,11 +12,9 @@ from django.db.models import (
     Min,
     RowRange,
     Value,
-    CharField,
-    DateField,
 )
 from django.db.models.functions import JSONObject  # type: ignore
-from django.db.models.functions import Cast, NullIf, Extract, Concat
+from django.db.models.functions import Cast, NullIf
 
 
 class ExtractEpoch(Func):
@@ -103,6 +101,8 @@ class AggregateArraySubquery(Max):
     def __init__(self, *args, **kwargs):
         null = Value(None, output_field=ArrayField(base_field=JSONField()))
         return super().__init__(null, default=ArraySubquery(*args, **kwargs))
+
+
 class GroupExcludeRowRange(RowRange):
     """A RowRange that excludes the current group
 

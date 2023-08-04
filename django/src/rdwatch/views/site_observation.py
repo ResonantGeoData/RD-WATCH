@@ -5,11 +5,10 @@ from ninja import Router, Schema
 
 from django.contrib.gis.db.models.aggregates import Collect
 from django.contrib.gis.db.models.functions import Area, Transform
-from django.core.files.storage import default_storage
-
 from django.contrib.postgres.aggregates import JSONBAgg
+from django.core.files.storage import default_storage
 from django.db import transaction
-from django.db.models import Count, Max, Min, F, Q
+from django.db.models import Count, Max, Min
 from django.db.models.functions import JSONObject  # type: ignore
 from django.http import HttpRequest
 from django.shortcuts import get_object_or_404

@@ -1,4 +1,4 @@
-import { ModelRunEvaluations, SiteModelStatus } from "./client/services/ApiService";
+import { SiteModelStatus } from "./client/services/ApiService";
 import { SiteObservationImage } from "./store";
 
 export interface EvaluationImage {

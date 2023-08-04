@@ -50,12 +50,14 @@ export const updateImageMapSources =  (
 ) => {
     enabledSiteObservations.forEach((item) => {
         const source  = `siteImageSource_${item.id}`;
-        if (map) {
+        if (map ) {
             const mapSource = map.getSource(source) as ImageSource;
-            mapSource.updateImage({
-                url: getClosestTimestamp(item.id, timestamp, enabledSiteObservations, settings),
-                coordinates: scaleBoundingBox(item.bbox, 1.2),    
-            });
+            if (mapSource) {
+                mapSource.updateImage({
+                    url: getClosestTimestamp(item.id, timestamp, enabledSiteObservations, settings),
+                    coordinates: scaleBoundingBox(item.bbox, 1.2),    
+                });
+            }
         }
     });
 }

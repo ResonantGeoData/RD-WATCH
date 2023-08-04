@@ -15,6 +15,7 @@ import { setReference } from "../interactions/fillPatterns";
 import { setSatelliteTimeStamp } from "../mapstyle/satellite-image";
 import { isEqual, throttle } from 'lodash';
 import { nextTick } from "vue";
+import { updateImageMapSources } from "../mapstyle/images";
 
 interface Props {
   compact?: boolean
@@ -106,6 +107,9 @@ watch([() => state.timestamp, () => state.filters, () => state.satellite, () => 
   // Add opened model runs to list of vector tile layers
   openedModelRunIds.forEach((m) => { modelRunVectorLayers.add(m) })
 
+  if (map.value) {
+    updateImageMapSources(state.timestamp, state.enabledSiteObservations, state.siteObsSatSettings, map.value )
+  }
   map.value?.setStyle(
     style(state.timestamp, state.filters, state.satellite, state.enabledSiteObservations, state.siteObsSatSettings, Array.from(modelRunVectorLayers)),
   );
@@ -115,7 +119,6 @@ watch([() => state.timestamp, () => state.filters, () => state.satellite, () => 
     state.timestamp,
     state.filters
   );
-
   openedModelRunIds.forEach(id => {
     setFilter(`sites-outline-${id}`, siteFilter);
     setFilter(`observations-fill-${id}`, observationFilter);

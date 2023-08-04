@@ -23,6 +23,7 @@ class HyperParameters(models.Model):
         blank=True,
         help_text='Time relative to creation that this model run should be deleted.',
     )
+
     class ProposalStatus(models.TextChoices):
         PROPOSAL = (
             'PROPOSAL'  # proposal is a proposal awaiting Adjudication/Confirmation

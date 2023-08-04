@@ -25,7 +25,6 @@ const calculateScoreColor = (score: number) => {
   return "black";
 };
 let popup: Popup;
-let loadedPopups: string[] = [];
 const map:ShallowRef<null | Map> = ref(null)
 const popupLogic = async (mapArg: ShallowRef<null | Map>) => {
   popup = new Popup({

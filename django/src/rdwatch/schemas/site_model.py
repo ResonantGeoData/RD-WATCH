@@ -15,6 +15,7 @@ class SiteFeatureCache(Schema):
     timestamp: datetime | None
     commit_hash: str
 
+
 class SiteFeature(Schema):
     type: Literal['site']
     region_id: constr(regex=r'^[A-Z]{2}_[RCST][\dx]{3}$')

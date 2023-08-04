@@ -107,7 +107,11 @@ class SiteEvaluation(models.Model):
         assert isinstance(site_feature.properties, SiteFeature)
         status = None
         modified = False
-        if configuration.ground_truth is False and site_feature.properties.validated and site_feature.properties.originator == 'te':
+        if (
+            configuration.ground_truth is False
+            and site_feature.properties.validated
+            and site_feature.properties.originator == 'te'
+        ):
             configuration.ground_truth = True
             modified = True
         if configuration.proposal or site_feature.properties.site_number == 9999:

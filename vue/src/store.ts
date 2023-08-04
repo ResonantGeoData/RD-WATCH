@@ -162,7 +162,7 @@ export const state = reactive<{
     groundTruthPattern: false,
     otherPattern: false,
   },
-  mapLegend: false,
+  mapLegend: true,
   satellite: {
     satelliteImagesOn: false,
     satelliteTimeList:[],

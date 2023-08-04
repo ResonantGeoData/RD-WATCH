@@ -28,6 +28,38 @@ import { state } from '../store';
               <v-row dense>
                 <v-col>
                   <v-row
+                    v-for="item in annotationLegend.siteLegend"
+                    :key="item.name"
+                    align="center"
+                    class="px-5"
+                  >
+                    <span
+                      :style="`background-color: ${item.color}`"
+                      class="color-icon pr-1"
+                    />
+                    <span
+                      class="pl-1 legend-label"
+                      :class="{'legend-label-single': !state.filters.scoringColoring}"
+                    >
+                      :{{ item.name }}
+                    </span>
+                  </v-row>
+                </v-col>
+              </v-row>
+            </v-card-text>
+          </v-card>
+
+          <v-card density="compact">
+            <v-card-title
+              class="legend-title"
+              :class="{'legend-title-single': !state.filters.scoringColoring}"
+            >
+              Site Observations
+            </v-card-title>
+            <v-card-text>
+              <v-row dense>
+                <v-col>
+                  <v-row
                     v-for="item in annotationLegend.observationLegend"
                     :key="item.name"
                     align="center"
@@ -87,16 +119,16 @@ import { state } from '../store';
   max-width: 400px;
 }
 .legend-title {
-  font-size:0.75em !important;
+  font-size:0.50em !important;
 }
 .legend-label {
-  font-size: 0.75em;
+  font-size: 0.50em;
 }
 .legend-title-single {
   font-size:1em !important;
 }
 .legend-label-single {
-  font-size: 1em;
+  font-size: .75em;
 }
 .color-icon {
   min-width: 15px;

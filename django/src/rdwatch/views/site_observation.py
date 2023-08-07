@@ -35,7 +35,7 @@ class SiteObservationSchema(Schema):
     id: int
     label: str
     score: float
-    constellation: str
+    constellation: str | None
     spectrum: str | None
     timestamp: int | None
     bbox: BoundingBoxSchema
@@ -92,8 +92,8 @@ def site_observations(request: HttpRequest, evaluation_id: int):
             min=ExtractEpoch(Min('start_date')),
             max=ExtractEpoch(Max('end_date')),
         ),
+        bbox=BoundingBox(Collect('geom')),
     )
-    print(site_eval_data)
     queryset = (
         SiteObservation.objects.order_by('timestamp')
         .filter(siteeval__id=evaluation_id)
@@ -140,6 +140,13 @@ def site_observations(request: HttpRequest, evaluation_id: int):
         image['image'] = default_storage.url(image['image'])
     queryset['images'] = image_queryset
     queryset['timerange'] = site_eval_data['timerange']
+    replace_bbox = False
+    for key in queryset['bbox'].keys():
+        if queryset['bbox'][key] is None:  # Some Evals have no site Observations,
+            # need to replace the bounding box in this case
+            replace_bbox = True
+    if replace_bbox:
+        queryset['bbox'] = site_eval_data['bbox']
     if SatelliteFetching.objects.filter(siteeval=evaluation_id).exists():
         retrieved = SatelliteFetching.objects.filter(siteeval=evaluation_id).first()
         celery_data = {}

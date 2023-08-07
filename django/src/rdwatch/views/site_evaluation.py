@@ -229,6 +229,9 @@ def get_site_model_feature_JSON(id: int, obsevations=False):
                     team_name='configuration__performer__description',
                     short_code='configuration__performer__slug',
                 ),
+                cache_originator_file='cache_originator_file',
+                cache_timestamp='cache_timestamp',
+                cache_commit_hash='cache_commit_hash',
                 score='score',
                 status='label__slug',
                 geom=Transform('geom', srid=4326),
@@ -276,6 +279,12 @@ def get_site_model_feature_JSON(id: int, obsevations=False):
                 }
             ],
         }
+        if data['cache_originator_file']:
+            output['features'][0]['properties']['cache'] = {
+                'cache_originator_file': data['cache_originator_file'],
+                'cache_timestamp': data['cache_timestamp'],
+                'cache_commit_hash': data['cache_commit_hash'],
+            }
         return output, site_id
     return None, None
 

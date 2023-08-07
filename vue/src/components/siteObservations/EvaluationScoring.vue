@@ -18,6 +18,9 @@ const statusAnnotated: Ref<null | string> = ref(null);
 const color: Ref<null | string> = ref(null);
 const retrieveScoring = async () => {
     const scoreData = props.siteObservation.scoringBase;
+    if (!scoreData) {
+      return;
+    }
     try {
     const scoringRequest = await ApiService.getScoringDetails(scoreData.configurationId, scoreData.regionId, scoreData.siteNumber, scoreData.version);
     unionArea.value = scoringRequest.unionArea;

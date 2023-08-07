@@ -211,14 +211,6 @@ def get_siteobservations_images(
             f'Utilizing Constellation: {matchConstellation} - {matchConstellation.slug}'
         )
 
-    print('Min')
-    print(min_time)
-    print('Max')
-    print(max_time)
-    print('Buffer')
-    print(timebuffer)
-    print('Override')
-    print(overrideDates)
     captures = get_range_captures(
         max_bbox, timestamp, matchConstellation, timebuffer, worldView
     )

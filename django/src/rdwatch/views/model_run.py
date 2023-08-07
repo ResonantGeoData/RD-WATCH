@@ -20,14 +20,12 @@ from django.db.models import (
     Count,
     F,
     Func,
-    IntegerField,
     JSONField,
     Max,
     Min,
     OuterRef,
     Q,
     Subquery,
-    Sum,
     When,
 )
 from django.db.models.functions import Coalesce, JSONObject
@@ -60,13 +58,7 @@ router = RouterPaginated()
 class ModelRunFilterSchema(FilterSchema):
     performer: str | None = Field(q='performer_slug')
     region: str | None
-    proposal: str | None
-
-    def filter_proposal(self, value: str | None) -> Q:
-        if not value:
-            return Q(proposal=None)
-        else:
-            return Q(proposal=value)
+    proposal: str | None = Field(q='proposal', ignore_none=False)
 
     def filter_region(self, value: str | None) -> Q:
         if value is None:
@@ -144,6 +136,28 @@ class HyperParametersListSchema(Schema):
 
 
 def get_queryset():
+    # Subquery to count unique SiteEvaluations
+    # with proposal='PROPOSAL' for each HyperParameters
+    proposed_count_subquery = (
+        SiteEvaluation.objects.filter(
+            configuration=OuterRef('pk'),
+            status='PROPOSAL',
+        )
+        .values('configuration')
+        .annotate(count=Count('pk'))
+        .values('count')
+    )
+
+    # Subquery to count unique SiteEvaluations with proposal
+    # not equal to 'PROPOSAL' for each HyperParameters
+    other_count_subquery = (
+        SiteEvaluation.objects.filter(configuration=OuterRef('pk'))
+        .exclude(status='PROPOSAL')
+        .values('configuration')
+        .annotate(count=Count('pk'))
+        .values('count')
+    )
+
     return (
         HyperParameters.objects.select_related(
             'evaluations', 'performer', 'satellitefetching'
@@ -233,26 +247,10 @@ def get_queryset():
                 proposal='proposal_val',
                 adjudicated=Case(
                     When(
-                        ~Q(proposal_val=None),  # Wjen proposal has a value
+                        ~Q(proposal_val=None),  # When proposal has a value
                         then=JSONObject(
-                            proposed=Sum(
-                                Case(
-                                    When(evaluations__status='PROPOSAL', then=1),
-                                    default=0,
-                                    output_field=IntegerField(),
-                                )
-                            ),
-                            other=Sum(
-                                Case(
-                                    When(
-                                        ~Q(evaluations__status='PROPOSAL')
-                                        & ~Q(evaluations__status__isnull=True),
-                                        then=1,
-                                    ),
-                                    default=0,
-                                    output_field=IntegerField(),
-                                )
-                            ),
+                            proposed=Coalesce(Subquery(proposed_count_subquery), 0),
+                            other=Coalesce(Subquery(other_count_subquery), 0),
                         ),
                     ),
                     default=None,
@@ -531,9 +529,7 @@ def download_annotations(request: HttpRequest, id: int):
         zip_file_path = os.path.join(temp_dir, 'annotations.zip')
         file_list = []
         for item in site_evals:
-            print(item)
             data, site_id = get_site_model_feature_JSON(item.pk)
-            print(site_id)
             file_name = os.path.join(temp_dir, f'{site_id}.json')
             with open(file_name, 'w') as file:
                 json.dump(data, file)

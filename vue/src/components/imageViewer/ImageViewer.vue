@@ -3,9 +3,9 @@ import { Ref, computed, ref, watch, withDefaults } from "vue";
 import { ApiService } from "../../client";
 import {EvaluationGeoJSON, EvaluationImage, EvaluationImageResults } from "../../types";
 import { getColorFromLabel, styles } from '../../mapstyle/annotationStyles';
-import { state } from '../../store'
+import { loadAndToggleSatelliteImages, state, toggleSatelliteImages } from '../../store'
 import { VDatePicker } from 'vuetify/labs/VDatePicker'
-import { SiteEvaluationUpdateQuery, SiteModelStatus } from "../../client/services/ApiService";
+import { SiteModelStatus } from "../../client/services/ApiService";
 
 interface Props {
   siteEvalId: number;
@@ -257,7 +257,13 @@ const drawData = (canvas: HTMLCanvasElement, image: EvaluationImage, poly:PixelP
     }
     };
 
-const load = async () => {
+const load = async (newValue?: number, oldValue?: number) => {
+  const index = state.enabledSiteObservations.findIndex((item) => item.id === oldValue);
+  if (index !== -1) {
+    const tempArr = [...state.enabledSiteObservations];
+    tempArr.splice(index, 1);
+    state.enabledSiteObservations = tempArr;
+  }
   loading.value = true;
   await getImageData();
   if (currentImage.value < filteredImages.value.length && canvasRef.value !== null) {
@@ -325,6 +331,8 @@ const updateTime = (time: any, date: 'StartDate' | 'EndDate') => {
   siteEvaluationUpdated.value = true;
 }
 
+const mapImagesOn = computed(() => (state.enabledSiteObservations.findIndex((item) => item.id === props.siteEvalId) !== -1));
+
 const setEditingMode = (mode: EditModes) => {
   if (['StartDate', 'EndDate'].includes(mode)){
     if (startDate.value === null) {
@@ -383,6 +391,25 @@ const setSiteModelStatus = async (status: SiteModelStatus) => {
       class="edit-title"
     >
       <v-row dense>
+        <v-col style="max-width:20px" v-if="editable">
+          <v-tooltip
+            open-delay="50"
+            bottom
+          >
+            <template #activator="{ props:subProps }">
+              <v-icon
+                v-bind="subProps"
+                :color="mapImagesOn ? 'rgb(37, 99, 235)' : ''"
+                @click="loadAndToggleSatelliteImages(siteEvalId.toString())"
+              >
+                mdi-image
+              </v-icon>
+            </template>
+            <span>
+              Toggle Map Images
+            </span>
+          </v-tooltip>
+        </v-col>
         <v-col>
           <h3 class="mr-3">
             {{ siteEvaluationName }}:
@@ -475,6 +502,7 @@ const setSiteModelStatus = async (status: SiteModelStatus) => {
               v-model="drawGroundTruth"
               density="compact"
               label="Draw GT"
+              style="max-height:5px"
             />
           </div>
         </v-col>

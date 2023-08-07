@@ -27,7 +27,7 @@ class SiteEvaluation(models.Model):
         help_text='The region this site belongs to',
         db_index=True,
     )
-    number = models.PositiveSmallIntegerField(
+    number = models.IntegerField(
         help_text='The site number',
         db_index=True,
     )

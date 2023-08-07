@@ -19,7 +19,7 @@ class SiteFeatureCache(Schema):
 class SiteFeature(Schema):
     type: Literal['site']
     region_id: constr(regex=r'^[A-Z]{2}_[RCST][\dx]{3}$')
-    site_id: constr(regex=r'^[A-Z]{2}_([RST]\d{3}|C[0-7]\d{2}|[RC][Xx]{3})_\d{4}$')
+    site_id: constr(regex=r'^[A-Z]{2}_([RST]\d{3}|C[0-7]\d{2}|[RC][Xx]{3})_\d{4,6}$')
     version: constr(regex=r'^\d+\.\d+\.\d+$')
     mgrs: constr(regex=r'^\d{2}[A-Z]{3}$')
     status: Literal[

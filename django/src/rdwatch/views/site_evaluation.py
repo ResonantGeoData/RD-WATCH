@@ -10,6 +10,7 @@ from django.contrib.gis.db.models.aggregates import Collect
 from django.contrib.gis.db.models.functions import Transform
 from django.contrib.postgres.aggregates import JSONBAgg
 from django.core.paginator import Paginator
+from django.db import transaction
 from django.db.models import Count, Q, QuerySet
 from django.db.models.functions import JSONObject  # type: ignore
 from django.http import HttpRequest, HttpResponse
@@ -172,7 +173,9 @@ def list_site_evaluations(
 @router.patch('/{id}/')
 def patch_site_evaluation(request: HttpRequest, id: int, data: SiteEvaluationRequest):
     with transaction.atomic():
-        site_evaluation = get_object_or_404(SiteEvaluation.objects.select_for_update(), pk=id)
+        site_evaluation = get_object_or_404(
+            SiteEvaluation.objects.select_for_update(), pk=id
+        )
         # create a copy of it in the history log
         SiteEvaluationTracking.objects.create(
             score=site_evaluation.score,
@@ -185,7 +188,9 @@ def patch_site_evaluation(request: HttpRequest, id: int, data: SiteEvaluationReq
         )
 
         if data.label:
-            site_evaluation.label = lookups.ObservationLabel.objects.get(slug=data.label)
+            site_evaluation.label = lookups.ObservationLabel.objects.get(
+                slug=data.label
+            )
         if data.notes:
             site_evaluation.notes = data.notes
         if data.start_date:

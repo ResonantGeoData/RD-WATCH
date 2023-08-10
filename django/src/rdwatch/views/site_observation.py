@@ -1,4 +1,5 @@
 from datetime import datetime
+from typing import Literal
 
 from celery.result import AsyncResult
 from ninja import Router, Schema
@@ -168,20 +169,14 @@ def site_observations(request: HttpRequest, evaluation_id: int):
 
 
 @router.post('/{evaluation_id}/generate-images/', response={202: bool, 409: str})
-def get_site_observation_images(request: HttpRequest, evaluation_id: int):
-    constellation = 'WV'
-    dayRange = 14
-    noData = 50
-    overrideDates = None
-    if 'constellation' in request.GET:
-        constellation = request.GET['constellation']
-    if 'dayRange' in request.GET:
-        dayRange = request.GET['dayRange']
-    if 'noData' in request.GET:
-        noData = request.GET['noData']
-    if 'overrideDates' in request.GET:
-        overrideDates = request.GET['overrideDates']
-
+def get_site_observation_images(
+    request: HttpRequest,
+    evaluation_id: int,
+    constellation: Literal['WV', 'S2', 'L8'] = 'WV',
+    dayRange: int = 14,
+    noData: int = 50,
+    overrideDates: None | list[str] = None,
+):
     # Make sure site evaluation actually exists
     siteeval = get_object_or_404(SiteEvaluation, pk=evaluation_id)
 
@@ -265,7 +260,9 @@ def update_site_observation(
     request: HttpRequest, id: int, data: SiteObservationRequest
 ):
     with transaction.atomic():
-        site_observation = get_object_or_404(SiteObservation.objects.select_for_update(), pk=id)
+        site_observation = get_object_or_404(
+            SiteObservation.objects.select_for_update(), pk=id
+        )
         # create a copy of it in the history log
         SiteObservationTracking.objects.create(
             timestamp=site_observation.timestamp,
@@ -278,7 +275,9 @@ def update_site_observation(
         )
 
         if data.label:
-            site_observation.label = lookups.ObservationLabel.objects.get(slug=data.label)
+            site_observation.label = lookups.ObservationLabel.objects.get(
+                slug=data.label
+            )
         if data.notes:
             site_observation.notes = data.notes
         site_observation.timestamp = data.timestamp

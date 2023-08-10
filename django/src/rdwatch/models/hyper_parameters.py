@@ -37,7 +37,7 @@ class HyperParameters(models.Model):
         help_text='Fetching Status',
         choices=ProposalStatus.choices,
     )
-    ground_truth = models.BooleanField(blank=True, null=True)
+    ground_truth = models.BooleanField(default=False)
 
     def __str__(self) -> str:
         return str(self.pk)

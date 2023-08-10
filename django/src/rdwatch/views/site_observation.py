@@ -264,33 +264,34 @@ def cancel_site_observation_images(request: HttpRequest, evaluation_id: int):
 def update_site_observation(
     request: HttpRequest, id: int, data: SiteObservationRequest
 ):
-    site_observation = get_object_or_404(SiteObservation, pk=id)
-    # create a copy of it in the history log
-    SiteObservationTracking.objects.create(
-        timestamp=site_observation.timestamp,
-        geom=site_observation.geom,
-        score=site_observation.score,
-        siteval=site_observation.siteeval,
-        notes=site_observation.notes,
-        edited=datetime.now(),
-        observation=site_observation.pk,
-    )
-
-    if data.label:
-        site_observation.label = lookups.ObservationLabel.objects.get(slug=data.label)
-    if data.notes:
-        site_observation.notes = data.notes
-    site_observation.timestamp = data.timestamp
-    if data.spectrum:
-        site_observation.spectrum = data.spectrum
-    if data.constellation:
-        site_observation.constellation = lookups.Constellation.objects.get(
-            slug=data.label
+    with transaction.atomic():
+        site_observation = get_object_or_404(SiteObservation.objects.select_for_update(), pk=id)
+        # create a copy of it in the history log
+        SiteObservationTracking.objects.create(
+            timestamp=site_observation.timestamp,
+            geom=site_observation.geom,
+            score=site_observation.score,
+            siteval=site_observation.siteeval,
+            notes=site_observation.notes,
+            edited=datetime.now(),
+            observation=site_observation.pk,
         )
 
-    site_observation.save()
+        if data.label:
+            site_observation.label = lookups.ObservationLabel.objects.get(slug=data.label)
+        if data.notes:
+            site_observation.notes = data.notes
+        site_observation.timestamp = data.timestamp
+        if data.spectrum:
+            site_observation.spectrum = data.spectrum
+        if data.constellation:
+            site_observation.constellation = lookups.Constellation.objects.get(
+                slug=data.label
+            )
 
-    return site_observation
+        site_observation.save()
+
+        return site_observation
 
 
 @router.put('/{evaluation_id}/')

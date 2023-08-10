@@ -171,33 +171,31 @@ def list_site_evaluations(
 
 @router.patch('/{id}/')
 def patch_site_evaluation(request: HttpRequest, id: int, data: SiteEvaluationRequest):
-    site_evaluation = get_object_or_404(SiteEvaluation, pk=id)
+    with transaction.atomic():
+        site_evaluation = get_object_or_404(SiteEvaluation.objects.select_for_update(), pk=id)
+        # create a copy of it in the history log
+        SiteEvaluationTracking.objects.create(
+            score=site_evaluation.score,
+            label=site_evaluation.label,
+            end_date=site_evaluation.end_date,
+            start_date=site_evaluation.start_date,
+            notes=site_evaluation.notes,
+            edited=datetime.now(),
+            evaluation=site_evaluation,
+        )
 
-    assert isinstance(data, SiteEvaluationRequest)
+        if data.label:
+            site_evaluation.label = lookups.ObservationLabel.objects.get(slug=data.label)
+        if data.notes:
+            site_evaluation.notes = data.notes
+        if data.start_date:
+            site_evaluation.start_date = data.start_date
+        if data.end_date:
+            site_evaluation.end_date = data.end_date
+        if data.status:
+            site_evaluation.status = data.status
 
-    # create a copy of it in the history log
-    SiteEvaluationTracking.objects.create(
-        score=site_evaluation.score,
-        label=site_evaluation.label,
-        end_date=site_evaluation.end_date,
-        start_date=site_evaluation.start_date,
-        notes=site_evaluation.notes,
-        edited=datetime.now(),
-        evaluation=site_evaluation,
-    )
-
-    if data.label:
-        site_evaluation.label = lookups.ObservationLabel.objects.get(slug=data.label)
-    if data.notes:
-        site_evaluation.notes = data.notes
-    if data.start_date:
-        site_evaluation.start_date = data.start_date
-    if data.end_date:
-        site_evaluation.end_date = data.end_date
-    if data.status:
-        site_evaluation.status = data.status
-
-    site_evaluation.save()
+        site_evaluation.save()
 
     return 200
 

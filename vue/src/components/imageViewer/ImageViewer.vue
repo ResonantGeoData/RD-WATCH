@@ -3,7 +3,7 @@ import { Ref, computed, ref, watch, withDefaults } from "vue";
 import { ApiService } from "../../client";
 import {EvaluationGeoJSON, EvaluationImage, EvaluationImageResults } from "../../types";
 import { getColorFromLabel, styles } from '../../mapstyle/annotationStyles';
-import { loadAndToggleSatelliteImages, state, toggleSatelliteImages } from '../../store'
+import { loadAndToggleSatelliteImages, state } from '../../store'
 import { VDatePicker } from 'vuetify/labs/VDatePicker'
 import { SiteModelStatus } from "../../client/services/ApiService";
 
@@ -391,7 +391,10 @@ const setSiteModelStatus = async (status: SiteModelStatus) => {
       class="edit-title"
     >
       <v-row dense>
-        <v-col style="max-width:20px" v-if="editable">
+        <v-col
+          v-if="editable"
+          style="max-width:20px"
+        >
           <v-tooltip
             open-delay="50"
             bottom

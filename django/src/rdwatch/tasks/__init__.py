@@ -1,5 +1,9 @@
 import io
+import json
 import logging
+import os
+import tempfile
+import zipfile
 from collections.abc import Iterable
 from datetime import datetime, timedelta
 
@@ -15,6 +19,7 @@ from django.utils import timezone
 
 from rdwatch.celery import app
 from rdwatch.models import (
+    AnnotationExport,
     HyperParameters,
     SatelliteFetching,
     SiteEvaluation,
@@ -33,6 +38,7 @@ from rdwatch.utils.raster_tile import get_raster_bbox
 from rdwatch.utils.worldview_processed.raster_tile import (
     get_worldview_processed_visual_bbox,
 )
+from rdwatch.views.site_evaluation import get_site_model_feature_JSON
 
 logger = logging.getLogger(__name__)
 
@@ -325,3 +331,42 @@ def delete_temp_model_runs_task() -> None:
         ).delete()
         SiteEvaluation.objects.filter(configuration__in=model_runs_to_delete).delete()
         model_runs_to_delete.delete()
+
+
+@shared_task
+def delete_export_files() -> None:
+    """Delete all S3 Export Files that are over an hour old."""
+    exports_to_delete = AnnotationExport.objects.filter(
+        created__lte=timezone.now() - timedelta(hours=1)
+    )
+    with transaction.atomic():
+        exports_to_delete.delete()
+
+
+@app.task(bind=True)
+def download_annotations(self, id: int):
+    # Needs to go through the siteEvaluations and download one for each file
+    site_evals = SiteEvaluation.objects.filter(configuration_id=id)
+    configuration = HyperParameters.objects.get(pk=id)
+    task_id = self.request.id
+    temp_zip_file = tempfile.NamedTemporaryFile(delete=False, suffix='.zip')
+
+    with tempfile.TemporaryDirectory() as temp_dir:
+        file_list = []
+        for item in site_evals:
+            data, site_id = get_site_model_feature_JSON(item.pk)
+            file_name = os.path.join(temp_dir, f'{site_id}.json')
+            with open(file_name, 'w') as file:
+                json.dump(data, file)
+            file_list.append({'filename': file_name, 'siteId': site_id})
+        with zipfile.ZipFile(temp_zip_file, 'w') as zipf:
+            for item in file_list:
+                zipf.write(item['filename'], f"{item['siteId']}.json")
+        annotation_export = AnnotationExport.objects.create(
+            configuration=configuration,
+            name=configuration.title,
+            celery_id=task_id,
+            created=datetime.now(),
+        )
+        annotation_export.export_file.save(f'{task_id}.zip', File(temp_zip_file))
+        temp_zip_file.close()

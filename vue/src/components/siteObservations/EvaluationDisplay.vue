@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { computed, ref } from "vue";
-import { ImageBBox, SiteObservationImage, getSiteObservationDetails, state, toggleSatelliteImages } from "../../store";
+import { getSiteObservationDetails, state, toggleSatelliteImages } from "../../store";
 import { SiteObservation } from "../../store";
 import { imageFilter } from "../../mapstyle/images";
 import EvaluationImages from "./EvaluationImages.vue";

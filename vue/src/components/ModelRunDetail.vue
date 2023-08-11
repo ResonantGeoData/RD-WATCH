@@ -93,11 +93,32 @@ onBeforeUnmount(() => {
     loopingInterval = null;
   }
 })
+const taskId = ref('');
+const downloadError = ref(false);
+const downloadingModelRun = ref(false);
 
-const downloadJSON = async () => {
-  const url = `/api/model-runs/${props.modelRun.id}/download`
-  window.location.assign(url)
+const checkDownloadStatus = async () => {
+  if (taskId.value) {
+    const status = await ApiService.getModelRunDownloadStatus(taskId.value);
+    if (status === 'SUCCESS') {
+      const url = `/api/model-runs/${props.modelRun.id}/download?task_id=${taskId.value}`
+      window.location.assign(url);
+      downloadingModelRun.value = false;
+    } else if (['REVOKED', 'FAILURE'].includes(status)) {
+      downloadError.value = true;
+      downloadingModelRun.value = false;
+    } else {
+      setTimeout(checkDownloadStatus, 1000)
+    }
+  }
+}
 
+const downloadModelRun = async() => {
+  downloadError.value = false;
+  downloadingModelRun.value = true;
+  taskId.value = await ApiService.startModelRunDownload(props.modelRun.id);
+  // Now we poll to see when the download is finished
+  checkDownloadStatus();
 }
 
 </script>
@@ -216,11 +237,29 @@ const downloadJSON = async () => {
             <v-btn
               size="x-small"
               v-bind="subProps"
+              :disabled="downloadingModelRun"
               class="mx-1"
-              @click.stop="downloadJSON()"
+              @click.stop="downloadModelRun()"
             >
-              <v-icon size="small">
+              <v-icon
+                v-if="!downloadingModelRun"
+                size="small"
+              >
                 mdi-export
+              </v-icon>
+              <v-icon
+                v-else-if="downloadError"
+                size="small"
+                color="error"
+              >
+                mdi-alert
+              </v-icon>
+
+              <v-icon
+                v-else-if="downloadingModelRun"
+                size="small"
+              >
+                mdi-spin mdi-sync
               </v-icon>
             </v-btn>
           </template>

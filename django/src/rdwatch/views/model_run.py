@@ -1,7 +1,3 @@
-import json
-import os
-import tempfile
-import zipfile
 from datetime import datetime, timedelta
 
 import iso3166
@@ -39,6 +35,7 @@ from rdwatch.db.functions import (
     ExtractEpoch,
 )
 from rdwatch.models import (
+    AnnotationExport,
     HyperParameters,
     Region,
     SatelliteFetching,
@@ -47,9 +44,9 @@ from rdwatch.models import (
 )
 from rdwatch.schemas import RegionModel, SiteModel
 from rdwatch.schemas.common import TimeRangeSchema
+from rdwatch.tasks import download_annotations
 from rdwatch.views.performer import PerformerSchema
 from rdwatch.views.region import RegionSchema
-from rdwatch.views.site_evaluation import get_site_model_feature_JSON
 from rdwatch.views.site_observation import get_site_observation_images
 
 router = RouterPaginated()
@@ -520,27 +517,30 @@ def get_modelrun_evaluations(request: HttpRequest, hyper_parameters_id: int):
     return 200, query
 
 
-@router.get('/{id}/download')
-def download_annotations(request: HttpRequest, id: int):
-    # Needs to go through the siteEvaluations and download one for each file
-    site_evals = SiteEvaluation.objects.filter(configuration_id=id)
-    model_run_name = HyperParameters.objects.get(pk=id).title
-    with tempfile.TemporaryDirectory() as temp_dir:
-        zip_file_path = os.path.join(temp_dir, 'annotations.zip')
-        file_list = []
-        for item in site_evals:
-            data, site_id = get_site_model_feature_JSON(item.pk)
-            file_name = os.path.join(temp_dir, f'{site_id}.json')
-            with open(file_name, 'w') as file:
-                json.dump(data, file)
-            file_list.append({'filename': file_name, 'siteId': site_id})
-        with zipfile.ZipFile(zip_file_path, 'w') as zipf:
-            for item in file_list:
-                zipf.write(item['filename'], f"{item['siteId']}.json")
+@router.post('/{id}/download')
+def start_download(request: HttpRequest, id: int):
+    task_id = download_annotations.delay(id)
+    print(task_id)
+    return task_id.id
 
-        with open(zip_file_path, 'rb') as file:
-            response = HttpResponse(file.read(), content_type='application/zip')
-            response[
-                'Content-Disposition'
-            ] = f'attachment; filename="{model_run_name}.zip"'
-            return response
+
+@router.get('/download_status')
+def check_download(request: HttpRequest, task_id: str):
+    task = AsyncResult(task_id)
+    print(task)
+    return task.status
+
+
+@router.get('/{id}/download')
+def get_downloaded_annotations(request: HttpRequest, id: int, task_id: str):
+    annotation_export = AnnotationExport.objects.filter(celery_id=task_id)
+    print(annotation_export)
+    if annotation_export.exists():
+        annotation_export = annotation_export.first()
+        response = HttpResponse(
+            annotation_export.export_file.file, content_type='application/zip'
+        )
+        response[
+            'Content-Disposition'
+        ] = f'attachment; filename="{annotation_export.name}.zip"'
+        return response

@@ -91,6 +91,7 @@ export interface DownloadSettings {
 
 }
 
+export type CeleryStates = 'FAILURE' | 'PENDING' | 'SUCCESS' | 'RETRY' | 'REVOKED' | 'STARTED';
 
 export class ApiService {
   /**
@@ -482,6 +483,24 @@ export class ApiService {
         id: id,
       },
       query: {...data}
+    })
+  }
+
+  public static startModelRunDownload(id: number): CancelablePromise<string> {
+    return __request(OpenAPI, {
+      method: 'POST',
+      url: "/api/model-runs/{id}/download",
+      path: {
+        id: id,
+      },
+    })
+  }
+
+  public static getModelRunDownloadStatus(task_id: string): CancelablePromise<CeleryStates> {
+    return __request(OpenAPI, {
+      method: 'GET',
+      url: "/api/model-runs/download_status",
+      query: {task_id},
     })
   }
 

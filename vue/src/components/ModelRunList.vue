@@ -57,8 +57,9 @@ async function loadMore() {
     totalModelRuns.value = modelRunList.count;
 
     // sort list to show ground truth near the top
+    console.log(modelRunList);
     const modelRunResults = modelRunList.results.sort((a, b) =>
-      b.parameters["ground_truth"] === true ? 1 : -1
+      b.parameters && b.parameters["ground_truth"] === true ? 1 : -1
     );
     const keyedModelRunResults = modelRunResults.map((val, i) => {
       return {
@@ -224,8 +225,14 @@ function handleToggle(modelRun: KeyedModelRun) {
       .filter((modelRun) => state.openedModelRuns.has(modelRun.key))
       .map((modelRun) => {
         configurationIds.add(modelRun.id);
-        if (modelRun.region) {
+        if (modelRun.region && modelRun.region.id !== -1) {
           regionIds.add(modelRun.region?.id);
+        } else if (modelRun.region) {
+          const found = Object.entries(state.regionMap).find(([,name]) => name === modelRun.region?.name);
+          if (found) {
+          regionIds.add(parseInt(found[0], 10));
+          }
+
         }
       });
     state.filters = {

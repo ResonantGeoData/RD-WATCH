@@ -1,61 +1,21 @@
-from datetime import datetime, timedelta
-
-import iso3166
-from celery.result import AsyncResult
-from ninja import Field, FilterSchema, Query, Schema
+from ninja import FilterSchema, Query, Schema
 from ninja.errors import ValidationError
 from ninja.pagination import RouterPaginated
-from ninja.schema import validator
-from pydantic import constr  # type: ignore
 
-from django.contrib.postgres.aggregates import JSONBAgg
-from django.db import transaction
-from django.db.models import (
-    Avg,
-    Case,
-    Count,
-    CharField,
-    F,
-    Value,
-    Func,
-    JSONField,
-    Max,
-    Min,
-    OuterRef,
-    Q,
-    Subquery,
-    Aggregate,
-    When,
-)
-from django.db.models.functions import Coalesce, JSONObject, Concat
-from django.http import Http404, HttpRequest
-from django.shortcuts import get_object_or_404
 from django.contrib.gis.db.models.fields import PolygonField
-from django.contrib.gis.db.models.functions import AsGeoJSON, Envelope, Transform
+from django.contrib.gis.db.models.functions import AsGeoJSON
+from django.db.models import Aggregate, CharField, Count, F, JSONField, Max, Min, Value
+from django.db.models.functions import Cast, Concat, JSONObject, NullIf, Upper
+from django.http import HttpRequest
 
-from rdwatch.db.functions import (
-    AggregateArraySubquery,
-    ExtractEpoch,
-)
-from rdwatch.models import (
-    HyperParameters,
-    Region,
-    SatelliteFetching,
-    SiteEvaluation,
-    lookups,
-)
-from rdwatch.schemas import RegionModel, SiteModel
+from rdwatch.db.functions import AggregateArraySubquery, ExtractEpoch
 from rdwatch.schemas.common import TimeRangeSchema
 from rdwatch.views.performer import PerformerSchema
 from rdwatch.views.region import RegionSchema
-from rdwatch.views.site_observation import get_site_observation_images
-from django.db.models.functions import Cast, NullIf
-
 from rdwatch_scoring.models import EvaluationRun
 
-from rdwatch.db.functions import ExtractEpoch
-
 router = RouterPaginated()
+
 
 class TimeRangeJSON(NullIf):
     """Represents the min/max time of a field as JSON"""
@@ -68,9 +28,11 @@ class TimeRangeJSON(NullIf):
         null = Value({'min': None, 'max': None}, output_field=JSONField())
         return super().__init__(json, null)
 
+
 class ModelRunFilterSchema(FilterSchema):
-    performer: str | None 
+    performer: str | None
     region: str | None
+
 
 class BoundingBoxPolygon(Aggregate):
     """Gets the WGS-84 bounding box of a geometry stored in Web Mercator coordinates"""
@@ -92,15 +54,16 @@ class BoundingBoxGeoJSON(Cast):
 class HyperParametersDetailSchema(Schema):
     id: str
     title: str
-    region: str | None = None
-    performer: str
+    region: RegionSchema | None = None
+    performer: PerformerSchema
     # parameters: dict
     numsites: int
     # downloading: int | None = None
-    # score: float | None = None
+    score: float | None = None
     timestamp: int | None = None
     timerange: TimeRangeSchema | None = None
     bbox: dict | None
+    ground_truth: bool
     # created: datetime
     expiration_time: str | None = None
     evaluation: int | None = None
@@ -123,24 +86,35 @@ class HyperParametersListSchema(Schema):
 def get_queryset():
     return (
         EvaluationRun.objects.select_related('site', 'observation')
-        .order_by('start_datetime',)
+        .order_by(
+            'start_datetime',
+        )
         .annotate(
             json=JSONObject(
                 id='pk',
                 title=Concat(
-                    F('performer'), Value('_'),
-                    F('region'), Value('_'),
-                    F('evaluation_number'), Value('_'),
+                    F('performer'),
+                    Value('_'),
+                    F('region'),
+                    Value('_'),
+                    F('evaluation_number'),
+                    Value('_'),
                     F('evaluation_run_number'),
-                    output_field=CharField()
+                    output_field=CharField(),
                 ),
-                performer='performer',
-                region='region',
+                performer=JSONObject(
+                    id=Value(-1), team_name='performer', short_code=Upper('performer')
+                ),
+                region=JSONObject(id=Value(-1), name='region'),
+                score=None,
                 numsites=Count('site', filter=F('performer') == F('site__originator')),
                 evaluation='evaluation_number',
                 evaluation_run='evaluation_run_number',
-                timerange=TimeRangeJSON('site__start_date', 'site__end_date', 'performer', 'site_originator'),
+                timerange=TimeRangeJSON(
+                    'site__start_date', 'site__end_date', 'performer', 'site_originator'
+                ),
                 timestamp=ExtractEpoch('start_datetime'),
+                ground_truth=False,
                 # timerange=TimeRangeJSON('evaluations__observations__timestamp'),
                 bbox=BoundingBoxGeoJSON('site__observation__geometry'),
             )
@@ -164,9 +138,11 @@ def list_model_runs(
     # Calculate total number of model runs prior to paginating queryset
     total_model_run_count = queryset.count()
 
-    subquery = queryset[(page - 1) * limit: page * limit] if limit else queryset
+    subquery = queryset[(page - 1) * limit : page * limit] if limit else queryset
     aggregate = queryset.defer('json').aggregate(
-        timerange=TimeRangeJSON('site__start_date', 'site__end_date', 'performer', 'site_originator'),
+        timerange=TimeRangeJSON(
+            'site__start_date', 'site__end_date', 'performer', 'site_originator'
+        ),
         results=AggregateArraySubquery(subquery.values('json')),
     )
 
@@ -180,5 +156,3 @@ def list_model_runs(
         )
 
     return 200, aggregate
-
-

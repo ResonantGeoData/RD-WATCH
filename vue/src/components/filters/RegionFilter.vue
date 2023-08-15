@@ -27,8 +27,14 @@ watchEffect(async () => {
   regions.value = regionResults;
   regionItems.value = regionResults.map((item) => ({title: item.name, value: item.id}));
   const generatedMap: Record<Region['id'], Region['name']> = {}
+  let counter = 0;
     regionResults.forEach((item) => {
+      if (item.id === -1) {
+        generatedMap[counter] = item.name;
+        counter += 1;
+      } else {
       generatedMap[item.id] = item.name;
+      }
   })
   state.regionMap = generatedMap;
 });
@@ -40,9 +46,13 @@ watch(() => props.modelValue, () => {
 });
 
 watch(selectedRegion, (val) => {
-  let prepend = '/'
+  let prepend = ''
+  if (router.currentRoute.value.fullPath.includes('scoring')) {
+    prepend = '/scoring/'
+  }
+
   if (router.currentRoute.value.fullPath.includes('annotation')) {
-    prepend='/annotation/'
+    prepend=`${prepend}/annotation/`
   }
   if (val !== undefined) {
     const found = regions.value.find((item) => item.id === val);

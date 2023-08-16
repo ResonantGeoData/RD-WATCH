@@ -90,6 +90,9 @@ def site_observations(request: HttpRequest, pk: int):
                     percent_black='percent_black',
                     source='source',
                     siteobs_id='siteobs_id',
+                    bbox=BoundingBox('image_bbox'),
+                    image_dimensions='image_dimensions',
+                    aws_location='aws_location',
                 )
             ),
         )
@@ -179,7 +182,7 @@ def cancel_site_observation_images(request: HttpRequest, pk: int):
             if fetching_task.status == SatelliteFetching.Status.RUNNING:
                 if fetching_task.celery_id != '':
                     task = AsyncResult(fetching_task.celery_id)
-                    task.revoke()
+                    task.revoke(terminate=True)
                 fetching_task.status = SatelliteFetching.Status.COMPLETE
                 fetching_task.celery_id = ''
                 fetching_task.save()

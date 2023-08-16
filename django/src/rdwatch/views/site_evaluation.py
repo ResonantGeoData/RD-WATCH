@@ -1,55 +1,92 @@
 import sys
+from datetime import datetime
 
-import django_filters
+import iso3166
+from ninja import Field, FilterSchema, Query, Router, Schema
 
 from django.contrib.gis.db.models.aggregates import Collect
 from django.contrib.postgres.aggregates import JSONBAgg
 from django.core.paginator import Paginator
-from django.db.models import Count, Max, Min
+from django.db.models import Count, Max, Min, Q, QuerySet
 from django.db.models.functions import JSONObject  # type: ignore
 from django.http import HttpRequest
-from rest_framework.decorators import api_view, schema
-from rest_framework.response import Response
-from rest_framework.schemas.openapi import AutoSchema
 from rest_framework.settings import api_settings
 
 from rdwatch.db.functions import BoundingBox, ExtractEpoch
 from rdwatch.models import SiteEvaluation
-from rdwatch.serializers import SiteEvaluationListSerializer
+from rdwatch.schemas.common import BoundingBoxSchema, TimeRangeSchema
+
+from .performer import PerformerSchema
+
+router = Router()
 
 
-class SiteEvaluationsFilter(django_filters.FilterSet):
-    performer = django_filters.CharFilter(
-        field_name='configuration__performer__slug',
-        lookup_expr='iexact',
+class SiteEvaluationSchema(Schema):
+    id: int
+    site: dict
+    configuration: dict
+    performer: PerformerSchema
+    score: float
+    timestamp: int
+    timerange: TimeRangeSchema
+    bbox: BoundingBoxSchema
+
+    @staticmethod
+    def resolve_site(obj: dict) -> str:
+        country_numeric = str(obj['region']['country']).zfill(3)
+        country_code = iso3166.countries_by_numeric[country_numeric].alpha2
+        region_class = obj['region']['classification']
+        region_number = (
+            'xxx'
+            if obj['region']['number'] is None
+            else str(obj['region']['number']).zfill(3)
+        )
+        site_number = str(obj['number']).zfill(3)
+        return f'{country_code}_{region_class}{region_number}_{site_number}'
+
+
+class SiteEvaluationListSchema(Schema):
+    count: int
+    timerange: TimeRangeSchema
+    bbox: BoundingBoxSchema
+    performers: list[str]
+    results: list[SiteEvaluationSchema]
+    next: str | None
+    previous: str | None
+
+
+class SiteEvaluationFilterSchema(FilterSchema):
+    performer: str | None = Field(q='configuration__performer__slug')
+    score: int | None
+    timestamp_before: str | None
+    timestamp_after: str | None
+
+    @staticmethod
+    def _filter_timestamp(date: str, query: str) -> Q:
+        parsed_date = datetime.strptime(date, '%Y-%m-%d')
+        kwargs = {}
+        kwargs[query] = parsed_date
+        return Q(**kwargs)
+
+    def filter_timestamp_before(self, value: str | None) -> Q:
+        if value is None:
+            return Q()
+        return self._filter_timestamp(value, 'timestamp__lte')
+
+    def filter_timestamp_after(self, value: str | None) -> Q:
+        if value is None:
+            return Q()
+        return self._filter_timestamp(value, 'timestamp__gte')
+
+
+@router.get('/', response=SiteEvaluationListSchema)
+def list_site_evaluations(
+    request: HttpRequest,
+    filters: SiteEvaluationFilterSchema = Query(...),  # noqa: B008
+):
+    queryset: QuerySet[SiteEvaluation] = filters.filter(
+        SiteEvaluation.objects.order_by('-timestamp')
     )
-    score = django_filters.NumberFilter()
-    timestamp = django_filters.DateTimeFromToRangeFilter()
-
-    class Meta:
-        model = SiteEvaluation
-        fields = ['performer', 'score', 'timestamp']
-
-
-class SiteEvaluationsSchema(AutoSchema):
-    def get_operation_id(self, *args):
-        return 'getSiteEvaluations'
-
-    def get_serializer(self, *args):
-        return SiteEvaluationListSerializer()
-
-    def get_responses(self, *args, **kwargs):
-        self.view.action = 'retrieve'
-        return super().get_responses(*args, **kwargs)
-
-
-@api_view(['GET'])
-@schema(SiteEvaluationsSchema())
-def site_evaluations(request: HttpRequest):
-    queryset = SiteEvaluationsFilter(
-        request.GET,
-        queryset=SiteEvaluation.objects.order_by('-timestamp'),
-    ).qs
 
     # Overview
     overview = queryset.annotate(
@@ -64,9 +101,11 @@ def site_evaluations(request: HttpRequest):
         bbox=BoundingBox(Collect('geom')),
     )
 
-    overview['performers'] = SiteEvaluation.objects.values_list(
-        'configuration__performer__slug', flat=True
-    ).distinct()
+    overview['performers'] = list(
+        SiteEvaluation.objects.values_list(
+            'configuration__performer__slug', flat=True
+        ).distinct()
+    )
 
     # Pagination
     assert api_settings.PAGE_SIZE, 'PAGE_SIZE must be set.'
@@ -106,6 +145,7 @@ def site_evaluations(request: HttpRequest):
                 ),
                 configuration='configuration__parameters',
                 performer=JSONObject(
+                    id='configuration__performer__id',
                     team_name='configuration__performer__description',
                     short_code='configuration__performer__slug',
                 ),
@@ -120,5 +160,4 @@ def site_evaluations(request: HttpRequest):
         ),
     )
 
-    serializer = SiteEvaluationListSerializer(overview | results)
-    return Response(serializer.data)
+    return overview | results

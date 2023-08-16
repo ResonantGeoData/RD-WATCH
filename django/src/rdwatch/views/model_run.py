@@ -1,17 +1,21 @@
 from datetime import datetime, timedelta
 
 import iso3166
+from celery.result import AsyncResult
 from ninja import Field, FilterSchema, Query, Schema
 from ninja.errors import ValidationError
 from ninja.pagination import RouterPaginated
 from ninja.schema import validator
 from pydantic import constr  # type: ignore
 
+from django.contrib.postgres.aggregates import JSONBAgg
+from django.db import transaction
 from django.db.models import (
     Avg,
     Case,
     Count,
     F,
+    Func,
     JSONField,
     Max,
     Min,
@@ -26,15 +30,23 @@ from django.shortcuts import get_object_or_404
 
 from rdwatch.db.functions import (
     AggregateArraySubquery,
+    BoundingBox,
     BoundingBoxGeoJSON,
     ExtractEpoch,
     TimeRangeJSON,
 )
-from rdwatch.models import HyperParameters, Region, SiteEvaluation, lookups
+from rdwatch.models import (
+    HyperParameters,
+    Region,
+    SatelliteFetching,
+    SiteEvaluation,
+    lookups,
+)
 from rdwatch.schemas import RegionModel, SiteModel
 from rdwatch.schemas.common import TimeRangeSchema
 from rdwatch.views.performer import PerformerSchema
 from rdwatch.views.region import RegionSchema
+from rdwatch.views.site_observation import get_site_observation_images
 
 router = RouterPaginated()
 
@@ -86,6 +98,7 @@ class HyperParametersDetailSchema(Schema):
     performer: PerformerSchema
     parameters: dict
     numsites: int
+    downloading: int | None = None
     score: float | None = None
     timestamp: int | None = None
     timerange: TimeRangeSchema | None = None
@@ -94,6 +107,12 @@ class HyperParametersDetailSchema(Schema):
     expiration_time: str | None = None
     evaluation: int | None = None
     evaluation_run: int | None = None
+
+
+class EvaluationListSchema(Schema):
+    id: int
+    siteNumber: int
+    region: RegionSchema | None
 
 
 class HyperParametersListSchema(Schema):
@@ -105,7 +124,9 @@ class HyperParametersListSchema(Schema):
 
 def get_queryset():
     return (
-        HyperParameters.objects.select_related('evaluations', 'performer')
+        HyperParameters.objects.select_related(
+            'evaluations', 'performer', 'satellitefetching'
+        )
         # Get minimum score and performer so that we can tell which runs
         # are ground truth
         .alias(min_score=Min('evaluations__score'), performer_slug=F('performer__slug'))
@@ -122,6 +143,7 @@ def get_queryset():
         .alias(
             region_id=F('evaluations__region_id'),
             observation_count=Count('evaluations__observations'),
+            evaluation_configuration=F('evaluations__configuration'),
         )
         .annotate(
             json=JSONObject(
@@ -151,6 +173,19 @@ def get_queryset():
                         )
                     ),
                     output_field=JSONField(),
+                ),
+                downloading=Coalesce(
+                    Subquery(
+                        SatelliteFetching.objects.filter(
+                            siteeval__configuration_id=OuterRef(
+                                'evaluation_configuration'
+                            ),
+                            status=SatelliteFetching.Status.RUNNING,
+                        )
+                        .annotate(count=Func(F('id'), function='Count'))
+                        .values('count')
+                    ),
+                    0,  # Default value when evaluations are None
                 ),
                 parameters='parameters',
                 numsites=Count('evaluations__pk', distinct=True),
@@ -314,3 +349,110 @@ def post_region_model(
         region_model, hyper_parameters
     )
     return 201, [eval.id for eval in site_evaluations]
+
+
+@router.post('/{hyper_parameters_id}/generate-images/')
+def generate_images(request: HttpRequest, hyper_parameters_id: int):
+    siteEvaluations = SiteEvaluation.objects.filter(configuration=hyper_parameters_id)
+
+    for eval in siteEvaluations:
+        get_site_observation_images(request, eval.pk)
+
+    return 202
+
+
+@router.put('/{hyper_parameters_id}/cancel-generate-images/')
+def cancel_generate_images(request: HttpRequest, hyper_parameters_id: int):
+    siteEvaluations = SiteEvaluation.objects.filter(configuration=hyper_parameters_id)
+
+    for eval in siteEvaluations:
+        with transaction.atomic():
+            # Use select_for_update here to lock the SatelliteFetching row
+            # for the duration of this transaction in order to ensure its
+            # status doesn't change out from under us
+            fetching_task = (
+                SatelliteFetching.objects.select_for_update()
+                .filter(siteeval=eval.pk)
+                .first()
+            )
+            if fetching_task is not None:
+                if fetching_task.status == SatelliteFetching.Status.RUNNING:
+                    if fetching_task.celery_id != '':
+                        task = AsyncResult(fetching_task.celery_id)
+                        task.revoke(terminate=True)
+                    fetching_task.status = SatelliteFetching.Status.COMPLETE
+                    fetching_task.celery_id = ''
+                    fetching_task.save()
+
+    return 202
+
+
+def get_region(hyper_parameters_id: int):
+    return (
+        HyperParameters.objects.select_related('evaluations')
+        .filter(pk=hyper_parameters_id)
+        .alias(
+            region_id=F('evaluations__region_id'),
+        )
+        .annotate(
+            json=JSONObject(
+                region=Subquery(  # prevents including "region" in slow GROUP BY
+                    Region.objects.filter(pk=OuterRef('region_id')).values(
+                        json=JSONObject(
+                            id='id',
+                            country='country',
+                            classification=JSONObject(slug='classification__slug'),
+                            number='number',
+                        )
+                    ),
+                    output_field=JSONField(),
+                ),
+            ),
+        )
+    )
+
+
+def get_evaluations_query(hyper_parameters_id: int):
+    return (
+        SiteEvaluation.objects.select_related('siteimage')
+        .filter(configuration=hyper_parameters_id)
+        .annotate(
+            siteimage_count=Count('siteimage'),
+            S2=Count(Case(When(siteimage__source='S2', then=1))),
+            WV=Count(Case(When(siteimage__source='WV', then=1))),
+            L8=Count(Case(When(siteimage__source='L8', then=1))),
+        )
+        .aggregate(
+            evaluations=JSONBAgg(
+                JSONObject(
+                    id='pk',
+                    number='number',
+                    bbox=BoundingBox('geom'),
+                    images='siteimage_count',
+                    S2='S2',
+                    WV='WV',
+                    L8='L8',
+                ),
+                ordering='number',
+            ),
+        )
+    )
+
+
+@router.get('/{hyper_parameters_id}/evaluations')
+def get_modelrun_evaluations(request: HttpRequest, hyper_parameters_id: int):
+    region = get_region(hyper_parameters_id).values_list('json', flat=True)
+    if not region.exists():
+        raise Http404()
+
+    query = get_evaluations_query(hyper_parameters_id)
+    model_run = region[0]
+    # TODO: use a resolver instead.
+    # Temporary until https://github.com/vitalik/django-ninja/issues/610 is fixed
+    if model_run['region']:
+        model_run['region'] = {
+            'name': RegionSchema.resolve_name(model_run['region']),
+            'id': model_run['region']['id'],
+        }
+    query['region'] = model_run['region']
+    return 200, query

@@ -37,8 +37,8 @@ def get_max_bbox(
     newbbox = [
         min(bbox[0], maxbbox[0]),
         min(bbox[1], maxbbox[1]),
-        max(bbox[2], maxbbox[3]),
-        max(bbox[2], maxbbox[3]),
+        max(bbox[2], maxbbox[2]),
+        max(bbox[3], maxbbox[3]),
     ]
     return newbbox
 
@@ -112,4 +112,5 @@ def fetch_boundbox_image(
         'bytes': bytes,
         'cloudcover': closest_capture.cloudcover,
         'timestamp': closest_capture.timestamp,
+        'uri': closest_capture.uri,
     }

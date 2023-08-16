@@ -17,6 +17,7 @@ import {
 import type { StyleSpecification } from "maplibre-gl";
 import { EnabledSiteObservations, KeyedModelRun, MapFilters, SatelliteData, siteObsSatSettings } from "../store";
 import { buildImageLayerFilter, buildImageSourceFilter } from "./images";
+import { Map } from "maplibre-gl";
 
 const tileServerURL =
   import.meta.env.VITE_TILE_SERVER_URL || "https://basemap.kitware.watch";

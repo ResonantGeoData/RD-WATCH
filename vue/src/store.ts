@@ -182,7 +182,7 @@ export const state = reactive<{
   selectedObservations: [],
   enabledSiteObservations: [],
   siteObsSatSettings: {
-    observationSources: ['S2', 'WV'],
+    observationSources: ['S2', 'WV', 'L8'],
     cloudCoverFilter: 70,
     percentBlackFilter: 70,
     imageOpacity: 100.0,
@@ -215,10 +215,12 @@ export const getSiteObservationDetails = async (siteId: string, scoringBase: Sco
   const worldViewList = images.results.filter((item) => item.source === 'WV' && item.image !== null)
     .sort((a, b) => (a.timestamp - b.timestamp));
   const S2List = images.results.filter((item) => item.source === 'S2' && item.image !== null).sort((a, b) => (a.timestamp - b.timestamp));
+  const L8List = images.results.filter((item) => item.source === 'L8' && item.image !== null).sort((a, b) => (a.timestamp - b.timestamp));
 
   const L8 = {
     total: results.filter((item) => item.constellation === 'L8').length,
-    loaded:images.results.filter((item) => item.source === 'L8').length,
+    loaded:L8List.length,
+    images: L8List,
     unmatched: null,
 
   };

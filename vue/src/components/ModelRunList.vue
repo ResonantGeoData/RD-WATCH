@@ -7,7 +7,7 @@ import {
   ModelRun,
   QueryArguments,
 } from "../client";
-import { computed, ref, watch, watchEffect } from "vue";
+import { computed, ref, watch, watchEffect, withDefaults } from "vue";
 import type { Ref } from "vue";
 import { ApiService } from "../client";
 import { filteredSatelliteTimeList, state } from "../store";
@@ -16,9 +16,13 @@ import { LngLatBounds } from "maplibre-gl";
 import { hoveredInfo } from "../interactions/mouseEvents";
 const limit = 10;
 
-const props = defineProps<{
+interface Props {
   filters: QueryArguments;
-}>();
+  compact?: boolean
+}
+const props = withDefaults(defineProps<Props>(), {
+  compact: false,
+});
 
 const emit = defineEmits<{
   (e: "update:timerange", timerange: ModelRun["timerange"]): void;
@@ -53,8 +57,9 @@ async function loadMore() {
     totalModelRuns.value = modelRunList.count;
 
     // sort list to show ground truth near the top
+    console.log(modelRunList);
     const modelRunResults = modelRunList.results.sort((a, b) =>
-      b.parameters["ground_truth"] === true ? 1 : -1
+      b.parameters && b.parameters["ground_truth"] === true ? 1 : -1
     );
     const keyedModelRunResults = modelRunResults.map((val, i) => {
       return {
@@ -76,7 +81,9 @@ async function loadMore() {
         ymax: bounds.getNorth(),
       };
       resultsBoundingBox.value = bbox;
-      getSatelliteTimestamps(modelRunList)
+      if (!props.compact) {
+          getSatelliteTimestamps(modelRunList)
+      }
       state.bbox = bbox;
     } else if (!state.filters.region_id?.length) {
       const bbox = {
@@ -99,7 +106,7 @@ async function loadMore() {
     emit("update:timerange", modelRunList["timerange"]);
   } catch (e) {
     if (e instanceof CancelError) {
-      console.warn(e);
+      console.log('Request has been cancelled');
     } else {
       throw e;
     }
@@ -203,6 +210,9 @@ function handleToggle(modelRun: KeyedModelRun) {
   if (state.openedModelRuns.has(modelRun.key)) {
     state.openedModelRuns.delete(modelRun.key);
   } else {
+    if (props.compact) {
+      state.openedModelRuns.clear();
+    }
     state.openedModelRuns.add(modelRun.key);
   }
 
@@ -215,8 +225,14 @@ function handleToggle(modelRun: KeyedModelRun) {
       .filter((modelRun) => state.openedModelRuns.has(modelRun.key))
       .map((modelRun) => {
         configurationIds.add(modelRun.id);
-        if (modelRun.region) {
+        if (modelRun.region && modelRun.region.id !== -1) {
           regionIds.add(modelRun.region?.id);
+        } else if (modelRun.region) {
+          const found = Object.entries(state.regionMap).find(([,name]) => name === modelRun.region?.name);
+          if (found) {
+          regionIds.add(parseInt(found[0], 10));
+          }
+
         }
       });
     state.filters = {
@@ -266,7 +282,7 @@ watch([() => props.filters.region, () => props.filters.performer], () => {
 
 <template>
   <div>
-    <v-row>
+    <v-row v-if="!compact">
       <v-chip
         v-if="!loading && !loadingSatelliteTimestamps"
         style="font-size: 0.75em"
@@ -356,13 +372,15 @@ watch([() => props.filters.region, () => props.filters.performer], () => {
       </v-alert>
     </div>
     <v-container
-      class="overflow-y-auto p-5 mt-5 modelRuns"
+      class="overflow-y-auto p-5 mt-5"
+      :class="{ modelRuns: !compact, compactModelRuns: compact}"
       @scroll="handleScroll"
     >
       <ModelRunDetail
         v-for="modelRun in state.modelRuns"
         :key="modelRun.key"
         :model-run="modelRun"
+        :compact="compact"
         :open="state.openedModelRuns.has(modelRun.key)"
         :class="{
           outlined: hoveredInfo.region.includes(
@@ -378,7 +396,9 @@ watch([() => props.filters.region, () => props.filters.performer], () => {
 <style scoped>
 .modelRuns {
   height: calc(100vh - 250px);
-
+}
+.compactModelRuns {
+  height: calc(100vh - 150px);
 }
 .outlined {
   background-color: orange;

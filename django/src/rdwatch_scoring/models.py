@@ -48,7 +48,7 @@ class Addrfeat(models.Model):
     rtotyp = models.CharField(max_length=1, blank=True, null=True)
     offsetl = models.CharField(max_length=1, blank=True, null=True)
     offsetr = models.CharField(max_length=1, blank=True, null=True)
-    the_geom = models.LineStringField(srid=4269, blank=True, null=True)
+    the_geom = models.LineStringField(srid=4326, blank=True, null=True)
 
     class Meta:
         managed = False
@@ -79,7 +79,7 @@ class Bg(models.Model):
     awater = models.FloatField(blank=True, null=True)
     intptlat = models.CharField(max_length=11, blank=True, null=True)
     intptlon = models.CharField(max_length=12, blank=True, null=True)
-    the_geom = models.MultiPolygonField(srid=4269, blank=True, null=True)
+    the_geom = models.MultiPolygonField(srid=4326, blank=True, null=True)
 
     class Meta:
         managed = False
@@ -106,7 +106,7 @@ class County(models.Model):
     awater = models.FloatField(blank=True, null=True)
     intptlat = models.CharField(max_length=11, blank=True, null=True)
     intptlon = models.CharField(max_length=12, blank=True, null=True)
-    the_geom = models.MultiPolygonField(srid=4269, blank=True, null=True)
+    the_geom = models.MultiPolygonField(srid=4326, blank=True, null=True)
 
     class Meta:
         managed = False
@@ -162,7 +162,7 @@ class Cousub(models.Model):
     awater = models.DecimalField(max_digits=14, decimal_places=0, blank=True, null=True)
     intptlat = models.CharField(max_length=11, blank=True, null=True)
     intptlon = models.CharField(max_length=12, blank=True, null=True)
-    the_geom = models.MultiPolygonField(srid=4269, blank=True, null=True)
+    the_geom = models.MultiPolygonField(srid=4326, blank=True, null=True)
 
     class Meta:
         managed = False
@@ -213,7 +213,7 @@ class Edges(models.Model):
     offsetr = models.CharField(max_length=1, blank=True, null=True)
     tnidf = models.DecimalField(max_digits=10, decimal_places=0, blank=True, null=True)
     tnidt = models.DecimalField(max_digits=10, decimal_places=0, blank=True, null=True)
-    the_geom = models.MultiLineStringField(srid=4269, blank=True, null=True)
+    the_geom = models.MultiLineStringField(srid=4326, blank=True, null=True)
 
     class Meta:
         managed = False
@@ -513,7 +513,7 @@ class Faces(models.Model):
     atotal = models.FloatField(blank=True, null=True)
     intptlat = models.CharField(max_length=11, blank=True, null=True)
     intptlon = models.CharField(max_length=12, blank=True, null=True)
-    the_geom = models.MultiPolygonField(srid=4269, blank=True, null=True)
+    the_geom = models.MultiPolygonField(srid=4326, blank=True, null=True)
     tractce20 = models.CharField(max_length=6, blank=True, null=True)
     blkgrpce20 = models.CharField(max_length=1, blank=True, null=True)
     blockce20 = models.CharField(max_length=4, blank=True, null=True)
@@ -754,7 +754,7 @@ class Place(models.Model):
     awater = models.BigIntegerField(blank=True, null=True)
     intptlat = models.CharField(max_length=11, blank=True, null=True)
     intptlon = models.CharField(max_length=12, blank=True, null=True)
-    the_geom = models.MultiPolygonField(srid=4269, blank=True, null=True)
+    the_geom = models.MultiPolygonField(srid=4326, blank=True, null=True)
 
     class Meta:
         managed = False
@@ -851,7 +851,7 @@ class State(models.Model):
     awater = models.BigIntegerField(blank=True, null=True)
     intptlat = models.CharField(max_length=11, blank=True, null=True)
     intptlon = models.CharField(max_length=12, blank=True, null=True)
-    the_geom = models.MultiPolygonField(srid=4269, blank=True, null=True)
+    the_geom = models.MultiPolygonField(srid=4326, blank=True, null=True)
 
     class Meta:
         managed = False
@@ -898,7 +898,7 @@ class Tabblock(models.Model):
     awater = models.FloatField(blank=True, null=True)
     intptlat = models.CharField(max_length=11, blank=True, null=True)
     intptlon = models.CharField(max_length=12, blank=True, null=True)
-    the_geom = models.MultiPolygonField(srid=4269, blank=True, null=True)
+    the_geom = models.MultiPolygonField(srid=4326, blank=True, null=True)
 
     class Meta:
         managed = False
@@ -922,7 +922,7 @@ class Tabblock20(models.Model):
     awater = models.FloatField(blank=True, null=True)
     intptlat = models.CharField(max_length=11, blank=True, null=True)
     intptlon = models.CharField(max_length=12, blank=True, null=True)
-    the_geom = models.MultiPolygonField(srid=4269, blank=True, null=True)
+    the_geom = models.MultiPolygonField(srid=4326, blank=True, null=True)
     housing = models.FloatField(blank=True, null=True)
     pop = models.FloatField(blank=True, null=True)
 
@@ -958,7 +958,7 @@ class Tract(models.Model):
     awater = models.FloatField(blank=True, null=True)
     intptlat = models.CharField(max_length=11, blank=True, null=True)
     intptlon = models.CharField(max_length=12, blank=True, null=True)
-    the_geom = models.MultiPolygonField(srid=4269, blank=True, null=True)
+    the_geom = models.MultiPolygonField(srid=4326, blank=True, null=True)
 
     class Meta:
         managed = False
@@ -978,7 +978,7 @@ class Zcta5(models.Model):
     intptlat = models.CharField(max_length=11, blank=True, null=True)
     intptlon = models.CharField(max_length=12, blank=True, null=True)
     partflg = models.CharField(max_length=1, blank=True, null=True)
-    the_geom = models.MultiPolygonField(srid=4269, blank=True, null=True)
+    the_geom = models.MultiPolygonField(srid=4326, blank=True, null=True)
 
     class Meta:
         managed = False

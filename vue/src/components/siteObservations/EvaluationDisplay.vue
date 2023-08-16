@@ -6,6 +6,7 @@ import { imageFilter } from "../../mapstyle/images";
 import EvaluationImages from "./EvaluationImages.vue";
 import EvaluationScoring from "./EvaluationScoring.vue";
 import { ApiService } from "../../client";
+import ImageViewerButton from "../imageViewer/ImageViewerButton.vue";
 
 const props = defineProps<{
   siteObservation: SiteObservation;
@@ -30,6 +31,9 @@ const toggleImages = (siteObs: SiteObservation, off= false) => {
             }
             if (siteObs.imageCounts.S2.images && state.siteObsSatSettings.observationSources.includes('S2')) {
               imageList = [...imageList, ...siteObs.imageCounts.S2.images]
+            }
+            if (siteObs.imageCounts.L8.images && state.siteObsSatSettings.observationSources.includes('L8')) {
+              imageList = [...imageList, ...siteObs.imageCounts.L8.images]
             }
             tempArr.push({
                 id: siteObs.id,
@@ -80,7 +84,7 @@ const currentClosestTimestamp = computed(() => {
         next = false;
       }
       return {
-        time: `${new Date(closest * 1000).toLocaleDateString()} ${new Date(closest * 1000).toLocaleTimeString()}`, 
+        time: `${new Date(closest * 1000).toLocaleDateString()}`, 
         type: observation.images[rootIndex].source,
         prev,
         next,
@@ -129,6 +133,8 @@ hasScore();
 const changeTimstamp = ({dir, loop}: {dir: number, loop: boolean}) => {
   goToTimestamp(dir, loop);
 }
+
+const hasLoadedImages = computed(() => (Object.entries(props.siteObservation.imageCounts).findIndex(([key, data]) => data.loaded > 0) !== -1));
 
 </script>
 
@@ -258,7 +264,6 @@ const changeTimstamp = ({dir, loop}: {dir: number, loop: boolean}) => {
         </div>
         <v-spacer />
       </v-row>
-
       <v-row
         dense
         justify="center"
@@ -311,6 +316,12 @@ const changeTimstamp = ({dir, loop}: {dir: number, loop: boolean}) => {
         >
           mdi-chevron-right
         </v-icon>
+      </v-row>
+      <v-row>
+        <image-viewer-button
+          v-if="hasLoadedImages"
+          :site-eval-id="siteObservation.id"
+        />
       </v-row>
     </v-card-text>
   </v-card>

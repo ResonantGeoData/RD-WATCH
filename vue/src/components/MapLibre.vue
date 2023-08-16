@@ -6,7 +6,7 @@ import {
   buildSiteFilter,
 } from "../mapstyle/rdwatchtiles";
 import { filteredSatelliteTimeList, state } from "../store";
-import { markRaw, onMounted, onUnmounted, reactive, shallowRef, watch } from "vue";
+import { markRaw, onMounted, onUnmounted, reactive, shallowRef, watch, withDefaults } from "vue";
 import type { FilterSpecification } from "maplibre-gl";
 import type { ShallowRef } from "vue";
 import { popupLogic } from "../interactions/mouseEvents";
@@ -14,6 +14,16 @@ import { satelliteLoading } from "../interactions/satelliteLoading";
 import { setReference } from "../interactions/fillPatterns";
 import { setSatelliteTimeStamp } from "../mapstyle/satellite-image";
 import { isEqual, throttle } from 'lodash';
+import { updateImageMapSources } from "../mapstyle/images";
+import { nextTick } from "vue";
+
+interface Props {
+  compact?: boolean
+}
+
+const props = withDefaults(defineProps<Props>(), {
+  compact: false,
+});
 
 const mapContainer: ShallowRef<null | HTMLElement> = shallowRef(null);
 const map: ShallowRef<null | Map> = shallowRef(null);
@@ -120,12 +130,23 @@ watch(
   () => state.bbox,
   (val) => fitBounds(val)
 );
+
+watch(() => props.compact, () => {
+  // Wait for it to resize the map based on CSS before resizing and fitting
+  nextTick(() => {
+    map.value?.resize();
+    if (props.compact) {
+      fitBounds(state.bbox);
+    }
+  });
+});
+
 </script>
 
 <template>
   <div
     ref="mapContainer"
-    class="map"
+    :class="{map: !compact, compactMap: compact}"
   />
 </template>
 
@@ -138,6 +159,15 @@ watch(
   height: 100vh;
   inset: 0;
   z-index: -1;
+}
+
+.compactMap {
+  position: fixed;
+  width: 100%;
+  max-height:50vh;
+  height: 50vh;
+  z-index: -1;
+  inset: 0;
 }
 
 .mapboxgl-popup {

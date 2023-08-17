@@ -5,6 +5,13 @@ from configurations import Configuration, values
 
 _ENVIRON_PREFIX = 'RDWATCH'
 
+if os.name == 'nt':
+    OSGEO4W = r"C:\OSGeo4W"
+    assert os.path.isdir(OSGEO4W), "Directory does not exist: " + OSGEO4W
+    os.environ['OSGEO4W_ROOT'] = OSGEO4W
+    os.environ['GDAL_DATA'] = OSGEO4W + r"\share\gdal"
+    os.environ['PATH'] = OSGEO4W + r"\bin;" + os.environ['PATH']
+
 
 # With the default "late_binding=False", and "environ_name" is
 # specified or "environ=False", even Values from non-included

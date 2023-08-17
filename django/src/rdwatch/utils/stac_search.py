@@ -4,6 +4,7 @@ from datetime import datetime, timedelta
 from os import path
 from typing import Literal, TypedDict
 from urllib.request import Request, urlopen
+import urllib.parse
 
 from django.conf import settings
 
@@ -78,7 +79,7 @@ def stac_search(
 ) -> Results:
     # Use SMART program server instead of public server
     # (https://earth-search.aws.element84.com/v0/search)
-    url = path.join(settings.SMART_STAC_URL, 'search')
+    url = urllib.parse.urljoin(settings.SMART_STAC_URL, 'search')
     params = SearchParams()
     params['bbox'] = bbox
     if timebuffer is not None:

@@ -517,7 +517,7 @@ def get_modelrun_evaluations(request: HttpRequest, hyper_parameters_id: int):
     return 200, query
 
 
-@router.post('/{id}/download')
+@router.post('/{id}/download/')
 def start_download(request: HttpRequest, id: int):
     task_id = download_annotations.delay(id)
     print(task_id)

@@ -3,6 +3,7 @@ from datetime import datetime, timedelta
 from os import path
 from typing import Literal, TypedDict
 from urllib.request import Request, urlopen
+import urllib.parse
 
 from django.conf import settings
 
@@ -67,7 +68,7 @@ def worldview_search(
     timebuffer: timedelta | None = None,
     page: int = 1,
 ) -> Results:
-    url = path.join(settings.SMART_STAC_URL, 'search')
+    url = urllib.parse.urljoin(settings.SMART_STAC_URL, 'search')
     params = SearchParams()
     params['bbox'] = bbox
     if timebuffer is not None:

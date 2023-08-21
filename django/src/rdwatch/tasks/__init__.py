@@ -339,8 +339,7 @@ def delete_export_files() -> None:
     exports_to_delete = AnnotationExport.objects.filter(
         created__lte=timezone.now() - timedelta(hours=1)
     )
-    with transaction.atomic():
-        exports_to_delete.delete()
+    exports_to_delete.delete()
 
 
 @app.task(bind=True)

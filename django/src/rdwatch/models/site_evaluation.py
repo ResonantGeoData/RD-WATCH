@@ -114,6 +114,8 @@ class SiteEvaluation(models.Model):
         ):
             configuration.ground_truth = True
             modified = True
+        # If a Site has a number of 9999 it is a proposal
+        # https://smartgitlab.com/TE/annotations/-/wikis/Submitting-Proposals-for-New-Sites
         if configuration.proposal or site_feature.properties.site_number == 9999:
             status = SiteEvaluation.Status.PROPOSAL
             configuration.proposal = HyperParameters.ProposalStatus.PROPOSAL

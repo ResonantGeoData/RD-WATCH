@@ -353,7 +353,7 @@ def download_annotations(self, id: int):
 
     with tempfile.TemporaryDirectory() as temp_dir:
         file_list = []
-        for item in site_evals:
+        for item in site_evals.iterator():
             data, site_id = get_site_model_feature_JSON(item.pk)
             file_name = os.path.join(temp_dir, f'{site_id}.json')
             with open(file_name, 'w') as file:

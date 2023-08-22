@@ -8,7 +8,6 @@ import {
   QueryArguments,
 } from "../client";
 import { computed, ref, watch, watchEffect, withDefaults } from "vue";
-import type { Ref } from "vue";
 import { ApiService } from "../client";
 import { filteredSatelliteTimeList, state } from "../store";
 import type { KeyedModelRun } from '../store'
@@ -49,6 +48,7 @@ async function loadMore() {
   request = ApiService.getModelRuns({
     limit,
     ...props.filters,
+    proposal: props.compact ? 'PROPOSAL' : undefined, // if compact we are doing proposal adjudication
   });
   try {
     const modelRunList = await request;
@@ -190,7 +190,7 @@ async function getSatelliteTimestamps(modelRun: ModelRunList, force=false) {
 async function checkScores(modelRun: KeyedModelRun)  {
   let hasScores = false;
   try {
-    hasScores = await ApiService.hasScores(modelRun.id, modelRun.region?.id || 0)
+    //hasScores = await ApiService.hasScores(modelRun.id, modelRun.region?.id || 0)
   } catch (err) {
     hasScores = false;
   }
@@ -340,17 +340,6 @@ watch([() => props.filters.region, () => props.filters.performer], () => {
     >
       <v-alert type="warning">
         <div>
-          <svg
-            xmlns="http://www.w3.org/2000/svg"
-            class="stroke-current flex-shrink-0 h-6 w-6"
-            fill="none"
-            viewBox="0 0 24 24"
-          ><path
-            stroke-linecap="round"
-            stroke-linejoin="round"
-            stroke-width="2"
-            d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"
-          /></svg>
           <span>    Region is Too Large to efficiently get Images:
           </span>
           <div class="flex-none">

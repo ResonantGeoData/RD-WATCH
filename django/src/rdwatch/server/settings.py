@@ -152,6 +152,10 @@ class BaseConfiguration(Configuration):
             'task': 'rdwatch.tasks.delete_temp_model_runs_task',
             'schedule': timedelta(hours=1),
         },
+        'delete-export-files-runs-beat': {
+            'task': 'rdwatch.tasks.delete_export_files',
+            'schedule': timedelta(hours=1),
+        },
     }
 
 

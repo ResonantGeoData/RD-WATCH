@@ -3,14 +3,14 @@ from ninja import Router, Schema
 from django.contrib.gis.db.models.functions import Transform
 from django.contrib.postgres.aggregates import JSONBAgg
 from django.core.files.storage import default_storage
-from django.db.models import Count
+from django.db.models import Count, F
 from django.db.models.functions import JSONObject  # type: ignore
 from django.http import HttpRequest
 from rest_framework.exceptions import NotFound
 
 from rdwatch.db.functions import BoundingBox, ExtractEpoch
 from rdwatch.models import SiteEvaluation, SiteImage, SiteObservation
-from rdwatch.schemas.common import BoundingBoxSchema
+from rdwatch.schemas.common import BoundingBoxSchema, TimeRangeSchema
 
 router = Router()
 
@@ -33,20 +33,33 @@ class SiteImageListSchema(Schema):
 
 
 class SiteObsGeomSchema(Schema):
-    timestamp: int
+    timestamp: int | None
     geoJSON: dict  # TODO: Replace with pydantics geoJSON
+    label: str
+
+
+class GroundTruthSchema(Schema):
+    timerange: TimeRangeSchema | None = None
+    geoJSON: dict
     label: str
 
 
 class SiteImageResponse(Schema):
     images: SiteImageListSchema
     geoJSON: list[SiteObsGeomSchema]
+    evaluationGeoJSON: dict
+    status: str | None
+    label: str
+    notes: str | None
+    groundTruth: GroundTruthSchema | None
 
 
 @router.get('/{id}/', response=SiteImageResponse)
 def site_images(request: HttpRequest, id: int):
     if not SiteEvaluation.objects.filter(pk=id).exists():
         raise NotFound()
+    else:
+        site_eval_obj = SiteEvaluation.objects.get(pk=id)
     image_queryset = (
         SiteImage.objects.filter(siteeval__id=id)
         .order_by('timestamp')
@@ -83,11 +96,48 @@ def site_images(request: HttpRequest, id: int):
             )
         )
     )
+    site_eval_data = (
+        SiteEvaluation.objects.filter(pk=id)
+        .values()
+        .annotate(
+            json=JSONObject(
+                label=F('label__slug'),
+                status=F('status'),
+                evaluationGeoJSON=Transform('geom', srid=4326),
+                notes=F('notes'),
+            )
+        )[0]
+    )
+    # get the same Region_#### for ground truth if it exists
+    ground_truth = (
+        SiteEvaluation.objects.filter(
+            region=site_eval_obj.region,
+            number=site_eval_obj.number,
+            configuration__performer__slug='TE',
+            score=1,
+        )
+        .values()
+        .annotate(
+            json=JSONObject(
+                label=F('label__slug'),
+                timerange=JSONObject(
+                    min=ExtractEpoch('start_date'),
+                    max=ExtractEpoch('end_date'),
+                ),
+                geoJSON=Transform('geom', srid=4326),
+            )
+        )
+    )
     output = {}
     # lets get the presigned URL for each image
     for image in image_queryset['results']:
         image['image'] = default_storage.url(image['image'])
     output['images'] = image_queryset
     output['geoJSON'] = geom_queryset['results']
-
+    output['label'] = site_eval_data['json']['label']
+    output['status'] = site_eval_data['json']['status']
+    output['notes'] = site_eval_data['json']['notes']
+    if ground_truth.exists():
+        output['groundTruth'] = ground_truth[0]['json']
+    output['evaluationGeoJSON'] = site_eval_data['json']['evaluationGeoJSON']
     return output

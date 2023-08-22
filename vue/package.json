@@ -51,6 +51,7 @@
     "vue-eslint-parser": "^9.0.3",
     "vue-tsc": "^0.38.4"
   },
+  "//":"vue/no-setup-props-destructure is disabled in esLint, due to an issue with utilizing DefineProps: https://github.com/vuejs/eslint-plugin-vue/issues/2121",
   "eslintConfig": {
     "root": true,
     "env": {
@@ -64,6 +65,7 @@
       "@typescript-eslint"
     ],
     "rules": {
+      "vue/no-setup-props-destructure": 0,
       "sort-imports": [
         "error",
         {

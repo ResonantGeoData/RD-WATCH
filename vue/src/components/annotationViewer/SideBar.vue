@@ -79,7 +79,7 @@ onMounted(() => {
     <div>
       <v-row>
         <TimeSlider
-          :min="timemin"
+          :min="timemin || 0"
           :max="Math.floor(Date.now() / 1000)"
         />
       </v-row>
@@ -104,8 +104,8 @@ onMounted(() => {
         />
         <RegionFilter
           v-model="selectedRegion"
-          @update:model-value="updateRegion($event)"
           cols="6"
+          @update:model-value="updateRegion($event)"
         />
       </v-row>
     </div>

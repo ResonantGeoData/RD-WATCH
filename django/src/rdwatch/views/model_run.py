@@ -25,7 +25,7 @@ from django.db.models import (
     When,
 )
 from django.db.models.functions import Coalesce, JSONObject
-from django.http import Http404, HttpRequest
+from django.http import Http404, HttpRequest, HttpResponse
 from django.shortcuts import get_object_or_404
 
 from rdwatch.db.functions import (
@@ -33,9 +33,9 @@ from rdwatch.db.functions import (
     BoundingBox,
     BoundingBoxGeoJSON,
     ExtractEpoch,
-    TimeRangeJSON,
 )
 from rdwatch.models import (
+    AnnotationExport,
     HyperParameters,
     Region,
     SatelliteFetching,
@@ -44,6 +44,7 @@ from rdwatch.models import (
 )
 from rdwatch.schemas import RegionModel, SiteModel
 from rdwatch.schemas.common import TimeRangeSchema
+from rdwatch.tasks import download_annotations
 from rdwatch.views.performer import PerformerSchema
 from rdwatch.views.region import RegionSchema
 from rdwatch.views.site_observation import get_site_observation_images
@@ -54,6 +55,7 @@ router = RouterPaginated()
 class ModelRunFilterSchema(FilterSchema):
     performer: str | None = Field(q='performer_slug')
     region: str | None
+    proposal: str | None = Field(q='proposal', ignore_none=False)
 
     def filter_region(self, value: str | None) -> Q:
         if value is None:
@@ -76,6 +78,7 @@ class HyperParametersWriteSchema(Schema):
     expiration_time: int | None
     evaluation: int | None = None
     evaluation_run: int | None = None
+    proposal: bool | None = None
 
     @validator('performer')
     def validate_performer(cls, v: str) -> lookups.Performer:
@@ -89,6 +92,11 @@ class HyperParametersWriteSchema(Schema):
         if v is not None:
             return timedelta(hours=v)
         return v
+
+
+class HyperParametersAdjudicated(Schema):
+    proposed: int
+    other: int
 
 
 class HyperParametersDetailSchema(Schema):
@@ -107,6 +115,8 @@ class HyperParametersDetailSchema(Schema):
     expiration_time: str | None = None
     evaluation: int | None = None
     evaluation_run: int | None = None
+    proposal: str = None
+    adjudicated: HyperParametersAdjudicated | None = None
 
 
 class EvaluationListSchema(Schema):
@@ -123,6 +133,28 @@ class HyperParametersListSchema(Schema):
 
 
 def get_queryset():
+    # Subquery to count unique SiteEvaluations
+    # with proposal='PROPOSAL' for each HyperParameters
+    proposed_count_subquery = (
+        SiteEvaluation.objects.filter(
+            configuration=OuterRef('pk'),
+            status='PROPOSAL',
+        )
+        .values('configuration')
+        .annotate(count=Count('pk'))
+        .values('count')
+    )
+
+    # Subquery to count unique SiteEvaluations with proposal
+    # not equal to 'PROPOSAL' for each HyperParameters
+    other_count_subquery = (
+        SiteEvaluation.objects.filter(configuration=OuterRef('pk'))
+        .exclude(status='PROPOSAL')
+        .values('configuration')
+        .annotate(count=Count('pk'))
+        .values('count')
+    )
+
     return (
         HyperParameters.objects.select_related(
             'evaluations', 'performer', 'satellitefetching'
@@ -144,6 +176,7 @@ def get_queryset():
             region_id=F('evaluations__region_id'),
             observation_count=Count('evaluations__observations'),
             evaluation_configuration=F('evaluations__configuration'),
+            proposal_val=F('proposal'),
         )
         .annotate(
             json=JSONObject(
@@ -193,7 +226,10 @@ def get_queryset():
                 evaluation='evaluation',
                 evaluation_run='evaluation_run',
                 timestamp=ExtractEpoch(Max('evaluations__timestamp')),
-                timerange=TimeRangeJSON('evaluations__observations__timestamp'),
+                timerange=JSONObject(
+                    min=ExtractEpoch(Min('evaluations__start_date')),
+                    max=ExtractEpoch(Max('evaluations__end_date')),
+                ),
                 bbox=Case(
                     # If there are no site observations associated with this
                     # site evaluation, return the bbox of the site polygon.
@@ -204,6 +240,17 @@ def get_queryset():
                         then=BoundingBoxGeoJSON('evaluations__geom'),
                     ),
                     default=BoundingBoxGeoJSON('evaluations__observations__geom'),
+                ),
+                proposal='proposal_val',
+                adjudicated=Case(
+                    When(
+                        ~Q(proposal_val=None),  # When proposal has a value
+                        then=JSONObject(
+                            proposed=Coalesce(Subquery(proposed_count_subquery), 0),
+                            other=Coalesce(Subquery(other_count_subquery), 0),
+                        ),
+                    ),
+                    default=None,
                 ),
             )
         )
@@ -222,6 +269,7 @@ def create_model_run(
         expiration_time=hyper_parameters_data.expiration_time,
         evaluation=hyper_parameters_data.evaluation,
         evaluation_run=hyper_parameters_data.evaluation_run,
+        proposal=hyper_parameters_data.proposal,
     )
     return 200, {
         'id': hyper_parameters.pk,
@@ -264,7 +312,10 @@ def list_model_runs(
 
     subquery = queryset[(page - 1) * limit : page * limit] if limit else queryset
     aggregate = queryset.defer('json').aggregate(
-        timerange=TimeRangeJSON('evaluations__observations__timestamp'),
+        timerange=JSONObject(
+            min=ExtractEpoch(Min('evaluations__start_date')),
+            max=ExtractEpoch(Max('evaluations__end_date')),
+        ),
         results=AggregateArraySubquery(subquery.values('json')),
     )
 
@@ -351,17 +402,20 @@ def post_region_model(
     return 201, [eval.id for eval in site_evaluations]
 
 
-@router.post('/{hyper_parameters_id}/generate-images/')
+@router.post('/{hyper_parameters_id}/generate-images/', response={202: bool})
 def generate_images(request: HttpRequest, hyper_parameters_id: int):
     siteEvaluations = SiteEvaluation.objects.filter(configuration=hyper_parameters_id)
 
     for eval in siteEvaluations:
         get_site_observation_images(request, eval.pk)
 
-    return 202
+    return 202, True
 
 
-@router.put('/{hyper_parameters_id}/cancel-generate-images/')
+@router.put(
+    '/{hyper_parameters_id}/cancel-generate-images/',
+    response={202: bool, 409: str, 404: str},
+)
 def cancel_generate_images(request: HttpRequest, hyper_parameters_id: int):
     siteEvaluations = SiteEvaluation.objects.filter(configuration=hyper_parameters_id)
 
@@ -384,7 +438,7 @@ def cancel_generate_images(request: HttpRequest, hyper_parameters_id: int):
                     fetching_task.celery_id = ''
                     fetching_task.save()
 
-    return 202
+    return 202, True
 
 
 def get_region(hyper_parameters_id: int):
@@ -421,17 +475,22 @@ def get_evaluations_query(hyper_parameters_id: int):
             S2=Count(Case(When(siteimage__source='S2', then=1))),
             WV=Count(Case(When(siteimage__source='WV', then=1))),
             L8=Count(Case(When(siteimage__source='L8', then=1))),
+            time=ExtractEpoch('timestamp'),
         )
         .aggregate(
             evaluations=JSONBAgg(
                 JSONObject(
                     id='pk',
+                    timestamp='time',
                     number='number',
                     bbox=BoundingBox('geom'),
                     images='siteimage_count',
                     S2='S2',
                     WV='WV',
                     L8='L8',
+                    start_date=ExtractEpoch('start_date'),
+                    end_date=ExtractEpoch('end_date'),
+                    status='status',
                 ),
                 ordering='number',
             ),
@@ -456,3 +515,31 @@ def get_modelrun_evaluations(request: HttpRequest, hyper_parameters_id: int):
         }
     query['region'] = model_run['region']
     return 200, query
+
+
+@router.post('/{id}/download/')
+def start_download(request: HttpRequest, id: int):
+    task_id = download_annotations.delay(id)
+    print(task_id)
+    return task_id.id
+
+
+@router.get('/download_status')
+def check_download(request: HttpRequest, task_id: str):
+    task = AsyncResult(task_id)
+    print(task)
+    return task.status
+
+
+@router.get('/{id}/download')
+def get_downloaded_annotations(request: HttpRequest, id: int, task_id: str):
+    annotation_export = AnnotationExport.objects.filter(celery_id=task_id)
+    if annotation_export.exists():
+        annotation_export = annotation_export.first()
+        response = HttpResponse(
+            annotation_export.export_file.file, content_type='application/zip'
+        )
+        response[
+            'Content-Disposition'
+        ] = f'attachment; filename="{annotation_export.name}.zip"'
+        return response

@@ -27,12 +27,20 @@ class SiteEvaluation(models.Model):
         help_text='The region this site belongs to',
         db_index=True,
     )
-    number = models.PositiveSmallIntegerField(
+    number = models.IntegerField(
         help_text='The site number',
         db_index=True,
     )
     timestamp = models.DateTimeField(
         help_text='Time when this evaluation was finished',
+    )
+    start_date = models.DateTimeField(
+        help_text='Start date in geoJSON',
+        null=True,
+    )
+    end_date = models.DateTimeField(
+        help_text='end date in geoJSON',
+        null=True,
     )
     geom = PolygonField(
         help_text="Polygon from this site's Site Feature",
@@ -54,6 +62,40 @@ class SiteEvaluation(models.Model):
         null=True,
         help_text='Version of annotations',
     )
+    notes = models.TextField(null=True, blank=True)
+
+    validated = models.BooleanField(blank=True, null=True)
+
+    class Status(models.TextChoices):
+        PROPOSAL = (
+            'PROPOSAL'  # proposal is a proposal awaiting Adjudication/Confirmation
+        )
+        APPROVED = 'APPROVED'  # proposal is approved and merged into ground truth
+        REJECTED = 'REJECTED'  # proposal is rejected
+
+    status = models.CharField(
+        max_length=255,  # If we need future states
+        blank=True,
+        null=True,
+        help_text='Fetching Status',
+        choices=Status.choices,
+    )
+    cache_originator_file = models.CharField(
+        max_length=2048,
+        blank=True,
+        null=True,
+        help_text='Name of source file for proposals',
+    )
+    cache_timestamp = models.DateTimeField(
+        help_text='Cache timestamp for proposals',
+        null=True,
+    )
+    cache_commit_hash = models.CharField(
+        max_length=2048,
+        blank=True,
+        null=True,
+        help_text='Hash of the file for proposals',
+    )
 
     @classmethod
     def bulk_create_from_site_model(
@@ -63,20 +105,52 @@ class SiteEvaluation(models.Model):
 
         site_feature = site_model.site_feature
         assert isinstance(site_feature.properties, SiteFeature)
+        status = None
+        modified = False
+        if (
+            configuration.ground_truth is False
+            and site_feature.properties.validated
+            and site_feature.properties.originator == 'te'
+        ):
+            configuration.ground_truth = True
+            modified = True
+        # If a Site has a number of 9999 it is a proposal
+        # https://smartgitlab.com/TE/annotations/-/wikis/Submitting-Proposals-for-New-Sites
+        if configuration.proposal or site_feature.properties.site_number == 9999:
+            status = SiteEvaluation.Status.PROPOSAL
+            configuration.proposal = HyperParameters.ProposalStatus.PROPOSAL
+            modified = True
+        if modified:
+            configuration.save()
         with transaction.atomic():
             region = get_or_create_region(site_feature.properties.region_id)[0]
             label = lookups.ObservationLabel.objects.get(
                 slug=site_feature.properties.status
             )
+            cache_originator_file = None
+            cache_timestamp = None
+            cache_commit_hash = None
+            if site_feature.properties.cache:
+                cache_originator_file = site_feature.properties.cache.originator_file
+                cache_timestamp = site_feature.properties.cache.timestamp
+                cache_commit_hash = site_feature.properties.cache.commit_hash
+
             site_eval = cls.objects.create(
                 configuration=configuration,
                 region=region,
                 version=site_feature.properties.version,
                 number=site_feature.properties.site_number,
+                start_date=site_feature.properties.start_date,
+                end_date=site_feature.properties.end_date,
                 timestamp=datetime.now(),
                 geom=site_feature.geometry,
                 label=label,
                 score=site_feature.properties.score,
+                status=status,
+                validated=site_feature.properties.validated,
+                cache_originator_file=cache_originator_file,
+                cache_timestamp=cache_timestamp,
+                cache_commit_hash=cache_commit_hash,
             )
 
             SiteObservation.bulk_create_from_site_evaluation(site_eval, site_model)
@@ -152,3 +226,30 @@ class SiteEvaluation(models.Model):
                 ),
             ),
         ]
+
+
+class SiteEvaluationTracking(models.Model):
+    edited = models.DateTimeField()
+    evaluation = models.ForeignKey(
+        to='SiteEvaluation',
+        on_delete=models.CASCADE,
+        db_index=True,
+    )
+    start_date = models.DateTimeField(
+        help_text='Start date in geoJSON',
+        null=True,
+    )
+    end_date = models.DateTimeField(
+        help_text='end date in geoJSON',
+        null=True,
+    )
+    label = models.ForeignKey(
+        to='ObservationLabel',
+        on_delete=models.PROTECT,
+        help_text='Site feature classification label',
+        db_index=True,
+    )
+    score = models.FloatField(
+        help_text='Score of site footprint',
+    )
+    notes = models.TextField(null=True, blank=True)

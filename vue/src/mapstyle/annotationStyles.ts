@@ -196,4 +196,5 @@ export {
     annotationLegend,
     siteText,
     getColorFromLabel,
+    styles,
 }

@@ -23,6 +23,7 @@ export interface QueryArguments {
   region?: string;
   page?: number;
   limit?: number;
+  proposal?: 'PROPOSAL' | 'APPROVED';
 }
 
 export interface ScoringResults {
@@ -42,6 +43,8 @@ export interface ScoringResults {
   color?: string;
 }
 
+export type SiteModelStatus = 'PROPOSAL' | 'APPROVED' | 'REJECTED'
+
 export interface ModelRunEvaluations {
   region: Region;
 
@@ -51,10 +54,44 @@ export interface ModelRunEvaluations {
     WV: number,
     L8: number,
     number: number,
+    start_date: number;
+    end_date: number;
     id: number
     bbox: { xmin: number; ymin: number; xmax: number; ymax: number }
+    status: SiteModelStatus
+    timestamp: number;
   }[];
 }
+export interface SiteEvaluationUpdateQuery {
+  label?: string;
+  geom?: GeoJSON.Polygon;
+  score?: number,
+  start_date?: string | null;
+  end_date?: string | null;
+  notes?: string;
+  status?: SiteModelStatus
+}
+
+export interface SiteObservationUpdateQuery {
+  label?: string;
+  geom?: GeoJSON.Polygon;
+  score?: number,
+  timestamp: string;
+  constellation: string;
+  spectrum?: string;
+  notes?: string;
+
+}
+
+export interface DownloadSettings {
+  constellation: 'S2' | 'WV' | 'L8';
+  dayRange?: number;
+  noData?: number;
+  customDateRange?: [string, string];
+
+}
+
+export type CeleryStates = 'FAILURE' | 'PENDING' | 'SUCCESS' | 'RETRY' | 'REVOKED' | 'STARTED';
 
 export class ApiService {
   /**
@@ -92,7 +129,7 @@ export class ApiService {
   ): CancelablePromise<SiteObservationList> {
     return __request(OpenAPI, {
       method: "GET",
-      url: "/api/evaluations/{id}",
+      url: "/api/observations/{id}",
       path: {
         id: id,
       },
@@ -106,20 +143,21 @@ export class ApiService {
    */
       public static getObservationImages(
         id: string,
-        constellation: 'WV' | 'S2' | 'L8' = 'WV'
+        data: DownloadSettings
       ): CancelablePromise<boolean> {
         return __request(OpenAPI, {
           method: "POST",
-          url: "/api/observations/{id}/generate-images",
+          url: "/api/observations/{id}/generate-images/",
           path: {
             id: id,
           },
           query: {
-            constellation,
+            ...data,
           }
         });
       }
       
+  
       /**
    * @param id
    * @returns boolean
@@ -127,7 +165,7 @@ export class ApiService {
    */
       public static getModelRunImages(
         id: string,
-        constellation: 'WV' | 'S2' | 'L8' = 'WV'
+        data: DownloadSettings
       ): CancelablePromise<boolean> {
         return __request(OpenAPI, {
           method: "POST",
@@ -136,7 +174,7 @@ export class ApiService {
             id: id,
           },
           query: {
-            constellation,
+            ...data,
           }
         });
       }
@@ -414,5 +452,58 @@ export class ApiService {
     });
 
   }
+
+  public static patchSiteEvaluation(id: number, data: SiteEvaluationUpdateQuery): CancelablePromise<boolean> {
+    return __request(OpenAPI, {
+      method: 'PATCH',
+      url: "/api/evaluations/{id}/",
+      path: {
+        id: id,
+      },
+      body: {...data}
+    })
+  }
+
+  public static patchSiteObservation(id: number, data: SiteObservationUpdateQuery): CancelablePromise<boolean> {
+    return __request(OpenAPI, {
+      method: 'PATCH',
+      url: "/api/observations/{id}/",
+      path: {
+        id: id,
+      },
+      body: {...data}
+    })
+  }
+
+  public static addSiteObservation(id: number, data: SiteObservationUpdateQuery): CancelablePromise<boolean> {
+    return __request(OpenAPI, {
+      method: 'PUT',
+      url: "/api/observations/{id}/",
+      path: {
+        id: id,
+      },
+      query: {...data}
+    })
+  }
+
+  public static startModelRunDownload(id: number): CancelablePromise<string> {
+    return __request(OpenAPI, {
+      method: 'POST',
+      url: "/api/model-runs/{id}/download",
+      path: {
+        id: id,
+      },
+    })
+  }
+
+  public static getModelRunDownloadStatus(task_id: string): CancelablePromise<CeleryStates> {
+    return __request(OpenAPI, {
+      method: 'GET',
+      url: "/api/model-runs/download_status",
+      query: {task_id},
+    })
+  }
+
+
 }
 

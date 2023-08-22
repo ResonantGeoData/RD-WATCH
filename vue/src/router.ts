@@ -5,7 +5,7 @@ import Annotation from './views/AnnotationViewer.vue';
 
 const routes = [
     { path: '/:region?/:selected?', component: RGD, props:true, },
-    { path: '/annotation/:region?/:selected?', component: Annotation, props:true, },
+    { path: '/proposals/:region?/:selected?', component: Annotation, props:true, },
 ]
 
 const router = createRouter({

@@ -41,8 +41,8 @@ watch(() => props.modelValue, () => {
 
 watch(selectedRegion, (val) => {
   let prepend = '/'
-  if (router.currentRoute.value.fullPath.includes('annotation')) {
-    prepend='/annotation/'
+  if (router.currentRoute.value.fullPath.includes('proposals')) {
+    prepend='/proposals/'
   }
   if (val !== undefined) {
     const found = regions.value.find((item) => item.id === val);

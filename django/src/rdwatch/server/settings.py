@@ -36,7 +36,6 @@ class BaseConfiguration(Configuration):
             'django.contrib.staticfiles',
             'django.contrib.gis',
             'django.contrib.postgres',
-            'django_filters',
             'django_extensions',
             'rdwatch',
             'django_celery_results',

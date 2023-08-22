@@ -33,7 +33,6 @@ uritemplate = "^4.1.1"
 iso3166 = "^2.1.1"
 rio-tiler = "^3.1.6"
 mercantile = "^1.2.1"
-django-filter = "^22.1"
 django-ninja = "^0.21.0"
 celery = "^5.2.7"
 django-extensions = "^3.2.1"
@@ -83,7 +82,6 @@ plugins = ["mypy_django_plugin.main", "mypy_drf_plugin.main"]
 
 [[tool.mypy.overrides]]
 module = [
-  "django_filters",
   "mercantile"
 ]
 ignore_missing_imports = true

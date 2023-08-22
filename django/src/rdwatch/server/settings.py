@@ -37,7 +37,6 @@ class BaseConfiguration(Configuration):
             'django.contrib.gis',
             'django.contrib.postgres',
             'django_filters',
-            'rest_framework',
             'django_extensions',
             'rdwatch',
             'django_celery_results',
@@ -96,13 +95,6 @@ class BaseConfiguration(Configuration):
             scoring_dict = scoring_val.value
             db_dict.update(scoring_dict)
         return db_dict
-
-    REST_FRAMEWORK = {
-        'DEFAULT_RENDERER_CLASSES': ['rest_framework.renderers.JSONRenderer'],
-        'DEFAULT_PARSER_CLASSES': ['rest_framework.parsers.JSONParser'],
-        'DEFAULT_PAGINATION_CLASS': 'rest_framework.pagination.PageNumberPagination',
-        'PAGE_SIZE': 25,
-    }
 
     NINJA_PAGINATION_CLASS = 'ninja.pagination.PageNumberPagination'
     NINJA_PAGINATION_PAGE_SIZE = 100

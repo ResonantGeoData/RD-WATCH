@@ -718,22 +718,6 @@ django = "*"
 typing-extensions = "*"
 
 [[package]]
-name = "djangorestframework"
-version = "3.13.1"
-description = "Web APIs for Django, made easy."
-category = "main"
-optional = false
-python-versions = ">=3.6"
-files = [
-    {file = "djangorestframework-3.13.1-py3-none-any.whl", hash = "sha256:24c4bf58ed7e85d1fe4ba250ab2da926d263cd57d64b03e8dcef0ac683f8b1aa"},
-    {file = "djangorestframework-3.13.1.tar.gz", hash = "sha256:0c33407ce23acc68eca2a6e46424b008c9c02eceb8cf18581921d0092bc1f2ee"},
-]
-
-[package.dependencies]
-django = ">=2.2"
-pytz = "*"
-
-[[package]]
 name = "djangorestframework-stubs"
 version = "3.14.0"
 description = "PEP-484 stubs for django-rest-framework"
@@ -2257,4 +2241,4 @@ files = [
 [metadata]
 lock-version = "2.0"
 python-versions = "~3.10.0"
-content-hash = "c9cf856f010827f6845b93fa2af580d3ba857067ab9148ac007439b5c92244f6"
+content-hash = "b5e3d0331cca8e17821c79dcea759758d66a3f4aa5bf6c81457ae9f75d9464c9"

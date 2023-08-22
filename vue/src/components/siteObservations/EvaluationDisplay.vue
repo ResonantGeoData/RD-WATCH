@@ -1,64 +1,25 @@
 <script setup lang="ts">
 import { computed, ref } from "vue";
-import { ImageBBox, SiteObservationImage, getSiteObservationDetails, state } from "../../store";
+import { getSiteObservationDetails, state, toggleSatelliteImages } from "../../store";
 import { SiteObservation } from "../../store";
 import { imageFilter } from "../../mapstyle/images";
 import EvaluationImages from "./EvaluationImages.vue";
 import EvaluationScoring from "./EvaluationScoring.vue";
-import { ApiService } from "../../client";
 import ImageViewerButton from "../imageViewer/ImageViewerButton.vue";
-
+import { timeRangeFormat } from "../../utils";
 const props = defineProps<{
   siteObservation: SiteObservation;
 }>();
 
 
-const toggleImages = (siteObs: SiteObservation, off= false) => {
-    const found = state.enabledSiteObservations.find((item) => item.id === siteObs.id);
-    if (found === undefined && !off) {
-        const baseBBox = siteObs.bbox;
-        const bbox = [
-            [baseBBox.xmin, baseBBox.ymax],
-            [baseBBox.xmax, baseBBox.ymax],
-            [baseBBox.xmax, baseBBox.ymin],
-            [baseBBox.xmin, baseBBox.ymin],
-        ] as ImageBBox;
-        if (siteObs.imageCounts.WV.images || siteObs.imageCounts.S2.images) {
-            const tempArr = [...state.enabledSiteObservations];
-            let imageList: SiteObservationImage[] = [];
-            if (siteObs.imageCounts.WV.images && state.siteObsSatSettings.observationSources.includes('WV')) {
-              imageList = [...siteObs.imageCounts.WV.images]
-            }
-            if (siteObs.imageCounts.S2.images && state.siteObsSatSettings.observationSources.includes('S2')) {
-              imageList = [...imageList, ...siteObs.imageCounts.S2.images]
-            }
-            if (siteObs.imageCounts.L8.images && state.siteObsSatSettings.observationSources.includes('L8')) {
-              imageList = [...imageList, ...siteObs.imageCounts.L8.images]
-            }
-            tempArr.push({
-                id: siteObs.id,
-                timestamp: siteObs.timerange.min,
-                images: imageList,
-                bbox,
-            });
-            state.enabledSiteObservations = tempArr;
-        }
-    } else {
-        const tempArr = [...state.enabledSiteObservations];
-        const index = tempArr.findIndex((item) => item.id === siteObs.id);
-        if (index !== -1) {
-            tempArr.splice(index, 1);
-            state.enabledSiteObservations = tempArr;
-        }
-    }
-}
+
 const refresh = async () => {
   await getSiteObservationDetails(props.siteObservation.id.toString(), props.siteObservation.scoringBase);
 }
 const close = () => {
   const foundIndex = state.selectedObservations.findIndex((item) => item.id === props.siteObservation.id);
   if (foundIndex !== -1) {
-    toggleImages(props.siteObservation, true);
+    toggleSatelliteImages(props.siteObservation, true);
     state.selectedObservations.splice(foundIndex, 1);
   }
 }
@@ -122,8 +83,8 @@ const goToTimestamp = (dir: number, loop = false) => {
 const noScore = ref(false);
 const hasScore = async () => {
   try {
-    const result = await ApiService.hasScores(props.siteObservation.scoringBase.configurationId, props.siteObservation.scoringBase.regionId)
-    noScore.value = !result;
+    // const result = await ApiService.hasScores(props.siteObservation.scoringBase.configurationId, props.siteObservation.scoringBase.regionId)
+    // noScore.value = !result;
   } catch {
     noScore.value = true;
   }
@@ -134,7 +95,8 @@ const changeTimstamp = ({dir, loop}: {dir: number, loop: boolean}) => {
   goToTimestamp(dir, loop);
 }
 
-const hasLoadedImages = computed(() => (Object.entries(props.siteObservation.imageCounts).findIndex(([key, data]) => data.loaded > 0) !== -1));
+
+const hasLoadedImages = computed(() => (Object.entries(props.siteObservation.imageCounts).findIndex(([,data]) => data.loaded > 0) !== -1));
 
 </script>
 
@@ -146,7 +108,7 @@ const hasLoadedImages = computed(() => (Object.entries(props.siteObservation.ima
         justify="center"
         align="center"
       >
-        <v-col>
+        <v-col v-if="siteObservation.scoringBase">
           <span class="model-title">
             {{ `${state.regionMap[siteObservation.scoringBase.regionId]}_${siteObservation.scoringBase.siteNumber.toString().padStart(4, '0')}` }}
           </span>
@@ -159,7 +121,7 @@ const hasLoadedImages = computed(() => (Object.entries(props.siteObservation.ima
               :color="imagesActive ? 'rgb(37, 99, 235)': 'black'"
               :disabled="!hasImages"
               icon="mdi-image"
-              @click="hasImages && toggleImages(siteObservation)"
+              @click="hasImages && toggleSatelliteImages(siteObservation)"
             />
           </span>
         </v-col>
@@ -198,7 +160,7 @@ const hasLoadedImages = computed(() => (Object.entries(props.siteObservation.ima
           </v-expansion-panel-text>
         </v-expansion-panel>
         <v-expansion-panel
-          v-if="siteObservation.scoringBase.version && !noScore"
+          v-if="siteObservation.scoringBase && siteObservation.scoringBase.version && !noScore"
           key="Scoring"
         >
           <v-expansion-panel-title>Scoring</v-expansion-panel-title>
@@ -246,21 +208,7 @@ const hasLoadedImages = computed(() => (Object.entries(props.siteObservation.ima
           dates:
         </div>
         <div>
-          {{
-            siteObservation.timerange === null
-              ? "--"
-              : `${new Date(siteObservation.timerange.min * 1000).toLocaleString(
-                "en",
-                {
-                  dateStyle: "short",
-                }
-              )} - ${new Date(siteObservation.timerange.max * 1000).toLocaleString(
-                "en",
-                {
-                  dateStyle: "short",
-                }
-              )}`
-          }}
+          {{ timeRangeFormat(siteObservation.timerange) }}
         </div>
         <v-spacer />
       </v-row>

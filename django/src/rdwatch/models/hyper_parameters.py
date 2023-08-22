@@ -24,5 +24,20 @@ class HyperParameters(models.Model):
         help_text='Time relative to creation that this model run should be deleted.',
     )
 
+    class ProposalStatus(models.TextChoices):
+        PROPOSAL = (
+            'PROPOSAL'  # proposal is a proposal awaiting Adjudication/Confirmation
+        )
+        APPROVED = 'APPROVED'  # proposal is approved and merged into ground truth
+
+    proposal = models.CharField(
+        max_length=255,  # If we need future states
+        blank=True,
+        null=True,
+        help_text='Fetching Status',
+        choices=ProposalStatus.choices,
+    )
+    ground_truth = models.BooleanField(default=False)
+
     def __str__(self) -> str:
         return str(self.pk)

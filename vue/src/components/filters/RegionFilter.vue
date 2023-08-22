@@ -51,8 +51,8 @@ watch(selectedRegion, (val) => {
     prepend = '/scoring/'
   }
 
-  if (router.currentRoute.value.fullPath.includes('annotation')) {
-    prepend=`${prepend}/annotation/`
+  if (router.currentRoute.value.fullPath.includes('proposals')) {
+    prepend=`${prepend}/proposals/`
   }
   if (val !== undefined) {
     const found = regions.value.find((item) => item.id === val);

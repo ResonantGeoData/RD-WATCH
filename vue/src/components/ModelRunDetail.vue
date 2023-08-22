@@ -2,8 +2,10 @@
 import TimeSlider from "./TimeSlider.vue";
 import { ApiService, ModelRun } from "../client";
 import { state } from "../store";
-import { Ref, onBeforeMount, onBeforeUnmount, ref, withDefaults } from "vue";
-
+import { onBeforeMount, onBeforeUnmount, ref, withDefaults } from "vue";
+import { timeRangeFormat } from "../utils";
+import ImagesDownloadDialog from "./ImagesDownloadDialog.vue";
+import { DownloadSettings } from "../client/services/ApiService";
 
 interface Props {
   modelRun: ModelRun;
@@ -24,8 +26,6 @@ async function handleClick() {
 
 const useScoring = ref(false);
 const downloadImages = ref(false);
-const baseList = ref(['S2', 'WV', 'L8'])
-const selectedSource: Ref<'S2' | 'WV' | 'L8'> = ref('WV');
 
 let loopingInterval: NodeJS.Timeout | null = null;
 
@@ -64,8 +64,8 @@ const updateDownloading = async () => {
   }
 
 }
-const startDownload = () => {
-  ApiService.getModelRunImages(props.modelRun.id.toString(), selectedSource.value )
+const startDownload = (data: DownloadSettings) => {
+  ApiService.getModelRunImages(props.modelRun.id.toString(), data )
   downloadImages.value = false;
   downloading.value = props.modelRun.numsites;
   setTimeout(() => {
@@ -93,6 +93,34 @@ onBeforeUnmount(() => {
     loopingInterval = null;
   }
 })
+const taskId = ref('');
+const downloadError = ref(false);
+const downloadingModelRun = ref(false);
+
+const checkDownloadStatus = async () => {
+  if (taskId.value) {
+    const status = await ApiService.getModelRunDownloadStatus(taskId.value);
+    if (status === 'SUCCESS') {
+      const url = `/api/model-runs/${props.modelRun.id}/download?task_id=${taskId.value}`
+      window.location.assign(url);
+      downloadingModelRun.value = false;
+    } else if (['REVOKED', 'FAILURE'].includes(status)) {
+      downloadError.value = true;
+      downloadingModelRun.value = false;
+    } else {
+      setTimeout(checkDownloadStatus, 1000)
+    }
+  }
+}
+
+const downloadModelRun = async() => {
+  downloadError.value = false;
+  downloadingModelRun.value = true;
+  taskId.value = await ApiService.startModelRunDownload(props.modelRun.id);
+  // Now we poll to see when the download is finished
+  checkDownloadStatus();
+}
+
 </script>
 
 <template>
@@ -137,7 +165,10 @@ onBeforeUnmount(() => {
           {{ modelRun.numsites }}
         </div>
       </v-row>
-      <v-row dense v-if="!compact">
+      <v-row
+        v-if="!compact"
+        dense
+      >
         <div>
           average score:
         </div>
@@ -151,22 +182,32 @@ onBeforeUnmount(() => {
         </div>
         <div>
           {{
-            modelRun.timerange === null
-              ? "--"
-              : `${new Date(modelRun.timerange.min * 1000).toLocaleString(
-                "en",
-                {
-                  dateStyle: "short",
-                }
-              )} - ${new Date(modelRun.timerange.max * 1000).toLocaleString(
-                "en",
-                {
-                  dateStyle: "short",
-                }
-              )}`
+            timeRangeFormat(modelRun.timerange)
           }}
         </div>
       </v-row>
+      <v-row
+        v-if="modelRun.proposal && modelRun.adjudicated"
+        dense
+      >
+        <div v-if="modelRun.adjudicated.proposed !== 0">
+          <v-chip
+            size="small"
+            color="warning"
+          >
+            {{ modelRun.adjudicated.other }} / {{ modelRun.adjudicated.other + modelRun.adjudicated.proposed }} Adjudicated
+          </v-chip>
+        </div>
+        <div v-else>
+          <v-chip
+            size="small"
+            color="success"
+          >
+            All Proposals Adjudicated
+          </v-chip>
+        </div>
+      </v-row>
+
       <v-row
         v-if="!compact && modelRun.hasScores && props.open"
         dense
@@ -191,13 +232,53 @@ onBeforeUnmount(() => {
           {{ modelRun.performer.short_code }}
         </div>
         <v-spacer />
-        <v-btn
-          :disabled="downloading > 0"
-          size="x-small"
-          @click.stop="downloadImages = true"
-        >
-          Get <v-icon>mdi-image</v-icon>
-        </v-btn>
+        <v-tooltip>
+          <template #activator="{ props:subProps }">
+            <v-btn
+              size="x-small"
+              v-bind="subProps"
+              :disabled="downloadingModelRun"
+              class="mx-1"
+              @click.stop="downloadModelRun()"
+            >
+              <v-icon
+                v-if="!downloadingModelRun"
+                size="small"
+              >
+                mdi-export
+              </v-icon>
+              <v-icon
+                v-else-if="downloadError"
+                size="small"
+                color="error"
+              >
+                mdi-alert
+              </v-icon>
+
+              <v-icon
+                v-else-if="downloadingModelRun"
+                size="small"
+              >
+                mdi-spin mdi-sync
+              </v-icon>
+            </v-btn>
+          </template>
+          <span>Download JSON</span>
+        </v-tooltip>
+        <v-tooltip>
+          <template #activator="{ props:subProps }">
+            <v-btn
+              :disabled="downloading > 0"
+              size="x-small"
+              v-bind="subProps"
+              class="mx-1"
+              @click.stop="downloadImages = true"
+            >
+              Get <v-icon>mdi-image</v-icon>
+            </v-btn>
+          </template>
+          <span> Download Satellite Images</span>
+        </v-tooltip>
       </v-row>
       <v-row v-if="downloading > 0">
         <b class="small">Downloading {{ downloading }} site(s) Images</b>
@@ -213,17 +294,6 @@ onBeforeUnmount(() => {
           Cancel
         </v-btn>
       </v-row>
-      <v-row
-        v-if="modelRun.hasScores && props.open"
-        dense
-      >
-        <input
-          v-model="useScoring"
-          type="checkbox"
-          @click.stop="getScoringColoring()"
-        >
-        <span class="ml-2"> Scoring Coloring</span>
-      </v-row>
     </v-card-text>
     <v-card-actions v-if="open && !compact">
       <TimeSlider
@@ -231,40 +301,11 @@ onBeforeUnmount(() => {
         :max="modelRun.timerange?.max || 0"
       />
     </v-card-actions>
-    <v-dialog
-      v-model="downloadImages"
-      width="300"
-    >
-      <v-card>
-        <v-card-title>Download Model-Run Images</v-card-title>
-        <v-card-text>
-          <v-select
-            v-model="selectedSource"
-            :items="baseList"
-            label="Source"
-          />
-        </v-card-text>
-        <v-card-actions>
-          <v-row>
-            <v-spacer />
-            <v-btn
-              color="error"
-              class="mx-3"
-              @click="downloadImages = false"
-            >
-              Cancel
-            </v-btn>
-            <v-btn
-              color="success"
-              class="mx-3"
-              @click="startDownload()"
-            >
-              Download
-            </v-btn>
-          </v-row>
-        </v-card-actions>
-      </v-card>
-    </v-dialog>
+    <images-download-dialog
+      v-if="downloadImages"
+      @download="startDownload($event)"
+      @cancel="downloadImages = false"
+    />
   </v-card>
 </template>
 

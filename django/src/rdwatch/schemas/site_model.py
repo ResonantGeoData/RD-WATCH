@@ -10,10 +10,16 @@ from django.contrib.gis.gdal import GDALException
 from django.contrib.gis.geos import GEOSGeometry
 
 
+class SiteFeatureCache(Schema):
+    originator_file: str
+    timestamp: datetime | None
+    commit_hash: str
+
+
 class SiteFeature(Schema):
     type: Literal['site']
     region_id: constr(regex=r'^[A-Z]{2}_[RCST][\dx]{3}$')
-    site_id: constr(regex=r'^[A-Z]{2}_([RST]\d{3}|C[0-7]\d{2}|[RC][Xx]{3})_\d{4}$')
+    site_id: constr(regex=r'^[A-Z]{2}_([RST]\d{3}|C[0-7]\d{2}|[RC][Xx]{3})_\d{4,6}$')
     version: constr(regex=r'^\d+\.\d+\.\d+$')
     mgrs: constr(regex=r'^\d{2}[A-Z]{3}$')
     status: Literal[
@@ -51,6 +57,7 @@ class SiteFeature(Schema):
     # Optional fields
     score: confloat(ge=0.0, le=1.0) | None
     validated: Literal['True', 'False'] | None
+    cache: SiteFeatureCache | None
     predicted_phase_transition: Literal[
         'Active Construction',
         'Post Construction',
@@ -81,7 +88,7 @@ class SiteFeature(Schema):
 
 class ObservationFeature(Schema):
     type: Literal['observation']
-    observation_date: datetime
+    observation_date: datetime | None
     source: str | None
     sensor_name: Literal['Landsat 8', 'Sentinel-2', 'WorldView', 'Planet'] | None
     current_phase: list[
@@ -123,7 +130,9 @@ class ObservationFeature(Schema):
         return val.split(', ')
 
     @validator('observation_date', pre=True)
-    def parse_dates(cls, v: Any) -> datetime:
+    def parse_dates(cls, v: Any) -> datetime | None:
+        if v is None:
+            return None
         if not isinstance(v, str):
             raise ValueError('"observation_date" must be a valid date string.')
         return datetime.strptime(v, '%Y-%m-%d')

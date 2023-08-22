@@ -105,6 +105,7 @@ class BaseConfiguration(Configuration):
     }
 
     NINJA_PAGINATION_CLASS = 'ninja.pagination.PageNumberPagination'
+    NINJA_PAGINATION_PAGE_SIZE = 100
 
     CACHES = {
         'default': {

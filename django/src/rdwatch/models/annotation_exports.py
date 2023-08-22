@@ -11,7 +11,7 @@ class AnnotationExport(models.Model):
     )
     export_file = models.FileField(null=True, blank=True)
     created = models.DateTimeField(
-        help_text='The annotation file export, will be deleted 1 hour after creation',
+        help_text='The zip file export, deleted 1 hour after creation',
     )
     name = models.CharField(
         max_length=1024,

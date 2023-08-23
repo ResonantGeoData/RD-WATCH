@@ -12,8 +12,8 @@ from django.http import (
     HttpResponsePermanentRedirect,
     JsonResponse,
 )
+from django.urls import reverse
 from django.views.decorators.cache import cache_page
-from rest_framework.reverse import reverse
 
 from rdwatch.models.lookups import Constellation
 from rdwatch.utils.raster_tile import get_raster_bbox, get_raster_tile

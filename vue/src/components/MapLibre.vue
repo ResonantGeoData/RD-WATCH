@@ -9,13 +9,13 @@ import { filteredSatelliteTimeList, state } from "../store";
 import { markRaw, onMounted, onUnmounted, reactive, shallowRef, watch, withDefaults } from "vue";
 import type { FilterSpecification } from "maplibre-gl";
 import type { ShallowRef } from "vue";
-import { popupLogic } from "../interactions/mouseEvents";
+import { popupLogic, setPopupEvents } from "../interactions/mouseEvents";
 import { satelliteLoading } from "../interactions/satelliteLoading";
 import { setReference } from "../interactions/fillPatterns";
 import { setSatelliteTimeStamp } from "../mapstyle/satellite-image";
 import { isEqual, throttle } from 'lodash';
-import { updateImageMapSources } from "../mapstyle/images";
 import { nextTick } from "vue";
+import { updateImageMapSources } from "../mapstyle/images";
 
 interface Props {
   compact?: boolean
@@ -74,6 +74,7 @@ onMounted(() => {
     );
     map.value.keyboard.disable();
     popupLogic(map);
+    setPopupEvents(map);
     satelliteLoading(map);
     setReference(map);
   }
@@ -106,6 +107,9 @@ watch([() => state.timestamp, () => state.filters, () => state.satellite, () => 
   // Add opened model runs to list of vector tile layers
   openedModelRunIds.forEach((m) => { modelRunVectorLayers.add(m) })
 
+  if (map.value) {
+    updateImageMapSources(state.timestamp, state.enabledSiteObservations, state.siteObsSatSettings, map.value )
+  }
   map.value?.setStyle(
     style(state.timestamp, state.filters, state.satellite, state.enabledSiteObservations, state.siteObsSatSettings, Array.from(modelRunVectorLayers)),
   );
@@ -115,7 +119,6 @@ watch([() => state.timestamp, () => state.filters, () => state.satellite, () => 
     state.timestamp,
     state.filters
   );
-
   openedModelRunIds.forEach(id => {
     setFilter(`sites-outline-${id}`, siteFilter);
     setFilter(`observations-fill-${id}`, observationFilter);
@@ -123,7 +126,7 @@ watch([() => state.timestamp, () => state.filters, () => state.satellite, () => 
     setFilter(`observations-text-${id}`, observationFilter);
   })
 
-  popupLogic(map);
+  setPopupEvents(map);
 });
 
 watch(

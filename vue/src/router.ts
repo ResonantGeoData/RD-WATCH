@@ -6,9 +6,10 @@ import { ApiService } from './client/services/ApiService'; // Import your ApiSer
 
 const routes = [
   { path: '/:region?/:selected?', component: RGD, props:true, },
+  { path: '/proposals/:region?/:selected?', component: Annotation, props:true, },
   { path: '/annotation/:region?/:selected?', component: Annotation, props:true, },
   { path: '/scoring/:region?/:selected?', component: RGD, props:true, },
-  { path: '/scoring/annotation/:region?/:selected?', component: Annotation, props:true, },
+  { path: '/scoring/proposals/:region?/:selected?', component: Annotation, props:true, },
 ]
 
 const router = createRouter({

@@ -1,5 +1,9 @@
 import io
+import json
 import logging
+import os
+import tempfile
+import zipfile
 from collections.abc import Iterable
 from datetime import datetime, timedelta
 
@@ -15,6 +19,7 @@ from django.utils import timezone
 
 from rdwatch.celery import app
 from rdwatch.models import (
+    AnnotationExport,
     HyperParameters,
     SatelliteFetching,
     SiteEvaluation,
@@ -33,8 +38,11 @@ from rdwatch.utils.raster_tile import get_raster_bbox
 from rdwatch.utils.worldview_processed.raster_tile import (
     get_worldview_processed_visual_bbox,
 )
+from rdwatch.views.site_evaluation import get_site_model_feature_JSON
 
 logger = logging.getLogger(__name__)
+
+BaseTime = '2013-01-01'  # lowest time to use if time is null for observations
 
 
 def is_inside_range(
@@ -55,17 +63,22 @@ def get_siteobservations_images(
     self,
     site_eval_id: int,
     baseConstellation='WV',
-    force=False,
+    force=False,  # forced downloading found_timestamps again
     dayRange=14,
     no_data_limit=50,
+    overrideDates: None | list[datetime, datetime] = None,
 ) -> None:
     constellationObj = Constellation.objects.filter(slug=baseConstellation).first()
+    # Ensure we are using ints for the DayRange and no_data_limit
+    dayRange = int(dayRange)
+    no_data_limit = int(no_data_limit)
     site_observations = SiteObservation.objects.filter(
         siteeval=site_eval_id
     )  # need a full list for min/max times
     site_obs_count = SiteObservation.objects.filter(
         siteeval=site_eval_id, constellation_id=constellationObj.pk
     ).count()
+
     transformer = Transformer.from_crs('EPSG:3857', 'EPSG:4326')
     found_timestamps = {}
     min_time = datetime.max
@@ -73,6 +86,16 @@ def get_siteobservations_images(
     max_bbox = [float('inf'), float('inf'), float('-inf'), float('-inf')]
     matchConstellation = ''
     baseSiteEval = None
+    if site_obs_count == 0:
+        baseSiteEval = SiteEvaluation.objects.get(pk=site_eval_id)
+        mercator: tuple[float, float, float, float] = baseSiteEval.geom.extent
+        tempbox = transformer.transform_bounds(
+            mercator[0], mercator[1], mercator[2], mercator[3]
+        )
+        bbox = [tempbox[1], tempbox[0], tempbox[3], tempbox[2]]
+        bbox = scale_bbox(bbox, 1.2)
+        max_bbox = get_max_bbox(bbox, max_bbox)
+
     # First we gather all images that match observations
     count = 0
     for observation in site_observations.iterator():
@@ -86,8 +109,9 @@ def get_siteobservations_images(
                 'siteEvalId': site_eval_id,
             },
         )
-        min_time = min(min_time, observation.timestamp)
-        max_time = max(max_time, observation.timestamp)
+        if observation.timestamp is not None:
+            min_time = min(min_time, observation.timestamp)
+            max_time = max(max_time, observation.timestamp)
         mercator: tuple[float, float, float, float] = observation.geom.extent
         tempbox = transformer.transform_bounds(
             mercator[0], mercator[1], mercator[2], mercator[3]
@@ -99,7 +123,8 @@ def get_siteobservations_images(
         timestamp = observation.timestamp
         constellation = observation.constellation
         # We need to grab the image for this timerange and type
-        if str(constellation) == baseConstellation:
+        logger.warning(timestamp)
+        if str(constellation) == baseConstellation and timestamp is not None:
             baseSiteEval = observation.siteeval
             matchConstellation = constellation
             found = SiteImage.objects.filter(
@@ -171,8 +196,17 @@ def get_siteobservations_images(
 
     # Now we need to go through and find all other images
     # that exist in the start/end range of the siteEval
+    if overrideDates:
+        min_time = datetime.strptime(overrideDates[0], '%Y-%m-%d')
+        max_time = datetime.strptime(overrideDates[1], '%Y-%m-%d')
+    else:
+        if min_time == datetime.max:
+            min_time = datetime.strptime(BaseTime, '%Y-%m-%d')
+        if max_time == datetime.min:
+            max_time = datetime.now()
     timebuffer = ((max_time + timedelta(days=30)) - (min_time - timedelta(days=30))) / 2
     timestamp = (min_time + timedelta(days=30)) + timebuffer
+
     # Now we get a list of all the timestamps and captures that fall in this range.
     worldView = baseConstellation == 'WV'
     if matchConstellation == '':
@@ -182,6 +216,7 @@ def get_siteobservations_images(
         logger.warning(
             f'Utilizing Constellation: {matchConstellation} - {matchConstellation.slug}'
         )
+
     captures = get_range_captures(
         max_bbox, timestamp, matchConstellation, timebuffer, worldView
     )
@@ -199,6 +234,7 @@ def get_siteobservations_images(
     ):  # We need to grab the siteEvaluation directly for a reference
         baseSiteEval = SiteEvaluation.objects.filter(pk=site_eval_id).first()
     count = 0
+    logger.warning(f'Found {len(captures)} captures')
     for (
         capture
     ) in (
@@ -235,7 +271,7 @@ def get_siteobservations_images(
             percent_black = get_percent_black_pixels(bytes)
             cloudcover = capture.cloudcover
             count += 1
-            output = f'tile_image_{observation.siteeval}_nonobs_{count}.jpg'
+            output = f'tile_image_{baseSiteEval.pk}_nonobs_{count}.jpg'
             image = File(io.BytesIO(bytes), name=output)
             imageObj = Image.open(io.BytesIO(bytes))
             if image is None:  # No null/None images should be set
@@ -295,3 +331,41 @@ def delete_temp_model_runs_task() -> None:
         ).delete()
         SiteEvaluation.objects.filter(configuration__in=model_runs_to_delete).delete()
         model_runs_to_delete.delete()
+
+
+@shared_task
+def delete_export_files() -> None:
+    """Delete all S3 Export Files that are over an hour old."""
+    exports_to_delete = AnnotationExport.objects.filter(
+        created__lte=timezone.now() - timedelta(hours=1)
+    )
+    exports_to_delete.delete()
+
+
+@app.task(bind=True)
+def download_annotations(self, id: int):
+    # Needs to go through the siteEvaluations and download one for each file
+    site_evals = SiteEvaluation.objects.filter(configuration_id=id)
+    configuration = HyperParameters.objects.get(pk=id)
+    task_id = self.request.id
+    temp_zip_file = tempfile.NamedTemporaryFile(delete=False, suffix='.zip')
+
+    with tempfile.TemporaryDirectory() as temp_dir:
+        file_list = []
+        for item in site_evals.iterator():
+            data, site_id = get_site_model_feature_JSON(item.pk)
+            file_name = os.path.join(temp_dir, f'{site_id}.json')
+            with open(file_name, 'w') as file:
+                json.dump(data, file)
+            file_list.append({'filename': file_name, 'siteId': site_id})
+        with zipfile.ZipFile(temp_zip_file, 'w') as zipf:
+            for item in file_list:
+                zipf.write(item['filename'], f"{item['siteId']}.json")
+        annotation_export = AnnotationExport.objects.create(
+            configuration=configuration,
+            name=configuration.title,
+            celery_id=task_id,
+            created=datetime.now(),
+        )
+        annotation_export.export_file.save(f'{task_id}.zip', File(temp_zip_file))
+        temp_zip_file.close()

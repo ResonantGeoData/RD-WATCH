@@ -107,7 +107,11 @@ def get_queryset():
                 ),
                 region=JSONObject(id=Value(-1), name='region'),
                 score=None,
-                numsites=Count('site', filter=F('performer') == F('site__originator')),
+                numsites=Count(
+                    'site__site_id',
+                    filter=F('performer') == F('site__originator'),
+                    distinct=True,
+                ),
                 evaluation='evaluation_number',
                 evaluation_run='evaluation_run_number',
                 timerange=TimeRangeJSON(

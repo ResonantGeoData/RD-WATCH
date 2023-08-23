@@ -79,11 +79,11 @@ export interface SiteObservationJob {
 
 export interface SiteObservation {
   id: number;
-  scoringBase: ScoringBase;
+  scoringBase?: ScoringBase;
   timerange: {
     min: number;
     max: number;
-  },
+  } | null,
   imagesLoaded: boolean;
   imageCounts: {
     L8: {total:number, unmatched:number | null, loaded: number, images?: SiteObservationImage[]};
@@ -162,7 +162,7 @@ export const state = reactive<{
     groundTruthPattern: false,
     otherPattern: false,
   },
-  mapLegend: false,
+  mapLegend: true,
   satellite: {
     satelliteImagesOn: false,
     satelliteTimeList:[],
@@ -208,7 +208,7 @@ export const selectedObservationList = computed(() => {
 })
 
 
-export const getSiteObservationDetails = async (siteId: string, scoringBase: ScoringBase) => {
+export const getSiteObservationDetails = async (siteId: string, scoringBase?: ScoringBase, select=true) => {
   const data = await ApiService.getSiteObservations(siteId);
   const { results } = data;
   const { images } = data;
@@ -266,9 +266,64 @@ export const getSiteObservationDetails = async (siteId: string, scoringBase: Sco
   job: data.job,
   bbox: data.bbox,
 };
-  if (foundIndex === -1) {
+  if (foundIndex === -1 && select) {
     state.selectedObservations.push(obsData)
   } else {
     state.selectedObservations.splice(foundIndex, 1, obsData)
   }
+  return obsData;
+}
+
+export const toggleSatelliteImages = (siteObs: SiteObservation, off= false) => {
+  const found = state.enabledSiteObservations.find((item) => item.id === siteObs.id);
+  if (found === undefined && !off) {
+      const baseBBox = siteObs.bbox;
+      const bbox = [
+          [baseBBox.xmin, baseBBox.ymax],
+          [baseBBox.xmax, baseBBox.ymax],
+          [baseBBox.xmax, baseBBox.ymin],
+          [baseBBox.xmin, baseBBox.ymin],
+      ] as ImageBBox;
+      if (siteObs.imageCounts.WV.images || siteObs.imageCounts.S2.images) {
+          const tempArr = [...state.enabledSiteObservations];
+          let imageList: SiteObservationImage[] = [];
+          if (siteObs.imageCounts.WV.images && state.siteObsSatSettings.observationSources.includes('WV')) {
+            imageList = [...siteObs.imageCounts.WV.images]
+          }
+          if (siteObs.imageCounts.S2.images && state.siteObsSatSettings.observationSources.includes('S2')) {
+            imageList = [...imageList, ...siteObs.imageCounts.S2.images]
+          }
+          if (siteObs.imageCounts.L8.images && state.siteObsSatSettings.observationSources.includes('L8')) {
+            imageList = [...imageList, ...siteObs.imageCounts.L8.images]
+          }
+          tempArr.push({
+              id: siteObs.id,
+              timestamp: siteObs.timerange ? siteObs.timerange.min : 0,
+              images: imageList,
+              bbox,
+          });
+          state.enabledSiteObservations = tempArr;
+      }
+  } else {
+      const tempArr = [...state.enabledSiteObservations];
+      const index = tempArr.findIndex((item) => item.id === siteObs.id);
+      if (index !== -1) {
+          tempArr.splice(index, 1);
+          state.enabledSiteObservations = tempArr;
+      }
+  }
+}
+
+export const loadAndToggleSatelliteImages = async (siteId: string) => {
+  const index = state.enabledSiteObservations.findIndex((item) => item.id === parseInt(siteId, 10));
+  if (index !== -1) {
+    const tempArr = [...state.enabledSiteObservations];
+    tempArr.splice(index, 1);
+    state.enabledSiteObservations = tempArr;
+  } else {
+  const data = await getSiteObservationDetails(siteId, undefined, false);
+  toggleSatelliteImages(data);
+  }
+  
+
 }

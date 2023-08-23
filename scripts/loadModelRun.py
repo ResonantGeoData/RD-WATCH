@@ -36,6 +36,7 @@ def main():
         default="TE",
         help='Performer shortcode (default: "TE")',
     )
+    parser.add_argument("--proposal", default=False, action=argparse.BooleanOptionalAction, help="Marks all siteModels as proposals")
     parser.add_argument("--eval_num", default=None, type=int, help="Evaluation Number")
     parser.add_argument(
         "--eval_run_num", default=None, type=int, help="Evaluation  Run Number"
@@ -52,6 +53,7 @@ def upload_to_rgd(
     rgd_auth_cookie,
     title="Ground Truth",
     performer_shortcode="TE",
+    proposal=None,
     eval_num=None,
     eval_run_num=None,
     expiration_time=None,
@@ -97,6 +99,8 @@ def upload_to_rgd(
             post_model_data["evaluation"] = eval_num
         if eval_run_num is not None:
             post_model_data["evaluation_run"] = eval_run_num
+        if proposal is not None:
+            post_model_data["proposal"] = True
         if title == "Ground Truth":
             post_model_data["parameters"] = {"ground_truth": True}
 

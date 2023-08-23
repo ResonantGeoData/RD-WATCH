@@ -18,7 +18,6 @@ urlpatterns = [
         name='openapi-schema',
     ),
     path('status', views.RetrieveServerStatus.as_view()),  # type: ignore
-    path('evaluations/<int:pk>', views.site_observations),
     path('satellite-image/timestamps', views.satelliteimage_time_list),
     path('satellite-image/all-timestamps', views.all_satellite_timestamps),
     path(
@@ -41,13 +40,5 @@ urlpatterns = [
         'satellite-image/visual-tile/<int:z>/<int:x>/<int:y>.webp',
         views.satelliteimage_visual_tile,
         name='satellite-visual-tiles',
-    ),
-    path(
-        'observations/<int:pk>/generate-images',
-        views.get_site_observation_images,
-    ),
-    path(
-        'observations/<int:pk>/cancel-generate-images',
-        views.cancel_site_observation_images,
     ),
 ]

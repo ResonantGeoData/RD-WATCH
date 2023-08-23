@@ -31,13 +31,13 @@ class SiteEvaluationSerializer(serializers.Serializer):
     performer = PerformerSerializer()
     score = serializers.FloatField()
     timestamp = serializers.IntegerField()
-    timerange = TimeRangeSerializer()
+    timerange = TimeRangeSerializer(required=False, allow_null=True)
     bbox = BoundingBoxSerializer()
 
 
 class SiteEvaluationListSerializer(serializers.Serializer):
     count = serializers.IntegerField()
-    timerange = TimeRangeSerializer()
+    timerange = TimeRangeSerializer(required=False, allow_null=True)
     bbox = BoundingBoxSerializer()
     performers = serializers.ListField()
     results = SiteEvaluationSerializer(many=True)

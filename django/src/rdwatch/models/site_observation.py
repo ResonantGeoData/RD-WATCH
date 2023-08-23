@@ -45,7 +45,9 @@ class SiteObservation(models.Model):
     )
     timestamp = models.DateTimeField(
         help_text="The source image's timestamp",
+        null=True,
     )
+    notes = models.TextField(null=True, blank=True)
 
     def __str__(self):
         sit = str(self.siteeval)
@@ -121,3 +123,32 @@ class SiteObservation(models.Model):
     class Meta:
         default_related_name = 'observations'
         indexes = [GistIndex(fields=['timestamp']), GistIndex(fields=['score'])]
+
+
+class SiteObservationTracking(models.Model):
+    edited = models.DateTimeField()
+    siteeval = models.ForeignKey(
+        to='SiteEvaluation',
+        on_delete=models.CASCADE,
+        db_index=True,
+    )
+    label = models.ForeignKey(
+        to='ObservationLabel',
+        on_delete=models.PROTECT,
+        db_index=True,
+    )
+    score = models.FloatField(
+        help_text='Evaluation accuracy',
+    )
+    geom = PolygonField(
+        help_text='Footprint of site observation',
+        srid=3857,
+        spatial_index=True,
+    )
+    observation = models.ForeignKey(
+        to='SiteObservation',
+        on_delete=models.CASCADE,
+        db_index=True,
+        related_name='base_site_observation',
+    )
+    notes = models.TextField(null=True, blank=True)

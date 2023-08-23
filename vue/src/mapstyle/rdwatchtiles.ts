@@ -173,7 +173,7 @@ export const buildSourceFilter = (modelRunIds: number[]) => {
     const source = `vectorTileSource_${id}`;
     results[source] = {
       type: "vector",
-      tiles: [`${urlRoot}/api/model-runs/${id}/vector-tile/{z}/{x}/{y}.pbf/`],
+      tiles: [`${urlRoot}/api/scoring/model-runs/${id}/vector-tile/{z}/{x}/{y}.pbf/`],
       minzoom: 0,
       maxzoom: 14,
     };

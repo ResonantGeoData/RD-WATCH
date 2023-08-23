@@ -74,7 +74,7 @@ const startDownload = (data: DownloadSettings) => {
   }, 2000)
 }
 
-const cancelDownload = () => { 
+const cancelDownload = () => {
   ApiService.cancelModelRunsImageTask(props.modelRun.id);
 }
 
@@ -101,7 +101,7 @@ const checkDownloadStatus = async () => {
   if (taskId.value) {
     const status = await ApiService.getModelRunDownloadStatus(taskId.value);
     if (status === 'SUCCESS') {
-      const url = `/api/model-runs/${props.modelRun.id}/download?task_id=${taskId.value}`
+      const url = `/api/scoring/model-runs/${props.modelRun.id}/download?task_id=${taskId.value}`
       window.location.assign(url);
       downloadingModelRun.value = false;
     } else if (['REVOKED', 'FAILURE'].includes(status)) {

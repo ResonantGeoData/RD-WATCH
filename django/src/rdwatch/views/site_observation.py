@@ -11,10 +11,8 @@ from django.core.files.storage import default_storage
 from django.db import transaction
 from django.db.models import Count, Max, Min
 from django.db.models.functions import JSONObject  # type: ignore
-from django.http import HttpRequest
+from django.http import Http404, HttpRequest
 from django.shortcuts import get_object_or_404
-from rest_framework import status
-from rest_framework.exceptions import NotFound
 
 from rdwatch.db.functions import BoundingBox, ExtractEpoch
 from rdwatch.models import (
@@ -87,7 +85,7 @@ class SiteObservationsListSchema(Schema):
 @router.get('/{evaluation_id}/', response={200: SiteObservationsListSchema})
 def site_observations(request: HttpRequest, evaluation_id: int):
     if not SiteEvaluation.objects.filter(pk=evaluation_id).exists():
-        raise NotFound()
+        raise Http404()
     site_eval_data = SiteEvaluation.objects.filter(pk=evaluation_id).aggregate(
         timerange=JSONObject(
             min=ExtractEpoch(Min('start_date')),
@@ -193,7 +191,7 @@ def get_site_observation_images(
             # If the task already exists and is running, return a 409 and do not
             # start another one.
             if fetching_task.status == SatelliteFetching.Status.RUNNING:
-                return status.HTTP_409_CONFLICT, 'Image generation already in progress.'
+                return 409, 'Image generation already in progress.'
             # Otherwise, if the task exists but is *not* running, set the status
             # to running and kick off the task
             fetching_task.status = SatelliteFetching.Status.RUNNING

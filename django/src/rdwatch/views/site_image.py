@@ -5,8 +5,7 @@ from django.contrib.postgres.aggregates import JSONBAgg
 from django.core.files.storage import default_storage
 from django.db.models import Count, F
 from django.db.models.functions import JSONObject  # type: ignore
-from django.http import HttpRequest
-from rest_framework.exceptions import NotFound
+from django.http import Http404, HttpRequest
 
 from rdwatch.db.functions import BoundingBox, ExtractEpoch
 from rdwatch.models import SiteEvaluation, SiteImage, SiteObservation
@@ -57,7 +56,7 @@ class SiteImageResponse(Schema):
 @router.get('/{id}/', response=SiteImageResponse)
 def site_images(request: HttpRequest, id: int):
     if not SiteEvaluation.objects.filter(pk=id).exists():
-        raise NotFound()
+        raise Http404()
     else:
         site_eval_obj = SiteEvaluation.objects.get(pk=id)
     image_queryset = (

@@ -6,6 +6,7 @@ from datetime import datetime
 import iso3166
 from ninja import Field, FilterSchema, Query, Router, Schema
 
+from django.conf import settings
 from django.contrib.gis.db.models.aggregates import Collect
 from django.contrib.gis.db.models.functions import Transform
 from django.contrib.postgres.aggregates import JSONBAgg
@@ -15,7 +16,6 @@ from django.db.models import Count, Q, QuerySet
 from django.db.models.functions import JSONObject  # type: ignore
 from django.http import HttpRequest, HttpResponse
 from django.shortcuts import get_object_or_404
-from rest_framework.settings import api_settings
 
 from rdwatch.db.functions import BoundingBox, ExtractEpoch
 from rdwatch.models import SiteEvaluation, SiteEvaluationTracking, lookups
@@ -115,8 +115,13 @@ def list_site_evaluations(
     )
 
     # Pagination
-    assert api_settings.PAGE_SIZE, 'PAGE_SIZE must be set.'
-    limit = int(request.GET.get('limit', api_settings.PAGE_SIZE)) or sys.maxsize
+    assert (
+        settings.NINJA_PAGINATION_PAGE_SIZE
+    ), 'NINJA_PAGINATION_PAGE_SIZE must be set.'
+    limit = (
+        int(request.GET.get('limit', settings.NINJA_PAGINATION_PAGE_SIZE))
+        or sys.maxsize
+    )
     paginator = Paginator(queryset, limit)
     page = paginator.page(request.GET.get('page', 1))
 

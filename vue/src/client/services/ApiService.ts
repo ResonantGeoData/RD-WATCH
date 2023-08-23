@@ -134,7 +134,7 @@ export class ApiService {
   ): CancelablePromise<SiteObservationList> {
     return __request(OpenAPI, {
       method: "GET",
-      url:`${this.apiPrefix}/evaluations/{id}`,
+      url:`${this.apiPrefix}/observations/{id}/`,
       path: {
         id: id,
       },
@@ -494,7 +494,7 @@ export class ApiService {
   public static startModelRunDownload(id: number): CancelablePromise<string> {
     return __request(OpenAPI, {
       method: 'POST',
-      url: "/api/model-runs/{id}/download",
+      url: "/api/model-runs/{id}/download/",
       path: {
         id: id,
       },

@@ -19,15 +19,6 @@ if os.name == 'nt':
 # expect env vars to be set.
 values.Value.late_binding = True
 
-import os
-if os.name == 'nt':
-    OSGEO4W = r"C:\OSGeo4W"
-    assert os.path.isdir(OSGEO4W), "Directory does not exist: " + OSGEO4W
-    os.environ['OSGEO4W_ROOT'] = OSGEO4W
-    os.environ['GDAL_DATA'] = OSGEO4W + r"\share\gdal"
-    #os.environ['PROJ_LIB'] = OSGEO4W + r"\share\proj" //geoDjango PROJ_LIB conflicts
-    os.environ['PATH'] = OSGEO4W + r"\bin;" + os.environ['PATH']
-
 class BaseConfiguration(Configuration):
     ROOT_URLCONF = 'rdwatch.server.urls'
     USE_I18N = False

@@ -94,7 +94,7 @@ export interface DownloadSettings {
 export type CeleryStates = 'FAILURE' | 'PENDING' | 'SUCCESS' | 'RETRY' | 'REVOKED' | 'STARTED';
 
 export class ApiService {
-  private static apiPrefix = "/api/scoring";
+  public static apiPrefix = "/api/scoring";
 
   public static setApiPrefix(prefix: string) {
     ApiService.apiPrefix = prefix;
@@ -174,7 +174,7 @@ export class ApiService {
       ): CancelablePromise<boolean> {
         return __request(OpenAPI, {
           method: "POST",
-          url: `${this.apiPrefix}/scoring/model-runs/{id}/generate-images/`,
+          url: `${this.apiPrefix}/model-runs/{id}/generate-images/`,
           path: {
             id: id,
           },
@@ -211,7 +211,7 @@ export class ApiService {
       ): CancelablePromise<boolean> {
         return __request(OpenAPI, {
           method: "PUT",
-          url: `${this.apiPrefix}/scoring/model-runs/{id}/cancel-generate-images/`,
+          url: `${this.apiPrefix}/model-runs/{id}/cancel-generate-images/`,
           path: {
             id: id,
           },
@@ -227,7 +227,7 @@ export class ApiService {
   ): CancelablePromise<ModelRunList> {
     return __request(OpenAPI, {
       method: "GET",
-      url: `${this.apiPrefix}/scoring/model-runs`,
+      url: `${this.apiPrefix}/model-runs`,
       query: Object.fromEntries(
         Object.entries(query).filter(([key, value]) => value !== undefined)
       ),
@@ -241,7 +241,7 @@ export class ApiService {
     public static getModelRunEvaluations(id: number): CancelablePromise<ModelRunEvaluations> {
       return __request(OpenAPI, {
         method: "GET",
-        url: `${this.apiPrefix}/scoring/model-runs/{id}/evaluations`,
+        url: `${this.apiPrefix}/model-runs/{id}/evaluations`,
         path: {
           id: id,
         },
@@ -258,7 +258,7 @@ export class ApiService {
   public static getModelRun(id: number): CancelablePromise<ModelRun> {
     return __request(OpenAPI, {
       method: "GET",
-      url: `${this.apiPrefix}/scoring/model-runs/{id}`,
+      url: `${this.apiPrefix}/model-runs/{id}`,
       path: {
         id: id,
       },

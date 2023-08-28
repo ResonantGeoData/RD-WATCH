@@ -489,7 +489,7 @@ export class ApiService {
   public static startModelRunDownload(id: number): CancelablePromise<string> {
     return __request(OpenAPI, {
       method: 'POST',
-      url: "/api/model-runs/{id}/download",
+      url: "/api/model-runs/{id}/download/",
       path: {
         id: id,
       },

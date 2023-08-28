@@ -174,7 +174,6 @@ def get_queryset():
         .order_by('-groundtruth', '-id')
         .alias(
             region_id=F('evaluations__region_id'),
-            observation_count=Count('evaluations__observations'),
             evaluation_configuration=F('evaluations__configuration'),
             proposal_val=F('proposal'),
         )
@@ -230,17 +229,7 @@ def get_queryset():
                     min=ExtractEpoch(Min('evaluations__start_date')),
                     max=ExtractEpoch(Max('evaluations__end_date')),
                 ),
-                bbox=Case(
-                    # If there are no site observations associated with this
-                    # site evaluation, return the bbox of the site polygon.
-                    # Otherwise, return the bounding box of all observation
-                    # polygons.
-                    When(
-                        observation_count=0,
-                        then=BoundingBoxGeoJSON('evaluations__geom'),
-                    ),
-                    default=BoundingBoxGeoJSON('evaluations__observations__geom'),
-                ),
+                bbox=BoundingBoxGeoJSON('evaluations__geom'),
                 proposal='proposal_val',
                 adjudicated=Case(
                     When(

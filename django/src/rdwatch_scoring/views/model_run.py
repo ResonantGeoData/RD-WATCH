@@ -120,7 +120,7 @@ def get_queryset():
                 timestamp=ExtractEpoch('start_datetime'),
                 ground_truth=False,
                 # timerange=TimeRangeJSON('evaluations__observations__timestamp'),
-                bbox=BoundingBoxGeoJSON('site__geometry'),
+                bbox=BoundingBoxGeoJSON('site__union_geometry'),
             )
         )
     )
@@ -156,7 +156,7 @@ def list_model_runs(
         aggregate |= queryset.defer('json').aggregate(
             # Use the region polygon for the bbox if it exists.
             # Otherwise, fall back on the site polygon.
-            bbox=BoundingBoxGeoJSON('site__observation__geometry'),
+            bbox=BoundingBoxGeoJSON('site__union_geometry'),
         )
 
     return 200, aggregate

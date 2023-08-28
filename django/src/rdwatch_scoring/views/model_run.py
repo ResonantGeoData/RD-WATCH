@@ -120,7 +120,7 @@ def get_queryset():
                 timestamp=ExtractEpoch('start_datetime'),
                 ground_truth=False,
                 # timerange=TimeRangeJSON('evaluations__observations__timestamp'),
-                bbox=BoundingBoxGeoJSON('site__observation__geometry'),
+                bbox=BoundingBoxGeoJSON('site__geometry'),
             )
         )
     )

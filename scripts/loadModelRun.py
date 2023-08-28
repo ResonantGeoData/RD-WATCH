@@ -99,7 +99,7 @@ def upload_to_rgd(
             post_model_data["evaluation"] = eval_num
         if eval_run_num is not None:
             post_model_data["evaluation_run"] = eval_run_num
-        if proposal is not None:
+        if proposal is True:
             post_model_data["proposal"] = True
         if title == "Ground Truth":
             post_model_data["parameters"] = {"ground_truth": True}

@@ -85,7 +85,7 @@ class HyperParametersListSchema(Schema):
 
 def get_queryset():
     return (
-        EvaluationRun.objects #.select_related('site', 'observation')
+        EvaluationRun.objects.select_related('site', 'observation')
         .order_by(
             'start_datetime',
         )
@@ -107,20 +107,20 @@ def get_queryset():
                 ),
                 region=JSONObject(id=Value(-1), name='region'),
                 score=None,
-                # numsites=Count(
-                #     'site__site_id',
-                #     filter=F('performer') == F('site__originator'),
-                #     distinct=True,
-                # ),
+                numsites=Count(
+                    'site__site_id',
+                    filter=F('performer') == F('site__originator'),
+                    distinct=True,
+                ),
                 evaluation='evaluation_number',
                 evaluation_run='evaluation_run_number',
-                # timerange=TimeRangeJSON(
-                #     'site__start_date', 'site__end_date', 'performer', 'site_originator'
-                # ),
+                timerange=TimeRangeJSON(
+                    'site__start_date', 'site__end_date', 'performer', 'site_originator'
+                ),
                 timestamp=ExtractEpoch('start_datetime'),
                 ground_truth=False,
                 # timerange=TimeRangeJSON('evaluations__observations__timestamp'),
-                # bbox=BoundingBoxGeoJSON('site__observation__geometry'),
+                bbox=BoundingBoxGeoJSON('site__union_geometry'),
             )
         )
     )
@@ -145,13 +145,12 @@ def list_model_runs(
     print(total_model_run_count)
 
     subquery = queryset[(page - 1) * limit : page * limit] if limit else queryset
-    aggregate = {}
-    # queryset.defer('json').aggregate(
-    #     timerange=TimeRangeJSON(
-    #         'site__start_date', 'site__end_date', 'performer', 'site_originator'
-    #     ),
-    #     results=AggregateArraySubquery(subquery.values('json')),
-    # )
+    aggregate = queryset.defer('json').aggregate(
+        timerange=TimeRangeJSON(
+            'site__start_date', 'site__end_date', 'performer', 'site_originator'
+        ),
+        results=AggregateArraySubquery(subquery.values('json')),
+    )
 
     aggregate['count'] = total_model_run_count
 
@@ -159,7 +158,7 @@ def list_model_runs(
         aggregate |= queryset.defer('json').aggregate(
             # Use the region polygon for the bbox if it exists.
             # Otherwise, fall back on the site polygon.
-            bbox=BoundingBoxGeoJSON('site__observation__geometry'),
+            bbox=BoundingBoxGeoJSON('site__union_geometry'),
         )
 
     return 200, aggregate

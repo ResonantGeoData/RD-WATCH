@@ -42,6 +42,7 @@ pillow = "^9.5.0"
 django-configurations = {extras = ["database", "email"], version = "^2.4.1"}
 django-storages = {extras = ["boto3"], version = "^1.13.2"}
 django-celery-results = "^2.5.1"
+werkzeug = "^2.3.7"
 
 [tool.poetry.group.dev.dependencies]
 black = "^23.3.0"

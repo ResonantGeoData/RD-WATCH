@@ -167,7 +167,7 @@ watch(() => props.compact, () => {
 .compactMap {
   position: fixed;
   width: 100%;
-  max-height:50vh;
+  max-height:70vh;
   height: 50vh;
   z-index: -1;
   inset: 0;

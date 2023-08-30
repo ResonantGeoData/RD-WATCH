@@ -64,7 +64,7 @@ const currentDate = ref('');
 const hasGroundTruth = ref(false);
 const groundTruth: Ref<EvaluationImageResults['groundTruth'] | null > = ref(null);
 const drawGroundTruth = ref(false);
-const labelList = computed(() => styles.filter((item) => item.labelType === 'observation').map((item) => item.label));
+//const labelList = computed(() => styles.filter((item) => item.labelType === 'observation').map((item) => item.label));
 const siteEvaluationList = computed(() => styles.filter((item) => item.labelType === 'sites').map((item) => item.label));
 const getClosestPoly = (timestamp: number, polys: EvaluationGeoJSON[], evaluationPoly: EvaluationGeoJSON['geoJSON'], siteEvalLabel: string) => {
   if (polys.length === 0) {
@@ -313,6 +313,7 @@ watch([currentImage, imageRef, filteredImages, drawGroundTruth], () => {
 
 });
 
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
 const updateTime = (time: any, date: 'StartDate' | 'EndDate') => {
   if (time === null) {
     if (date === 'StartDate') {
@@ -373,6 +374,7 @@ const setSiteModelStatus = async (status: SiteModelStatus) => {
   <v-card
     class="pa-4"
     :class="{review: !dialog}"
+    style="top:40vh !important; height:60vh"
   >
     <v-row
       v-if="dialog"
@@ -392,7 +394,7 @@ const setSiteModelStatus = async (status: SiteModelStatus) => {
     >
       <v-row dense>
         <v-col
-          v-if="editable"
+          v-if="!dialog"
           style="max-width:20px"
         >
           <v-tooltip

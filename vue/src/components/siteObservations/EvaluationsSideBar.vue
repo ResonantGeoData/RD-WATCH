@@ -53,14 +53,15 @@ onUnmounted(() => {
     class="px-5 pb-5 site-eval-card"
   >
     <v-row>
-      <h1 class="mx-4 mt-2">
-        Selected Evaluations
-      </h1>
+      <h4 class="mx-4 mt-2">
+        {{ state.selectedObservations.length > 1 ? 'Selected Sites': 'Selected Site' }}
+      </h4>
     </v-row>
 
     <v-row>
       <v-btn
-        size="small"
+        size="x-small"
+        class="ml-5"
         @click="clearAll()"
       >
         Clear All

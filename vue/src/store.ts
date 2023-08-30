@@ -120,6 +120,10 @@ export interface siteObsSatSettings {
   imageOpacity: number;
 }
 
+export interface SelectionSettings {
+  singleSelect: boolean; // Only select one site at a time
+  openDetails: boolean; // Open the detailed viewer when selecting
+}
 export interface KeyedModelRun extends ModelRun {
   key: string;
 }
@@ -127,6 +131,12 @@ export interface KeyedModelRun extends ModelRun {
 export const state = reactive<{
   timestamp: number;
   timeMin: number;
+  openSiteDetails: boolean,
+  selectedSiteDetails: {
+    id: number;
+    name: string;
+    dateRange?: number[] | null;
+  } | null,
   settings: {
     autoZoom: boolean;
   };
@@ -142,6 +152,7 @@ export const state = reactive<{
   selectedObservations: SiteObservation[];
   enabledSiteObservations: EnabledSiteObservations[],
   siteObsSatSettings: siteObsSatSettings,
+  selectionSettings: SelectionSettings,
   loopingInterval: NodeJS.Timeout | null,
   loopingId: number | null,
   modelRuns: KeyedModelRun[],
@@ -149,6 +160,8 @@ export const state = reactive<{
 }>({
   timestamp: Math.floor(Date.now() / 1000),
   timeMin: new Date(0).valueOf(),
+  openSiteDetails: false,
+  selectedSiteDetails: null,
   settings: {
     autoZoom: false,
   },
@@ -186,6 +199,10 @@ export const state = reactive<{
     cloudCoverFilter: 70,
     percentBlackFilter: 70,
     imageOpacity: 100.0,
+  },
+  selectionSettings: {
+    singleSelect: true,
+    openDetails: false,
   },
   loopingInterval: null,
   loopingId: null,
@@ -266,6 +283,9 @@ export const getSiteObservationDetails = async (siteId: string, scoringBase?: Sc
   job: data.job,
   bbox: data.bbox,
 };
+  if (state.selectionSettings.singleSelect) {
+    state.selectedObservations = [];
+  }
   if (foundIndex === -1 && select) {
     state.selectedObservations.push(obsData)
   } else {

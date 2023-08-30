@@ -29,87 +29,142 @@ const cloudFilter = computed({
       state.siteObsSatSettings = { ...state.siteObsSatSettings, imageOpacity: val };
     },
   });
-  
+
+  const singleSelect = computed({
+    get() {
+      return state.selectionSettings.singleSelect;
+    },
+    set(val: boolean) {
+      state.selectionSettings = { ...state.selectionSettings, singleSelect: val };
+    },
+  });
+
+  const openDetails = computed({
+    get() {
+      return state.selectionSettings.openDetails;
+    },
+    set(val: boolean) {
+      state.selectionSettings = { ...state.selectionSettings, openDetails: val };
+    },
+  });
+
 </script>
 
 <template>
-  <div style="border: 1px solid black; padding:5px">
-    <v-row
-      dense
-      justify="center"
-      align="center"
-    >
-      <v-col cols="3">
-        <span class="setting-label">Cloud Cover:</span>
-      </v-col>
-      <v-col cols="7">
-        <v-slider
-          v-model.number="cloudFilter"
-          min="0"
-          max="100"
-          step="1"
-          color="primary"
-          density="compact"
-          class="mt-5"
-        />
-      </v-col>
-      <v-col>
-        <span class="pl-2 setting-label">
-          {{ cloudFilter }}%
-        </span>
-      </v-col>
-    </v-row>
-    <v-row
-      dense
-      justify="center"
-      align="center"
-    >
-      <v-col cols="3">
-        <span class="setting-label">NoData:</span>
-      </v-col>
-      <v-col cols="7">
-        <v-slider
-          v-model.number="percentBlackFilter"
-          min="0"
-          max="100"
-          step="1"
-          color="primary"
-          density="compact"
-          class="mt-5"
-        />
-      </v-col>
-      <v-col>
-        <span class="pl-2 setting-label">
-          {{ percentBlackFilter }}%
-        </span>
-      </v-col>
-    </v-row>
-    <v-row
-      dense
-      justify="center"
-      align="center"
-    >
-      <v-col cols="3">
-        <span class="setting-label">Image Opacity:</span>
-      </v-col>
-      <v-col cols="7">
-        <v-slider
-          v-model.number="imageOpacity"
-          min="0"
-          max="100"
-          step="1"
-          color="primary"
-          density="compact"
-          class="mt-5"
-        />
-      </v-col>
-      <v-col>
-        <span class="pl-2 setting-label">
-          {{ imageOpacity }}%
-        </span>
-      </v-col>
-    </v-row>
-  </div>
+  <v-expansion-panels
+    variant="accordion"
+    class="pa-0 ma-0 mb-2"
+  >
+    <v-expansion-panel key="Selection">
+      <v-expansion-panel-title>Selection Settings</v-expansion-panel-title>
+      <v-expansion-panel-text>
+        <v-row
+          dense
+          justify="center"
+          align="center"
+        >
+          <v-checkbox
+            v-model="singleSelect"
+            density="compact"
+            label="Single Selection"
+            class="pa-0 ma-0"
+          />
+        </v-row>
+        <v-row
+          dense
+          justify="center"
+          align="center"
+        >
+          <v-checkbox
+            v-model="openDetails"
+            density="compact"
+            label="Open Details on Select"
+          />
+        </v-row>
+      </v-expansion-panel-text>
+    </v-expansion-panel>
+
+    <v-expansion-panel key="Images">
+      <v-expansion-panel-title>Image Settings</v-expansion-panel-title>
+      <v-expansion-panel-text>
+        <v-row
+          dense
+          justify="center"
+          align="center"
+        >
+          <v-col cols="3">
+            <span class="setting-label">Cloud Cover:</span>
+          </v-col>
+          <v-col cols="6">
+            <v-slider
+              v-model.number="cloudFilter"
+              min="0"
+              max="100"
+              step="1"
+              color="primary"
+              density="compact"
+              class="mt-5"
+            />
+          </v-col>
+          <v-col>
+            <span class="pl-2 setting-label">
+              {{ cloudFilter }}%
+            </span>
+          </v-col>
+        </v-row>
+        <v-row
+          dense
+          justify="center"
+          align="center"
+        >
+          <v-col cols="3">
+            <span class="setting-label">NoData:</span>
+          </v-col>
+          <v-col cols="6">
+            <v-slider
+              v-model.number="percentBlackFilter"
+              min="0"
+              max="100"
+              step="1"
+              color="primary"
+              density="compact"
+              class="mt-5"
+            />
+          </v-col>
+          <v-col>
+            <span class="pl-2 setting-label">
+              {{ percentBlackFilter }}%
+            </span>
+          </v-col>
+        </v-row>
+        <v-row
+          dense
+          justify="center"
+          align="center"
+        >
+          <v-col cols="3">
+            <span class="setting-label">Image Opacity:</span>
+          </v-col>
+          <v-col cols="6">
+            <v-slider
+              v-model.number="imageOpacity"
+              min="0"
+              max="100"
+              step="1"
+              color="primary"
+              density="compact"
+              class="mt-5"
+            />
+          </v-col>
+          <v-col>
+            <span class="pl-2 setting-label">
+              {{ imageOpacity }}%
+            </span>
+          </v-col>
+        </v-row>
+      </v-expansion-panel-text>
+    </v-expansion-panel>
+  </v-expansion-panels>
 </template>
 
 <style scoped>

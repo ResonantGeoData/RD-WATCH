@@ -26,6 +26,7 @@ const download = () => {
     })
 }
 
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
 const updateTime = (time: any, date: 'StartDate' | 'EndDate') => {
     if (date === 'StartDate') {
       overrideDates.value[0] = new Date(time as string).toISOString().split('T')[0];

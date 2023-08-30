@@ -5,7 +5,7 @@ import { SiteObservation } from "../../store";
 import { imageFilter } from "../../mapstyle/images";
 import EvaluationImages from "./EvaluationImages.vue";
 import EvaluationScoring from "./EvaluationScoring.vue";
-import ImageViewerButton from "../imageViewer/ImageViewerButton.vue";
+import OpenDetailsButton from "../imageViewer/OpenDetailsButton.vue";
 import { timeRangeFormat } from "../../utils";
 const props = defineProps<{
   siteObservation: SiteObservation;
@@ -96,7 +96,19 @@ const changeTimstamp = ({dir, loop}: {dir: number, loop: boolean}) => {
 }
 
 
-const hasLoadedImages = computed(() => (Object.entries(props.siteObservation.imageCounts).findIndex(([,data]) => data.loaded > 0) !== -1));
+const selectedName = computed(() => {
+  if (props.siteObservation.scoringBase) {
+  return `${state.regionMap[props.siteObservation.scoringBase.regionId]}_${props.siteObservation.scoringBase.siteNumber.toString().padStart(4, '0')}`;
+  }
+  return '';
+})
+
+const dateRange = computed(() => {
+    if (props.siteObservation.timerange) {
+    return [props.siteObservation.timerange?.min, props.siteObservation.timerange?.max]
+    }
+    return null;
+});
 
 </script>
 
@@ -110,7 +122,7 @@ const hasLoadedImages = computed(() => (Object.entries(props.siteObservation.ima
       >
         <v-col v-if="siteObservation.scoringBase">
           <span class="model-title">
-            {{ `${state.regionMap[siteObservation.scoringBase.regionId]}_${siteObservation.scoringBase.siteNumber.toString().padStart(4, '0')}` }}
+            {{ selectedName }}
           </span>
         </v-col>
         <v-col cols="1">
@@ -266,9 +278,11 @@ const hasLoadedImages = computed(() => (Object.entries(props.siteObservation.ima
         </v-icon>
       </v-row>
       <v-row>
-        <image-viewer-button
-          v-if="hasLoadedImages"
+        <open-details-button
+          v-if="!state.openSiteDetails"
           :site-eval-id="siteObservation.id"
+          :name="selectedName"
+          :date-range="dateRange"
         />
       </v-row>
     </v-card-text>

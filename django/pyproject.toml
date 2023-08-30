@@ -1,5 +1,5 @@
 [build-system]
-requires = [ "poetry-core>=1.4.2" ]
+requires = [ "poetry-core>=1.6.1" ]
 build-backend = "poetry.core.masonry.api"
 
 
@@ -53,6 +53,7 @@ flake8-django = "^1.2"
 pre-commit = "^3.3.1"
 tox = "^4.5.1"
 django-minio-storage = "^0.5.2"
+werkzeug = "^2.3.7"
 
 [tool.taskipy.tasks]
 "build:openapi" = "DJANGO_SETTINGS_MODULE=rdwatch.server.settings django-admin generateschema --format openapi-json --file openapi.json"

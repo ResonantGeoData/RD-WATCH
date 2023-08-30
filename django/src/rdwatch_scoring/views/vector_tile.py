@@ -41,7 +41,7 @@ def _get_vector_tile_cache_key(
 
 
 @router.get('/{hyper_parameters_id}/vector-tile/{z}/{x}/{y}.pbf/')
-def vector_tile(request: HttpRequest, hyper_parameters_id: int, z: int, x: int, y: int):
+def vector_tile(request: HttpRequest, hyper_parameters_id, z: int, x: int, y: int):
     timestamps: dict[
         Literal[
             'latest_evaluation_timestamp',

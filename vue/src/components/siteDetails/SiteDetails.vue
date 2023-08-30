@@ -385,11 +385,7 @@ const setSiteModelStatus = async (status: SiteModelStatus) => {
         mdi-close
       </v-icon>
     </v-row>
-    <v-card-title v-if="!editable">
-      Site Image Display
-    </v-card-title>
     <v-card-title
-      v-else
       class="edit-title"
     >
       <v-row dense>

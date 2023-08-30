@@ -2,7 +2,7 @@
 import SideBar from "../components/SideBar.vue"
 import MapLibre from "../components/MapLibre.vue";
 import RightBar from "../components/RightBar.vue"
-import ImageViewer from "../components/imageViewer/ImageViewer.vue"
+import SiteDetails from "../components/siteDetails/SiteDetails.vue"
 import { watch } from "vue";
 import { state } from "../store";
 
@@ -44,7 +44,7 @@ watch(() => state.regionMap, () => {
   </v-navigation-drawer>
   <v-main style="z-index:1">
     <MapLibre :compact="state.openSiteDetails && !!state.selectedSiteDetails && !!state.selectedObservations.length" />
-    <ImageViewer
+    <SiteDetails
       v-if="state.openSiteDetails && state.selectedSiteDetails && !!state.selectedObservations.length"
       :site-eval-id=" state.selectedSiteDetails.id"
       :site-evaluation-name="state.selectedSiteDetails.name"

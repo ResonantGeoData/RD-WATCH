@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { ref } from "vue";
-import ImageViewer from './ImageViewer.vue';
+import SiteDetails from './SiteDetails.vue';
 import { state } from '../../store'
 const props = defineProps<{
   siteEvalId: number;
@@ -34,7 +34,7 @@ const openDetailViewer = () => {
       v-model="displayImage"
       width="800"
     >
-      <ImageViewer
+      <SiteDetails
         :site-eval-id="siteEvalId"
         dialog
         @close="displayImage = false"

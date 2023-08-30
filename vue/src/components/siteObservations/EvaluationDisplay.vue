@@ -5,7 +5,7 @@ import { SiteObservation } from "../../store";
 import { imageFilter } from "../../mapstyle/images";
 import EvaluationImages from "./EvaluationImages.vue";
 import EvaluationScoring from "./EvaluationScoring.vue";
-import OpenDetailsButton from "../imageViewer/OpenDetailsButton.vue";
+import OpenDetailsButton from "../siteDetails/OpenDetailsButton.vue";
 import { timeRangeFormat } from "../../utils";
 const props = defineProps<{
   siteObservation: SiteObservation;

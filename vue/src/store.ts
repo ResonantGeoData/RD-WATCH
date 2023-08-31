@@ -4,7 +4,7 @@ import { ApiService, ModelRun, Region } from "./client";
 
 export interface MapFilters {
   configuration_id?: number[];
-  performer_id?: number[];
+  performer_ids?: number[];
   region_id?: number[];
   showSiteOutline?: boolean;
   groundTruthPattern?: boolean;

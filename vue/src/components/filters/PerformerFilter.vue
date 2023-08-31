@@ -4,42 +4,48 @@ import { ApiService, PerformerList } from "../../client";
 import type { Ref } from "vue";
 import type { Performer } from "../../client";
 
-type SelectedPerformer = Performer | null;
+type SelectedPerformers = Performer[];
 
 const props = defineProps<{
-  modelValue: SelectedPerformer;
+  modelValue: SelectedPerformers;
 }>();
 
 const emit = defineEmits<{
-  (e: "update:modelValue", performer: SelectedPerformer): void;
+  (e: "update:modelValue", performer: SelectedPerformers): void;
 }>();
 
 const performers: Ref<{value: number; title: string}[]> = ref([]);
-const selectedPerformer: Ref<number | undefined> = ref(props.modelValue?.id);
+const selectedPerformers: Ref<number[]> = ref(props.modelValue.map((item) => item.id));
 const performerList: Ref<PerformerList | null> = ref(null);
+const performerIdMap: Record<number, Performer> = {}
 watchEffect(async () => {
   performerList.value = await ApiService.getPerformers();
   const performerResults = performerList.value.items
   performerResults.sort((a, b) => (a.team_name > b.team_name ? 1 : -1))
-  performers.value = performerResults.map((item) => ({title: item.team_name, value: item.id }));
+  performers.value = [];
+  performerResults.forEach((item) => {
+    performerIdMap[item.id] = item;
+    performers.value.push({title: item.team_name, value: item.id });
+  })
 });
 
-watch(selectedPerformer, (val) => {
+watch(selectedPerformers, () => {
   if (performerList.value !== null) {
-    const newPerformer = performerList.value.items.find((item) => item.id === val);
-    if (newPerformer) {
-      emit("update:modelValue", newPerformer);
+    const newPerformers = selectedPerformers.value.map((item) => performerIdMap[item])
+    if (newPerformers.length) {
+      emit("update:modelValue", newPerformers);
       return;
     }
   }
-  emit("update:modelValue", null);
+  emit("update:modelValue", []);
 });
 </script>
 
 <template>
   <v-select
-    v-model="selectedPerformer"
+    v-model="selectedPerformers"
     clearable
+    multiple
     persistent-clear
     density="compact"
     variant="outlined"

@@ -1,5 +1,5 @@
 from django.contrib.gis.db import models
-
+from django_extensions.db.models import CreationDateTimeField
 
 class Addr(models.Model):
     gid = models.AutoField(primary_key=True)

@@ -1,5 +1,7 @@
 from django.contrib.gis.db import models
 from django_extensions.db.models import CreationDateTimeField
+from rdwatch_scoring.models import Region
+
 
 class Addr(models.Model):
     gid = models.AutoField(primary_key=True)
@@ -782,21 +784,6 @@ class Provenance(models.Model):
         managed = False
         app_label = 'rdwatch_scoring'
         db_table = 'provenance'
-
-
-class Region(models.Model):
-    id = models.CharField(primary_key=True, max_length=255)
-    start_date = models.DateField()
-    end_date = models.DateField()
-    crs = models.CharField(max_length=255, blank=True, null=True)
-    mgrs = models.CharField(max_length=255, blank=True, null=True)
-    geometry = models.TextField(blank=True, null=True)
-    area = models.FloatField(blank=True, null=True)
-
-    class Meta:
-        managed = False
-        app_label = 'rdwatch_scoring'
-        db_table = 'region'
 
 
 class SecondaryUnitLookup(models.Model):

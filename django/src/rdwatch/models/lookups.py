@@ -13,7 +13,7 @@ class Lookup(models.Model):
     slug = models.SlugField(unique=True)
     description = models.TextField()
 
-    def __str__(self):
+    def __str__(self): # This always returns the string
         return self.slug
 
     class Meta:

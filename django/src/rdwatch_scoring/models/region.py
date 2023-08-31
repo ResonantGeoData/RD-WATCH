@@ -6,7 +6,7 @@ from django.contrib.gis.geos import Polygon
 from django.core.exceptions import ObjectDoesNotExist
 from django.db import models, transaction
 
-from rdwatch.models import lookups
+from rdwatch_scoring.models import lookups
 from rdwatch.validators import validate_iso3166
 
 

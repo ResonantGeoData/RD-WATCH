@@ -11,7 +11,7 @@ from django.shortcuts import get_object_or_404
 from rdwatch.models import HyperParameters, Region
 from rdwatch.views.region import RegionSchema
 
-from ..models import (
+from ..models_file import (
     EvaluationActivityClassificationTemporalIou,
     EvaluationBroadAreaSearchDetection,
     EvaluationRun,

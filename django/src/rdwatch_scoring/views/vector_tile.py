@@ -20,7 +20,9 @@ from django.db.models import (
 from django.http import Http404, HttpRequest, HttpResponse
 
 from rdwatch.db.functions import ExtractEpoch, GroupExcludeRowRange
-from rdwatch.models import HyperParameters, Region, SiteEvaluation, SiteObservation
+from rdwatch.models import Region, SiteObservation
+from rdwatch_scoring.models_file import EvaluationRun
+from rdwatch_scoring.models import HyperParameters, SiteEvaluation
 
 from .model_run import router
 
@@ -42,33 +44,8 @@ def _get_vector_tile_cache_key(
 
 @router.get('/{hyper_parameters_id}/vector-tile/{z}/{x}/{y}.pbf/')
 def vector_tile(request: HttpRequest, hyper_parameters_id, z: int, x: int, y: int):
-    timestamps: dict[
-        Literal[
-            'latest_evaluation_timestamp',
-            'model_run_timestamp',
-        ],
-        datetime | None,
-    ] = HyperParameters.objects.filter(id=hyper_parameters_id).aggregate(
-        # Get timestamp of most recent site evaluation so we can use it as a cache key
-        latest_evaluation_timestamp=Max('evaluations__timestamp'),
-        # Also include the timestamp of the model run itself. A model
-        # run with no evaluations will use this for the cache key. The
-        # `Max()` aggregation has no effect here, but we need to call
-        # *some* kind of aggregation function in order for the query to
-        # work correctly. This is preferable to making a separate
-        # query/round-trip to the DB in order to check for the model
-        # run's existence.
-        model_run_timestamp=Max('created'),
-    )
 
-    # A null value for the model run timestamp indicates that
-    # this model run doesn't exist.
-    if timestamps['model_run_timestamp'] is None:
-        raise Http404()
-
-    latest_timestamp = (
-        timestamps['latest_evaluation_timestamp'] or timestamps['model_run_timestamp']
-    )
+    latest_timestamp = EvaluationRun.objects.get(pk=hyper_parameters_id).start_datetime
 
     # Generate a unique cache key based on the model run ID, vector tile coordinates,
     # and the latest timestamp
@@ -218,6 +195,7 @@ def vector_tile(request: HttpRequest, hyper_parameters_id, z: int, x: int, y: in
         with connection.cursor() as cursor:
             cursor.execute(sql, params)
             row = cursor.fetchone()
+        # What is being returned here?
         tile = row[0]
 
         # Cache this for 30 days

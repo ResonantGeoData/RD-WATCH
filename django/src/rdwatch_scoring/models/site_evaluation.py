@@ -7,10 +7,11 @@ from django.contrib.gis.geos import MultiPolygon
 from django.contrib.postgres.indexes import GistIndex
 from django.db import models, transaction
 
-from rdwatch_scoring.models import HyperParameters, lookups, get_or_create_region
+from rdwatch_scoring.models import HyperParameters, lookups
 from rdwatch.schemas import RegionModel, SiteModel
 from rdwatch.schemas.region_model import RegionFeature, SiteSummaryFeature
 from rdwatch.schemas.site_model import SiteFeature
+from rdwatch_scoring.models.region import get_or_create_region
 
 
 class SiteEvaluation(models.Model):

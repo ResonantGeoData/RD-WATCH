@@ -106,7 +106,7 @@ def vector_tile(request: HttpRequest, hyper_parameters_id: int, z: int, x: int, 
                 id=F('pk'),
                 mvtgeom=mvtgeom,
                 configuration_id=F('configuration_id'),
-                label=F('label_id'),
+                label=F('label_id'), # Resolves to name instead of ID
                 timestamp=ExtractEpoch('timestamp'),
                 timemin=ExtractEpoch(Min('observations__timestamp')),
                 timemax=ExtractEpoch(Max('observations__timestamp')),

@@ -144,7 +144,7 @@ const getAnnotationColor = (filters: MapFilters) => {
         });
     }
     styles.forEach((item) => {
-        result.push(['==', ['get', 'label'], item.id]);
+        result.push(['==', ['get', 'label'], item.id]); // Find same label in Scoring DB
         result.push(item.color);
     });
     result.push(defaultAnnotationColor);

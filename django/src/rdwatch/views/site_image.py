@@ -136,7 +136,6 @@ def site_images(request: HttpRequest, id: int):
     output['label'] = site_eval_data['json']['label']
     output['status'] = site_eval_data['json']['status']
     output['notes'] = site_eval_data['json']['notes']
-    print(f'PERFORMER {site_eval_obj.configuration.performer.slug}')
     if ground_truth.exists() and site_eval_obj.configuration.performer.slug != 'TE':
         output['groundTruth'] = ground_truth[0]['json']
     output['evaluationGeoJSON'] = site_eval_data['json']['evaluationGeoJSON']

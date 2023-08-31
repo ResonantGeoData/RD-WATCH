@@ -23,7 +23,7 @@ watch(selectedPerformer, (val) => {
   };
   state.filters = {
     ...state.filters,
-    performer_ids: !val.length ? undefined : [val.map((item) => item.id)],
+    performer_ids: !val.length ? undefined : val.map((item) => item.id),
     scoringColoring: null,
   };
 });

@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { Ref, computed, ref, watch, withDefaults } from "vue";
+import { Ref, computed, ref, watch, withDefaults, nextTick } from "vue";
 import { ApiService } from "../../client";
 import {EvaluationGeoJSON, EvaluationImage, EvaluationImageResults } from "../../types";
 import { getColorFromLabel, styles } from '../../mapstyle/annotationStyles';
@@ -37,6 +37,7 @@ const emit = defineEmits<{
 const loading = ref(false);
 const currentImage = ref(0);
 const editMode = ref(props.editable);
+const imageViewer = ref(props.editable);
 
 const editDialog = ref(false);
 const currentEditMode: Ref<null | EditModes> = ref(null);
@@ -234,7 +235,7 @@ const drawData = (canvas: HTMLCanvasElement, image: EvaluationImage, poly:PixelP
         });
         // Now scale the canvas to the proper size
         const ratio = image.image_dimensions[1] / image.image_dimensions[0];
-        const maxHeight = document.documentElement.clientHeight * 0.30;
+        const maxHeight = document.documentElement.clientHeight * 0.22;
         const maxWidth = document.documentElement.clientWidth - 550;
         let width = maxWidth
         let height = width * ratio;
@@ -278,6 +279,21 @@ const load = async (newValue?: number, oldValue?: number) => {
 }
 
 watch(() => props.siteEvalId , load);
+watch(imageViewer, () => {
+  if (imageViewer.value) {
+    nextTick(() => {
+    if (currentImage.value < filteredImages.value.length && canvasRef.value !== null) {
+      drawData(
+        canvasRef.value,
+        filteredImages.value[currentImage.value].image,
+        filteredImages.value[currentImage.value].poly,
+        filteredImages.value[currentImage.value].groundTruthPoly
+      )
+    }
+  });
+  }
+  
+});
 load();
 
 watch([percentBlackFilter, cloudFilter, siteObsFilter, imageSourcesFilter], () => {
@@ -374,7 +390,7 @@ const setSiteModelStatus = async (status: SiteModelStatus) => {
   <v-card
     class="pa-4"
     :class="{review: !dialog}"
-    style="top:40vh !important; height:60vh"
+    style="top:50vh !important; height:50vh"
   >
     <v-row
       v-if="dialog"
@@ -394,6 +410,7 @@ const setSiteModelStatus = async (status: SiteModelStatus) => {
           style="max-width:20px"
         >
           <v-tooltip
+            v-if="editable"
             open-delay="50"
             bottom
           >
@@ -508,7 +525,7 @@ const setSiteModelStatus = async (status: SiteModelStatus) => {
           </div>
         </v-col>
         <v-spacer />
-        <v-col>
+        <v-col v-if="editable">
           <v-btn
             v-if="siteEvaluationUpdated"
             size="small"
@@ -560,25 +577,19 @@ const setSiteModelStatus = async (status: SiteModelStatus) => {
       dense
       class="my-1"
     >
-      <v-btn
-        v-if="editable && false"
-        :color="editMode ? 'success' : ''"
-        class="mx-3"
-        size="x-small"
-        @click="editMode = !editMode"
+      <v-icon
+        :color="imageViewer ? 'rgb(37, 99, 235)' : ''"
+        @click="imageViewer = !imageViewer"
       >
-        Edit Mode
-        <v-icon
-          class="mx-3"
-          @click="editMode = !editMode"
-        >
-          mdi-pencil
-        </v-icon>
-      </v-btn>
-      <v-icon @click="filterSettings = !filterSettings">
+        mdi-image
+      </v-icon>
+      <v-icon
+        v-if="imageViewer"
+        @click="filterSettings = !filterSettings"
+      >
         mdi-filter
       </v-icon>
-      <div>
+      <div v-if="imageViewer">
         Displaying {{ filteredImages.length }} of {{ combinedImages.length }} images
       </div>
       <v-spacer />
@@ -655,102 +666,104 @@ const setSiteModelStatus = async (status: SiteModelStatus) => {
         </v-col>
       </v-row>
     </div>
-    <v-row>
-      <v-spacer />
-      <canvas
-        ref="canvasRef"
-      />
-      <v-spacer />
-    </v-row>
-    <v-row
-      v-if="filteredImages.length && filteredImages[currentImage]"
-      dense
-      class="mt-2"
-    >
-      <v-col cols="3">
-        <div v-if="filteredImages[currentImage].image.siteobs_id !== null">
-          <div>Site Observation</div>
-        </div>
-        <div v-else>
-          <div>Non Site Observation</div>
-        </div>
-        <v-tooltip
-          open-delay="50"
-          bottom
-        >
-          <template #activator="{ props:subProps }">
-            <v-icon
-              v-bind="subProps"
-              @click="copyURL(filteredImages[currentImage].image.aws_location)"
-            >
-              mdi-information
-            </v-icon>
-          </template>
-          <span>
-            Click to Copy: {{ filteredImages[currentImage].image.aws_location }}
-          </span>
-        </v-tooltip>
-      </v-col>
-      <v-spacer />
-      <v-col class="text-center">
-        <div>
-          <div>{{ filteredImages[currentImage].image.source }}</div>
+    <div v-if="imageViewer">
+      <v-row>
+        <v-spacer />
+        <canvas
+          ref="canvasRef"
+        />
+        <v-spacer />
+      </v-row>
+      <v-row
+        v-if="filteredImages.length && filteredImages[currentImage]"
+        dense
+        class="mt-2"
+      >
+        <v-col cols="3">
+          <div v-if="filteredImages[currentImage].image.siteobs_id !== null">
+            <div>Site Observation</div>
+          </div>
+          <div v-else>
+            <div>Non Site Observation</div>
+          </div>
+          <v-tooltip
+            open-delay="50"
+            bottom
+          >
+            <template #activator="{ props:subProps }">
+              <v-icon
+                v-bind="subProps"
+                @click="copyURL(filteredImages[currentImage].image.aws_location)"
+              >
+                mdi-information
+              </v-icon>
+            </template>
+            <span>
+              Click to Copy: {{ filteredImages[currentImage].image.aws_location }}
+            </span>
+          </v-tooltip>
+        </v-col>
+        <v-spacer />
+        <v-col class="text-center">
+          <div>
+            <div>{{ filteredImages[currentImage].image.source }}</div>
 
-          <div>
-            {{ currentDate }}
+            <div>
+              {{ currentDate }}
+            </div>
+            <div>
+              <v-chip
+                size="small"
+                :color="getColorFromLabel(currentLabel)"
+              >
+                {{ currentLabel }}
+              </v-chip>
+              <v-icon
+                v-if="editMode && filteredImages[currentImage].image.siteobs_id !== null"
+                size="small"
+                @click="setEditingMode('SiteObservationLabel')"
+              >
+                mdi-pencil
+              </v-icon>
+            </div>
           </div>
+        </v-col>
+        <v-spacer />
+        <v-col
+          class="text-right"
+          cols="3"
+        >
           <div>
-            <v-chip
-              size="small"
-              :color="getColorFromLabel(currentLabel)"
-            >
-              {{ currentLabel }}
-            </v-chip>
-            <v-icon
-              v-if="editMode && filteredImages[currentImage].image.siteobs_id !== null"
-              size="small"
-              @click="setEditingMode('SiteObservationLabel')"
-            >
-              mdi-pencil
-            </v-icon>
+            <div>NODATA: {{ filteredImages[currentImage].image.percent_black.toFixed(0) }}%</div>
+            <div>Cloud: {{ filteredImages[currentImage].image.cloudcover.toFixed(0) }}%</div>
           </div>
-        </div>
-      </v-col>
-      <v-spacer />
-      <v-col
-        class="text-right"
-        cols="3"
-      >
-        <div>
-          <div>NODATA: {{ filteredImages[currentImage].image.percent_black.toFixed(0) }}%</div>
-          <div>Cloud: {{ filteredImages[currentImage].image.cloudcover.toFixed(0) }}%</div>
-        </div>
-      </v-col>
-    </v-row>
-    <v-slider
-      v-if="filteredImages.length && filteredImages[currentImage]"
-      v-model="currentImage"
-      min="0"
-      :max="filteredImages.length - 1"
-      step="1"
-    />
-    <v-progress-linear
-      v-if="loading"
-      indeterminate
-      color="primary"
-      height="15"
-      class="mt-4"
-    />
-    <div v-if="false">
-      <v-icon
-        v-if="editMode && filteredImages[currentImage] && filteredImages[currentImage].image.siteobs_id !== null"
-        @click="setEditingMode('SiteObservationNotes')"
-      >
-        mdi-pencil
-      </v-icon>Notes:
-      <p>
-        {{ notes }}
-      </p>
+        </v-col>
+      </v-row>
+      <v-slider
+        v-if="filteredImages.length && filteredImages[currentImage]"
+        v-model="currentImage"
+        min="0"
+        :max="filteredImages.length - 1"
+        step="1"
+      />
+      <v-progress-linear
+        v-if="loading"
+        indeterminate
+        color="primary"
+        height="15"
+        class="mt-4"
+      />
+      <div v-if="false">
+        <v-icon
+          v-if="editMode && filteredImages[currentImage] && filteredImages[currentImage].image.siteobs_id !== null"
+          @click="setEditingMode('SiteObservationNotes')"
+        >
+          mdi-pencil
+        </v-icon>Notes:
+        <p>
+          {{ notes }}
+        </p>
+      </div>
     </div>
     <v-dialog
       v-model="editDialog"

@@ -18,7 +18,7 @@ import { SatelliteTimeStamp } from "../../store";
 import { EvaluationImageResults } from "../../types";
 
 export interface QueryArguments {
-  performer?: string;
+  performer?: string[];
   groundtruth?: boolean;
   region?: string;
   page?: number;

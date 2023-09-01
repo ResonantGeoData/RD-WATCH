@@ -53,9 +53,17 @@ router = RouterPaginated()
 
 
 class ModelRunFilterSchema(FilterSchema):
-    performer: str | None = Field(q='performer_slug')
+    performer: list[str] | None = Field(q='performer_slug')
     region: str | None
     proposal: str | None = Field(q='proposal', ignore_none=False)
+
+    def filter_performer(self, value: list[str] | None) -> Q:
+        if value is None or not value:
+            return Q()
+        performer_q = Q()
+        for performer_slug in value:
+            performer_q |= Q(performer_slug=performer_slug)
+        return performer_q
 
     def filter_region(self, value: str | None) -> Q:
         if value is None:

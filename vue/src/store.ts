@@ -291,7 +291,7 @@ export const getSiteObservationDetails = async (siteId: string, scoringBase?: Sc
   } else {
     state.selectedObservations.splice(foundIndex, 1, obsData)
   }
-  if (state.selectionSettings.openDetails) {
+  if (state.selectionSettings.openDetails && state.selectionSettings.singleSelect) {
   state.selectedSiteDetails = {
       id: obsData.id,
       name: obsData.scoringBase ? `${state.regionMap[obsData.scoringBase.regionId]}_${obsData.scoringBase.siteNumber.toString().padStart(4, '0')}` : '',

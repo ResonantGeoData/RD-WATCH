@@ -35,7 +35,11 @@ const cloudFilter = computed({
       return state.selectionSettings.singleSelect;
     },
     set(val: boolean) {
-      state.selectionSettings = { ...state.selectionSettings, singleSelect: val };
+      let openDetailVal = val && state.selectionSettings.openDetails;
+      if (!val) {
+        openDetailVal = false;
+      }
+      state.selectionSettings = { ...state.selectionSettings, singleSelect: val, openDetails: openDetailVal };
     },
   });
 
@@ -77,6 +81,7 @@ const cloudFilter = computed({
         >
           <v-checkbox
             v-model="openDetails"
+            :disabled="!singleSelect"
             density="compact"
             label="Open Details on Select"
           />

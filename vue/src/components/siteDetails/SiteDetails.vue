@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { Ref, computed, ref, watch, withDefaults, nextTick } from "vue";
+import { Ref, computed, nextTick, ref, watch, withDefaults,  } from "vue";
 import { ApiService } from "../../client";
 import {EvaluationGeoJSON, EvaluationImage, EvaluationImageResults } from "../../types";
 import { getColorFromLabel, styles } from '../../mapstyle/annotationStyles';
@@ -37,7 +37,6 @@ const emit = defineEmits<{
 const loading = ref(false);
 const currentImage = ref(0);
 const editMode = ref(props.editable);
-const imageViewer = ref(props.editable);
 
 const editDialog = ref(false);
 const currentEditMode: Ref<null | EditModes> = ref(null);
@@ -129,6 +128,7 @@ function createCanvas(width: number, height: number){
     return myOffScreenCanvas;
  }
 
+ const imageViewer = computed(() => combinedImages.value.length);
 
 const getImageData = async () => {
     combinedImages.value = [];
@@ -393,7 +393,7 @@ const setSiteModelStatus = async (status: SiteModelStatus) => {
     style="top:50vh !important; height:50vh"
   >
     <v-row
-      v-if="dialog"
+      v-if="!editable"
       dense
     >
       <v-spacer />
@@ -410,7 +410,7 @@ const setSiteModelStatus = async (status: SiteModelStatus) => {
           style="max-width:20px"
         >
           <v-tooltip
-            v-if="editable"
+            v-if="imageViewer"
             open-delay="50"
             bottom
           >
@@ -577,12 +577,6 @@ const setSiteModelStatus = async (status: SiteModelStatus) => {
       dense
       class="my-1"
     >
-      <v-icon
-        :color="imageViewer ? 'rgb(37, 99, 235)' : ''"
-        @click="imageViewer = !imageViewer"
-      >
-        mdi-image
-      </v-icon>
       <v-icon
         v-if="imageViewer"
         @click="filterSettings = !filterSettings"

@@ -291,6 +291,17 @@ export const getSiteObservationDetails = async (siteId: string, scoringBase?: Sc
   } else {
     state.selectedObservations.splice(foundIndex, 1, obsData)
   }
+  if (state.selectionSettings.openDetails) {
+  state.selectedSiteDetails = {
+      id: obsData.id,
+      name: obsData.scoringBase ? `${state.regionMap[obsData.scoringBase.regionId]}_${obsData.scoringBase.siteNumber.toString().padStart(4, '0')}` : '',
+      dateRange: [obsData.timerange.min, obsData.timerange.max],
+    }
+  } else {
+    state.selectedSiteDetails = null;
+    state.openSiteDetails = false;
+  }
+
   return obsData;
 }
 

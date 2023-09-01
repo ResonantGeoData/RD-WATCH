@@ -45,10 +45,11 @@ watch(() => state.regionMap, () => {
   <v-main style="z-index:1">
     <MapLibre :compact="state.openSiteDetails && !!state.selectedSiteDetails && !!state.selectedObservations.length" />
     <SiteDetails
-      v-if="state.openSiteDetails && state.selectedSiteDetails && !!state.selectedObservations.length"
+      v-if="(state.openSiteDetails && state.selectedSiteDetails && !!state.selectedObservations.length) || (state.selectedSiteDetails && !!state.selectedObservations.length && state.selectionSettings.openDetails)"
       :site-eval-id=" state.selectedSiteDetails.id"
       :site-evaluation-name="state.selectedSiteDetails.name"
       :date-range="state.selectedSiteDetails.dateRange"
+      @close="state.openSiteDetails = false"
     />
   </v-main>
   <RightBar />

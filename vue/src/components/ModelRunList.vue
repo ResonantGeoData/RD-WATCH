@@ -46,7 +46,6 @@ async function loadMore() {
     request.cancel();
   }
   const { performer } = props.filters; // unwrap performer array
-  console.log(performer);
   request = ApiService.getModelRuns({
     limit,
     ...props.filters,

@@ -291,7 +291,9 @@ export const getSiteObservationDetails = async (siteId: string, scoringBase?: Sc
   } else {
     state.selectedObservations.splice(foundIndex, 1, obsData)
   }
-  if (state.selectionSettings.openDetails && state.selectionSettings.singleSelect) {
+  // For now only open if we have images to show
+  const imagesLoaded = obsData.imageCounts.L8.loaded || obsData.imageCounts.S2.loaded | obsData.imageCounts.WV.loaded;
+  if (state.selectionSettings.openDetails && state.selectionSettings.singleSelect && imagesLoaded) {
   state.selectedSiteDetails = {
       id: obsData.id,
       name: obsData.scoringBase ? `${state.regionMap[obsData.scoringBase.regionId]}_${obsData.scoringBase.siteNumber.toString().padStart(4, '0')}` : '',

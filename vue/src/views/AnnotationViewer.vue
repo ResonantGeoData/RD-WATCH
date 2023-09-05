@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import SideBar from "../components/annotationViewer/SideBar.vue"
-import ImageViewer from "../components/imageViewer/ImageViewer.vue"
+import SiteDetails from "../components/siteDetails/SiteDetails.vue"
 import MapLibre from "../components/MapLibre.vue";
 import ModelRunSiteEvalList from "../components/annotationViewer/ModelRunSiteEvalList.vue"
 import { ModelRunEvaluationDisplay } from "../components/annotationViewer/ModelRunSiteEvalList.vue"
@@ -75,7 +75,7 @@ const updateSiteModels = () => {
   </v-navigation-drawer>
   <v-main style="z-index:1">
     <MapLibre :compact="selectedEval !== null" />
-    <ImageViewer
+    <SiteDetails
       v-if="selectedEval !== null"
       :site-eval-id="selectedEval"
       :site-evaluation-name="selectedName"

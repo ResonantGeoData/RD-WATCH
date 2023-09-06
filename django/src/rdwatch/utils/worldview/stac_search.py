@@ -1,10 +1,13 @@
 import json
 from datetime import datetime, timedelta
+import logging
 from os import path
 from typing import Literal, TypedDict
 from urllib.request import Request, urlopen
 
 from django.conf import settings
+
+logger = logging.getLogger(__name__)
 
 
 class EOBand(TypedDict):
@@ -63,6 +66,11 @@ class SearchParams(TypedDict, total=False):
     page: int
     limit: int
 
+COLLECTIONS: list[str] = []
+
+if settings.ACCENTURE_VERSION is not None:
+    COLLECTIONS.append(f'ta1-wv-acc-{settings.ACCENTURE_VERSION}')
+
 
 def _fmt_time(time: datetime):
     return f'{time.isoformat()[:19]}Z'
@@ -84,7 +92,7 @@ def worldview_search(
     else:
         time_str = f'{_fmt_time(timestamp)}Z'
     params['datetime'] = time_str
-    params['collections'] = ['worldview-nitf']
+    params['collections'] = COLLECTIONS
     params['page'] = page
     params['limit'] = 100
     request = Request(
@@ -92,5 +100,9 @@ def worldview_search(
         data=bytes(json.dumps(params), 'utf-8'),
         headers={'x-api-key': settings.SMART_STAC_KEY},
     )
+    logger.warning(request.full_url)
+    logger.warning(params)
     with urlopen(request) as resp:
-        return json.loads(resp.read())
+        read = resp.read()
+        logger.warning(read)
+        return json.loads(read)

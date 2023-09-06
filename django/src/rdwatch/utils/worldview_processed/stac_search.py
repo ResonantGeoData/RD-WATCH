@@ -3,9 +3,10 @@ from datetime import datetime, timedelta
 from os import path
 from typing import Literal, TypedDict
 from urllib.request import Request, urlopen
-
+import logging
 from django.conf import settings
 
+logger = logging.getLogger(__name__)
 
 class Link(TypedDict):
     rel: str
@@ -69,7 +70,7 @@ def worldview_search(
 ) -> Results:
     url = path.join(settings.SMART_STAC_URL, 'search')
     params = SearchParams()
-    params['bbox'] = bbox
+    params['bbox'] = bbox  # ','.join(str(f) for f in bbox)
     if timebuffer is not None:
         min_time = timestamp - timebuffer
         max_time = timestamp + timebuffer
@@ -85,5 +86,9 @@ def worldview_search(
         data=bytes(json.dumps(params), 'utf-8'),
         headers={'x-api-key': settings.SMART_STAC_KEY},
     )
+    logger.warning(request.full_url)
+    logger.warning(params)
     with urlopen(request) as resp:
-        return json.loads(resp.read())
+        read = resp.read()
+        logger.warning(read)
+        return json.loads(read)

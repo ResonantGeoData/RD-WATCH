@@ -80,7 +80,7 @@ def stac_search(
     # (https://earth-search.aws.element84.com/v0/search)
     url = path.join(settings.SMART_STAC_URL, 'search')
     params = SearchParams()
-    params['bbox'] = bbox
+    params['bbox'] = bbox  # ','.join(str(f) for f in bbox)
     if timebuffer is not None:
         min_time = timestamp - timebuffer
         max_time = timestamp + timebuffer

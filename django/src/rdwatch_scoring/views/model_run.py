@@ -12,7 +12,7 @@ from rdwatch.db.functions import AggregateArraySubquery, ExtractEpoch
 from rdwatch.schemas.common import TimeRangeSchema
 from rdwatch.views.performer import PerformerSchema
 from rdwatch.views.region import RegionSchema
-from rdwatch_scoring.models_file import EvaluationRun
+from rdwatch_scoring.models_file import EvaluationRun, Site
 
 router = RouterPaginated()
 
@@ -145,7 +145,7 @@ def list_model_runs(
     print(total_model_run_count)
 
     subquery = queryset[(page - 1) * limit : page * limit] if limit else queryset
-    aggregate = queryset.defer('json').aggregate(
+    aggregate = queryset.defer('json').aggregate( # Long running
         timerange=TimeRangeJSON(
             'site__start_date', 'site__end_date', 'performer', 'site_originator'
         ),

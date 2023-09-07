@@ -9,7 +9,7 @@ from django.db import models
 
 
 class Lookup(models.Model):
-    id = models.SmallAutoField(primary_key=True)
+    id = models.CharField(primary_key=True, max_length=1000)
     slug = models.SlugField(unique=True)
     description = models.TextField()
 

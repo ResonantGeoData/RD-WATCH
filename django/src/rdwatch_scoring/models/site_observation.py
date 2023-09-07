@@ -11,6 +11,7 @@ from rdwatch.schemas.site_model import ObservationFeature
 
 
 class SiteObservation(models.Model):
+    uuid = models.CharField(primary_key=True, max_length=1000)
     siteeval = models.ForeignKey(
         to='SiteEvaluation',
         on_delete=models.CASCADE,

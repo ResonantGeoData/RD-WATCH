@@ -18,6 +18,12 @@ class HyperParameters(models.Model):
         blank=True,
         help_text='Time relative to creation that this model run should be deleted.',
     )
+    performer = models.ForeignKey(
+        to='Performer',
+        on_delete=models.PROTECT,
+        help_text='The team that produced this evaluation',
+        db_index=True,
+    )
 
     class ProposalStatus(models.TextChoices):
         PROPOSAL = (

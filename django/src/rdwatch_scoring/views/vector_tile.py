@@ -20,19 +20,18 @@ from django.db.models import (
 from django.http import Http404, HttpRequest, HttpResponse
 
 from rdwatch.db.functions import ExtractEpoch, GroupExcludeRowRange
-from rdwatch.models import Region, SiteObservation
 from rdwatch_scoring.models_file import EvaluationRun
-from rdwatch_scoring.models import HyperParameters, SiteEvaluation
+from rdwatch_scoring.models import HyperParameters, SiteEvaluation, SiteObservation, Region
 
 from .model_run import router
 
 def _get_vector_tile_cache_key(
-    hyper_parameters_id: int, z: int, x: int, y: int, timestamp: datetime
+    evaluation_run_uuid: int, z: int, x: int, y: int, timestamp: datetime
 ) -> str:
     return '|'.join(
         [
             HyperParameters.__name__,
-            str(hyper_parameters_id),
+            str(evaluation_run_uuid),
             'vector-tile',
             str(z),
             str(x),
@@ -42,15 +41,15 @@ def _get_vector_tile_cache_key(
     ).replace(' ', '_')
 
 
-@router.get('/{hyper_parameters_id}/vector-tile/{z}/{x}/{y}.pbf/')
-def vector_tile(request: HttpRequest, hyper_parameters_id, z: int, x: int, y: int):
+@router.get('/{evaluation_run_uuid}/vector-tile/{z}/{x}/{y}.pbf/')
+def vector_tile(request: HttpRequest, evaluation_run_uuid, z: int, x: int, y: int):
 
-    latest_timestamp = EvaluationRun.objects.get(pk=hyper_parameters_id).start_datetime
+    latest_timestamp = EvaluationRun.objects.get(pk=evaluation_run_uuid).start_datetime
 
     # Generate a unique cache key based on the model run ID, vector tile coordinates,
     # and the latest timestamp
     cache_key = _get_vector_tile_cache_key(
-        hyper_parameters_id, z, x, y, latest_timestamp
+        evaluation_run_uuid, z, x, y, latest_timestamp
     )
 
     tile = cache.get(cache_key)
@@ -72,21 +71,29 @@ def vector_tile(request: HttpRequest, hyper_parameters_id, z: int, x: int, y: in
             function='ST_AsMVTGeom',
             output_field=Field(),
         )
+        # my test
+        my_queryset = (
+            EvaluationRun.objects.filter(uuid=evaluation_run_uuid).values())
+        (
+            my_evaluations_sql,
+            my_evaluations_params,
+        ) = my_queryset.query.sql_with_params()
+        print("hi")
 
         evaluations_queryset = (
-            SiteEvaluation.objects.filter(configuration_id=hyper_parameters_id)
+            SiteEvaluation.objects.filter(configuration_id=evaluation_run_uuid)
             .filter(intersects)
             .values()
-            .alias(observation_count=Count('observations'))
+            .alias(observation_count=Count('observations')) #where is observations table?
             .annotate(
-                id=F('pk'),
+                uuid=F('pk'),
                 mvtgeom=mvtgeom,
                 configuration_id=F('configuration_id'),
                 label=F('label_id'),
                 timestamp=ExtractEpoch('timestamp'),
                 timemin=ExtractEpoch(Min('observations__timestamp')),
                 timemax=ExtractEpoch(Max('observations__timestamp')),
-                performer_id=F('configuration__performer_id'),
+                performer_id=F('configuration__performer_id'), # no performer_id in HyperParameters
                 region_id=F('region_id'),
                 groundtruth=Case(
                     When(
@@ -111,14 +118,14 @@ def vector_tile(request: HttpRequest, hyper_parameters_id, z: int, x: int, y: in
 
         observations_queryset = (
             SiteObservation.objects.filter(
-                siteeval__configuration_id=hyper_parameters_id
+                siteeval__configuration_id=evaluation_run_uuid
             )
             .filter(intersects)
             .values()
             .annotate(
-                id=F('pk'),
+                uuid=F('pk'),
                 mvtgeom=mvtgeom,
-                configuration_id=F('siteeval__configuration_id'),
+                configuration_id=F('siteeval__configuration_id'),  # class SiteObservation.siteeval, Q: id or uuid?
                 site_number=F('siteeval__number'),
                 label=F('label_id'),
                 area=Area(Transform('geom', srid=6933)),
@@ -150,11 +157,11 @@ def vector_tile(request: HttpRequest, hyper_parameters_id, z: int, x: int, y: in
         ) = observations_queryset.query.sql_with_params()
 
         regions_queryset = (
-            Region.objects.filter(evaluations__configuration_id=hyper_parameters_id)
+            Region.objects.filter(evaluations__configuration_id=evaluation_run_uuid)
             .filter(intersects)
             .values()
             .annotate(
-                id=F('pk'),
+                uuid=F('pk'),
                 mvtgeom=mvtgeom,
             )
         )
@@ -170,12 +177,12 @@ def vector_tile(request: HttpRequest, hyper_parameters_id, z: int, x: int, y: in
                 regions AS ({regions_sql})
             SELECT (
                 (
-                    SELECT ST_AsMVT(evaluations.*, 'sites-%s', 4096, 'mvtgeom', 'id')
+                    SELECT ST_AsMVT(evaluations.*, 'sites-%s', 4096, 'mvtgeom', 'uuid')
                     FROM evaluations
                 )
                 ||
                 (
-                    SELECT ST_AsMVT(observations.*, 'observations-%s', 4096, 'mvtgeom', 'id')
+                    SELECT ST_AsMVT(observations.*, 'observations-%s', 4096, 'mvtgeom', 'uuid')
                     FROM observations
                 )
                 ||
@@ -189,7 +196,7 @@ def vector_tile(request: HttpRequest, hyper_parameters_id, z: int, x: int, y: in
             evaluations_params
             + observations_params
             + regions_params
-            + (hyper_parameters_id,) * 3
+            + (evaluation_run_uuid,) * 3
         )
 
         with connection.cursor() as cursor:

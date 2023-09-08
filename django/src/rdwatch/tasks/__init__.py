@@ -362,7 +362,7 @@ def download_annotations(self, id: int, mode: Literal['all', 'approved', 'reject
 
     with tempfile.TemporaryDirectory() as temp_dir:
         file_list = []
-        nine_count = 0
+        nine_count = 0  # annotations that have Site Id 9999
         for item in site_evals.iterator():
             data, site_id, basefilename = get_site_model_feature_JSON(item.pk)
             modified_site_id = site_id

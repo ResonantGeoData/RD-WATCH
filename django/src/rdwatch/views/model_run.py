@@ -520,7 +520,6 @@ def get_modelrun_evaluations(request: HttpRequest, hyper_parameters_id: int):
 def start_download(
     request: HttpRequest, id: int, mode: Literal['all', 'approved', 'rejected'] = 'all'
 ):
-    print(mode)
     task_id = download_annotations.delay(id, mode)
     print(task_id)
     return task_id.id

@@ -20,7 +20,7 @@ from django.db.models import (
 from django.http import Http404, HttpRequest, HttpResponse
 
 from rdwatch.db.functions import ExtractEpoch, GroupExcludeRowRange
-from rdwatch_scoring.models_file import EvaluationRun, SiteEvaluationAPL
+from rdwatch_scoring.models_file import EvaluationRun, Site, Observation
 from rdwatch_scoring.models import HyperParameters, SiteEvaluation, SiteObservation, Region
 
 from .model_run import router
@@ -59,177 +59,81 @@ def vector_tile(request: HttpRequest, evaluation_run_uuid, z: int, x: int, y: in
         envelope = Func(z, x, y, function='ST_TileEnvelope')
         intersects = Q(
             Func(
-                'geom',
+                'geomfromtext',
                 envelope,
                 function='ST_Intersects',
                 output_field=BooleanField(),
             )
         )
+
         mvtgeom = Func(
-            'geom',
+            'geomfromtext',
             envelope,
             function='ST_AsMVTGeom',
             output_field=Field(),
         )
-        # my test
-        my_queryset = (
-            SiteEvaluationAPL.objects.filter(uuid=f"'{evaluation_run_uuid}'")
-            .filter(intersects)
-            .values()
-            .alias(observation_count=Count('observations'))
+        geomfromtext = Func(
+            'union_geometry',
+            function='ST_GeomFromText',
+            output_field=Field()
         )
-        #     .annotate(
-        #         uuid=F('pk'),
-        #         mvtgeom=mvtgeom,
-        #         configuration_id=F('evaluation_run_uuid'),
-        #         label=F('label_id'),
-        #         timestamp=ExtractEpoch('timestamp'),
-        #         timemin=ExtractEpoch(Min('observations__timestamp')),
-        #         timemax=ExtractEpoch(Max('observations__timestamp')),
-        #         performer_id=F('configuration__performer_id'), # no performer_id in HyperParameters
-        #         region_id=F('region_id'),
-        #         groundtruth=Case(
-        #             When(
-        #                 Q(configuration__performer__slug='TE') & Q(score=1),
-        #                 True,
-        #             ),
-        #             default=False,
-        #         ),
-        #         site_polygon=Case(
-        #             When(
-        #                 observation_count=0,
-        #                 then=True,
-        #             ),
-        #             default=False,
-        #         ),
-        #     )
-        # )
-        (
-            my_evaluations_sql,
-            my_evaluations_params,
-        ) = my_queryset.query.sql_with_params()
-        print("hi")
+        setsrid = Func(
+            'geomfromtext',
+            3857,
+            function='ST_SetSRID',
+            output_field=Field()
+        )
 
-        evaluations_queryset = (
-            SiteEvaluation.objects.filter(configuration_id=f"'{evaluation_run_uuid}'")
-            .filter(intersects)
-            .values()
-            .alias(observation_count=Count('observations')) #where is observations table?
+        site_queryset = (
+            Site.objects.filter(evaluation_run_uuid=evaluation_run_uuid)
             .annotate(
-                uuid=F('pk'),
-                mvtgeom=mvtgeom,
-                configuration_id=F('configuration_id'),
-                label=F('label_id'),
-                timestamp=ExtractEpoch('timestamp'),
-                timemin=ExtractEpoch(Min('observations__timestamp')),
-                timemax=ExtractEpoch(Max('observations__timestamp')),
-                performer_id=F('configuration__performer_id'), # no performer_id in HyperParameters,
-                # should it be performer__id?
-                region_id=F('region_id'),
-                groundtruth=Case(
-                    When(
-                        Q(configuration__performer__slug='TE') & Q(score=1),
-                        True,
-                    ),
-                    default=False,
-                ),
-                site_polygon=Case(
-                    When(
-                        observation_count=0,
-                        then=True,
-                    ),
-                    default=False,
-                ),
+            geomfromtext=geomfromtext
+            )
+            .annotate(
+            geomfromtext=setsrid
+            )
+            .filter(intersects)
+            .annotate(
+            mvtgeom=mvtgeom
             )
         )
         (
-            evaluations_sql,
-            evaluations_params,
-        ) = evaluations_queryset.query.sql_with_params()
+            site_sql,
+            site_params,
+        ) = site_queryset.query.sql_with_params()
 
         observations_queryset = (
-            SiteObservation.objects.filter(
-                siteeval__configuration_id=f"'{evaluation_run_uuid}'"
-            )
-            .filter(intersects)
-            .values()
-            .annotate(
-                uuid=F('pk'),
-                mvtgeom=mvtgeom,
-                configuration_id=F('siteeval__configuration_id'),  # class SiteObservation.siteeval, Q: id or uuid?
-                site_number=F('siteeval__number'),
-                label=F('label_id'),
-                area=Area(Transform('geom', srid=6933)),
-                timemin=ExtractEpoch('timestamp'),
-                timemax=ExtractEpoch(
-                    Window(
-                        expression=Min('timestamp'),
-                        partition_by=[F('siteeval')],
-                        frame=GroupExcludeRowRange(start=0, end=None),
-                        order_by='timestamp',  # type: ignore
-                    ),
-                ),
-                performer_id=F('siteeval__configuration__performer_id'),
-                region_id=F('siteeval__region_id'),
-                version=F('siteeval__version'),
-                groundtruth=Case(
-                    When(
-                        Q(siteeval__configuration__performer__slug='TE')
-                        & Q(siteeval__score=1),
-                        True,
-                    ),
-                    default=False,
-                ),
-            )
+            Observation.objects.filter(site_uuid__evaluation_run_uuid=evaluation_run_uuid)
         )
         (
             observations_sql,
             observations_params,
         ) = observations_queryset.query.sql_with_params()
-
-        regions_queryset = (
-            Region.objects.filter(evaluations__configuration_id=f"'{evaluation_run_uuid}'")
-            .filter(intersects)
-            .values()
-            .annotate(
-                uuid=F('pk'),
-                mvtgeom=mvtgeom,
-            )
+        region_queryset = (
+            Region.objects.filter(id__in=site_queryset.values('region'))
         )
         (
-            regions_sql,
-            regions_params,
-        ) = regions_queryset.query.sql_with_params()
+            region_sql,
+            region_params,
+        ) = region_queryset.query.sql_with_params()
 
         sql = f"""
             WITH
-                evaluations AS ({evaluations_sql}),
-                observations AS ({observations_sql}),
-                regions AS ({regions_sql})
+                sites AS ({site_sql})
             SELECT (
                 (
-                    SELECT ST_AsMVT(evaluations.*, %s, 4096, 'mvtgeom', 'uuid')
-                    FROM evaluations
-                )
-                ||
-                (
-                    SELECT ST_AsMVT(observations.*, %s, 4096, 'mvtgeom', 'uuid')
-                    FROM observations
-                )
-                ||
-                (
-                    SELECT ST_AsMVT(regions.*, %s, 4096, 'mvtgeom', 'id')
-                    FROM regions
+                    SELECT ST_AsMVT(sites.*, %s, 4096, 'mvtgeom')
+                    FROM sites
                 )
             )
         """  # noqa: E501
         params = (
-            evaluations_params
-            + observations_params
-            + regions_params
-            + (f'sites-{evaluation_run_uuid}',
-               f'observations-{evaluation_run_uuid}',
-               f'regions-{evaluation_run_uuid}')
+            site_params
+            # + observations_params
+            # + region_params
+            + (f'sites-{evaluation_run_uuid}',)
+               # f'observations-{evaluation_run_uuid}',
+               # f'regions-{evaluation_run_uuid}')
         )
 
         with connection.cursor() as cursor:

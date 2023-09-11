@@ -2,7 +2,7 @@
 import TimeSlider from "./TimeSlider.vue";
 import { ApiService, ModelRun } from "../client";
 import { state } from "../store";
-import { onBeforeMount, onBeforeUnmount, ref, withDefaults } from "vue";
+import { Ref, onBeforeMount, onBeforeUnmount, ref, withDefaults } from "vue";
 import { timeRangeFormat } from "../utils";
 import ImagesDownloadDialog from "./ImagesDownloadDialog.vue";
 import { DownloadSettings } from "../client/services/ApiService";
@@ -64,6 +64,7 @@ const updateDownloading = async () => {
   }
 
 }
+
 const startDownload = (data: DownloadSettings) => {
   ApiService.getModelRunImages(props.modelRun.id.toString(), data )
   downloadImages.value = false;
@@ -112,14 +113,27 @@ const checkDownloadStatus = async () => {
     }
   }
 }
+const downloadDialog = ref(false);
+const downloadMode: Ref<'all' | 'rejected' | 'approved'> = ref('all');
+
 
 const downloadModelRun = async() => {
   downloadError.value = false;
   downloadingModelRun.value = true;
-  taskId.value = await ApiService.startModelRunDownload(props.modelRun.id);
+  taskId.value = await ApiService.startModelRunDownload(props.modelRun.id, downloadMode.value);
   // Now we poll to see when the download is finished
   checkDownloadStatus();
 }
+
+const determineDownload = () => {
+  if (props.modelRun.proposal) {
+    downloadDialog.value = true;
+  } else {
+
+    downloadModelRun();
+  }
+}
+
 
 </script>
 
@@ -239,7 +253,7 @@ const downloadModelRun = async() => {
               v-bind="subProps"
               :disabled="downloadingModelRun"
               class="mx-1"
-              @click.stop="downloadModelRun()"
+              @click.stop="determineDownload()"
             >
               <v-icon
                 v-if="!downloadingModelRun"
@@ -306,6 +320,41 @@ const downloadModelRun = async() => {
       @download="startDownload($event)"
       @cancel="downloadImages = false"
     />
+    <v-dialog
+      v-model="downloadDialog"
+      width="400"
+    >
+      <v-card>
+        <v-card-title>Download Annotations</v-card-title>
+        <v-card-text>
+          <v-select
+            v-model="downloadMode"
+            :items="['all', 'approved', 'rejected']"
+            label="Label"
+            class="mx-2"
+          />
+        </v-card-text>
+        <v-card-actions>
+          <v-row dense>
+            <v-spacer />
+            <v-btn
+              color="error"
+              class="mx-3"
+              @click="downloadDialog = false"
+            >
+              Cancel
+            </v-btn>
+            <v-btn
+              color="success"
+              class="mx-3"
+              @click="downloadDialog =false; downloadModelRun()"
+            >
+              Download
+            </v-btn>
+          </v-row>
+        </v-card-actions>
+      </v-card>
+    </v-dialog>
   </v-card>
 </template>
 

@@ -1,4 +1,5 @@
 from datetime import datetime, timedelta
+from typing import Literal
 
 import iso3166
 from celery.result import AsyncResult
@@ -488,6 +489,7 @@ def get_evaluations_query(hyper_parameters_id: int):
                     start_date=ExtractEpoch('start_date'),
                     end_date=ExtractEpoch('end_date'),
                     status='status',
+                    filename='cache_originator_file',
                 ),
                 ordering='number',
             ),
@@ -515,8 +517,10 @@ def get_modelrun_evaluations(request: HttpRequest, hyper_parameters_id: int):
 
 
 @router.post('/{id}/download/')
-def start_download(request: HttpRequest, id: int):
-    task_id = download_annotations.delay(id)
+def start_download(
+    request: HttpRequest, id: int, mode: Literal['all', 'approved', 'rejected'] = 'all'
+):
+    task_id = download_annotations.delay(id, mode)
     print(task_id)
     return task_id.id
 

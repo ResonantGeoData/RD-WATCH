@@ -6,6 +6,7 @@ import tempfile
 import zipfile
 from collections.abc import Iterable
 from datetime import datetime, timedelta
+from typing import Literal
 
 from celery import shared_task
 from PIL import Image
@@ -343,24 +344,45 @@ def delete_export_files() -> None:
 
 
 @app.task(bind=True)
-def download_annotations(self, id: int):
+def download_annotations(self, id: int, mode: Literal['all', 'approved', 'rejected']):
     # Needs to go through the siteEvaluations and download one for each file
-    site_evals = SiteEvaluation.objects.filter(configuration_id=id)
+    if mode == 'all':
+        site_evals = SiteEvaluation.objects.filter(configuration_id=id)
+    elif mode == 'approved':
+        site_evals = SiteEvaluation.objects.filter(
+            configuration_id=id, status=SiteEvaluation.Status.APPROVED
+        )
+    elif mode == 'rejected':
+        site_evals = SiteEvaluation.objects.filter(
+            configuration_id=id, status=SiteEvaluation.Status.REJECTED
+        )
     configuration = HyperParameters.objects.get(pk=id)
     task_id = self.request.id
     temp_zip_file = tempfile.NamedTemporaryFile(delete=False, suffix='.zip')
 
     with tempfile.TemporaryDirectory() as temp_dir:
         file_list = []
+        nine_count = 0  # annotations that have Site Id 9999
         for item in site_evals.iterator():
-            data, site_id = get_site_model_feature_JSON(item.pk)
-            file_name = os.path.join(temp_dir, f'{site_id}.json')
+            data, site_id, basefilename = get_site_model_feature_JSON(item.pk)
+            modified_site_id = site_id
+            if '9999' in site_id:
+                nine_count += 1
+                modified_site_id = f'{site_id}-{nine_count}'
+            file_name = os.path.join(temp_dir, f'{modified_site_id}.json')
+
             with open(file_name, 'w') as file:
                 json.dump(data, file)
-            file_list.append({'filename': file_name, 'siteId': site_id})
+            file_list.append(
+                {
+                    'filename': file_name,
+                    'siteId': modified_site_id,
+                    'baseName': basefilename,
+                }
+            )
         with zipfile.ZipFile(temp_zip_file, 'w') as zipf:
             for item in file_list:
-                zipf.write(item['filename'], f"{item['siteId']}.json")
+                zipf.write(item['filename'], f"{item['siteId']}.geojson")
         annotation_export = AnnotationExport.objects.create(
             configuration=configuration,
             name=configuration.title,

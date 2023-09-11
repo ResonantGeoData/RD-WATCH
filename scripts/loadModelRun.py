@@ -1,8 +1,12 @@
+from __future__ import annotations
+
 import argparse
+import os
 import sys
 import json
 import traceback
 from glob import glob
+from multiprocessing import Pool
 
 import requests
 
@@ -44,19 +48,26 @@ def main():
     parser.add_argument(
         "--expiration_time", default=None, type=int, help="expiration time in hours"
     )
+    parser.add_argument(
+        '--parallelism',
+        default=os.cpu_count(),
+        type=int,
+        help='max number of uploads to perform at once',
+    )
     upload_to_rgd(**vars(parser.parse_args()))
 
 
 def upload_to_rgd(
-    region_id,
-    site_models_glob,
-    rgd_auth_cookie,
-    title="Ground Truth",
-    performer_shortcode="TE",
-    proposal=None,
-    eval_num=None,
-    eval_run_num=None,
-    expiration_time=None,
+    region_id: str,
+    site_models_glob: str,
+    rgd_auth_cookie: str,
+    parallelism: int,
+    title='Ground Truth',
+    performer_shortcode='TE',
+    proposal: str | None = None,
+    eval_num: int | None = None,
+    eval_run_num: int | None = None,
+    expiration_time: int | None = None,
 ):
     # Check that our run doesn't already exist
     model_run_results_url = f"{rgd_endpoint}/api/model-runs/"
@@ -114,30 +125,38 @@ def upload_to_rgd(
 
     post_site_url = f"{rgd_endpoint}/api/model-runs/{model_run_id}/site-model/"
     print(site_models_glob)
-    for site_file in glob(site_models_glob):
-        print("Uploading '{}' ..".format(site_file))
-        try:
-            result = post_site(post_site_url, site_file, rgd_auth_cookie)
-            print(result)
-        except Exception:
-            print("Exception occurred (printed below)")
-            traceback.print_exception(*sys.exc_info())
-        else:
-            if result.status_code != 201:
-                print(f"Error uploading site, status " f"code: [{result.status_code}]")
-
+    site_files = glob(site_models_glob)
+    with Pool(processes=parallelism) as pool:
+        pool.starmap(
+            post_site,
+            zip(
+                [post_site_url] * len(site_files),
+                site_files,
+                [rgd_auth_cookie] * len(site_files),
+                strict=True
+            )
+        )
 
 def post_site(post_site_url, site_filepath, rgd_auth_cookie):
+    print("Uploading '{}' ..".format(site_filepath))
     with open(site_filepath, "r") as f:
         cookie = None
         if rgd_auth_cookie:
             cookie = {"AWSELBAuthSessionCookie-0": rgd_auth_cookie}
-        response = requests.post(
-            post_site_url,
-            json=json.load(f),
-            headers={"Content-Type": "application/json"},
-            cookies=cookie,
-        )
+        try:
+            response = requests.post(
+                post_site_url,
+                json=json.load(f),
+                headers={"Content-Type": "application/json"},
+                cookies=cookie,
+            )
+        except Exception:
+            print("Exception occurred (printed below)")
+            traceback.print_exception(*sys.exc_info())
+
+    print(response)
+    if response.status_code != 201:
+        print(f"Error uploading site, status " f"code: [{response.status_code}]")
 
     return response
 

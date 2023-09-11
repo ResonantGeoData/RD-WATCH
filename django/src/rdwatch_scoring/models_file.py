@@ -1,4 +1,5 @@
 from django.contrib.gis.db import models
+from django.contrib.gis.db.models import PolygonField
 from django_extensions.db.models import CreationDateTimeField
 from rdwatch_scoring.models import Region
 
@@ -445,6 +446,65 @@ class EvaluationRun(models.Model):
         )
 
 
+class SiteEvaluationAPL(models.Model):
+    uuid = models.CharField(primary_key=True, max_length=1000)
+    evaluation_run_uuid = models.ForeignKey(
+        'EvaluationRun', models.DO_NOTHING, db_column='evaluation_run_uuid'
+    )
+    gt_sites = models.ForeignKey(
+        to='EvaluationBroadAreaSearchDetection',
+        on_delete=models.DO_NOTHING,
+    )
+    perf_sites = models.ForeignKey(
+        to='EvaluationBroadAreaSearchProposal',
+        on_delete=models.DO_NOTHING,
+    )
+    observations = models.ForeignKey(
+        to='Observation',
+        on_delete=models.DO_NOTHING,
+    )
+    regions = models.ForeignKey(
+        to='Region',
+        on_delete=models.DO_NOTHING
+    )
+    geom = PolygonField(
+        help_text="Polygon from this site's Site Feature",
+        srid=3857,
+        spatial_index=True,
+    )
+    timestamp = models.DateTimeField(
+        help_text='Time when this evaluation was finished',
+    )
+    start_date = models.DateTimeField(
+        help_text='Start date in geoJSON',
+        null=True,
+    )
+    end_date = models.DateTimeField(
+        help_text='end date in geoJSON',
+        null=True,
+    )
+    label = models.ForeignKey(
+        to='ObservationLabel',
+        on_delete=models.PROTECT,
+        help_text='Site feature classification label',
+        db_index=True,
+    )
+    cache_originator_file = models.CharField(
+        max_length=2048,
+        blank=True,
+        null=True,
+        help_text='Name of source file for proposals',
+    )
+    cache_timestamp = models.DateTimeField(
+        help_text='Cache timestamp for proposals',
+        null=True,
+    )
+    cache_commit_hash = models.CharField(
+        max_length=2048,
+        blank=True,
+        null=True,
+        help_text='Hash of the file for proposals',
+    )
 class Faces(models.Model):
     gid = models.AutoField(primary_key=True)
     tfid = models.DecimalField(max_digits=10, decimal_places=0, blank=True, null=True)

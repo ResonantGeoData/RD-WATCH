@@ -20,7 +20,7 @@ from django.db.models import (
 from django.http import Http404, HttpRequest, HttpResponse
 
 from rdwatch.db.functions import ExtractEpoch, GroupExcludeRowRange
-from rdwatch_scoring.models_file import EvaluationRun
+from rdwatch_scoring.models_file import EvaluationRun, SiteEvaluationAPL
 from rdwatch_scoring.models import HyperParameters, SiteEvaluation, SiteObservation, Region
 
 from .model_run import router
@@ -73,7 +73,37 @@ def vector_tile(request: HttpRequest, evaluation_run_uuid, z: int, x: int, y: in
         )
         # my test
         my_queryset = (
-            EvaluationRun.objects.filter(uuid=evaluation_run_uuid).values())
+            SiteEvaluationAPL.objects.filter(uuid=f"'{evaluation_run_uuid}'")
+            .filter(intersects)
+            .values()
+            .alias(observation_count=Count('observations'))
+        )
+        #     .annotate(
+        #         uuid=F('pk'),
+        #         mvtgeom=mvtgeom,
+        #         configuration_id=F('evaluation_run_uuid'),
+        #         label=F('label_id'),
+        #         timestamp=ExtractEpoch('timestamp'),
+        #         timemin=ExtractEpoch(Min('observations__timestamp')),
+        #         timemax=ExtractEpoch(Max('observations__timestamp')),
+        #         performer_id=F('configuration__performer_id'), # no performer_id in HyperParameters
+        #         region_id=F('region_id'),
+        #         groundtruth=Case(
+        #             When(
+        #                 Q(configuration__performer__slug='TE') & Q(score=1),
+        #                 True,
+        #             ),
+        #             default=False,
+        #         ),
+        #         site_polygon=Case(
+        #             When(
+        #                 observation_count=0,
+        #                 then=True,
+        #             ),
+        #             default=False,
+        #         ),
+        #     )
+        # )
         (
             my_evaluations_sql,
             my_evaluations_params,
@@ -81,7 +111,7 @@ def vector_tile(request: HttpRequest, evaluation_run_uuid, z: int, x: int, y: in
         print("hi")
 
         evaluations_queryset = (
-            SiteEvaluation.objects.filter(configuration_id=evaluation_run_uuid)
+            SiteEvaluation.objects.filter(configuration_id=f"'{evaluation_run_uuid}'")
             .filter(intersects)
             .values()
             .alias(observation_count=Count('observations')) #where is observations table?
@@ -93,7 +123,8 @@ def vector_tile(request: HttpRequest, evaluation_run_uuid, z: int, x: int, y: in
                 timestamp=ExtractEpoch('timestamp'),
                 timemin=ExtractEpoch(Min('observations__timestamp')),
                 timemax=ExtractEpoch(Max('observations__timestamp')),
-                performer_id=F('configuration__performer_id'), # no performer_id in HyperParameters
+                performer_id=F('configuration__performer_id'), # no performer_id in HyperParameters,
+                # should it be performer__id?
                 region_id=F('region_id'),
                 groundtruth=Case(
                     When(
@@ -118,7 +149,7 @@ def vector_tile(request: HttpRequest, evaluation_run_uuid, z: int, x: int, y: in
 
         observations_queryset = (
             SiteObservation.objects.filter(
-                siteeval__configuration_id=evaluation_run_uuid
+                siteeval__configuration_id=f"'{evaluation_run_uuid}'"
             )
             .filter(intersects)
             .values()
@@ -157,7 +188,7 @@ def vector_tile(request: HttpRequest, evaluation_run_uuid, z: int, x: int, y: in
         ) = observations_queryset.query.sql_with_params()
 
         regions_queryset = (
-            Region.objects.filter(evaluations__configuration_id=evaluation_run_uuid)
+            Region.objects.filter(evaluations__configuration_id=f"'{evaluation_run_uuid}'")
             .filter(intersects)
             .values()
             .annotate(
@@ -177,17 +208,17 @@ def vector_tile(request: HttpRequest, evaluation_run_uuid, z: int, x: int, y: in
                 regions AS ({regions_sql})
             SELECT (
                 (
-                    SELECT ST_AsMVT(evaluations.*, 'sites-%s', 4096, 'mvtgeom', 'uuid')
+                    SELECT ST_AsMVT(evaluations.*, %s, 4096, 'mvtgeom', 'uuid')
                     FROM evaluations
                 )
                 ||
                 (
-                    SELECT ST_AsMVT(observations.*, 'observations-%s', 4096, 'mvtgeom', 'uuid')
+                    SELECT ST_AsMVT(observations.*, %s, 4096, 'mvtgeom', 'uuid')
                     FROM observations
                 )
                 ||
                 (
-                    SELECT ST_AsMVT(regions.*, 'regions-%s', 4096, 'mvtgeom', 'id')
+                    SELECT ST_AsMVT(regions.*, %s, 4096, 'mvtgeom', 'id')
                     FROM regions
                 )
             )
@@ -196,11 +227,14 @@ def vector_tile(request: HttpRequest, evaluation_run_uuid, z: int, x: int, y: in
             evaluations_params
             + observations_params
             + regions_params
-            + (evaluation_run_uuid,) * 3
+            + (f'sites-{evaluation_run_uuid}',
+               f'observations-{evaluation_run_uuid}',
+               f'regions-{evaluation_run_uuid}')
         )
 
         with connection.cursor() as cursor:
             cursor.execute(sql, params)
+
             row = cursor.fetchone()
         # What is being returned here?
         tile = row[0]

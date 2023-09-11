@@ -130,7 +130,7 @@ def get_queryset():
 def list_model_runs(
     request: HttpRequest,
     filters: ModelRunFilterSchema = Query(...),  # noqa: B008
-    limit: int = 25,
+    limit: int = 5,
     page: int = 1,
 ):
     EvaluationRun.objects.count()

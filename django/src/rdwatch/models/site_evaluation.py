@@ -15,6 +15,9 @@ from rdwatch.schemas.site_model import SiteFeature
 
 
 class SiteEvaluation(models.Model):
+    '''
+    Corresponds to site summary in region model
+    '''
     configuration = models.ForeignKey(
         to='HyperParameters',
         on_delete=models.PROTECT,

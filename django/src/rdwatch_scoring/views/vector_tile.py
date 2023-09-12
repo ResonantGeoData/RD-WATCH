@@ -71,7 +71,7 @@ def vector_tile(request: HttpRequest, evaluation_run_uuid, z: int, x: int, y: in
             'geomfromtext',
             3857,
             function='ST_Transform',
-            output_field=GeometryField()
+            output_field=Field()
         )
         mvtgeom = Func(
             'transformedgeom',
@@ -108,7 +108,7 @@ def vector_tile(request: HttpRequest, evaluation_run_uuid, z: int, x: int, y: in
                 groundtruth=
                 Case(
                     When(
-                        Q(originator='te') & Q(score=1),
+                        Q(originator='te'),
                         True,
                         ),
                     default=False,
@@ -130,7 +130,6 @@ def vector_tile(request: HttpRequest, evaluation_run_uuid, z: int, x: int, y: in
             .annotate(
                 mvtgeom=mvtgeom,
                 site_number=F('site_uuid__site_id'),
-                area=Area(Transform('transformedgeom', srid=6933)),
                 timemin=ExtractEpoch('date'),
                 performer_id=F('site_uuid__originator'),
                 region_id=F('site_uuid__region_id'),

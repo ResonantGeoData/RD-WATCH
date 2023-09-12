@@ -1,6 +1,7 @@
 from datetime import datetime, timedelta
 from typing import Literal
 
+from django.contrib.gis.db.models import GeometryField
 from django.contrib.gis.db.models.functions import Area, Transform
 from django.core.cache import cache
 from django.db import connections
@@ -14,6 +15,7 @@ from django.db.models import (
     Max,
     Min,
     Q,
+    Value,
     When,
     Window,
 )
@@ -69,7 +71,7 @@ def vector_tile(request: HttpRequest, evaluation_run_uuid, z: int, x: int, y: in
             'geomfromtext',
             3857,
             function='ST_Transform',
-            output_field=Field()
+            output_field=GeometryField()
         )
         mvtgeom = Func(
             'transformedgeom',
@@ -95,7 +97,24 @@ def vector_tile(request: HttpRequest, evaluation_run_uuid, z: int, x: int, y: in
             .annotate(geomfromtext=geomfromuniongeometrytext)
             .annotate(transformedgeom=transform)
             .filter(intersects)
-            .annotate(mvtgeom=mvtgeom)
+            .values()
+            .annotate(
+                id=F('pk'),
+                mvtgeom=mvtgeom,
+                timemin=ExtractEpoch('start_date'),
+                timemax=ExtractEpoch('end_date'),
+                performer_id=F('originator'),
+                region_id=F('region_id'),
+                groundtruth=
+                Case(
+                    When(
+                        Q(originator='te') & Q(score=1),
+                        True,
+                        ),
+                    default=False,
+                ),
+                site_polygon=Value(True, output_field=BooleanField())
+            )
         )
         (
             site_sql,
@@ -107,7 +126,24 @@ def vector_tile(request: HttpRequest, evaluation_run_uuid, z: int, x: int, y: in
             .annotate(geomfromtext=geomfromobservationtext)
             .annotate(transformedgeom=transform)
             .filter(intersects)
-            .annotate(mvtgeom=mvtgeom)
+            .values()
+            .annotate(
+                mvtgeom=mvtgeom,
+                site_number=F('site_uuid__site_id'),
+                area=Area(Transform('transformedgeom', srid=6933)),
+                timemin=ExtractEpoch('date'),
+                performer_id=F('site_uuid__originator'),
+                region_id=F('site_uuid__region_id'),
+                version=F('site_uuid__version'),
+                groundtruth=
+                Case(
+                    When(
+                        Q(site_uuid__originator='te'),
+                        True,)
+                    ,
+                    default=False,
+                ),
+            )
         )
         (
             observations_sql,

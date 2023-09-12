@@ -59,28 +59,28 @@ def vector_tile(request: HttpRequest, evaluation_run_uuid, z: int, x: int, y: in
         envelope = Func(z, x, y, function='ST_TileEnvelope')
         intersects = Q(
             Func(
-                'geomfromtext',
+                'transformedgeom',
                 envelope,
                 function='ST_Intersects',
                 output_field=BooleanField(),
             )
         )
-
-        mvtgeom = Func(
+        transform = Func(
             'geomfromtext',
+            3857,
+            function='ST_Transform',
+            output_field=Field()
+        )
+        mvtgeom = Func(
+            'transformedgeom',
             envelope,
             function='ST_AsMVTGeom',
             output_field=Field(),
         )
         geomfromtext = Func(
             'union_geometry',
+            4326,
             function='ST_GeomFromText',
-            output_field=Field()
-        )
-        setsrid = Func(
-            'geomfromtext',
-            3857,
-            function='ST_SetSRID',
             output_field=Field()
         )
 
@@ -90,7 +90,7 @@ def vector_tile(request: HttpRequest, evaluation_run_uuid, z: int, x: int, y: in
             geomfromtext=geomfromtext
             )
             .annotate(
-            geomfromtext=setsrid
+            transformedgeom=transform
             )
             .filter(intersects)
             .annotate(
@@ -120,12 +120,8 @@ def vector_tile(request: HttpRequest, evaluation_run_uuid, z: int, x: int, y: in
         sql = f"""
             WITH
                 sites AS ({site_sql})
-            SELECT (
-                (
-                    SELECT ST_AsMVT(sites.*, %s, 4096, 'mvtgeom')
-                    FROM sites
-                )
-            )
+            SELECT ST_AsMVT(sites.*, %s, 4096, 'mvtgeom')
+            FROM sites
         """  # noqa: E501
         params = (
             site_params

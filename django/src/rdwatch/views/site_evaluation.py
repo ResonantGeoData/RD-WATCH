@@ -240,6 +240,7 @@ def get_site_model_feature_JSON(id: int, obsevations=False):
                 cache_originator_file='cache_originator_file',
                 cache_timestamp='cache_timestamp',
                 cache_commit_hash='cache_commit_hash',
+                notes='notes',
                 score='score',
                 status='label__slug',
                 geom=Transform('geom', srid=4326),
@@ -287,19 +288,22 @@ def get_site_model_feature_JSON(id: int, obsevations=False):
                 }
             ],
         }
+        filename = None
         if data['cache_originator_file']:
+            filename = data['cache_originator_file']
             output['features'][0]['properties']['cache'] = {
                 'cache_originator_file': data['cache_originator_file'],
                 'cache_timestamp': data['cache_timestamp'],
                 'cache_commit_hash': data['cache_commit_hash'],
+                'cache_notes': data['notes'],
             }
-        return output, site_id
+        return output, site_id, filename
     return None, None
 
 
 @router.get('/{id}/download')
 def download_annotations(request: HttpRequest, id: int):
-    output, site_id = get_site_model_feature_JSON(id)
+    output, site_id, filename = get_site_model_feature_JSON(id)
     if output is not None:
         with tempfile.NamedTemporaryFile(delete=False) as temp_file:
             json_data = json.dumps(output).encode('utf-8')

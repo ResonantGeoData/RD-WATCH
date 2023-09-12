@@ -11,6 +11,7 @@ export interface MapFilters {
   otherPattern?: boolean;
   showRegionPolygon?: boolean;
   hoverSiteId?: number;
+  showText?: boolean;
   scoringColoring?: Record<string, Record<string, string>> | null;
 }
 
@@ -161,6 +162,7 @@ export const state = reactive<{
   filters: {
     groundTruthPattern: false,
     otherPattern: false,
+    showText: false,
   },
   mapLegend: true,
   satellite: {

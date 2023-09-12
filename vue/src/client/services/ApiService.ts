@@ -60,6 +60,7 @@ export interface ModelRunEvaluations {
     bbox: { xmin: number; ymin: number; xmax: number; ymax: number }
     status: SiteModelStatus
     timestamp: number;
+    filename?: string | null;
   }[];
 }
 export interface SiteEvaluationUpdateQuery {
@@ -486,13 +487,14 @@ export class ApiService {
     })
   }
 
-  public static startModelRunDownload(id: number): CancelablePromise<string> {
+  public static startModelRunDownload(id: number, mode: 'all' | 'approved' | 'rejected'='all'): CancelablePromise<string> {
     return __request(OpenAPI, {
       method: 'POST',
       url: "/api/model-runs/{id}/download/",
       path: {
         id: id,
       },
+      query: {mode},
     })
   }
 

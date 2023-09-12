@@ -77,8 +77,14 @@ def vector_tile(request: HttpRequest, evaluation_run_uuid, z: int, x: int, y: in
             function='ST_AsMVTGeom',
             output_field=Field(),
         )
-        geomfromtext = Func(
+        geomfromuniongeometrytext = Func(
             'union_geometry',
+            4326,
+            function='ST_GeomFromText',
+            output_field=Field()
+        )
+        geomfromobservationtext = Func(
+            'geometry',
             4326,
             function='ST_GeomFromText',
             output_field=Field()
@@ -86,16 +92,10 @@ def vector_tile(request: HttpRequest, evaluation_run_uuid, z: int, x: int, y: in
 
         site_queryset = (
             Site.objects.filter(evaluation_run_uuid=evaluation_run_uuid)
-            .annotate(
-            geomfromtext=geomfromtext
-            )
-            .annotate(
-            transformedgeom=transform
-            )
+            .annotate(geomfromtext=geomfromuniongeometrytext)
+            .annotate(transformedgeom=transform)
             .filter(intersects)
-            .annotate(
-            mvtgeom=mvtgeom
-            )
+            .annotate(mvtgeom=mvtgeom)
         )
         (
             site_sql,
@@ -104,13 +104,22 @@ def vector_tile(request: HttpRequest, evaluation_run_uuid, z: int, x: int, y: in
 
         observations_queryset = (
             Observation.objects.filter(site_uuid__evaluation_run_uuid=evaluation_run_uuid)
+            .annotate(geomfromtext=geomfromobservationtext)
+            .annotate(transformedgeom=transform)
+            .filter(intersects)
+            .annotate(mvtgeom=mvtgeom)
         )
         (
             observations_sql,
             observations_params,
         ) = observations_queryset.query.sql_with_params()
+
         region_queryset = (
             Region.objects.filter(id__in=site_queryset.values('region_id'))
+            .annotate(geomfromtext=geomfromobservationtext)
+            .annotate(transformedgeom=transform)
+            .filter(intersects)
+            .annotate(mvtgeom=mvtgeom)
         )
         (
             region_sql,
@@ -119,17 +128,33 @@ def vector_tile(request: HttpRequest, evaluation_run_uuid, z: int, x: int, y: in
 
         sql = f"""
             WITH
-                sites AS ({site_sql})
-            SELECT ST_AsMVT(sites.*, %s, 4096, 'mvtgeom')
-            FROM sites
+                sites AS ({site_sql}),
+                observations AS ({observations_sql}),
+                regions AS ({region_sql})
+            SELECT(
+                (
+                    SELECT ST_AsMVT(sites.*, %s, 4096, 'mvtgeom')
+                    FROM sites
+                )
+                ||
+                (
+                    SELECT ST_AsMVT(observations.*, %s, 4096, 'mvtgeom')
+                    FROM observations
+                )
+                ||
+                (
+                    SELECT ST_AsMVT(regions.*, %s, 4096, 'mvtgeom')
+                    FROM regions
+                )
+            )
         """  # noqa: E501
         params = (
             site_params
-            # + observations_params
-            # + region_params
-            + (f'sites-{evaluation_run_uuid}',)
-               # f'observations-{evaluation_run_uuid}',
-               # f'regions-{evaluation_run_uuid}')
+            + observations_params
+            + region_params
+            + (f'sites-{evaluation_run_uuid}',
+               f'observations-{evaluation_run_uuid}',
+               f'regions-{evaluation_run_uuid}')
         )
 
         with connections['scoringdb'].cursor() as cursor:

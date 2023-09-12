@@ -16,7 +16,7 @@ class Region(models.Model):
     end_date = models.DateField()
     crs = models.CharField(max_length=255, blank=True, null=True)
     mgrs = models.CharField(max_length=255, blank=True, null=True)
-    geom = models.TextField(blank=True, null=True)
+    geometry = models.TextField(blank=True, null=True)
     area = models.FloatField(blank=True, null=True)
 
     class Meta:

@@ -3,7 +3,7 @@ from typing import Literal
 
 from django.contrib.gis.db.models.functions import Area, Transform
 from django.core.cache import cache
-from django.db import connection
+from django.db import connections
 from django.db.models import (
     BooleanField,
     Case,
@@ -21,7 +21,7 @@ from django.http import Http404, HttpRequest, HttpResponse
 
 from rdwatch.db.functions import ExtractEpoch, GroupExcludeRowRange
 from rdwatch_scoring.models_file import EvaluationRun, Site, Observation
-from rdwatch_scoring.models import HyperParameters, SiteEvaluation, SiteObservation, Region
+from rdwatch_scoring.models import HyperParameters, Region
 
 from .model_run import router
 
@@ -110,7 +110,7 @@ def vector_tile(request: HttpRequest, evaluation_run_uuid, z: int, x: int, y: in
             observations_params,
         ) = observations_queryset.query.sql_with_params()
         region_queryset = (
-            Region.objects.filter(id__in=site_queryset.values('region'))
+            Region.objects.filter(id__in=site_queryset.values('region_id'))
         )
         (
             region_sql,
@@ -132,7 +132,7 @@ def vector_tile(request: HttpRequest, evaluation_run_uuid, z: int, x: int, y: in
                # f'regions-{evaluation_run_uuid}')
         )
 
-        with connection.cursor() as cursor:
+        with connections['scoringdb'].cursor() as cursor:
             cursor.execute(sql, params)
 
             row = cursor.fetchone()

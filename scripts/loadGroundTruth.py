@@ -27,8 +27,7 @@ def main():
         '--rgd-auth-cookie',
         required=False,
         type=str,
-        help='RGD Authentication cookie, e.g.: '
-        'AWSELBAuthSessionCookie-0=<LONG BASE64 STRING>',
+        help='RGD Authentication cookie, e.g.: token=<LONG BASE64 STRING>',
     )
     parser.add_argument(
         '--expiration_time', default=None, type=int, help='expiration time in hours'

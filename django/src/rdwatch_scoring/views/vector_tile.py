@@ -71,7 +71,7 @@ def vector_tile(request: HttpRequest, evaluation_run_uuid, z: int, x: int, y: in
             'geomfromtext',
             3857,
             function='ST_Transform',
-            output_field=Field()
+            output_field=GeometryField()
         )
         mvtgeom = Func(
             'transformedgeom',
@@ -130,6 +130,8 @@ def vector_tile(request: HttpRequest, evaluation_run_uuid, z: int, x: int, y: in
             .annotate(
                 mvtgeom=mvtgeom,
                 site_number=F('site_uuid__site_id'),
+                label=F('phase'),
+                area=Area(Transform('transformedgeom', srid=6933)),
                 timemin=ExtractEpoch('date'),
                 performer_id=F('site_uuid__originator'),
                 region_id=F('site_uuid__region_id'),

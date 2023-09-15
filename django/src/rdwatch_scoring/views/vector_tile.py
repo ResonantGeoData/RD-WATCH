@@ -101,6 +101,7 @@ def vector_tile(request: HttpRequest, evaluation_run_uuid, z: int, x: int, y: in
             .annotate(
                 id=F('pk'),
                 mvtgeom=mvtgeom,
+                configuration_id=Value(evaluation_run_uuid),
                 timemin=ExtractEpoch('start_date'),
                 timemax=ExtractEpoch('end_date'),
                 performer_id=F('originator'),
@@ -129,10 +130,12 @@ def vector_tile(request: HttpRequest, evaluation_run_uuid, z: int, x: int, y: in
             .values()
             .annotate(
                 mvtgeom=mvtgeom,
+                configuration_id=Value(evaluation_run_uuid),
                 site_number=F('site_uuid__site_id'),
-                label=F('phase'),
+                label=F('phase'), # This should be an ID, on client side can make it understand this
                 area=Area(Transform('transformedgeom', srid=6933)),
                 timemin=ExtractEpoch('date'),
+                timemax=ExtractEpoch('date'),
                 performer_id=F('site_uuid__originator'),
                 region_id=F('site_uuid__region_id'),
                 version=F('site_uuid__version'),

@@ -332,6 +332,7 @@ class EvaluationActivityPredictionTemporalError(models.Model):
 
 
 class EvaluationBroadAreaSearchDetection(models.Model):
+    id = models.IntegerField(primary_key=True)
     evaluation_run_uuid = models.ForeignKey(
         'EvaluationRun', models.DO_NOTHING, db_column='evaluation_run_uuid'
     )
@@ -347,6 +348,12 @@ class EvaluationBroadAreaSearchDetection(models.Model):
     )  # This field type is a guess.
     site_proposal_matched_count = models.IntegerField(blank=True, null=True)
     detection_score = models.FloatField(blank=True, null=True)
+    spatial_overlap = models.FloatField(blank=True, null=True)
+    temporal_iot = models.FloatField(blank=True, null=True)
+    temporal_iop = models.FloatField(blank=True, null=True)
+    association_status = models.CharField(max_length=255)
+    associated = models.BooleanField()
+    color_code = models.IntegerField()
 
     class Meta:
         managed = False
@@ -395,6 +402,7 @@ class EvaluationBroadAreaSearchMetric(models.Model):
 
 
 class EvaluationBroadAreaSearchProposal(models.Model):
+    id = models.IntegerField(primary_key=True)
     evaluation_run_uuid = models.ForeignKey(
         'EvaluationRun', models.DO_NOTHING, db_column='evaluation_run_uuid'
     )
@@ -408,7 +416,9 @@ class EvaluationBroadAreaSearchProposal(models.Model):
         blank=True, null=True
     )  # This field type is a guess.
     site_truth_matched_count = models.IntegerField(blank=True, null=True)
-
+    association_status = models.CharField(max_length=255)
+    associated = models.BooleanField()
+    color_code = models.IntegerField()
     class Meta:
         managed = False
         app_label = 'rdwatch_scoring'

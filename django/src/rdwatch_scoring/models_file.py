@@ -436,50 +436,6 @@ class LoaderVariables(models.Model):
         db_table = 'loader_variables'
 
 
-class Observation(models.Model):
-    uuid = models.CharField(primary_key=True, max_length=255)
-    site_uuid = models.ForeignKey('Site', models.DO_NOTHING, db_column='site_uuid')
-    date = models.DateField(blank=True, null=True)
-    source = models.CharField(max_length=255, blank=True, null=True)
-    sensor = models.CharField(max_length=255, blank=True, null=True)
-    phase = models.CharField(max_length=255, blank=True, null=True)
-    score = models.FloatField(blank=True, null=True)
-    crs = models.CharField(max_length=255, blank=True, null=True)
-    geometry = models.TextField(blank=True, null=True)
-    is_site_boundary = models.CharField(max_length=255, blank=True, null=True)
-
-    class Meta:
-        managed = False
-        app_label = 'rdwatch_scoring'
-        db_table = 'observation'
-
-
-class ObservationComparison(models.Model):
-    observation_truth_uuid = models.ForeignKey(
-        Observation,
-        models.DO_NOTHING,
-        related_name='comparison_truth_uuid',
-        db_column='observation_truth_uuid',
-    )
-    observation_proposal_uuid = models.ForeignKey(
-        Observation,
-        models.DO_NOTHING,
-        related_name='comparison_proposal_uuid',
-        db_column='observation_proposal_uuid',
-        blank=True,
-        null=True,
-    )
-    intersection_geometry = models.TextField(blank=True, null=True)
-    union_geometry = models.TextField(blank=True, null=True)
-    intersection_area = models.FloatField(blank=True, null=True)
-    union_area = models.FloatField(blank=True, null=True)
-
-    class Meta:
-        managed = False
-        app_label = 'rdwatch_scoring'
-        db_table = 'observation_comparison'
-
-
 class PagcGaz(models.Model):
     seq = models.IntegerField(blank=True, null=True)
     word = models.TextField(blank=True, null=True)
@@ -573,33 +529,6 @@ class SecondaryUnitLookup(models.Model):
         managed = False
         app_label = 'rdwatch_scoring'
         db_table = 'secondary_unit_lookup'
-
-
-class Site(models.Model):
-    uuid = models.CharField(primary_key=True, max_length=255)
-    site_id = models.CharField(max_length=255)
-    region_id = models.ForeignKey(Region, models.DO_NOTHING, db_column='region_id')
-    evaluation_run_uuid = models.ForeignKey(
-        EvaluationRun, models.DO_NOTHING, db_column='evaluation_run_uuid'
-    )
-    originator = models.CharField(max_length=255)
-    version = models.CharField(max_length=255)
-    crs = models.CharField(max_length=255, blank=True, null=True)
-    mgrs = models.CharField(max_length=255, blank=True, null=True)
-    status_annotated = models.CharField(max_length=255, blank=True, null=True)
-    predicted_phase = models.CharField(max_length=255, blank=True, null=True)
-    predicted_date = models.DateField(blank=True, null=True)
-    score = models.FloatField(blank=True, null=True)
-    union_geometry = models.TextField(blank=True, null=True)
-    union_area = models.FloatField(blank=True, null=True)
-    sites = models.TextField(blank=True, null=True)  # This field type is a guess.
-    start_date = models.DateField(blank=True, null=True)
-    end_date = models.DateField(blank=True, null=True)
-
-    class Meta:
-        managed = False
-        app_label = 'rdwatch_scoring'
-        db_table = 'site'
 
 
 class State(models.Model):

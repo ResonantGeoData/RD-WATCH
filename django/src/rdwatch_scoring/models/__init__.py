@@ -12,7 +12,11 @@ from .evaluation_activity_classification_temporal_error import EvaluationActivit
 from .evaluation_activity_classification_temporal_iou import EvaluationActivityClassificationTemporalIou
 from .evaluation_broad_area_search_detection import EvaluationBroadAreaSearchDetection
 from .evaluation_broad_area_search_proposal import EvaluationBroadAreaSearchProposal
-from evaluation_broad_area_search_metric import EvaluationBroadAreaSearchMetric
+from .evaluation_broad_area_search_metric import EvaluationBroadAreaSearchMetric
+from .observation import Observation
+from .observation_comparison import ObservationComparison
+from .site import Site
+
 
 
 __all__ = [
@@ -28,7 +32,9 @@ __all__ = [
     'EvaluationRun',
     'lookups',
     'HyperParameters',
+    'Observation',
     'Region',
+    'Site',
     'SiteEvaluation',
     'SiteEvaluationTracking',
     'SiteObservation'

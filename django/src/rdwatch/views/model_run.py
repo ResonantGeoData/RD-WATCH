@@ -206,7 +206,7 @@ def get_queryset():
                     ),
                     output_field=JSONField(),
                 ),
-                downloading=Coalesce(
+                downloading=Coalesce( # This tells whether to provide cancel
                     Subquery(
                         SatelliteFetching.objects.filter(
                             siteeval__configuration_id=OuterRef(
@@ -392,6 +392,7 @@ def post_region_model(
 
 
 @router.post('/{hyper_parameters_id}/generate-images/', response={202: bool})
+#TODO: Do this with scoring
 def generate_images(request: HttpRequest, hyper_parameters_id: int):
     siteEvaluations = SiteEvaluation.objects.filter(configuration=hyper_parameters_id)
 
@@ -405,6 +406,7 @@ def generate_images(request: HttpRequest, hyper_parameters_id: int):
     '/{hyper_parameters_id}/cancel-generate-images/',
     response={202: bool, 409: str, 404: str},
 )
+#TODO: Do this for scoring
 def cancel_generate_images(request: HttpRequest, hyper_parameters_id: int):
     siteEvaluations = SiteEvaluation.objects.filter(configuration=hyper_parameters_id)
 

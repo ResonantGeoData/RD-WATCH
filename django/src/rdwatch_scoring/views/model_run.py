@@ -12,7 +12,8 @@ from rdwatch.db.functions import AggregateArraySubquery, ExtractEpoch
 from rdwatch.schemas.common import TimeRangeSchema
 from rdwatch.views.performer import PerformerSchema
 from rdwatch.views.region import RegionSchema
-from rdwatch_scoring.models_file import EvaluationRun, Site
+from rdwatch_scoring.models_file import Site
+from rdwatch_scoring.models import EvaluationRun
 
 router = RouterPaginated()
 

@@ -3,7 +3,7 @@ from ninja.pagination import RouterPaginated
 
 from django.http import HttpRequest
 
-from rdwatch_scoring.models_file import EvaluationRun
+from rdwatch_scoring.models import EvaluationRun
 
 
 class PerformerSchema(Schema):

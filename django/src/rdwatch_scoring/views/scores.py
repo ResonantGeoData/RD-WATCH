@@ -12,10 +12,13 @@ from rdwatch.models import HyperParameters, Region
 from rdwatch.views.region import RegionSchema
 
 from ..models_file import (
+    Site
+)
+
+from ..models import(
     EvaluationActivityClassificationTemporalIou,
     EvaluationBroadAreaSearchDetection,
-    EvaluationRun,
-    Site,
+    EvaluationRun
 )
 
 logger = logging.getLogger(__name__)

@@ -167,6 +167,7 @@ def site_observations(request: HttpRequest, evaluation_id: int):
 
 
 @router.post('/{evaluation_id}/generate-images/', response={202: bool, 409: str})
+#TODO: Do this for scoring.
 def get_site_observation_images(
     request: HttpRequest,
     evaluation_id: int,
@@ -218,6 +219,7 @@ def get_site_observation_images(
 @router.put(
     '/{evaluation_id}/cancel-generate-images/', response={202: bool, 409: str, 404: str}
 )
+#TODO: Do this for scoring
 def cancel_site_observation_images(request: HttpRequest, evaluation_id: int):
     siteeval = get_object_or_404(SiteEvaluation, pk=evaluation_id)
 

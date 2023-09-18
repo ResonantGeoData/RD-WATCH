@@ -512,15 +512,6 @@ class PlaceLookup(models.Model):
         unique_together = (('st_code', 'pl_code'),)
 
 
-class Provenance(models.Model):
-    test_harness_git_hash = models.CharField(max_length=255)
-
-    class Meta:
-        managed = False
-        app_label = 'rdwatch_scoring'
-        db_table = 'provenance'
-
-
 class SecondaryUnitLookup(models.Model):
     name = models.CharField(primary_key=True, max_length=20)
     abbrev = models.CharField(max_length=5, blank=True, null=True)

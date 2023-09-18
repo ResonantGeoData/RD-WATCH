@@ -30,3 +30,12 @@ class EvaluationRun(models.Model):
                 'evaluation_increment_number',
             ),
         )
+
+
+class Provenance(models.Model):
+    test_harness_git_hash = models.CharField(max_length=255)
+
+    class Meta:
+        managed = False
+        app_label = 'rdwatch_scoring'
+        db_table = 'provenance'

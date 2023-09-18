@@ -11,14 +11,11 @@ from django.shortcuts import get_object_or_404
 from rdwatch.models import HyperParameters, Region
 from rdwatch.views.region import RegionSchema
 
-from ..models_file import (
-    Site
-)
-
 from ..models import(
     EvaluationActivityClassificationTemporalIou,
     EvaluationBroadAreaSearchDetection,
-    EvaluationRun
+    EvaluationRun,
+    Site
 )
 
 logger = logging.getLogger(__name__)

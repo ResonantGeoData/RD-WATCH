@@ -9,7 +9,7 @@ from rdwatch.utils.worldview_processed.stac_search import worldview_search
 class WorldViewProcessedCapture:
     timestamp: datetime
     bbox: tuple[float, float, float, float]
-    
+
     uri: str
     panuri: str | None
     cloudcover: int | None

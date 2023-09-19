@@ -21,7 +21,6 @@ class WorldViewImage:
     collection: str
 
 
-
 @dataclass(frozen=True)
 class WorldViewCapture:
     bits_per_pixel: int
@@ -70,20 +69,27 @@ def get_captures(
             if 'properties' in feature:
                 if 'eo:cloud_cover' in feature['properties']:
                     cloudcover = feature['properties']['eo:cloud_cover']
-        if feature['properties']['instruments'][0] in {'vis-multi', 'panchromatic'} and feature['properties']['nitf:compression'] == 'NC':
+        if (
+            feature['properties']['instruments'][0] in {'vis-multi', 'panchromatic'}
+            and feature['properties']['nitf:compression'] == 'NC'
+        ):
             images.append(
                 WorldViewImage(
                     mission=feature['properties']['mission'],
                     instrument=feature['properties']['instruments'][0],
-                    image_representation=feature['properties']['nitf:image_representation'],
+                    image_representation=feature['properties'][
+                        'nitf:image_representation'
+                    ],
                     bits_per_pixel=feature['properties']['nitf:bits_per_pixel'],
                     timestamp=datetime.fromisoformat(
                         feature['properties']['datetime'].rstrip('Z')
                     ),
-                    bbox=cast(tuple[float, float, float, float], tuple(feature['bbox'])),
+                    bbox=cast(
+                        tuple[float, float, float, float], tuple(feature['bbox'])
+                    ),
                     uri=feature['assets']['B01']['href'],
                     cloudcover=cloudcover,
-                    collection=feature['collection']
+                    collection=feature['collection'],
                 )
             )
 

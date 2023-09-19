@@ -1,6 +1,6 @@
 import json
-from datetime import datetime, timedelta
 import logging
+from datetime import datetime, timedelta
 from os import path
 from typing import Literal, TypedDict
 from urllib.request import Request, urlopen
@@ -65,6 +65,7 @@ class SearchParams(TypedDict, total=False):
     collections: list[str]
     page: int
     limit: int
+
 
 COLLECTIONS: list[str] = []
 

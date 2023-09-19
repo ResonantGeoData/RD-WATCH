@@ -182,7 +182,6 @@ def list_regions(
     generatedSiteId = (
         f'{region_name}_{str(siteNumber).zfill(4)}_{performer_name}_{version}'
     )
-    logger.warning(generatedSiteId)
     siteObj = Site.objects.filter(
         site_id=generatedSiteId, evaluation_run_uuid=evaluationUUID
     ).first()

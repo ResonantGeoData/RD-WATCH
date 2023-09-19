@@ -1,9 +1,4 @@
 import logging
-import multiprocessing
-
-# We must import this explicitly, it is not imported by the top-level
-# multiprocessing module.
-import multiprocessing.pool
 import time
 
 import rasterio  # type: ignore
@@ -15,25 +10,6 @@ from rdwatch.utils.worldview_processed.satellite_captures import (
 )
 
 logger = logging.getLogger(__name__)
-
-log_timing = False  # used to log the timing
-
-
-class NoDaemonProcess(multiprocessing.Process):
-    # make 'daemon' attribute always return False
-    def _get_daemon(self):
-        return False
-
-    def _set_daemon(self, value):
-        pass
-
-    daemon = property(_get_daemon, _set_daemon)
-
-
-# We sub-class multiprocessing.pool.Pool instead of multiprocessing.Pool
-# because the latter is only a wrapper function, not a proper class.
-class MyPool(multiprocessing.pool.Pool):
-    Process = NoDaemonProcess
 
 
 def get_worldview_processed_visual_tile(

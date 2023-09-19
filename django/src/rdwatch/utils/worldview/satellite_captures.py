@@ -17,8 +17,6 @@ class WorldViewImage:
     timestamp: datetime
     bbox: tuple[float, float, float, float]
     uri: str
-    cloudcover: int | None
-    collection: str
 
 
 @dataclass(frozen=True)
@@ -30,8 +28,6 @@ class WorldViewCapture:
     bbox: tuple[float, float, float, float]
     uri: str
     panuri: str | None
-    cloudcover: int | None
-    collection: str
 
 
 def get_features(
@@ -62,37 +58,22 @@ def get_captures(
     if window is None:
         window = timedelta(days=1)
 
-    images = []
-    for feature in get_features(timestamp, bbox, timebuffer=timebuffer):
-        cloudcover = 0
-        if 'visual' in feature['assets']:
-            if 'properties' in feature:
-                if 'eo:cloud_cover' in feature['properties']:
-                    cloudcover = feature['properties']['eo:cloud_cover']
-        if (
-            feature['properties']['instruments'][0] in {'vis-multi', 'panchromatic'}
-            and feature['properties']['nitf:compression'] == 'NC'
-        ):
-            images.append(
-                WorldViewImage(
-                    mission=feature['properties']['mission'],
-                    instrument=feature['properties']['instruments'][0],
-                    image_representation=feature['properties'][
-                        'nitf:image_representation'
-                    ],
-                    bits_per_pixel=feature['properties']['nitf:bits_per_pixel'],
-                    timestamp=datetime.fromisoformat(
-                        feature['properties']['datetime'].rstrip('Z')
-                    ),
-                    bbox=cast(
-                        tuple[float, float, float, float], tuple(feature['bbox'])
-                    ),
-                    uri=feature['assets']['B01']['href'],
-                    cloudcover=cloudcover,
-                    collection=feature['collection'],
-                )
-            )
-
+    images = [
+        WorldViewImage(
+            mission=feature['properties']['mission'],
+            instrument=feature['properties']['instruments'][0],
+            image_representation=feature['properties']['nitf:image_representation'],
+            bits_per_pixel=feature['properties']['nitf:bits_per_pixel'],
+            timestamp=datetime.fromisoformat(
+                feature['properties']['datetime'].rstrip('Z')
+            ),
+            bbox=cast(tuple[float, float, float, float], tuple(feature['bbox'])),
+            uri=feature['assets']['data']['href'],
+        )
+        for feature in get_features(timestamp, bbox, timebuffer=timebuffer)
+        if feature['properties']['instruments'][0] in {'vis-multi', 'panchromatic'}
+        and feature['properties']['nitf:compression'] == 'NC'
+    ]
     images.sort(key=lambda i: i.timestamp)
 
     # find each vis-multi image's related panchromatic image
@@ -151,8 +132,6 @@ def get_captures(
                         bbox=image.bbox,
                         uri=image.uri,
                         panuri=panuri,
-                        cloudcover=image.cloudcover,
-                        collection=image.collection,
                     )
                 )
 

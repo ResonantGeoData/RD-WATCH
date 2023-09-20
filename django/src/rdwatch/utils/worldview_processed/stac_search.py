@@ -1,9 +1,8 @@
-import json
 import logging
 from datetime import datetime, timedelta
-from os import path
-from typing import Literal, TypedDict
-from urllib.request import Request, urlopen
+from typing import Literal, TypedDict, cast
+
+from pystac_client import Client
 
 from django.conf import settings
 
@@ -68,26 +67,28 @@ def worldview_search(
     timestamp: datetime,
     bbox: tuple[float, float, float, float],
     timebuffer: timedelta | None = None,
-    page: int = 1,
 ) -> Results:
-    url = path.join(settings.SMART_STAC_URL, 'search')
-    params = SearchParams()
-    params['bbox'] = bbox
+    stac_catalog = Client.open(
+        settings.SMART_STAC_URL,
+        headers={'x-api-key': settings.SMART_STAC_KEY},
+    )
+
     if timebuffer is not None:
         min_time = timestamp - timebuffer
         max_time = timestamp + timebuffer
         time_str = f'{_fmt_time(min_time)}/{_fmt_time(max_time)}'
     else:
         time_str = f'{_fmt_time(timestamp)}Z'
-    params['datetime'] = time_str
-    params['collections'] = COLLECTIONS
-    params['page'] = page
-    params['limit'] = 100
-    request = Request(
-        url,
-        data=bytes(json.dumps(params), 'utf-8'),
-        headers={'x-api-key': settings.SMART_STAC_KEY},
+
+    results = stac_catalog.search(
+        method='GET',
+        bbox=bbox,
+        datetime=time_str,
+        collections=COLLECTIONS,
+        limit=100,
     )
-    with urlopen(request) as resp:
-        read = resp.read()
-        return json.loads(read)
+
+    # TODO: return `results` directly instead of converting to a dict.
+    # Before that can happen, the callers need to be updated to handle
+    # an `ItemSearch` object.
+    return cast(Results, results.item_collection_as_dict())

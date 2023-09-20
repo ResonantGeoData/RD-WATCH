@@ -32,7 +32,7 @@ async def fetch_bbox(
         '/api/satellite-image/visual-bbox' if worldview else '/api/satellite-image/bbox'
     )
     params = {'timestamp': datetime.isoformat(time)}
-    params['bbox'] = bbox  # ','.join(str(x) for x in bbox)
+    params['bbox'] = ','.join(str(x) for x in bbox)
     params['format'] = 'WEBP'
     if not worldview:
         params['constellation'] = 'S2'

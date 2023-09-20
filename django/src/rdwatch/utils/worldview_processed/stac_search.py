@@ -45,14 +45,6 @@ class Results(TypedDict):
     links: list[Link]
 
 
-class SearchParams(TypedDict, total=False):
-    bbox: tuple[float, float, float, float]
-    datetime: str
-    collections: list[str]
-    page: int
-    limit: int
-
-
 COLLECTIONS: list[str] = []
 
 if settings.ACCENTURE_VERSION is not None:

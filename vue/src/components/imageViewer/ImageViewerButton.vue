@@ -1,7 +1,8 @@
 <script setup lang="ts">
 import { ref } from "vue";
 import ImageViewer from './ImageViewer.vue';
-const props = defineProps<{
+
+defineProps<{
   siteEvalId: number;
 }>();
 

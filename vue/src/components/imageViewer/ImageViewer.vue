@@ -64,7 +64,6 @@ const currentDate = ref('');
 const hasGroundTruth = ref(false);
 const groundTruth: Ref<EvaluationImageResults['groundTruth'] | null > = ref(null);
 const drawGroundTruth = ref(false);
-const labelList = computed(() => styles.filter((item) => item.labelType === 'observation').map((item) => item.label));
 const siteEvaluationList = computed(() => styles.filter((item) => item.labelType === 'sites').map((item) => item.label));
 const getClosestPoly = (timestamp: number, polys: EvaluationGeoJSON[], evaluationPoly: EvaluationGeoJSON['geoJSON'], siteEvalLabel: string) => {
   if (polys.length === 0) {
@@ -313,6 +312,7 @@ watch([currentImage, imageRef, filteredImages, drawGroundTruth], () => {
 
 });
 
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
 const updateTime = (time: any, date: 'StartDate' | 'EndDate') => {
   if (time === null) {
     if (date === 'StartDate') {

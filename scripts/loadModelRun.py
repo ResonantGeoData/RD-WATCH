@@ -25,8 +25,7 @@ def main():
         '--rgd-auth-cookie',
         required=False,
         type=str,
-        help='RGD Authentication cookie, e.g.: '
-        'AWSELBAuthSessionCookie-0=<LONG BASE64 STRING>',
+        help='RGD Authentication cookie, e.g.: token=<LONG BASE64 STRING>',
     )
     parser.add_argument(
         '--title',
@@ -78,7 +77,7 @@ def upload_to_rgd(
     model_run_results_url = f'{rgd_endpoint}/api/model-runs/'
     cookies = None
     if rgd_auth_cookie:
-        cookies = {'AWSELBAuthSessionCookie-0': rgd_auth_cookie}
+        cookies = {'token': rgd_auth_cookie}
     model_runs_result = requests.get(
         model_run_results_url,
         params={'limit': '0'},
@@ -148,7 +147,7 @@ def post_site(post_site_url, site_filepath, rgd_auth_cookie):
     with open(site_filepath) as f:
         cookie = None
         if rgd_auth_cookie:
-            cookie = {'AWSELBAuthSessionCookie-0': rgd_auth_cookie}
+            cookie = {'token': rgd_auth_cookie}
         try:
             response = requests.post(
                 post_site_url,

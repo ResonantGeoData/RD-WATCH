@@ -177,4 +177,5 @@ class Migration(migrations.Migration):
                 help_text='The hyper parameters used for the xport',
             ),
         ),
+        migrations.DeleteModel(name='HyperParameters'),
     ]

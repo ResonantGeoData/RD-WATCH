@@ -1,6 +1,6 @@
 from datetime import datetime, timedelta
+from typing import Literal
 
-import iso3166
 from celery.result import AsyncResult
 from ninja import Field, FilterSchema, Query, Schema
 from ninja.errors import ValidationError
@@ -53,22 +53,17 @@ router = RouterPaginated()
 
 
 class ModelRunFilterSchema(FilterSchema):
-    performer: str | None = Field(q='performer_slug')
+    performer: list[str] | None = Field(q='performer_slug')
     region: str | None
     proposal: str | None = Field(q='proposal', ignore_none=False)
 
-    def filter_region(self, value: str | None) -> Q:
-        if value is None:
+    def filter_performer(self, value: list[str] | None) -> Q:
+        if value is None or not value:
             return Q()
-        countrystr, numstr = value.split('_')
-        country = iso3166.countries_by_alpha2[countrystr].numeric
-        classification_slug = numstr[0]
-        number = None if numstr[1:] == 'xxx' else int(numstr[1:])
-        return (
-            Q(region_country=country)
-            & Q(region_class_slug=classification_slug)
-            & Q(region_number=number)
-        )
+        performer_q = Q()
+        for performer_slug in value:
+            performer_q |= Q(performer_slug=performer_slug)
+        return performer_q
 
 
 class HyperParametersWriteSchema(Schema):
@@ -199,9 +194,7 @@ def get_queryset():
                     Region.objects.filter(pk=OuterRef('region_id')).values(
                         json=JSONObject(
                             id='id',
-                            country='country',
-                            classification=JSONObject(slug='classification__slug'),
-                            number='number',
+                            name='name',
                         )
                     ),
                     output_field=JSONField(),
@@ -287,9 +280,7 @@ def list_model_runs(
         queryset.alias(
             min_score=Min('evaluations__score'),
             performer_slug=F('performer__slug'),
-            region_country=F('evaluations__region__country'),
-            region_class_slug=F('evaluations__region__classification__slug'),
-            region_number=F('evaluations__region__number'),
+            region=F('evaluations__region__name'),
         )
     )
 
@@ -309,15 +300,6 @@ def list_model_runs(
     )
 
     aggregate['count'] = total_model_run_count
-
-    # TODO: use a resolver instead.
-    # Temporary until https://github.com/vitalik/django-ninja/issues/610 is fixed
-    for result in aggregate['results']:
-        if result['region']:
-            result['region'] = {
-                'name': RegionSchema.resolve_name(result['region']),
-                'id': result['region']['id'],
-            }
 
     # Only bother calculating the entire bounding box of this model run
     # list if the user has specified a region. We don't want to overload
@@ -445,9 +427,7 @@ def get_region(hyper_parameters_id: int):
                     Region.objects.filter(pk=OuterRef('region_id')).values(
                         json=JSONObject(
                             id='id',
-                            country='country',
-                            classification=JSONObject(slug='classification__slug'),
-                            number='number',
+                            name='name',
                         )
                     ),
                     output_field=JSONField(),
@@ -482,6 +462,7 @@ def get_evaluations_query(hyper_parameters_id: int):
                     start_date=ExtractEpoch('start_date'),
                     end_date=ExtractEpoch('end_date'),
                     status='status',
+                    filename='cache_originator_file',
                 ),
                 ordering='number',
             ),
@@ -497,20 +478,15 @@ def get_modelrun_evaluations(request: HttpRequest, hyper_parameters_id: int):
 
     query = get_evaluations_query(hyper_parameters_id)
     model_run = region[0]
-    # TODO: use a resolver instead.
-    # Temporary until https://github.com/vitalik/django-ninja/issues/610 is fixed
-    if model_run['region']:
-        model_run['region'] = {
-            'name': RegionSchema.resolve_name(model_run['region']),
-            'id': model_run['region']['id'],
-        }
     query['region'] = model_run['region']
     return 200, query
 
 
 @router.post('/{id}/download/')
-def start_download(request: HttpRequest, id: int):
-    task_id = download_annotations.delay(id)
+def start_download(
+    request: HttpRequest, id: int, mode: Literal['all', 'approved', 'rejected'] = 'all'
+):
+    task_id = download_annotations.delay(id, mode)
     print(task_id)
     return task_id.id
 

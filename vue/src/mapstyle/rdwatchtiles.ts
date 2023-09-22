@@ -215,25 +215,6 @@ export const buildLayerFilter = (
         filter: buildObservationFilter(timestamp, filters),
       },
       {
-        id: `observations-text-${id}`,
-        type: "symbol",
-        source: `vectorTileSource_${id}`,
-        "source-layer": `observations-${id}`,
-        layout: {
-          "text-anchor": "center",
-          "text-font": ["Roboto Regular"],
-          "text-max-width": 5,
-          "text-size": 12,
-          "text-allow-overlap": true,
-          "text-offset": buildTextOffset("observation", filters),
-          "text-field": observationText,
-        },
-        paint: {
-          "text-color": annotationColors(filters),
-        },
-        filter: buildObservationFilter(timestamp, filters),
-      },
-      {
         id: `regions-outline-${id}`,
         type: "line",
         source: `vectorTileSource_${id}`,
@@ -255,7 +236,9 @@ export const buildLayerFilter = (
         },
         filter: buildSiteFilter(timestamp, filters),
       },
-      {
+    ]);
+    if (filters.showText) {
+      results = results.concat([{
         id: `sites-text-${id}`,
         type: "symbol",
         source: `vectorTileSource_${id}`,
@@ -274,7 +257,27 @@ export const buildLayerFilter = (
         },
         filter: buildSiteFilter(timestamp, filters),
       },
-    ]);
+      {
+        id: `observations-text-${id}`,
+        type: "symbol",
+        source: `vectorTileSource_${id}`,
+        "source-layer": `observations-${id}`,
+        layout: {
+          "text-anchor": "center",
+          "text-font": ["Roboto Regular"],
+          "text-max-width": 5,
+          "text-size": 12,
+          "text-allow-overlap": true,
+          "text-offset": buildTextOffset("observation", filters),
+          "text-field": observationText,
+        },
+        paint: {
+          "text-color": annotationColors(filters),
+        },
+        filter: buildObservationFilter(timestamp, filters),
+      }]);
+
+    }
   });
   return results;
 };

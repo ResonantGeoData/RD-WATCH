@@ -12,18 +12,18 @@ import { changeTime } from "../../interactions/timeStepper";
 const timemin = ref(Math.floor(new Date(0).valueOf() / 1000));
 const queryFilters: Ref<QueryArguments> = ref({ page: 1 });
 
-const selectedPerformer: Ref<Performer | null> = ref(null);
+const selectedPerformer: Ref<Performer[]> = ref([]);
 const selectedRegion: Ref<Region | undefined> = ref(undefined);
 const showSiteOutline: Ref<boolean> = ref(false);
 watch(selectedPerformer, (val) => {
   queryFilters.value = {
     ...queryFilters.value,
-    performer: val?.short_code,
+    performer: val.map((item) => item.short_code),
     page: 1,
   };
   state.filters = {
     ...state.filters,
-    performer_id: val?.id === undefined ? undefined : [val.id],
+    performer_ids: !val.length ? undefined : val.map((item) => item.id),
     scoringColoring: null,
   };
 });

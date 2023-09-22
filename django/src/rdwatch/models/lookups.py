@@ -41,7 +41,3 @@ class Performer(Lookup):
 
 class ProcessingLevel(Lookup):
     ...
-
-
-class RegionClassification(Lookup):
-    ...

@@ -4,13 +4,14 @@ import { ApiService, ModelRun, Region } from "./client";
 
 export interface MapFilters {
   configuration_id?: number[];
-  performer_id?: number[];
+  performer_ids?: number[];
   region_id?: number[];
   showSiteOutline?: boolean;
   groundTruthPattern?: boolean;
   otherPattern?: boolean;
   showRegionPolygon?: boolean;
   hoverSiteId?: number;
+  showText?: boolean;
   scoringColoring?: Record<string, Record<string, string>> | null;
 }
 
@@ -161,6 +162,7 @@ export const state = reactive<{
   filters: {
     groundTruthPattern: false,
     otherPattern: false,
+    showText: false,
   },
   mapLegend: true,
   satellite: {

@@ -30,10 +30,7 @@ class SiteEvaluation(models.Model):
         help_text='The region this site belongs to',
         db_index=True,
     )
-    number = models.IntegerField(
-        help_text='The site number',
-        db_index=True,
-    )
+    number = models.IntegerField(help_text='The site number', db_index=True)
     timestamp = models.DateTimeField(
         help_text='Time when this evaluation was finished',
     )
@@ -216,19 +213,6 @@ class SiteEvaluation(models.Model):
     class Meta:
         default_related_name = 'evaluations'
         indexes = [GistIndex(fields=['timestamp']), GistIndex(fields=['score'])]
-        constraints = [
-            models.UniqueConstraint(
-                name='unique_siteeval',
-                fields=[
-                    'configuration',
-                    'region',
-                    'number',
-                ],
-                violation_error_message=(  # type: ignore
-                    'Site evaluation already exists.'
-                ),
-            ),
-        ]
 
 
 class SiteEvaluationTracking(models.Model):

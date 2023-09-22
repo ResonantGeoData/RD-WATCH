@@ -123,7 +123,9 @@ watch([() => state.timestamp, () => state.filters, () => state.satellite, () => 
     setFilter(`sites-outline-${id}`, siteFilter);
     setFilter(`observations-fill-${id}`, observationFilter);
     setFilter(`observations-outline-${id}`, observationFilter);
-    setFilter(`observations-text-${id}`, observationFilter);
+    if (state.filters.showText) {
+      setFilter(`observations-text-${id}`, observationFilter);
+    }
   })
 
   setPopupEvents(map);

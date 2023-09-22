@@ -38,13 +38,6 @@ def get_features(
     results = worldview_search(timestamp, bbox, timebuffer=timebuffer)
     yield from results['features']
 
-    matched = results['context']['matched']
-    limit = results['context']['limit']
-    for i in range(matched // limit):
-        page = i + 2
-        results = worldview_search(timestamp, bbox, timebuffer=timebuffer, page=page)
-        yield from results['features']
-
 
 def get_captures(
     timestamp: datetime,

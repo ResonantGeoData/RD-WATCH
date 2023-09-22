@@ -11,6 +11,7 @@ export interface ModelRunEvaluationDisplay {
   startDate: number,
   endDate: number,
   selected:boolean;
+  filename?: string | null;
   images: number;
   S2: number;
   WV: number,
@@ -54,13 +55,25 @@ getSiteEvalIds();
 
 const modifiedList = computed(() => {
   const modList: ModelRunEvaluationDisplay[] = []
+  let newNumbers = 0;
   if (evaluationsList.value?.evaluations) {
     const regionName = evaluationsList.value.region.name;
     evaluationsList.value.evaluations.forEach((item) => {
       const newNum = item.number.toString().padStart(4, '0')
+      if (newNum === '9999') {
+        newNumbers += 1;
+      }
+      let name = `${regionName}_${newNum}`
+      if (newNumbers > 1) {
+        name = `${name}-${newNumbers}`
+      }
+
       modList.push(
         {
-          number: item.number, id: item.id, name: `${regionName}_${newNum}`,
+          number: item.number,
+          id: item.id,
+          name,
+          filename: item.filename,
           bbox: item.bbox,
           selected: item.id === props.selectedEval,
           images: item.images,
@@ -164,6 +177,24 @@ const download = (id: number) => {
                   </v-btn>
                 </template>
                 <span>Download JSON</span>
+              </v-tooltip>
+              <v-spacer />
+              <v-tooltip
+                v-if="item.filename"
+                open-delay="50"
+                bottom
+              >
+                <template #activator="{ props:subProps }">
+                  <v-icon
+                    x-small
+                    v-bind="subProps"
+                  >
+                    mdi-file-outline
+                  </v-icon>
+                </template>
+                <span>
+                  {{ item.filename }}
+                </span>
               </v-tooltip>
             </v-row>
           </v-card-text>

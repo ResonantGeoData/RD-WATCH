@@ -3,7 +3,6 @@ import sys
 import tempfile
 from datetime import datetime
 
-import iso3166
 from ninja import Field, FilterSchema, Query, Router, Schema
 
 from django.conf import settings
@@ -21,7 +20,6 @@ from rdwatch.db.functions import BoundingBox, ExtractEpoch
 from rdwatch.models import SiteEvaluation, SiteEvaluationTracking, lookups
 from rdwatch.schemas import SiteEvaluationRequest
 from rdwatch.schemas.common import BoundingBoxSchema, TimeRangeSchema
-from rdwatch.utils.tools import getRegion
 
 from .performer import PerformerSchema
 
@@ -30,26 +28,13 @@ router = Router()
 
 class SiteEvaluationSchema(Schema):
     id: int
-    site: dict
+    site: str
     configuration: dict
     performer: PerformerSchema
     score: float
     timestamp: int | None
     timerange: TimeRangeSchema | None
     bbox: BoundingBoxSchema
-
-    @staticmethod
-    def resolve_site(obj: dict) -> str:
-        country_numeric = str(obj['region']['country']).zfill(3)
-        country_code = iso3166.countries_by_numeric[country_numeric].alpha2
-        region_class = obj['region']['classification']
-        region_number = (
-            'xxx'
-            if obj['region']['number'] is None
-            else str(obj['region']['number']).zfill(3)
-        )
-        site_number = str(obj['number']).zfill(3)
-        return f'{country_code}_{region_class}{region_number}_{site_number}'
 
 
 class SiteEvaluationListSchema(Schema):
@@ -148,11 +133,7 @@ def list_site_evaluations(
             JSONObject(
                 id='pk',
                 site=JSONObject(
-                    region=JSONObject(
-                        country='region__country',
-                        classification='region__classification__slug',
-                        number='region__number',
-                    ),
+                    region='region__name',
                     number='number',
                 ),
                 configuration='configuration__parameters',
@@ -210,12 +191,6 @@ def patch_site_evaluation(request: HttpRequest, id: int, data: SiteEvaluationReq
     return 200
 
 
-def get_region_name(country, number, classification):
-    # Your implementation of getRegion function here
-    # Replace this with the actual implementation of getRegion function
-    return getRegion(country, number, classification)
-
-
 def get_site_model_feature_JSON(id: int, obsevations=False):
     query = (
         SiteEvaluation.objects.filter(pk=id)
@@ -223,11 +198,7 @@ def get_site_model_feature_JSON(id: int, obsevations=False):
         .annotate(
             json=JSONObject(
                 site=JSONObject(
-                    region=JSONObject(
-                        country='region__country',
-                        classification='region__classification__slug',
-                        number='region__number',
-                    ),
+                    region='region__name',
                     number='number',
                 ),
                 configuration='configuration__parameters',
@@ -240,6 +211,7 @@ def get_site_model_feature_JSON(id: int, obsevations=False):
                 cache_originator_file='cache_originator_file',
                 cache_timestamp='cache_timestamp',
                 cache_commit_hash='cache_commit_hash',
+                notes='notes',
                 score='score',
                 status='label__slug',
                 geom=Transform('geom', srid=4326),
@@ -251,11 +223,7 @@ def get_site_model_feature_JSON(id: int, obsevations=False):
     if query.exists():
         data = query[0]['json']
 
-        # convert to
-        region = data['site']['region']
-        region_name = getRegion(
-            region['country'], region['number'], region['classification']
-        )
+        region_name = data['site']['region']
         site_id = f'{region_name}_{str(data["site"]["number"]).zfill(3)}'
         version = data['version']
         output = {
@@ -287,19 +255,22 @@ def get_site_model_feature_JSON(id: int, obsevations=False):
                 }
             ],
         }
+        filename = None
         if data['cache_originator_file']:
+            filename = data['cache_originator_file']
             output['features'][0]['properties']['cache'] = {
                 'cache_originator_file': data['cache_originator_file'],
                 'cache_timestamp': data['cache_timestamp'],
                 'cache_commit_hash': data['cache_commit_hash'],
+                'cache_notes': data['notes'],
             }
-        return output, site_id
+        return output, site_id, filename
     return None, None
 
 
 @router.get('/{id}/download')
 def download_annotations(request: HttpRequest, id: int):
-    output, site_id = get_site_model_feature_JSON(id)
+    output, site_id, filename = get_site_model_feature_JSON(id)
     if output is not None:
         with tempfile.NamedTemporaryFile(delete=False) as temp_file:
             json_data = json.dumps(output).encode('utf-8')

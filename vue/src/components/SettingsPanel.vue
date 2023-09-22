@@ -73,6 +73,16 @@ const otherPattern = computed({
     state.filters = { ...state.filters, otherPattern: val };
   },
 });
+const showText = computed({
+    get() {
+      return state.filters.showText || false;
+    },
+    set(val: boolean) {
+      state.filters = { ...state.filters, showText: val };
+    },
+
+  })
+
 const patternThickness = computed({
   get() {
     return state.patterns?.patternThickness;
@@ -104,6 +114,8 @@ const S2Imagery = computed({
     }
   },
 });
+
+
 
 const worldViewImagery = computed({
   get() {
@@ -360,7 +372,15 @@ watch(hiddenCanvas, () => {
       </v-row>
 
 
-
+      <v-row dense>
+        <v-col cols="8">
+          <v-checkbox
+            v-model="showText"
+            label="Site Label On"
+            density="compact"
+          />
+        </v-col>
+      </v-row>
       <v-row dense>
         <v-col cols="8">
           <v-checkbox

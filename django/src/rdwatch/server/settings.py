@@ -177,6 +177,20 @@ class DevelopmentConfiguration(BaseConfiguration):
     MINIO_STORAGE_MEDIA_USE_PRESIGNED = True
     MINIO_STORAGE_MEDIA_URL = 'http://127.0.0.1:9000/rdwatch'
 
+    # Install django-debug-toolbar in development
+    @property
+    def INSTALLED_APPS(self) -> list[str]:
+        return super().INSTALLED_APPS + ['debug_toolbar']
+
+    @property
+    def MIDDLEWARE(self) -> list[str]:
+        return super().MIDDLEWARE + ['debug_toolbar.middleware.DebugToolbarMiddleware']
+
+    # This is needed for django-debug-toolbar
+    @property
+    def INTERNAL_IPS(self) -> list[str]:
+        return super().INTERNAL_IPS + ['127.0.0.1']
+
 
 class ProductionConfiguration(BaseConfiguration):
     SECRET_KEY = values.Value(environ_required=True, environ_prefix=_ENVIRON_PREFIX)

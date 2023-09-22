@@ -8,14 +8,10 @@ from rdwatch.views.vector_tile import _get_vector_tile_cache_key
 
 
 @pytest.mark.django_db
-def test_vector_tile_cache(
-    test_client: TestClient, model_run: ModelRun
-) -> None:
+def test_vector_tile_cache(test_client: TestClient, model_run: ModelRun) -> None:
     assert model_run.evaluations.count() == 0
 
-    cache_key = _get_vector_tile_cache_key(
-        model_run.id, 0, 0, 0, model_run.created
-    )
+    cache_key = _get_vector_tile_cache_key(model_run.id, 0, 0, 0, model_run.created)
 
     assert cache.get(cache_key) is None
 

@@ -73,9 +73,7 @@ def vector_tile(request: HttpRequest, model_run_id: int, z: int, x: int, y: int)
 
     # Generate a unique cache key based on the model run ID, vector tile coordinates,
     # and the latest timestamp
-    cache_key = _get_vector_tile_cache_key(
-        model_run_id, z, x, y, latest_timestamp
-    )
+    cache_key = _get_vector_tile_cache_key(model_run_id, z, x, y, latest_timestamp)
 
     tile = cache.get(cache_key)
 
@@ -134,9 +132,7 @@ def vector_tile(request: HttpRequest, model_run_id: int, z: int, x: int, y: int)
         ) = evaluations_queryset.query.sql_with_params()
 
         observations_queryset = (
-            SiteObservation.objects.filter(
-                siteeval__configuration_id=model_run_id
-            )
+            SiteObservation.objects.filter(siteeval__configuration_id=model_run_id)
             .filter(intersects)
             .values()
             .annotate(

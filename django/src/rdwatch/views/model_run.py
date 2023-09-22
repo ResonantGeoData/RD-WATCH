@@ -144,9 +144,7 @@ def get_queryset():
     )
 
     return (
-        ModelRun.objects.select_related(
-            'evaluations', 'performer', 'satellitefetching'
-        )
+        ModelRun.objects.select_related('evaluations', 'performer', 'satellitefetching')
         # Get minimum score and performer so that we can tell which runs
         # are ground truth
         .alias(min_score=Min('evaluations__score'), performer_slug=F('performer__slug'))
@@ -330,9 +328,7 @@ def post_site_model(
     site_model: SiteModel,
 ):
     model_run = get_object_or_404(ModelRun, pk=model_run_id)
-    site_evaluation = SiteEvaluation.bulk_create_from_site_model(
-        site_model, model_run
-    )
+    site_evaluation = SiteEvaluation.bulk_create_from_site_model(site_model, model_run)
     return 201, site_evaluation.id
 
 

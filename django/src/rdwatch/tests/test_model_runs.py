@@ -6,7 +6,7 @@ from ninja.testing import TestClient
 
 from django.utils import timezone
 
-from rdwatch.models import HyperParameters, lookups
+from rdwatch.models import ModelRun, lookups
 from rdwatch.tasks import delete_temp_model_runs_task
 
 
@@ -14,29 +14,29 @@ from rdwatch.tasks import delete_temp_model_runs_task
 def test_model_run_auto_delete() -> None:
     # Create a model run with expiration time of an hour ago
     with freeze_time(timezone.now() - timedelta(hours=2)):
-        HyperParameters.objects.create(
+        ModelRun.objects.create(
             title='test1',
             parameters={},
             performer=lookups.Performer.objects.all().first(),
             expiration_time=timedelta(hours=1),
         )
-    not_expired_model_run = HyperParameters.objects.create(
+    not_expired_model_run = ModelRun.objects.create(
         title='test2',
         parameters={},
         performer=lookups.Performer.objects.all().first(),
         expiration_time=timedelta(hours=2),
     )
-    model_run_with_no_expiration = HyperParameters.objects.create(
+    model_run_with_no_expiration = ModelRun.objects.create(
         title='test3',
         parameters={},
         performer=lookups.Performer.objects.all().first(),
     )
-    assert HyperParameters.objects.count() == 3
+    assert ModelRun.objects.count() == 3
 
     delete_temp_model_runs_task()
 
-    assert HyperParameters.objects.count() == 2
-    assert list(HyperParameters.objects.all()) == [
+    assert ModelRun.objects.count() == 2
+    assert list(ModelRun.objects.all()) == [
         not_expired_model_run,
         model_run_with_no_expiration,
     ]
@@ -47,7 +47,7 @@ def test_model_run_rest_create(test_client: TestClient) -> None:
     performer = lookups.Performer.objects.first()
     title = 'test'
 
-    assert HyperParameters.objects.filter(title=title, performer=performer).count() == 0
+    assert ModelRun.objects.filter(title=title, performer=performer).count() == 0
 
     res = test_client.post(
         '/model-runs/',
@@ -61,15 +61,15 @@ def test_model_run_rest_create(test_client: TestClient) -> None:
     assert res.status_code == 200
     assert res.json()['title'] == title
     assert res.json()['performer']['short_code'] == performer.slug
-    assert HyperParameters.objects.filter(title=title, performer=performer).count() == 1
+    assert ModelRun.objects.filter(title=title, performer=performer).count() == 1
 
 
 @pytest.mark.django_db
 def test_model_run_rest_list(test_client: TestClient) -> None:
     # Create test data
     performers = list(lookups.Performer.objects.all())
-    model_runs = HyperParameters.objects.bulk_create(
-        HyperParameters(performer=performer, title=f'test_{i}', parameters={})
+    model_runs = ModelRun.objects.bulk_create(
+        ModelRun(performer=performer, title=f'test_{i}', parameters={})
         for i, performer in enumerate(performers)
     )
 
@@ -95,7 +95,7 @@ def test_model_run_rest_get(test_client: TestClient) -> None:
     # Create test data
     performer = lookups.Performer.objects.first()
     title = 'test'
-    model_run = HyperParameters.objects.create(
+    model_run = ModelRun.objects.create(
         performer=performer,
         title=title,
         parameters={},

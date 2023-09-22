@@ -8,7 +8,7 @@ from ninja.pagination import RouterPaginated
 from django.http import HttpRequest
 from django.shortcuts import get_object_or_404
 
-from rdwatch.models import HyperParameters
+from rdwatch.models import ModelRun
 
 from .models import (
     EvaluationActivityClassificationTemporalIou,
@@ -96,7 +96,7 @@ class EvaluationResponseSchema(Schema):
 def has_scores(request: HttpRequest, configurationId: int, region: str):
     # from the hyper parameters we need the evaluation and evaluation_run Ids
     configuration = get_object_or_404(
-        HyperParameters.objects.select_related('performer'), pk=configurationId
+        ModelRun.objects.select_related('performer'), pk=configurationId
     )
     evaluationId = configuration.evaluation
     performer_name = configuration.performer.slug.lower()
@@ -117,7 +117,7 @@ def has_scores(request: HttpRequest, configurationId: int, region: str):
 @router.get('/region-colors')
 def region_color_map(request: HttpRequest, configurationId: int, region: str):
     # from the hyper parameters we need the evaluation and evaluation_run Ids
-    configuration = HyperParameters.objects.filter(pk=configurationId).first()
+    configuration = ModelRun.objects.filter(pk=configurationId).first()
     evaluationId = configuration.evaluation
     performer_name = configuration.performer.slug.lower()
     evaluation_run = configuration.evaluation_run
@@ -161,7 +161,7 @@ def list_regions(
     version: str,
 ):
     # from the hyper parameters we need the evaluation and evaluation_run Ids
-    configuration = HyperParameters.objects.filter(pk=configurationId).first()
+    configuration = ModelRun.objects.filter(pk=configurationId).first()
     evaluationId = configuration.evaluation
     performer_name = configuration.performer.slug.lower()
     evaluation_run = configuration.evaluation_run

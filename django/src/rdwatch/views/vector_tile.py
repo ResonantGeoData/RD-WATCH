@@ -20,18 +20,18 @@ from django.db.models import (
 from django.http import Http404, HttpRequest, HttpResponse
 
 from rdwatch.db.functions import ExtractEpoch, GroupExcludeRowRange
-from rdwatch.models import HyperParameters, Region, SiteEvaluation, SiteObservation
+from rdwatch.models import ModelRun, Region, SiteEvaluation, SiteObservation
 
 from .model_run import router
 
 
 def _get_vector_tile_cache_key(
-    hyper_parameters_id: int, z: int, x: int, y: int, timestamp: datetime
+    model_run_id: int, z: int, x: int, y: int, timestamp: datetime
 ) -> str:
     return '|'.join(
         [
-            HyperParameters.__name__,
-            str(hyper_parameters_id),
+            ModelRun.__name__,
+            str(model_run_id),
             'vector-tile',
             str(z),
             str(x),
@@ -41,15 +41,15 @@ def _get_vector_tile_cache_key(
     ).replace(' ', '_')
 
 
-@router.get('/{hyper_parameters_id}/vector-tile/{z}/{x}/{y}.pbf/')
-def vector_tile(request: HttpRequest, hyper_parameters_id: int, z: int, x: int, y: int):
+@router.get('/{model_run_id}/vector-tile/{z}/{x}/{y}.pbf/')
+def vector_tile(request: HttpRequest, model_run_id: int, z: int, x: int, y: int):
     timestamps: dict[
         Literal[
             'latest_evaluation_timestamp',
             'model_run_timestamp',
         ],
         datetime | None,
-    ] = HyperParameters.objects.filter(id=hyper_parameters_id).aggregate(
+    ] = ModelRun.objects.filter(id=model_run_id).aggregate(
         # Get timestamp of most recent site evaluation so we can use it as a cache key
         latest_evaluation_timestamp=Max('evaluations__timestamp'),
         # Also include the timestamp of the model run itself. A model
@@ -74,7 +74,7 @@ def vector_tile(request: HttpRequest, hyper_parameters_id: int, z: int, x: int, 
     # Generate a unique cache key based on the model run ID, vector tile coordinates,
     # and the latest timestamp
     cache_key = _get_vector_tile_cache_key(
-        hyper_parameters_id, z, x, y, latest_timestamp
+        model_run_id, z, x, y, latest_timestamp
     )
 
     tile = cache.get(cache_key)
@@ -98,7 +98,7 @@ def vector_tile(request: HttpRequest, hyper_parameters_id: int, z: int, x: int, 
         )
 
         evaluations_queryset = (
-            SiteEvaluation.objects.filter(configuration_id=hyper_parameters_id)
+            SiteEvaluation.objects.filter(configuration_id=model_run_id)
             .filter(intersects)
             .values()
             .alias(observation_count=Count('observations'))
@@ -135,7 +135,7 @@ def vector_tile(request: HttpRequest, hyper_parameters_id: int, z: int, x: int, 
 
         observations_queryset = (
             SiteObservation.objects.filter(
-                siteeval__configuration_id=hyper_parameters_id
+                siteeval__configuration_id=model_run_id
             )
             .filter(intersects)
             .values()
@@ -174,7 +174,7 @@ def vector_tile(request: HttpRequest, hyper_parameters_id: int, z: int, x: int, 
         ) = observations_queryset.query.sql_with_params()
 
         regions_queryset = (
-            Region.objects.filter(evaluations__configuration_id=hyper_parameters_id)
+            Region.objects.filter(evaluations__configuration_id=model_run_id)
             .filter(intersects)
             .values()
             .annotate(
@@ -213,7 +213,7 @@ def vector_tile(request: HttpRequest, hyper_parameters_id: int, z: int, x: int, 
             evaluations_params
             + observations_params
             + regions_params
-            + (hyper_parameters_id,) * 3
+            + (model_run_id,) * 3
         )
 
         with connection.cursor() as cursor:

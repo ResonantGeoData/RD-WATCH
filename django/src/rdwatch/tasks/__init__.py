@@ -21,7 +21,7 @@ from django.utils import timezone
 from rdwatch.celery import app
 from rdwatch.models import (
     AnnotationExport,
-    HyperParameters,
+    ModelRun,
     SatelliteFetching,
     SiteEvaluation,
     SiteImage,
@@ -317,7 +317,7 @@ def get_siteobservations_images(
 def delete_temp_model_runs_task() -> None:
     """Delete all model runs that are due to be deleted."""
     model_runs_to_delete = (
-        HyperParameters.objects.filter(expiration_time__isnull=False)
+        ModelRun.objects.filter(expiration_time__isnull=False)
         .alias(
             delete_at=ExpressionWrapper(
                 F('created') + F('expiration_time'), output_field=DateTimeField()
@@ -356,7 +356,7 @@ def download_annotations(self, id: int, mode: Literal['all', 'approved', 'reject
         site_evals = SiteEvaluation.objects.filter(
             configuration_id=id, status=SiteEvaluation.Status.REJECTED
         )
-    configuration = HyperParameters.objects.get(pk=id)
+    configuration = ModelRun.objects.get(pk=id)
     task_id = self.request.id
     temp_zip_file = tempfile.NamedTemporaryFile(delete=False, suffix='.zip')
 

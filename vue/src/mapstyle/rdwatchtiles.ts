@@ -69,8 +69,8 @@ export const buildObservationFilter = (
     ],
     [
       "in",
-      ["get", "region_id"],
-      ["literal", filters.region_id?.length ? filters.region_id : [""]],
+      ["get", "region"],
+      ["literal", filters.regions?.length ? filters.regions : [""]],
     ],
     [
       "any",

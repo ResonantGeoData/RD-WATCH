@@ -157,8 +157,8 @@ export class ApiService {
           }
         });
       }
-      
-  
+
+
       /**
    * @param id
    * @returns boolean
@@ -213,7 +213,7 @@ export class ApiService {
           },
         });
       }
-  
+
   /**
    * @returns ModelRunList
    * @throws ApiError
@@ -243,8 +243,8 @@ export class ApiService {
         },
       });
     }
-  
-    
+
+
 
   /**
    * @param id
@@ -295,21 +295,6 @@ export class ApiService {
     return __request(OpenAPI, {
       method: "GET",
       url: "/api/regions",
-    });
-  }
-
-  /**
-   * @param id
-   * @returns Performer
-   * @throws ApiError
-   */
-  public static getRegion(id: number): CancelablePromise<Region> {
-    return __request(OpenAPI, {
-      method: "GET",
-      url: "/api/regions/{id}",
-      path: {
-        id: id,
-      },
     });
   }
 
@@ -408,7 +393,7 @@ export class ApiService {
 
   public static getScoringDetails(
     configurationId: number,
-    regionId: number,
+    region: string,
     siteNumber: number,
     version: string
   ): CancelablePromise<ScoringResults>
@@ -416,30 +401,30 @@ export class ApiService {
     return __request(OpenAPI, {
       method: "GET",
       url: "/api/scores/details",
-      query: { configurationId, regionId, siteNumber, version },
+      query: { configurationId, region, siteNumber, version },
     });
   }
 
   public static hasScores(
     configurationId: number,
-    regionId: number,
+    region: string,
   ): CancelablePromise<boolean>
   {
     return __request(OpenAPI, {
       method: "GET",
       url: "/api/scores/has-scores",
-      query: { configurationId, regionId },
+      query: { configurationId, region },
     });
   }
   public static getScoreColoring(
     configurationId: number,
-    regionId: number,
+    region: string,
   ): CancelablePromise<Record<string, string>>
   {
     return __request(OpenAPI, {
       method: "GET",
       url: "/api/scores/region-colors",
-      query: { configurationId, regionId },
+      query: { configurationId, region, },
     });
   }
 
@@ -508,4 +493,3 @@ export class ApiService {
 
 
 }
-

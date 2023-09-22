@@ -28,14 +28,14 @@ watch(selectedPerformer, (val) => {
     scoringColoring: null,
   };
 });
-watch (() => state.filters.region_id, () => {
-  if (state.filters.region_id?.length) {
-    selectedRegion.value = {id:state.filters.region_id[0], name: state.regionMap[state.filters.region_id[0]]}
+watch (() => state.filters.regions, () => {
+  if (state.filters.regions?.length) {
+    selectedRegion.value = state.filters.regions[0];
   }
 });
 
 const updateRegion = (val?: Region) => {
-  queryFilters.value = { ...queryFilters.value, region: val?.name, page: 1 };
+  queryFilters.value = { ...queryFilters.value, region: val, page: 1 };
   if (selectedRegion.value === undefined) {
     state.satellite.satelliteImagesOn = false;
     state.enabledSiteObservations = [];
@@ -43,7 +43,7 @@ const updateRegion = (val?: Region) => {
   }
   state.filters = {
     ...state.filters,
-    region_id: val?.id === undefined ? undefined : [val.id],
+    regions: val === undefined ? undefined : [val],
     scoringColoring: null,
   };
 };
@@ -125,7 +125,7 @@ onMounted(() => {
             'animate-flicker': state.satellite.loadingSatelliteImages,
           }"
           :color="imagesOn ? 'rgb(37, 99, 235)' : 'black'"
-          :disabled="selectedRegion === null || (filteredSatelliteTimeList.length === 0 && state.satellite.satelliteSources.length !== 0)" 
+          :disabled="selectedRegion === null || (filteredSatelliteTimeList.length === 0 && state.satellite.satelliteSources.length !== 0)"
           icon="mdi-image"
           @click="imagesOn = selectedRegion !== null && (filteredSatelliteTimeList.length !== 0 || state.satellite.satelliteSources.length === 0) ? !imagesOn : imagesOn"
         />

@@ -111,7 +111,7 @@ def vector_tile(request: HttpRequest, hyper_parameters_id: int, z: int, x: int, 
                 timemin=ExtractEpoch(Min('observations__timestamp')),
                 timemax=ExtractEpoch(Max('observations__timestamp')),
                 performer_id=F('configuration__performer_id'),
-                region_id=F('region_id'),
+                region=F('region__name'),
                 groundtruth=Case(
                     When(
                         Q(configuration__performer__slug='TE') & Q(score=1),
@@ -156,7 +156,7 @@ def vector_tile(request: HttpRequest, hyper_parameters_id: int, z: int, x: int, 
                     ),
                 ),
                 performer_id=F('siteeval__configuration__performer_id'),
-                region_id=F('siteeval__region_id'),
+                region=F('siteeval__region__name'),
                 version=F('siteeval__version'),
                 groundtruth=Case(
                     When(
@@ -178,7 +178,7 @@ def vector_tile(request: HttpRequest, hyper_parameters_id: int, z: int, x: int, 
             .filter(intersects)
             .values()
             .annotate(
-                id=F('pk'),
+                name=F('name'),
                 mvtgeom=mvtgeom,
             )
         )

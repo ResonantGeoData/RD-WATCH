@@ -46,7 +46,6 @@ async function loadMore() {
     request.cancel();
   }
   const { performer } = props.filters; // unwrap performer array
-  console.log(performer);
   request = ApiService.getModelRuns({
     limit,
     ...props.filters,
@@ -87,7 +86,7 @@ async function loadMore() {
           getSatelliteTimestamps(modelRunList)
       }
       state.bbox = bbox;
-    } else if (!state.filters.region_id?.length) {
+    } else if (!state.filters.regions?.length) {
       const bbox = {
         xmin: -180,
         ymin: -90,
@@ -128,8 +127,8 @@ function updateCameraBounds(filtered = true) {
   }
   if (
     !state.settings.autoZoom &&
-    state.filters.region_id &&
-    state.filters.region_id?.length > 0
+    state.filters.regions &&
+    state.filters.regions?.length > 0
   ) {
     return;
   }
@@ -222,19 +221,19 @@ function handleToggle(modelRun: KeyedModelRun) {
     // Only move camera if we're *not* currently filtering by region
     updateCameraBounds();
     const configurationIds: Set<number> = new Set();
-    const regionIds: Set<number> = new Set();
+    const regions: Set<string> = new Set();
     state.modelRuns
       .filter((modelRun) => state.openedModelRuns.has(modelRun.key))
       .map((modelRun) => {
         configurationIds.add(modelRun.id);
         if (modelRun.region) {
-          regionIds.add(modelRun.region?.id);
+          regions.add(modelRun.region);
         }
       });
     state.filters = {
       ...state.filters,
       configuration_id: Array.from(configurationIds),
-      region_id: Array.from(regionIds),
+      regions: Array.from(regions),
       scoringColoring: null,
     };
   } else {
@@ -290,7 +289,7 @@ watch([() => props.filters.region, () => props.filters.performer], () => {
         {{ totalModelRuns }} {{ totalModelRuns > 1 ? "Runs" : "Run" }}
       </v-chip>
       <v-chip
-        v-if="!loading && !loadingSatelliteTimestamps && hasSatelliteImages && !state.satellite.satelliteImagesOn && state.filters.region_id?.length"
+        v-if="!loading && !loadingSatelliteTimestamps && hasSatelliteImages && !state.satellite.satelliteImagesOn && state.filters.regions?.length"
         style="font-size: 0.75em"
         label
         density="compact"
@@ -337,7 +336,7 @@ watch([() => props.filters.region, () => props.filters.performer], () => {
       />
     </div>
     <div
-      v-if="!loading && state.filters.region_id?.length && satelliteRegionTooLarge"
+      v-if="!loading && state.filters.regions?.length && satelliteRegionTooLarge"
       class="mt-5"
       style="font-size: 0.75em"
     >
@@ -369,7 +368,7 @@ watch([() => props.filters.region, () => props.filters.performer], () => {
         :open="state.openedModelRuns.has(modelRun.key)"
         :class="{
           outlined: hoveredInfo.region.includes(
-            `${modelRun.id}_${modelRun.region?.id}_${modelRun.performer.id}`
+            `${modelRun.id}_${modelRun.region}_${modelRun.performer.id}`
           ),
         }"
         @toggle="() => handleToggle(modelRun)"

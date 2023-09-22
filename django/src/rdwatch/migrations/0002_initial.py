@@ -7,7 +7,12 @@ import django.contrib.postgres.indexes
 import django.db.models.deletion
 from django.db import migrations, models
 
-import rdwatch.validators
+
+def validate_iso3166(value: int):
+    import iso3166
+
+    if str(value).zfill(3) not in iso3166.countries_by_numeric:
+        raise ValidationError('Invalid country code')
 
 
 class Migration(migrations.Migration):
@@ -117,7 +122,7 @@ class Migration(migrations.Migration):
                     models.PositiveSmallIntegerField(
                         db_index=True,
                         help_text='The numeric country identifier as specified by ISO 3166',
-                        validators=[rdwatch.validators.validate_iso3166],
+                        validators=[validate_iso3166],
                     ),
                 ),
                 (

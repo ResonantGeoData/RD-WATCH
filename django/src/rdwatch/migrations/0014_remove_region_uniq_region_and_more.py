@@ -2,8 +2,6 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
-import iso3166
-
 from django.db import migrations, models
 
 if TYPE_CHECKING:
@@ -13,6 +11,10 @@ if TYPE_CHECKING:
 
 def migrate_region_name(apps: StateApps, schema_editor: PostGISSchemaEditor):
     Region = apps.get_model('rdwatch', 'Region')  # noqa: N806
+    if Region.objects.count() == 0:
+        return
+
+    import iso3166
 
     for region in Region.objects.iterator():
         country_numeric = str(region.country).zfill(3)

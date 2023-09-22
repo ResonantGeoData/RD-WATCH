@@ -10,6 +10,7 @@ from typing import Literal
 
 from celery import shared_task
 from PIL import Image
+from pydantic import UUID4
 from pyproj import Transformer
 
 from django.contrib.gis.geos import Polygon
@@ -344,7 +345,7 @@ def delete_export_files() -> None:
 
 
 @app.task(bind=True)
-def download_annotations(self, id: int, mode: Literal['all', 'approved', 'rejected']):
+def download_annotations(self, id: UUID4, mode: Literal['all', 'approved', 'rejected']):
     # Needs to go through the siteEvaluations and download one for each file
     if mode == 'all':
         site_evals = SiteEvaluation.objects.filter(configuration_id=id)

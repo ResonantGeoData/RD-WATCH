@@ -6,7 +6,7 @@ from ninja import Field, FilterSchema, Query, Schema
 from ninja.errors import ValidationError
 from ninja.pagination import RouterPaginated
 from ninja.schema import validator
-from pydantic import constr  # type: ignore
+from pydantic import UUID4, constr  # type: ignore
 
 from django.contrib.postgres.aggregates import JSONBAgg
 from django.db import transaction
@@ -94,7 +94,7 @@ class ModelRunAdjudicated(Schema):
 
 
 class ModelRunDetailSchema(Schema):
-    id: int
+    id: UUID4
     title: str
     region: str | None = None
     performer: PerformerSchema
@@ -307,7 +307,7 @@ def list_model_runs(
 
 
 @router.get('/{id}/', response={200: ModelRunDetailSchema})
-def get_model_run(request: HttpRequest, id: int):
+def get_model_run(request: HttpRequest, id: UUID4):
     values = get_queryset().filter(id=id).values_list('json', flat=True)
 
     if not values.exists():
@@ -324,7 +324,7 @@ def get_model_run(request: HttpRequest, id: int):
 )
 def post_site_model(
     request: HttpRequest,
-    model_run_id: int,
+    model_run_id: UUID4,
     site_model: SiteModel,
 ):
     model_run = get_object_or_404(ModelRun, pk=model_run_id)
@@ -338,7 +338,7 @@ def post_site_model(
 )
 def post_region_model(
     request: HttpRequest,
-    model_run_id: int,
+    model_run_id: UUID4,
     region_model: RegionModel,
 ):
     model_run = get_object_or_404(ModelRun, pk=model_run_id)
@@ -349,7 +349,7 @@ def post_region_model(
 
 
 @router.post('/{model_run_id}/generate-images/', response={202: bool})
-def generate_images(request: HttpRequest, model_run_id: int):
+def generate_images(request: HttpRequest, model_run_id: UUID4):
     siteEvaluations = SiteEvaluation.objects.filter(configuration=model_run_id)
 
     for eval in siteEvaluations:
@@ -362,7 +362,7 @@ def generate_images(request: HttpRequest, model_run_id: int):
     '/{model_run_id}/cancel-generate-images/',
     response={202: bool, 409: str, 404: str},
 )
-def cancel_generate_images(request: HttpRequest, model_run_id: int):
+def cancel_generate_images(request: HttpRequest, model_run_id: UUID4):
     siteEvaluations = SiteEvaluation.objects.filter(configuration=model_run_id)
 
     for eval in siteEvaluations:
@@ -387,7 +387,7 @@ def cancel_generate_images(request: HttpRequest, model_run_id: int):
     return 202, True
 
 
-def get_region(model_run_id: int):
+def get_region(model_run_id: UUID4):
     return (
         ModelRun.objects.select_related('evaluations')
         .filter(pk=model_run_id)
@@ -405,7 +405,7 @@ def get_region(model_run_id: int):
     )
 
 
-def get_evaluations_query(model_run_id: int):
+def get_evaluations_query(model_run_id: UUID4):
     return (
         SiteEvaluation.objects.select_related('siteimage')
         .filter(configuration=model_run_id)
@@ -439,7 +439,7 @@ def get_evaluations_query(model_run_id: int):
 
 
 @router.get('/{model_run_id}/evaluations')
-def get_modelrun_evaluations(request: HttpRequest, model_run_id: int):
+def get_modelrun_evaluations(request: HttpRequest, model_run_id: UUID4):
     region = get_region(model_run_id).values_list('json', flat=True)
     if not region.exists():
         raise Http404()
@@ -452,7 +452,9 @@ def get_modelrun_evaluations(request: HttpRequest, model_run_id: int):
 
 @router.post('/{id}/download/')
 def start_download(
-    request: HttpRequest, id: int, mode: Literal['all', 'approved', 'rejected'] = 'all'
+    request: HttpRequest,
+    id: UUID4,
+    mode: Literal['all', 'approved', 'rejected'] = 'all',
 ):
     task_id = download_annotations.delay(id, mode)
     print(task_id)

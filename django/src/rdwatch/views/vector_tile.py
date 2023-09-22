@@ -1,6 +1,8 @@
 from datetime import datetime, timedelta
 from typing import Literal
 
+from pydantic import UUID4
+
 from django.contrib.gis.db.models.functions import Area, Transform
 from django.core.cache import cache
 from django.db import connection
@@ -26,7 +28,7 @@ from .model_run import router
 
 
 def _get_vector_tile_cache_key(
-    model_run_id: int, z: int, x: int, y: int, timestamp: datetime
+    model_run_id: UUID4, z: int, x: int, y: int, timestamp: datetime
 ) -> str:
     return '|'.join(
         [
@@ -42,7 +44,7 @@ def _get_vector_tile_cache_key(
 
 
 @router.get('/{model_run_id}/vector-tile/{z}/{x}/{y}.pbf/')
-def vector_tile(request: HttpRequest, model_run_id: int, z: int, x: int, y: int):
+def vector_tile(request: HttpRequest, model_run_id: UUID4, z: int, x: int, y: int):
     timestamps: dict[
         Literal[
             'latest_evaluation_timestamp',
@@ -190,17 +192,17 @@ def vector_tile(request: HttpRequest, model_run_id: int, z: int, x: int, y: int)
                 regions AS ({regions_sql})
             SELECT (
                 (
-                    SELECT ST_AsMVT(evaluations.*, 'sites-%s', 4096, 'mvtgeom', 'id')
+                    SELECT ST_AsMVT(evaluations.*, %s, 4096, 'mvtgeom', 'id')
                     FROM evaluations
                 )
                 ||
                 (
-                    SELECT ST_AsMVT(observations.*, 'observations-%s', 4096, 'mvtgeom', 'id')
+                    SELECT ST_AsMVT(observations.*, %s, 4096, 'mvtgeom', 'id')
                     FROM observations
                 )
                 ||
                 (
-                    SELECT ST_AsMVT(regions.*, 'regions-%s', 4096, 'mvtgeom', 'id')
+                    SELECT ST_AsMVT(regions.*, %s, 4096, 'mvtgeom', 'id')
                     FROM regions
                 )
             )
@@ -209,7 +211,11 @@ def vector_tile(request: HttpRequest, model_run_id: int, z: int, x: int, y: int)
             evaluations_params
             + observations_params
             + regions_params
-            + (model_run_id,) * 3
+            + (
+                f'sites-{model_run_id}',
+                f'observations-{model_run_id}',
+                f'regions-{model_run_id}',
+            )
         )
 
         with connection.cursor() as cursor:

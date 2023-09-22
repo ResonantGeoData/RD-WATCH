@@ -16,7 +16,7 @@ from rdwatch.schemas.site_model import SiteFeature
 
 class SiteEvaluation(models.Model):
     configuration = models.ForeignKey(
-        to='HyperParameters',
+        to='ModelRun',
         on_delete=models.PROTECT,
         help_text='The hyper parameters used this site evaluation.',
         db_index=True,

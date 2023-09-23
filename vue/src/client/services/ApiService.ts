@@ -19,7 +19,6 @@ import { EvaluationImageResults } from "../../types";
 
 export interface QueryArguments {
   performer?: string[];
-  groundtruth?: boolean;
   region?: string;
   page?: number;
   limit?: number;

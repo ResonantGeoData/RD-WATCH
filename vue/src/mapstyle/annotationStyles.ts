@@ -1,127 +1,86 @@
 import { DataDrivenPropertyValueSpecification, FormattedSpecification } from "maplibre-gl";
 import { MapFilters } from "../store";
 
-export interface AnnotationStyle {
-    id: number;
-    label: string;
-    color: string;
-    labelType: 'observation' | 'sites' | ''; // Filter for label types
-}
+export type AnnotationStyle = Record<string, { color: string, type: string }>;
 
 const defaultAnnotationColor = '#7F7F7F'
 
 const defaultLabelText = '';
 
-const styles: AnnotationStyle[] = [
-    {
-        id: 1,
-        color: '#007DFF',
-        label: 'active_construction',
-        labelType: 'observation',
-    },
-    {
-        id: 2,
-        color: '#BE4EFF',
-        label: 'post_construction',
-        labelType: 'observation',
-    },
-    {
-        id: 3,
-        color: '#FFA100',
-        label: 'site_preparation',
-        labelType: 'observation',
-    },
-    {
-        id: 4,
-        color: '#FFA100',
-        label: 'unknown',
-        labelType: 'observation'
-    },
-    {
-        id: 5,
-        color: '#228b22',
-        label: 'no_activity',
-        labelType: 'observation'
-    },
-    {
-        id: 6,
-        color: '#7f0000',
-        label: 'positive_annotated',
-        labelType: 'sites'
-    },
-    {
-        id: 7,
-        color: '#00008b',
-        label: 'positive_partial',
-        labelType: 'sites',
-    },
-    {
-        id: 8,
-        color: '#ff8c00',
-        label: 'positive_annotated_static',
-        labelType: 'sites',
-    },
-    {
-        id: 9,
-        color: '#ffff00',
-        label: 'positive_partial_static',
-        labelType: 'sites',
-    },
-    {
-        id: 10,
-        color: '#1e90ff',
-        label: 'positive_pending',
-        labelType: 'sites',
-    },
-    {
-        id: 11,
-        color: '#00ffff',
-        label: 'positive_excluded',
-        labelType: 'sites',
-    },
-    {
-        id: 12,
-        color: '#ff00ff',
-        label: 'negative',
-        labelType: 'sites',
-    },
-    {
-        id: 13,
-        color: '#00ff00',
-        label: 'ignore',
-        labelType: 'sites',
-    },
-    {
-        id: 14,
-        color: '#ff69b4',
-        label: 'transient_positive',
-        labelType: 'sites',
-    },
-    {
-        id: 15,
-        color: '#ffe4c4',
-        label: 'transient_negative',
-        labelType: 'sites',
-    },
-    {
-        id: 16,
-        color: '#1F77B4',
-        label: 'system_proposed',
-        labelType: 'sites',
-    },
-    {
-        id: 17,
-        color: '#1F77B4',
-        label: 'system_confirmed',
-        labelType: 'sites',
-    },
-    {
-        id: 18,
-        color: '#1F77B4',
-        label: 'system_rejected',
-        labelType: 'sites',
-    },
-]
+const styles: AnnotationStyle = {
+  active_construction: {
+    color: "#007DFF",
+    type: "observation",
+  },
+  post_construction: {
+    color: "#BE4EFF",
+    type: "observation",
+  },
+  site_preparation: {
+    color: "#FFA100",
+    type: "observation",
+  },
+  unknown: {
+    color: "#FFA100",
+    type: "observation",
+  },
+  no_activity: {
+    color: "#228b22",
+    type: "observation",
+  },
+  positive_annotated: {
+    color: "#7f0000",
+    type: "sites",
+  },
+  positive_partial: {
+    color: "#00008b",
+    type: "sites",
+  },
+  positive_annotated_static: {
+    color: "#ff8c00",
+    type: "sites",
+  },
+  positive_partial_static: {
+    color: "#ffff00",
+    type: "sites",
+  },
+  positive_pending: {
+    color: "#1e90ff",
+    type: "sites",
+  },
+  positive_excluded: {
+    color: "#00ffff",
+    type: "sites",
+  },
+  negative: {
+    color: "#ff00ff",
+    type: "sites",
+  },
+  ignore: {
+    color: "#00ff00",
+    type: "sites",
+  },
+  transient_positive: {
+    color: "#ff69b4",
+    type: "sites",
+  },
+  transient_negative: {
+    color: "#ffe4c4",
+    type: "sites",
+  },
+  system_proposed: {
+    color: "#1F77B4",
+    type: "sites",
+  },
+  system_confirmed: {
+    color: "#1F77B4",
+    type: "sites",
+  },
+  system_rejected: {
+    color: "#1F77B4",
+    type: "sites",
+  },
+};
 
 const getAnnotationColor = (filters: MapFilters) => {
     const result = [];
@@ -143,20 +102,20 @@ const getAnnotationColor = (filters: MapFilters) => {
             });
         });
     }
-    styles.forEach((item) => {
-        result.push(['==', ['get', 'label'], item.id]);
-        result.push(item.color);
+    Object.entries(styles).forEach(([label, { color }]) => {
+        result.push(['==', ['get', 'label'], label]);
+        result.push(color);
     });
     result.push(defaultAnnotationColor);
     return result as DataDrivenPropertyValueSpecification<string>;
 }
 
-const getText = (textType: AnnotationStyle['labelType']) => {
+const getText = (textType: string) => {
     const result = [];
     result.push('case');
-    styles.filter((item) => item.labelType === textType).forEach((item) => {
-        result.push(['==', ['get', 'label'], item.id]);
-        result.push(item.label);
+    Object.entries(styles).filter(([label, { type }]) => type === textType).forEach(([label, { type }]) => {
+        result.push(['==', ['get', 'label'], label]);
+        result.push(label);
     })
     result.push(defaultLabelText);
     return result as DataDrivenPropertyValueSpecification<FormattedSpecification>;
@@ -169,12 +128,12 @@ const siteText = getText('sites');
 const createAnnotationLegend = () => {
     const observationLegend: {color: string, name: string}[] = [];
     const siteLegend: {color: string, name: string}[] = [];
-    styles.forEach((item) => {
-        if (item.labelType === 'observation'){
-            observationLegend.push({color: item.color, name: item.label})
+    Object.entries(styles).forEach(([label, { type, color }]) => {
+        if (type === 'observation'){
+            observationLegend.push({color: color, name: label})
         }
-        if (item.labelType === 'sites'){
-            siteLegend.push({color: item.color, name: item.label})
+        if (type === 'sites'){
+            siteLegend.push({color: color, name: label})
         }
     });
     const scoringLegend = [
@@ -186,9 +145,8 @@ const createAnnotationLegend = () => {
     return { observationLegend, scoringLegend, siteLegend }
 }
 const annotationLegend = createAnnotationLegend();
-const getColorFromLabel = (label: string) => {
-    return styles.find((item) => item.label === label)?.color || 'white';
-}
+
+const getColorFromLabel = ((label: string) => styles[label].color);
 
 export {
     annotationColors,

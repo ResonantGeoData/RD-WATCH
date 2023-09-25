@@ -7,7 +7,7 @@ from django.contrib.gis.geos import MultiPolygon
 from django.contrib.postgres.indexes import GistIndex
 from django.db import models, transaction
 
-from rdwatch.models import HyperParameters, lookups
+from rdwatch.models import ModelRun, lookups
 from rdwatch.models.region import get_or_create_region
 from rdwatch.schemas import RegionModel, SiteModel
 from rdwatch.schemas.region_model import RegionFeature, SiteSummaryFeature
@@ -16,7 +16,7 @@ from rdwatch.schemas.site_model import SiteFeature
 
 class SiteEvaluation(models.Model):
     configuration = models.ForeignKey(
-        to='HyperParameters',
+        to='ModelRun',
         on_delete=models.PROTECT,
         help_text='The hyper parameters used this site evaluation.',
         db_index=True,
@@ -96,7 +96,7 @@ class SiteEvaluation(models.Model):
 
     @classmethod
     def bulk_create_from_site_model(
-        cls, site_model: SiteModel, configuration: HyperParameters
+        cls, site_model: SiteModel, configuration: ModelRun
     ):
         from rdwatch.models import SiteObservation
 
@@ -115,7 +115,7 @@ class SiteEvaluation(models.Model):
         # https://smartgitlab.com/TE/annotations/-/wikis/Submitting-Proposals-for-New-Sites
         if configuration.proposal or site_feature.properties.site_number == 9999:
             status = SiteEvaluation.Status.PROPOSAL
-            configuration.proposal = HyperParameters.ProposalStatus.PROPOSAL
+            configuration.proposal = ModelRun.ProposalStatus.PROPOSAL
             modified = True
         if modified:
             configuration.save()
@@ -156,7 +156,7 @@ class SiteEvaluation(models.Model):
 
     @classmethod
     def bulk_create_from_from_region_model(
-        cls, region_model: RegionModel, configuration: HyperParameters
+        cls, region_model: RegionModel, configuration: ModelRun
     ) -> list[Self]:
         region_feature = region_model.region_feature
         assert isinstance(region_feature.properties, RegionFeature)

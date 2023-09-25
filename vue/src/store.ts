@@ -3,7 +3,7 @@ import { computed, reactive } from "vue";
 import { ApiService, ModelRun, Region } from "./client";
 
 export interface MapFilters {
-  configuration_id?: number[];
+  configuration_id?: string[];
   performer_ids?: number[];
   regions?: Region[];
   showSiteOutline?: boolean;

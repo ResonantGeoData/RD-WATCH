@@ -1,7 +1,7 @@
 from django.contrib import admin
 
 from rdwatch.models import (
-    HyperParameters,
+    ModelRun,
     Region,
     SatelliteFetching,
     SiteEvaluation,
@@ -41,8 +41,8 @@ class ProcessingLevelAdmin(admin.ModelAdmin):
     search_fields = ('slug',)
 
 
-@admin.register(HyperParameters)
-class HyperParametersAdmin(admin.ModelAdmin):
+@admin.register(ModelRun)
+class ModelRunAdmin(admin.ModelAdmin):
     list_display = (
         'id',
         'created',

@@ -4,7 +4,7 @@ from django.dispatch import receiver
 
 class AnnotationExport(models.Model):
     configuration = models.ForeignKey(
-        to='HyperParameters',
+        to='ModelRun',
         on_delete=models.PROTECT,
         help_text='The hyper parameters used for the xport',
         db_index=True,

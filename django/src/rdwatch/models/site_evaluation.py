@@ -1,4 +1,5 @@
 from datetime import datetime
+from uuid import uuid4
 
 from typing_extensions import Self
 
@@ -15,6 +16,8 @@ from rdwatch.schemas.site_model import SiteFeature
 
 
 class SiteEvaluation(models.Model):
+    id = models.UUIDField(primary_key=True, default=uuid4, editable=False)
+
     configuration = models.ForeignKey(
         to='ModelRun',
         on_delete=models.PROTECT,

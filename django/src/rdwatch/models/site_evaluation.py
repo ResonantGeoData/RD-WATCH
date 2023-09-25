@@ -216,6 +216,8 @@ class SiteEvaluation(models.Model):
 
 
 class SiteEvaluationTracking(models.Model):
+    id = models.UUIDField(primary_key=True, default=uuid4, editable=False)
+
     edited = models.DateTimeField()
     evaluation = models.ForeignKey(
         to='SiteEvaluation',

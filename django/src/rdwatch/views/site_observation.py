@@ -32,7 +32,7 @@ router = Router()
 
 
 class SiteObservationSchema(Schema):
-    id: int
+    id: UUID4
     label: str
     score: float
     constellation: str | None
@@ -256,7 +256,7 @@ def cancel_site_observation_images(request: HttpRequest, evaluation_id: UUID4):
 
 @router.patch('/{id}/')
 def update_site_observation(
-    request: HttpRequest, id: int, data: SiteObservationRequest
+    request: HttpRequest, id: UUID4, data: SiteObservationRequest
 ):
     with transaction.atomic():
         site_observation = get_object_or_404(

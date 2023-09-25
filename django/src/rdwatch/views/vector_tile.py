@@ -192,17 +192,17 @@ def vector_tile(request: HttpRequest, model_run_id: UUID4, z: int, x: int, y: in
                 regions AS ({regions_sql})
             SELECT (
                 (
-                    SELECT ST_AsMVT(evaluations.*, %s, 4096, 'mvtgeom', 'id')
+                    SELECT ST_AsMVT(evaluations.*, %s, 4096, 'mvtgeom')
                     FROM evaluations
                 )
                 ||
                 (
-                    SELECT ST_AsMVT(observations.*, %s, 4096, 'mvtgeom', 'id')
+                    SELECT ST_AsMVT(observations.*, %s, 4096, 'mvtgeom')
                     FROM observations
                 )
                 ||
                 (
-                    SELECT ST_AsMVT(regions.*, %s, 4096, 'mvtgeom', 'id')
+                    SELECT ST_AsMVT(regions.*, %s, 4096, 'mvtgeom')
                     FROM regions
                 )
             )

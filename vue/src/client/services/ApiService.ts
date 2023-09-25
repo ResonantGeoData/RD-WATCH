@@ -202,7 +202,7 @@ export class ApiService {
    * @throws ApiError
    */
       public static cancelModelRunsImageTask(
-        id: number,
+        id: string,
       ): CancelablePromise<boolean> {
         return __request(OpenAPI, {
           method: "PUT",
@@ -233,7 +233,7 @@ export class ApiService {
    * @returns EvaluationsList
    * @throws ApiError
    */
-    public static getModelRunEvaluations(id: number): CancelablePromise<ModelRunEvaluations> {
+    public static getModelRunEvaluations(id: string): CancelablePromise<ModelRunEvaluations> {
       return __request(OpenAPI, {
         method: "GET",
         url: "/api/model-runs/{id}/evaluations",
@@ -250,7 +250,7 @@ export class ApiService {
    * @returns ModelRun
    * @throws ApiError
    */
-  public static getModelRun(id: number): CancelablePromise<ModelRun> {
+  public static getModelRun(id: string): CancelablePromise<ModelRun> {
     return __request(OpenAPI, {
       method: "GET",
       url: "/api/model-runs/{id}",
@@ -416,7 +416,7 @@ export class ApiService {
     });
   }
   public static getScoreColoring(
-    configurationId: number,
+    configurationId: string,
     region: string,
   ): CancelablePromise<Record<string, string>>
   {
@@ -471,7 +471,7 @@ export class ApiService {
     })
   }
 
-  public static startModelRunDownload(id: number, mode: 'all' | 'approved' | 'rejected'='all'): CancelablePromise<string> {
+  public static startModelRunDownload(id: string, mode: 'all' | 'approved' | 'rejected'='all'): CancelablePromise<string> {
     return __request(OpenAPI, {
       method: 'POST',
       url: "/api/model-runs/{id}/download/",

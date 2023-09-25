@@ -43,7 +43,7 @@ class SiteObservationSchema(Schema):
 
 
 class SiteEvaluationImageSchema(Schema):
-    id: int
+    id: str
     timestamp: int
     image: str
     cloudcover: float

@@ -83,7 +83,7 @@ onUnmounted(() => {
         label="Sources"
         multiple
         density="compact"
-        closable-chips	
+        closable-chips
         chips
         class="mx-2"
         width="150"
@@ -104,7 +104,7 @@ onUnmounted(() => {
         class="siteObs"
         :class="{ outlined: hoveredInfo.siteId.includes(item.id), evalhovered: state.filters.hoverSiteId === item.id }"
         @mouseenter="state.filters.hoverSiteId = item.id"
-        @mouseleave="state.filters.hoverSiteId = -1"
+        @mouseleave="state.filters.hoverSiteId = undefined"
       />
     </div>
   </v-card>

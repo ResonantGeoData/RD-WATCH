@@ -5,7 +5,7 @@ import { ModelRunEvaluations, SiteModelStatus } from "../../client/services/ApiS
 
 export interface ModelRunEvaluationDisplay {
   number: number;
-  id: number;
+  id: string;
   name: string;
   bbox: { xmin: number; ymin: number; xmax: number; ymax: number };
   startDate: number,
@@ -23,7 +23,7 @@ export interface ModelRunEvaluationDisplay {
 
 const props = defineProps<{
   modelRun: string | null;
-  selectedEval: number | null;
+  selectedEval: string | null;
 }>();
 
 const emit = defineEmits<{
@@ -91,7 +91,7 @@ const modifiedList = computed(() => {
   return modList;
 });
 
-const download = (id: number) => {
+const download = (id: string) => {
   const url = `/api/evaluations/${id}/download`
   window.location.assign(url)
 }

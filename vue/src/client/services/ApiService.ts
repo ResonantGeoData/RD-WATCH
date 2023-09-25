@@ -185,7 +185,7 @@ export class ApiService {
    * @throws ApiError
    */
       public static cancelSiteObservationImageTask(
-        id: number,
+        id: string,
       ): CancelablePromise<boolean> {
         return __request(OpenAPI, {
           method: "PUT",
@@ -427,7 +427,7 @@ export class ApiService {
     });
   }
 
-  public static getEvaluationImages(id: number): CancelablePromise<EvaluationImageResults> {
+  public static getEvaluationImages(id: string): CancelablePromise<EvaluationImageResults> {
     return __request(OpenAPI, {
       method: "GET",
       url: "/api/evaluations/images/{id}",
@@ -449,7 +449,7 @@ export class ApiService {
     })
   }
 
-  public static patchSiteObservation(id: number, data: SiteObservationUpdateQuery): CancelablePromise<boolean> {
+  public static patchSiteObservation(id: string, data: SiteObservationUpdateQuery): CancelablePromise<boolean> {
     return __request(OpenAPI, {
       method: 'PATCH',
       url: "/api/observations/{id}/",
@@ -460,7 +460,7 @@ export class ApiService {
     })
   }
 
-  public static addSiteObservation(id: number, data: SiteObservationUpdateQuery): CancelablePromise<boolean> {
+  public static addSiteObservation(id: string, data: SiteObservationUpdateQuery): CancelablePromise<boolean> {
     return __request(OpenAPI, {
       method: 'PUT',
       url: "/api/observations/{id}/",

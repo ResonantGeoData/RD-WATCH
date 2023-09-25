@@ -8,7 +8,7 @@ import { VDatePicker } from 'vuetify/labs/VDatePicker'
 import { SiteModelStatus } from "../../client/services/ApiService";
 
 interface Props {
-  siteEvalId: number;
+  siteEvalId: string;
   dialog?: boolean;
   editable?: boolean;
   siteEvaluationName?: string | null;
@@ -256,7 +256,7 @@ const drawData = (canvas: HTMLCanvasElement, image: EvaluationImage, poly:PixelP
     }
     };
 
-const load = async (newValue?: number, oldValue?: number) => {
+const load = async (newValue?: string, oldValue?: string) => {
   const index = state.enabledSiteObservations.findIndex((item) => item.id === oldValue);
   if (index !== -1) {
     const tempArr = [...state.enabledSiteObservations];
@@ -402,7 +402,7 @@ const setSiteModelStatus = async (status: SiteModelStatus) => {
               <v-icon
                 v-bind="subProps"
                 :color="mapImagesOn ? 'rgb(37, 99, 235)' : ''"
-                @click="loadAndToggleSatelliteImages(siteEvalId.toString())"
+                @click="loadAndToggleSatelliteImages(siteEvalId)"
               >
                 mdi-image
               </v-icon>

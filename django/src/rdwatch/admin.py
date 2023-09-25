@@ -41,12 +41,6 @@ class ProcessingLevelAdmin(admin.ModelAdmin):
     search_fields = ('slug',)
 
 
-@admin.register(lookups.RegionClassification)
-class RegionClassificationAdmin(admin.ModelAdmin):
-    list_display = ('id', 'slug', 'description')
-    search_fields = ('slug',)
-
-
 @admin.register(HyperParameters)
 class HyperParametersAdmin(admin.ModelAdmin):
     list_display = (
@@ -64,8 +58,7 @@ class HyperParametersAdmin(admin.ModelAdmin):
 
 @admin.register(Region)
 class RegionAdmin(admin.ModelAdmin):
-    list_display = ('id', 'country', 'classification', 'number', 'geom')
-    raw_id_fields = ('classification',)
+    list_display = ('id', 'name')
 
 
 @admin.register(SatelliteFetching)

@@ -434,29 +434,5 @@
       "slug": "2A",
       "description": "surface reflectance"
     }
-  },
-  {
-    "model": "rdwatch.regionclassification",
-    "pk": 1,
-    "fields": {
-      "slug": "R",
-      "description": "standard region identifier"
-    }
-  },
-  {
-    "model": "rdwatch.regionclassification",
-    "pk": 2,
-    "fields": {
-      "slug": "C",
-      "description": "a proposal by anyone for 'coarse' annotation"
-    }
-  },
-  {
-    "model": "rdwatch.regionclassification",
-    "pk": 3,
-    "fields": {
-      "slug": "S",
-      "description": "a 'super-region', which will contain one or more 'standard' or 'coarse' regions"
-    }
   }
 ]

@@ -106,7 +106,7 @@ def vector_tile(request: HttpRequest, model_run_id: UUID4, z: int, x: int, y: in
                 id=F('pk'),
                 mvtgeom=mvtgeom,
                 configuration_id=F('configuration_id'),
-                label=F('label_id'), # Resolves to name instead of ID
+                label=F('label__slug'),
                 timestamp=ExtractEpoch('timestamp'),
                 timemin=ExtractEpoch(Min('observations__timestamp')),
                 timemax=ExtractEpoch(Max('observations__timestamp')),
@@ -142,7 +142,7 @@ def vector_tile(request: HttpRequest, model_run_id: UUID4, z: int, x: int, y: in
                 mvtgeom=mvtgeom,
                 configuration_id=F('siteeval__configuration_id'),
                 site_number=F('siteeval__number'),
-                label=F('label_id'),
+                label=F('label__slug'),
                 area=Area(Transform('geom', srid=6933)),
                 timemin=ExtractEpoch('timestamp'),
                 timemax=ExtractEpoch(

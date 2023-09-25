@@ -401,12 +401,7 @@ def get_region(hyper_parameters_id: int):
         .annotate(
             json=JSONObject(
                 region=Subquery(  # prevents including "region" in slow GROUP BY
-                    Region.objects.filter(pk=OuterRef('region_id')).values(
-                        json=JSONObject(
-                            id='id',
-                            name='name',
-                        )
-                    ),
+                    Region.objects.filter(pk=OuterRef('region_id')).values('name')[:1],
                     output_field=JSONField(),
                 ),
             ),

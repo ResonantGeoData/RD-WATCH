@@ -22,7 +22,7 @@ export interface ModelRunEvaluationDisplay {
 
 
 const props = defineProps<{
-  modelRun: number | null;
+  modelRun: string | null;
   selectedEval: number | null;
 }>();
 

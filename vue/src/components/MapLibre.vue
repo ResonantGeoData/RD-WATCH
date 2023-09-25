@@ -28,7 +28,7 @@ const props = withDefaults(defineProps<Props>(), {
 const mapContainer: ShallowRef<null | HTMLElement> = shallowRef(null);
 const map: ShallowRef<null | Map> = shallowRef(null);
 
-const modelRunVectorLayers = reactive<Set<number>>(new Set());
+const modelRunVectorLayers = reactive<Set<string>>(new Set());
 
 function setFilter(layerID: string, filter: FilterSpecification) {
   map.value?.setFilter(layerID, filter, {

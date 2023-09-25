@@ -221,7 +221,7 @@ function handleToggle(modelRun: KeyedModelRun) {
   if (state.openedModelRuns.size > 0) {
     // Only move camera if we're *not* currently filtering by region
     updateCameraBounds();
-    const configurationIds: Set<number> = new Set();
+    const configurationIds: Set<string> = new Set();
     const regions: Set<string> = new Set();
     state.modelRuns
       .filter((modelRun) => state.openedModelRuns.has(modelRun.key))

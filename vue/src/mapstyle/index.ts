@@ -26,7 +26,7 @@ export const style = (
   satellite: SatelliteData,
   enabledSiteObservations: EnabledSiteObservations[],
   settings: siteObsSatSettings,
-  modelRunIds: number[],
+  modelRunIds: string[],
 ): StyleSpecification => ({
   version: 8,
   sources: {

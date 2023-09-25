@@ -169,7 +169,7 @@ const buildObservationFill = (
   ];
 };
 
-export const buildSourceFilter = (modelRunIds: number[]) => {
+export const buildSourceFilter = (modelRunIds: string[]) => {
   const results: Record<string, SourceSpecification> = {};
   modelRunIds.forEach((id) => {
     const source = `vectorTileSource_${id}`;
@@ -186,7 +186,7 @@ export const buildSourceFilter = (modelRunIds: number[]) => {
 export const buildLayerFilter = (
   timestamp: number,
   filters: MapFilters,
-  modelRunIds: number[]
+  modelRunIds: string[]
 ): LayerSpecification[] => {
   let results: LayerSpecification[] = [];
   modelRunIds.forEach((id) => {

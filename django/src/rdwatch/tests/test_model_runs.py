@@ -1,4 +1,5 @@
 from datetime import timedelta
+from uuid import uuid4
 
 import pytest
 from freezegun import freeze_time
@@ -103,10 +104,10 @@ def test_model_run_rest_get(test_client: TestClient) -> None:
 
     # Get model run that exists
     res = test_client.get(f'/model-runs/{model_run.id}/')
-    assert res.json()['id'] == model_run.id
+    assert res.json()['id'] == str(model_run.id)
     assert res.json()['performer']['id'] == performer.id
     assert res.json()['performer']['short_code'] == performer.slug
 
     # Get model run that doesn't exist
-    res = test_client.get(f'/model-runs/{model_run.id + 1}/')
+    res = test_client.get(f'/model-runs/{uuid4()}/')
     assert res.status_code == 404

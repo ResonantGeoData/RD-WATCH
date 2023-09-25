@@ -1,3 +1,5 @@
+from uuid import uuid4
+
 import pytest
 from ninja.testing import TestClient
 
@@ -23,7 +25,7 @@ def test_vector_tile_cache(test_client: TestClient, model_run: ModelRun) -> None
 
 @pytest.mark.django_db
 def test_vector_tile_cache_nonexistant_model_run(test_client: TestClient) -> None:
-    non_existant_model_run_id = 100
+    non_existant_model_run_id = uuid4()
 
     resp = test_client.get(
         f'/model-runs/{non_existant_model_run_id}/vector-tile/0/0/0.pbf/'

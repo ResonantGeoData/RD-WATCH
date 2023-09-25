@@ -1,4 +1,5 @@
 from ninja import Router, Schema
+from pydantic import UUID4
 
 from django.contrib.gis.db.models.functions import Transform
 from django.contrib.postgres.aggregates import JSONBAgg
@@ -54,7 +55,7 @@ class SiteImageResponse(Schema):
 
 
 @router.get('/{id}/', response=SiteImageResponse)
-def site_images(request: HttpRequest, id: int):
+def site_images(request: HttpRequest, id: UUID4):
     if not SiteEvaluation.objects.filter(pk=id).exists():
         raise Http404()
     else:

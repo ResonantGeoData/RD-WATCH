@@ -1,3 +1,5 @@
+from uuid import uuid4
+
 from typing_extensions import Self
 
 from django.contrib.gis.db.models import PolygonField
@@ -11,6 +13,8 @@ from rdwatch.schemas.site_model import ObservationFeature
 
 
 class SiteObservation(models.Model):
+    id = models.UUIDField(primary_key=True, default=uuid4, editable=False)
+
     siteeval = models.ForeignKey(
         to='SiteEvaluation',
         on_delete=models.CASCADE,

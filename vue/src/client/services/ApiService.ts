@@ -27,7 +27,7 @@ export interface QueryArguments {
 
 export interface ScoringResults {
   region_name: string;
-  evaluationId?: number;
+  evaluationId?: string;
   evaluation_run?: number;
   performer: string;
   evaluation_uuid: string;
@@ -55,7 +55,7 @@ export interface ModelRunEvaluations {
     number: number,
     start_date: number;
     end_date: number;
-    id: number
+    id: string
     bbox: { xmin: number; ymin: number; xmax: number; ymax: number }
     status: SiteModelStatus
     timestamp: number;
@@ -438,7 +438,7 @@ export class ApiService {
 
   }
 
-  public static patchSiteEvaluation(id: number, data: SiteEvaluationUpdateQuery): CancelablePromise<boolean> {
+  public static patchSiteEvaluation(id: string, data: SiteEvaluationUpdateQuery): CancelablePromise<boolean> {
     return __request(OpenAPI, {
       method: 'PATCH',
       url: "/api/evaluations/{id}/",

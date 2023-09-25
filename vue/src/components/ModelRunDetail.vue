@@ -31,20 +31,20 @@ let loopingInterval: NodeJS.Timeout | null = null;
 
 async function getScoringColoring() {
   if (!useScoring.value) { // inverted value because of the delay
-    const results = await ApiService.getScoreColoring(props.modelRun.id, props.modelRun.region?.id || 0)
+    const results = await ApiService.getScoreColoring(props.modelRun.id, props.modelRun.region || '')
     let tempResults = state.filters.scoringColoring;
     if (!tempResults) {
       tempResults = {};
     }
     if (tempResults !== undefined && tempResults !== null)  {
-      tempResults[`${props.modelRun.id}_${props.modelRun.region?.id || 0}`] = results;
+      tempResults[`${props.modelRun.id}_${props.modelRun.region}`] = results;
     }
     state.filters = { ...state.filters, scoringColoring: tempResults };
   } else {
     let tempResults = state.filters.scoringColoring;
     if (tempResults) {
-      if (Object.keys(tempResults).includes(`${props.modelRun.id}_${props.modelRun.region?.id || 0}`)) {
-        delete tempResults[`${props.modelRun.id}_${props.modelRun.region?.id || 0}`];
+      if (Object.keys(tempResults).includes(`${props.modelRun.id}_${props.modelRun.region}`)) {
+        delete tempResults[`${props.modelRun.id}_${props.modelRun.region}`];
       }
       if (Object.values(tempResults).length === 0) {
         tempResults = null;
@@ -156,7 +156,7 @@ const determineDownload = () => {
           region:
         </div>
         <div>
-          {{ modelRun.region?.name || "(none)" }}
+          {{ modelRun.region || "(none)" }}
         </div>
       </v-row>
       <v-row dense>

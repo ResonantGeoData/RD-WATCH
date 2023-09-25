@@ -4,11 +4,11 @@ import ImageViewer from "../components/imageViewer/ImageViewer.vue"
 import MapLibre from "../components/MapLibre.vue";
 import ModelRunSiteEvalList from "../components/annotationViewer/ModelRunSiteEvalList.vue"
 import { ModelRunEvaluationDisplay } from "../components/annotationViewer/ModelRunSiteEvalList.vue"
-import { Ref, computed, ref, watch } from "vue";
+import { Ref, computed, onMounted, ref, watch } from "vue";
 import { state } from "../store";
 
 interface Props {
-  region?: number | string;
+  region?: string;
   selected?: number[] | string;
 }
 const props = withDefaults(defineProps<Props>(), {
@@ -25,18 +25,15 @@ const selectedModelRun = computed(() => {
     return null;
 });
 
-watch(() => state.regionMap, () => {
-  if (state.regionMap && props.region) {
-    const found = Object.entries(state.regionMap).find(([, key]) => key === props.region);
-    if (found) {
-      state.filters = {
-    ...state.filters,
-    region_id: [parseInt(found[0], 10)],
-    scoringColoring: null,
-  };
-    }
+onMounted(() => {
+  if (props.region) {
+    state.filters = {
+      ...state.filters,
+      regions: [props.region],
+      scoringColoring: null,
+    };
   }
-})
+});
 
 const selectedEval: Ref<number | null> = ref(null);
 const selectedName: Ref<string | null> = ref(null);

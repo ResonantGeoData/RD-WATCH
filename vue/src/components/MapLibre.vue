@@ -98,7 +98,7 @@ watch([() => state.timestamp, () => state.filters, () => state.satellite, () => 
   const oldFilters = oldVals[1];
 
   // Clear layers on region change
-  if (!isEqual(newFilters.region_id, oldFilters.region_id)) {
+  if (!isEqual(newFilters.regions, oldFilters.regions)) {
     modelRunVectorLayers.clear();
   }
 

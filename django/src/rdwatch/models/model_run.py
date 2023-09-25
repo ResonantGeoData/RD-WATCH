@@ -1,9 +1,13 @@
+from uuid import uuid4
+
 from django_extensions.db.models import CreationDateTimeField
 
 from django.db import models
 
 
-class HyperParameters(models.Model):
+class ModelRun(models.Model):
+    id = models.UUIDField(primary_key=True, default=uuid4, editable=False)
+
     created = CreationDateTimeField()
     title = models.CharField(max_length=1000)
     performer = models.ForeignKey(

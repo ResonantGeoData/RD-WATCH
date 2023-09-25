@@ -5,7 +5,7 @@ import { ApiService, ModelRun, Region } from "./client";
 export interface MapFilters {
   configuration_id?: number[];
   performer_ids?: number[];
-  region_id?: number[];
+  regions?: Region[];
   showSiteOutline?: boolean;
   groundTruthPattern?: boolean;
   otherPattern?: boolean;
@@ -52,7 +52,7 @@ export interface SiteObservationImage {
 }
 
 export interface ScoringBase {
-  regionId: number;
+  region: string;
   configurationId: number;
   siteNumber: number;
   version: string;
@@ -139,7 +139,6 @@ export const state = reactive<{
     patternThickness: number;
     patternOpacity: number;
   };
-  regionMap: Record<Region["id"], Region["name"]>
   selectedObservations: SiteObservation[];
   enabledSiteObservations: EnabledSiteObservations[],
   siteObsSatSettings: siteObsSatSettings,
@@ -180,7 +179,6 @@ export const state = reactive<{
     patternThickness: 8,
     patternOpacity: 255,
   },
-  regionMap: {},
   selectedObservations: [],
   enabledSiteObservations: [],
   siteObsSatSettings: {
@@ -250,24 +248,24 @@ export const getSiteObservationDetails = async (siteId: string, scoringBase?: Sc
   const numId = parseInt(siteId, 10)
   const foundIndex = state.selectedObservations.findIndex((item) => item.id === numId);
   const obsData =  {
-  id: numId,
-  scoringBase,
-  timerange: data.timerange,
-  imagesLoaded: false,
-  imagesActive: false,
-  imageCounts: {
-    L8,
-    S2,
-    WV,
-  },
-  score: {
-    min: minScore,
-    max: maxScore,
-    average: avgScore,
-  },
-  job: data.job,
-  bbox: data.bbox,
-};
+    id: numId,
+    scoringBase,
+    timerange: data.timerange,
+    imagesLoaded: false,
+    imagesActive: false,
+    imageCounts: {
+      L8,
+      S2,
+      WV,
+    },
+    score: {
+      min: minScore,
+      max: maxScore,
+      average: avgScore,
+    },
+    job: data.job,
+    bbox: data.bbox,
+  };
   if (foundIndex === -1 && select) {
     state.selectedObservations.push(obsData)
   } else {
@@ -326,6 +324,6 @@ export const loadAndToggleSatelliteImages = async (siteId: string) => {
   const data = await getSiteObservationDetails(siteId, undefined, false);
   toggleSatelliteImages(data);
   }
-  
+
 
 }

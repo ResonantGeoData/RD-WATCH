@@ -50,11 +50,11 @@ const drawPopup = async (e: MapLayerMouseEvent) => {
       ) => {
         if (item.properties && item.properties.id) {
           const id = item.properties.site_number;
-          const regionName = state.regionMap[item.properties.region_id]
+          const region: string = item.properties.region;
           const score = item.properties.score;
           const siteId = item.properties.siteeval_id;
           hoveredInfo.value.region.push(
-            `${item.properties.configuration_id}_${item.properties.region_id}_${item.properties.performer_id}`
+            `${item.properties.configuration_id}_${region}_${item.properties.performer_id}`
           );
           hoveredInfo.value.siteId.push(siteId);
           if (!htmlMap[id]) {
@@ -66,7 +66,7 @@ const drawPopup = async (e: MapLayerMouseEvent) => {
                 }
                 const area = Math.round(item.properties.area).toLocaleString('en-US');
                 popupData.push({
-                  siteId: `${regionName}_${String(id).padStart(4, '0')}`,
+                  siteId: `${region}_${String(id).padStart(4, '0')}`,
                   score,
                   groundTruth: item.properties.groundtruth,
                   siteColor: `rgb(${fillColor.r *255}, ${fillColor.g * 255}, ${fillColor.b * 255})`,
@@ -105,7 +105,7 @@ const clickObservation = async (e: MapLayerMouseEvent) => {
     if (feature.properties) {
       const siteId = feature.properties.siteeval_id;
       const scoringBase = {
-        regionId: feature.properties.region_id as number,
+        region: feature.properties.region as string,
         configurationId: feature.properties.configuration_id as number,
         siteNumber: feature.properties.site_number as number,
         version: feature.properties.version,

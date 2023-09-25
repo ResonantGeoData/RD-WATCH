@@ -19,7 +19,6 @@ import { EvaluationImageResults } from "../../types";
 
 export interface QueryArguments {
   performer?: string[];
-  groundtruth?: boolean;
   region?: string;
   page?: number;
   limit?: number;
@@ -343,7 +342,7 @@ export class ApiService {
     const bboxstr = `${minY},${minX},${maxY},${maxX}`;;
     return __request(OpenAPI, {
       method: "GET",
-      url: `api/satellite-image/timestamps`,
+      url: "/api/satellite-image/timestamps",
       query: { constellation, level, spectrum, start_timestamp: startTime, end_timestamp: endTime, bbox: bboxstr,
       }
     });
@@ -375,7 +374,7 @@ export class ApiService {
     const bboxstr = `${minY},${minX},${maxY},${maxX}`;
     return __request(OpenAPI, {
       method: "GET",
-      url: `api/satellite-image/visual-timestamps`,
+      url: "/api/satellite-image/visual-timestamps",
       query: { constellation, level, spectrum, start_timestamp: startTime, end_timestamp: endTime, bbox: bboxstr,
       }
     });
@@ -405,7 +404,7 @@ export class ApiService {
     const bboxstr = `${minY},${minX},${maxY},${maxX}`;
     return __request(OpenAPI, {
       method: "GET",
-      url: `api/satellite-image/all-timestamps`,
+      url: "/api/satellite-image/all-timestamps",
       query: { constellation, level, spectrum, start_timestamp: startTime, end_timestamp: endTime, bbox: bboxstr,
       }
     });
@@ -413,38 +412,41 @@ export class ApiService {
 
   public static getScoringDetails(
     configurationId: number,
-    regionId: number,
+    region: string,
     siteNumber: number,
     version: string
   ): CancelablePromise<ScoringResults>
   {
     return __request(OpenAPI, {
       method: "GET",
-      url: "/api/scoring/scores/details",
-      query: { configurationId, regionId, siteNumber, version },
+      url: "/api/scores/details",
+      query: { configurationId, region, siteNumber, version },
+      // Not sure if `scores` or `scoring`, need to check
+      // url: "/api/scoring/scores/details",
+      // query: { configurationId, region, siteNumber, version },
     });
   }
 
   public static hasScores(
     configurationId: number,
-    regionId: number,
+    region: string,
   ): CancelablePromise<boolean>
   {
     return __request(OpenAPI, {
       method: "GET",
-      url: "/api/scoring/scores/has-scores",
-      query: { configurationId, regionId },
+      url: "/api/scores/has-scores",
+      query: { configurationId, region },
     });
   }
   public static getScoreColoring(
     configurationId: number,
-    regionId: number,
+    region: string,
   ): CancelablePromise<Record<string, string>>
   {
     return __request(OpenAPI, {
       method: "GET",
-      url: "/api/scoring/scores/region-colors",
-      query: { configurationId, regionId },
+      url: "/api/scores/region-colors",
+      query: { configurationId, region, },
     });
   }
 
@@ -495,7 +497,7 @@ export class ApiService {
   public static startModelRunDownload(id: number, mode: 'all' | 'approved' | 'rejected'='all'): CancelablePromise<string> {
     return __request(OpenAPI, {
       method: 'POST',
-      url: "/api/scoring/model-runs/{id}/download/",
+      url: `${this.apiPrefix}/model-runs/{id}/download/`,
       path: {
         id: id,
       },
@@ -506,11 +508,10 @@ export class ApiService {
   public static getModelRunDownloadStatus(task_id: string): CancelablePromise<CeleryStates> {
     return __request(OpenAPI, {
       method: 'GET',
-      url: "/api/scoring/model-runs/download_status",
+      url: `${this.apiPrefix}/model-runs/download_status`,
       query: {task_id},
     })
   }
 
 
 }
-

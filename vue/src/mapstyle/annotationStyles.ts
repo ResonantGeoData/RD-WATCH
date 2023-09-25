@@ -134,7 +134,7 @@ const getAnnotationColor = (filters: MapFilters) => {
                 if (splits.length === 4) {
                     result.push(['all',
                         ['==', ['get', 'configuration_id'], splits[0]],
-                        ['==', ['get', 'region_id'], splits[1]],
+                        ['==', ['get', 'region'], splits[1]],
                         ['==', ['get', 'performer_id'], splits[2]],
                         ['==', ['get', 'site_number'], splits[3]],
                     ]);

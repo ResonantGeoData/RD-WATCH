@@ -1,6 +1,8 @@
 from datetime import datetime, timedelta
 from typing import Literal
 
+from pydantic import UUID4
+
 from django.contrib.gis.db.models.functions import Area, Transform
 from django.core.cache import cache
 from django.db import connection
@@ -20,18 +22,18 @@ from django.db.models import (
 from django.http import Http404, HttpRequest, HttpResponse
 
 from rdwatch.db.functions import ExtractEpoch, GroupExcludeRowRange
-from rdwatch.models import HyperParameters, Region, SiteEvaluation, SiteObservation
+from rdwatch.models import ModelRun, Region, SiteEvaluation, SiteObservation
 
 from .model_run import router
 
 
 def _get_vector_tile_cache_key(
-    hyper_parameters_id: int, z: int, x: int, y: int, timestamp: datetime
+    model_run_id: UUID4, z: int, x: int, y: int, timestamp: datetime
 ) -> str:
     return '|'.join(
         [
-            HyperParameters.__name__,
-            str(hyper_parameters_id),
+            ModelRun.__name__,
+            str(model_run_id),
             'vector-tile',
             str(z),
             str(x),
@@ -41,15 +43,15 @@ def _get_vector_tile_cache_key(
     ).replace(' ', '_')
 
 
-@router.get('/{hyper_parameters_id}/vector-tile/{z}/{x}/{y}.pbf/')
-def vector_tile(request: HttpRequest, hyper_parameters_id: int, z: int, x: int, y: int):
+@router.get('/{model_run_id}/vector-tile/{z}/{x}/{y}.pbf/')
+def vector_tile(request: HttpRequest, model_run_id: UUID4, z: int, x: int, y: int):
     timestamps: dict[
         Literal[
             'latest_evaluation_timestamp',
             'model_run_timestamp',
         ],
         datetime | None,
-    ] = HyperParameters.objects.filter(id=hyper_parameters_id).aggregate(
+    ] = ModelRun.objects.filter(id=model_run_id).aggregate(
         # Get timestamp of most recent site evaluation so we can use it as a cache key
         latest_evaluation_timestamp=Max('evaluations__timestamp'),
         # Also include the timestamp of the model run itself. A model
@@ -73,9 +75,7 @@ def vector_tile(request: HttpRequest, hyper_parameters_id: int, z: int, x: int, 
 
     # Generate a unique cache key based on the model run ID, vector tile coordinates,
     # and the latest timestamp
-    cache_key = _get_vector_tile_cache_key(
-        hyper_parameters_id, z, x, y, latest_timestamp
-    )
+    cache_key = _get_vector_tile_cache_key(model_run_id, z, x, y, latest_timestamp)
 
     tile = cache.get(cache_key)
 
@@ -98,7 +98,7 @@ def vector_tile(request: HttpRequest, hyper_parameters_id: int, z: int, x: int, 
         )
 
         evaluations_queryset = (
-            SiteEvaluation.objects.filter(configuration_id=hyper_parameters_id)
+            SiteEvaluation.objects.filter(configuration_id=model_run_id)
             .filter(intersects)
             .values()
             .alias(observation_count=Count('observations'))
@@ -111,7 +111,7 @@ def vector_tile(request: HttpRequest, hyper_parameters_id: int, z: int, x: int, 
                 timemin=ExtractEpoch(Min('observations__timestamp')),
                 timemax=ExtractEpoch(Max('observations__timestamp')),
                 performer_id=F('configuration__performer_id'),
-                region_id=F('region_id'),
+                region=F('region__name'),
                 groundtruth=Case(
                     When(
                         Q(configuration__performer__slug='TE') & Q(score=1),
@@ -134,9 +134,7 @@ def vector_tile(request: HttpRequest, hyper_parameters_id: int, z: int, x: int, 
         ) = evaluations_queryset.query.sql_with_params()
 
         observations_queryset = (
-            SiteObservation.objects.filter(
-                siteeval__configuration_id=hyper_parameters_id
-            )
+            SiteObservation.objects.filter(siteeval__configuration_id=model_run_id)
             .filter(intersects)
             .values()
             .annotate(
@@ -156,7 +154,7 @@ def vector_tile(request: HttpRequest, hyper_parameters_id: int, z: int, x: int, 
                     ),
                 ),
                 performer_id=F('siteeval__configuration__performer_id'),
-                region_id=F('siteeval__region_id'),
+                region=F('siteeval__region__name'),
                 version=F('siteeval__version'),
                 groundtruth=Case(
                     When(
@@ -174,11 +172,11 @@ def vector_tile(request: HttpRequest, hyper_parameters_id: int, z: int, x: int, 
         ) = observations_queryset.query.sql_with_params()
 
         regions_queryset = (
-            Region.objects.filter(evaluations__configuration_id=hyper_parameters_id)
+            Region.objects.filter(evaluations__configuration_id=model_run_id)
             .filter(intersects)
             .values()
             .annotate(
-                id=F('pk'),
+                name=F('name'),
                 mvtgeom=mvtgeom,
             )
         )
@@ -194,17 +192,17 @@ def vector_tile(request: HttpRequest, hyper_parameters_id: int, z: int, x: int, 
                 regions AS ({regions_sql})
             SELECT (
                 (
-                    SELECT ST_AsMVT(evaluations.*, 'sites-%s', 4096, 'mvtgeom', 'id')
+                    SELECT ST_AsMVT(evaluations.*, %s, 4096, 'mvtgeom', 'id')
                     FROM evaluations
                 )
                 ||
                 (
-                    SELECT ST_AsMVT(observations.*, 'observations-%s', 4096, 'mvtgeom', 'id')
+                    SELECT ST_AsMVT(observations.*, %s, 4096, 'mvtgeom', 'id')
                     FROM observations
                 )
                 ||
                 (
-                    SELECT ST_AsMVT(regions.*, 'regions-%s', 4096, 'mvtgeom', 'id')
+                    SELECT ST_AsMVT(regions.*, %s, 4096, 'mvtgeom', 'id')
                     FROM regions
                 )
             )
@@ -213,7 +211,11 @@ def vector_tile(request: HttpRequest, hyper_parameters_id: int, z: int, x: int, 
             evaluations_params
             + observations_params
             + regions_params
-            + (hyper_parameters_id,) * 3
+            + (
+                f'sites-{model_run_id}',
+                f'observations-{model_run_id}',
+                f'regions-{model_run_id}',
+            )
         )
 
         with connection.cursor() as cursor:

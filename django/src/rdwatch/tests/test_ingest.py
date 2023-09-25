@@ -3,7 +3,7 @@ from typing import Any
 import pytest
 from ninja.testing import TestClient
 
-from rdwatch.models import HyperParameters, SiteEvaluation, SiteObservation
+from rdwatch.models import ModelRun, SiteEvaluation, SiteObservation
 
 
 @pytest.fixture
@@ -81,10 +81,10 @@ def site_model_json() -> dict[str, Any]:
 def test_site_model_ingest(
     site_model_json: dict[str, Any],
     test_client: TestClient,
-    hyper_parameters: HyperParameters,
+    model_run: ModelRun,
 ) -> None:
     res = test_client.post(
-        f'/model-runs/{hyper_parameters.id}/site-model/',
+        f'/model-runs/{model_run.id}/site-model/',
         json=site_model_json,
     )
 
@@ -97,7 +97,7 @@ def test_site_model_ingest(
 def test_site_model_ingest_missing_scores(
     site_model_json: dict[str, Any],
     test_client: TestClient,
-    hyper_parameters: HyperParameters,
+    model_run: ModelRun,
 ) -> None:
     """
     Test that a site model containing sites/observations with missing
@@ -108,7 +108,7 @@ def test_site_model_ingest_missing_scores(
         del feature['properties']['score']
 
     res = test_client.post(
-        f'/model-runs/{hyper_parameters.id}/site-model/',
+        f'/model-runs/{model_run.id}/site-model/',
         json=site_model_json,
     )
     assert res.status_code == 201
@@ -123,7 +123,7 @@ def test_site_model_ingest_missing_scores(
 @pytest.mark.django_db(databases=['default'])
 def test_site_model_ingest_malformed_geometry(
     test_client: TestClient,
-    hyper_parameters: HyperParameters,
+    model_run: ModelRun,
 ) -> None:
     """
     Test that ensures a malformed geometry gracefully fails (i.e. returns
@@ -155,7 +155,7 @@ def test_site_model_ingest_malformed_geometry(
         ],
     }
     res = test_client.post(
-        f'/model-runs/{hyper_parameters.id}/site-model/',
+        f'/model-runs/{model_run.id}/site-model/',
         json=site_model,
     )
 

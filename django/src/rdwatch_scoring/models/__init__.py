@@ -1,5 +1,5 @@
 from . import lookups
-from .hyper_parameters import HyperParameters
+from .model_run import ModelRun
 from .site_evaluation import SiteEvaluation, SiteEvaluationTracking
 from .region import Region
 from .site_observation import SiteObservation
@@ -16,10 +16,13 @@ from .evaluation_broad_area_search_metric import EvaluationBroadAreaSearchMetric
 from .observation import Observation
 from .observation_comparison import ObservationComparison
 from .site import Site
+from .annotation_exports import AnnotationExport
+from .satellite_fetching import SatelliteFetching
 
 
 
 __all__ = [
+    'AnnotationExport',
     'EvaluationActivityClassificationMatrix',
     'EvaluationActivityClassificationPhase',
     'EvaluationActivityClassificationF1',
@@ -31,9 +34,10 @@ __all__ = [
     'EvaluationBroadAreaSearchMetric',
     'EvaluationRun',
     'lookups',
-    'HyperParameters',
+    'ModelRun',
     'Observation',
     'Region',
+    'SatelliteFetching',
     'Site',
     'SiteEvaluation',
     'SiteEvaluationTracking',

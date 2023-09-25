@@ -7,7 +7,6 @@ from django.core.exceptions import ObjectDoesNotExist
 from django.db import models, transaction
 
 from rdwatch_scoring.models import lookups
-from rdwatch.validators import validate_iso3166
 
 
 class Region(models.Model):

@@ -7,7 +7,7 @@ from django.contrib.gis.geos import MultiPolygon
 from django.contrib.postgres.indexes import GistIndex
 from django.db import models, transaction
 
-from rdwatch_scoring.models import HyperParameters, lookups
+from rdwatch_scoring.models import ModelRun, lookups
 from rdwatch.schemas import RegionModel, SiteModel
 from rdwatch.schemas.region_model import RegionFeature, SiteSummaryFeature
 from rdwatch.schemas.site_model import SiteFeature
@@ -17,9 +17,9 @@ from rdwatch_scoring.models.region import get_or_create_region
 class SiteEvaluation(models.Model):
     uuid = models.CharField(primary_key=True, max_length=1000)
     configuration = models.ForeignKey(
-        to='HyperParameters',
+        to='ModelRun',
         on_delete=models.PROTECT,
-        help_text='The hyper parameters used this site evaluation.',
+        help_text='The Model Run used this site evaluation.',
         db_index=True,
     )
     region = models.ForeignKey(
@@ -100,7 +100,7 @@ class SiteEvaluation(models.Model):
 
     @classmethod
     def bulk_create_from_site_model(
-        cls, site_model: SiteModel, configuration: HyperParameters
+        cls, site_model: SiteModel, configuration: ModelRun
     ):
         from rdwatch.models import SiteObservation
 
@@ -119,7 +119,7 @@ class SiteEvaluation(models.Model):
         # https://smartgitlab.com/TE/annotations/-/wikis/Submitting-Proposals-for-New-Sites
         if configuration.proposal or site_feature.properties.site_number == 9999:
             status = SiteEvaluation.Status.PROPOSAL
-            configuration.proposal = HyperParameters.ProposalStatus.PROPOSAL
+            configuration.proposal = ModelRun.ProposalStatus.PROPOSAL
             modified = True
         if modified:
             configuration.save()
@@ -160,7 +160,7 @@ class SiteEvaluation(models.Model):
 
     @classmethod
     def bulk_create_from_from_region_model(
-        cls, region_model: RegionModel, configuration: HyperParameters
+        cls, region_model: RegionModel, configuration: ModelRun
     ) -> list[Self]:
         region_feature = region_model.region_feature
         assert isinstance(region_feature.properties, RegionFeature)

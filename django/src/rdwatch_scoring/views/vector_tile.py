@@ -1,5 +1,4 @@
 from datetime import datetime, timedelta
-from typing import Literal
 
 from django.contrib.gis.db.models import GeometryField
 from django.contrib.gis.db.models.functions import Area, Transform
@@ -22,7 +21,7 @@ from django.db.models import (
 from django.http import Http404, HttpRequest, HttpResponse
 
 from rdwatch.db.functions import ExtractEpoch, GroupExcludeRowRange
-from rdwatch_scoring.models import HyperParameters, Region, EvaluationRun, Site, Observation
+from rdwatch_scoring.models import ModelRun, Region, EvaluationRun, Site, Observation
 
 from .model_run import router
 
@@ -31,7 +30,7 @@ def _get_vector_tile_cache_key(
 ) -> str:
     return '|'.join(
         [
-            HyperParameters.__name__,
+            ModelRun.__name__,
             str(evaluation_run_uuid),
             'vector-tile',
             str(z),

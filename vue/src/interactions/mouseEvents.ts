@@ -6,7 +6,7 @@ import  createPopup from '../main';
 import { PopUpData } from '../interactions/popUpType';
 
 
-  const hoveredInfo: Ref<{region: string[], siteId: number[]}> = ref({region: [], siteId:[]});
+  const hoveredInfo: Ref<{region: string[], siteId: string[]}> = ref({region: [], siteId:[]});
 
 let app: App | null = null;
 const calculateScoreColor = (score: number) => {

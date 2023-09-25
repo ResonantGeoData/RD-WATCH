@@ -320,7 +320,7 @@ def get_model_run(request: HttpRequest, id: UUID4):
 
 @router.post(
     '/{model_run_id}/site-model/',
-    response={201: int},
+    response={201: UUID4},
 )
 def post_site_model(
     request: HttpRequest,
@@ -334,7 +334,7 @@ def post_site_model(
 
 @router.post(
     '/{model_run_id}/region-model/',
-    response={201: list[int]},
+    response={201: list[UUID4]},
 )
 def post_region_model(
     request: HttpRequest,

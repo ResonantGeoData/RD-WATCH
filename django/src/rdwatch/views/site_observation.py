@@ -221,8 +221,6 @@ def get_site_observation_images(
     '/{evaluation_id}/cancel-generate-images/', response={202: bool, 409: str, 404: str}
 )
 def cancel_site_observation_images(request: HttpRequest, evaluation_id: UUID4):
-#TODO: Do this for scoring
-def cancel_site_observation_images(request: HttpRequest, evaluation_id: int):
     siteeval = get_object_or_404(SiteEvaluation, pk=evaluation_id)
 
     with transaction.atomic():

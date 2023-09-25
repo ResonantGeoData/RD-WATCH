@@ -11,31 +11,33 @@ import type { Ref } from "vue";
 import { changeTime } from "../interactions/timeStepper";
 
 const timemin = ref(Math.floor(new Date(0).valueOf() / 1000));
-const queryFilters: Ref<QueryArguments> = ref({ page: 1 });
+
+const page = ref<number>(1);
+
+const queryFilters = computed<QueryArguments>(() => ({
+  page: page.value,
+  performer: selectedPerformer.value.map((item) => item.short_code),
+  region: selectedRegion.value,
+}));
 
 const selectedPerformer: Ref<Performer[]> = ref([]);
 const selectedRegion: Ref<Region | undefined> = ref(undefined);
 const showSiteOutline: Ref<boolean> = ref(false);
 watch(selectedPerformer, (val) => {
-  queryFilters.value = {
-    ...queryFilters.value,
-    performer: val.map((item) => item.short_code),
-    page: 1,
-  };
   state.filters = {
     ...state.filters,
     performer_ids: !val.length ? undefined : val.map((item) => item.id),
     scoringColoring: null,
   };
 });
-watch (() => state.filters.region_id, () => {
-  if (state.filters.region_id?.length) {
-    selectedRegion.value = {id:state.filters.region_id[0], name: state.regionMap[state.filters.region_id[0]]}
+watch (() => state.filters.regions, () => {
+  if (state.filters.regions?.length) {
+    selectedRegion.value = state.filters.regions[0];
   }
 });
 
 const updateRegion = (val?: Region) => {
-  queryFilters.value = { ...queryFilters.value, region: val?.name, page: 1 };
+  page.value = 1;
   if (selectedRegion.value === undefined) {
     state.satellite.satelliteImagesOn = false;
     state.enabledSiteObservations = [];
@@ -43,7 +45,7 @@ const updateRegion = (val?: Region) => {
   }
   state.filters = {
     ...state.filters,
-    region_id: val?.id === undefined ? undefined : [val.id],
+    regions: val === undefined ? undefined : [val],
     scoringColoring: null,
   };
 };
@@ -63,10 +65,7 @@ const imagesOn = computed({
 
 
 function nextPage() {
-  queryFilters.value = {
-    ...queryFilters.value,
-    page: (queryFilters.value.page || 0) + 1,
-  };
+  page.value += 1;
 }
 
 onMounted(() => {
@@ -125,7 +124,7 @@ onMounted(() => {
             'animate-flicker': state.satellite.loadingSatelliteImages,
           }"
           :color="imagesOn ? 'rgb(37, 99, 235)' : 'black'"
-          :disabled="selectedRegion === null || (filteredSatelliteTimeList.length === 0 && state.satellite.satelliteSources.length !== 0)" 
+          :disabled="selectedRegion === null || (filteredSatelliteTimeList.length === 0 && state.satellite.satelliteSources.length !== 0)"
           icon="mdi-image"
           @click="imagesOn = selectedRegion !== null && (filteredSatelliteTimeList.length !== 0 || state.satellite.satelliteSources.length === 0) ? !imagesOn : imagesOn"
         />

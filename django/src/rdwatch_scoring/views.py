@@ -8,8 +8,7 @@ from ninja.pagination import RouterPaginated
 from django.http import HttpRequest
 from django.shortcuts import get_object_or_404
 
-from rdwatch.models import HyperParameters, Region
-from rdwatch.views.region import RegionSchema
+from rdwatch.models import HyperParameters
 
 from .models import (
     EvaluationActivityClassificationTemporalIou,
@@ -94,7 +93,7 @@ class EvaluationResponseSchema(Schema):
 
 # If the combination of configurationId and regionId has scoring
 @router.get('/has-scores')
-def has_scores(request: HttpRequest, configurationId: int, regionId: int):
+def has_scores(request: HttpRequest, configurationId: int, region: str):
     # from the hyper parameters we need the evaluation and evaluation_run Ids
     configuration = get_object_or_404(
         HyperParameters.objects.select_related('performer'), pk=configurationId
@@ -102,7 +101,6 @@ def has_scores(request: HttpRequest, configurationId: int, regionId: int):
     evaluationId = configuration.evaluation
     performer_name = configuration.performer.slug.lower()
     evaluation_run = configuration.evaluation_run
-    region_name = RegionSchema.resolve_name(Region.objects.filter(pk=regionId).first())
 
     if evaluation_run is None or evaluationId is None:
         return False
@@ -110,44 +108,43 @@ def has_scores(request: HttpRequest, configurationId: int, regionId: int):
     return EvaluationRun.objects.filter(
         evaluation_run_number=evaluation_run,
         evaluation_number=evaluationId,
-        region=region_name,
+        region=region,
         performer=performer_name,
     ).exists()
 
 
 # Region scoring Map
 @router.get('/region-colors')
-def region_color_map(request: HttpRequest, configurationId: int, regionId: int):
+def region_color_map(request: HttpRequest, configurationId: int, region: str):
     # from the hyper parameters we need the evaluation and evaluation_run Ids
     configuration = HyperParameters.objects.filter(pk=configurationId).first()
     evaluationId = configuration.evaluation
     performer_name = configuration.performer.slug.lower()
     evaluation_run = configuration.evaluation_run
-    region_name = RegionSchema.resolve_name(Region.objects.filter(pk=regionId).first())
 
     evaluation = EvaluationRun.objects.filter(
         evaluation_run_number=evaluation_run,
         evaluation_number=evaluationId,
-        region=region_name,
+        region=region,
         performer=performer_name,
     ).first()
     if evaluation:
         evaluationUUID = evaluation.uuid
         # Now we can get a list of the  SiteIds information for this evaluationId
         site_list = Site.objects.filter(
-            region_id=region_name,
+            region_id=region,
             evaluation_run_uuid=evaluationUUID,
             originator=performer_name,
         )
         colorMappers = {}
         for site in site_list:
             site_number = int(
-                site.site_id.replace(f'{region_name}_', '').replace(
+                site.site_id.replace(f'{region}_', '').replace(
                     f'_{performer_name}_{site.version}', ''
                 )
             )
             colorMappers[
-                f'{configurationId}_{regionId}_{configuration.performer.id}_{site_number}'  # noqa: E501
+                f'{configurationId}_{region}_{configuration.performer.id}_{site_number}'  # noqa: E501
             ] = get_site_scoring_color(evaluationUUID, 'overall', site.site_id)
 
     return colorMappers
@@ -159,7 +156,7 @@ def region_color_map(request: HttpRequest, configurationId: int, regionId: int):
 def list_regions(
     request: HttpRequest,
     configurationId: int,
-    regionId: int,
+    region: str,
     siteNumber: int,
     version: str,
 ):
@@ -168,20 +165,17 @@ def list_regions(
     evaluationId = configuration.evaluation
     performer_name = configuration.performer.slug.lower()
     evaluation_run = configuration.evaluation_run
-    region_name = RegionSchema.resolve_name(Region.objects.filter(pk=regionId).first())
 
     evaluation = get_object_or_404(
         EvaluationRun,
         evaluation_run_number=evaluation_run,
         evaluation_number=evaluationId,
-        region=region_name,
+        region=region,
         performer=performer_name,
     )
     evaluationUUID = evaluation.uuid
     # Now we can get the SiteId information for this evaluationId
-    generatedSiteId = (
-        f'{region_name}_{str(siteNumber).zfill(4)}_{performer_name}_{version}'
-    )
+    generatedSiteId = f'{region}_{str(siteNumber).zfill(4)}_{performer_name}_{version}'
     logger.warning(generatedSiteId)
     siteObj = Site.objects.filter(
         site_id=generatedSiteId, evaluation_run_uuid=evaluationUUID
@@ -225,7 +219,7 @@ def list_regions(
     sm_color = get_site_scoring_color(evaluationUUID, 'overall', generatedSiteId)
 
     return {
-        'region_name': region_name,
+        'region_name': region,
         'evaluationId': evaluationId,
         'evaluation_run': evaluation_run,
         'performer': performer_name,

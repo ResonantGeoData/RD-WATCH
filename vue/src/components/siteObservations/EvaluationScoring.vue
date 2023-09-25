@@ -22,7 +22,7 @@ const retrieveScoring = async () => {
       return;
     }
     try {
-    const scoringRequest = await ApiService.getScoringDetails(scoreData.configurationId, scoreData.regionId, scoreData.siteNumber, scoreData.version);
+    const scoringRequest = await ApiService.getScoringDetails(scoreData.configurationId, scoreData.region, scoreData.siteNumber, scoreData.version);
     unionArea.value = scoringRequest.unionArea;
     temporalIOU.value = scoringRequest.temporalIOU;
     statusAnnotated.value = scoringRequest.statusAnnotated;
@@ -67,7 +67,7 @@ onMounted(() => retrieveScoring())
       <v-col v-if="statusAnnotated">
         <b> Status:</b>
         <span> {{ statusAnnotated }}</span>
-      </v-col>      
+      </v-col>
     </v-row>
     <v-row
       v-if="color"
@@ -98,7 +98,7 @@ onMounted(() => retrieveScoring())
         <v-col v-if="temporalIOU.site_preparation">
           <span> Site Prep: </span>
           <span> {{ parseFloat(temporalIOU.site_preparation).toFixed(6) }}</span>
-        </v-col>      
+        </v-col>
       </v-row>
       <v-row
         v-if="temporalIOU"
@@ -109,7 +109,7 @@ onMounted(() => retrieveScoring())
         <v-col v-if="temporalIOU.active_construction">
           <span> Active: </span>
           <span> {{ parseFloat(temporalIOU.active_construction).toFixed(6) }}</span>
-        </v-col>      
+        </v-col>
       </v-row>
       <v-row
         v-if="temporalIOU"
@@ -120,9 +120,9 @@ onMounted(() => retrieveScoring())
         <v-col v-if="temporalIOU.post_construction">
           <span> Post: </span>
           <span> {{ parseFloat(temporalIOU.post_construction).toFixed(6) }}</span>
-        </v-col>      
+        </v-col>
       </v-row>
     </v-container>
-    
+
   </span>
 </template>

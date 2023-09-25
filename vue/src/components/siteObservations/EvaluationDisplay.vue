@@ -45,7 +45,7 @@ const currentClosestTimestamp = computed(() => {
         next = false;
       }
       return {
-        time: `${new Date(closest * 1000).toLocaleDateString()}`, 
+        time: `${new Date(closest * 1000).toLocaleDateString()}`,
         type: observation.images[rootIndex].source,
         prev,
         next,
@@ -110,7 +110,7 @@ const hasLoadedImages = computed(() => (Object.entries(props.siteObservation.ima
       >
         <v-col v-if="siteObservation.scoringBase">
           <span class="model-title">
-            {{ `${state.regionMap[siteObservation.scoringBase.regionId]}_${siteObservation.scoringBase.siteNumber.toString().padStart(4, '0')}` }}
+            {{ `${siteObservation.scoringBase.region}_${siteObservation.scoringBase.siteNumber.toString().padStart(4, '0')}` }}
           </span>
         </v-col>
         <v-col cols="1">
@@ -127,7 +127,7 @@ const hasLoadedImages = computed(() => (Object.entries(props.siteObservation.ima
         </v-col>
         <v-spacer />
         <v-col class="pl-4">
-          <v-icon 
+          <v-icon
             size="large"
             color="rgb(37, 99, 235)"
             class="mr-2"
@@ -172,7 +172,7 @@ const hasLoadedImages = computed(() => (Object.entries(props.siteObservation.ima
           </v-expansion-panel-text>
         </v-expansion-panel>
       </v-expansion-panels>
-      
+
       <v-row
         dense
         justify="center"
@@ -182,7 +182,7 @@ const hasLoadedImages = computed(() => (Object.entries(props.siteObservation.ima
           score:
         </div>
         <div>
-          {{ siteObservation.score.min.toFixed(2) }} to {{ siteObservation.score.max.toFixed(2) }} 
+          {{ siteObservation.score.min.toFixed(2) }} to {{ siteObservation.score.max.toFixed(2) }}
         </div>
         <v-spacer />
       </v-row>

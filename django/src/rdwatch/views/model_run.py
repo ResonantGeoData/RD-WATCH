@@ -46,7 +46,6 @@ from rdwatch.schemas import RegionModel, SiteModel
 from rdwatch.schemas.common import TimeRangeSchema
 from rdwatch.tasks import download_annotations
 from rdwatch.views.performer import PerformerSchema
-from rdwatch.views.region import RegionSchema
 from rdwatch.views.site_observation import get_site_observation_images
 
 router = RouterPaginated()
@@ -97,7 +96,7 @@ class HyperParametersAdjudicated(Schema):
 class HyperParametersDetailSchema(Schema):
     id: int
     title: str
-    region: RegionSchema | None = None
+    region: str | None = None
     performer: PerformerSchema
     parameters: dict
     numsites: int
@@ -112,12 +111,6 @@ class HyperParametersDetailSchema(Schema):
     evaluation_run: int | None = None
     proposal: str = None
     adjudicated: HyperParametersAdjudicated | None = None
-
-
-class EvaluationListSchema(Schema):
-    id: int
-    siteNumber: int
-    region: RegionSchema | None
 
 
 class HyperParametersListSchema(Schema):
@@ -191,13 +184,7 @@ def get_queryset():
                     output_field=JSONField(),
                 ),
                 region=Subquery(  # prevents including "region" in slow GROUP BY
-                    Region.objects.filter(pk=OuterRef('region_id')).values(
-                        json=JSONObject(
-                            id='id',
-                            name='name',
-                        )
-                    ),
-                    output_field=JSONField(),
+                    Region.objects.filter(pk=OuterRef('region_id')).values('name')[:1],
                 ),
                 downloading=Coalesce(
                     Subquery(
@@ -330,14 +317,6 @@ def get_model_run(request: HttpRequest, id: int):
 
     model_run = values[0]
 
-    # TODO: use a resolver instead.
-    # Temporary until https://github.com/vitalik/django-ninja/issues/610 is fixed
-    if model_run['region']:
-        model_run['region'] = {
-            'name': RegionSchema.resolve_name(model_run['region']),
-            'id': model_run['region']['id'],
-        }
-
     return 200, model_run
 
 
@@ -422,12 +401,7 @@ def get_region(hyper_parameters_id: int):
         .annotate(
             json=JSONObject(
                 region=Subquery(  # prevents including "region" in slow GROUP BY
-                    Region.objects.filter(pk=OuterRef('region_id')).values(
-                        json=JSONObject(
-                            id='id',
-                            name='name',
-                        )
-                    ),
+                    Region.objects.filter(pk=OuterRef('region_id')).values('name')[:1],
                     output_field=JSONField(),
                 ),
             ),

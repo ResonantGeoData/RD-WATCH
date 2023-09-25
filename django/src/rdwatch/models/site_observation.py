@@ -130,6 +130,8 @@ class SiteObservation(models.Model):
 
 
 class SiteObservationTracking(models.Model):
+    id = models.UUIDField(primary_key=True, default=uuid4, editable=False)
+
     edited = models.DateTimeField()
     siteeval = models.ForeignKey(
         to='SiteEvaluation',

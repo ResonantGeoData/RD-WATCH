@@ -49,7 +49,7 @@ class SiteEvaluationImageSchema(Schema):
     cloudcover: float
     percent_black: float
     source: str
-    siteobs_id: int | None
+    siteobs_id: str | None
     bbox: BoundingBoxSchema
     image_dimensions: list[int]
     aws_location: str

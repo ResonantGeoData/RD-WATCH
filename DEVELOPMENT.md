@@ -9,16 +9,18 @@ This is the simplest configuration for developers to start with.
 2. Set the environment variables in `.env`.
 3. Run `docker compose up` to start the Django development server and Celery worker, plus all backing services
    like PostGIS, Redis, RabbitMQ, etc.
-4. Optionally, populate your database with test data by running `docker compose run --rm django poetry run django-admin loaddata testdata`
-5. Optionally, create an account for the Django admin (http://localhost:8000/admin) by running `docker compose run --rm django poetry --directory django run django-admin createsuperuser`
-6. Start the client development server:
+4. Run `docker compose run --rm django poetry run django-admin migrate` to apply database migrations.
+5. Run `docker compose run --rm django poetry run django-admin loaddata lookups` to initialize your database with required data.
+6. Optionally, populate your database with test data by running `docker compose run --rm django poetry run django-admin loaddata testdata`
+7. Optionally, create an account for the Django admin (http://localhost:8000/admin) by running `docker compose run --rm django poetry --directory django run django-admin createsuperuser`
+8. Start the client development server:
    ```sh
    cd vue
    npm install
    npm run dev
    ```
-7. Access the site, starting at http://localhost:8080/
-8. When finished, use `Ctrl+C`
+9. Access the site, starting at http://localhost:8080/
+10. When finished, use `Ctrl+C`
 
 ## Develop Natively (advanced)
 This configuration still uses Docker to run attached services in the background,
@@ -42,7 +44,9 @@ but allows developers to run Python code on their native system.
 2. Run:
    1. `source ./dev/export-env.sh dev/.env.docker-compose-native`
    2. `source ./dev/export-env.sh .env`
-   3. `poetry run --directory django django/src/manage.py runserver`
+   3. `poetry run --directory django django/src/manage.py migrate`
+   4. `poetry run --directory django django/src/manage.py loaddata lookups`
+   5. `poetry run --directory django django/src/manage.py runserver`
 3. Run in a separate terminal:
    1. `source ./dev/export-env.sh`
    2. `poetry run --directory django celery --app rdwatch.celery worker --loglevel INFO --without-heartbeat`
@@ -53,9 +57,8 @@ but allows developers to run Python code on their native system.
 6. To destroy the stack and start fresh, run `docker compose down`
    1. Note: this command does not destroy docker volumes, such as those associated with the postgresql and minio services. To destroy those as well, run `docker compose down -v`.
 
-### Running DB migrations manually
-The docker entrypoint script runs database migrations on container start. However, in some cases you may wish to run migrations manually;
-to do this, run the following command:
+### A note on database migrations
+Note that database migrations are _not_ run automatically. Anytime a new migration is introduced, you must run the following command to apply it:
 
 `poetry --directory django run django-admin migrate`
 

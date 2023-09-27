@@ -88,7 +88,7 @@ export interface DownloadSettings {
   dayRange?: number;
   noData?: number;
   customDateRange?: [string, string];
-
+  force?: boolean;
 }
 
 export type CeleryStates = 'FAILURE' | 'PENDING' | 'SUCCESS' | 'RETRY' | 'REVOKED' | 'STARTED';
@@ -299,21 +299,6 @@ export class ApiService {
     return __request(OpenAPI, {
       method: "GET",
       url: `${this.apiPrefix}/regions`,
-    });
-  }
-
-  /**
-   * @param id
-   * @returns Performer
-   * @throws ApiError
-   */
-  public static getRegion(id: number): CancelablePromise<Region> {
-    return __request(OpenAPI, {
-      method: "GET",
-      url: `${this.apiPrefix}/regions/{id}`,
-      path: {
-        id: id,
-      },
     });
   }
 

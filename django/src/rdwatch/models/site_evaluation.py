@@ -1,4 +1,5 @@
 from datetime import datetime
+from typing import Self
 from uuid import uuid4
 
 from typing_extensions import Self

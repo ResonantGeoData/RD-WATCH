@@ -38,8 +38,7 @@ watch(selectedRegion, (val) => {
   }
 
   if (router.currentRoute.value.fullPath.includes('proposals')) {
-    prepend = '/proposals/'
-    prepend = `${prepend}/proposals/`
+    prepend=`${prepend}/proposals/`
   }
   if (val) {
     router.push(`${prepend}${val}`)

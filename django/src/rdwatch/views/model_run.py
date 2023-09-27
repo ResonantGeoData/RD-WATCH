@@ -349,11 +349,27 @@ def post_region_model(
 
 
 @router.post('/{model_run_id}/generate-images/', response={202: bool})
-def generate_images(request: HttpRequest, model_run_id: UUID4):
+def generate_images(
+    request: HttpRequest,
+    model_run_id: UUID4,
+    constellation: Literal['WV', 'S2', 'L8'] = 'WV',
+    dayRange: int = 14,
+    noData: int = 50,
+    overrideDates: None | list[str] = None,
+    force: bool = False,
+):
     siteEvaluations = SiteEvaluation.objects.filter(configuration=model_run_id)
 
     for eval in siteEvaluations:
-        get_site_observation_images(request, eval.pk)
+        get_site_observation_images(
+            request,
+            eval.pk,
+            constellation,
+            dayRange,
+            noData,
+            overrideDates,
+            force,
+        )
 
     return 202, True
 

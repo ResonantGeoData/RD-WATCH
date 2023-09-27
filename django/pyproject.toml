@@ -25,13 +25,13 @@ packages = [
 ]
 
 [tool.poetry.dependencies]
-python = "~3.10.0"
+python = "~3.11.0"
 django = ">=4.1,<4.2"
 psycopg2 = "~2.9.3"
 redis = { version = "~4.3.4", extras = [ "hiredis" ] }
 uritemplate = "^4.1.1"
 iso3166 = "^2.1.1"
-rio-tiler = "^3.1.6"
+rio-tiler = "5.0.3"
 mercantile = "^1.2.1"
 django-ninja = "^0.21.0"
 celery = "^5.2.7"

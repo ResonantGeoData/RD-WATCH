@@ -1,13 +1,12 @@
 from datetime import datetime, timedelta
 from typing import Literal
 
-import iso3166
 from celery.result import AsyncResult
 from ninja import Field, FilterSchema, Query, Schema
 from ninja.errors import ValidationError
 from ninja.pagination import RouterPaginated
 from ninja.schema import validator
-from pydantic import constr  # type: ignore
+from pydantic import UUID4, constr  # type: ignore
 
 from django.contrib.postgres.aggregates import JSONBAgg
 from django.db import transaction
@@ -37,7 +36,7 @@ from rdwatch.db.functions import (
 )
 from rdwatch.models import (
     AnnotationExport,
-    HyperParameters,
+    ModelRun,
     Region,
     SatelliteFetching,
     SiteEvaluation,
@@ -47,7 +46,6 @@ from rdwatch.schemas import RegionModel, SiteModel
 from rdwatch.schemas.common import TimeRangeSchema
 from rdwatch.tasks import download_annotations
 from rdwatch.views.performer import PerformerSchema
-from rdwatch.views.region import RegionSchema
 from rdwatch.views.site_observation import get_site_observation_images
 
 router = RouterPaginated()
@@ -66,21 +64,8 @@ class ModelRunFilterSchema(FilterSchema):
             performer_q |= Q(performer_slug=performer_slug)
         return performer_q
 
-    def filter_region(self, value: str | None) -> Q:
-        if value is None:
-            return Q()
-        countrystr, numstr = value.split('_')
-        country = iso3166.countries_by_alpha2[countrystr].numeric
-        classification_slug = numstr[0]
-        number = None if numstr[1:] == 'xxx' else int(numstr[1:])
-        return (
-            Q(region_country=country)
-            & Q(region_class_slug=classification_slug)
-            & Q(region_number=number)
-        )
 
-
-class HyperParametersWriteSchema(Schema):
+class ModelRunWriteSchema(Schema):
     performer: str
     title: constr(max_length=1000)
     parameters: dict
@@ -103,15 +88,15 @@ class HyperParametersWriteSchema(Schema):
         return v
 
 
-class HyperParametersAdjudicated(Schema):
+class ModelRunAdjudicated(Schema):
     proposed: int
     other: int
 
 
-class HyperParametersDetailSchema(Schema):
-    id: int
+class ModelRunDetailSchema(Schema):
+    id: UUID4
     title: str
-    region: RegionSchema | None = None
+    region: str | None = None
     performer: PerformerSchema
     parameters: dict
     numsites: int
@@ -125,25 +110,19 @@ class HyperParametersDetailSchema(Schema):
     evaluation: int | None = None
     evaluation_run: int | None = None
     proposal: str = None
-    adjudicated: HyperParametersAdjudicated | None = None
+    adjudicated: ModelRunAdjudicated | None = None
 
 
-class EvaluationListSchema(Schema):
-    id: int
-    siteNumber: int
-    region: RegionSchema | None
-
-
-class HyperParametersListSchema(Schema):
+class ModelRunListSchema(Schema):
     count: int
     timerange: TimeRangeSchema | None = None
     bbox: dict | None = None
-    results: list[HyperParametersDetailSchema]
+    results: list[ModelRunDetailSchema]
 
 
 def get_queryset():
     # Subquery to count unique SiteEvaluations
-    # with proposal='PROPOSAL' for each HyperParameters
+    # with proposal='PROPOSAL' for each ModelRun
     proposed_count_subquery = (
         SiteEvaluation.objects.filter(
             configuration=OuterRef('pk'),
@@ -155,7 +134,7 @@ def get_queryset():
     )
 
     # Subquery to count unique SiteEvaluations with proposal
-    # not equal to 'PROPOSAL' for each HyperParameters
+    # not equal to 'PROPOSAL' for each ModelRun
     other_count_subquery = (
         SiteEvaluation.objects.filter(configuration=OuterRef('pk'))
         .exclude(status='PROPOSAL')
@@ -165,9 +144,7 @@ def get_queryset():
     )
 
     return (
-        HyperParameters.objects.select_related(
-            'evaluations', 'performer', 'satellitefetching'
-        )
+        ModelRun.objects.select_related('evaluations', 'performer', 'satellitefetching')
         # Get minimum score and performer so that we can tell which runs
         # are ground truth
         .alias(min_score=Min('evaluations__score'), performer_slug=F('performer__slug'))
@@ -205,15 +182,7 @@ def get_queryset():
                     output_field=JSONField(),
                 ),
                 region=Subquery(  # prevents including "region" in slow GROUP BY
-                    Region.objects.filter(pk=OuterRef('region_id')).values(
-                        json=JSONObject(
-                            id='id',
-                            country='country',
-                            classification=JSONObject(slug='classification__slug'),
-                            number='number',
-                        )
-                    ),
-                    output_field=JSONField(),
+                    Region.objects.filter(pk=OuterRef('region_id')).values('name')[:1],
                 ),
                 downloading=Coalesce(
                     Subquery(
@@ -255,36 +224,36 @@ def get_queryset():
     )
 
 
-@router.post('/', response={200: HyperParametersDetailSchema}, exclude_none=True)
+@router.post('/', response={200: ModelRunDetailSchema}, exclude_none=True)
 def create_model_run(
     request: HttpRequest,
-    hyper_parameters_data: HyperParametersWriteSchema,
+    model_run_data: ModelRunWriteSchema,
 ):
-    hyper_parameters = HyperParameters.objects.create(
-        title=hyper_parameters_data.title,
-        performer=hyper_parameters_data.performer,
-        parameters=hyper_parameters_data.parameters,
-        expiration_time=hyper_parameters_data.expiration_time,
-        evaluation=hyper_parameters_data.evaluation,
-        evaluation_run=hyper_parameters_data.evaluation_run,
-        proposal=hyper_parameters_data.proposal,
+    model_run = ModelRun.objects.create(
+        title=model_run_data.title,
+        performer=model_run_data.performer,
+        parameters=model_run_data.parameters,
+        expiration_time=model_run_data.expiration_time,
+        evaluation=model_run_data.evaluation,
+        evaluation_run=model_run_data.evaluation_run,
+        proposal=model_run_data.proposal,
     )
     return 200, {
-        'id': hyper_parameters.pk,
-        'title': hyper_parameters.title,
+        'id': model_run.pk,
+        'title': model_run.title,
         'performer': {
-            'id': hyper_parameters.performer.pk,
-            'team_name': hyper_parameters.performer.description,
-            'short_code': hyper_parameters.performer.slug,
+            'id': model_run.performer.pk,
+            'team_name': model_run.performer.description,
+            'short_code': model_run.performer.slug,
         },
-        'parameters': hyper_parameters.parameters,
+        'parameters': model_run.parameters,
         'numsites': 0,
-        'created': hyper_parameters.created,
-        'expiration_time': str(hyper_parameters.expiration_time),
+        'created': model_run.created,
+        'expiration_time': str(model_run.expiration_time),
     }
 
 
-@router.get('/', response={200: HyperParametersListSchema})
+@router.get('/', response={200: ModelRunListSchema})
 def list_model_runs(
     request: HttpRequest,
     filters: ModelRunFilterSchema = Query(...),  # noqa: B008
@@ -296,9 +265,7 @@ def list_model_runs(
         queryset.alias(
             min_score=Min('evaluations__score'),
             performer_slug=F('performer__slug'),
-            region_country=F('evaluations__region__country'),
-            region_class_slug=F('evaluations__region__classification__slug'),
-            region_number=F('evaluations__region__number'),
+            region=F('evaluations__region__name'),
         )
     )
 
@@ -318,15 +285,6 @@ def list_model_runs(
     )
 
     aggregate['count'] = total_model_run_count
-
-    # TODO: use a resolver instead.
-    # Temporary until https://github.com/vitalik/django-ninja/issues/610 is fixed
-    for result in aggregate['results']:
-        if result['region']:
-            result['region'] = {
-                'name': RegionSchema.resolve_name(result['region']),
-                'id': result['region']['id'],
-            }
 
     # Only bother calculating the entire bounding box of this model run
     # list if the user has specified a region. We don't want to overload
@@ -348,8 +306,8 @@ def list_model_runs(
     return 200, aggregate
 
 
-@router.get('/{id}/', response={200: HyperParametersDetailSchema})
-def get_model_run(request: HttpRequest, id: int):
+@router.get('/{id}/', response={200: ModelRunDetailSchema})
+def get_model_run(request: HttpRequest, id: UUID4):
     values = get_queryset().filter(id=id).values_list('json', flat=True)
 
     if not values.exists():
@@ -357,65 +315,71 @@ def get_model_run(request: HttpRequest, id: int):
 
     model_run = values[0]
 
-    # TODO: use a resolver instead.
-    # Temporary until https://github.com/vitalik/django-ninja/issues/610 is fixed
-    if model_run['region']:
-        model_run['region'] = {
-            'name': RegionSchema.resolve_name(model_run['region']),
-            'id': model_run['region']['id'],
-        }
-
     return 200, model_run
 
 
 @router.post(
-    '/{hyper_parameters_id}/site-model/',
+    '/{model_run_id}/site-model/',
     response={201: int},
 )
 def post_site_model(
     request: HttpRequest,
-    hyper_parameters_id: int,
+    model_run_id: UUID4,
     site_model: SiteModel,
 ):
-    hyper_parameters = get_object_or_404(HyperParameters, pk=hyper_parameters_id)
-    site_evaluation = SiteEvaluation.bulk_create_from_site_model(
-        site_model, hyper_parameters
-    )
+    model_run = get_object_or_404(ModelRun, pk=model_run_id)
+    site_evaluation = SiteEvaluation.bulk_create_from_site_model(site_model, model_run)
     return 201, site_evaluation.id
 
 
 @router.post(
-    '/{hyper_parameters_id}/region-model/',
+    '/{model_run_id}/region-model/',
     response={201: list[int]},
 )
 def post_region_model(
     request: HttpRequest,
-    hyper_parameters_id: int,
+    model_run_id: UUID4,
     region_model: RegionModel,
 ):
-    hyper_parameters = get_object_or_404(HyperParameters, pk=hyper_parameters_id)
+    model_run = get_object_or_404(ModelRun, pk=model_run_id)
     site_evaluations = SiteEvaluation.bulk_create_from_from_region_model(
-        region_model, hyper_parameters
+        region_model, model_run
     )
     return 201, [eval.id for eval in site_evaluations]
 
 
-@router.post('/{hyper_parameters_id}/generate-images/', response={202: bool})
-def generate_images(request: HttpRequest, hyper_parameters_id: int):
-    siteEvaluations = SiteEvaluation.objects.filter(configuration=hyper_parameters_id)
+@router.post('/{model_run_id}/generate-images/', response={202: bool})
+def generate_images(
+    request: HttpRequest,
+    model_run_id: UUID4,
+    constellation: Literal['WV', 'S2', 'L8'] = 'WV',
+    dayRange: int = 14,
+    noData: int = 50,
+    overrideDates: None | list[str] = None,
+    force: bool = False,
+):
+    siteEvaluations = SiteEvaluation.objects.filter(configuration=model_run_id)
 
     for eval in siteEvaluations:
-        get_site_observation_images(request, eval.pk)
+        get_site_observation_images(
+            request,
+            eval.pk,
+            constellation,
+            dayRange,
+            noData,
+            overrideDates,
+            force,
+        )
 
     return 202, True
 
 
 @router.put(
-    '/{hyper_parameters_id}/cancel-generate-images/',
+    '/{model_run_id}/cancel-generate-images/',
     response={202: bool, 409: str, 404: str},
 )
-def cancel_generate_images(request: HttpRequest, hyper_parameters_id: int):
-    siteEvaluations = SiteEvaluation.objects.filter(configuration=hyper_parameters_id)
+def cancel_generate_images(request: HttpRequest, model_run_id: UUID4):
+    siteEvaluations = SiteEvaluation.objects.filter(configuration=model_run_id)
 
     for eval in siteEvaluations:
         with transaction.atomic():
@@ -439,24 +403,17 @@ def cancel_generate_images(request: HttpRequest, hyper_parameters_id: int):
     return 202, True
 
 
-def get_region(hyper_parameters_id: int):
+def get_region(model_run_id: UUID4):
     return (
-        HyperParameters.objects.select_related('evaluations')
-        .filter(pk=hyper_parameters_id)
+        ModelRun.objects.select_related('evaluations')
+        .filter(pk=model_run_id)
         .alias(
             region_id=F('evaluations__region_id'),
         )
         .annotate(
             json=JSONObject(
                 region=Subquery(  # prevents including "region" in slow GROUP BY
-                    Region.objects.filter(pk=OuterRef('region_id')).values(
-                        json=JSONObject(
-                            id='id',
-                            country='country',
-                            classification=JSONObject(slug='classification__slug'),
-                            number='number',
-                        )
-                    ),
+                    Region.objects.filter(pk=OuterRef('region_id')).values('name')[:1],
                     output_field=JSONField(),
                 ),
             ),
@@ -464,10 +421,10 @@ def get_region(hyper_parameters_id: int):
     )
 
 
-def get_evaluations_query(hyper_parameters_id: int):
+def get_evaluations_query(model_run_id: UUID4):
     return (
         SiteEvaluation.objects.select_related('siteimage')
-        .filter(configuration=hyper_parameters_id)
+        .filter(configuration=model_run_id)
         .annotate(
             siteimage_count=Count('siteimage'),
             S2=Count(Case(When(siteimage__source='S2', then=1))),
@@ -497,28 +454,23 @@ def get_evaluations_query(hyper_parameters_id: int):
     )
 
 
-@router.get('/{hyper_parameters_id}/evaluations')
-def get_modelrun_evaluations(request: HttpRequest, hyper_parameters_id: int):
-    region = get_region(hyper_parameters_id).values_list('json', flat=True)
+@router.get('/{model_run_id}/evaluations')
+def get_modelrun_evaluations(request: HttpRequest, model_run_id: UUID4):
+    region = get_region(model_run_id).values_list('json', flat=True)
     if not region.exists():
         raise Http404()
 
-    query = get_evaluations_query(hyper_parameters_id)
+    query = get_evaluations_query(model_run_id)
     model_run = region[0]
-    # TODO: use a resolver instead.
-    # Temporary until https://github.com/vitalik/django-ninja/issues/610 is fixed
-    if model_run['region']:
-        model_run['region'] = {
-            'name': RegionSchema.resolve_name(model_run['region']),
-            'id': model_run['region']['id'],
-        }
     query['region'] = model_run['region']
     return 200, query
 
 
 @router.post('/{id}/download/')
 def start_download(
-    request: HttpRequest, id: int, mode: Literal['all', 'approved', 'rejected'] = 'all'
+    request: HttpRequest,
+    id: UUID4,
+    mode: Literal['all', 'approved', 'rejected'] = 'all',
 ):
     task_id = download_annotations.delay(id, mode)
     print(task_id)

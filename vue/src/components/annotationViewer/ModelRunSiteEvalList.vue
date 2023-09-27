@@ -22,7 +22,7 @@ export interface ModelRunEvaluationDisplay {
 
 
 const props = defineProps<{
-  modelRun: number | null;
+  modelRun: string | null;
   selectedEval: number | null;
 }>();
 
@@ -36,7 +36,7 @@ const statusMap: Record<SiteModelStatus, { name: string, color: string }> = {
   'PROPOSAL': { name: 'Proposed', color: 'orange'},
   'REJECTED': { name: 'Rejected', color: 'error'},
   'APPROVED': { name: 'Approved', color: 'success'},
-  
+
 }
 
 const getSiteEvalIds = async () => {
@@ -57,7 +57,7 @@ const modifiedList = computed(() => {
   const modList: ModelRunEvaluationDisplay[] = []
   let newNumbers = 0;
   if (evaluationsList.value?.evaluations) {
-    const regionName = evaluationsList.value.region.name;
+    const regionName: string = evaluationsList.value.region;
     evaluationsList.value.evaluations.forEach((item) => {
       const newNum = item.number.toString().padStart(4, '0')
       if (newNum === '9999') {
@@ -115,7 +115,7 @@ const download = (id: number) => {
       </div>
       <div v-else>
         <h3>Site Models:</h3>
-        <v-card 
+        <v-card
           v-for="item in modifiedList"
           :key="`${item.name}_${item.id}_${item.selected}`"
           class="modelRunCard"

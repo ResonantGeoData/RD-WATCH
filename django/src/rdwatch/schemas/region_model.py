@@ -46,7 +46,7 @@ class RegionFeature(Schema):
 class SiteSummaryFeature(Schema):
     type: Literal['site_summary']
     # match the site_id of format KR_R001_0001 or KR_R001_9990
-    site_id: constr(regex=r'^[A-Z]{2}_[RCST]\d{3}_\d{4,6}$')
+    site_id: constr(regex=r'^[A-Z]{2}_[RCST]\d{3}_\d{4,8}$')
     version: str | None
     mgrs: str
     status: Literal[

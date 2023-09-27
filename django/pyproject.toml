@@ -25,13 +25,13 @@ packages = [
 ]
 
 [tool.poetry.dependencies]
-python = "~3.10.0"
+python = "~3.11.0"
 django = ">=4.1,<4.2"
 psycopg2 = "~2.9.3"
 redis = { version = "~4.3.4", extras = [ "hiredis" ] }
 uritemplate = "^4.1.1"
 iso3166 = "^2.1.1"
-rio-tiler = "^3.1.6"
+rio-tiler = "5.0.3"
 mercantile = "^1.2.1"
 django-ninja = "^0.21.0"
 celery = "^5.2.7"
@@ -40,6 +40,7 @@ pillow = "^9.5.0"
 django-configurations = {extras = ["database", "email"], version = "^2.4.1"}
 django-storages = {extras = ["boto3"], version = "^1.13.2"}
 django-celery-results = "^2.5.1"
+pystac-client = "^0.7.5"
 
 [tool.poetry.group.dev.dependencies]
 black = "^23.3.0"
@@ -54,6 +55,7 @@ pre-commit = "^3.3.1"
 tox = "^4.5.1"
 django-minio-storage = "^0.5.2"
 werkzeug = "^2.3.7"
+django-debug-toolbar = "^4.2.0"
 
 [tool.taskipy.tasks]
 "build:openapi" = "DJANGO_SETTINGS_MODULE=rdwatch.server.settings django-admin generateschema --format openapi-json --file openapi.json"

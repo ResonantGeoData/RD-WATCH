@@ -19,7 +19,6 @@ import { EvaluationImageResults } from "../../types";
 
 export interface QueryArguments {
   performer?: string[];
-  groundtruth?: boolean;
   region?: string;
   page?: number;
   limit?: number;
@@ -89,7 +88,7 @@ export interface DownloadSettings {
   dayRange?: number;
   noData?: number;
   customDateRange?: [string, string];
-
+  force?: boolean;
 }
 
 export type CeleryStates = 'FAILURE' | 'PENDING' | 'SUCCESS' | 'RETRY' | 'REVOKED' | 'STARTED';
@@ -162,8 +161,8 @@ export class ApiService {
           }
         });
       }
-      
-  
+
+
       /**
    * @param id
    * @returns boolean
@@ -208,7 +207,7 @@ export class ApiService {
    * @throws ApiError
    */
       public static cancelModelRunsImageTask(
-        id: number,
+        id: string,
       ): CancelablePromise<boolean> {
         return __request(OpenAPI, {
           method: "PUT",
@@ -218,7 +217,7 @@ export class ApiService {
           },
         });
       }
-  
+
   /**
    * @returns ModelRunList
    * @throws ApiError
@@ -239,7 +238,7 @@ export class ApiService {
    * @returns EvaluationsList
    * @throws ApiError
    */
-    public static getModelRunEvaluations(id: number): CancelablePromise<ModelRunEvaluations> {
+    public static getModelRunEvaluations(id: string): CancelablePromise<ModelRunEvaluations> {
       return __request(OpenAPI, {
         method: "GET",
         url: `${this.apiPrefix}/model-runs/{id}/evaluations`,
@@ -248,15 +247,15 @@ export class ApiService {
         },
       });
     }
-  
-    
+
+
 
   /**
    * @param id
    * @returns ModelRun
    * @throws ApiError
    */
-  public static getModelRun(id: number): CancelablePromise<ModelRun> {
+  public static getModelRun(id: string): CancelablePromise<ModelRun> {
     return __request(OpenAPI, {
       method: "GET",
       url: `${this.apiPrefix}/model-runs/{id}`,
@@ -300,21 +299,6 @@ export class ApiService {
     return __request(OpenAPI, {
       method: "GET",
       url: `${this.apiPrefix}/regions`,
-    });
-  }
-
-  /**
-   * @param id
-   * @returns Performer
-   * @throws ApiError
-   */
-  public static getRegion(id: number): CancelablePromise<Region> {
-    return __request(OpenAPI, {
-      method: "GET",
-      url: `${this.apiPrefix}/regions/{id}`,
-      path: {
-        id: id,
-      },
     });
   }
 
@@ -413,38 +397,38 @@ export class ApiService {
 
   public static getScoringDetails(
     configurationId: number,
-    regionId: number,
+    region: string,
     siteNumber: number,
     version: string
   ): CancelablePromise<ScoringResults>
   {
     return __request(OpenAPI, {
       method: "GET",
-      url: "/api/scoring/scores/details",
-      query: { configurationId, regionId, siteNumber, version },
+      url: "/api/scores/details",
+      query: { configurationId, region, siteNumber, version },
     });
   }
 
   public static hasScores(
     configurationId: number,
-    regionId: number,
+    region: string,
   ): CancelablePromise<boolean>
   {
     return __request(OpenAPI, {
       method: "GET",
-      url: "/api/scoring/scores/has-scores",
-      query: { configurationId, regionId },
+      url: "/api/scores/has-scores",
+      query: { configurationId, region },
     });
   }
   public static getScoreColoring(
-    configurationId: number,
-    regionId: number,
+    configurationId: string,
+    region: string,
   ): CancelablePromise<Record<string, string>>
   {
     return __request(OpenAPI, {
       method: "GET",
-      url: "/api/scoring/scores/region-colors",
-      query: { configurationId, regionId },
+      url: "/api/scores/region-colors",
+      query: { configurationId, region, },
     });
   }
 
@@ -492,7 +476,7 @@ export class ApiService {
     })
   }
 
-  public static startModelRunDownload(id: number, mode: 'all' | 'approved' | 'rejected'='all'): CancelablePromise<string> {
+  public static startModelRunDownload(id: string, mode: 'all' | 'approved' | 'rejected'='all'): CancelablePromise<string> {
     return __request(OpenAPI, {
       method: 'POST',
       url: "/api/model-runs/{id}/download/",
@@ -513,4 +497,3 @@ export class ApiService {
 
 
 }
-

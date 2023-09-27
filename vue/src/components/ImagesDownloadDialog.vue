@@ -15,6 +15,7 @@ const dayRange = ref(14);
 const noData = ref(50)
 const overrideDates: Ref<[string, string]> = ref(['2013-01-01', new Date().toISOString().split('T')[0]])
 const showAdvanced = ref(false);
+const force =ref(false);
 const customDateRange = ref(false);
 
 const download = () => {
@@ -23,6 +24,7 @@ const download = () => {
         dayRange: dayRange.value,
         noData: noData.value,
         customDateRange: customDateRange.value ? overrideDates.value : undefined,
+        force: force.value,
     })
 }
 
@@ -65,6 +67,19 @@ const display = ref(true);
           </v-icon>
         </v-row>
         <div v-if="showAdvanced">
+          <v-row
+            dense
+            align="center"
+            class="pb-5"
+          >
+            <v-checkbox
+              v-model="force"
+              density="compact"
+              label="Force"
+              hint="Force redownloading all images"
+              persistent-hint
+            />
+          </v-row>        
           <v-row
             dense
             align="center"

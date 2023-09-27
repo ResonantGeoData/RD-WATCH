@@ -8,7 +8,7 @@ from ninja.testing import TestClient
 from django.core.management import call_command
 
 from rdwatch.api import api
-from rdwatch.models import HyperParameters
+from rdwatch.models import ModelRun
 from rdwatch.models.lookups import Performer
 
 if TYPE_CHECKING:
@@ -27,8 +27,8 @@ def test_client() -> TestClient:
 
 
 @pytest.fixture
-def hyper_parameters() -> HyperParameters:
-    return HyperParameters.objects.create(
+def model_run() -> ModelRun:
+    return ModelRun.objects.create(
         title='Test',
         parameters={},
         performer=Performer.objects.all().first(),

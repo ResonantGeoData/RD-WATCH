@@ -2,7 +2,7 @@ import type { Performer } from "./Performer";
 import type { Region } from "./Region";
 
 export type ModelRun = {
-  id: number;
+  id: string;
   region: Region | null;
   title: string;
   performer: Performer;

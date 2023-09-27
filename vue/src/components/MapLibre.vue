@@ -28,7 +28,7 @@ const props = withDefaults(defineProps<Props>(), {
 const mapContainer: ShallowRef<null | HTMLElement> = shallowRef(null);
 const map: ShallowRef<null | Map> = shallowRef(null);
 
-const modelRunVectorLayers = reactive<Set<number>>(new Set());
+const modelRunVectorLayers = reactive<Set<string>>(new Set());
 
 function setFilter(layerID: string, filter: FilterSpecification) {
   map.value?.setFilter(layerID, filter, {
@@ -98,7 +98,7 @@ watch([() => state.timestamp, () => state.filters, () => state.satellite, () => 
   const oldFilters = oldVals[1];
 
   // Clear layers on region change
-  if (!isEqual(newFilters.region_id, oldFilters.region_id)) {
+  if (!isEqual(newFilters.regions, oldFilters.regions)) {
     modelRunVectorLayers.clear();
   }
 

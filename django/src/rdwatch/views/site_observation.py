@@ -43,13 +43,13 @@ class SiteObservationSchema(Schema):
 
 
 class SiteEvaluationImageSchema(Schema):
-    id: int
+    id: str
     timestamp: int
     image: str
     cloudcover: float
     percent_black: float
     source: str
-    siteobs_id: int | None
+    siteobs_id: str | None
     bbox: BoundingBoxSchema
     image_dimensions: list[int]
     aws_location: str

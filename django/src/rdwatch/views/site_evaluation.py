@@ -4,6 +4,7 @@ import tempfile
 from datetime import datetime
 
 from ninja import Field, FilterSchema, Query, Router, Schema
+from pydantic import UUID4
 
 from django.conf import settings
 from django.contrib.gis.db.models.aggregates import Collect
@@ -157,7 +158,7 @@ def list_site_evaluations(
 
 
 @router.patch('/{id}/')
-def patch_site_evaluation(request: HttpRequest, id: int, data: SiteEvaluationRequest):
+def patch_site_evaluation(request: HttpRequest, id: UUID4, data: SiteEvaluationRequest):
     with transaction.atomic():
         site_evaluation = get_object_or_404(
             SiteEvaluation.objects.select_for_update(), pk=id
@@ -267,7 +268,7 @@ def get_site_model_feature_JSON(id: int, obsevations=False):
 
 
 @router.get('/{id}/download')
-def download_annotations(request: HttpRequest, id: int):
+def download_annotations(request: HttpRequest, id: UUID4):
     output, site_id, filename = get_site_model_feature_JSON(id)
     if output is not None:
         with tempfile.NamedTemporaryFile(delete=False) as temp_file:

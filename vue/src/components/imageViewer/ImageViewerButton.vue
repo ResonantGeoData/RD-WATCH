@@ -3,7 +3,7 @@ import { ref } from "vue";
 import ImageViewer from './ImageViewer.vue';
 
 defineProps<{
-  siteEvalId: number;
+  siteEvalId: string;
 }>();
 
 const displayImage = ref(false);

@@ -1,33 +1,33 @@
 # Base runtime environment for rdwatch
-FROM ubuntu:22.10 AS base
+FROM ubuntu:23.04 AS base
 COPY docker/nginx.json /usr/local/etc/unit/config.json
 COPY docker/docker-entrypoint.sh /docker-entrypoint.sh
 COPY docker/keyrings/nginx.gpg /usr/share/keyrings/nginx.gpg
-RUN echo "deb [signed-by=/usr/share/keyrings/nginx.gpg] http://packages.nginx.org/unit/ubuntu/ jammy unit" > /etc/apt/sources.list.d/unit.list \
- && echo "deb-src [signed-by=/usr/share/keyrings/nginx.gpg] http://packages.nginx.org/unit/ubuntu/ jammy unit" >> /etc/apt/sources.list.d/unit.list \
- && apt-get update \
+RUN apt-get update \
+ && apt-get install --no-install-recommends --yes ca-certificates curl gnupg
+RUN echo "deb [signed-by=/usr/share/keyrings/nginx.gpg] http://packages.nginx.org/unit/ubuntu/ lunar unit" > /etc/apt/sources.list.d/unit.list \
+ && echo "deb-src [signed-by=/usr/share/keyrings/nginx.gpg] http://packages.nginx.org/unit/ubuntu/ lunar unit" >> /etc/apt/sources.list.d/unit.list
+RUN apt-get update \
  && apt-get install --no-install-recommends --yes \
-      ca-certificates \
-      curl \
       libproj25 \
-      libgdal31 \
+      libgdal32 \
       netcat-openbsd \
       python3-cachecontrol \
       python3-pip \
-      python3.10-venv \
+      python3.11-venv \
       tzdata \
       unit \
-      unit-python3.10 \
+      unit-python3.11 \
  && rm -rf /var/lib/apt/lists/* \
  && mkdir /run/unit \
  && chmod +x /docker-entrypoint.sh \
  && useradd --no-create-home rdwatch \
  && usermod --lock rdwatch \
  && usermod --append --groups rdwatch unit
-RUN python3 -m pip install poetry==1.6.1
 RUN python3 -m venv /poetry/venvs/rdwatch
 ENV PATH="/poetry/venvs/rdwatch/bin:$PATH"
 ENV VIRTUAL_ENV=/poetry/venvs/rdwatch
+RUN $VIRTUAL_ENV/bin/python -m pip install poetry==1.6.1
 WORKDIR /app
 EXPOSE 80
 ENTRYPOINT [ "/docker-entrypoint.sh" ]

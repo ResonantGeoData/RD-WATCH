@@ -1,5 +1,5 @@
 import rasterio  # type: ignore
-from rio_tiler.io.cogeo import COGReader
+from rio_tiler.io.rasterio import Reader
 
 from rdwatch.utils.worldview_processed.satellite_captures import (
     WorldViewProcessedCapture,
@@ -20,7 +20,7 @@ def get_worldview_processed_visual_tile(
         VSI_CACHE='TRUE',
         VSI_CACHE_SIZE=5000000,
     ):
-        with COGReader(input=capture.uri) as img:
+        with Reader(input=capture.uri) as img:
             rgb = img.tile(x, y, z, tilesize=512)
         rgb.rescale(in_range=((0, 10000),))
         return rgb.render(img_format='WEBP')
@@ -42,7 +42,7 @@ def get_worldview_processed_visual_bbox(
         VSI_CACHE='TRUE',
         VSI_CACHE_SIZE=5000000,
     ):
-        with COGReader(input=capture.uri) as img:
+        with Reader(input=capture.uri) as img:
             rgb = img.part(bbox)
         rgb.rescale(in_range=((0, 10000),))
         return rgb.render(img_format=format)

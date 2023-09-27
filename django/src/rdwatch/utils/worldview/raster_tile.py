@@ -1,5 +1,5 @@
 import rasterio  # type: ignore
-from rio_tiler.io.cogeo import COGReader
+from rio_tiler.io.rasterio import Reader
 from rio_tiler.utils import pansharpening_brovey
 
 from rdwatch.utils.worldview.satellite_captures import WorldViewCapture
@@ -9,7 +9,7 @@ def get_worldview_visual_tile(
     capture: WorldViewCapture, z: int, x: int, y: int
 ) -> bytes:
     with rasterio.Env(GDAL_DISABLE_READDIR_ON_OPEN='EMPTY_DIR'):
-        with COGReader(input=capture.uri) as img:
+        with Reader(input=capture.uri) as img:
             info = img.info()
             red = info.colorinterp.index('red') + 1  # type: ignore
             green = info.colorinterp.index('green') + 1  # type: ignore
@@ -17,7 +17,7 @@ def get_worldview_visual_tile(
             rgb = img.tile(x, y, z, tilesize=512, indexes=(red, green, blue))
 
         if capture.image_representation != 'RGB' and capture.panuri:
-            with COGReader(input=capture.panuri) as img:
+            with Reader(input=capture.panuri) as img:
                 pan = img.tile(x, y, z, tilesize=512)
             rgb.data = pansharpening_brovey(rgb.data, pan.data, 0.2, 'uint16')
 

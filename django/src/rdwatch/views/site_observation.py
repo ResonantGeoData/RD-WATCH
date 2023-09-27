@@ -174,6 +174,7 @@ def get_site_observation_images(
     dayRange: int = 14,
     noData: int = 50,
     overrideDates: None | list[str] = None,
+    force: bool = False,
 ):
     # Make sure site evaluation actually exists
     siteeval = get_object_or_404(SiteEvaluation, pk=evaluation_id)
@@ -205,7 +206,7 @@ def get_site_observation_images(
         task_id = get_siteobservations_images.delay(
             evaluation_id,
             constellation,
-            False,
+            force,
             dayRange,
             noData,
             overrideDates,

@@ -1,6 +1,5 @@
 from datetime import datetime
-
-from typing_extensions import Self
+from typing import Self
 
 from django.contrib.gis.db.models import PolygonField
 from django.contrib.gis.geos import MultiPolygon

@@ -32,6 +32,12 @@ interface PixelPoly {
 const emit = defineEmits<{
   (e: "close"): void;
   (e: "update-list"): void;
+  (e: "eval-save", {label, startDate, endDate, notes} :{
+    label: string;
+    startDate: string | null
+    endDate: string | null;
+    notes: string;
+  }): void;
 }>();
 
 const loading = ref(false);
@@ -41,7 +47,7 @@ const editMode = ref(props.editable);
 const editDialog = ref(false);
 const currentEditMode: Ref<null | EditModes> = ref(null);
 const notes = ref('');
-const siteEvaluationLabel = ref('');
+const siteEvaluationLabel = ref('unknown');
 const startDate: Ref<string|null> = ref(props.dateRange && props.dateRange[0] ? new Date(props.dateRange[0] * 1000).toISOString().split('T')[0] : null);
 const endDate: Ref<string|null> = ref(props.dateRange && props.dateRange[1] ? new Date(props.dateRange[1] * 1000).toISOString().split('T')[0] : null);
 const siteEvaluationNotes = ref('');
@@ -58,7 +64,7 @@ const percentBlackFilter: Ref<number> = ref(100);
 const cloudFilter: Ref<number> = ref(100);
 const siteObsFilter: Ref<('observations' | 'non-observations')[]> = ref(['observations', 'non-observations'])
 // Ease of display refs
-const currentLabel = ref('')
+const currentLabel = ref('unknown')
 const currentDate = ref('');
 // Ground Truth Values
 const hasGroundTruth = ref(false);
@@ -258,6 +264,10 @@ const drawData = (canvas: HTMLCanvasElement, image: EvaluationImage, poly:PixelP
 
 const load = async (newValue?: number, oldValue?: number) => {
   const index = state.enabledSiteObservations.findIndex((item) => item.id === oldValue);
+
+  startDate.value = (props.dateRange && props.dateRange[0] ? new Date(props.dateRange[0] * 1000).toISOString().split('T')[0] : null);
+  endDate.value= (props.dateRange && props.dateRange[1] ? new Date(props.dateRange[1] * 1000).toISOString().split('T')[0] : null);
+
   if (index !== -1) {
     const tempArr = [...state.enabledSiteObservations];
     tempArr.splice(index, 1);
@@ -313,12 +323,16 @@ watch([currentImage, imageRef, filteredImages, drawGroundTruth], () => {
 });
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
-const updateTime = (time: any, date: 'StartDate' | 'EndDate') => {
+const updateTime = (time: any, date: 'StartDate' | 'EndDate'| 'StartDateTemp' | 'EndDateTemp') => {
   if (time === null) {
     if (date === 'StartDate') {
       startDate.value = null;
     } else if (date === 'EndDate') {
       endDate.value = null
+    } else if (date === 'StartDateTemp') {
+      startDateTemp.value = null;
+    }  else if (date === 'EndDateTemp') {
+      endDateTemp.value = null;
     }
     editDialog.value = false;
   } else {
@@ -326,20 +340,25 @@ const updateTime = (time: any, date: 'StartDate' | 'EndDate') => {
       startDate.value = new Date(time as string).toISOString().split('T')[0];
     } else if (date === 'EndDate') {
       endDate.value = new Date(time as string).toISOString().split('T')[0];
+    } else if (date === 'StartDateTemp') {
+      startDateTemp.value = new Date(time as string).toISOString().split('T')[0];
+    } else if (date === 'EndDateTemp') {
+      endDateTemp.value = new Date(time as string).toISOString().split('T')[0];
     }
   }
   siteEvaluationUpdated.value = true;
 }
 
 const mapImagesOn = computed(() => (state.enabledSiteObservations.findIndex((item) => item.id === props.siteEvalId) !== -1));
-
+const startDateTemp: Ref<string | null> = ref(null);
+const endDateTemp: Ref<string | null> = ref(null);
 const setEditingMode = (mode: EditModes) => {
   if (['StartDate', 'EndDate'].includes(mode)){
     if (startDate.value === null) {
-      startDate.value = new Date().toISOString().split('T')[0];
+      startDateTemp.value = currentDate.value;
     }
     if (endDate.value === null) {
-      endDate.value = new Date().toISOString().split('T')[0];
+      endDateTemp.value = currentDate.value;
     }
   }
   editDialog.value = true;
@@ -347,14 +366,15 @@ const setEditingMode = (mode: EditModes) => {
 }
 
 
-const saveSiteEvaluationChanges = () => {
-  ApiService.patchSiteEvaluation(props.siteEvalId, {
+const saveSiteEvaluationChanges = async () => {
+ await  ApiService.patchSiteEvaluation(props.siteEvalId, {
     label: siteEvaluationLabel.value,
     start_date: startDate.value,
     end_date: endDate.value,
     notes: siteEvaluationNotes.value ? siteEvaluationNotes.value : undefined,
   });
   siteEvaluationUpdated.value = false;
+  emit('update-list');
 }
 
 const setSiteModelStatus = async (status: SiteModelStatus) => {
@@ -813,11 +833,11 @@ const setSiteModelStatus = async (status: SiteModelStatus) => {
               </v-btn>
             </v-row>
             <v-date-picker
-              v-if="startDate !== null"
-              :model-value="[startDate ? startDate : new Date()]"
-              @update:model-value="updateTime($event, 'StartDate')"
+              v-if="startDateTemp !== null"
+              :model-value="[startDateTemp ? startDateTemp : currentTimestamp]"
+              @update:model-value="updateTime($event, 'StartDateTemp')"
               @click:cancel="editDialog = false"
-              @click:save="editDialog = false"
+              @click:save="updateTime(startDateTemp, 'StartDate'); editDialog = false"
             />
           </v-card-text>
         </v-card>
@@ -848,11 +868,11 @@ const setSiteModelStatus = async (status: SiteModelStatus) => {
               </v-btn>
             </v-row>
             <v-date-picker
-              v-if="endDate !== null"
-              :model-value="[endDate ? endDate : new Date()]"
-              @update:model-value="updateTime($event, 'EndDate')"
+              v-if="endDateTemp !== null"
+              :model-value="[endDateTemp ? endDateTemp : currentTimestamp]"
+              @update:model-value="updateTime($event, 'EndDateTemp')"
               @click:cancel="editDialog = false"
-              @click:save="editDialog = false"
+              @click:save="updateTime(endDateTemp, 'EndDate');editDialog = false"
             />
           </v-card-text>
         </v-card>

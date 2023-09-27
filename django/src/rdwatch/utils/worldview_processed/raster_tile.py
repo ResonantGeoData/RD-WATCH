@@ -83,7 +83,7 @@ def get_worldview_processed_visual_bbox(
                     rgb = rgbimg.part(bbox, width=pan.width, height=pan.height)
                     logger.warning(f'RGB Download Time: {time.time() - startTime}')
                 logger.warning(f'PanSharpening: {capture.panuri}')
-                rgb.data = pansharpening_brovey(rgb.data, pan.data, 0.2, 'uint16')
+                rgb.from_array(pansharpening_brovey(rgb.data, pan.data, 0.2, 'uint16'))
                 logger.warning(f'Pan Sharpening Time: {time.time() - startTime}')
 
         rgb.rescale(in_range=((0, 10000),))

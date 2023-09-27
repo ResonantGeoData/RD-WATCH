@@ -31,7 +31,7 @@
   ],
   "applications": {
     "rdwatch": {
-      "type": "python 3.10",
+      "type": "python 3.11",
       "user": "rdwatch",
       "group": "rdwatch",
       "path": "/app/django/",

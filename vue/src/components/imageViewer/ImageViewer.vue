@@ -64,7 +64,7 @@ const currentDate = ref('');
 const hasGroundTruth = ref(false);
 const groundTruth: Ref<EvaluationImageResults['groundTruth'] | null > = ref(null);
 const drawGroundTruth = ref(false);
-const siteEvaluationList = computed(() => styles.filter((item) => item.labelType === 'sites').map((item) => item.label));
+const siteEvaluationList = computed(() => Object.entries(styles).filter(([label, { type }]) => type === 'sites').map(([label]) => label));
 const getClosestPoly = (timestamp: number, polys: EvaluationGeoJSON[], evaluationPoly: EvaluationGeoJSON['geoJSON'], siteEvalLabel: string) => {
   if (polys.length === 0) {
     return {geoJSON: evaluationPoly, label:siteEvalLabel};
@@ -87,10 +87,10 @@ const filteredImages = computed(() => {
       add = false;
     }
     if (siteObsFilter.value.includes('observations') && siteObsFilter.value.length ===1 && item.image.siteobs_id === null) {
-      add = false;      
+      add = false;
     }
     if (siteObsFilter.value.includes('non-observations') && siteObsFilter.value.length ===1 && item.image.siteobs_id !== null) {
-      add = false;      
+      add = false;
     }
     if (item.image.percent_black > percentBlackFilter.value) {
       add = false;
@@ -123,7 +123,7 @@ function createCanvas(width: number, height: number){
     myOffScreenCanvas.width = width;
     myOffScreenCanvas.height = height;
     // attach the context to the canvas for easy access and to reduce complexity.
-    myOffScreenCanvas.ctx = myOffScreenCanvas.getContext("2d"); 
+    myOffScreenCanvas.ctx = myOffScreenCanvas.getContext("2d");
     return myOffScreenCanvas;
  }
 
@@ -151,7 +151,7 @@ const getImageData = async () => {
     // For each polygon we need to convert it to the proper image sizing result.
     images.forEach((image) => {
         const closestPoly = getClosestPoly(image.timestamp, polygons, data.evaluationGeoJSON, data.label);
-        // Now we convert the coordinates to 
+        // Now we convert the coordinates to
         const bboxWidth = image.bbox.xmax - image.bbox.xmin;
         const bboxHeight = image.bbox.ymax - image.bbox.ymin;
         const imageWidth = image.image_dimensions[0];
@@ -448,7 +448,7 @@ const setSiteModelStatus = async (status: SiteModelStatus) => {
           </div>
           <div v-if="groundTruth && hasGroundTruth">
             <b class="mr-1">Date Range:</b>
-            <span> {{ new Date(groundTruth.timerange.min * 1000).toISOString().split('T')[0] }} 
+            <span> {{ new Date(groundTruth.timerange.min * 1000).toISOString().split('T')[0] }}
               <v-icon
                 class="ma-0"
                 color="white"
@@ -592,7 +592,7 @@ const setSiteModelStatus = async (status: SiteModelStatus) => {
           label="Site Observations"
           :items="baseObs"
           multiple
-          closable-chips	
+          closable-chips
           chips
           class="mx-2"
         />
@@ -601,7 +601,7 @@ const setSiteModelStatus = async (status: SiteModelStatus) => {
           label="Sources"
           :items="baseImageSources"
           multiple
-          closable-chips	
+          closable-chips
           chips
           class="mx-2"
         />

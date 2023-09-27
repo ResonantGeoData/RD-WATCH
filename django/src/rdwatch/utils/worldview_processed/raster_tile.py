@@ -2,7 +2,7 @@ import logging
 import time
 
 import rasterio  # type: ignore
-from rio_tiler.io.cogeo import COGReader
+from rio_tiler.io.rasterio import Reader
 from rio_tiler.utils import pansharpening_brovey
 
 from rdwatch.utils.worldview_processed.satellite_captures import (
@@ -27,18 +27,18 @@ def get_worldview_processed_visual_tile(
         VSI_CACHE_SIZE=5000000,
     ):
         if not capture.panuri:
-            with COGReader(input=capture.uri) as img:
+            with Reader(input=capture.uri) as img:
                 rgb = img.tile(x, y, z, tilesize=512)
         if capture.panuri:
             logger.warning(f'PAN URI: {capture.panuri}')
-            with COGReader(input=capture.panuri) as img:
+            with Reader(input=capture.panuri) as img:
                 pan = img.tile(
                     x,
                     y,
                     z,
                     tilesize=512,
                 )
-                with COGReader(input=capture.uri) as rgbimg:
+                with Reader(input=capture.uri) as rgbimg:
                     rgb = rgbimg.tile(x, y, z, tilesize=512)
                 rgb.data = pansharpening_brovey(rgb.data, pan.data, 0.2, 'uint16')
             rgb.rescale(in_range=((0, 10000),))
@@ -46,7 +46,7 @@ def get_worldview_processed_visual_tile(
 
 
 def get_cog_image(uri, bbox):
-    with COGReader(input=uri) as img:
+    with Reader(input=uri) as img:
         return img.part(bbox)
 
 
@@ -68,7 +68,7 @@ def get_worldview_processed_visual_bbox(
     ):
         startTime = time.time()
         if not capture.panuri:
-            with COGReader(input=capture.uri) as img:
+            with Reader(input=capture.uri) as img:
                 logger.warning(f'Image URI: {capture.uri}')
                 logger.warning(f'Base Info Time: {time.time() - startTime}')
                 rgb = img.part(bbox)
@@ -76,10 +76,10 @@ def get_worldview_processed_visual_bbox(
 
         if capture.panuri:
             logger.warning(f'Pan URI: {capture.panuri}')
-            with COGReader(input=capture.panuri) as img:
+            with Reader(input=capture.panuri) as img:
                 pan = img.part(bbox)
                 logger.warning(f'Pan Download Time: {time.time() - startTime}')
-                with COGReader(input=capture.uri) as rgbimg:
+                with Reader(input=capture.uri) as rgbimg:
                     rgb = rgbimg.part(bbox, width=pan.width, height=pan.height)
                     logger.warning(f'RGB Download Time: {time.time() - startTime}')
                 logger.warning(f'PanSharpening: {capture.panuri}')

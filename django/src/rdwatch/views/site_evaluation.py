@@ -177,12 +177,10 @@ def patch_site_evaluation(request: HttpRequest, id: int, data: SiteEvaluationReq
             site_evaluation.label = lookups.ObservationLabel.objects.get(
                 slug=data.label
             )
+        site_evaluation.start_date = data.start_date
+        site_evaluation.end_date = data.end_date
         if data.notes:
             site_evaluation.notes = data.notes
-        if data.start_date:
-            site_evaluation.start_date = data.start_date
-        if data.end_date:
-            site_evaluation.end_date = data.end_date
         if data.status:
             site_evaluation.status = data.status
 

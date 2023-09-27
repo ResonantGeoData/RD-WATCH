@@ -63,7 +63,7 @@ def is_inside_range(
 @app.task(bind=True)
 def get_siteobservations_images(
     self,
-    site_eval_id: int,
+    site_eval_id: UUID4,
     baseConstellation='WV',
     force=False,  # forced downloading found_timestamps again
     dayRange=14,

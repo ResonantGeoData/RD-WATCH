@@ -4,7 +4,7 @@ import { ImageSource, Map } from "maplibre-gl";
 
 
 
-const getClosestTimestamp = (id: number, timestamp: number, enabledSiteObservations: EnabledSiteObservations[], settings: siteObsSatSettings) => {
+const getClosestTimestamp = (id: string, timestamp: number, enabledSiteObservations: EnabledSiteObservations[], settings: siteObsSatSettings) => {
     if (enabledSiteObservations.length > 0) {
         const observation = enabledSiteObservations.find((item) => item.id === id);
         const images = observation?.images.filter((item) => imageFilter(item, settings));
@@ -14,7 +14,7 @@ const getClosestTimestamp = (id: number, timestamp: number, enabledSiteObservati
             });
             const index = observation.images.findIndex((item) => item.timestamp === closest);
             if (index !== -1) {
-                return observation.images[index].image 
+                return observation.images[index].image
             }
         }
     }
@@ -55,7 +55,7 @@ export const updateImageMapSources =  (
             if (mapSource) {
                 mapSource.updateImage({
                     url: getClosestTimestamp(item.id, timestamp, enabledSiteObservations, settings),
-                    coordinates: scaleBoundingBox(item.bbox, 1.2),    
+                    coordinates: scaleBoundingBox(item.bbox, 1.2),
                 });
             }
         }
@@ -74,23 +74,23 @@ export const buildImageSourceFilter = (
         if (map) {
             const mapSource = map.getSource(source) as ImageSource;
             if (mapSource) {
-                results[source] = 
+                results[source] =
                 {
                     type: 'image',
                     url: mapSource.url,
                     coordinates: mapSource.coordinates,
                 }
-                update = true; 
+                update = true;
             }
         }
         if (!update) {
-            results[source] = 
+            results[source] =
             {
                 type: 'image',
                 url: getClosestTimestamp(item.id, timestamp, enabledSiteObservations, settings),
                 coordinates: scaleBoundingBox(item.bbox, 1.2),
             }
-        } 
+        }
     });
     return results;
 }

@@ -3,6 +3,7 @@ from typing import Literal
 
 from celery.result import AsyncResult
 from ninja import Router, Schema
+from pydantic import UUID4
 
 from django.contrib.gis.db.models.aggregates import Collect
 from django.contrib.gis.db.models.functions import Area, Transform
@@ -31,7 +32,7 @@ router = Router()
 
 
 class SiteObservationSchema(Schema):
-    id: int
+    id: UUID4
     label: str
     score: float
     constellation: str | None
@@ -42,13 +43,13 @@ class SiteObservationSchema(Schema):
 
 
 class SiteEvaluationImageSchema(Schema):
-    id: int
+    id: str
     timestamp: int
     image: str
     cloudcover: float
     percent_black: float
     source: str
-    siteobs_id: int | None
+    siteobs_id: str | None
     bbox: BoundingBoxSchema
     image_dimensions: list[int]
     aws_location: str
@@ -83,7 +84,7 @@ class SiteObservationsListSchema(Schema):
 
 
 @router.get('/{evaluation_id}/', response={200: SiteObservationsListSchema})
-def site_observations(request: HttpRequest, evaluation_id: int):
+def site_observations(request: HttpRequest, evaluation_id: UUID4):
     if not SiteEvaluation.objects.filter(pk=evaluation_id).exists():
         raise Http404()
     site_eval_data = SiteEvaluation.objects.filter(pk=evaluation_id).aggregate(
@@ -169,7 +170,7 @@ def site_observations(request: HttpRequest, evaluation_id: int):
 @router.post('/{evaluation_id}/generate-images/', response={202: bool, 409: str})
 def get_site_observation_images(
     request: HttpRequest,
-    evaluation_id: int,
+    evaluation_id: UUID4,
     constellation: Literal['WV', 'S2', 'L8'] = 'WV',
     dayRange: int = 14,
     noData: int = 50,
@@ -219,7 +220,7 @@ def get_site_observation_images(
 @router.put(
     '/{evaluation_id}/cancel-generate-images/', response={202: bool, 409: str, 404: str}
 )
-def cancel_site_observation_images(request: HttpRequest, evaluation_id: int):
+def cancel_site_observation_images(request: HttpRequest, evaluation_id: UUID4):
     siteeval = get_object_or_404(SiteEvaluation, pk=evaluation_id)
 
     with transaction.atomic():
@@ -256,7 +257,7 @@ def cancel_site_observation_images(request: HttpRequest, evaluation_id: int):
 
 @router.patch('/{id}/')
 def update_site_observation(
-    request: HttpRequest, id: int, data: SiteObservationRequest
+    request: HttpRequest, id: UUID4, data: SiteObservationRequest
 ):
     with transaction.atomic():
         site_observation = get_object_or_404(
@@ -294,7 +295,7 @@ def update_site_observation(
 
 @router.put('/{evaluation_id}/')
 def add_site_observation(
-    request: HttpRequest, evaluation_id: int, data: SiteObservationRequest
+    request: HttpRequest, evaluation_id: UUID4, data: SiteObservationRequest
 ):
     site_evaluation = get_object_or_404(SiteEvaluation, pk=evaluation_id)
 

@@ -18,7 +18,7 @@ export type SiteObservationList = {
     ymax: number;
   };
   results: Array<{
-    id: number;
+    id: string;
     label: string;
     score: number;
     constellation: string;

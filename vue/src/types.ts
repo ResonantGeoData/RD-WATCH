@@ -6,7 +6,7 @@ export interface EvaluationImage {
     source: SiteObservationImage['source'];
     cloudcover: number;
     image: string;
-    siteobs_id: number | null;
+    siteobs_id: string | null;
     percent_black: number;
     bbox: { xmin: number; ymin: number; xmax: number; ymax: number };
     image_dimensions: [number, number];

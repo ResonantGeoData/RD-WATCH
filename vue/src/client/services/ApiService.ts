@@ -27,7 +27,7 @@ export interface QueryArguments {
 
 export interface ScoringResults {
   region_name: string;
-  evaluationId?: number;
+  evaluationId?: string;
   evaluation_run?: number;
   performer: string;
   evaluation_uuid: string;
@@ -55,7 +55,7 @@ export interface ModelRunEvaluations {
     number: number,
     start_date: number;
     end_date: number;
-    id: number
+    id: string
     bbox: { xmin: number; ymin: number; xmax: number; ymax: number }
     status: SiteModelStatus
     timestamp: number;
@@ -185,7 +185,7 @@ export class ApiService {
    * @throws ApiError
    */
       public static cancelSiteObservationImageTask(
-        id: number,
+        id: string,
       ): CancelablePromise<boolean> {
         return __request(OpenAPI, {
           method: "PUT",
@@ -427,7 +427,7 @@ export class ApiService {
     });
   }
 
-  public static getEvaluationImages(id: number): CancelablePromise<EvaluationImageResults> {
+  public static getEvaluationImages(id: string): CancelablePromise<EvaluationImageResults> {
     return __request(OpenAPI, {
       method: "GET",
       url: "/api/evaluations/images/{id}",
@@ -438,7 +438,7 @@ export class ApiService {
 
   }
 
-  public static patchSiteEvaluation(id: number, data: SiteEvaluationUpdateQuery): CancelablePromise<boolean> {
+  public static patchSiteEvaluation(id: string, data: SiteEvaluationUpdateQuery): CancelablePromise<boolean> {
     return __request(OpenAPI, {
       method: 'PATCH',
       url: "/api/evaluations/{id}/",
@@ -449,7 +449,7 @@ export class ApiService {
     })
   }
 
-  public static patchSiteObservation(id: number, data: SiteObservationUpdateQuery): CancelablePromise<boolean> {
+  public static patchSiteObservation(id: string, data: SiteObservationUpdateQuery): CancelablePromise<boolean> {
     return __request(OpenAPI, {
       method: 'PATCH',
       url: "/api/observations/{id}/",
@@ -460,7 +460,7 @@ export class ApiService {
     })
   }
 
-  public static addSiteObservation(id: number, data: SiteObservationUpdateQuery): CancelablePromise<boolean> {
+  public static addSiteObservation(id: string, data: SiteObservationUpdateQuery): CancelablePromise<boolean> {
     return __request(OpenAPI, {
       method: 'PUT',
       url: "/api/observations/{id}/",

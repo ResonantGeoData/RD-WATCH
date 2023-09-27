@@ -35,7 +35,7 @@ onMounted(() => {
   }
 });
 
-const selectedEval: Ref<number | null> = ref(null);
+const selectedEval: Ref<string | null> = ref(null);
 const selectedName: Ref<string | null> = ref(null);
 const selectedDateRange: Ref<number[] | null> = ref(null);
 

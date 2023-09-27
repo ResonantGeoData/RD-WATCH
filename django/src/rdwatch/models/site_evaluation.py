@@ -1,5 +1,6 @@
 from datetime import datetime
 from typing import Self
+from uuid import uuid4
 
 from django.contrib.gis.db.models import PolygonField
 from django.contrib.gis.geos import MultiPolygon
@@ -14,6 +15,8 @@ from rdwatch.schemas.site_model import SiteFeature
 
 
 class SiteEvaluation(models.Model):
+    id = models.UUIDField(primary_key=True, default=uuid4, editable=False)
+
     configuration = models.ForeignKey(
         to='ModelRun',
         on_delete=models.PROTECT,
@@ -212,6 +215,8 @@ class SiteEvaluation(models.Model):
 
 
 class SiteEvaluationTracking(models.Model):
+    id = models.UUIDField(primary_key=True, default=uuid4, editable=False)
+
     edited = models.DateTimeField()
     evaluation = models.ForeignKey(
         to='SiteEvaluation',

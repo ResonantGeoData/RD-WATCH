@@ -16,31 +16,6 @@ import {
   siteText,
 } from "./annotationStyles";
 
-// function buildSearchFilters(filters: MapFilters) {
-//   const filter: FilterSpecification = ["all"];
-//   if (filters.groundtruth) {
-//     Object.entries(filters).forEach(([key, value]) => {
-//       if (value !== undefined && key !== "groundtruth") {
-//         filter.push([
-//           "any",
-//           ["in", ["get", key], value],
-//           ["get", "groundtruth"],
-//         ]);
-//       }
-//     });
-//     if (filter.length === 1) {
-//       filter.push(["get", "groundtruth"]);
-//     }
-//   } else {
-//     Object.entries(filters).forEach(([key, value]) => {
-//       if (value !== undefined && key !== "groundtruth") {
-//         filter.push([["in", ["get", key], value]]);
-//       }
-//     });
-//   }
-//   return filter;
-// }
-
 const buildTextOffset = (
   type: "site" | "observation",
   filters: MapFilters
@@ -84,12 +59,6 @@ export const buildObservationFilter = (
     ],
   ];
 
-  // Add any filters set in the UI
-  Object.entries(filters).forEach(([key, value]) => {
-    if (value !== undefined && typeof value === "string") {
-      filter.push(["in", ["get", key], ["literal", value]]);
-    }
-  });
   return filter;
 };
 
@@ -116,13 +85,6 @@ export const buildSiteFilter = (
       ["literal", !!filters.showSiteOutline],
       ],
   ];
-
-  // Add any filters set in the UI
-  Object.entries(filters).forEach(([key, value]) => {
-    if (value !== undefined && typeof value === "string") {
-      filter.push(["in", ["get", key], ["literal", value]]);
-    }
-  });
 
   return filter;
 };

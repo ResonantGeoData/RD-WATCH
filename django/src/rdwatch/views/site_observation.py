@@ -176,6 +176,7 @@ def get_site_observation_images(
     noData: int = 50,
     overrideDates: None | list[str] = None,
     force: bool = False,
+    scale: str = 'default',
 ):
     # Make sure site evaluation actually exists
     siteeval = get_object_or_404(SiteEvaluation, pk=evaluation_id)
@@ -211,6 +212,7 @@ def get_site_observation_images(
             dayRange,
             noData,
             overrideDates,
+            scale,
         )
         fetching_task.celery_id = task_id.id
         fetching_task.save()

@@ -357,6 +357,7 @@ def generate_images(
     noData: int = 50,
     overrideDates: None | list[str] = None,
     force: bool = False,
+    scale: str = 'default',
 ):
     siteEvaluations = SiteEvaluation.objects.filter(configuration=model_run_id)
 
@@ -369,6 +370,7 @@ def generate_images(
             noData,
             overrideDates,
             force,
+            scale,
         )
 
     return 202, True

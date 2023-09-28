@@ -6,6 +6,8 @@ import { getColorFromLabel, styles } from '../../mapstyle/annotationStyles';
 import { loadAndToggleSatelliteImages, state } from '../../store'
 import { VDatePicker } from 'vuetify/labs/VDatePicker'
 import { SiteModelStatus } from "../../client/services/ApiService";
+import { CanvasCapture } from 'canvas-capture';
+import { filter } from "lodash";
 
 interface Props {
   siteEvalId: string;
@@ -194,10 +196,11 @@ const getImageData = async () => {
     })
 }
 let background: HTMLCanvasElement & { ctx?: CanvasRenderingContext2D | null };
-const drawData = (canvas: HTMLCanvasElement, image: EvaluationImage, poly:PixelPoly, groundTruthPoly?: PixelPoly) => {
+const drawData = (canvas: HTMLCanvasElement, image: EvaluationImage, poly:PixelPoly, groundTruthPoly?: PixelPoly, overrideWidth = -1, overrideHeight = -1) => {
     const context = canvas.getContext('2d');
     const imageObj = new Image();
     imageObj.src = image.image;
+    imageObj.crossOrigin = "Anonymous";
     if (!background) {
         background = createCanvas(image.image_dimensions[0], image.image_dimensions[1]);
     }
@@ -206,10 +209,14 @@ const drawData = (canvas: HTMLCanvasElement, image: EvaluationImage, poly:PixelP
     const { coords } = poly;
     const renderFunction = () => {
         if (context) {
-        canvas.width = image.image_dimensions[0];
-        canvas.height = image.image_dimensions[1];
+        canvas.width = overrideWidth === -1 ? image.image_dimensions[0]: overrideWidth;
+        canvas.height = overrideHeight === -1 ? image.image_dimensions[1]: overrideHeight;
         // draw the offscreen canvas
-        context.drawImage(background, 0, 0);
+        if (overrideWidth !== -1 || overrideHeight !== -1) {
+          context.drawImage(background, 0, 0, image.image_dimensions[0], image.image_dimensions[1], 0, 0, overrideWidth, overrideHeight);
+        } else {
+          context.drawImage(background, 0, 0);
+        }
         // We draw the ground truth
         if (groundTruthPoly && drawGroundTruth.value) {
           groundTruthPoly.coords.forEach((ring) => {
@@ -261,6 +268,42 @@ const drawData = (canvas: HTMLCanvasElement, image: EvaluationImage, poly:PixelP
         }
     }
     };
+
+const exportProgress = (progress: number) => {
+  console.log(`Exporting Progress: ${progress}`);
+}
+
+function drawForDownload() {
+  let width = -Infinity;
+  let height = -Infinity;
+  for (let i = 0; i< filteredImages.value.length; i += 1) {
+    const [imgWidth, imgHeight ] =filteredImages.value[i].image.image_dimensions;
+    width = Math.max(width, imgWidth);
+    height = Math.max(height, imgHeight);
+  }
+  const offScreenCanvas = createCanvas(width, height);
+    CanvasCapture.init(offScreenCanvas, { verbose: true});
+    CanvasCapture.beginGIFRecord({name: 'download', fps: 1, onExportProgress: exportProgress});
+    let index = 0;
+    function drawImageForRecord(){
+      requestAnimationFrame(drawImageForRecord);
+      if (index < filteredImages.value.length ) {
+        drawData(
+          offScreenCanvas,
+          filteredImages.value[index].image,
+          filteredImages.value[index].poly,
+          filteredImages.value[index].groundTruthPoly,
+          width,
+          height,
+        );
+        CanvasCapture.recordFrame()
+        index += 1
+      } else {
+        CanvasCapture.stopRecord()
+      }
+    }
+    drawImageForRecord();
+}
 
 const load = async (newValue?: string, oldValue?: string) => {
   const index = state.enabledSiteObservations.findIndex((item) => item.id === oldValue);
@@ -604,6 +647,9 @@ const setSiteModelStatus = async (status: SiteModelStatus) => {
         Displaying {{ filteredImages.length }} of {{ combinedImages.length }} images
       </div>
       <v-spacer />
+      <v-icon @click="drawForDownload()">
+        mdi-download-box-outline
+      </v-icon>
     </v-row>
     <div v-if="filterSettings">
       <v-row dense>

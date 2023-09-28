@@ -19,6 +19,7 @@
   "dependencies": {
     "@fontsource/inter": "^4.5.12",
     "@fontsource/iosevka": "^4.5.4",
+    "canvas-capture": "https://github.com/amandaghassaei/canvas-capture#dev",
     "lodash": "^4.17.21",
     "maplibre-gl": "^2.1.9",
     "vue": "^3.2.37",
@@ -51,7 +52,7 @@
     "vue-eslint-parser": "^9.0.3",
     "vue-tsc": "^0.38.4"
   },
-  "//":"vue/no-setup-props-destructure is disabled in esLint, due to an issue with utilizing DefineProps: https://github.com/vuejs/eslint-plugin-vue/issues/2121",
+  "//": "vue/no-setup-props-destructure is disabled in esLint, due to an issue with utilizing DefineProps: https://github.com/vuejs/eslint-plugin-vue/issues/2121",
   "eslintConfig": {
     "root": true,
     "env": {

@@ -1,5 +1,6 @@
 import logging
 import time
+from typing import Literal
 
 import rasterio  # type: ignore
 from rio_tiler.io.rasterio import Reader

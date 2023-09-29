@@ -1,6 +1,7 @@
 import io
 import logging
 from datetime import datetime, timedelta
+from typing import Literal
 from urllib.error import URLError
 
 from PIL import Image
@@ -90,7 +91,7 @@ def fetch_boundbox_image(
     timestamp: datetime,
     constellation: str,
     worldView=False,
-    scale: Literal['default', 'bits'] = 'default'
+    scale: Literal['default', 'bits'] = 'default',
 ):
     timebuffer = timedelta(days=1)
     try:

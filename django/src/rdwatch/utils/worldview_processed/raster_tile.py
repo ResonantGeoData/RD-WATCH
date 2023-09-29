@@ -56,7 +56,7 @@ def get_worldview_processed_visual_bbox(
     capture: WorldViewProcessedCapture,
     bbox: tuple[float, float, float, float],
     format='PNG',
-    scale='default',
+    scale: Literal['default', 'bits'] = 'default',
 ) -> bytes:
     with rasterio.Env(
         GDAL_DISABLE_READDIR_ON_OPEN='EMPTY_DIR',

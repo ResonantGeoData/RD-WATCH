@@ -91,8 +91,7 @@ def upload_to_rgd(
             model_run['title'] == title
             and model_run['performer']['short_code'] == performer_shortcode
             and 'region' in model_run
-            and model_run['region'] is not None
-            and model_run['region'].get('name') == region_id
+            and model_run['region'] == region_id
         ):  # noqa
             existing_model_run = model_run
             break

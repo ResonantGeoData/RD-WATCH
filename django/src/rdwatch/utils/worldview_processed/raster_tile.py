@@ -1,5 +1,6 @@
 import logging
 import time
+from typing import Literal
 
 import rasterio  # type: ignore
 from rio_tiler.io.rasterio import Reader
@@ -40,7 +41,9 @@ def get_worldview_processed_visual_tile(
                 )
                 with Reader(input=capture.uri) as rgbimg:
                     rgb = rgbimg.tile(x, y, z, tilesize=512)
-                rgb.data = pansharpening_brovey(rgb.data, pan.data, 0.2, 'uint16')
+                    rgb = rgb.from_array(
+                        pansharpening_brovey(rgb.data, pan.data, 0.2, 'uint16')
+                    )
             rgb.rescale(in_range=((0, 10000),))
         return rgb.render(img_format='WEBP')
 
@@ -54,6 +57,7 @@ def get_worldview_processed_visual_bbox(
     capture: WorldViewProcessedCapture,
     bbox: tuple[float, float, float, float],
     format='PNG',
+    scale: Literal['default', 'bits'] = 'default',
 ) -> bytes:
     with rasterio.Env(
         GDAL_DISABLE_READDIR_ON_OPEN='EMPTY_DIR',
@@ -82,9 +86,17 @@ def get_worldview_processed_visual_bbox(
                 with Reader(input=capture.uri) as rgbimg:
                     rgb = rgbimg.part(bbox, width=pan.width, height=pan.height)
                     logger.warning(f'RGB Download Time: {time.time() - startTime}')
-                logger.warning(f'PanSharpening: {capture.panuri}')
-                rgb.from_array(pansharpening_brovey(rgb.data, pan.data, 0.2, 'uint16'))
-                logger.warning(f'Pan Sharpening Time: {time.time() - startTime}')
+                    logger.warning(f'PanSharpening: {capture.panuri}')
+                    rgb = rgb.from_array(
+                        pansharpening_brovey(rgb.data, pan.data, 0.2, 'uint16')
+                    )
+                    logger.warning(f'Pan Sharpening Time: {time.time() - startTime}')
 
-        rgb.rescale(in_range=((0, 10000),))
+        if scale == 'default':
+            rgb.rescale(in_range=((0, 10000),))
+        elif scale == 'bits':
+            if capture.bits_per_pixel != 8:
+                max_bits = 2**capture.bits_per_pixel - 1
+                rgb.rescale(in_range=((0, max_bits),))
+
         return rgb.render(img_format=format)

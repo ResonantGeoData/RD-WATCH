@@ -264,7 +264,9 @@ def get_siteobservations_images(
             # we need to add a new image into the structure
             bytes = None
             if worldView:
-                bytes = get_worldview_processed_visual_bbox(capture, max_bbox)
+                bytes = get_worldview_processed_visual_bbox(
+                    capture, max_bbox, 'PNG', scale
+                )
             else:
                 bytes = get_raster_bbox(capture.uri, max_bbox)
             if bytes is None:

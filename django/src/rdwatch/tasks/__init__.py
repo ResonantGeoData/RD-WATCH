@@ -69,7 +69,7 @@ def get_siteobservations_images(
     dayRange=14,
     no_data_limit=50,
     overrideDates: None | list[datetime, datetime] = None,
-    scale='default',
+    scale: Literal['default', 'bits'] = 'default'
 ) -> None:
     constellationObj = Constellation.objects.filter(slug=baseConstellation).first()
     # Ensure we are using ints for the DayRange and no_data_limit

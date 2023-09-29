@@ -90,7 +90,7 @@ def fetch_boundbox_image(
     timestamp: datetime,
     constellation: str,
     worldView=False,
-    scale='default',
+    scale: Literal['default', 'bits'] = 'default'
 ):
     timebuffer = timedelta(days=1)
     try:

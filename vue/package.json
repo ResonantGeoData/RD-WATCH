@@ -19,7 +19,7 @@
   "dependencies": {
     "@fontsource/inter": "^4.5.12",
     "@fontsource/iosevka": "^4.5.4",
-    "canvas-capture": "https://github.com/amandaghassaei/canvas-capture#dev",
+    "canvas-capture": "^2.1.1",
     "lodash": "^4.17.21",
     "maplibre-gl": "^2.1.9",
     "vue": "^3.2.37",

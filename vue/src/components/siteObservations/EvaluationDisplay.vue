@@ -267,8 +267,9 @@ const hasLoadedImages = computed(() => (Object.entries(props.siteObservation.ima
       </v-row>
       <v-row>
         <image-viewer-button
-          v-if="hasLoadedImages"
+          v-if="hasLoadedImages && siteObservation.scoringBase"
           :site-eval-id="siteObservation.id"
+          :site-evaluation-name="`${siteObservation.scoringBase.region}_${siteObservation.scoringBase.siteNumber.toString().padStart(4, '0')}`"
         />
       </v-row>
     </v-card-text>

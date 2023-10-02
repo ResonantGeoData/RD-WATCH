@@ -7,7 +7,6 @@ import { loadAndToggleSatelliteImages, state } from '../../store'
 import { VDatePicker } from 'vuetify/labs/VDatePicker'
 import { SiteModelStatus } from "../../client/services/ApiService";
 import { CanvasCapture } from 'canvas-capture';
-import { filter } from "lodash";
 
 interface Props {
   siteEvalId: string;
@@ -72,7 +71,7 @@ const currentDate = ref('');
 const hasGroundTruth = ref(false);
 const groundTruth: Ref<EvaluationImageResults['groundTruth'] | null > = ref(null);
 const drawGroundTruth = ref(false);
-const siteEvaluationList = computed(() => Object.entries(styles).filter(([label, { type }]) => type === 'sites').map(([label]) => label));
+const siteEvaluationList = computed(() => Object.entries(styles).filter(([, { type }]) => type === 'sites').map(([label]) => label));
 const getClosestPoly = (timestamp: number, polys: EvaluationGeoJSON[], evaluationPoly: EvaluationGeoJSON['geoJSON'], siteEvalLabel: string) => {
   if (polys.length === 0) {
     return {geoJSON: evaluationPoly, label:siteEvalLabel};
@@ -196,7 +195,14 @@ const getImageData = async () => {
     })
 }
 let background: HTMLCanvasElement & { ctx?: CanvasRenderingContext2D | null };
-const drawData = (canvas: HTMLCanvasElement, image: EvaluationImage, poly:PixelPoly, groundTruthPoly?: PixelPoly, overrideWidth = -1, overrideHeight = -1) => {
+const drawData = (
+  canvas: HTMLCanvasElement,
+  image: EvaluationImage,
+  poly:PixelPoly,
+  groundTruthPoly?: PixelPoly,
+  overrideWidth = -1,
+  overrideHeight = -1,
+  ) => {
     const context = canvas.getContext('2d');
     const imageObj = new Image();
     imageObj.src = image.image;
@@ -217,16 +223,24 @@ const drawData = (canvas: HTMLCanvasElement, image: EvaluationImage, poly:PixelP
         } else {
           context.drawImage(background, 0, 0);
         }
+        const widthRatio = overrideWidth / image.image_dimensions[0];
+        const heightRatio = overrideHeight / image.image_dimensions[1];
+
         // We draw the ground truth
         if (groundTruthPoly && drawGroundTruth.value) {
           groundTruthPoly.coords.forEach((ring) => {
-            context.moveTo(ring[0].x, image.image_dimensions[1] - ring[0].y);
+            const xPos = overrideWidth === -1 ? ring[0].x : ring[0].x * widthRatio ;
+            const yPos = overrideHeight === -1 ? image.image_dimensions[1] - ring[0].y : overrideHeight - (ring[0].y * overrideHeight);
+            context.moveTo(xPos, yPos);
+            context.beginPath();
             ring.forEach(({x, y}) => {
+              const yPosEnd =  overrideHeight === -1 ? image.image_dimensions[1] - y : overrideHeight - (y * heightRatio);
+              const xPos = overrideWidth === -1 ? x : x * widthRatio;
               if (context){
-                  context.lineTo(x, image.image_dimensions[1] - y);
+                  context.lineTo(xPos, yPosEnd);
               }
             });
-            const lineDivisor = Math.max(image.image_dimensions[0], image.image_dimensions[1])
+            const lineDivisor = Math.max(canvas.width, canvas.height)
             context.lineWidth = lineDivisor/ 50.0;
             context.strokeStyle = getColorFromLabel(groundTruthPoly.label);
             context.stroke();
@@ -234,31 +248,56 @@ const drawData = (canvas: HTMLCanvasElement, image: EvaluationImage, poly:PixelP
         }
 
         coords.forEach((ring) => {
-          context.moveTo(ring[0].x, image.image_dimensions[1] - ring[0].y);
+          const xPos = overrideWidth === -1 ? ring[0].x : ring[0].x * widthRatio ;
+          const yPos = overrideHeight === -1 ? image.image_dimensions[1] - ring[0].y : overrideHeight - (ring[0].y * overrideHeight);
+          
+          context.moveTo(xPos, yPos);
+          context.beginPath();
           ring.forEach(({x, y}) => {
+            const yPosEnd =  overrideHeight === -1 ? image.image_dimensions[1] - y : overrideHeight - (y * heightRatio);
+            const xPos = overrideWidth === -1 ? x : x * widthRatio;
             if (context){
-                context.lineTo(x, image.image_dimensions[1] - y);
+                context.lineTo(xPos, yPosEnd);
             }
           });
-          const lineDivisor = Math.max(image.image_dimensions[0], image.image_dimensions[1])
+          const lineDivisor = Math.max(canvas.width, canvas.height);
           context.lineWidth = lineDivisor/ 100.0;
           context.strokeStyle = getColorFromLabel(poly.label);
           currentLabel.value = siteEvaluationLabel.value == poly.label ? '' : poly.label;
           context.stroke();
         });
         // Now scale the canvas to the proper size
-        const ratio = image.image_dimensions[1] / image.image_dimensions[0];
-        const maxHeight = document.documentElement.clientHeight * 0.30;
-        const maxWidth = document.documentElement.clientWidth - 550;
-        let width = maxWidth
-        let height = width * ratio;
-        if (height > maxHeight) {
-          height = maxHeight;
-          width = height / ratio;
+        if (overrideHeight === -1  && overrideWidth === -1) {
+          const ratio = image.image_dimensions[1] / image.image_dimensions[0];
+          const maxHeight = document.documentElement.clientHeight * 0.30;
+          const maxWidth = document.documentElement.clientWidth - 550;
+          let width = maxWidth
+          let height = width * ratio;
+          if (height > maxHeight) {
+            height = maxHeight;
+            width = height / ratio;
+          }
+          context.canvas.style.width = `${width}px`
+          context.canvas.style.height = `${height}px`;
+        } else { // We draw a label for downloaded GIFs
+          const fontSize = Math.max(canvas.width, canvas.height) / 50;
+          context.font = `${fontSize * 0.75}px Arial`;
+          const calcWidth = context.measureText(poly.label).width;
+          const labelWidth = Math.max(canvas.width / 8, calcWidth * 1.2);
+          const labelHeight = canvas.height / 4;
+          context.fillStyle = 'rgba(255, 255, 255, 0.5)';
+          context.fillRect(0, 0, labelWidth, labelHeight);
+          context.fillStyle = 'black';
+          context.font = `${fontSize}px Arial`;
+          context.fillText(image.source, 10, labelHeight / 4);
+          context.font = `${fontSize * 0.75}px Arial`;
+          const date = new Date(image.timestamp * 1000).toISOString().split('T')[0]
+          context.fillText(date, 10, labelHeight / 2);
+          context.fillStyle = getColorFromLabel(poly.label);
+          context.fillText(poly.label, 10, labelHeight * 0.75, labelWidth);
+          context.stroke();
         }
-        context.canvas.style.width = `${width}px`
-        context.canvas.style.height = `${height}px`;
-        }
+      } 
     }
 
     imageObj.onload = () => {
@@ -271,11 +310,20 @@ const drawData = (canvas: HTMLCanvasElement, image: EvaluationImage, poly:PixelP
     }
     };
 
+const downloadingGif = ref(false);
+const downloadingGifState: Ref<null | 'drawing' | 'generating'> = ref(null);
+const downloadingGifProgress = ref(0);
 const exportProgress = (progress: number) => {
-  console.log(`Exporting Progress: ${progress}`);
+  downloadingGifProgress.value = progress * 100;
+  if (progress === 1) {
+    downloadingGif.value = false;
+    downloadingGifState.value = null;
+    downloadingGifProgress.value = 0;
+  }
 }
 
 function drawForDownload() {
+  downloadingGif.value = true;
   let width = -Infinity;
   let height = -Infinity;
   for (let i = 0; i< filteredImages.value.length; i += 1) {
@@ -283,28 +331,43 @@ function drawForDownload() {
     width = Math.max(width, imgWidth);
     height = Math.max(height, imgHeight);
   }
-  const offScreenCanvas = createCanvas(width, height);
-    CanvasCapture.init(offScreenCanvas, { verbose: true});
-    CanvasCapture.beginGIFRecord({name: 'download', fps: 1, onExportProgress: exportProgress});
-    let index = 0;
-    function drawImageForRecord(){
-      requestAnimationFrame(drawImageForRecord);
-      if (index < filteredImages.value.length ) {
-        drawData(
-          offScreenCanvas,
-          filteredImages.value[index].image,
-          filteredImages.value[index].poly,
-          filteredImages.value[index].groundTruthPoly,
-          width,
-          height,
-        );
-        CanvasCapture.recordFrame()
-        index += 1
-      } else {
-        CanvasCapture.stopRecord()
-      }
+  if (width < 500 || height < 500) {
+    const ratio = width / height;
+    if (width < 500) {
+      width = 500;
+      height = ratio / 500;
     }
-    drawImageForRecord();
+    if (height < 500) {
+      height = 500;
+      width = ratio * 500;
+    }
+  }
+  const offScreenCanvas = createCanvas(width, height);
+  downloadingGifState.value = 'drawing';
+  CanvasCapture.init(offScreenCanvas, { verbose: false});
+  CanvasCapture.beginGIFRecord({name: props.siteEvaluationName || 'download', fps: 1, onExportProgress: exportProgress});
+  let index = 0;
+  function drawImageForRecord(){
+    requestAnimationFrame(drawImageForRecord);
+    if (index < filteredImages.value.length ) {
+      drawData(
+        offScreenCanvas,
+        filteredImages.value[index].image,
+        filteredImages.value[index].poly,
+        filteredImages.value[index].groundTruthPoly,
+        width,
+        height,
+      );
+      CanvasCapture.recordFrame();
+      index += 1
+      downloadingGifProgress.value = (index / filteredImages.value.length) * 100;
+    } else {
+      CanvasCapture.stopRecord();
+      downloadingGifState.value = 'generating';
+      downloadingGifProgress.value = 0;
+    }
+  }
+  drawImageForRecord();
 }
 
 const load = async (newValue?: string, oldValue?: string) => {
@@ -649,9 +712,33 @@ const setSiteModelStatus = async (status: SiteModelStatus) => {
         Displaying {{ filteredImages.length }} of {{ combinedImages.length }} images
       </div>
       <v-spacer />
-      <v-icon @click="drawForDownload()">
-        mdi-download-box-outline
-      </v-icon>
+      <div v-if="downloadingGif">
+        <span> {{ downloadingGifState === 'drawing' ? 'Drawing' : 'GIF Creation' }}</span>
+        <v-progress-linear
+          v-model="downloadingGifProgress"
+          width="50"
+        />
+      </div>
+      <v-tooltip
+        open-delay="50"
+        bottom
+      >
+        <template #activator="{ props:subProps }">
+          <v-icon
+            v-if="!downloadingGif"
+            v-bind="subProps"
+            @click="drawForDownload()"
+          >
+            mdi-download-box-outline
+          </v-icon>
+          <v-icon v-else>
+            mdi-spin mdi-sync
+          </v-icon>
+        </template>
+        <span>
+          Download Images to GIF.
+        </span>
+      </v-tooltip>
     </v-row>
     <div v-if="filterSettings">
       <v-row dense>

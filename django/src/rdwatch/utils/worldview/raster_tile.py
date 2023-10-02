@@ -19,7 +19,9 @@ def get_worldview_visual_tile(
         if capture.image_representation != 'RGB' and capture.panuri:
             with Reader(input=capture.panuri) as img:
                 pan = img.tile(x, y, z, tilesize=512)
-            rgb.from_array(pansharpening_brovey(rgb.data, pan.data, 0.2, 'uint16'))
+                rgb = rgb.from_array(
+                    pansharpening_brovey(rgb.data, pan.data, 0.2, 'uint16')
+                )
 
         if capture.bits_per_pixel != 8:
             max_bits = 2**capture.bits_per_pixel - 1

@@ -226,7 +226,8 @@ const drawData = (canvas: HTMLCanvasElement, image: EvaluationImage, poly:PixelP
                   context.lineTo(x, image.image_dimensions[1] - y);
               }
             });
-            context.lineWidth = 4;
+            const lineDivisor = Math.max(image.image_dimensions[0], image.image_dimensions[1])
+            context.lineWidth = lineDivisor/ 50.0;
             context.strokeStyle = getColorFromLabel(groundTruthPoly.label);
             context.stroke();
           });
@@ -239,7 +240,8 @@ const drawData = (canvas: HTMLCanvasElement, image: EvaluationImage, poly:PixelP
                 context.lineTo(x, image.image_dimensions[1] - y);
             }
           });
-          context.lineWidth = 1;
+          const lineDivisor = Math.max(image.image_dimensions[0], image.image_dimensions[1])
+          context.lineWidth = lineDivisor/ 100.0;
           context.strokeStyle = getColorFromLabel(poly.label);
           currentLabel.value = siteEvaluationLabel.value == poly.label ? '' : poly.label;
           context.stroke();

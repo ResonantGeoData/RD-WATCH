@@ -89,6 +89,7 @@ export interface DownloadSettings {
   noData?: number;
   customDateRange?: [string, string];
   force?: boolean;
+  scale?: 'default' | 'bits'
 }
 
 export type CeleryStates = 'FAILURE' | 'PENDING' | 'SUCCESS' | 'RETRY' | 'REVOKED' | 'STARTED';

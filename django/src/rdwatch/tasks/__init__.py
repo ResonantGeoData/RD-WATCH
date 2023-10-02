@@ -69,6 +69,7 @@ def get_siteobservations_images(
     dayRange=14,
     no_data_limit=50,
     overrideDates: None | list[datetime, datetime] = None,
+    scale: Literal['default', 'bits'] = 'default',
 ) -> None:
     constellationObj = Constellation.objects.filter(slug=baseConstellation).first()
     # Ensure we are using ints for the DayRange and no_data_limit
@@ -149,7 +150,7 @@ def get_siteobservations_images(
                 count += 1
                 continue
             results = fetch_boundbox_image(
-                bbox, timestamp, constellation, baseConstellation == 'WV'
+                bbox, timestamp, constellation, baseConstellation == 'WV', scale
             )
             if results is None:
                 logger.warning(f'COULD NOT FIND ANY IMAGE FOR TIMESTAMP: {timestamp}')
@@ -263,7 +264,9 @@ def get_siteobservations_images(
             # we need to add a new image into the structure
             bytes = None
             if worldView:
-                bytes = get_worldview_processed_visual_bbox(capture, max_bbox)
+                bytes = get_worldview_processed_visual_bbox(
+                    capture, max_bbox, 'PNG', scale
+                )
             else:
                 bytes = get_raster_bbox(capture.uri, max_bbox)
             if bytes is None:

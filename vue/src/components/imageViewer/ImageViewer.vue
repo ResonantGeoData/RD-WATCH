@@ -280,21 +280,39 @@ const drawData = (
           context.canvas.style.width = `${width}px`
           context.canvas.style.height = `${height}px`;
         } else { // We draw a label for downloaded GIFs
-          const fontSize = Math.max(canvas.width, canvas.height) / 50;
+          const fontSize = canvas.height / 20;
           context.font = `${fontSize * 0.75}px Arial`;
-          const calcWidth = context.measureText(poly.label).width;
-          const labelWidth = Math.max(canvas.width / 8, calcWidth * 1.2);
-          const labelHeight = canvas.height / 4;
-          context.fillStyle = 'rgba(255, 255, 255, 0.5)';
-          context.fillRect(0, 0, labelWidth, labelHeight);
-          context.fillStyle = 'black';
-          context.font = `${fontSize}px Arial`;
-          context.fillText(image.source, 10, labelHeight / 4);
-          context.font = `${fontSize * 0.75}px Arial`;
-          const date = new Date(image.timestamp * 1000).toISOString().split('T')[0]
-          context.fillText(date, 10, labelHeight / 2);
-          context.fillStyle = getColorFromLabel(poly.label);
-          context.fillText(poly.label, 10, labelHeight * 0.75, labelWidth);
+          // Source Satellite
+          if (image.source) {
+            const calc = context.measureText(image.source);
+            // Background
+            context.fillStyle = 'rgba(255, 255, 255, 0.5)';
+            const fontHeight =  (calc.actualBoundingBoxAscent + calc.actualBoundingBoxDescent) * 1.10;
+            context.fillRect(0, 0, calc.width*1.10, fontHeight);
+            context.fillStyle = 'black';
+            context.fillText(image.source, 1, fontHeight);
+          }
+          if (image.timestamp) {
+            const date = new Date(image.timestamp * 1000).toISOString().split('T')[0]
+            const calc = context.measureText(date);
+            // Background
+            context.fillStyle = 'rgba(255, 255, 255, 0.5)';
+            const fontHeight =  (calc.actualBoundingBoxAscent + calc.actualBoundingBoxDescent) * 1.10;
+            const xPos = (canvas.width * 0.5) - (calc.width * 1.10 * 0.5);
+            context.fillRect(xPos, 0, calc.width*1.10, fontHeight * 0.90);
+            context.fillStyle = 'black';
+            context.fillText(date, xPos, fontHeight);
+          }
+          if (image.timestamp) {
+            const calc = context.measureText(poly.label);
+            // Background
+            context.fillStyle = 'rgba(255, 255, 255, 0.5)';
+            const fontHeight =  (calc.fontBoundingBoxAscent + calc.fontBoundingBoxDescent) * 1.10;
+            const xPos = (canvas.width) - (calc.width * 1.10);
+            context.fillRect(xPos, 0, calc.width*1.10, fontHeight);
+            context.fillStyle = getColorFromLabel(poly.label);
+            context.fillText(poly.label, xPos, fontHeight * 0.90);
+          }
           context.stroke();
         }
       } 

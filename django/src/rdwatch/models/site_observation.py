@@ -96,12 +96,12 @@ class SiteObservation(models.Model):
 
             constellation = constellation_map.get(feature.properties.sensor_name, None)
 
-            assert isinstance(feature.geometry, Polygon | MultiPolygon)
+            assert isinstance(feature.parsed_geometry, Polygon | MultiPolygon)
 
             geometry = (
-                feature.geometry
-                if isinstance(feature.geometry, MultiPolygon)
-                else MultiPolygon([feature.geometry])
+                feature.parsed_geometry
+                if isinstance(feature.parsed_geometry, MultiPolygon)
+                else MultiPolygon([feature.parsed_geometry])
             )
             for i, polygon in enumerate(geometry):
                 if feature.properties.current_phase:

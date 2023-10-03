@@ -142,7 +142,7 @@ class SiteEvaluation(models.Model):
                 start_date=site_feature.properties.start_date,
                 end_date=site_feature.properties.end_date,
                 timestamp=datetime.now(),
-                geom=site_feature.geometry,
+                geom=site_feature.parsed_geometry,
                 label=label,
                 score=site_feature.properties.score,
                 status=status,
@@ -175,13 +175,13 @@ class SiteEvaluation(models.Model):
         site_evals: list[SiteEvaluation] = []
         with transaction.atomic():
             region = get_or_create_region(
-                region_feature.properties.region_id, region_feature.geometry
+                region_feature.properties.region_id, region_feature.parsed_geometry
             )[0]
 
             for feature in region_model.site_summary_features:
                 assert isinstance(feature.properties, SiteSummaryFeature)
 
-                geometry = feature.geometry
+                geometry = feature.parsed_geometry
                 if isinstance(geometry, MultiPolygon):
                     geometry = geometry.convex_hull
 

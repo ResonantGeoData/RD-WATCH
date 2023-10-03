@@ -1,12 +1,14 @@
 <script setup lang="ts">
 import { Ref, computed, ref, watch, withDefaults } from "vue";
 import { ApiService } from "../../client";
-import {EvaluationGeoJSON, EvaluationImage, EvaluationImageResults } from "../../types";
+import { EvaluationImage, EvaluationImageResults } from "../../types";
 import { getColorFromLabel, styles } from '../../mapstyle/annotationStyles';
 import { loadAndToggleSatelliteImages, state } from '../../store'
 import { VDatePicker } from 'vuetify/labs/VDatePicker'
 import { SiteModelStatus } from "../../client/services/ApiService";
 import { CanvasCapture } from 'canvas-capture';
+import type { PixelPoly } from './imageUtils';
+import { createCanvas, drawData, processImagePoly } from './imageUtils';
 
 interface Props {
   siteEvalId: string;
@@ -24,11 +26,6 @@ const props = withDefaults(defineProps<Props>(), {
   siteEvaluationName: null,
   dateRange: null,
 });
-
-interface PixelPoly {
-    coords: {x:number; y:number}[][];
-    label: string;
-}
 
 const emit = defineEmits<{
   (e: "close"): void;
@@ -72,20 +69,7 @@ const hasGroundTruth = ref(false);
 const groundTruth: Ref<EvaluationImageResults['groundTruth'] | null > = ref(null);
 const drawGroundTruth = ref(false);
 const siteEvaluationList = computed(() => Object.entries(styles).filter(([, { type }]) => type === 'sites').map(([label]) => label));
-const getClosestPoly = (timestamp: number, polys: EvaluationGeoJSON[], evaluationPoly: EvaluationGeoJSON['geoJSON'], siteEvalLabel: string) => {
-  if (polys.length === 0) {
-    return {geoJSON: evaluationPoly, label:siteEvalLabel};
-  }
-    let found = polys[0];
-    for (let i = 0; i < polys.length; i += 1) {
-        if (timestamp > polys[i].timestamp) {
-            if (i > 0) {
-                found = polys[i -1]
-            }
-        }
-    }
-    return found;
-}
+
 
 const filteredImages = computed(() => {
   return combinedImages.value.filter((item) => {
@@ -125,15 +109,6 @@ watch(currentTimestamp, () => {
   currentDate.value = currentTimestamp.value;
 });
 
-function createCanvas(width: number, height: number){
-    const myOffScreenCanvas: HTMLCanvasElement & { ctx?: CanvasRenderingContext2D | null } = document.createElement("canvas");
-    myOffScreenCanvas.width = width;
-    myOffScreenCanvas.height = height;
-    // attach the context to the canvas for easy access and to reduce complexity.
-    myOffScreenCanvas.ctx = myOffScreenCanvas.getContext("2d");
-    return myOffScreenCanvas;
- }
-
 
 const getImageData = async () => {
     combinedImages.value = [];
@@ -157,180 +132,37 @@ const getImageData = async () => {
     // Lets process the polygons to get them in pixel space.
     // For each polygon we need to convert it to the proper image sizing result.
     images.forEach((image) => {
-        const closestPoly = getClosestPoly(image.timestamp, polygons, data.evaluationGeoJSON, data.label);
-        // Now we convert the coordinates to
-        const bboxWidth = image.bbox.xmax - image.bbox.xmin;
-        const bboxHeight = image.bbox.ymax - image.bbox.ymin;
-        const imageWidth = image.image_dimensions[0];
-        const imageHeight = image.image_dimensions[1];
-        const imageNormalizePoly: {x: number, y: number}[][] = []
-        closestPoly.geoJSON.coordinates.forEach((ring) => {
-          imageNormalizePoly.push([]);
-            ring.forEach((coord) => {
-                const normalize_x = (coord[0] - image.bbox.xmin) / bboxWidth;
-            const normalize_y = (coord[1] - image.bbox.ymin) / bboxHeight;
-            const image_x = normalize_x * imageWidth;
-            const image_y = normalize_y * imageHeight;
-            imageNormalizePoly[imageNormalizePoly.length -1].push({x: image_x, y: image_y});
-
-            })
-        })
-        let groundTruthPoly;
-        if (hasGroundTruth.value && groundTruth.value) {
-          const gtNormalizePoly: {x: number, y: number}[][] = []
-          groundTruth.value.geoJSON.coordinates.forEach((ring) => {
-            gtNormalizePoly.push([]);
-            ring.forEach((coord) => {
-                const normalize_x = (coord[0] - image.bbox.xmin) / bboxWidth;
-              const normalize_y = (coord[1] - image.bbox.ymin) / bboxHeight;
-              const image_x = normalize_x * imageWidth;
-              const image_y = normalize_y * imageHeight;
-              gtNormalizePoly[imageNormalizePoly.length -1].push({x: image_x, y: image_y});
-              })
-              groundTruthPoly = { coords: gtNormalizePoly, label: groundTruth.value?.label}
-          })
-
-        }
-        combinedImages.value.push({ image: image, poly: {coords: imageNormalizePoly, label: closestPoly.label}, groundTruthPoly });
+        const result = processImagePoly(image, polygons, data.evaluationGeoJSON, data.label, hasGroundTruth.value, groundTruth.value);
+        combinedImages.value.push(result);
     })
 }
 let background: HTMLCanvasElement & { ctx?: CanvasRenderingContext2D | null };
-const drawData = (
-  canvas: HTMLCanvasElement,
-  image: EvaluationImage,
-  poly:PixelPoly,
-  groundTruthPoly?: PixelPoly,
-  overrideWidth = -1,
-  overrideHeight = -1,
-  ) => {
-    const context = canvas.getContext('2d');
-    const imageObj = new Image();
-    imageObj.src = image.image;
-    imageObj.crossOrigin = "Anonymous";
-    if (!background) {
-        background = createCanvas(image.image_dimensions[0], image.image_dimensions[1]);
-    }
-    background.width = image.image_dimensions[0];
-    background.height = image.image_dimensions[1];
-    const { coords } = poly;
-    const renderFunction = () => {
-        if (context) {
-        canvas.width = overrideWidth === -1 ? image.image_dimensions[0]: overrideWidth;
-        canvas.height = overrideHeight === -1 ? image.image_dimensions[1]: overrideHeight;
-        // draw the offscreen canvas
-        if (overrideWidth !== -1 || overrideHeight !== -1) {
-          context.drawImage(background, 0, 0, image.image_dimensions[0], image.image_dimensions[1], 0, 0, overrideWidth, overrideHeight);
-        } else {
-          context.drawImage(background, 0, 0);
-        }
-        const widthRatio = overrideWidth / image.image_dimensions[0];
-        const heightRatio = overrideHeight / image.image_dimensions[1];
 
-        // We draw the ground truth
-        if (groundTruthPoly && drawGroundTruth.value) {
-          groundTruthPoly.coords.forEach((ring) => {
-            const xPos = overrideWidth === -1 ? ring[0].x : ring[0].x * widthRatio ;
-            const yPos = overrideHeight === -1 ? image.image_dimensions[1] - ring[0].y : overrideHeight - (ring[0].y * overrideHeight);
-            context.moveTo(xPos, yPos);
-            context.beginPath();
-            ring.forEach(({x, y}) => {
-              const yPosEnd =  overrideHeight === -1 ? image.image_dimensions[1] - y : overrideHeight - (y * heightRatio);
-              const xPos = overrideWidth === -1 ? x : x * widthRatio;
-              if (context){
-                  context.lineTo(xPos, yPosEnd);
-              }
-            });
-            const lineDivisor = Math.max(canvas.width, canvas.height)
-            context.lineWidth = lineDivisor/ 50.0;
-            context.strokeStyle = getColorFromLabel(groundTruthPoly.label);
-            context.stroke();
-          });
-        }
+// GIF Settings and Variables
 
-        coords.forEach((ring) => {
-          const xPos = overrideWidth === -1 ? ring[0].x : ring[0].x * widthRatio ;
-          const yPos = overrideHeight === -1 ? image.image_dimensions[1] - ring[0].y : overrideHeight - (ring[0].y * overrideHeight);
-          
-          context.moveTo(xPos, yPos);
-          context.beginPath();
-          ring.forEach(({x, y}) => {
-            const yPosEnd =  overrideHeight === -1 ? image.image_dimensions[1] - y : overrideHeight - (y * heightRatio);
-            const xPos = overrideWidth === -1 ? x : x * widthRatio;
-            if (context){
-                context.lineTo(xPos, yPosEnd);
-            }
-          });
-          const lineDivisor = Math.max(canvas.width, canvas.height);
-          context.lineWidth = lineDivisor/ 100.0;
-          context.strokeStyle = getColorFromLabel(poly.label);
-          currentLabel.value = siteEvaluationLabel.value == poly.label ? '' : poly.label;
-          context.stroke();
-        });
-        // Now scale the canvas to the proper size
-        if (overrideHeight === -1  && overrideWidth === -1) {
-          const ratio = image.image_dimensions[1] / image.image_dimensions[0];
-          const maxHeight = document.documentElement.clientHeight * 0.30;
-          const maxWidth = document.documentElement.clientWidth - 550;
-          let width = maxWidth
-          let height = width * ratio;
-          if (height > maxHeight) {
-            height = maxHeight;
-            width = height / ratio;
-          }
-          context.canvas.style.width = `${width}px`
-          context.canvas.style.height = `${height}px`;
-        } else { // We draw a label for downloaded GIFs
-          const fontSize = canvas.height / 20;
-          context.font = `${fontSize * 0.75}px Arial`;
-          // Source Satellite
-          if (image.source) {
-            const calc = context.measureText(image.source);
-            // Background
-            context.fillStyle = 'rgba(255, 255, 255, 0.5)';
-            const fontHeight =  (calc.actualBoundingBoxAscent + calc.actualBoundingBoxDescent) * 1.10;
-            context.fillRect(0, 0, calc.width*1.10, fontHeight);
-            context.fillStyle = 'black';
-            context.fillText(image.source, 1, fontHeight);
-          }
-          if (image.timestamp) {
-            const date = new Date(image.timestamp * 1000).toISOString().split('T')[0]
-            const calc = context.measureText(date);
-            // Background
-            context.fillStyle = 'rgba(255, 255, 255, 0.5)';
-            const fontHeight =  (calc.actualBoundingBoxAscent + calc.actualBoundingBoxDescent) * 1.10;
-            const xPos = (canvas.width * 0.5) - (calc.width * 1.10 * 0.5);
-            context.fillRect(xPos, 0, calc.width*1.10, fontHeight * 0.90);
-            context.fillStyle = 'black';
-            context.fillText(date, xPos, fontHeight);
-          }
-          if (image.timestamp) {
-            const calc = context.measureText(poly.label);
-            // Background
-            context.fillStyle = 'rgba(255, 255, 255, 0.5)';
-            const fontHeight =  (calc.fontBoundingBoxAscent + calc.fontBoundingBoxDescent) * 1.10;
-            const xPos = (canvas.width) - (calc.width * 1.10);
-            context.fillRect(xPos, 0, calc.width*1.10, fontHeight);
-            context.fillStyle = getColorFromLabel(poly.label);
-            context.fillText(poly.label, xPos, fontHeight * 0.90);
-          }
-          context.stroke();
-        }
-      } 
-    }
 
-    imageObj.onload = () => {
-        if (background.ctx) {
-            background.width = image.image_dimensions[0];
-            background.height = image.image_dimensions[1];
-            background.ctx.drawImage(imageObj, 0, 0, image.image_dimensions[0], image.image_dimensions[1]);
-            renderFunction();
-        }
-    }
-    };
+const downloadingGifFPS = computed({
+  get() {
+    return state.gifSettings.fps || 1;
+  },
+  set(val: number) {
+    state.gifSettings = { ...state.gifSettings, fps: val };
+  },
+});
+const downloadingGifQuality = computed({
+  get() {
+    return state.gifSettings.quality || 0.01;
+  },
+  set(val: number) {
+    state.gifSettings = { ...state.gifSettings, quality: val };
+  },
+});
+
 
 const downloadingGif = ref(false);
 const downloadingGifState: Ref<null | 'drawing' | 'generating'> = ref(null);
 const downloadingGifProgress = ref(0);
+const GifSettingsDialog = ref(false);
 const exportProgress = (progress: number) => {
   downloadingGifProgress.value = progress * 100;
   if (progress === 1) {
@@ -363,7 +195,12 @@ function drawForDownload() {
   const offScreenCanvas = createCanvas(width, height);
   downloadingGifState.value = 'drawing';
   CanvasCapture.init(offScreenCanvas, { verbose: false});
-  CanvasCapture.beginGIFRecord({name: props.siteEvaluationName || 'download', fps: 1, onExportProgress: exportProgress});
+  CanvasCapture.beginGIFRecord({
+    name: props.siteEvaluationName || 'download',
+    fps: downloadingGifFPS.value,
+    quality: downloadingGifQuality.value,
+    onExportProgress: exportProgress,
+  });
   let index = 0;
   function drawImageForRecord(){
     requestAnimationFrame(drawImageForRecord);
@@ -375,6 +212,8 @@ function drawForDownload() {
         filteredImages.value[index].groundTruthPoly,
         width,
         height,
+        background,
+        drawGroundTruth.value,
       );
       CanvasCapture.recordFrame();
       index += 1
@@ -406,7 +245,11 @@ const load = async (newValue?: string, oldValue?: string) => {
         canvasRef.value,
         filteredImages.value[currentImage.value].image,
         filteredImages.value[currentImage.value].poly,
-        filteredImages.value[currentImage.value].groundTruthPoly
+        filteredImages.value[currentImage.value].groundTruthPoly,
+        -1, 
+        -1,
+        background,
+        drawGroundTruth.value,
         )
   }
   loading.value = false;
@@ -440,6 +283,10 @@ watch([currentImage, imageRef, filteredImages, drawGroundTruth], () => {
           filteredImages.value[currentImage.value].image,
           filteredImages.value[currentImage.value].poly,
           filteredImages.value[currentImage.value].groundTruthPoly,
+          -1,
+          -1,
+          background,
+          drawGroundTruth.value,
         )
     }
     if (props.dialog === false && filteredImages.value[currentImage.value]) {
@@ -752,6 +599,9 @@ const setSiteModelStatus = async (status: SiteModelStatus) => {
           <v-icon v-else>
             mdi-spin mdi-sync
           </v-icon>
+          <v-icon @click="GifSettingsDialog = true">
+            mdi-cog
+          </v-icon>
         </template>
         <span>
           Download Images to GIF.
@@ -927,6 +777,44 @@ const setSiteModelStatus = async (status: SiteModelStatus) => {
         {{ notes }}
       </p>
     </div>
+    <v-dialog
+      v-model="GifSettingsDialog"
+      width="400"
+    >
+      <v-card>
+        <v-card-title> GIF Downloading Settings</v-card-title>
+        <v-card-text>
+          <v-row dense>
+            <v-text-field
+              v-model.number="downloadingGifFPS"
+              type="number"
+              label="FPS"
+              :rules="[v => v > 0 || 'Value must be greater than 0']"
+            />
+          </v-row>
+          <v-row dense>
+            <v-slider
+              v-model="downloadingGifQuality"
+              min="0"
+              max="1"
+              step="0.1"
+              :label="`Quality (${downloadingGifQuality.toFixed(2)})`"
+            />
+          </v-row>
+        </v-card-text>
+        <v-card-actions>
+          <v-row>
+            <v-spacer />
+            <v-btn
+              color="success"
+              @click="GifSettingsDialog = false"
+            >
+              OK
+            </v-btn>
+          </v-row>
+        </v-card-actions>
+      </v-card>
+    </v-dialog>
     <v-dialog
       v-model="editDialog"
       width="400"

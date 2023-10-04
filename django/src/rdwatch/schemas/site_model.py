@@ -11,9 +11,9 @@ from django.contrib.gis.geos import GEOSGeometry
 
 
 class SiteFeatureCache(Schema):
-    originator_file: str
+    originator_file: str | None
     timestamp: datetime | None
-    commit_hash: str
+    commit_hash: str | None
 
 
 class SiteFeature(Schema):

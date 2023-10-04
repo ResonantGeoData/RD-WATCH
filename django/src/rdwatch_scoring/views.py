@@ -10,7 +10,7 @@ from django.shortcuts import get_object_or_404
 
 from rdwatch.models import ModelRun
 
-from .models import (
+from .models.scoring_models import (
     EvaluationActivityClassificationTemporalIou,
     EvaluationBroadAreaSearchDetection,
     EvaluationRun,

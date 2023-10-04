@@ -118,7 +118,7 @@ const drawData = (
             context.canvas.style.width = `${width}px`
             context.canvas.style.height = `${height}px`;
           } else { // We draw a label for downloaded GIFs
-            const fontSize = canvas.height / 15;
+            const fontSize = canvas.height / 25;
             context.font = `${fontSize}px Arial`;
             // Source Satellite
             if (image.source) {

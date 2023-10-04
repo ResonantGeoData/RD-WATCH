@@ -109,23 +109,24 @@ class SiteSummaryFeature(Schema):
 
 
 class Feature(Schema):
-    class Config:
-        arbitrary_types_allowed = True
-
     type: Literal['Feature']
     properties: Annotated[
         RegionFeature | SiteSummaryFeature,
         Field(discriminator='type'),
     ]
-    geometry: Polygon
+    geometry: dict[str, Any]
+
+    @property
+    def parsed_geometry(self) -> GEOSGeometry:
+        return GEOSGeometry(json.dumps(self.geometry))
 
     @validator('geometry', pre=True)
-    def parse_geometry(cls, v: dict[str, Any]):
+    def parse_geometry(cls, v: dict[str, Any]) -> dict[str, Any]:
         try:
             geom = GEOSGeometry(json.dumps(v))
             if not isinstance(geom, Polygon):
                 raise ValueError('A region or site summary geometry must be a Polygon.')
-            return geom
+            return v
         except GDALException:
             raise ValueError('Failed to parse geometry.')
 

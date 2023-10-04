@@ -129,6 +129,28 @@ class ModelRunListSchema(Schema):
 
 
 def get_queryset():
+    # Subquery to count unique SiteEvaluations
+    # with proposal='PROPOSAL' for each ModelRun
+    proposed_count_subquery = (
+        SiteEvaluation.objects.filter(
+            configuration=OuterRef('pk'),
+            status='PROPOSAL',
+        )
+        .values('configuration')
+        .annotate(count=Count('pk'))
+        .values('count')
+    )
+
+    # Subquery to count unique SiteEvaluations with proposal
+    # not equal to 'PROPOSAL' for each ModelRun
+    other_count_subquery = (
+        SiteEvaluation.objects.filter(configuration=OuterRef('pk'))
+        .exclude(status='PROPOSAL')
+        .values('configuration')
+        .annotate(count=Count('pk'))
+        .values('count')
+    )
+
     return (
         ModelRun.objects
         # Get minimum score and performer so that we can tell which runs
@@ -185,6 +207,16 @@ def get_queryset():
                 max=ExtractEpoch(Max('evaluations__end_date')),
             ),
             bbox=BoundingBoxGeoJSON('evaluations__geom'),
+            adjudicated=Case(
+                When(
+                    ~Q(proposal_val=None),  # When proposal has a value
+                    then=JSONObject(
+                        proposed=Coalesce(Subquery(proposed_count_subquery), 0),
+                        other=Coalesce(Subquery(other_count_subquery), 0),
+                    ),
+                ),
+                default=None,
+            ),
         )
     )
 

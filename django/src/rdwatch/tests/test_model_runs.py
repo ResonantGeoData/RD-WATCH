@@ -79,14 +79,14 @@ def test_model_run_rest_list(test_client: TestClient) -> None:
     assert res.status_code == 200
     assert res.json()['count'] == len(model_runs)
     assert {
-        (mr['title'], mr['performer']['short_code']) for mr in res.json()['results']
+        (mr['title'], mr['performer']['short_code']) for mr in res.json()['items']
     } == {(mr.title, mr.performer.slug) for mr in model_runs}
 
     # Test performer filter
     for performer in performers:
         res = test_client.get(f'/model-runs/?performer={performer.slug}')
         assert res.status_code == 200
-        assert [mr['title'] for mr in res.json()['results']] == [
+        assert [mr['title'] for mr in res.json()['items']] == [
             mr.title for mr in model_runs if mr.performer == performer
         ]
 

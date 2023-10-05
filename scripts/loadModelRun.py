@@ -86,7 +86,7 @@ def upload_to_rgd(
     )
 
     existing_model_run = None
-    for model_run in model_runs_result.json().get('results', ()):
+    for model_run in model_runs_result.json().get('items', ()):
         if (
             model_run['title'] == title
             and model_run['performer']['short_code'] == performer_shortcode

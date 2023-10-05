@@ -9,5 +9,5 @@ export type ModelRunList = {
     max: number;
   } | null;
   bbox: GeoJSON.Polygon | null;
-  results: ModelRun[];
+  items: ModelRun[];
 };

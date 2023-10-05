@@ -113,7 +113,7 @@ const getAnnotationColor = (filters: MapFilters) => {
 const getText = (textType: string) => {
     const result = [];
     result.push('case');
-    Object.entries(styles).filter(([label, { type }]) => type === textType).forEach(([label, { type }]) => {
+    Object.entries(styles).filter(([, { type }]) => type === textType).forEach(([label,]) => {
         result.push(['==', ['get', 'label'], label]);
         result.push(label);
     })

@@ -4,6 +4,7 @@ import ImageViewer from './ImageViewer.vue';
 
 defineProps<{
   siteEvalId: string;
+  siteEvaluationName?: string;
 }>();
 
 const displayImage = ref(false);
@@ -22,6 +23,7 @@ const displayImage = ref(false);
     >
       <ImageViewer
         :site-eval-id="siteEvalId"
+        :site-evaluation-name="siteEvaluationName"
         dialog
         @close="displayImage = false"
       />

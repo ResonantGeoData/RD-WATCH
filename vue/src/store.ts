@@ -146,6 +146,7 @@ export const state = reactive<{
   loopingId: string | null,
   modelRuns: KeyedModelRun[],
   openedModelRuns: Set<KeyedModelRun["key"]>
+  gifSettings: { fps: number, quality: number},
 }>({
   timestamp: Math.floor(Date.now() / 1000),
   timeMin: new Date(0).valueOf(),
@@ -191,6 +192,7 @@ export const state = reactive<{
   loopingId: null,
   modelRuns: [],
   openedModelRuns: new Set<KeyedModelRun["key"]>(),
+  gifSettings: { fps: 1, quality: 1}
 });
 
 export const filteredSatelliteTimeList = computed(() => {

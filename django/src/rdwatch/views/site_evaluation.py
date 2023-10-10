@@ -178,12 +178,14 @@ def patch_site_evaluation(request: HttpRequest, id: UUID4, data: SiteEvaluationR
             site_evaluation.label = lookups.ObservationLabel.objects.get(
                 slug=data.label
             )
-        site_evaluation.start_date = data.start_date
-        site_evaluation.end_date = data.end_date
-        if data.notes:
-            site_evaluation.notes = data.notes
-        if data.status:
-            site_evaluation.status = data.status
+
+        # Use `exclude_unset` here because an explicitly `null` start/end date
+        # means something different than a missing start/end date.
+        data_dict = data.dict(exclude_unset=True)
+
+        FIELDS = ('start_date', 'end_date', 'notes', 'status')
+        for field in filter(lambda f: f in data_dict, FIELDS):
+            setattr(site_evaluation, field, data_dict[field])
 
         site_evaluation.save()
 

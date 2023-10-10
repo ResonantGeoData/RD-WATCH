@@ -98,8 +98,8 @@ const filteredImages = computed(() => {
 
 
 const currentTimestamp = computed(() => {
-    if (combinedImages.value[currentImage.value]) {
-    const time = combinedImages.value[currentImage.value].image.timestamp;
+    if (filteredImages.value[currentImage.value]) {
+    const time = filteredImages.value[currentImage.value].image.timestamp;
     return new Date(time * 1000).toISOString().split('T')[0]
     }
     return new Date().toISOString().split('T')[0]

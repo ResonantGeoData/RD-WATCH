@@ -440,14 +440,6 @@ export class ApiService {
   }
 
   public static patchSiteEvaluation(id: string, data: SiteEvaluationUpdateQuery): CancelablePromise<boolean> {
-    const dataCopy = { ...data};
-    // Django-Ninja can't differentiate betwen null and missing parameters
-    if (data.start_date === null) {
-      dataCopy.start_date = 'null';
-    }
-    if (data.end_date === null) {
-      dataCopy.end_date = 'null';
-    }
     return __request(OpenAPI, {
       method: 'PATCH',
       url: "/api/evaluations/{id}/",

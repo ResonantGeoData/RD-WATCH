@@ -101,7 +101,7 @@ class ModelRunDetailSchema(Schema):
     timerange: TimeRangeSchema | None = None
     bbox: dict | None
     created: datetime
-    expiration_time: str | None = None
+    expiration_time: timedelta | None = None
     evaluation: int | None = None
     evaluation_run: int | None = None
     proposal: str = None
@@ -121,7 +121,7 @@ class ModelRunListSchema(Schema):
     timerange: TimeRangeSchema | None = None
     bbox: dict | None
     created: datetime
-    expiration_time: str | None = None
+    expiration_time: timedelta | None = None
     evaluation: int | None = None
     evaluation_run: int | None = None
     proposal: str = None
@@ -277,7 +277,7 @@ def create_model_run(
         'parameters': model_run.parameters,
         'numsites': 0,
         'created': model_run.created,
-        'expiration_time': str(model_run.expiration_time),
+        'expiration_time': model_run.expiration_time,
     }
 
 

@@ -7,7 +7,7 @@ export type ModelRun = {
   title: string;
   performer: Performer;
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  parameters?: Record<string, any>;
+  parameters: Record<string, any>;
   numsites: number;
   downloading: number;
   score: number | null;

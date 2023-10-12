@@ -7,6 +7,7 @@ import sys
 import traceback
 from glob import glob
 from multiprocessing import Pool
+from pathlib import Path
 
 import requests
 
@@ -141,7 +142,7 @@ def upload_to_rgd(
         )
 
 
-def post_site(post_site_url, site_filepath, rgd_auth_cookie):
+def post_site(post_site_url: str, site_filepath: str, rgd_auth_cookie: str | None):
     print(f"Uploading '{site_filepath}' ..")
     with open(site_filepath) as f:
         cookie = None
@@ -160,7 +161,12 @@ def post_site(post_site_url, site_filepath, rgd_auth_cookie):
 
     print(response)
     if response.status_code != 201:
-        print(f'Error uploading site, status ' f'code: [{response.status_code}]')
+        print(
+            f'Error uploading site "{Path(site_filepath).name}", status '
+            f'code: [{response.status_code}]',
+            file=sys.stderr,
+        )
+        print(response.text, file=sys.stderr, end='\n\n')
 
     return response
 

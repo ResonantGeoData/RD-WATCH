@@ -168,7 +168,6 @@ def site_observations(request: HttpRequest, evaluation_id: UUID4):
 
 
 @router.post('/{evaluation_id}/generate-images/', response={202: bool, 409: str})
-#TODO: Do this for scoring.
 def get_site_observation_images(
     request: HttpRequest,
     evaluation_id: UUID4,

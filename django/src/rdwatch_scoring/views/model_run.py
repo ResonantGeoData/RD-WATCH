@@ -119,47 +119,6 @@ class ModelRunListSchema(Schema):
     bbox: dict | None = None
     results: list[ModelRunDetailSchema]
 
-def get_queryset2():
-    return (
-            EvaluationRun.objects.select_related('site')
-            .order_by(
-                'start_datetime',
-            )
-            .annotate(
-                json=JSONObject(
-                    id='pk',
-                    title=Concat(
-                        F('performer'),
-                        Value('_'),
-                        F('region'),
-                        Value('_'),
-                        F('evaluation_number'),
-                        Value('_'),
-                        F('evaluation_run_number'),
-                        output_field=CharField(),
-                    ),
-                    performer=JSONObject(
-                        id=Value(-1), team_name='performer', short_code=Upper('performer')
-                    ),
-                    region=JSONObject(id=Value(-1), name='region'),
-                    score=None,
-                    numsites=Count(
-                        'site__site_id',
-                        filter=F('performer') == F('site__originator'),
-                        distinct=True,
-                    ),
-                    evaluation='evaluation_number',
-                    evaluation_run='evaluation_run_number',
-                    timerange=TimeRangeJSON(
-                        'site__start_date', 'site__end_date', 'performer', 'site_originator'
-                    ),
-                    timestamp=ExtractEpoch('start_datetime'),
-                    ground_truth=False,
-                    # timerange=TimeRangeJSON('evaluations__observations__timestamp'),
-                    bbox=BoundingBoxGeoJSON('site__union_geometry'),
-                )
-            )
-        )
 
 def get_queryset():
     # Subquery to count unique SiteEvaluations

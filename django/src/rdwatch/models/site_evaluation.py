@@ -1,5 +1,7 @@
-from datetime import datetime
 from typing import Self
+from uuid import uuid4
+
+from django_extensions.db.models import CreationDateTimeField
 
 from django.contrib.gis.db.models import PolygonField
 from django.contrib.gis.geos import MultiPolygon
@@ -14,6 +16,9 @@ from rdwatch.schemas.site_model import SiteFeature
 
 
 class SiteEvaluation(models.Model):
+    id = models.UUIDField(primary_key=True, default=uuid4, editable=False)
+
+    timestamp = CreationDateTimeField()
     configuration = models.ForeignKey(
         to='ModelRun',
         on_delete=models.PROTECT,
@@ -27,9 +32,6 @@ class SiteEvaluation(models.Model):
         db_index=True,
     )
     number = models.IntegerField(help_text='The site number', db_index=True)
-    timestamp = models.DateTimeField(
-        help_text='Time when this evaluation was finished',
-    )
     start_date = models.DateTimeField(
         help_text='Start date in geoJSON',
         null=True,
@@ -138,8 +140,7 @@ class SiteEvaluation(models.Model):
                 number=site_feature.properties.site_number,
                 start_date=site_feature.properties.start_date,
                 end_date=site_feature.properties.end_date,
-                timestamp=datetime.now(),
-                geom=site_feature.geometry,
+                geom=site_feature.parsed_geometry,
                 label=label,
                 score=site_feature.properties.score,
                 status=status,
@@ -172,13 +173,13 @@ class SiteEvaluation(models.Model):
         site_evals: list[SiteEvaluation] = []
         with transaction.atomic():
             region = get_or_create_region(
-                region_feature.properties.region_id, region_feature.geometry
+                region_feature.properties.region_id, region_feature.parsed_geometry
             )[0]
 
             for feature in region_model.site_summary_features:
                 assert isinstance(feature.properties, SiteSummaryFeature)
 
-                geometry = feature.geometry
+                geometry = feature.parsed_geometry
                 if isinstance(geometry, MultiPolygon):
                     geometry = geometry.convex_hull
 
@@ -186,7 +187,6 @@ class SiteEvaluation(models.Model):
                     configuration=configuration,
                     region=region,
                     number=feature.properties.site_number,
-                    timestamp=datetime.now(),
                     geom=geometry,
                     label=label_map[feature.properties.status],
                     score=feature.properties.score,
@@ -212,6 +212,8 @@ class SiteEvaluation(models.Model):
 
 
 class SiteEvaluationTracking(models.Model):
+    id = models.UUIDField(primary_key=True, default=uuid4, editable=False)
+
     edited = models.DateTimeField()
     evaluation = models.ForeignKey(
         to='SiteEvaluation',

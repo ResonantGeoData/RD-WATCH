@@ -4,6 +4,7 @@ import tempfile
 from datetime import datetime
 
 from ninja import Field, FilterSchema, Query, Router, Schema
+from pydantic import UUID4
 
 from django.conf import settings
 from django.contrib.gis.db.models.aggregates import Collect
@@ -157,7 +158,7 @@ def list_site_evaluations(
 
 
 @router.patch('/{id}/')
-def patch_site_evaluation(request: HttpRequest, id: int, data: SiteEvaluationRequest):
+def patch_site_evaluation(request: HttpRequest, id: UUID4, data: SiteEvaluationRequest):
     with transaction.atomic():
         site_evaluation = get_object_or_404(
             SiteEvaluation.objects.select_for_update(), pk=id
@@ -177,14 +178,14 @@ def patch_site_evaluation(request: HttpRequest, id: int, data: SiteEvaluationReq
             site_evaluation.label = lookups.ObservationLabel.objects.get(
                 slug=data.label
             )
-        if data.notes:
-            site_evaluation.notes = data.notes
-        if data.start_date:
-            site_evaluation.start_date = data.start_date
-        if data.end_date:
-            site_evaluation.end_date = data.end_date
-        if data.status:
-            site_evaluation.status = data.status
+
+        # Use `exclude_unset` here because an explicitly `null` start/end date
+        # means something different than a missing start/end date.
+        data_dict = data.dict(exclude_unset=True)
+
+        FIELDS = ('start_date', 'end_date', 'notes', 'status')
+        for field in filter(lambda f: f in data_dict, FIELDS):
+            setattr(site_evaluation, field, data_dict[field])
 
         site_evaluation.save()
 
@@ -269,7 +270,7 @@ def get_site_model_feature_JSON(id: int, obsevations=False):
 
 
 @router.get('/{id}/download')
-def download_annotations(request: HttpRequest, id: int):
+def download_annotations(request: HttpRequest, id: UUID4):
     output, site_id, filename = get_site_model_feature_JSON(id)
     if output is not None:
         with tempfile.NamedTemporaryFile(delete=False) as temp_file:

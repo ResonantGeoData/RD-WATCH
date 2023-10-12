@@ -17,6 +17,8 @@ const overrideDates: Ref<[string, string]> = ref(['2013-01-01', new Date().toISO
 const showAdvanced = ref(false);
 const force =ref(false);
 const customDateRange = ref(false);
+const scaleOptions = ref(['default', 'bits'])
+const scale: Ref<'default' | 'bits'> = ref('default')
 
 const download = () => {
     emit('download', {
@@ -25,6 +27,7 @@ const download = () => {
         noData: noData.value,
         customDateRange: customDateRange.value ? overrideDates.value : undefined,
         force: force.value,
+        scale: scale.value,
     })
 }
 
@@ -80,6 +83,21 @@ const display = ref(true);
               persistent-hint
             />
           </v-row>        
+          <v-row
+            v-if="selectedSource === 'WV'"
+            dense
+            align="center"
+            class="pb-5"
+          >
+            <v-select
+              v-model="scale"
+              :items="scaleOptions"
+              density="compact"
+              label="Bit Scaling"
+              persistent-hint
+            />
+          </v-row>        
+
           <v-row
             dense
             align="center"

@@ -55,14 +55,6 @@ class Results(TypedDict):
     links: list[Link]
 
 
-class SearchParams(TypedDict, total=False):
-    bbox: tuple[float, float, float, float]
-    datetime: str
-    collections: list[str]
-    page: int
-    limit: int
-
-
 def _fmt_time(time: datetime):
     return f'{time.isoformat()[:19]}Z'
 

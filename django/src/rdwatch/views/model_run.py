@@ -1,14 +1,14 @@
 from datetime import datetime, timedelta
-from typing import Literal
+from typing import Any, Literal
 
 from celery.result import AsyncResult
 from ninja import Field, FilterSchema, Query, Schema
-from ninja.errors import ValidationError
-from ninja.pagination import RouterPaginated
+from ninja.pagination import PageNumberPagination, RouterPaginated, paginate
 from ninja.schema import validator
 from pydantic import UUID4, constr  # type: ignore
 
 from django.contrib.postgres.aggregates import JSONBAgg
+from django.core.cache import cache
 from django.db import transaction
 from django.db.models import (
     Avg,
@@ -21,6 +21,7 @@ from django.db.models import (
     Min,
     OuterRef,
     Q,
+    QuerySet,
     Subquery,
     When,
 )
@@ -28,12 +29,7 @@ from django.db.models.functions import Coalesce, JSONObject
 from django.http import Http404, HttpRequest, HttpResponse
 from django.shortcuts import get_object_or_404
 
-from rdwatch.db.functions import (
-    AggregateArraySubquery,
-    BoundingBox,
-    BoundingBoxGeoJSON,
-    ExtractEpoch,
-)
+from rdwatch.db.functions import BoundingBox, BoundingBoxGeoJSON, ExtractEpoch
 from rdwatch.models import (
     AnnotationExport,
     ModelRun,
@@ -106,7 +102,7 @@ class ModelRunDetailSchema(Schema):
     timerange: TimeRangeSchema | None = None
     bbox: dict | None
     created: datetime
-    expiration_time: str | None = None
+    expiration_time: timedelta | None = None
     evaluation: int | None = None
     evaluation_run: int | None = None
     proposal: str = None
@@ -114,10 +110,23 @@ class ModelRunDetailSchema(Schema):
 
 
 class ModelRunListSchema(Schema):
-    count: int
+    id: UUID4
+    title: str
+    region: str | None = None
+    performer: PerformerSchema
+    parameters: dict
+    numsites: int
+    downloading: int | None = None
+    score: float | None = None
+    timestamp: int | None = None
     timerange: TimeRangeSchema | None = None
-    bbox: dict | None = None
-    results: list[ModelRunDetailSchema]
+    bbox: dict | None
+    created: datetime
+    expiration_time: timedelta | None = None
+    evaluation: int | None = None
+    evaluation_run: int | None = None
+    proposal: str = None
+    adjudicated: ModelRunAdjudicated | None = None
 
 
 def get_queryset():
@@ -144,10 +153,12 @@ def get_queryset():
     )
 
     return (
-        ModelRun.objects.select_related('evaluations', 'performer', 'satellitefetching')
+        ModelRun.objects
         # Get minimum score and performer so that we can tell which runs
         # are ground truth
-        .alias(min_score=Min('evaluations__score'), performer_slug=F('performer__slug'))
+        .annotate(
+            min_score=Min('evaluations__score'), performer_slug=F('performer__slug')
+        )
         # Label ground truths as such. A ground truth is defined as a model run
         # with a min_score of 1 and a performer of "TE"
         .alias(
@@ -163,65 +174,98 @@ def get_queryset():
             evaluation_configuration=F('evaluations__configuration'),
             proposal_val=F('proposal'),
         )
+        .values()
         .annotate(
-            json=JSONObject(
-                id='pk',
-                title='title',
-                created='created',
-                expiration_time='expiration_time',
-                performer=Subquery(  # prevents including "performer" in slow GROUP BY
-                    lookups.Performer.objects.filter(
-                        pk=OuterRef('performer_id')
-                    ).values(
-                        json=JSONObject(
-                            id='id',
-                            team_name='description',
-                            short_code='slug',
-                        )
+            performer=Subquery(  # prevents including "performer" in slow GROUP BY
+                lookups.Performer.objects.filter(pk=OuterRef('performer_id')).values(
+                    json=JSONObject(
+                        id='id',
+                        team_name='description',
+                        short_code='slug',
+                    )
+                ),
+                output_field=JSONField(),
+            ),
+            region=Subquery(  # prevents including "region" in slow GROUP BY
+                Region.objects.filter(pk=OuterRef('region_id')).values('name')[:1],
+            ),
+            downloading=Coalesce(
+                Subquery(
+                    SatelliteFetching.objects.filter(
+                        siteeval__configuration_id=OuterRef('evaluation_configuration'),
+                        status=SatelliteFetching.Status.RUNNING,
+                    )
+                    .annotate(count=Func(F('id'), function='Count'))
+                    .values('count')
+                ),
+                0,  # Default value when evaluations are None
+            ),
+            numsites=Count('evaluations__pk', distinct=True),
+            score=Avg('evaluations__score'),
+            timestamp=ExtractEpoch(Max('evaluations__timestamp')),
+            timerange=JSONObject(
+                min=ExtractEpoch(Min('evaluations__start_date')),
+                max=ExtractEpoch(Max('evaluations__end_date')),
+            ),
+            bbox=BoundingBoxGeoJSON('evaluations__geom'),
+            adjudicated=Case(
+                When(
+                    ~Q(proposal_val=None),  # When proposal has a value
+                    then=JSONObject(
+                        proposed=Coalesce(Subquery(proposed_count_subquery), 0),
+                        other=Coalesce(Subquery(other_count_subquery), 0),
                     ),
-                    output_field=JSONField(),
                 ),
-                region=Subquery(  # prevents including "region" in slow GROUP BY
-                    Region.objects.filter(pk=OuterRef('region_id')).values('name')[:1],
-                ),
-                downloading=Coalesce(
-                    Subquery(
-                        SatelliteFetching.objects.filter(
-                            siteeval__configuration_id=OuterRef(
-                                'evaluation_configuration'
-                            ),
-                            status=SatelliteFetching.Status.RUNNING,
-                        )
-                        .annotate(count=Func(F('id'), function='Count'))
-                        .values('count')
-                    ),
-                    0,  # Default value when evaluations are None
-                ),
-                parameters='parameters',
-                numsites=Count('evaluations__pk', distinct=True),
-                score=Avg('evaluations__score'),
-                evaluation='evaluation',
-                evaluation_run='evaluation_run',
-                timestamp=ExtractEpoch(Max('evaluations__timestamp')),
-                timerange=JSONObject(
+                default=None,
+            ),
+        )
+    )
+
+
+class ModelRunPagination(PageNumberPagination):
+    class Output(Schema):
+        count: int
+        timerange: TimeRangeSchema | None = None
+        bbox: dict | None = None
+        items: list[ModelRunListSchema]
+
+    def paginate_queryset(
+        self,
+        queryset: QuerySet,
+        pagination: PageNumberPagination.Input,
+        filters: ModelRunFilterSchema,
+        **params,
+    ) -> dict[str, Any]:
+        # TODO: remove caching after model runs endpoint is
+        # refactored to be more efficient.
+        cache_key = _get_model_runs_cache_key(filters.dict())
+        model_runs = cache.get(cache_key)
+
+        # If we have a cache miss, execute the query and save the results to cache
+        # before returning.
+        if model_runs is None:
+            qs = super().paginate_queryset(queryset, pagination, **params)
+
+            aggregate_kwargs = {
+                'timerange': JSONObject(
                     min=ExtractEpoch(Min('evaluations__start_date')),
                     max=ExtractEpoch(Max('evaluations__end_date')),
                 ),
-                bbox=BoundingBoxGeoJSON('evaluations__geom'),
-                proposal='proposal_val',
-                adjudicated=Case(
-                    When(
-                        ~Q(proposal_val=None),  # When proposal has a value
-                        then=JSONObject(
-                            proposed=Coalesce(Subquery(proposed_count_subquery), 0),
-                            other=Coalesce(Subquery(other_count_subquery), 0),
-                        ),
-                    ),
-                    default=None,
-                ),
+            }
+            if filters.region:
+                aggregate_kwargs['bbox'] = Coalesce(
+                    BoundingBoxGeoJSON('evaluations__region__geom'),
+                    BoundingBoxGeoJSON('evaluations__geom'),
+                )
+
+            model_runs = qs | queryset.aggregate(**aggregate_kwargs)
+            cache.set(
+                key=cache_key,
+                value=model_runs,
+                timeout=timedelta(days=30).total_seconds(),
             )
-        )
-    )
+
+        return model_runs
 
 
 @router.post('/', response={200: ModelRunDetailSchema}, exclude_none=True)
@@ -249,78 +293,42 @@ def create_model_run(
         'parameters': model_run.parameters,
         'numsites': 0,
         'created': model_run.created,
-        'expiration_time': str(model_run.expiration_time),
+        'expiration_time': model_run.expiration_time,
     }
 
 
-@router.get('/', response={200: ModelRunListSchema})
+def _get_model_runs_cache_key(params: dict) -> str:
+    """Generate a cache key for the model runs listing endpoint."""
+    most_recent_evaluation = ModelRun.objects.aggregate(
+        latest_eval=Max('evaluations__timestamp')
+    )['latest_eval']
+
+    return '|'.join(
+        [
+            ModelRun.__name__,
+            str(most_recent_evaluation),
+            *[f'{key}={value}' for key, value in params.items()],
+        ]
+    ).replace(' ', '_')
+
+
+@router.get('/', response={200: list[ModelRunListSchema]})
+@paginate(ModelRunPagination)
 def list_model_runs(
     request: HttpRequest,
     filters: ModelRunFilterSchema = Query(...),  # noqa: B008
-    limit: int = 25,
-    page: int = 1,
 ):
-    queryset = get_queryset()
-    queryset = filters.filter(
-        queryset.alias(
-            min_score=Min('evaluations__score'),
-            performer_slug=F('performer__slug'),
-            region=F('evaluations__region__name'),
-        )
-    )
-
-    if page < 1 or (not limit and page != 1):
-        raise ValidationError(f"Invalid page '{page}'")
-
-    # Calculate total number of model runs prior to paginating queryset
-    total_model_run_count = queryset.count()
-
-    subquery = queryset[(page - 1) * limit : page * limit] if limit else queryset
-    aggregate = queryset.defer('json').aggregate(
-        timerange=JSONObject(
-            min=ExtractEpoch(Min('evaluations__start_date')),
-            max=ExtractEpoch(Max('evaluations__end_date')),
-        ),
-        results=AggregateArraySubquery(subquery.values('json')),
-    )
-
-    aggregate['count'] = total_model_run_count
-
-    # Only bother calculating the entire bounding box of this model run
-    # list if the user has specified a region. We don't want to overload
-    # PostGIS by making it calculate a bounding box for every polygon in
-    # the database.
-    if filters.region is not None:
-        aggregate |= queryset.defer('json').aggregate(
-            # Use the region polygon for the bbox if it exists.
-            # Otherwise, fall back on the site polygon.
-            bbox=Coalesce(
-                BoundingBoxGeoJSON('evaluations__region__geom'),
-                BoundingBoxGeoJSON('evaluations__geom'),
-            )
-        )
-
-    if aggregate['count'] > 0 and not aggregate['results']:
-        raise ValidationError({'page': f"Invalid page '{page}'"})
-
-    return 200, aggregate
+    return filters.filter(get_queryset())
 
 
 @router.get('/{id}/', response={200: ModelRunDetailSchema})
 def get_model_run(request: HttpRequest, id: UUID4):
-    values = get_queryset().filter(id=id).values_list('json', flat=True)
-
-    if not values.exists():
-        raise Http404()
-
-    model_run = values[0]
-
-    return 200, model_run
+    return get_object_or_404(get_queryset(), id=id)
 
 
 @router.post(
     '/{model_run_id}/site-model/',
-    response={201: int},
+    response={201: UUID4},
 )
 def post_site_model(
     request: HttpRequest,
@@ -334,7 +342,7 @@ def post_site_model(
 
 @router.post(
     '/{model_run_id}/region-model/',
-    response={201: list[int]},
+    response={201: list[UUID4]},
 )
 def post_region_model(
     request: HttpRequest,
@@ -357,6 +365,7 @@ def generate_images(
     noData: int = 50,
     overrideDates: None | list[str] = None,
     force: bool = False,
+    scale: str = 'default',
 ):
     siteEvaluations = SiteEvaluation.objects.filter(configuration=model_run_id)
 
@@ -369,6 +378,7 @@ def generate_images(
             noData,
             overrideDates,
             force,
+            scale,
         )
 
     return 202, True

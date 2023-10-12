@@ -10,7 +10,7 @@ export interface MapFilters {
   groundTruthPattern?: boolean;
   otherPattern?: boolean;
   showRegionPolygon?: boolean;
-  hoverSiteId?: number;
+  hoverSiteId?: string;
   showText?: boolean;
   scoringColoring?: Record<string, Record<string, string>> | null;
 }
@@ -47,7 +47,7 @@ export interface SiteObservationImage {
   source: 'S2' | 'WV' | 'L8';
   cloudcover?: number;
   percent_black?: number;
-  siteobs_id: number | null;
+  siteobs_id: string | null;
   disabled?: boolean;
 }
 
@@ -59,7 +59,7 @@ export interface ScoringBase {
 }
 
 export interface EnabledSiteObservations {
-  id: number;
+  id: string;
   images: SiteObservationImage[];
   bbox: ImageBBox;
   timestamp: number;
@@ -79,7 +79,7 @@ export interface SiteObservationJob {
 }
 
 export interface SiteObservation {
-  id: number;
+  id: string;
   scoringBase?: ScoringBase;
   timerange: {
     min: number;
@@ -143,9 +143,10 @@ export const state = reactive<{
   enabledSiteObservations: EnabledSiteObservations[],
   siteObsSatSettings: siteObsSatSettings,
   loopingInterval: NodeJS.Timeout | null,
-  loopingId: number | null,
+  loopingId: string | null,
   modelRuns: KeyedModelRun[],
   openedModelRuns: Set<KeyedModelRun["key"]>
+  gifSettings: { fps: number, quality: number},
 }>({
   timestamp: Math.floor(Date.now() / 1000),
   timeMin: new Date(0).valueOf(),
@@ -191,6 +192,7 @@ export const state = reactive<{
   loopingId: null,
   modelRuns: [],
   openedModelRuns: new Set<KeyedModelRun["key"]>(),
+  gifSettings: { fps: 1, quality: 1}
 });
 
 export const filteredSatelliteTimeList = computed(() => {
@@ -245,7 +247,7 @@ export const getSiteObservationDetails = async (siteId: string, scoringBase?: Sc
     avgScore += item.score
   })
   avgScore = avgScore / results.length;
-  const numId = parseInt(siteId, 10)
+  const numId = siteId
   const foundIndex = state.selectedObservations.findIndex((item) => item.id === numId);
   const obsData =  {
     id: numId,
@@ -315,7 +317,7 @@ export const toggleSatelliteImages = (siteObs: SiteObservation, off= false) => {
 }
 
 export const loadAndToggleSatelliteImages = async (siteId: string) => {
-  const index = state.enabledSiteObservations.findIndex((item) => item.id === parseInt(siteId, 10));
+  const index = state.enabledSiteObservations.findIndex((item) => item.id === siteId);
   if (index !== -1) {
     const tempArr = [...state.enabledSiteObservations];
     tempArr.splice(index, 1);

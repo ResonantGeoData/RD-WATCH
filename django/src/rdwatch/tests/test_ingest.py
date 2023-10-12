@@ -90,7 +90,7 @@ def test_site_model_ingest(
 
     assert SiteEvaluation.objects.count() == 1
     assert res.status_code == 201
-    assert res.json() == SiteEvaluation.objects.first().id, res.json()
+    assert res.json() == str(SiteEvaluation.objects.first().id), res.json()
 
 
 @pytest.mark.django_db(databases=['default'])

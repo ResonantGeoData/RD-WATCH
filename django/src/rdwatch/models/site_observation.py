@@ -1,4 +1,5 @@
 from typing import Self
+from uuid import uuid4
 
 from django.contrib.gis.db.models import PolygonField
 from django.contrib.gis.geos import MultiPolygon, Polygon
@@ -11,6 +12,8 @@ from rdwatch.schemas.site_model import ObservationFeature
 
 
 class SiteObservation(models.Model):
+    id = models.UUIDField(primary_key=True, default=uuid4, editable=False)
+
     siteeval = models.ForeignKey(
         to='SiteEvaluation',
         on_delete=models.CASCADE,
@@ -93,12 +96,12 @@ class SiteObservation(models.Model):
 
             constellation = constellation_map.get(feature.properties.sensor_name, None)
 
-            assert isinstance(feature.geometry, Polygon | MultiPolygon)
+            assert isinstance(feature.parsed_geometry, Polygon | MultiPolygon)
 
             geometry = (
-                feature.geometry
-                if isinstance(feature.geometry, MultiPolygon)
-                else MultiPolygon([feature.geometry])
+                feature.parsed_geometry
+                if isinstance(feature.parsed_geometry, MultiPolygon)
+                else MultiPolygon([feature.parsed_geometry])
             )
             for i, polygon in enumerate(geometry):
                 if feature.properties.current_phase:
@@ -126,6 +129,8 @@ class SiteObservation(models.Model):
 
 
 class SiteObservationTracking(models.Model):
+    id = models.UUIDField(primary_key=True, default=uuid4, editable=False)
+
     edited = models.DateTimeField()
     siteeval = models.ForeignKey(
         to='SiteEvaluation',

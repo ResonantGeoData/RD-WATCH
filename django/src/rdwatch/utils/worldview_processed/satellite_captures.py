@@ -13,6 +13,7 @@ class WorldViewProcessedCapture:
     panuri: str | None
     cloudcover: int | None
     collection: str
+    bits_per_pixel: int
 
 
 def get_features(
@@ -47,6 +48,7 @@ def get_captures(
                 ),
                 bbox=cast(tuple[float, float, float, float], tuple(feature['bbox'])),
                 uri=feature['assets']['visual']['href'],
+                bits_per_pixel=feature['properties']['nitf:bits_per_pixel'],
                 panuri=None,
                 cloudcover=cloudcover,
                 collection=feature['collection'],

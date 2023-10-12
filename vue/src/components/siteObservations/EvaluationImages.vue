@@ -76,7 +76,7 @@ const isRunning = computed(() => {
   return !!(props.siteObservation.job && props.siteObservation.job.status === 'Running');
 });
 
-const cancelTask = async (siteId: number) => {
+const cancelTask = async (siteId: string) => {
   await ApiService.cancelSiteObservationImageTask(siteId);
   if (state.loopingInterval !== null) {
     clearInterval(state.loopingInterval);

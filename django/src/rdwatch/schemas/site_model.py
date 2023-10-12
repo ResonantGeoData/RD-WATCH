@@ -11,9 +11,9 @@ from django.contrib.gis.geos import GEOSGeometry
 
 
 class SiteFeatureCache(Schema):
-    originator_file: str
+    originator_file: str | None
     timestamp: datetime | None
-    commit_hash: str
+    commit_hash: str | None
 
 
 class SiteFeature(Schema):
@@ -39,7 +39,7 @@ class SiteFeature(Schema):
     ]
     start_date: datetime | None
     end_date: datetime | None
-    model_content: Literal['annotation', 'proposed']
+    model_content: Literal['annotation', 'proposed', 'update']
     originator: Literal[
         'te',
         'pmo',
@@ -166,22 +166,24 @@ class ObservationFeature(Schema):
 
 
 class Feature(Schema):
-    class Config:
-        arbitrary_types_allowed = True
-
     type: Literal['Feature']
     properties: Annotated[
         SiteFeature | ObservationFeature,
         Field(discriminator='type'),
     ]
-    geometry: GEOSGeometry
+    geometry: dict[str, Any]
+
+    @property
+    def parsed_geometry(self) -> GEOSGeometry:
+        return GEOSGeometry(json.dumps(self.geometry))
 
     @validator('geometry', pre=True)
     def parse_geometry(cls, v: dict[str, Any]):
         try:
-            return GEOSGeometry(json.dumps(v))
+            GEOSGeometry(json.dumps(v))
         except GDALException:
             raise ValueError('Failed to parse geometry.')
+        return v
 
     @root_validator
     def ensure_correct_geometry_type(cls, values: dict[str, Any]):
@@ -189,7 +191,7 @@ class Feature(Schema):
             return values
         if (
             isinstance(values['properties'], SiteFeature)
-            and values['geometry'].geom_type != 'Polygon'
+            and values['geometry'].get('type') != 'Polygon'
         ):
             raise ValueError('Site geometry must be of type "Polygon"')
         return values

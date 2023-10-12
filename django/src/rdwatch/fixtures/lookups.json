@@ -360,7 +360,7 @@
     "pk": 1,
     "fields": {
       "slug": "TE",
-      "description": "Test and Evaluation Team"
+      "description": "Ground Truth"
     }
   },
   {

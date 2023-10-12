@@ -16,7 +16,7 @@ export type SiteEvaluationList = {
   };
   performers: Array<any>;
   results: Array<{
-    id: number;
+    id: string;
     site: string;
     configuration: any;
     performer: {

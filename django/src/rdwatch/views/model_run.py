@@ -8,6 +8,7 @@ from ninja.schema import validator
 from pydantic import UUID4, constr  # type: ignore
 
 from django.contrib.postgres.aggregates import JSONBAgg
+from django.core.cache import cache
 from django.db import transaction
 from django.db.models import (
     Avg,
@@ -235,21 +236,36 @@ class ModelRunPagination(PageNumberPagination):
         filters: ModelRunFilterSchema,
         **params,
     ) -> dict[str, Any]:
-        qs = super().paginate_queryset(queryset, pagination, **params)
+        # TODO: remove caching after model runs endpoint is
+        # refactored to be more efficient.
+        cache_key = _get_model_runs_cache_key(filters.dict())
+        model_runs = cache.get(cache_key)
 
-        aggregate_kwargs = {
-            'timerange': JSONObject(
-                min=ExtractEpoch(Min('evaluations__start_date')),
-                max=ExtractEpoch(Max('evaluations__end_date')),
-            ),
-        }
-        if filters.region:
-            aggregate_kwargs['bbox'] = Coalesce(
-                BoundingBoxGeoJSON('evaluations__region__geom'),
-                BoundingBoxGeoJSON('evaluations__geom'),
+        # If we have a cache miss, execute the query and save the results to cache
+        # before returning.
+        if model_runs is None:
+            qs = super().paginate_queryset(queryset, pagination, **params)
+
+            aggregate_kwargs = {
+                'timerange': JSONObject(
+                    min=ExtractEpoch(Min('evaluations__start_date')),
+                    max=ExtractEpoch(Max('evaluations__end_date')),
+                ),
+            }
+            if filters.region:
+                aggregate_kwargs['bbox'] = Coalesce(
+                    BoundingBoxGeoJSON('evaluations__region__geom'),
+                    BoundingBoxGeoJSON('evaluations__geom'),
+                )
+
+            model_runs = qs | queryset.aggregate(**aggregate_kwargs)
+            cache.set(
+                key=cache_key,
+                value=model_runs,
+                timeout=timedelta(days=30).total_seconds(),
             )
 
-        return qs | queryset.aggregate(**aggregate_kwargs)
+        return model_runs
 
 
 @router.post('/', response={200: ModelRunDetailSchema}, exclude_none=True)
@@ -281,14 +297,28 @@ def create_model_run(
     }
 
 
+def _get_model_runs_cache_key(params: dict) -> str:
+    """Generate a cache key for the model runs listing endpoint."""
+    most_recent_evaluation = ModelRun.objects.aggregate(
+        latest_eval=Max('evaluations__timestamp')
+    )['latest_eval']
+
+    return '|'.join(
+        [
+            ModelRun.__name__,
+            str(most_recent_evaluation),
+            *[f'{key}={value}' for key, value in params.items()],
+        ]
+    ).replace(' ', '_')
+
+
 @router.get('/', response={200: list[ModelRunListSchema]})
 @paginate(ModelRunPagination)
 def list_model_runs(
     request: HttpRequest,
     filters: ModelRunFilterSchema = Query(...),  # noqa: B008
 ):
-    queryset = get_queryset()
-    return filters.filter(queryset)
+    return filters.filter(get_queryset())
 
 
 @router.get('/{id}/', response={200: ModelRunDetailSchema})

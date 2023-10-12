@@ -69,6 +69,7 @@ def get_siteobservations_images(
     dayRange=14,
     no_data_limit=50,
     overrideDates: None | list[datetime, datetime] = None,
+    scale: Literal['default', 'bits'] = 'default',
 ) -> None:
     constellationObj = Constellation.objects.filter(slug=baseConstellation).first()
     # Ensure we are using ints for the DayRange and no_data_limit
@@ -87,16 +88,15 @@ def get_siteobservations_images(
     max_time = datetime.min
     max_bbox = [float('inf'), float('inf'), float('-inf'), float('-inf')]
     matchConstellation = ''
-    baseSiteEval = None
-    if site_obs_count == 0:
-        baseSiteEval = SiteEvaluation.objects.get(pk=site_eval_id)
-        mercator: tuple[float, float, float, float] = baseSiteEval.geom.extent
-        tempbox = transformer.transform_bounds(
-            mercator[0], mercator[1], mercator[2], mercator[3]
-        )
-        bbox = [tempbox[1], tempbox[0], tempbox[3], tempbox[2]]
-        bbox = scale_bbox(bbox, 1.2)
-        max_bbox = get_max_bbox(bbox, max_bbox)
+    # Use the base SiteEvaluation extents as the max size
+    baseSiteEval = SiteEvaluation.objects.get(pk=site_eval_id)
+    mercator: tuple[float, float, float, float] = baseSiteEval.geom.extent
+    tempbox = transformer.transform_bounds(
+        mercator[0], mercator[1], mercator[2], mercator[3]
+    )
+    bbox = [tempbox[1], tempbox[0], tempbox[3], tempbox[2]]
+    bbox = scale_bbox(bbox, 1.2)
+    max_bbox = get_max_bbox(bbox, max_bbox)
 
     # First we gather all images that match observations
     count = 0
@@ -150,7 +150,7 @@ def get_siteobservations_images(
                 count += 1
                 continue
             results = fetch_boundbox_image(
-                bbox, timestamp, constellation, baseConstellation == 'WV'
+                bbox, timestamp, constellation, baseConstellation == 'WV', scale
             )
             if results is None:
                 logger.warning(f'COULD NOT FIND ANY IMAGE FOR TIMESTAMP: {timestamp}')
@@ -167,7 +167,7 @@ def get_siteobservations_images(
             elif dayRange == -1:
                 found_timestamps[found_timestamp] = True
             # logger.warning(f'Retrieved Image with timestamp: {timestamp}')
-            output = f'tile_image_{observation.id}.jpg'
+            output = f'tile_image_{observation.id}.png'
             image = File(io.BytesIO(bytes), name=output)
             imageObj = Image.open(io.BytesIO(bytes))
             if image is None:  # No null/None images should be set
@@ -264,7 +264,9 @@ def get_siteobservations_images(
             # we need to add a new image into the structure
             bytes = None
             if worldView:
-                bytes = get_worldview_processed_visual_bbox(capture, max_bbox)
+                bytes = get_worldview_processed_visual_bbox(
+                    capture, max_bbox, 'PNG', scale
+                )
             else:
                 bytes = get_raster_bbox(capture.uri, max_bbox)
             if bytes is None:
@@ -273,7 +275,7 @@ def get_siteobservations_images(
             percent_black = get_percent_black_pixels(bytes)
             cloudcover = capture.cloudcover
             count += 1
-            output = f'tile_image_{baseSiteEval.pk}_nonobs_{count}.jpg'
+            output = f'tile_image_{baseSiteEval.pk}_nonobs_{count}.png'
             image = File(io.BytesIO(bytes), name=output)
             imageObj = Image.open(io.BytesIO(bytes))
             if image is None:  # No null/None images should be set

@@ -176,7 +176,6 @@ def list_regions(
     evaluationUUID = evaluation.uuid
     # Now we can get the SiteId information for this evaluationId
     generatedSiteId = f'{region}_{str(siteNumber).zfill(4)}_{performer_name}_{version}'
-    logger.warning(generatedSiteId)
     siteObj = Site.objects.filter(
         site_id=generatedSiteId, evaluation_run_uuid=evaluationUUID
     ).first()

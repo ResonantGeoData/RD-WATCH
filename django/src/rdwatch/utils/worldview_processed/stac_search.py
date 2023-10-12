@@ -1,9 +1,12 @@
+import logging
 from datetime import datetime, timedelta
 from typing import Literal, TypedDict, cast
 
 from pystac_client import Client
 
 from django.conf import settings
+
+logger = logging.getLogger(__name__)
 
 
 class Link(TypedDict):
@@ -40,14 +43,6 @@ class Results(TypedDict):
     context: Context
     features: list[Feature]
     links: list[Link]
-
-
-class SearchParams(TypedDict, total=False):
-    bbox: tuple[float, float, float, float]
-    datetime: str
-    collections: list[str]
-    page: int
-    limit: int
 
 
 COLLECTIONS: list[str] = []

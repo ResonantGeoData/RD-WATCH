@@ -39,7 +39,7 @@ class SiteFeature(Schema):
     ]
     start_date: datetime | None
     end_date: datetime | None
-    model_content: Literal['annotation', 'proposed']
+    model_content: Literal['annotation', 'proposed', 'update']
     originator: Literal[
         'te',
         'pmo',

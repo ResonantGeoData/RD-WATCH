@@ -46,6 +46,11 @@ logger = logging.getLogger(__name__)
 
 BaseTime = '2013-01-01'  # lowest time to use if time is null for observations
 
+BboxScale = 1.2
+
+ToMeters = 111139.0 # rough number to convert lat/long to Meters
+
+overrideImageSize = 1000 # number in meters to add to the center of small polygons
 
 def is_inside_range(
     timestamps: Iterable[datetime], check_timestamp: datetime, days_range
@@ -69,7 +74,7 @@ def get_siteobservations_images(
     dayRange=14,
     no_data_limit=50,
     overrideDates: None | list[datetime, datetime] = None,
-    scale: Literal['default', 'bits'] = 'default',
+    scale: Literal['default', 'bits'] | list[int] = 'default',
 ) -> None:
     constellationObj = Constellation.objects.filter(slug=baseConstellation).first()
     # Ensure we are using ints for the DayRange and no_data_limit
@@ -95,13 +100,17 @@ def get_siteobservations_images(
         mercator[0], mercator[1], mercator[2], mercator[3]
     )
     bbox = [tempbox[1], tempbox[0], tempbox[3], tempbox[2]]
-    bbox = scale_bbox(bbox, 1.2)
+    bbox_width = (tempbox[2] - tempbox[0]) * ToMeters  # calculation for meter
+    bbox_height = (tempbox[3] - tempbox[1]) * ToMeters
+    if baseConstellation != 'WV' and (bbox_width < overrideImageSize or bbox_height < overrideImageSize):
+        size_diff = ((overrideImageSize * 0.5) / ToMeters)  # find how much to add to each lon/lat
+        bbox = [tempbox[1] - size_diff, tempbox[0] - size_diff, tempbox[3] + size_diff, tempbox[2] + size_diff]
+    bbox = scale_bbox(bbox, BboxScale)
     max_bbox = get_max_bbox(bbox, max_bbox)
 
     # First we gather all images that match observations
-    count = 0
+    count = 1
     for observation in site_observations.iterator():
-        count += 1
         self.update_state(
             state='PROGRESS',
             meta={
@@ -119,7 +128,9 @@ def get_siteobservations_images(
             mercator[0], mercator[1], mercator[2], mercator[3]
         )
         bbox = [tempbox[1], tempbox[0], tempbox[3], tempbox[2]]
-        bbox = scale_bbox(bbox, 1.2)
+        logger.warning(f' width:{tempbox[3] - tempbox[1]} height: {tempbox[2] - tempbox[0]}')
+        
+        bbox = scale_bbox(bbox, BboxScale)
         max_bbox = get_max_bbox(bbox, max_bbox)
 
         timestamp = observation.timestamp
@@ -127,6 +138,7 @@ def get_siteobservations_images(
         # We need to grab the image for this timerange and type
         logger.warning(timestamp)
         if str(constellation) == baseConstellation and timestamp is not None:
+            count += 1
             baseSiteEval = observation.siteeval
             matchConstellation = constellation
             found = SiteImage.objects.filter(
@@ -270,6 +282,7 @@ def get_siteobservations_images(
             else:
                 bytes = get_raster_bbox(capture.uri, max_bbox)
             if bytes is None:
+                count += 1
                 logger.warning(f'COULD NOT FIND ANY IMAGE FOR TIMESTAMP: {timestamp}')
                 continue
             percent_black = get_percent_black_pixels(bytes)
@@ -279,6 +292,7 @@ def get_siteobservations_images(
             image = File(io.BytesIO(bytes), name=output)
             imageObj = Image.open(io.BytesIO(bytes))
             if image is None:  # No null/None images should be set
+                count += 1
                 continue
             found = SiteImage.objects.filter(
                 siteeval=baseSiteEval,
@@ -310,6 +324,8 @@ def get_siteobservations_images(
                     image_bbox=Polygon.from_bbox(max_bbox),
                     image_dimensions=[imageObj.width, imageObj.height],
                 )
+        else:
+            count += 1
     fetching_task = SatelliteFetching.objects.get(siteeval_id=site_eval_id)
     fetching_task.status = SatelliteFetching.Status.COMPLETE
     fetching_task.celery_id = ''

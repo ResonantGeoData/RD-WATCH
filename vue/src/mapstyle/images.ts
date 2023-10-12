@@ -14,11 +14,13 @@ const getClosestTimestamp = (id: string, timestamp: number, enabledSiteObservati
             });
             const index = observation.images.findIndex((item) => item.timestamp === closest);
             if (index !== -1) {
-                return observation.images[index].image
+                const bbox = observation.images[index].bbox
+                const coordinates = [[bbox.xmin, bbox.ymax], [bbox.xmax, bbox.ymax], [bbox.xmax, bbox.ymin], [bbox.xmin, bbox.ymin]];
+                return {url: observation.images[index].image, coordinates };
             }
         }
     }
-    return '';
+    return {url: '', coordinates: [[0,0], [0,0], [0,0], [0,0]] as ImageBBox};
 }
 
 
@@ -53,9 +55,12 @@ export const updateImageMapSources =  (
         if (map ) {
             const mapSource = map.getSource(source) as ImageSource;
             if (mapSource) {
+                const { url, coordinates} = getClosestTimestamp(item.id, timestamp, enabledSiteObservations, settings);
+                console.log(url);
+                console.log(coordinates);
                 mapSource.updateImage({
-                    url: getClosestTimestamp(item.id, timestamp, enabledSiteObservations, settings),
-                    coordinates: scaleBoundingBox(item.bbox, 1.2),
+                    url,
+                    coordinates,
                 });
             }
         }
@@ -84,11 +89,14 @@ export const buildImageSourceFilter = (
             }
         }
         if (!update) {
+            const { url, coordinates} = getClosestTimestamp(item.id, timestamp, enabledSiteObservations, settings);
+            console.log(url);
+            console.log(coordinates);
             results[source] =
             {
                 type: 'image',
-                url: getClosestTimestamp(item.id, timestamp, enabledSiteObservations, settings),
-                coordinates: scaleBoundingBox(item.bbox, 1.2),
+                url,
+                coordinates,
             }
         }
     });

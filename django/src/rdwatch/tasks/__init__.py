@@ -46,11 +46,14 @@ logger = logging.getLogger(__name__)
 
 BaseTime = '2013-01-01'  # lowest time to use if time is null for observations
 
-BboxScale = 1.2
+BboxScaleDefault = 1.2
 
-ToMeters = 111139.0 # rough number to convert lat/long to Meters
+ToMeters = 111139.0  # rough number to convert lat/long to Meters
 
-overrideImageSize = 1000 # number in meters to add to the center of small polygons
+overrideImageSize = (
+    1000  # number in meters to add to the center of small polygons for S2/L8
+)
+
 
 def is_inside_range(
     timestamps: Iterable[datetime], check_timestamp: datetime, days_range
@@ -75,6 +78,7 @@ def get_siteobservations_images(
     no_data_limit=50,
     overrideDates: None | list[datetime, datetime] = None,
     scale: Literal['default', 'bits'] | list[int] = 'default',
+    bboxScale: float = BboxScaleDefault,
 ) -> None:
     constellationObj = Constellation.objects.filter(slug=baseConstellation).first()
     # Ensure we are using ints for the DayRange and no_data_limit
@@ -86,15 +90,19 @@ def get_siteobservations_images(
     site_obs_count = SiteObservation.objects.filter(
         siteeval=site_eval_id, constellation_id=constellationObj.pk
     ).count()
-
     transformer = Transformer.from_crs('EPSG:3857', 'EPSG:4326')
     found_timestamps = {}
-    min_time = datetime.max
-    max_time = datetime.min
     max_bbox = [float('inf'), float('inf'), float('-inf'), float('-inf')]
     matchConstellation = ''
     # Use the base SiteEvaluation extents as the max size
     baseSiteEval = SiteEvaluation.objects.get(pk=site_eval_id)
+    min_time = baseSiteEval.start_date
+    max_time = baseSiteEval.end_date
+    if min_time is None:
+        min_time = datetime.strptime(BaseTime, '%Y-%m-%d')
+    if max_time is None:
+        max_bbox = datetime.now()
+
     mercator: tuple[float, float, float, float] = baseSiteEval.geom.extent
     tempbox = transformer.transform_bounds(
         mercator[0], mercator[1], mercator[2], mercator[3]
@@ -102,10 +110,19 @@ def get_siteobservations_images(
     bbox = [tempbox[1], tempbox[0], tempbox[3], tempbox[2]]
     bbox_width = (tempbox[2] - tempbox[0]) * ToMeters  # calculation for meter
     bbox_height = (tempbox[3] - tempbox[1]) * ToMeters
-    if baseConstellation != 'WV' and (bbox_width < overrideImageSize or bbox_height < overrideImageSize):
-        size_diff = ((overrideImageSize * 0.5) / ToMeters)  # find how much to add to each lon/lat
-        bbox = [tempbox[1] - size_diff, tempbox[0] - size_diff, tempbox[3] + size_diff, tempbox[2] + size_diff]
-    bbox = scale_bbox(bbox, BboxScale)
+    if baseConstellation != 'WV' and (
+        bbox_width < overrideImageSize or bbox_height < overrideImageSize
+    ):
+        size_diff = (
+            overrideImageSize * 0.5
+        ) / ToMeters  # find how much to add to each lon/lat
+        bbox = [
+            tempbox[1] - size_diff,
+            tempbox[0] - size_diff,
+            tempbox[3] + size_diff,
+            tempbox[2] + size_diff,
+        ]
+    bbox = scale_bbox(bbox, bboxScale)
     max_bbox = get_max_bbox(bbox, max_bbox)
 
     # First we gather all images that match observations
@@ -124,14 +141,13 @@ def get_siteobservations_images(
             min_time = min(min_time, observation.timestamp)
             max_time = max(max_time, observation.timestamp)
         mercator: tuple[float, float, float, float] = observation.geom.extent
-        tempbox = transformer.transform_bounds(
-            mercator[0], mercator[1], mercator[2], mercator[3]
-        )
-        bbox = [tempbox[1], tempbox[0], tempbox[3], tempbox[2]]
-        logger.warning(f' width:{tempbox[3] - tempbox[1]} height: {tempbox[2] - tempbox[0]}')
-        
-        bbox = scale_bbox(bbox, BboxScale)
-        max_bbox = get_max_bbox(bbox, max_bbox)
+        #  We no longer use the site obs bbox
+        # tempbox = transformer.transform_bounds(
+        #     mercator[0], mercator[1], mercator[2], mercator[3]
+        # )
+        # bbox = [tempbox[1], tempbox[0], tempbox[3], tempbox[2]]
+        # bbox = scale_bbox(bbox, BboxScale)
+        # max_bbox = get_max_bbox(bbox, max_bbox)
 
         timestamp = observation.timestamp
         constellation = observation.constellation
@@ -155,11 +171,9 @@ def get_siteobservations_images(
                 )
             ):
                 logger.warning(f'Skipping Timestamp: {timestamp}')
-                count += 1
                 continue
             if found.exists() and not force:
                 found_timestamps[observation.timestamp] = True
-                count += 1
                 continue
             results = fetch_boundbox_image(
                 bbox, timestamp, constellation, baseConstellation == 'WV', scale
@@ -210,14 +224,10 @@ def get_siteobservations_images(
 
     # Now we need to go through and find all other images
     # that exist in the start/end range of the siteEval
-    if overrideDates:
+    if overrideDates and len(overrideDates) == 2:
         min_time = datetime.strptime(overrideDates[0], '%Y-%m-%d')
         max_time = datetime.strptime(overrideDates[1], '%Y-%m-%d')
-    else:
-        if min_time == datetime.max:
-            min_time = datetime.strptime(BaseTime, '%Y-%m-%d')
-        if max_time == datetime.min:
-            max_time = datetime.now()
+
     timebuffer = ((max_time + timedelta(days=30)) - (min_time - timedelta(days=30))) / 2
     timestamp = (min_time + timedelta(days=30)) + timebuffer
 

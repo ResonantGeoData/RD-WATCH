@@ -89,7 +89,9 @@ export interface DownloadSettings {
   noData?: number;
   customDateRange?: [string, string];
   force?: boolean;
-  scale?: 'default' | 'bits'
+  scale?: 'default' | 'bits' | 'custom';
+  scaleNum?: number[];
+  bboxScale?: number;
 }
 
 export type CeleryStates = 'FAILURE' | 'PENDING' | 'SUCCESS' | 'RETRY' | 'REVOKED' | 'STARTED';

@@ -37,7 +37,6 @@ def get_bands(
         bbox,
         timebuffer=timebuffer or timedelta(hours=1),
     )
-
     if 'features' not in results:
         logger.warning("Malformed STAC response: no 'features'")
         return

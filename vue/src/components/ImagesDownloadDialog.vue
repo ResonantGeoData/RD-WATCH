@@ -17,10 +17,13 @@ const overrideDates: Ref<[string, string]> = ref(['2013-01-01', new Date().toISO
 const showAdvanced = ref(false);
 const force =ref(false);
 const customDateRange = ref(false);
-const scaleOptions = ref(['default', 'bits'])
-const scale: Ref<'default' | 'bits'> = ref('default')
+const scaleOptions = ref(['default', 'bits', 'custom'])
+const scale: Ref<'default' | 'bits' | 'custom'> = ref('default')
+const scaleNums: Ref<[number, number]> = ref([0, 10000])
+const bboxScale: Ref<number> = ref(1.2);
 
 const download = () => {
+    
     emit('download', {
         constellation: selectedSource.value,
         dayRange: dayRange.value,
@@ -28,6 +31,8 @@ const download = () => {
         customDateRange: customDateRange.value ? overrideDates.value : undefined,
         force: force.value,
         scale: scale.value,
+        scaleNum: scale.value === 'custom' ? scaleNums.value : undefined,
+        bboxScale: bboxScale.value,
     })
 }
 
@@ -84,7 +89,6 @@ const display = ref(true);
             />
           </v-row>        
           <v-row
-            v-if="selectedSource === 'WV'"
             dense
             align="center"
             class="pb-5"
@@ -96,7 +100,52 @@ const display = ref(true);
               label="Bit Scaling"
               persistent-hint
             />
-          </v-row>        
+          </v-row>    
+          <v-row
+            v-if="scale==='custom'"
+            dense
+            align="center"
+            class="pb-5"
+          >
+            <v-text-field
+              v-model.number="scaleNums[0]"
+              type="number"
+              label="low"
+              class="mx-2"
+            />
+            <v-text-field
+              v-model.number="scaleNums[1]"
+              type="number"
+              label="high"
+              class="mx-2"
+            />
+          </v-row>    
+          <v-row
+            dense
+            align="center"
+            class="pb-5"
+          >
+            <v-text-field
+              v-model.number="bboxScale"
+              type="number"
+              label="Box Scaling"
+            />
+            <v-tooltip
+              open-delay="50"
+              bottom
+            >
+              <template #activator="{ props:subProps }">
+                <v-icon
+                  v-bind="subProps"
+                >
+                  mdi-information
+                </v-icon>
+              </template>
+              <span>
+                Adds a scaling factor to the calculating bounding box to provide more image area around site
+              </span>
+            </v-tooltip>
+          </v-row>    
 
           <v-row
             dense

@@ -94,6 +94,7 @@ def get_siteobservations_images(
     matchConstellation = ''
     # Use the base SiteEvaluation extents as the max size
     baseSiteEval = SiteEvaluation.objects.get(pk=site_eval_id)
+    # use the Eval Start/End date if not null
     min_time = baseSiteEval.start_date
     max_time = baseSiteEval.end_date
     if min_time is None:
@@ -106,7 +107,8 @@ def get_siteobservations_images(
         mercator[0], mercator[1], mercator[2], mercator[3]
     )
     bbox = [tempbox[1], tempbox[0], tempbox[3], tempbox[2]]
-    bbox_width = (tempbox[2] - tempbox[0]) * ToMeters  # calculation for meter
+    # if width | height is too small we pad S2/L8 regions for more context
+    bbox_width = (tempbox[2] - tempbox[0]) * ToMeters
     bbox_height = (tempbox[3] - tempbox[1]) * ToMeters
     if baseConstellation != 'WV' and (
         bbox_width < overrideImageSize or bbox_height < overrideImageSize
@@ -120,7 +122,9 @@ def get_siteobservations_images(
             tempbox[3] + size_diff,
             tempbox[2] + size_diff,
         ]
+    # add the included padding to the updated BBOX
     bbox = scale_bbox(bbox, bboxScale)
+    # get the updated BBOX if it's bigger
     max_bbox = get_max_bbox(bbox, max_bbox)
 
     # First we gather all images that match observations
@@ -139,13 +143,6 @@ def get_siteobservations_images(
             min_time = min(min_time, observation.timestamp)
             max_time = max(max_time, observation.timestamp)
         mercator: tuple[float, float, float, float] = observation.geom.extent
-        #  We no longer use the site obs bbox
-        # tempbox = transformer.transform_bounds(
-        #     mercator[0], mercator[1], mercator[2], mercator[3]
-        # )
-        # bbox = [tempbox[1], tempbox[0], tempbox[3], tempbox[2]]
-        # bbox = scale_bbox(bbox, BboxScale)
-        # max_bbox = get_max_bbox(bbox, max_bbox)
 
         timestamp = observation.timestamp
         constellation = observation.constellation

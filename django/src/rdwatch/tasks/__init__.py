@@ -43,16 +43,14 @@ from rdwatch.utils.worldview_processed.raster_tile import (
 from rdwatch.views.site_evaluation import get_site_model_feature_JSON
 
 logger = logging.getLogger(__name__)
-
-BaseTime = '2013-01-01'  # lowest time to use if time is null for observations
-
+# lowest time to use if time is null for observations
+BaseTime = '2013-01-01'
+# Default scale multiplier for bounding box to provide more area
 BboxScaleDefault = 1.2
-
-ToMeters = 111139.0  # rough number to convert lat/long to Meters
-
-overrideImageSize = (
-    1000  # number in meters to add to the center of small polygons for S2/L8
-)
+# rough number to convert lat/long to Meters
+ToMeters = 111139.0
+# number in meters to add to the center of small polygons for S2/L8
+overrideImageSize = 1000
 
 
 def is_inside_range(

@@ -155,7 +155,7 @@ class SiteEvaluation(models.Model):
         return site_eval
 
     @classmethod
-    def bulk_create_from_from_region_model(
+    def bulk_create_from_region_model(
         cls, region_model: RegionModel, configuration: ModelRun
     ) -> list[Self]:
         region_feature = region_model.region_feature

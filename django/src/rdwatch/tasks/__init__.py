@@ -50,7 +50,7 @@ BboxScaleDefault = 1.2
 # rough number to convert lat/long to Meters
 ToMeters = 111139.0
 # number in meters to add to the center of small polygons for S2/L8
-overrideImageSize = 1000
+overrideImageSize = 500
 
 
 def is_inside_range(

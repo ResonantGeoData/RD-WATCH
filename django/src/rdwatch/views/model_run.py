@@ -350,7 +350,7 @@ def post_region_model(
     region_model: RegionModel,
 ):
     model_run = get_object_or_404(ModelRun, pk=model_run_id)
-    site_evaluations = SiteEvaluation.bulk_create_from_from_region_model(
+    site_evaluations = SiteEvaluation.bulk_create_from_region_model(
         region_model, model_run
     )
     return 201, [eval.id for eval in site_evaluations]
@@ -495,8 +495,10 @@ def check_download(request: HttpRequest, task_id: str):
 
 
 @router.get('/{id}/download')
-def get_downloaded_annotations(request: HttpRequest, id: int, task_id: str):
-    annotation_export = AnnotationExport.objects.filter(celery_id=task_id)
+def get_downloaded_annotations(request: HttpRequest, id: UUID4, task_id: str):
+    annotation_export = AnnotationExport.objects.filter(
+        configuration=id, celery_id=task_id
+    )
     if annotation_export.exists():
         annotation_export = annotation_export.first()
         response = HttpResponse(

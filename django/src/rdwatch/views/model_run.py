@@ -350,7 +350,7 @@ def post_region_model(
     region_model: RegionModel,
 ):
     model_run = get_object_or_404(ModelRun, pk=model_run_id)
-    site_evaluations = SiteEvaluation.bulk_create_from_from_region_model(
+    site_evaluations = SiteEvaluation.bulk_create_from_region_model(
         region_model, model_run
     )
     return 201, [eval.id for eval in site_evaluations]

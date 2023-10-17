@@ -96,9 +96,9 @@ def upload_to_rgd(
     if rgd_auth_cookie or 'RGD_AUTH_COOKIE' in os.environ:
         cookies = {'token': os.environ.get('RGD_AUTH_COOKIE', rgd_auth_cookie)}
 
-    model_runs: defaultdict[str, list[Path]] = defaultdict(list)
-
     for dir, endpoint in check_vals:
+        model_runs: defaultdict[str, list[Path]] = defaultdict(list)
+
         geojson_dir_path = Path(base_dir) / dir
         geojson_files = sorted(list(geojson_dir_path.iterdir()))
 

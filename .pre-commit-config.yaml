@@ -1,7 +1,7 @@
 files: ^(django|cli|scripts)/
 repos:
   - repo: https://github.com/pre-commit/pre-commit-hooks
-    rev: v4.4.0
+    rev: v4.5.0
     hooks:
       - id: check-case-conflict
       - id: check-docstring-first
@@ -18,7 +18,7 @@ repos:
       - id: trailing-whitespace
 
   - repo: https://github.com/psf/black
-    rev: 23.3.0
+    rev: 23.9.1
     hooks:
       - id: black
         args: [--config, django/pyproject.toml]
@@ -30,19 +30,19 @@ repos:
         args: [--settings-file, django/pyproject.toml]
 
   - repo: https://github.com/asottile/pyupgrade
-    rev: v3.3.1
+    rev: v3.15.0
     hooks:
       - id: pyupgrade
         args: [--py311-plus]
 
   - repo: https://github.com/adamchainz/django-upgrade
-    rev: 1.13.0
+    rev: 1.15.0
     hooks:
     -   id: django-upgrade
         args: [--target-version, "4.1"]
 
   - repo: https://github.com/PyCQA/autoflake
-    rev: v2.0.2
+    rev: v2.2.1
     hooks:
       - id: autoflake
         args:
@@ -53,7 +53,7 @@ repos:
           - --remove-unused-variables
 
   - repo: https://github.com/PyCQA/flake8
-    rev: 6.0.0
+    rev: 6.1.0
     hooks:
       - id: flake8
         additional_dependencies:

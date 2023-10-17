@@ -192,7 +192,7 @@ def patch_site_evaluation(request: HttpRequest, id: UUID4, data: SiteEvaluationR
     return 200
 
 
-def get_site_model_feature_JSON(id: int, obsevations=False):
+def get_site_model_feature_JSON(id: UUID4, obsevations=False):
     query = (
         SiteEvaluation.objects.filter(pk=id)
         .values()

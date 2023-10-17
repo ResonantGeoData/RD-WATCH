@@ -24,3 +24,8 @@ __pycache__
 .venv
 *.pyc
 dmypy.json
+
+# Django Files
+django/celerybeat-schedule.db
+django/nohup.out
+

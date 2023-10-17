@@ -495,7 +495,7 @@ def check_download(request: HttpRequest, task_id: str):
 
 
 @router.get('/{id}/download')
-def get_downloaded_annotations(request: HttpRequest, id: int, task_id: str):
+def get_downloaded_annotations(request: HttpRequest, id: str, task_id: str):
     annotation_export = AnnotationExport.objects.filter(celery_id=task_id)
     if annotation_export.exists():
         annotation_export = annotation_export.first()

@@ -2,7 +2,6 @@ from . import lookups
 from .model_run import ModelRun
 from .site_evaluation import SiteEvaluation, SiteEvaluationTracking
 from .region import Region
-from .site_observation import SiteObservation
 from .evaluation_run import EvaluationRun
 from .evaluation_activity_classification_matrix import EvaluationActivityClassificationMatrix
 from .evaluation_activity_classification_phase import EvaluationActivityClassificationPhase
@@ -16,13 +15,10 @@ from .evaluation_broad_area_search_metric import EvaluationBroadAreaSearchMetric
 from .observation import Observation
 from .observation_comparison import ObservationComparison
 from .site import Site
-from .annotation_exports import AnnotationExport
-from .satellite_fetching import SatelliteFetching
-
+from .performer import Performer
 
 
 __all__ = [
-    'AnnotationExport',
     'EvaluationActivityClassificationMatrix',
     'EvaluationActivityClassificationPhase',
     'EvaluationActivityClassificationF1',
@@ -36,10 +32,9 @@ __all__ = [
     'lookups',
     'ModelRun',
     'Observation',
+    'Performer',
     'Region',
-    'SatelliteFetching',
     'Site',
     'SiteEvaluation',
     'SiteEvaluationTracking',
-    'SiteObservation'
 ]

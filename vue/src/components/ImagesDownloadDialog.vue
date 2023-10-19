@@ -130,7 +130,7 @@ const display = ref(true);
             >
               <v-text-field
                 v-model.number="bboxScale"
-                :rules="[ v => v >= 1 || 'Must be >= 1', v => v <= 2 || 'Must be <= 2']"
+                :rules="[ v => v >= 1.2 || 'Must be >= 1.2', v => v <= 2 || 'Must be <= 2']"
                 type="number"
                 step="0.1"
                 label="Box Scaling"

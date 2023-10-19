@@ -50,7 +50,7 @@ BboxScaleDefault = 1.2
 # rough number to convert lat/long to Meters
 ToMeters = 111139.0
 # number in meters to add to the center of small polygons for S2/L8
-overrideImageSize = 500
+overrideImageSize = 1000
 
 
 def is_inside_range(
@@ -128,13 +128,13 @@ def get_siteobservations_images(
     max_bbox = get_max_bbox(bbox, max_bbox)
 
     # First we gather all images that match observations
-    count = 1
+    count = 0
     for observation in site_observations.iterator():
         self.update_state(
             state='PROGRESS',
             meta={
                 'current': count,
-                'total': site_obs_count + 1,
+                'total': site_obs_count,
                 'mode': 'Site Observations',
                 'siteEvalId': site_eval_id,
             },
@@ -252,7 +252,7 @@ def get_siteobservations_images(
         baseSiteEval is None
     ):  # We need to grab the siteEvaluation directly for a reference
         baseSiteEval = SiteEvaluation.objects.filter(pk=site_eval_id).first()
-    count = 0
+    count = 1
     logger.warning(f'Found {len(captures)} captures')
     for (
         capture
@@ -263,7 +263,7 @@ def get_siteobservations_images(
             state='PROGRESS',
             meta={
                 'current': count,
-                'total': len(captures) + 1,
+                'total': len(captures),
                 'mode': 'Image Captures',
                 'siteEvalId': site_eval_id,
             },

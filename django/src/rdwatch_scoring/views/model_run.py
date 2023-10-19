@@ -156,6 +156,7 @@ def get_queryset():
                 output_field=CharField()
             ),
             region=F('region'),
+            performer_slug=F('performer'),
             performer=JSONObject(
                 id=0,
                 team_name=F('performer'),

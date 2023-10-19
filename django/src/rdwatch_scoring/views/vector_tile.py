@@ -1,4 +1,5 @@
 from datetime import datetime, timedelta
+from pydantic import UUID4
 
 from django.contrib.gis.db.models import GeometryField
 from django.contrib.gis.db.models.functions import Area, Transform
@@ -18,6 +19,7 @@ from django.db.models import (
     When,
     Window,
 )
+from django.db.models.functions import Replace, Lower
 from django.http import Http404, HttpRequest, HttpResponse
 
 from rdwatch.db.functions import ExtractEpoch, GroupExcludeRowRange
@@ -26,7 +28,7 @@ from rdwatch_scoring.models import ModelRun, Region, EvaluationRun, Site, Observ
 from .model_run import router
 
 def _get_vector_tile_cache_key(
-    evaluation_run_uuid: int, z: int, x: int, y: int, timestamp: datetime
+    evaluation_run_uuid: UUID4, z: int, x: int, y: int, timestamp: datetime
 ) -> str:
     return '|'.join(
         [
@@ -42,7 +44,7 @@ def _get_vector_tile_cache_key(
 
 
 @router.get('/{evaluation_run_uuid}/vector-tile/{z}/{x}/{y}.pbf/')
-def vector_tile(request: HttpRequest, evaluation_run_uuid, z: int, x: int, y: int):
+def vector_tile(request: HttpRequest, evaluation_run_uuid: UUID4, z: int, x: int, y: int):
 
     latest_timestamp = EvaluationRun.objects.get(pk=evaluation_run_uuid).start_datetime
 
@@ -97,22 +99,23 @@ def vector_tile(request: HttpRequest, evaluation_run_uuid, z: int, x: int, y: in
             .filter(intersects)
             .values()
             .annotate(
-                id=F('pk'),
+                id=F('site_id'),
                 mvtgeom=mvtgeom,
-                configuration_id=Value(evaluation_run_uuid),
+                configuration_id=F('evaluation_run_uuid'),
+                label=F('observation__phase'),
+                timestamp=ExtractEpoch('evaluation_run_uuid__start_datetime'),
                 timemin=ExtractEpoch('start_date'),
                 timemax=ExtractEpoch('end_date'),
                 performer_id=F('originator'),
-                region_id=F('region_id'),
-                groundtruth=
-                Case(
+                region=F('region_id'),
+                groundtruth=Case(
                     When(
                         Q(originator='te'),
                         True,
-                        ),
+                    ),
                     default=False,
                 ),
-                site_polygon=Value(True, output_field=BooleanField())
+                site_polygon=Value(False, output_field=BooleanField())
             )
         )
         (
@@ -127,22 +130,23 @@ def vector_tile(request: HttpRequest, evaluation_run_uuid, z: int, x: int, y: in
             .filter(intersects)
             .values()
             .annotate(
+                id=F('uuid'),
                 mvtgeom=mvtgeom,
-                configuration_id=Value(evaluation_run_uuid),
+                configuration_id=F('site_uuid__evaluation_run_uuid'),
                 site_number=F('site_uuid__site_id'),
-                label=F('phase'), # This should be an ID, on client side can make it understand this
+                label=Lower(Replace('phase', Value(" "), Value("_"))), # This should be an ID, on client side can make it understand this
                 area=Area(Transform('transformedgeom', srid=6933)),
                 timemin=ExtractEpoch('date'),
                 timemax=ExtractEpoch('date'),
                 performer_id=F('site_uuid__originator'),
-                region_id=F('site_uuid__region_id'),
+                region=F('site_uuid__region_id'),
                 version=F('site_uuid__version'),
                 groundtruth=
                 Case(
                     When(
                         Q(site_uuid__originator='te'),
-                        True,)
-                    ,
+                        True,
+                    ),
                     default=False,
                 ),
             )
@@ -153,11 +157,15 @@ def vector_tile(request: HttpRequest, evaluation_run_uuid, z: int, x: int, y: in
         ) = observations_queryset.query.sql_with_params()
 
         region_queryset = (
-            Region.objects.filter(id__in=site_queryset.values('region_id'))
+            Region.objects.filter(id=site_queryset.values('region_id')[:1])
             .annotate(geomfromtext=geomfromobservationtext)
             .annotate(transformedgeom=transform)
             .filter(intersects)
-            .annotate(mvtgeom=mvtgeom)
+            .values()
+            .annotate(
+                name=F('id'),
+                mvtgeom=mvtgeom
+            )
         )
         (
             region_sql,
@@ -197,13 +205,11 @@ def vector_tile(request: HttpRequest, evaluation_run_uuid, z: int, x: int, y: in
 
         with connections['scoringdb'].cursor() as cursor:
             cursor.execute(sql, params)
-
             row = cursor.fetchone()
-        # What is being returned here?
         tile = row[0]
 
         # Cache this for 30 days
-        cache.set(cache_key, tile.tobytes(), timedelta(days=30).total_seconds())
+        cache.set(cache_key, tile.tobytes(), timedelta(minutes=1).total_seconds())
 
     return HttpResponse(
         tile,

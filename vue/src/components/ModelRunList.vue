@@ -62,7 +62,7 @@ async function loadMore() {
     // const modelRunResults = modelRunList.items.sort((a, b) =>
     //   b.parameters["ground_truth"] === true ? 1 : -1
     // );
-    const modelRunResults = modelRunList
+    const modelRunResults = modelRunList.items
     const keyedModelRunResults = modelRunResults.map((val, i) => {
       return {
         ...val,

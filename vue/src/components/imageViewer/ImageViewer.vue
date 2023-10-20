@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { Ref, computed, ref, watch, withDefaults } from "vue";
 import { ApiService } from "../../client";
-import { BaseBBox, EvaluationImage, EvaluationImageResults } from "../../types";
+import { EvaluationImage, EvaluationImageResults } from "../../types";
 import { getColorFromLabel, styles } from '../../mapstyle/annotationStyles';
 import { loadAndToggleSatelliteImages, state } from '../../store'
 import { VDatePicker } from 'vuetify/labs/VDatePicker'
@@ -216,6 +216,7 @@ function drawForDownload() {
         height,
         background,
         drawGroundTruth.value,
+        rescaleImage.value,
       );
       CanvasCapture.recordFrame();
       index += 1

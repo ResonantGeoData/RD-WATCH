@@ -63,29 +63,42 @@ const drawData = (
           if (context) {
           canvas.width = overrideWidth === -1 ? image.image_dimensions[0]: overrideWidth;
           canvas.height = overrideHeight === -1 ? image.image_dimensions[1]: overrideHeight;
-
           // draw the offscreen canvas
           if ((overrideWidth !== -1 || overrideHeight !== -1) && background && poly.scaled && rescale) {
             context.drawImage(background, poly.scaled.crop.x, poly.scaled.crop.y, poly.scaled.crop.width, poly.scaled.crop.height, 0, 0, overrideWidth, overrideHeight);
           } else if ((overrideWidth !== -1 || overrideHeight !== -1) && background) {
             context.drawImage(background, 0, 0, image.image_dimensions[0], image.image_dimensions[1], 0, 0, overrideWidth, overrideHeight);
           } else if (poly.scaled && background && rescale) {
-            context.drawImage(background, poly.scaled.crop.x, poly.scaled.crop.y, poly.scaled.crop.width, poly.scaled.crop.height);
+            context.drawImage(background, poly.scaled.crop.x, poly.scaled.crop.y, poly.scaled.crop.width, poly.scaled.crop.height, 0, 0, canvas.width, canvas.height );
           } else if (background) {
             context.drawImage(background, 0, 0);
           }
-          const widthRatio = overrideWidth / image.image_dimensions[0];
-          const heightRatio = overrideHeight / image.image_dimensions[1];
+
+          const standardPoly = (overrideHeight === -1 && !rescale) || !poly.scaled;
+
+          let widthRatio = rescale && poly.scaled ? image.image_dimensions[0] / poly.scaled.crop.width  : overrideWidth / image.image_dimensions[0];
+          let heightRatio = rescale && poly.scaled  ? image.image_dimensions[1] / poly.scaled.crop.height : overrideHeight / image.image_dimensions[1];
   
+          let computedImageHeight = rescale && poly.scaled ? poly.scaled.crop.height: image.image_dimensions[1];
+          let computedOverrideHeight = rescale && poly.scaled ? image.image_dimensions[1] : overrideHeight;
+          if (overrideHeight !== -1 || overrideWidth !== -1) {
+            computedImageHeight = image.image_dimensions[1];
+            computedOverrideHeight = overrideHeight
+            if (poly.scaled) {
+              widthRatio = !rescale ? overrideWidth / image.image_dimensions[0] : overrideWidth / poly.scaled.crop.width;
+              heightRatio = !rescale ? overrideHeight / image.image_dimensions[1] : overrideHeight / poly.scaled.crop.height;
+            }
+          }
+
           // We draw the ground truth
           if (groundTruthPoly && drawGroundTruth) {
             groundTruthPoly.coords.forEach((ring) => {
               const xPos = overrideWidth === -1 ? ring[0].x : ring[0].x * widthRatio ;
-              const yPos = overrideHeight === -1 ? image.image_dimensions[1] - ring[0].y : overrideHeight - (ring[0].y * overrideHeight);
+              const yPos = overrideHeight === -1 ? image.image_dimensions[1] - ring[0].y : computedOverrideHeight - (ring[0].y * heightRatio);
               context.moveTo(xPos, yPos);
               context.beginPath();
               ring.forEach(({x, y}) => {
-                const yPosEnd =  overrideHeight === -1 ? image.image_dimensions[1] - y : overrideHeight - (y * heightRatio);
+                const yPosEnd =  overrideHeight === -1 ? image.image_dimensions[1] - y : computedOverrideHeight - (y * heightRatio);
                 const xPos = overrideWidth === -1 ? x : x * widthRatio;
                 if (context){
                     context.lineTo(xPos, yPosEnd);
@@ -99,14 +112,21 @@ const drawData = (
           }
   
           coords.forEach((ring) => {
-            const xPos = overrideWidth === -1 ? ring[0].x : ring[0].x * widthRatio ;
-            const yPos = overrideHeight === -1 ? image.image_dimensions[1] - ring[0].y : overrideHeight - (ring[0].y * overrideHeight);
+            const xPos = standardPoly ? ring[0].x : ring[0].x * widthRatio ;
+            const yPos = standardPoly ? computedImageHeight - ring[0].y : computedOverrideHeight - (ring[0].y * heightRatio);
             
+            if (poly.scaled && (overrideHeight !== -1 || overrideWidth !== -1)) {
+              console.log(standardPoly);
+              console.log(poly.scaled.crop)
+              console.log(heightRatio);
+              console.log(`x: ${xPos} y: ${yPos}`);
+            }
+
             context.moveTo(xPos, yPos);
             context.beginPath();
             ring.forEach(({x, y}) => {
-              const yPosEnd =  overrideHeight === -1 ? image.image_dimensions[1] - y : overrideHeight - (y * heightRatio);
-              const xPos = overrideWidth === -1 ? x : x * widthRatio;
+              const yPosEnd =  standardPoly ? computedImageHeight - y : computedOverrideHeight - (y * heightRatio);
+              const xPos = standardPoly ? x : x * widthRatio;  
               if (context){
                   context.lineTo(xPos, yPosEnd);
               }
@@ -178,17 +198,17 @@ const drawData = (
       }
     };
 
-const rescale = (baseBBox: BaseBBox, scale=0.2) => {
+const rescale = (baseBBox: BaseBBox, scale=1.2) => {
   const baseWidth =  baseBBox.xmax - baseBBox.xmin;
   const baseHeight =  baseBBox.ymax - baseBBox.ymin;
-  const adjustmentWidth = (baseWidth * scale) / 2.0;
-  const adjustmentHeight = (baseHeight * scale) / 2.0;
+  const newWidth = (baseWidth * scale) ;
+  const newHeight = (baseHeight * scale);
 
   return {
-    xmin: baseBBox.xmin - adjustmentWidth,
-    xmax: baseBBox.xmax + adjustmentWidth,
-    ymin: baseBBox.ymin - adjustmentHeight,
-    ymax: baseBBox.ymax + adjustmentHeight,
+    xmin: baseBBox.xmin - ((newWidth - baseWidth) / 2),
+    ymin: baseBBox.ymin - ((newHeight - baseHeight) / 2),
+    xmax: baseBBox.xmax + ((newWidth - baseWidth) / 2),
+    ymax: baseBBox.ymax + ((newHeight - baseHeight) / 2),
   }
 }
 
@@ -217,10 +237,10 @@ const rescalePoly = (image:EvaluationImage, baseBBox: BaseBBox, polygon: GeoJSON
   const baseHeight = rescaled.ymax - rescaled.ymin;
   const imageBBoxWidth = image.bbox.xmax - image.bbox.xmin;
   const imageBBoxHeight = image.bbox.ymax - image.bbox.ymin;
+
   // If not equal we need to rescale them
   const diffX  = ((imageBBoxWidth - baseWidth) / imageBBoxWidth) * 100;
   const diffY  = ((imageBBoxHeight - baseHeight) / imageBBoxHeight) * 100;
-  console.log(`${image.source} x: ${diffX} y: ${diffY}`);
   if (diffX > 7 || diffY > 7) {
     // Now we calculate a crop value for the larger imageBBox
     const relativeWidth = baseWidth / imageBBoxHeight;
@@ -229,7 +249,6 @@ const rescalePoly = (image:EvaluationImage, baseBBox: BaseBBox, polygon: GeoJSON
     const newImageHeight = image.image_dimensions[1] * relativeHeight;
     const widthDiff = image.image_dimensions[0] - newImageWidth;
     const heightDiff = image.image_dimensions[1] - newImageHeight;
-
     const crop = {
       x: widthDiff / 2.0,
       y: heightDiff / 2.0,
@@ -266,8 +285,6 @@ const processImagePoly = (
           const gtNormalizePoly: {x: number, y: number}[][] = normalizePolygon(image.bbox, imageWidth, imageHeight, groundTruth.geoJSON)
           groundTruthPoly = { coords: gtNormalizePoly, label: groundTruth.label}
         }
-
-        console.log()
         const poly: {
           coords: {x: number, y:number}[][],
           label:string;

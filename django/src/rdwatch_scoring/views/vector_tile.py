@@ -32,7 +32,7 @@ def _get_vector_tile_cache_key(
 ) -> str:
     return '|'.join(
         [
-            ModelRun.__name__,
+            Site.__name__,
             str(evaluation_run_uuid),
             'vector-tile',
             str(z),
@@ -216,7 +216,7 @@ def vector_tile(request: HttpRequest, evaluation_run_uuid: UUID4, z: int, x: int
         tile = row[0]
 
         # Cache this for 30 days
-        cache.set(cache_key, tile.tobytes(), timedelta(minutes=1).total_seconds())
+        cache.set(cache_key, tile.tobytes(), timedelta(days=30).total_seconds())
 
     return HttpResponse(
         tile,

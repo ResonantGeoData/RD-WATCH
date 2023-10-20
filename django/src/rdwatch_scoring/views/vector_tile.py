@@ -102,7 +102,7 @@ def vector_tile(request: HttpRequest, evaluation_run_uuid: UUID4, z: int, x: int
                 id=F('site_id'),
                 mvtgeom=mvtgeom,
                 configuration_id=F('evaluation_run_uuid'),
-                label=F('observation__phase'),
+                label=Lower(Replace('status_annotated', Value(" "), Value("_"))), # This needs a version to be scoring coloring, but that needs some coordination with kitware
                 timestamp=ExtractEpoch('evaluation_run_uuid__start_datetime'),
                 timemin=ExtractEpoch('start_date'),
                 timemax=ExtractEpoch('end_date'),
@@ -137,7 +137,14 @@ def vector_tile(request: HttpRequest, evaluation_run_uuid: UUID4, z: int, x: int
                 label=Lower(Replace('phase', Value(" "), Value("_"))), # This should be an ID, on client side can make it understand this
                 area=Area(Transform('transformedgeom', srid=6933)),
                 timemin=ExtractEpoch('date'),
-                timemax=ExtractEpoch('date'),
+                timemax=ExtractEpoch(
+                    Window(
+                        expression=Min('date'),
+                        partition_by=[F('site_uuid')],
+                        frame=GroupExcludeRowRange(start=0, end=None),
+                        order_by='date',
+                    ),
+                ), # This probably needs to be using the site tables start/end dates
                 performer_id=F('site_uuid__originator'),
                 region=F('site_uuid__region_id'),
                 version=F('site_uuid__version'),

@@ -20,7 +20,6 @@ class Region(models.Model):
 
     class Meta:
         managed = False
-        app_label = 'rdwatch_scoring'
         db_table = 'region'
 
 def get_or_create_region(

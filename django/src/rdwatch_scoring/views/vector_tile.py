@@ -102,7 +102,13 @@ def vector_tile(request: HttpRequest, evaluation_run_uuid: UUID4, z: int, x: int
                 id=F('site_id'),
                 mvtgeom=mvtgeom,
                 configuration_id=F('evaluation_run_uuid'),
-                label=Lower(Replace('status_annotated', Value(" "), Value("_"))), # This needs a version to be scoring coloring, but that needs some coordination with kitware
+                label=Case(
+                    When(
+                        Q(status_annotated__isnull=False),
+                        Lower(Replace('status_annotated', Value(" "), Value("_")))
+                    ),
+                    default=Value('unknown')
+                ), # This needs a version to be scoring coloring, but that needs some coordination with kitware
                 timestamp=ExtractEpoch('evaluation_run_uuid__start_datetime'),
                 timemin=ExtractEpoch('start_date'),
                 timemax=ExtractEpoch('end_date'),
@@ -134,7 +140,13 @@ def vector_tile(request: HttpRequest, evaluation_run_uuid: UUID4, z: int, x: int
                 mvtgeom=mvtgeom,
                 configuration_id=F('site_uuid__evaluation_run_uuid'),
                 site_number=F('site_uuid__site_id'),
-                label=Lower(Replace('phase', Value(" "), Value("_"))), # This should be an ID, on client side can make it understand this
+                label=Case(
+                    When(
+                        Q(phase__isnull=False),
+                        Lower(Replace('phase', Value(" "), Value("_")))
+                    ),
+                    default=Value('unknown')
+                ), # This should be an ID, on client side can make it understand this
                 area=Area(Transform('transformedgeom', srid=6933)),
                 timemin=ExtractEpoch('date'),
                 timemax=ExtractEpoch(
@@ -148,6 +160,7 @@ def vector_tile(request: HttpRequest, evaluation_run_uuid: UUID4, z: int, x: int
                 performer_id=F('site_uuid__originator'),
                 region=F('site_uuid__region_id'),
                 version=F('site_uuid__version'),
+                score=F('confidence_score'),
                 groundtruth=
                 Case(
                     When(

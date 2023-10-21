@@ -12,8 +12,9 @@ class Observation(models.Model):
     crs = models.CharField(max_length=255, blank=True, null=True)
     geometry = models.TextField(blank=True, null=True)
     is_site_boundary = models.CharField(max_length=255, blank=True, null=True)
+    area = models.FloatField(blank=True, null=True)
+    confidence_score = models.FloatField(blank=True, null=True)
 
     class Meta:
         managed = False
-        app_label = 'rdwatch_scoring'
         db_table = 'observation'

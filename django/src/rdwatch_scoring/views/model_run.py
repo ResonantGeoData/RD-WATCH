@@ -36,7 +36,7 @@ from django.db.models import (
     When,
     Value,
 )
-from django.db.models.functions import Coalesce, JSONObject, Concat
+from django.db.models.functions import Coalesce, JSONObject, Concat, NullIf
 from django.http import Http404, HttpRequest, HttpResponse
 from django.shortcuts import get_object_or_404
 
@@ -163,47 +163,20 @@ def get_queryset():
                 short_code=F('performer')
             ),
             parameters=Value({}, output_field=JSONField()),
-            numsites=Subquery(
-                Site.objects.filter(evaluation_run_uuid=OuterRef('uuid')).annotate(
-                    count=Func(F('uuid'), function='Count')
-                ).values('count')
-            ),
+            numsites=Count('site__uuid'),
             downloading=Value(0),
-            score=Subquery(
-                EvaluationBroadAreaSearchMetric.objects.filter(
-                    evaluation_run_uuid=OuterRef('uuid'),
-                    activity_type='overall',
-                    rho=0.2,
-                    tau=0.5,
-                ).values('f1')[:1],
-                output_field=FloatField()
-            ),
-            timestamp=ExtractEpoch(
-                Site.objects.filter(evaluation_run_uuid=OuterRef('uuid')).annotate(
-                    max=Max('end_date')
-                ).values('max')[:1]
-            ),
+            score=Avg(NullIf('site__confidence_score', Value('NaN'), output_field=FloatField())),
+            timestamp=ExtractEpoch(Max('site__end_date')),
             timerange=JSONObject(
-                min=ExtractEpoch(
-                    Site.objects.filter(evaluation_run_uuid=OuterRef('uuid')).annotate(
-                        min=Min('start_date')
-                    ).values('min')[:1]
-                ),
-                max=ExtractEpoch(
-                    Site.objects.filter(evaluation_run_uuid=OuterRef('uuid')).annotate(
-                        max=Max('end_date')
-                    ).values('max')[:1]
-                ),
+                min=ExtractEpoch(Min('site__start_date')),
+                max=ExtractEpoch(Max('site__end_date'))
             ),
             # bbox=Value({}, output_field=JSONField()),
-            bbox=Subquery(
-                    Region.objects.filter(id=OuterRef('region')).annotate(
-                        geojson=Func(
-                        F('geometry'),
-                        4326,
-                        function='ST_AsGeoJSON',
-                        output_field=JSONField(),
-                    )).values('geojson')[:1]
+            bbox=Func(
+                F('site__region__geometry'),
+                4326,
+                function='ST_AsGeoJSON',
+                output_field=JSONField(),
             ),
             created=F('start_datetime'),
             expiration_time=Value(None, output_field=DateTimeField()),
@@ -234,36 +207,36 @@ class ModelRunPagination(PageNumberPagination):
     ) -> dict[str, Any]:
         # TODO: remove caching after model runs endpoint is
         # refactored to be more efficient.
-        # cache_key = _get_model_runs_cache_key(filters.dict())
-        # model_runs = cache.get(cache_key)
-        #
-        # # If we have a cache miss, execute the query and save the results to cache
-        # # before returning.
-        # if model_runs is None:
-        #     qs = super().paginate_queryset(queryset, pagination, **params)
-        #
-        #     aggregate_kwargs = {
-        #         'timerange': JSONObject(
-        #             min=ExtractEpoch(Min('evaluations__start_date')),
-        #             max=ExtractEpoch(Max('evaluations__end_date')),
-        #         ),
-        #     }
-        #     if filters.region:
-        #         aggregate_kwargs['bbox'] = BoundingBoxGeoJSON('bbox')
-        #
-        #     model_runs = qs | queryset.aggregate(**aggregate_kwargs)
-        #     cache.set(
-        #         key=cache_key,
-        #         value=model_runs,
-        #         timeout=timedelta(days=30).total_seconds(),
-        #     )
+        cache_key = _get_model_runs_cache_key(filters.dict())
+        model_runs = cache.get(cache_key)
 
-        return {
-            'count': queryset.count(),
-            'items': queryset,
-            'timerange': None,
-            'bbox': None,
-        }
+        # If we have a cache miss, execute the query and save the results to cache
+        # before returning.
+        if model_runs is None:
+            qs = super().paginate_queryset(queryset, pagination, **params)
+
+            aggregate_kwargs = {
+                'timerange': JSONObject(
+                    min=ExtractEpoch(Min('site__start_date')),
+                    max=ExtractEpoch(Max('site__end_date')),
+                ),
+            }
+            if filters.region:
+                aggregate_kwargs['bbox'] = Func(
+                    F('site__region__geometry'),
+                    4326,
+                    function='ST_AsGeoJSON',
+                    output_field=JSONField(),
+                )
+
+            model_runs = qs | queryset.aggregate(**aggregate_kwargs)
+            cache.set(
+                key=cache_key,
+                value=model_runs,
+                timeout=timedelta(days=30).total_seconds(),
+            )
+
+        return model_runs
 
 
 @router.post('/', response={200: ModelRunDetailSchema}, exclude_none=True)
@@ -303,7 +276,7 @@ def _get_model_runs_cache_key(params: dict) -> str:
 
     return '|'.join(
         [
-            ModelRun.__name__,
+            EvaluationRun.__name__,
             str(most_recent_evaluation),
             *[f'{key}={value}' for key, value in params.items()],
         ]

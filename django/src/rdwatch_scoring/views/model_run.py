@@ -222,12 +222,12 @@ class ModelRunPagination(PageNumberPagination):
                 ),
             }
             if filters.region:
-                aggregate_kwargs['bbox'] = Func(
+                aggregate_kwargs['bbox'] = Max(Func(
                     F('site__region__geometry'),
                     4326,
                     function='ST_AsGeoJSON',
                     output_field=JSONField(),
-                )
+                ))
 
             model_runs = qs | queryset.aggregate(**aggregate_kwargs)
             cache.set(

@@ -153,7 +153,7 @@ export class ApiService {
       ): CancelablePromise<boolean> {
         return __request(OpenAPI, {
           method: "POST",
-          url: `${this.apiPrefix}/observations/{id}/generate-images`,
+          url: `${this.apiPrefix}/observations/{id}/generate-images/`,
           path: {
             id: id,
           },

@@ -408,8 +408,8 @@ export class ApiService {
       url: "/api/scores/details",
       query: { configurationId, region, siteNumber, version },
       // Not sure if `scores` or `scoring`, need to check
-      // url: "/api/scoring/scores/details",
-      // query: { configurationId, region, siteNumber, version },
+      url: `${this.apiPrefix}/scoring/scores/details`,
+      query: { configurationId, region, siteNumber, version },
     });
   }
 

@@ -8,6 +8,7 @@ export interface PixelPoly {
     scaled?: {
       crop: {x: number, y:number, width: number, height: number}
       scaledPoly: {x: number; y:number}[][];
+      groundTruth?: {x: number; y:number}[][];
     } | false;
 }
 
@@ -92,15 +93,19 @@ const drawData = (
 
           // We draw the ground truth
           if (groundTruthPoly && drawGroundTruth) {
-            groundTruthPoly.coords.forEach((ring) => {
-              const xPos = overrideWidth === -1 ? ring[0].x : ring[0].x * widthRatio ;
-              const yPos = overrideHeight === -1 ? image.image_dimensions[1] - ring[0].y : computedOverrideHeight - (ring[0].y * heightRatio);
+            let gtPoly  = groundTruthPoly.coords;
+            if (poly.scaled && rescale && poly.scaled.groundTruth) {
+              gtPoly = poly.scaled.groundTruth
+            }
+            gtPoly.forEach((ring) => {
+              const xPos = standardPoly ? ring[0].x : ring[0].x * widthRatio ;
+              const yPos = standardPoly ? computedImageHeight - ring[0].y : computedOverrideHeight - (ring[0].y * heightRatio);
               context.moveTo(xPos, yPos);
               context.beginPath();
               ring.forEach(({x, y}) => {
-                const yPosEnd =  overrideHeight === -1 ? image.image_dimensions[1] - y : computedOverrideHeight - (y * heightRatio);
-                const xPos = overrideWidth === -1 ? x : x * widthRatio;
-                if (context){
+                const yPosEnd =  standardPoly ? computedImageHeight - y : computedOverrideHeight - (y * heightRatio);
+                const xPos = standardPoly ? x : x * widthRatio;  
+                  if (context){
                     context.lineTo(xPos, yPosEnd);
                 }
               });
@@ -282,17 +287,16 @@ const processImagePoly = (
           const gtNormalizePoly: {x: number, y: number}[][] = normalizePolygon(image.bbox, imageWidth, imageHeight, groundTruth.geoJSON)
           groundTruthPoly = { coords: gtNormalizePoly, label: groundTruth.label}
         }
-        const poly: {
-          coords: {x: number, y:number}[][],
-          label:string;
-          scaled:{
-            crop: {x:number, y:number, width:number, height:number },
-            scaledPoly: {x:number, y:number}[][],
-          } | false; 
-        } = {coords: imageNormalizePoly, label: closestPoly.label, scaled: false};
+        const poly: PixelPoly = {coords: imageNormalizePoly, label: closestPoly.label, scaled: false};
         const rescaled = rescalePoly(image, closestPoly.bbox, closestPoly.geoJSON);
         if (rescaled) {
           poly['scaled'] =  rescaled;
+        }
+        if (hasGroundTruth && groundTruth) {
+          const rescaleGT = rescalePoly(image, closestPoly.bbox, groundTruth.geoJSON);
+          if (rescaleGT && poly.scaled) {
+            poly['scaled']['groundTruth'] = rescaleGT.scaledPoly;
+          }
         }
         return { image: image, baseBBox: closestPoly.bbox, poly, groundTruthPoly };
 }

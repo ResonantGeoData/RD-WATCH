@@ -153,7 +153,7 @@ export class ApiService {
       ): CancelablePromise<boolean> {
         return __request(OpenAPI, {
           method: "POST",
-          url: `${this.apiPrefix}observations/{id}/generate-images`,
+          url: `${this.apiPrefix}/observations/{id}/generate-images`,
           path: {
             id: id,
           },
@@ -405,10 +405,7 @@ export class ApiService {
   {
     return __request(OpenAPI, {
       method: "GET",
-      url: "/api/scores/details",
-      query: { configurationId, region, siteNumber, version },
-      // Not sure if `scores` or `scoring`, need to check
-      url: `${this.apiPrefix}/scoring/scores/details`,
+      url: `${this.apiPrefix}/scores/details`,
       query: { configurationId, region, siteNumber, version },
     });
   }

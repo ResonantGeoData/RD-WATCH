@@ -277,7 +277,7 @@ const copyURL = async (mytext: string) => {
   }
 
 
-watch([currentImage, imageRef, filteredImages, drawGroundTruth], () => {
+watch([currentImage, imageRef, filteredImages, drawGroundTruth, rescaleImage], () => {
     if (currentImage.value < filteredImages.value.length && imageRef.value !== null) {
         imageRef.value.src = filteredImages.value[currentImage.value].image.image;
     }

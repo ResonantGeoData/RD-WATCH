@@ -115,13 +115,6 @@ const drawData = (
             const xPos = standardPoly ? ring[0].x : ring[0].x * widthRatio ;
             const yPos = standardPoly ? computedImageHeight - ring[0].y : computedOverrideHeight - (ring[0].y * heightRatio);
             
-            if (poly.scaled && (overrideHeight !== -1 || overrideWidth !== -1)) {
-              console.log(standardPoly);
-              console.log(poly.scaled.crop)
-              console.log(heightRatio);
-              console.log(`x: ${xPos} y: ${yPos}`);
-            }
-
             context.moveTo(xPos, yPos);
             context.beginPath();
             ring.forEach(({x, y}) => {
@@ -138,7 +131,10 @@ const drawData = (
           });
           // Now scale the canvas to the proper size
           if (overrideHeight === -1  && overrideWidth === -1) {
-            const ratio = image.image_dimensions[1] / image.image_dimensions[0];
+            let ratio = image.image_dimensions[1] / image.image_dimensions[0];
+            if (poly.scaled && rescale) {
+              ratio  = poly.scaled.crop.height / poly.scaled.crop.width;
+            }
             const maxHeight = document.documentElement.clientHeight * 0.30;
             const maxWidth = document.documentElement.clientWidth - 550;
             let width = maxWidth
@@ -147,6 +143,7 @@ const drawData = (
               height = maxHeight;
               width = height / ratio;
             }
+            
             context.canvas.style.width = `${width}px`
             context.canvas.style.height = `${height}px`;
           } else { // We draw a label for downloaded GIFs
@@ -243,7 +240,7 @@ const rescalePoly = (image:EvaluationImage, baseBBox: BaseBBox, polygon: GeoJSON
   const diffY  = ((imageBBoxHeight - baseHeight) / imageBBoxHeight) * 100;
   if (diffX > 7 || diffY > 7) {
     // Now we calculate a crop value for the larger imageBBox
-    const relativeWidth = baseWidth / imageBBoxHeight;
+    const relativeWidth = baseWidth / imageBBoxWidth;
     const relativeHeight = baseHeight / imageBBoxHeight;
     const newImageWidth = image.image_dimensions[0] * relativeWidth;
     const newImageHeight = image.image_dimensions[1] * relativeHeight;

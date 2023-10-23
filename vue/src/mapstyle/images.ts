@@ -67,8 +67,6 @@ export const buildImageSourceFilter = (
         }
         if (!update) {
             const { url, coordinates} = getClosestTimestamp(item.id, timestamp, enabledSiteObservations, settings);
-            console.log(url);
-            console.log(coordinates);
             results[source] =
             {
                 type: 'image',

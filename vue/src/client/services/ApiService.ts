@@ -87,7 +87,7 @@ export interface DownloadSettings {
   constellation: 'S2' | 'WV' | 'L8';
   dayRange?: number;
   noData?: number;
-  customDateRange?: [string, string];
+  overrideDates?: [string, string];
   force?: boolean;
   scale?: 'default' | 'bits' | 'custom';
   scaleNum?: number[];

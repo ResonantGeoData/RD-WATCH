@@ -225,7 +225,7 @@ def get_site_model_feature_JSON(id: UUID4, obsevations=False):
         data = query[0]['json']
 
         region_name = data['site']['region']
-        site_id = f'{region_name}_{str(data["site"]["number"]).zfill(3)}'
+        site_id = f'{region_name}_{str(data["site"]["number"]).zfill(4)}'
         version = data['version']
         output = {
             'type': 'FeatureCollection',

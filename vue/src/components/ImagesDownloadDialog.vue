@@ -25,7 +25,7 @@ const download = () => {
         constellation: selectedSource.value,
         dayRange: dayRange.value,
         noData: noData.value,
-        customDateRange: customDateRange.value ? overrideDates.value : undefined,
+        overrideDates: customDateRange.value ? overrideDates.value : undefined,
         force: force.value,
         scale: scale.value,
     })

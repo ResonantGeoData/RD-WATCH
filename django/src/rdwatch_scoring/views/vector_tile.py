@@ -89,8 +89,8 @@ def vector_tile(
 
         site_queryset = (
             Site.objects.filter(evaluation_run_uuid=evaluation_run_uuid)
-            .annotate(geomfromtext=geomfromuniongeometrytext)
-            .annotate(transformedgeom=transform)
+            .alias(geomfromtext=geomfromuniongeometrytext)
+            .alias(transformedgeom=transform)
             .filter(intersects)
             .values()
             .annotate(
@@ -129,8 +129,8 @@ def vector_tile(
             Observation.objects.filter(
                 site_uuid__evaluation_run_uuid=evaluation_run_uuid
             )
-            .annotate(geomfromtext=geomfromobservationtext)
-            .annotate(transformedgeom=transform)
+            .alias(geomfromtext=geomfromobservationtext)
+            .alias(transformedgeom=transform)
             .filter(intersects)
             .values()
             .annotate(
@@ -175,8 +175,8 @@ def vector_tile(
 
         region_queryset = (
             Region.objects.filter(id=site_queryset.values('region_id')[:1])
-            .annotate(geomfromtext=geomfromobservationtext)
-            .annotate(transformedgeom=transform)
+            .alias(geomfromtext=geomfromobservationtext)
+            .alias(transformedgeom=transform)
             .filter(intersects)
             .values()
             .annotate(name=F('id'), mvtgeom=mvtgeom)

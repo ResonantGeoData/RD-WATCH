@@ -15,12 +15,23 @@ class EvaluationRun(models.Model):
     evaluation_number = models.IntegerField(blank=True, null=True)
     evaluation_run_number = models.IntegerField(blank=True, null=True)
     evaluation_increment_number = models.IntegerField(blank=True, null=True)
-    provenance = models.ForeignKey('Provenance', models.DO_NOTHING, blank=True, null=True)
+    provenance = models.ForeignKey(
+        'Provenance', models.DO_NOTHING, blank=True, null=True
+    )
 
     class Meta:
         managed = False
         db_table = 'evaluation_run'
-        unique_together = (('performer', 'region', 'evaluation_number', 'evaluation_run_number', 'evaluation_increment_number'),)
+        unique_together = (
+            (
+                'performer',
+                'region',
+                'evaluation_number',
+                'evaluation_run_number',
+                'evaluation_increment_number',
+            ),
+        )
+
 
 class Provenance(models.Model):
     test_harness_git_hash = models.CharField(max_length=255)

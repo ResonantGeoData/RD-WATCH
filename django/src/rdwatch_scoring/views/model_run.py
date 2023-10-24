@@ -93,55 +93,47 @@ class ModelRunListSchema(Schema):
 
 
 def get_queryset():
-    return (
-        EvaluationRun.objects
-        .values()
-        .annotate(
-            id=F('uuid'),
-            title=Concat(
-                Value('Eval '),
-                'evaluation_number',
-                Value('.'),
-                'evaluation_run_number',
-                Value(' '),
-                'performer',
-                output_field=CharField(),
-            ),
-            region=F('region'),
-            performer_slug=F('performer'),
-            performer=JSONObject(
-                id=0, team_name=F('performer'), short_code=F('performer')
-            ),
-            parameters=Value({}, output_field=JSONField()),
-            numsites=Count('site__uuid'),
-            downloading=Value(0),
-            score=Avg(
-                NullIf(
-                    'site__confidence_score', Value('NaN'), output_field=FloatField()
-                )
-            ),
-            timestamp=ExtractEpoch(Max('site__end_date')),
-            timerange=JSONObject(
-                min=ExtractEpoch(Min('site__start_date')),
-                max=ExtractEpoch(Max('site__end_date')),
-            ),
-            # bbox=Value({}, output_field=JSONField()),
-            bbox=Func(
-                F('site__region__geometry'),
-                4326,
-                function='ST_AsGeoJSON',
-                output_field=JSONField(),
-            ),
-            created=F('start_datetime'),
-            expiration_time=Value(None, output_field=DateTimeField()),
-            evaluation=F('evaluation_number'),
-            evaluation_run=F('evaluation_run_number'),
-            proposal=Value(None, output_field=CharField()),
-            adjudicated=JSONObject(
-                proposed=0,
-                other=0,
-            ),
-        )
+    return EvaluationRun.objects.values().annotate(
+        id=F('uuid'),
+        title=Concat(
+            Value('Eval '),
+            'evaluation_number',
+            Value('.'),
+            'evaluation_run_number',
+            Value(' '),
+            'performer',
+            output_field=CharField(),
+        ),
+        region=F('region'),
+        performer_slug=F('performer'),
+        performer=JSONObject(id=0, team_name=F('performer'), short_code=F('performer')),
+        parameters=Value({}, output_field=JSONField()),
+        numsites=Count('site__uuid'),
+        downloading=Value(0),
+        score=Avg(
+            NullIf('site__confidence_score', Value('NaN'), output_field=FloatField())
+        ),
+        timestamp=ExtractEpoch(Max('site__end_date')),
+        timerange=JSONObject(
+            min=ExtractEpoch(Min('site__start_date')),
+            max=ExtractEpoch(Max('site__end_date')),
+        ),
+        # bbox=Value({}, output_field=JSONField()),
+        bbox=Func(
+            F('site__region__geometry'),
+            4326,
+            function='ST_AsGeoJSON',
+            output_field=JSONField(),
+        ),
+        created=F('start_datetime'),
+        expiration_time=Value(None, output_field=DateTimeField()),
+        evaluation=F('evaluation_number'),
+        evaluation_run=F('evaluation_run_number'),
+        proposal=Value(None, output_field=CharField()),
+        adjudicated=JSONObject(
+            proposed=0,
+            other=0,
+        ),
     )
 
 

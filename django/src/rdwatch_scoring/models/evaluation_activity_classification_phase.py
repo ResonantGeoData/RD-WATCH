@@ -20,4 +20,3 @@ class EvaluationActivityClassificationPhase(models.Model):
         managed = False
         app_label = 'rdwatch_scoring'
         db_table = 'evaluation_activity_classification_phase'
-

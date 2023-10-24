@@ -29,4 +29,3 @@ class EvaluationBroadAreaSearchDetection(models.Model):
         managed = False
         app_label = 'rdwatch_scoring'
         db_table = 'evaluation_broad_area_search_detection'
-

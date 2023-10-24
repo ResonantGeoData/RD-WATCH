@@ -1,4 +1,5 @@
 from django.contrib.gis.db import models
+
 from rdwatch_scoring.models import EvaluationRun, Region
 
 
@@ -6,7 +7,9 @@ class Site(models.Model):
     uuid = models.CharField(primary_key=True, max_length=255)
     site_id = models.CharField(max_length=255)
     region = models.ForeignKey(Region, models.DO_NOTHING)
-    evaluation_run_uuid = models.ForeignKey(EvaluationRun, models.DO_NOTHING, db_column='evaluation_run_uuid')
+    evaluation_run_uuid = models.ForeignKey(
+        EvaluationRun, models.DO_NOTHING, db_column='evaluation_run_uuid'
+    )
     originator = models.CharField(max_length=255)
     version = models.CharField(max_length=255)
     crs = models.CharField(max_length=255, blank=True, null=True)

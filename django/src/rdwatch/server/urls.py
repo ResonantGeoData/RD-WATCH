@@ -10,7 +10,7 @@ urlpatterns = [
 
 # Conditionally add the scoring URLs if the scoring app is installed
 if 'rdwatch_scoring' in apps.app_configs.keys():
-    urlpatterns.append(path('api/', include('rdwatch_scoring.urls')))
+    urlpatterns.append(path('api/scoring/', include('rdwatch_scoring.urls')))
 
 if settings.DEBUG:
     try:

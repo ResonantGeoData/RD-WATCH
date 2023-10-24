@@ -1,15 +1,13 @@
 from ninja import NinjaAPI
 from ninja.errors import ValidationError
 
-from .views.model_run import router as model_run_router
-from .views.performer import router as performer_router
-from .views.region import router as region_router
+from rdwatch_scoring import views
 
 api = NinjaAPI(urls_namespace='scoring')
 
-api.add_router('/scoring/model-runs/', model_run_router)
-api.add_router('/scoring/performers/', performer_router)
-api.add_router('/scoring/regions/', region_router)
+api.add_router('/model-runs/', views.model_run.router)
+api.add_router('/performers/', views.performer.router)
+api.add_router('/regions/', views.region.router)
 
 
 # useful for getting information back about validation errors

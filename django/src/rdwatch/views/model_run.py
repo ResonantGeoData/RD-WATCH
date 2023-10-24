@@ -168,7 +168,7 @@ def get_queryset():
             )
         )
         # Order queryset so that ground truths are first
-        .order_by('-groundtruth', '-id')
+        .order_by('groundtruth', '-created')
         .alias(
             region_id=F('evaluations__region_id'),
             evaluation_configuration=F('evaluations__configuration'),

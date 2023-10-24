@@ -94,11 +94,7 @@ class ModelRunListSchema(Schema):
 
 def get_queryset():
     return (
-        EvaluationRun.objects.filter(
-            region__in=['AE_R001', 'BR_R002', 'KR_R002'],
-            evaluation_run_number=0,
-            mode='batch',
-        )
+        EvaluationRun.objects
         .values()
         .annotate(
             id=F('uuid'),

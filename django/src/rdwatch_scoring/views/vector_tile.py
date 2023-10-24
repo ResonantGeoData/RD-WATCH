@@ -23,7 +23,7 @@ from django.db.models.functions import Replace, Lower
 from django.http import Http404, HttpRequest, HttpResponse
 
 from rdwatch.db.functions import ExtractEpoch, GroupExcludeRowRange
-from rdwatch_scoring.models import ModelRun, Region, EvaluationRun, Site, Observation
+from rdwatch_scoring.models import Region, EvaluationRun, Site, Observation
 
 from .model_run import router
 

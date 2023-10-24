@@ -35,8 +35,6 @@ __all__ = [
     'EvaluationBroadAreaSearchProposal',
     'EvaluationBroadAreaSearchMetric',
     'EvaluationRun',
-    'lookups',
-    'ModelRun',
     'Observation',
     'ObservationComparison',
     'Performer',

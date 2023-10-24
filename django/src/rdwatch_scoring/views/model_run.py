@@ -1,4 +1,4 @@
-from datetime import datetime, timedelta
+from datetime import timedelta
 from typing import Any
 
 from ninja import Field, FilterSchema, Query, Schema
@@ -27,8 +27,8 @@ from django.shortcuts import get_object_or_404
 
 from rdwatch.db.functions import ExtractEpoch
 from rdwatch.schemas.common import TimeRangeSchema
+from rdwatch.views.model_run import ModelRunDetailSchema, ModelRunListSchema
 from rdwatch_scoring.models import EvaluationRun
-from rdwatch_scoring.views.performer import PerformerSchema
 
 router = RouterPaginated()
 
@@ -45,51 +45,6 @@ class ModelRunFilterSchema(FilterSchema):
         for performer_slug in value:
             performer_q |= Q(performer_slug=performer_slug)
         return performer_q
-
-
-class ModelRunAdjudicated(Schema):
-    proposed: int
-    other: int
-
-
-class ModelRunDetailSchema(Schema):
-    id: UUID4
-    title: str
-    region: str | None = None
-    performer: PerformerSchema
-    parameters: dict
-    numsites: int
-    downloading: int | None = None
-    score: float | None = None
-    timestamp: int | None = None
-    timerange: TimeRangeSchema | None = None
-    bbox: dict | None
-    created: datetime
-    expiration_time: timedelta | None = None
-    evaluation: int | None = None
-    evaluation_run: int | None = None
-    proposal: str = None
-    adjudicated: ModelRunAdjudicated | None = None
-
-
-class ModelRunListSchema(Schema):
-    id: UUID4
-    title: str
-    region: str | None = None
-    performer: PerformerSchema
-    parameters: dict
-    numsites: int
-    downloading: int | None = None
-    score: float | None = None
-    timestamp: int | None = None
-    timerange: TimeRangeSchema | None = None
-    bbox: dict | None
-    created: datetime
-    expiration_time: timedelta | None = None
-    evaluation: int | None = None
-    evaluation_run: int | None = None
-    proposal: str = None
-    adjudicated: ModelRunAdjudicated | None = None
 
 
 def get_queryset():
@@ -209,7 +164,6 @@ def list_model_runs(
     filters: ModelRunFilterSchema = Query(...),  # noqa: B008
 ):
     return filters.filter(get_queryset())
-    # return get_queryset()
 
 
 @router.get('/{id}/', response={200: ModelRunDetailSchema})

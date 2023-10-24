@@ -1,16 +1,9 @@
-from ninja import Schema
 from ninja.pagination import RouterPaginated
 
 from django.http import HttpRequest
 
+from rdwatch.views.performer import PerformerSchema
 from rdwatch_scoring.models import EvaluationRun
-
-
-class PerformerSchema(Schema):
-    id: int
-    team_name: str
-    short_code: str
-
 
 router = RouterPaginated()
 

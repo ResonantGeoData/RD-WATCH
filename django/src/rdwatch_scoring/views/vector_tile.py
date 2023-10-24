@@ -20,6 +20,7 @@ from django.db.models import (
 )
 from django.db.models.functions import Lower, Replace
 from django.http import HttpRequest, HttpResponse
+from django.shortcuts import get_object_or_404
 
 from rdwatch.db.functions import ExtractEpoch, GroupExcludeRowRange
 from rdwatch_scoring.models import EvaluationRun, Observation, Region, Site
@@ -47,7 +48,9 @@ def _get_vector_tile_cache_key(
 def vector_tile(
     request: HttpRequest, evaluation_run_uuid: UUID4, z: int, x: int, y: int
 ):
-    latest_timestamp = EvaluationRun.objects.get(pk=evaluation_run_uuid).start_datetime
+    evaluation_run = get_object_or_404(EvaluationRun, pk=evaluation_run_uuid)
+
+    latest_timestamp = evaluation_run.start_datetime
 
     # Generate a unique cache key based on the model run ID, vector tile coordinates,
     # and the latest timestamp

@@ -95,6 +95,11 @@ export interface DownloadSettings {
 export type CeleryStates = 'FAILURE' | 'PENDING' | 'SUCCESS' | 'RETRY' | 'REVOKED' | 'STARTED';
 
 export class ApiService {
+  public static apiPrefix = "/api";
+
+  public static setApiPrefix(prefix: string) {
+    ApiService.apiPrefix = prefix;
+  }
   /**
    * @returns ServerStatus
    * @throws ApiError
@@ -115,7 +120,7 @@ export class ApiService {
   ): CancelablePromise<SiteEvaluationList> {
     return __request(OpenAPI, {
       method: "GET",
-      url: "/api/evaluations",
+      url: `${this.apiPrefix}/evaluations`,
       query,
     });
   }
@@ -170,7 +175,7 @@ export class ApiService {
       ): CancelablePromise<boolean> {
         return __request(OpenAPI, {
           method: "POST",
-          url: "/api/model-runs/{id}/generate-images/",
+          url: `${this.apiPrefix}/model-runs/{id}/generate-images/`,
           path: {
             id: id,
           },
@@ -190,7 +195,7 @@ export class ApiService {
       ): CancelablePromise<boolean> {
         return __request(OpenAPI, {
           method: "PUT",
-          url: "/api/observations/{id}/cancel-generate-images/",
+          url: `${this.apiPrefix}/observations/{id}/cancel-generate-images/`,
           path: {
             id: id,
           },
@@ -207,7 +212,7 @@ export class ApiService {
       ): CancelablePromise<boolean> {
         return __request(OpenAPI, {
           method: "PUT",
-          url: "/api/model-runs/{id}/cancel-generate-images/",
+          url: `${this.apiPrefix}/model-runs/{id}/cancel-generate-images/`,
           path: {
             id: id,
           },
@@ -223,7 +228,7 @@ export class ApiService {
   ): CancelablePromise<ModelRunList> {
     return __request(OpenAPI, {
       method: "GET",
-      url: "/api/model-runs",
+      url: `${this.apiPrefix}/model-runs`,
       query: Object.fromEntries(
         Object.entries(query).filter(([key, value]) => value !== undefined)
       ),
@@ -237,7 +242,7 @@ export class ApiService {
     public static getModelRunEvaluations(id: string): CancelablePromise<ModelRunEvaluations> {
       return __request(OpenAPI, {
         method: "GET",
-        url: "/api/model-runs/{id}/evaluations",
+        url: `${this.apiPrefix}/model-runs/{id}/evaluations`,
         path: {
           id: id,
         },
@@ -254,7 +259,7 @@ export class ApiService {
   public static getModelRun(id: string): CancelablePromise<ModelRun> {
     return __request(OpenAPI, {
       method: "GET",
-      url: "/api/model-runs/{id}",
+      url: `${this.apiPrefix}/model-runs/{id}`,
       path: {
         id: id,
       },
@@ -268,7 +273,7 @@ export class ApiService {
   public static getPerformers(): CancelablePromise<PerformerList> {
     return __request(OpenAPI, {
       method: "GET",
-      url: "/api/performers",
+      url: `${this.apiPrefix}/performers`,
     });
   }
 
@@ -280,7 +285,7 @@ export class ApiService {
   public static getPerformer(id: number): CancelablePromise<Performer> {
     return __request(OpenAPI, {
       method: "GET",
-      url: "/api/performers/{id}",
+      url: `${this.apiPrefix}/performers/{id}`,
       path: {
         id: id,
       },
@@ -294,7 +299,7 @@ export class ApiService {
   public static getRegions(): CancelablePromise<RegionList> {
     return __request(OpenAPI, {
       method: "GET",
-      url: "/api/regions",
+      url: `${this.apiPrefix}/regions`,
     });
   }
 
@@ -431,7 +436,7 @@ export class ApiService {
   public static getEvaluationImages(id: string): CancelablePromise<EvaluationImageResults> {
     return __request(OpenAPI, {
       method: "GET",
-      url: "/api/evaluations/images/{id}",
+      url: `${this.apiPrefix}/evaluations/images/{id}`,
       path: {
         id: id,
       },
@@ -475,7 +480,7 @@ export class ApiService {
   public static startModelRunDownload(id: string, mode: 'all' | 'approved' | 'rejected'='all'): CancelablePromise<string> {
     return __request(OpenAPI, {
       method: 'POST',
-      url: "/api/model-runs/{id}/download/",
+      url: `${this.apiPrefix}/model-runs/{id}/download/`,
       path: {
         id: id,
       },
@@ -486,7 +491,7 @@ export class ApiService {
   public static getModelRunDownloadStatus(task_id: string): CancelablePromise<CeleryStates> {
     return __request(OpenAPI, {
       method: 'GET',
-      url: "/api/model-runs/download_status",
+      url: `${this.apiPrefix}/model-runs/download_status`,
       query: {task_id},
     })
   }

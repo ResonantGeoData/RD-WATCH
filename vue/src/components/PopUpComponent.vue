@@ -37,7 +37,7 @@ const props = defineProps<{
         :color="item.scoreColor"
         class="mx-2"
       >
-        Score: {{ item.score.toFixed(2) }}
+        Score: {{ item.score?.toFixed(2) }}
       </v-chip>
       <v-chip
         label

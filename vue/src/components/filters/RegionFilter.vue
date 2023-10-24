@@ -33,8 +33,11 @@ watch(() => props.modelValue, () => {
 
 watch(selectedRegion, (val) => {
   let prepend = '/'
+  if (router.currentRoute.value.fullPath.includes('scoring')) {
+    prepend += 'scoring/'
+  }
   if (router.currentRoute.value.fullPath.includes('proposals')) {
-    prepend = '/proposals/'
+    prepend += 'proposals/'
   }
   if (val) {
     router.push(`${prepend}${val}`)

@@ -15,6 +15,7 @@ import {
   observationText,
   siteText,
 } from "./annotationStyles";
+import { ApiService } from '../client/services/ApiService';
 
 const buildTextOffset = (
   type: "site" | "observation",
@@ -135,7 +136,7 @@ export const buildSourceFilter = (modelRunIds: string[]) => {
     const source = `vectorTileSource_${id}`;
     results[source] = {
       type: "vector",
-      tiles: [`${urlRoot}/api/model-runs/${id}/vector-tile/{z}/{x}/{y}.pbf/`],
+      tiles: [`${urlRoot}${ApiService.apiPrefix}/model-runs/${id}/vector-tile/{z}/{x}/{y}.pbf/`],
       minzoom: 0,
       maxzoom: 14,
     };

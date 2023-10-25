@@ -42,7 +42,10 @@ from rdwatch.schemas import RegionModel, SiteModel
 from rdwatch.schemas.common import TimeRangeSchema
 from rdwatch.tasks import download_annotations
 from rdwatch.views.performer import PerformerSchema
-from rdwatch.views.site_observation import get_site_observation_images
+from rdwatch.views.site_observation import (
+    GenerateImagesSchema,
+    get_site_observation_images,
+)
 
 router = RouterPaginated()
 
@@ -360,25 +363,14 @@ def post_region_model(
 def generate_images(
     request: HttpRequest,
     model_run_id: UUID4,
-    constellation: Literal['WV', 'S2', 'L8'] = 'WV',
-    dayRange: int = 14,
-    noData: int = 50,
-    overrideDates: None | list[str] = None,
-    force: bool = False,
-    scale: str = 'default',
+    params: GenerateImagesSchema = Query(...),  # noqa: B008
 ):
     siteEvaluations = SiteEvaluation.objects.filter(configuration=model_run_id)
-
     for eval in siteEvaluations:
         get_site_observation_images(
             request,
             eval.pk,
-            constellation,
-            dayRange,
-            noData,
-            overrideDates,
-            force,
-            scale,
+            params,
         )
 
     return 202, True

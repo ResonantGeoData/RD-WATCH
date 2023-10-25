@@ -171,14 +171,14 @@ def site_observations(request: HttpRequest, evaluation_id: UUID4):
 
 
 class GenerateImagesSchema(Schema):
-    constellation: Literal['WV', 'S2', 'L8'] = ('WV',)
-    dayRange: int = (14,)
-    noData: int = (50,)
-    overrideDates: None | list[str] = (None,)
-    force: bool = (False,)
-    scale: Literal['default', 'bits', 'custom'] = ('default',)
-    scaleNum: None | list[int] = (None,)
-    bboxScale: None | float = (1.2,)
+    constellation: Literal['WV', 'S2', 'L8'] = 'WV'
+    dayRange: int = 14
+    noData: int = 50
+    overrideDates: None | list[str] = None
+    force: bool = False
+    scale: Literal['default', 'bits', 'custom'] = 'default'
+    scaleNum: None | list[int] = None
+    bboxScale: None | float = 1.2
 
 
 @router.post('/{evaluation_id}/generate-images/', response={202: bool, 409: str})

@@ -3,6 +3,7 @@ from datetime import datetime, timedelta
 from pydantic import UUID4
 
 from django.contrib.gis.db.models import GeometryField
+from django.contrib.gis.db.models.functions import Area, Transform
 from django.core.cache import cache
 from django.db import connections
 from django.db.models import (
@@ -145,6 +146,7 @@ def vector_tile(
                     ),
                     default=Value('unknown'),
                 ),  # This should be an ID, on client side can make it understand this
+                area=Area(Transform('transformedgeom', srid=6933)),
                 siteeval_id=F('site_uuid'),
                 timemin=ExtractEpoch('date'),
                 timemax=ExtractEpoch(

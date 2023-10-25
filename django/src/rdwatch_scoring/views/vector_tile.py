@@ -105,7 +105,7 @@ def vector_tile(
                     default=Value('unknown'),
                 ),  # This needs a version to be scoring coloring,
                 # but that needs some coordination with kitware
-                timestamp=ExtractEpoch('evaluation_run_uuid__start_datetime'),
+                timestamp=ExtractEpoch('start_date'),
                 timemin=ExtractEpoch('start_date'),
                 timemax=ExtractEpoch('end_date'),
                 performer_id=F('originator'),
@@ -135,9 +135,10 @@ def vector_tile(
             .values()
             .annotate(
                 id=F('uuid'),
+                timestamp=F('date'),
                 mvtgeom=mvtgeom,
                 configuration_id=F('site_uuid__evaluation_run_uuid'),
-                site_number=F('site_uuid__site_id'),
+                site_number=Substr(F('site_uuid__site_id'), 9),  # pos is 1 indexed
                 label=Case(
                     When(
                         Q(phase__isnull=False),
@@ -145,7 +146,7 @@ def vector_tile(
                     ),
                     default=Value('unknown'),
                 ),  # This should be an ID, on client side can make it understand this
-                area=Area(Transform('transformedgeom', srid=6933)),
+                siteeval_id=F('site_uuid'),
                 timemin=ExtractEpoch('date'),
                 timemax=ExtractEpoch(
                     Window(

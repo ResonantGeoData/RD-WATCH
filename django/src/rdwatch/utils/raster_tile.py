@@ -46,7 +46,7 @@ def get_raster_bbox(
                             low = stats_json['percentile_2']
                             high = stats_json['percentile_98']
                         img.rescale(in_range=((low, high),))
-                    elif len(scale) == 2:
+                    elif isinstance(scale, list) and len(scale) == 2:
                         img.rescale(in_range=((scale[0], scale[1]),))
                     return img.render(img_format=format)
         with Reader(input=uri) as cog:

@@ -3,7 +3,6 @@ from datetime import datetime, timedelta
 from pydantic import UUID4
 
 from django.contrib.gis.db.models import GeometryField
-from django.contrib.gis.db.models.functions import Area, Transform
 from django.core.cache import cache
 from django.db import connections
 from django.db.models import (
@@ -18,7 +17,7 @@ from django.db.models import (
     When,
     Window,
 )
-from django.db.models.functions import Lower, Replace
+from django.db.models.functions import Lower, Replace, Substr
 from django.http import HttpRequest, HttpResponse
 from django.shortcuts import get_object_or_404
 

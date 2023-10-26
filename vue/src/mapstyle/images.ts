@@ -14,33 +14,14 @@ const getClosestTimestamp = (id: string, timestamp: number, enabledSiteObservati
             });
             const index = observation.images.findIndex((item) => item.timestamp === closest);
             if (index !== -1) {
-                return observation.images[index].image
+                const bbox = observation.images[index].bbox
+                const coordinates = [[bbox.xmin, bbox.ymax], [bbox.xmax, bbox.ymax], [bbox.xmax, bbox.ymin], [bbox.xmin, bbox.ymin]] as ImageBBox;
+                return {url: observation.images[index].image, coordinates };
             }
         }
     }
-    return '';
+    return {url: '', coordinates: [[0,0], [0,0], [0,0], [0,0]] as ImageBBox};
 }
-
-
-function scaleBoundingBox(bbox: ImageBBox, scale: number) {
-    // Get the width and height of the bounding box
-    const width = bbox[2][0] - bbox[0][0];
-    const height = bbox[2][1] - bbox[0][1];
-
-    // Calculate the new width and height based on the scaling factor
-    const newWidth = width * scale;
-    const newHeight = height * scale;
-
-    // Calculate the new coordinates of the bounding box
-    const newX1 = bbox[0][0] - ((newWidth - width) / 2);
-    const newY1 = bbox[0][1] - ((newHeight - height) / 2);
-    const newX2 = bbox[2][0] + ((newWidth - width) / 2);
-    const newY2 = bbox[2][1] + ((newHeight - height) / 2);
-
-    // Return the new bounding box
-    return [[newX1, newY1], [newX2, newY1], [newX2, newY2],  [newX1, newY2]] as ImageBBox;
-  }
-
 
 export const updateImageMapSources =  (
     timestamp: number,
@@ -53,9 +34,10 @@ export const updateImageMapSources =  (
         if (map ) {
             const mapSource = map.getSource(source) as ImageSource;
             if (mapSource) {
+                const { url, coordinates} = getClosestTimestamp(item.id, timestamp, enabledSiteObservations, settings);
                 mapSource.updateImage({
-                    url: getClosestTimestamp(item.id, timestamp, enabledSiteObservations, settings),
-                    coordinates: scaleBoundingBox(item.bbox, 1.2),
+                    url,
+                    coordinates,
                 });
             }
         }
@@ -84,11 +66,12 @@ export const buildImageSourceFilter = (
             }
         }
         if (!update) {
+            const { url, coordinates} = getClosestTimestamp(item.id, timestamp, enabledSiteObservations, settings);
             results[source] =
             {
                 type: 'image',
-                url: getClosestTimestamp(item.id, timestamp, enabledSiteObservations, settings),
-                coordinates: scaleBoundingBox(item.bbox, 1.2),
+                url,
+                coordinates,
             }
         }
     });

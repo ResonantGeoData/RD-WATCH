@@ -49,6 +49,7 @@ export interface SiteObservationImage {
   percent_black?: number;
   siteobs_id: string | null;
   disabled?: boolean;
+  bbox: { xmin: number; ymin: number; xmax: number; ymax: number };
 }
 
 export interface ScoringBase {

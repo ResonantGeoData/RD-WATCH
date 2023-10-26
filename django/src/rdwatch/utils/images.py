@@ -91,7 +91,7 @@ def fetch_boundbox_image(
     timestamp: datetime,
     constellation: str,
     worldView=False,
-    scale: Literal['default', 'bits'] = 'default',
+    scale: Literal['default', 'bits'] | list[int] = 'default',
 ):
     timebuffer = timedelta(days=1)
     try:
@@ -109,7 +109,7 @@ def fetch_boundbox_image(
     if worldView:
         bytes = get_worldview_processed_visual_bbox(closest_capture, bbox, 'PNG', scale)
     else:
-        bytes = get_raster_bbox(closest_capture.uri, bbox)
+        bytes = get_raster_bbox(closest_capture.uri, bbox, 'PNG', scale)
     return {
         'bytes': bytes,
         'cloudcover': closest_capture.cloudcover,

@@ -35,6 +35,7 @@ class SiteImageListSchema(Schema):
 class SiteObsGeomSchema(Schema):
     timestamp: int | None
     geoJSON: dict  # TODO: Replace with pydantics geoJSON
+    bbox: dict
     label: str
 
 
@@ -48,6 +49,7 @@ class SiteImageResponse(Schema):
     images: SiteImageListSchema
     geoJSON: list[SiteObsGeomSchema]
     evaluationGeoJSON: dict
+    evaluationBBox: dict
     status: str | None
     label: str
     notes: str | None
@@ -92,6 +94,7 @@ def site_images(request: HttpRequest, id: UUID4):
                     label='label__slug',
                     timestamp=ExtractEpoch('timestamp'),
                     geoJSON=Transform('geom', srid=4326),
+                    bbox=BoundingBox(Transform('geom', srid=4326)),
                 )
             )
         )
@@ -104,6 +107,7 @@ def site_images(request: HttpRequest, id: UUID4):
                 label=F('label__slug'),
                 status=F('status'),
                 evaluationGeoJSON=Transform('geom', srid=4326),
+                evaluationBBox=BoundingBox(Transform('geom', srid=4326)),
                 notes=F('notes'),
             )
         )[0]
@@ -140,4 +144,5 @@ def site_images(request: HttpRequest, id: UUID4):
     if ground_truth.exists():
         output['groundTruth'] = ground_truth[0]['json']
     output['evaluationGeoJSON'] = site_eval_data['json']['evaluationGeoJSON']
+    output['evaluationBBox'] = site_eval_data['json']['evaluationBBox']
     return output

@@ -43,8 +43,14 @@ from rdwatch.utils.worldview_processed.raster_tile import (
 from rdwatch.views.site_evaluation import get_site_model_feature_JSON
 
 logger = logging.getLogger(__name__)
-
-BaseTime = '2013-01-01'  # lowest time to use if time is null for observations
+# lowest time to use if time is null for observations
+BaseTime = '2013-01-01'
+# Default scale multiplier for bounding box to provide more area
+BboxScaleDefault = 1.2
+# rough number to convert lat/long to Meters
+ToMeters = 111139.0
+# number in meters to add to the center of small polygons for S2/L8
+overrideImageSize = 1000
 
 
 def is_inside_range(
@@ -69,7 +75,8 @@ def get_siteobservations_images(
     dayRange=14,
     no_data_limit=50,
     overrideDates: None | list[datetime, datetime] = None,
-    scale: Literal['default', 'bits'] = 'default',
+    scale: Literal['default', 'bits'] | list[int] = 'default',
+    bboxScale: float = BboxScaleDefault,
 ) -> None:
     constellationObj = Constellation.objects.filter(slug=baseConstellation).first()
     # Ensure we are using ints for the DayRange and no_data_limit
@@ -81,32 +88,53 @@ def get_siteobservations_images(
     site_obs_count = SiteObservation.objects.filter(
         siteeval=site_eval_id, constellation_id=constellationObj.pk
     ).count()
-
     transformer = Transformer.from_crs('EPSG:3857', 'EPSG:4326')
     found_timestamps = {}
-    min_time = datetime.max
-    max_time = datetime.min
     max_bbox = [float('inf'), float('inf'), float('-inf'), float('-inf')]
     matchConstellation = ''
     # Use the base SiteEvaluation extents as the max size
     baseSiteEval = SiteEvaluation.objects.get(pk=site_eval_id)
+    # use the Eval Start/End date if not null
+    min_time = baseSiteEval.start_date
+    max_time = baseSiteEval.end_date
+    if min_time is None:
+        min_time = datetime.strptime(BaseTime, '%Y-%m-%d')
+    if max_time is None:
+        max_bbox = datetime.now()
+
     mercator: tuple[float, float, float, float] = baseSiteEval.geom.extent
     tempbox = transformer.transform_bounds(
         mercator[0], mercator[1], mercator[2], mercator[3]
     )
     bbox = [tempbox[1], tempbox[0], tempbox[3], tempbox[2]]
-    bbox = scale_bbox(bbox, 1.2)
+    # if width | height is too small we pad S2/L8 regions for more context
+    bbox_width = (tempbox[2] - tempbox[0]) * ToMeters
+    bbox_height = (tempbox[3] - tempbox[1]) * ToMeters
+    if baseConstellation != 'WV' and (
+        bbox_width < overrideImageSize or bbox_height < overrideImageSize
+    ):
+        size_diff = (
+            overrideImageSize * 0.5
+        ) / ToMeters  # find how much to add to each lon/lat
+        bbox = [
+            tempbox[1] - size_diff,
+            tempbox[0] - size_diff,
+            tempbox[3] + size_diff,
+            tempbox[2] + size_diff,
+        ]
+    # add the included padding to the updated BBOX
+    bbox = scale_bbox(bbox, bboxScale)
+    # get the updated BBOX if it's bigger
     max_bbox = get_max_bbox(bbox, max_bbox)
 
     # First we gather all images that match observations
     count = 0
     for observation in site_observations.iterator():
-        count += 1
         self.update_state(
             state='PROGRESS',
             meta={
                 'current': count,
-                'total': site_obs_count + 1,
+                'total': site_obs_count,
                 'mode': 'Site Observations',
                 'siteEvalId': site_eval_id,
             },
@@ -115,18 +143,13 @@ def get_siteobservations_images(
             min_time = min(min_time, observation.timestamp)
             max_time = max(max_time, observation.timestamp)
         mercator: tuple[float, float, float, float] = observation.geom.extent
-        tempbox = transformer.transform_bounds(
-            mercator[0], mercator[1], mercator[2], mercator[3]
-        )
-        bbox = [tempbox[1], tempbox[0], tempbox[3], tempbox[2]]
-        bbox = scale_bbox(bbox, 1.2)
-        max_bbox = get_max_bbox(bbox, max_bbox)
 
         timestamp = observation.timestamp
         constellation = observation.constellation
         # We need to grab the image for this timerange and type
         logger.warning(timestamp)
         if str(constellation) == baseConstellation and timestamp is not None:
+            count += 1
             baseSiteEval = observation.siteeval
             matchConstellation = constellation
             found = SiteImage.objects.filter(
@@ -143,11 +166,9 @@ def get_siteobservations_images(
                 )
             ):
                 logger.warning(f'Skipping Timestamp: {timestamp}')
-                count += 1
                 continue
             if found.exists() and not force:
                 found_timestamps[observation.timestamp] = True
-                count += 1
                 continue
             results = fetch_boundbox_image(
                 bbox, timestamp, constellation, baseConstellation == 'WV', scale
@@ -198,14 +219,10 @@ def get_siteobservations_images(
 
     # Now we need to go through and find all other images
     # that exist in the start/end range of the siteEval
-    if overrideDates:
+    if overrideDates and len(overrideDates) == 2:
         min_time = datetime.strptime(overrideDates[0], '%Y-%m-%d')
         max_time = datetime.strptime(overrideDates[1], '%Y-%m-%d')
-    else:
-        if min_time == datetime.max:
-            min_time = datetime.strptime(BaseTime, '%Y-%m-%d')
-        if max_time == datetime.min:
-            max_time = datetime.now()
+
     timebuffer = ((max_time + timedelta(days=30)) - (min_time - timedelta(days=30))) / 2
     timestamp = (min_time + timedelta(days=30)) + timebuffer
 
@@ -235,7 +252,7 @@ def get_siteobservations_images(
         baseSiteEval is None
     ):  # We need to grab the siteEvaluation directly for a reference
         baseSiteEval = SiteEvaluation.objects.filter(pk=site_eval_id).first()
-    count = 0
+    count = 1
     logger.warning(f'Found {len(captures)} captures')
     for (
         capture
@@ -246,7 +263,7 @@ def get_siteobservations_images(
             state='PROGRESS',
             meta={
                 'current': count,
-                'total': len(captures) + 1,
+                'total': len(captures),
                 'mode': 'Image Captures',
                 'siteEvalId': site_eval_id,
             },
@@ -270,6 +287,7 @@ def get_siteobservations_images(
             else:
                 bytes = get_raster_bbox(capture.uri, max_bbox)
             if bytes is None:
+                count += 1
                 logger.warning(f'COULD NOT FIND ANY IMAGE FOR TIMESTAMP: {timestamp}')
                 continue
             percent_black = get_percent_black_pixels(bytes)
@@ -279,6 +297,7 @@ def get_siteobservations_images(
             image = File(io.BytesIO(bytes), name=output)
             imageObj = Image.open(io.BytesIO(bytes))
             if image is None:  # No null/None images should be set
+                count += 1
                 continue
             found = SiteImage.objects.filter(
                 siteeval=baseSiteEval,
@@ -310,6 +329,8 @@ def get_siteobservations_images(
                     image_bbox=Polygon.from_bbox(max_bbox),
                     image_dimensions=[imageObj.width, imageObj.height],
                 )
+        else:
+            count += 1
     fetching_task = SatelliteFetching.objects.get(siteeval_id=site_eval_id)
     fetching_task.status = SatelliteFetching.Status.COMPLETE
     fetching_task.celery_id = ''

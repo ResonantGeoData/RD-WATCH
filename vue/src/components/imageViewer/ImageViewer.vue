@@ -18,6 +18,7 @@ interface Props {
   dateRange?: number[] | null
 }
 
+
 type EditModes = 'SiteEvaluationLabel' | 'StartDate' | 'EndDate' | 'SiteObservationLabel' | 'SiteEvaluationNotes' | 'SiteObservationNotes'
 
 const props = withDefaults(defineProps<Props>(), {
@@ -69,6 +70,7 @@ const hasGroundTruth = ref(false);
 const groundTruth: Ref<EvaluationImageResults['groundTruth'] | null > = ref(null);
 const drawGroundTruth = ref(false);
 const siteEvaluationList = computed(() => Object.entries(styles).filter(([, { type }]) => type === 'sites').map(([label]) => label));
+const rescaleImage = ref(false);
 
 
 const filteredImages = computed(() => {
@@ -132,7 +134,7 @@ const getImageData = async () => {
     // Lets process the polygons to get them in pixel space.
     // For each polygon we need to convert it to the proper image sizing result.
     images.forEach((image) => {
-        const result = processImagePoly(image, polygons, data.evaluationGeoJSON, data.label, hasGroundTruth.value, groundTruth.value);
+        const result = processImagePoly(image, polygons, data.evaluationGeoJSON, data.evaluationBBox, data.label, hasGroundTruth.value, groundTruth.value);
         combinedImages.value.push(result);
     })
 }
@@ -214,6 +216,7 @@ function drawForDownload() {
         height,
         background,
         drawGroundTruth.value,
+        rescaleImage.value,
       );
       CanvasCapture.recordFrame();
       index += 1
@@ -250,6 +253,7 @@ const load = async (newValue?: string, oldValue?: string) => {
         -1,
         background,
         drawGroundTruth.value,
+        rescaleImage.value,
         )
   }
   loading.value = false;
@@ -273,7 +277,7 @@ const copyURL = async (mytext: string) => {
   }
 
 
-watch([currentImage, imageRef, filteredImages, drawGroundTruth], () => {
+watch([currentImage, imageRef, filteredImages, drawGroundTruth, rescaleImage], () => {
     if (currentImage.value < filteredImages.value.length && imageRef.value !== null) {
         imageRef.value.src = filteredImages.value[currentImage.value].image.image;
     }
@@ -287,6 +291,7 @@ watch([currentImage, imageRef, filteredImages, drawGroundTruth], () => {
           -1,
           background,
           drawGroundTruth.value,
+          rescaleImage.value
         )
     }
     if (props.dialog === false && filteredImages.value[currentImage.value]) {
@@ -577,6 +582,23 @@ const setSiteModelStatus = async (status: SiteModelStatus) => {
         Displaying {{ filteredImages.length }} of {{ combinedImages.length }} images
       </div>
       <v-spacer />
+      <v-tooltip
+        open-delay="50"
+        bottom
+      >
+        <template #activator="{ props:subProps }">
+          <v-icon
+            v-bind="subProps"
+            :color="rescaleImage ? 'blue' : ''"
+            @click="rescaleImage = !rescaleImage"
+          >
+            mdi-resize
+          </v-icon>
+        </template>
+        <span>
+          Rescale Images
+        </span>
+      </v-tooltip>
       <div v-if="downloadingGif">
         <span> {{ downloadingGifState === 'drawing' ? 'Drawing' : 'GIF Creation' }}</span>
         <v-progress-linear

@@ -1,8 +1,9 @@
+import logging
 from datetime import datetime
 from typing import Literal
 
 from celery.result import AsyncResult
-from ninja import Router, Schema
+from ninja import Query, Router, Schema
 from pydantic import UUID4
 
 from django.contrib.gis.db.models.aggregates import Collect
@@ -27,6 +28,8 @@ from rdwatch.models import (
 from rdwatch.schemas import SiteObservationRequest
 from rdwatch.schemas.common import BoundingBoxSchema, TimeRangeSchema
 from rdwatch.tasks import get_siteobservations_images
+
+logger = logging.getLogger(__name__)
 
 router = Router()
 
@@ -167,16 +170,22 @@ def site_observations(request: HttpRequest, evaluation_id: UUID4):
     return queryset
 
 
+class GenerateImagesSchema(Schema):
+    constellation: Literal['WV', 'S2', 'L8'] = 'WV'
+    dayRange: int = 14
+    noData: int = 50
+    overrideDates: None | list[str] = None
+    force: bool = False
+    scale: Literal['default', 'bits', 'custom'] = 'default'
+    scaleNum: None | list[int] = None
+    bboxScale: None | float = 1.2
+
+
 @router.post('/{evaluation_id}/generate-images/', response={202: bool, 409: str})
 def get_site_observation_images(
     request: HttpRequest,
     evaluation_id: UUID4,
-    constellation: Literal['WV', 'S2', 'L8'] = 'WV',
-    dayRange: int = 14,
-    noData: int = 50,
-    overrideDates: None | list[str] = None,
-    force: bool = False,
-    scale: str = 'default',
+    params: GenerateImagesSchema = Query(...),  # noqa: B008
 ):
     # Make sure site evaluation actually exists
     siteeval = get_object_or_404(SiteEvaluation, pk=evaluation_id)
@@ -205,14 +214,18 @@ def get_site_observation_images(
                 timestamp=datetime.now(),
                 status=SatelliteFetching.Status.RUNNING,
             )
+        scalVal = params.scale
+        if params.scale == 'custom':
+            scalVal = params.scaleNum
         task_id = get_siteobservations_images.delay(
             evaluation_id,
-            constellation,
-            force,
-            dayRange,
-            noData,
-            overrideDates,
-            scale,
+            params.constellation,
+            params.force,
+            params.dayRange,
+            params.noData,
+            params.overrideDates,
+            scalVal,
+            params.bboxScale,
         )
         fetching_task.celery_id = task_id.id
         fetching_task.save()

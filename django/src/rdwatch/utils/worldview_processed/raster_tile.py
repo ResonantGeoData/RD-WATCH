@@ -98,5 +98,7 @@ def get_worldview_processed_visual_bbox(
             if capture.bits_per_pixel != 8:
                 max_bits = 2**capture.bits_per_pixel - 1
                 rgb.rescale(in_range=((0, max_bits),))
+        elif isinstance(scale, list) and len(scale) == 2:  # scale is an integeter range
+            rgb.rescale(in_range=((scale[0], scale[1]),))
 
         return rgb.render(img_format=format)

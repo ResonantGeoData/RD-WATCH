@@ -17,10 +17,14 @@ const overrideDates: Ref<[string, string]> = ref(['2013-01-01', new Date().toISO
 const showAdvanced = ref(false);
 const force =ref(false);
 const customDateRange = ref(false);
-const scaleOptions = ref(['default', 'bits'])
-const scale: Ref<'default' | 'bits'> = ref('default')
+const scaleOptions = ref(['default', 'bits', 'custom'])
+const scale: Ref<'default' | 'bits' | 'custom'> = ref('default')
+const scaleNums: Ref<[number, number]> = ref([0, 10000])
+const bboxScale: Ref<number> = ref(1.2);
+const validForm = ref(true);
 
 const download = () => {
+    
     emit('download', {
         constellation: selectedSource.value,
         dayRange: dayRange.value,
@@ -28,6 +32,8 @@ const download = () => {
         overrideDates: customDateRange.value ? overrideDates.value : undefined,
         force: force.value,
         scale: scale.value,
+        scaleNum: scale.value === 'custom' ? scaleNums.value : undefined,
+        bboxScale: bboxScale.value,
     })
 }
 
@@ -51,154 +57,204 @@ const display = ref(true);
   >
     <v-card>
       <v-card-title>Download Model-Run Images</v-card-title>
-      <v-card-text>
-        <v-row
-          dense
-          align="center"
-        >
-          <v-select
-            v-model="selectedSource"
-            :items="baseList"
-            label="Source"
-            class="mr-2"
-          />
-          <v-icon
-            :color="showAdvanced ? 'primary' : ''"
-            @click="showAdvanced = !showAdvanced"
-          >
-            mdi-cog
-          </v-icon>
-        </v-row>
-        <div v-if="showAdvanced">
+      <v-form v-model="validForm">
+        <v-card-text>
           <v-row
             dense
             align="center"
-            class="pb-5"
-          >
-            <v-checkbox
-              v-model="force"
-              density="compact"
-              label="Force"
-              hint="Force redownloading all images"
-              persistent-hint
-            />
-          </v-row>        
-          <v-row
-            v-if="selectedSource === 'WV'"
-            dense
-            align="center"
-            class="pb-5"
           >
             <v-select
-              v-model="scale"
-              :items="scaleOptions"
-              density="compact"
-              label="Bit Scaling"
-              persistent-hint
+              v-model="selectedSource"
+              :items="baseList"
+              label="Source"
+              class="mr-2"
             />
-          </v-row>        
+            <v-icon
+              :color="showAdvanced ? 'primary' : ''"
+              @click="showAdvanced = !showAdvanced"
+            >
+              mdi-cog
+            </v-icon>
+          </v-row>
+          <div v-if="showAdvanced">
+            <v-row
+              dense
+              align="center"
+              class="pb-5"
+            >
+              <v-checkbox
+                v-model="force"
+                density="compact"
+                label="Force"
+                hint="Force redownloading all images"
+                persistent-hint
+              />
+            </v-row>        
+            <v-row
+              dense
+              align="center"
+              class="pb-5"
+            >
+              <v-select
+                v-model="scale"
+                :items="scaleOptions"
+                density="compact"
+                label="Bit Scaling"
+                persistent-hint
+              />
+            </v-row>    
+            <v-row
+              v-if="scale==='custom'"
+              dense
+              align="center"
+              class="pb-5"
+            >
+              <v-text-field
+                v-model.number="scaleNums[0]"
+                type="number"
+                label="low"
+                :rules="[v => v >= 0 || 'Must be >= 0']"
+                class="mx-2"
+              />
+              <v-text-field
+                v-model.number="scaleNums[1]"
+                type="number"
+                label="high"
+                class="mx-2"
+              />
+            </v-row>    
+            <v-row
+              dense
+              align="center"
+              class="pb-5"
+            >
+              <v-text-field
+                v-model.number="bboxScale"
+                :rules="[ v => v >= 1.2 || 'Must be >= 1.2', v => v <= 2 || 'Must be <= 2']"
+                type="number"
+                step="0.1"
+                label="Box Scaling"
+              />
+              <v-tooltip
+                open-delay="50"
+                bottom
+              >
+                <template #activator="{ props:subProps }">
+                  <v-icon
+                    v-bind="subProps"
+                  >
+                    mdi-information
+                  </v-icon>
+                </template>
+                <span>
+                  Adds a scaling factor to the calculating bounding box to provide more image area around site
+                </span>
+              </v-tooltip>
+            </v-row>    
 
-          <v-row
-            dense
-            align="center"
-          >
-            <v-text-field
-              v-model="dayRange"
-              type="number"
-              label="Day Limit"
-              class="m4"
-            />
-            <v-tooltip
-              open-delay="50"
-              bottom
+            <v-row
+              dense
+              align="center"
             >
-              <template #activator="{ props:subProps }">
-                <v-icon
-                  v-bind="subProps"
-                >
-                  mdi-information
-                </v-icon>
-              </template>
-              <span>
-                Day Limit applies to S2/L8 imagery to grab one image every X days.  This is to prevent loading hundreds of images
-              </span>
-            </v-tooltip>
-          </v-row>
-          <v-row
-            dense
-            align="center"
-          >
-            <v-text-field
-              v-model="noData"
-              type="number"
-              label="NODATA %"
-            />
-            <v-tooltip
-              open-delay="50"
-              bottom
-            >
-              <template #activator="{ props:subProps }">
-                <v-icon
-                  v-bind="subProps"
-                >
-                  mdi-information
-                </v-icon>
-              </template>
-              <span>
-                When utilizing the DayRange limit this will attmept to filter out images that have more that X% NODATA
-              </span>
-            </v-tooltip>
-          </v-row>
-          <v-row dense>
-            <v-checkbox
-              v-model="customDateRange"
-              label="Custom Date Range"
-            />
-          </v-row>
-          <div v-if="customDateRange">
-            <v-row dense>
-              <v-menu
-                open-delay="20"
+              <v-text-field
+                v-model="dayRange"
+                type="number"
+                label="Day Limit"
+                :rules="[ v => v >= 0 || 'Must be >= 0', v => v <= 365 || 'Must be <= 365']"
+                class="m4"
+              />
+              <v-tooltip
+                open-delay="50"
+                bottom
               >
-                <template #activator="{ props }">
-                  <v-btn
-                    color="primary"
-                    v-bind="props"
-                    class="mr-2"
+                <template #activator="{ props:subProps }">
+                  <v-icon
+                    v-bind="subProps"
                   >
-                    <b>Start:</b>
-                    <span> {{ overrideDates[0] }}</span>
-                  </v-btn>
+                    mdi-information
+                  </v-icon>
                 </template>
-                <v-date-picker
-                  :model-value="[overrideDates[0]]"
-                  hide-actions
-                  @update:model-value="updateTime($event, 'StartDate')"
-                />
-              </v-menu>
-              <v-menu
-                open-delay="20"
-              >
-                <template #activator="{ props }">
-                  <v-btn
-                    color="primary"
-                    v-bind="props"
-                    class="ml-2"
-                  >
-                    <b>End:</b>
-                    <span> {{ overrideDates[1] }}</span>
-                  </v-btn>
-                </template>
-                <v-date-picker
-                  :model-value="[overrideDates[1]]"
-                  hide-actions
-                  @update:model-value="updateTime($event, 'EndDate')"
-                />
-              </v-menu>
+                <span>
+                  Day Limit applies to S2/L8 imagery to grab one image every X days.  This is to prevent loading hundreds of images
+                </span>
+              </v-tooltip>
             </v-row>
+            <v-row
+              dense
+              align="center"
+            >
+              <v-text-field
+                v-model="noData"
+                type="number"
+                label="NODATA %"
+              />
+              <v-tooltip
+                open-delay="50"
+                bottom
+              >
+                <template #activator="{ props:subProps }">
+                  <v-icon
+                    v-bind="subProps"
+                  >
+                    mdi-information
+                  </v-icon>
+                </template>
+                <span>
+                  When utilizing the DayRange limit this will attmept to filter out images that have more that X% NODATA
+                </span>
+              </v-tooltip>
+            </v-row>
+            <v-row dense>
+              <v-checkbox
+                v-model="customDateRange"
+                label="Custom Date Range"
+              />
+            </v-row>
+            <div v-if="customDateRange">
+              <v-row dense>
+                <v-menu
+                  open-delay="20"
+                >
+                  <template #activator="{ props }">
+                    <v-btn
+                      color="primary"
+                      v-bind="props"
+                      class="mr-2"
+                    >
+                      <b>Start:</b>
+                      <span> {{ overrideDates[0] }}</span>
+                    </v-btn>
+                  </template>
+                  <v-date-picker
+                    :model-value="[overrideDates[0]]"
+                    hide-actions
+                    @update:model-value="updateTime($event, 'StartDate')"
+                  />
+                </v-menu>
+                <v-menu
+                  open-delay="20"
+                >
+                  <template #activator="{ props }">
+                    <v-btn
+                      color="primary"
+                      v-bind="props"
+                      class="ml-2"
+                    >
+                      <b>End:</b>
+                      <span> {{ overrideDates[1] }}</span>
+                    </v-btn>
+                  </template>
+                  <v-date-picker
+                    :model-value="[overrideDates[1]]"
+                    hide-actions
+                    @update:model-value="updateTime($event, 'EndDate')"
+                  />
+                </v-menu>
+              </v-row>
+            </div>
           </div>
-        </div>
-      </v-card-text>
+        </v-card-text>
+      </v-form>
       <v-card-actions>
         <v-row>
           <v-spacer />
@@ -212,6 +268,7 @@ const display = ref(true);
           <v-btn
             color="success"
             class="mx-3"
+            :disabled="!validForm"
             @click="download()"
           >
             Download

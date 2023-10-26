@@ -65,13 +65,13 @@ class RegionAdmin(admin.ModelAdmin):
 class SatelliteFetchingAdmin(admin.ModelAdmin):
     list_display = (
         'id',
-        'siteeval',
+        'site',
         'timestamp',
         'status',
         'celery_id',
         'error',
     )
-    list_filter = ('siteeval', 'timestamp')
+    list_filter = ('site', 'timestamp')
 
 
 @admin.register(SiteEvaluation)

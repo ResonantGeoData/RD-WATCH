@@ -329,9 +329,13 @@ const setEditingMode = (mode: EditModes) => {
   if (['StartDate', 'EndDate'].includes(mode)){
     if (startDate.value === null) {
       startDateTemp.value = currentDate.value;
+    } else {
+      startDateTemp.value = startDate.value;
     }
     if (endDate.value === null) {
       endDateTemp.value = currentDate.value;
+    } else {
+      endDateTemp.value = endDate.value;
     }
   }
   editDialog.value = true;
@@ -876,9 +880,9 @@ const setSiteModelStatus = async (status: SiteModelStatus) => {
             <v-date-picker
               v-if="startDateTemp !== null"
               :model-value="[startDateTemp ? startDateTemp : currentTimestamp]"
-              @update:model-value="updateTime($event, 'StartDateTemp')"
+              @update:model-value="updateTime($event, 'StartDate')"
               @click:cancel="editDialog = false"
-              @click:save="updateTime(startDateTemp, 'StartDate'); editDialog = false"
+              @click:save="editDialog = false"
             />
           </v-card-text>
         </v-card>
@@ -911,9 +915,9 @@ const setSiteModelStatus = async (status: SiteModelStatus) => {
             <v-date-picker
               v-if="endDateTemp !== null"
               :model-value="[endDateTemp ? endDateTemp : currentTimestamp]"
-              @update:model-value="updateTime($event, 'EndDateTemp')"
+              @update:model-value="updateTime($event, 'EndDate')"
               @click:cancel="editDialog = false"
-              @click:save="updateTime(endDateTemp, 'EndDate');editDialog = false"
+              @click:save="editDialog = false"
             />
           </v-card-text>
         </v-card>

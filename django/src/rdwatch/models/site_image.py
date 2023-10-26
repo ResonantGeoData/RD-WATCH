@@ -6,12 +6,12 @@ from django.dispatch import receiver
 
 
 class SiteImage(models.Model):
-    siteeval = models.ForeignKey(
+    site = models.ForeignKey(
         to='SiteEvaluation',
         on_delete=models.CASCADE,
         db_index=True,
     )
-    siteobs = models.ForeignKey(
+    observation = models.ForeignKey(
         to='SiteObservation',
         on_delete=models.CASCADE,
         null=True,
@@ -44,7 +44,7 @@ class SiteImage(models.Model):
 
     def __str__(self):
         time = self.timestamp.isoformat()
-        return f'{self.siteeval}.{self.source}@{time}'
+        return f'{self.site}.{self.source}@{time}'
 
     class Meta:
         indexes = [GistIndex(fields=['timestamp'])]

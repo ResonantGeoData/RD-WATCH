@@ -154,8 +154,8 @@ def get_siteobservations_images(
             baseSiteEval = observation.siteeval
             matchConstellation = constellation
             found = SiteImage.objects.filter(
-                siteeval=observation.siteeval,
-                siteobs=observation,
+                site=observation.siteeval,
+                observation=observation,
                 timestamp=observation.timestamp,
                 source=baseConstellation,
             )
@@ -206,8 +206,8 @@ def get_siteobservations_images(
                 existing.save()
             else:
                 SiteImage.objects.create(
-                    siteeval=observation.siteeval,
-                    siteobs=observation,
+                    site=observation.siteeval,
+                    observation=observation,
                     timestamp=observation.timestamp,
                     image=image,
                     aws_location=results['uri'],
@@ -301,7 +301,7 @@ def get_siteobservations_images(
                 count += 1
                 continue
             found = SiteImage.objects.filter(
-                siteeval=baseSiteEval,
+                site=baseSiteEval,
                 timestamp=capture_timestamp,
                 source=baseConstellation,
             )
@@ -320,7 +320,7 @@ def get_siteobservations_images(
                 existing.save()
             else:
                 SiteImage.objects.create(
-                    siteeval=baseSiteEval,
+                    site=baseSiteEval,
                     timestamp=capture_timestamp,
                     aws_location=capture.uri,
                     image=image,

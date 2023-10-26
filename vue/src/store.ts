@@ -47,7 +47,7 @@ export interface SiteObservationImage {
   source: 'S2' | 'WV' | 'L8';
   cloudcover?: number;
   percent_black?: number;
-  siteobs_id: string | null;
+  observation_id: string | null;
   disabled?: boolean;
   bbox: { xmin: number; ymin: number; xmax: number; ymax: number };
 }

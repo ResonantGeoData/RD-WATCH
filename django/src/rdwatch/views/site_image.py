@@ -20,7 +20,7 @@ class SiteImageSchema(Schema):
     source: str
     cloudcover: float
     image: str
-    siteobs_id: str | None
+    observation_id: str | None
     percent_black: float
     bbox: BoundingBoxSchema
     image_dimensions: list[int]
@@ -63,7 +63,7 @@ def site_images(request: HttpRequest, id: UUID4):
     else:
         site_eval_obj = SiteEvaluation.objects.get(pk=id)
     image_queryset = (
-        SiteImage.objects.filter(siteeval__id=id)
+        SiteImage.objects.filter(site__id=id)
         .order_by('timestamp')
         .aggregate(
             count=Count('pk'),
@@ -75,7 +75,7 @@ def site_images(request: HttpRequest, id: UUID4):
                     cloudcover='cloudcover',
                     percent_black='percent_black',
                     source='source',
-                    siteobs_id='siteobs_id',
+                    observation_id='observation_id',
                     bbox=BoundingBox('image_bbox'),
                     image_dimensions='image_dimensions',
                     aws_location='aws_location',

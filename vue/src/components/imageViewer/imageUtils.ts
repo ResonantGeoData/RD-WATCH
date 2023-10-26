@@ -27,7 +27,7 @@ const getClosestPoly = (timestamp: number, polys: EvaluationGeoJSON[], evaluatio
       }
       return found;
   }
-  
+
 
 const createCanvas = (width: number, height: number) => {
     const myOffScreenCanvas: HTMLCanvasElement & { ctx?: CanvasRenderingContext2D | null } = document.createElement("canvas");
@@ -79,7 +79,7 @@ const drawData = (
 
           let widthRatio = rescale && poly.scaled ? image.image_dimensions[0] / poly.scaled.crop.width  : overrideWidth / image.image_dimensions[0];
           let heightRatio = rescale && poly.scaled  ? image.image_dimensions[1] / poly.scaled.crop.height : overrideHeight / image.image_dimensions[1];
-  
+
           let computedImageHeight = rescale && poly.scaled ? poly.scaled.crop.height: image.image_dimensions[1];
           let computedOverrideHeight = rescale && poly.scaled ? image.image_dimensions[1] : overrideHeight;
           if (overrideHeight !== -1 || overrideWidth !== -1) {
@@ -104,7 +104,7 @@ const drawData = (
               context.beginPath();
               ring.forEach(({x, y}) => {
                 const yPosEnd =  standardPoly ? computedImageHeight - y : computedOverrideHeight - (y * heightRatio);
-                const xPos = standardPoly ? x : x * widthRatio;  
+                const xPos = standardPoly ? x : x * widthRatio;
                   if (context){
                     context.lineTo(xPos, yPosEnd);
                 }
@@ -115,16 +115,16 @@ const drawData = (
               context.stroke();
             });
           }
-  
+
           coords.forEach((ring) => {
-            const xPos = standardPoly ? ring[0].x : ring[0].x * widthRatio ;
+            const xPos = standardPoly ? ring[0].x : ring[0].x * widthRatio;
             const yPos = standardPoly ? computedImageHeight - ring[0].y : computedOverrideHeight - (ring[0].y * heightRatio);
-            
+
             context.moveTo(xPos, yPos);
             context.beginPath();
             ring.forEach(({x, y}) => {
               const yPosEnd =  standardPoly ? computedImageHeight - y : computedOverrideHeight - (y * heightRatio);
-              const xPos = standardPoly ? x : x * widthRatio;  
+              const xPos = standardPoly ? x : x * widthRatio;
               if (context){
                   context.lineTo(xPos, yPosEnd);
               }
@@ -148,7 +148,7 @@ const drawData = (
               height = maxHeight;
               width = height / ratio;
             }
-            
+
             context.canvas.style.width = `${width}px`
             context.canvas.style.height = `${height}px`;
           } else { // We draw a label for downloaded GIFs
@@ -156,7 +156,7 @@ const drawData = (
             context.font = `${fontSize}px Arial`;
             // Source Satellite
             if (image.source) {
-              const drawText = image.siteobs_id !== null ? `*${image.source}` : image.source;
+              const drawText = image.observation_id !== null ? `*${image.source}` : image.source;
               const calc = context.measureText(drawText);
               context.fillStyle = 'rgba(255, 255, 255, 0.5)';
               const fontHeight =  (calc.actualBoundingBoxAscent + calc.actualBoundingBoxDescent) * 1.10;
@@ -178,7 +178,7 @@ const drawData = (
             // Label Drawing
             if (image.timestamp) {
               const calc = context.measureText(poly.label);
-              context.fillStyle = 'rgba(255, 255, 255, 0.5)'; 
+              context.fillStyle = 'rgba(255, 255, 255, 0.5)';
               const fontHeight =  (calc.fontBoundingBoxAscent + calc.fontBoundingBoxDescent) * 1.10;
               const xPos = (canvas.width) - (calc.width * 1.10);
               context.fillRect(xPos, 0, calc.width*1.10, fontHeight * 1.10);
@@ -187,9 +187,9 @@ const drawData = (
             }
             context.stroke();
           }
-        } 
+        }
       }
-  
+
       imageObj.onload = () => {
           if (background && background.ctx) {
               background.width = image.image_dimensions[0];

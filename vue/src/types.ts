@@ -13,7 +13,7 @@ export interface EvaluationImage {
     source: SiteObservationImage['source'];
     cloudcover: number;
     image: string;
-    siteobs_id: string | null;
+    observation_id: string | null;
     percent_black: number;
     bbox: BaseBBox;
     image_dimensions: [number, number];

@@ -79,10 +79,10 @@ const filteredImages = computed(() => {
     if (!imageSourcesFilter.value.includes(item.image.source)) {
       add = false;
     }
-    if (siteObsFilter.value.includes('observations') && siteObsFilter.value.length ===1 && item.image.siteobs_id === null) {
+    if (siteObsFilter.value.includes('observations') && siteObsFilter.value.length ===1 && item.image.observation_id === null) {
       add = false;
     }
-    if (siteObsFilter.value.includes('non-observations') && siteObsFilter.value.length ===1 && item.image.siteobs_id !== null) {
+    if (siteObsFilter.value.includes('non-observations') && siteObsFilter.value.length ===1 && item.image.observation_id !== null) {
       add = false;
     }
     if (item.image.percent_black > percentBlackFilter.value) {
@@ -249,7 +249,7 @@ const load = async (newValue?: string, oldValue?: string) => {
         filteredImages.value[currentImage.value].image,
         filteredImages.value[currentImage.value].poly,
         filteredImages.value[currentImage.value].groundTruthPoly,
-        -1, 
+        -1,
         -1,
         background,
         drawGroundTruth.value,
@@ -715,7 +715,7 @@ const setSiteModelStatus = async (status: SiteModelStatus) => {
       class="mt-2"
     >
       <v-col cols="3">
-        <div v-if="filteredImages[currentImage].image.siteobs_id !== null">
+        <div v-if="filteredImages[currentImage].image.observation_id !== null">
           <div>Site Observation</div>
         </div>
         <div v-else>
@@ -754,7 +754,7 @@ const setSiteModelStatus = async (status: SiteModelStatus) => {
               {{ currentLabel }}
             </v-chip>
             <v-icon
-              v-if="editMode && filteredImages[currentImage].image.siteobs_id !== null"
+              v-if="editMode && filteredImages[currentImage].image.observation_id !== null"
               size="small"
               @click="setEditingMode('SiteObservationLabel')"
             >
@@ -790,7 +790,7 @@ const setSiteModelStatus = async (status: SiteModelStatus) => {
     />
     <div v-if="false">
       <v-icon
-        v-if="editMode && filteredImages[currentImage] && filteredImages[currentImage].image.siteobs_id !== null"
+        v-if="editMode && filteredImages[currentImage] && filteredImages[currentImage].image.observation_id !== null"
         @click="setEditingMode('SiteObservationNotes')"
       >
         mdi-pencil

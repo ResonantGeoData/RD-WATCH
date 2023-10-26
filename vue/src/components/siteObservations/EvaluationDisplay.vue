@@ -49,7 +49,7 @@ const currentClosestTimestamp = computed(() => {
         type: observation.images[rootIndex].source,
         prev,
         next,
-        siteobs: observation.images[rootIndex].siteobs_id,
+        siteobs: observation.images[rootIndex].observation_id,
         total: observation.images.filter((item) => item.source !== 'L8').length,
         filteredTotal: images.length,
         index,

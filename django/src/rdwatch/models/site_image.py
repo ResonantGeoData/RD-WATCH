@@ -11,7 +11,7 @@ class SiteImage(models.Model):
         on_delete=models.CASCADE,
         db_index=True,
     )
-    siteobs = models.ForeignKey(
+    observation = models.ForeignKey(
         to='SiteObservation',
         on_delete=models.CASCADE,
         null=True,

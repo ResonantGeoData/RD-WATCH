@@ -7,6 +7,7 @@ import zipfile
 from collections.abc import Iterable
 from datetime import datetime, timedelta
 from typing import Literal
+from uuid import uuid4
 
 from celery import shared_task
 from PIL import Image
@@ -100,7 +101,7 @@ def get_siteobservations_images(
     if min_time is None:
         min_time = datetime.strptime(BaseTime, '%Y-%m-%d')
     if max_time is None:
-        max_bbox = datetime.now()
+        max_time = datetime.now()
 
     mercator: tuple[float, float, float, float] = baseSiteEval.geom.extent
     tempbox = transformer.transform_bounds(
@@ -285,7 +286,7 @@ def get_siteobservations_images(
                     capture, max_bbox, 'PNG', scale
                 )
             else:
-                bytes = get_raster_bbox(capture.uri, max_bbox)
+                bytes = get_raster_bbox(capture.uri, max_bbox, 'PNG', scale)
             if bytes is None:
                 count += 1
                 logger.warning(f'COULD NOT FIND ANY IMAGE FOR TIMESTAMP: {timestamp}')
@@ -293,7 +294,7 @@ def get_siteobservations_images(
             percent_black = get_percent_black_pixels(bytes)
             cloudcover = capture.cloudcover
             count += 1
-            output = f'tile_image_{baseSiteEval.pk}_nonobs_{count}.png'
+            output = f'tile_image_{baseSiteEval.pk}_nonobs_{uuid4()}.png'
             image = File(io.BytesIO(bytes), name=output)
             imageObj = Image.open(io.BytesIO(bytes))
             if image is None:  # No null/None images should be set

@@ -195,7 +195,7 @@ def get_queryset():
             downloading=Coalesce(
                 Subquery(
                     SatelliteFetching.objects.filter(
-                        siteeval__configuration_id=OuterRef('evaluation_configuration'),
+                        site__configuration_id=OuterRef('evaluation_configuration'),
                         status=SatelliteFetching.Status.RUNNING,
                     )
                     .annotate(count=Func(F('id'), function='Count'))
@@ -390,7 +390,7 @@ def cancel_generate_images(request: HttpRequest, model_run_id: UUID4):
             # status doesn't change out from under us
             fetching_task = (
                 SatelliteFetching.objects.select_for_update()
-                .filter(siteeval=eval.pk)
+                .filter(site=eval.pk)
                 .first()
             )
             if fetching_task is not None:

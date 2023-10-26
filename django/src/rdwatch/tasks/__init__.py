@@ -332,7 +332,7 @@ def get_siteobservations_images(
                 )
         else:
             count += 1
-    fetching_task = SatelliteFetching.objects.get(siteeval_id=site_eval_id)
+    fetching_task = SatelliteFetching.objects.get(site_id=site_eval_id)
     fetching_task.status = SatelliteFetching.Status.COMPLETE
     fetching_task.celery_id = ''
     fetching_task.save()

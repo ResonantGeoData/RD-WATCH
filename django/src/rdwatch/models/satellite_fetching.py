@@ -7,7 +7,7 @@ class SatelliteFetching(models.Model):
         RUNNING = 'Running'
         ERROR = 'Error'
 
-    siteeval = models.OneToOneField(
+    site = models.OneToOneField(
         to='SiteEvaluation',
         on_delete=models.CASCADE,
         db_index=True,
@@ -32,4 +32,4 @@ class SatelliteFetching(models.Model):
 
     def __str__(self):
         time = self.timestamp.isoformat()
-        return f'{self.siteeval}@{time}'
+        return f'{self.site}@{time}'

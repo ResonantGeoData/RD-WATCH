@@ -150,8 +150,8 @@ def site_observations(request: HttpRequest, evaluation_id: UUID4):
             replace_bbox = True
     if replace_bbox:
         queryset['bbox'] = site_eval_data['bbox']
-    if SatelliteFetching.objects.filter(siteeval=evaluation_id).exists():
-        retrieved = SatelliteFetching.objects.filter(siteeval=evaluation_id).first()
+    if SatelliteFetching.objects.filter(site=evaluation_id).exists():
+        retrieved = SatelliteFetching.objects.filter(site=evaluation_id).first()
         celery_data = {}
         if retrieved.celery_id:
             task = AsyncResult(retrieved.celery_id)
@@ -195,9 +195,7 @@ def get_site_observation_images(
         # for the duration of this transaction in order to ensure its
         # status doesn't change out from under us
         fetching_task = (
-            SatelliteFetching.objects.select_for_update()
-            .filter(siteeval=siteeval)
-            .first()
+            SatelliteFetching.objects.select_for_update().filter(site=siteeval).first()
         )
         if fetching_task is not None:
             # If the task already exists and is running, return a 409 and do not
@@ -210,7 +208,7 @@ def get_site_observation_images(
             fetching_task.save()
         else:
             fetching_task = SatelliteFetching.objects.create(
-                siteeval=siteeval,
+                site=siteeval,
                 timestamp=datetime.now(),
                 status=SatelliteFetching.Status.RUNNING,
             )
@@ -243,9 +241,7 @@ def cancel_site_observation_images(request: HttpRequest, evaluation_id: UUID4):
         # for the duration of this transaction in order to ensure its
         # status doesn't change out from under us
         fetching_task = (
-            SatelliteFetching.objects.select_for_update()
-            .filter(siteeval=siteeval)
-            .first()
+            SatelliteFetching.objects.select_for_update().filter(site=siteeval).first()
         )
         if fetching_task is not None:
             if fetching_task.status == SatelliteFetching.Status.RUNNING:

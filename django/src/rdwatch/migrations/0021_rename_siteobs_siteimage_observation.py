@@ -14,4 +14,9 @@ class Migration(migrations.Migration):
             old_name='siteobs',
             new_name='observation',
         ),
+        migrations.RenameField(
+            model_name='siteimage',
+            old_name='siteeval',
+            new_name='site',
+        ),
     ]

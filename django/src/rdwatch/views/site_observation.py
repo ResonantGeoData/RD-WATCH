@@ -118,7 +118,7 @@ def site_observations(request: HttpRequest, evaluation_id: UUID4):
         )
     )
     image_queryset = (
-        SiteImage.objects.filter(siteeval__id=evaluation_id)
+        SiteImage.objects.filter(site__id=evaluation_id)
         .order_by('timestamp')
         .aggregate(
             count=Count('pk'),

@@ -17,7 +17,10 @@ import { state } from '../store';
       </v-card-title>
       <v-card-text>
         <v-row dense>
-          <v-card density="compact">
+          <v-card
+            v-if="state.filters.drawSiteOutline"
+            density="compact"
+          >
             <v-card-title
               class="legend-title"
               :class="{'legend-title-single': !state.filters.scoringColoring}"
@@ -49,7 +52,10 @@ import { state } from '../store';
             </v-card-text>
           </v-card>
 
-          <v-card density="compact">
+          <v-card
+            v-if="state.filters.drawObservations"
+            density="compact"
+          >
             <v-card-title
               class="legend-title"
               :class="{'legend-title-single': !state.filters.scoringColoring}"

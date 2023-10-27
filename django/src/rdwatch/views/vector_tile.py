@@ -141,6 +141,8 @@ def vector_tile(request: HttpRequest, model_run_id: UUID4, z: int, x: int, y: in
                 id=F('pk'),
                 mvtgeom=mvtgeom,
                 configuration_id=F('siteeval__configuration_id'),
+                configuration_name=F('siteeval__configuration__title'),
+                site_label=F('siteeval__label__slug'),
                 site_number=F('siteeval__number'),
                 label=F('label__slug'),
                 area=Area(Transform('geom', srid=6933)),
@@ -154,6 +156,7 @@ def vector_tile(request: HttpRequest, model_run_id: UUID4, z: int, x: int, y: in
                     ),
                 ),
                 performer_id=F('siteeval__configuration__performer_id'),
+                performer_name=F('siteeval__configuration__performer__slug'),
                 region=F('siteeval__region__name'),
                 version=F('siteeval__version'),
                 groundtruth=Case(

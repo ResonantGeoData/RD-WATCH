@@ -6,7 +6,7 @@ import RegionFilter from "./filters/RegionFilter.vue";
 import SettingsPanel from "./SettingsPanel.vue";
 import { filteredSatelliteTimeList, state } from "../store";
 import { computed, onMounted, ref, watch } from "vue";
-import type { Performer, QueryArguments, Region } from "../client";
+import { ApiService, Performer, QueryArguments, Region } from "../client";
 import type { Ref } from "vue";
 import { changeTime } from "../interactions/timeStepper";
 
@@ -22,7 +22,7 @@ const queryFilters = computed<QueryArguments>(() => ({
 
 const selectedPerformer: Ref<Performer[]> = ref([]);
 const selectedRegion: Ref<Region | undefined> = ref(undefined);
-const showSiteOutline: Ref<boolean> = ref(false);
+const drawSiteOutline: Ref<boolean> = ref(false);
 watch(selectedPerformer, (val) => {
   state.filters = {
     ...state.filters,
@@ -49,8 +49,8 @@ const updateRegion = (val?: Region) => {
     scoringColoring: null,
   };
 };
-watch(showSiteOutline, (val) => {
-  state.filters = { ...state.filters, showSiteOutline: val, scoringColoring: null };
+watch(drawSiteOutline, (val) => {
+  state.filters = { ...state.filters, drawSiteOutline: val, scoringColoring: null };
 });
 const expandSettings = ref(false);
 
@@ -79,6 +79,33 @@ onMounted(() => {
     }
   });
 });
+const scoringApp = computed(()=> ApiService.apiPrefix.includes('scoring'));
+
+const toggleGroundTruth = () => {
+  const val = !state.filters.drawGroundTruth;
+  state.filters = { ...state.filters, drawGroundTruth: val };
+}
+
+const toggleText = () => {
+  const val = !state.filters.showText;
+  state.filters = { ...state.filters, showText: val };
+}
+
+const toggleObs = () => {
+  const val = !state.filters.drawObservations;
+  state.filters = { ...state.filters, drawObservations: val };
+}
+
+const toggleSites = () => {
+  const val = !state.filters.drawSiteOutline;
+  state.filters = { ...state.filters, drawSiteOutline: val };
+}
+
+const toggleRegion = () => {
+  const val = !state.filters.drawRegionPoly;
+  state.filters = { ...state.filters, drawRegionPoly: val };
+}
+
 
 </script>
 
@@ -114,7 +141,50 @@ onMounted(() => {
           {{ new Date(state.timestamp * 1000).toLocaleString() }}
         </div>
       </v-row>
-      <v-row dense>
+      <v-row
+        dense
+        align="center"
+        class="py-2"
+      >
+        <v-chip
+          density="compact"
+          size="small"
+          :variant="state.filters.drawObservations ? 'elevated' : 'outlined'"
+          class="mx-1"
+          @click="toggleObs()"
+        >
+          Obs
+        </v-chip>
+        <v-chip
+          density="compact"
+          size="small"
+          :variant="state.filters.drawSiteOutline ? 'elevated' : 'outlined'"
+          class="mx-1"
+          @click="toggleSites()"
+        >
+          Site
+        </v-chip>
+
+        <v-chip
+          v-if="scoringApp && (state.filters.drawObservations || state.filters.drawSiteOutline)"
+          density="compact"
+          size="small"
+          :variant="state.filters.drawGroundTruth ? 'elevated' : 'outlined'"
+          class="mx-1"
+          @click="toggleGroundTruth()"
+        >
+          GT
+        </v-chip>
+        <v-chip
+          density="compact"
+          size="small"
+          :variant="state.filters.drawRegionPoly ? 'elevated' : 'outlined'"
+          class="mx-1"
+          @click="toggleRegion()"
+        >
+          Region
+        </v-chip>
+
         <v-spacer />
         <v-btn
           variant="text"
@@ -128,6 +198,14 @@ onMounted(() => {
           icon="mdi-image"
           @click="imagesOn = selectedRegion !== null && (filteredSatelliteTimeList.length !== 0 || state.satellite.satelliteSources.length === 0) ? !imagesOn : imagesOn"
         />
+        <v-btn
+          :color="state.filters.showText ? 'rgb(37, 99, 235)' : 'gray'"
+          variant="text"
+          density="compact"
+          icon="mdi-format-text"
+          @click="toggleText()"
+        />
+
         <v-btn
           :color="expandSettings ? 'rgb(37, 99, 235)' : 'gray'"
           variant="text"

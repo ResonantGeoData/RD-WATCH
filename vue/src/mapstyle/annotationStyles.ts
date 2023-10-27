@@ -9,23 +9,23 @@ const defaultLabelText = '';
 
 const styles: AnnotationStyle = {
   active_construction: {
-    color: "#007DFF",
+    color: "#c00000",
     type: "observation",
   },
   post_construction: {
-    color: "#BE4EFF",
+    color: "#5b9bd5",
     type: "observation",
   },
   site_preparation: {
-    color: "#FFA100",
+    color: "#ffd966",
     type: "observation",
   },
   unknown: {
-    color: "#FFA100",
+    color: "#7030a0",
     type: "observation",
   },
   no_activity: {
-    color: "#228b22",
+    color: "#a6a6a6",
     type: "observation",
   },
   positive_annotated: {

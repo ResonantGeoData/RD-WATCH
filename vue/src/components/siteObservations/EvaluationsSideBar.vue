@@ -54,7 +54,7 @@ onUnmounted(() => {
   >
     <v-row>
       <h1 class="mx-4 mt-2">
-        Selected Evaluations
+        Selected Site Models
       </h1>
     </v-row>
 

@@ -21,9 +21,9 @@ const buildTextOffset = (
   type: "site" | "observation",
   filters: MapFilters
 ): [number, number] => {
-  if (filters.showSiteOutline && type === "site") {
+  if (filters.drawSiteOutline && type === "site") {
     return [0, 0.5];
-  } else if (filters.showSiteOutline && type === "observation") {
+  } else if (filters.drawSiteOutline && type === "observation") {
     return [0, -0.5];
   }
   return [0, 0];
@@ -33,6 +33,9 @@ export const buildObservationFilter = (
   timestamp: number,
   filters: MapFilters
 ): FilterSpecification => {
+  if (!filters.drawObservations) {
+    return false;
+  }
   const filter: FilterSpecification = [
     "all",
     [
@@ -59,6 +62,16 @@ export const buildObservationFilter = (
       [">", ["get", "timemax"], timestamp],
     ],
   ];
+  // If Scoring App and have ground truth we filter it out if the drawGT is false
+  if (ApiService.apiPrefix.includes('scoring')) {
+    if (!filters.drawGroundTruth) {
+      filter.push([
+          "any",
+          ["==", ["get", "groundtruth"], false]
+        ]
+      );
+    }
+  }
 
   return filter;
 };
@@ -83,15 +96,25 @@ export const buildSiteFilter = (
       // observations associated with this model run and that the main site polygon
       // should be rendered regardless of timestamp
       ["get", "site_polygon"],
-      ["literal", !!filters.showSiteOutline],
+      ["literal", !!filters.drawSiteOutline],
       ],
   ];
+
+  if (ApiService.apiPrefix.includes('scoring')) {
+    if (!filters.drawGroundTruth) {
+      filter.push([
+          "any",
+          ["==", ["get", "groundtruth"], false]
+        ]
+      );
+    }
+  }
 
   return filter;
 };
 
 export const buildRegionFilter = (filters: MapFilters): FilterSpecification => {
-  const filter: FilterSpecification = ["literal", !!filters.showRegionPolygon];
+  const filter: FilterSpecification = ["literal", !!filters.drawRegionPoly];
 
   return filter;
 };

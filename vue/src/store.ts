@@ -6,10 +6,12 @@ export interface MapFilters {
   configuration_id?: string[];
   performer_ids?: number[];
   regions?: Region[];
-  showSiteOutline?: boolean;
+  drawSiteOutline?: boolean;
   groundTruthPattern?: boolean;
+  drawGroundTruth?: boolean;
+  drawObservations?: boolean;
+  drawRegionPoly?: boolean;
   otherPattern?: boolean;
-  showRegionPolygon?: boolean;
   hoverSiteId?: string;
   showText?: boolean;
   scoringColoring?: Record<string, Record<string, string>> | null;
@@ -161,6 +163,8 @@ export const state = reactive<{
     ymax: 90,
   },
   filters: {
+    drawObservations: true,
+    drawSiteOutline: false,
     groundTruthPattern: false,
     otherPattern: false,
     showText: false,

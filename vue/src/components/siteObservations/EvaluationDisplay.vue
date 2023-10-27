@@ -14,7 +14,7 @@ const props = defineProps<{
 
 
 const refresh = async () => {
-  await getSiteObservationDetails(props.siteObservation.id.toString(), props.siteObservation.scoringBase);
+  await getSiteObservationDetails(props.siteObservation.id.toString(), props.siteObservation.obsDetails);
 }
 const close = () => {
   const foundIndex = state.selectedObservations.findIndex((item) => item.id === props.siteObservation.id);
@@ -81,15 +81,6 @@ const goToTimestamp = (dir: number, loop = false) => {
   }
 }
 const noScore = ref(false);
-const hasScore = async () => {
-  try {
-    // const result = await ApiService.hasScores(props.siteObservation.scoringBase.configurationId, props.siteObservation.scoringBase.regionId)
-    // noScore.value = !result;
-  } catch {
-    noScore.value = true;
-  }
-}
-hasScore();
 
 const changeTimstamp = ({dir, loop}: {dir: number, loop: boolean}) => {
   goToTimestamp(dir, loop);
@@ -108,9 +99,9 @@ const hasLoadedImages = computed(() => (Object.entries(props.siteObservation.ima
         justify="center"
         align="center"
       >
-        <v-col v-if="siteObservation.scoringBase">
+        <v-col v-if="siteObservation.obsDetails">
           <span class="model-title">
-            {{ `${siteObservation.scoringBase.region}_${siteObservation.scoringBase.siteNumber.toString().padStart(4, '0')}` }}
+            {{ `${siteObservation.obsDetails.region}_${siteObservation.obsDetails.siteNumber.toString().padStart(4, '0')}` }}
           </span>
         </v-col>
         <v-col cols="1">
@@ -145,6 +136,15 @@ const hasLoadedImages = computed(() => (Object.entries(props.siteObservation.ima
           </v-icon>
         </v-col>
       </v-row>
+      <v-row
+        dense
+        justify="center"
+        align="center"
+      >
+        <v-col v-if="siteObservation.obsDetails">
+          <span>{{ `${siteObservation.obsDetails.performer} ${siteObservation.obsDetails.title}: V${siteObservation.obsDetails.version}` }}</span>
+        </v-col>
+      </v-row>
       <v-expansion-panels
         variant="accordion"
         class="pa-0 ma-0 mb-2"
@@ -160,7 +160,7 @@ const hasLoadedImages = computed(() => (Object.entries(props.siteObservation.ima
           </v-expansion-panel-text>
         </v-expansion-panel>
         <v-expansion-panel
-          v-if="siteObservation.scoringBase && siteObservation.scoringBase.version && !noScore"
+          v-if="siteObservation.obsDetails && siteObservation.obsDetails.version && !noScore"
           key="Scoring"
         >
           <v-expansion-panel-title>Scoring</v-expansion-panel-title>
@@ -267,9 +267,11 @@ const hasLoadedImages = computed(() => (Object.entries(props.siteObservation.ima
       </v-row>
       <v-row>
         <image-viewer-button
-          v-if="hasLoadedImages && siteObservation.scoringBase"
+          v-if="hasLoadedImages && siteObservation.obsDetails"
           :site-eval-id="siteObservation.id"
-          :site-evaluation-name="`${siteObservation.scoringBase.region}_${siteObservation.scoringBase.siteNumber.toString().padStart(4, '0')}`"
+          :obs-details="siteObservation.obsDetails"
+          :date-range="siteObservation.timerange ? [siteObservation.timerange?.min, siteObservation.timerange.max]: undefined"
+          :site-evaluation-name="`${siteObservation.obsDetails.region}_${siteObservation.obsDetails.siteNumber.toString().padStart(4, '0')}`"
         />
       </v-row>
     </v-card-text>

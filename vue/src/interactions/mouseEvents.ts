@@ -115,15 +115,17 @@ const clickObservation = async (e: MapLayerMouseEvent) => {
     const feature = e.features[0];
     if (feature.properties) {
       const siteId = feature.properties.siteeval_id;
-      const scoringBase = {
+      const obsDetails = {
         region: feature.properties.region as string,
         configurationId: feature.properties.configuration_id as number,
         siteNumber: feature.properties.site_number as number,
         version: feature.properties.version,
+        performer: feature.properties.performer_name,
+        title: feature.properties.configuration_name,
       }
 
       if (siteId && !selectedObservationList.value.includes(siteId)) {
-        await getSiteObservationDetails(siteId, scoringBase);
+        await getSiteObservationDetails(siteId, obsDetails);
       }
     }
   }

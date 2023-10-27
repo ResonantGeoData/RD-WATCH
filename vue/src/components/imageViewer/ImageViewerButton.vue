@@ -1,10 +1,13 @@
 <script setup lang="ts">
 import { ref } from "vue";
+import { ObsDetails } from "../../store";
 import ImageViewer from './ImageViewer.vue';
 
 defineProps<{
   siteEvalId: string;
   siteEvaluationName?: string;
+  dateRange?: number[] | null
+  obsDetails?: ObsDetails;
 }>();
 
 const displayImage = ref(false);
@@ -24,6 +27,8 @@ const displayImage = ref(false);
       <ImageViewer
         :site-eval-id="siteEvalId"
         :site-evaluation-name="siteEvaluationName"
+        :obs-details="obsDetails"
+        :date-range="dateRange"
         dialog
         @close="displayImage = false"
       />

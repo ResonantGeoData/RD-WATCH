@@ -3,7 +3,7 @@ import { Ref, computed, ref, watch, withDefaults } from "vue";
 import { ApiService } from "../../client";
 import { EvaluationImage, EvaluationImageResults } from "../../types";
 import { getColorFromLabel, styles } from '../../mapstyle/annotationStyles';
-import { loadAndToggleSatelliteImages, state } from '../../store'
+import { ObsDetails, loadAndToggleSatelliteImages, state } from '../../store'
 import { VDatePicker } from 'vuetify/labs/VDatePicker'
 import { SiteModelStatus } from "../../client/services/ApiService";
 import { CanvasCapture } from 'canvas-capture';
@@ -16,6 +16,7 @@ interface Props {
   editable?: boolean;
   siteEvaluationName?: string | null;
   dateRange?: number[] | null
+  obsDetails?: ObsDetails;
 }
 
 
@@ -26,6 +27,7 @@ const props = withDefaults(defineProps<Props>(), {
   editable: false,
   siteEvaluationName: null,
   dateRange: null,
+  obsDetails: undefined,
 });
 
 const emit = defineEmits<{
@@ -375,15 +377,24 @@ const setSiteModelStatus = async (status: SiteModelStatus) => {
     <v-row
       v-if="dialog"
       dense
+      class="top-bar"
     >
+      <v-col v-if="obsDetails">
+        <span>{{ obsDetails.performer }} {{ obsDetails.title }} : V{{ obsDetails.version }}</span>
+      </v-col>
+      <v-col v-if="obsDetails">
+        <span>{{ siteEvaluationName }}</span>
+      </v-col>
+
+      <v-col v-if="obsDetails">
+        <span>{{ startDate }}</span> to <span> {{ endDate }}</span>
+      </v-col>
+
       <v-spacer />
       <v-icon @click="emit('close')">
         mdi-close
       </v-icon>
     </v-row>
-    <v-card-title v-if="!editable">
-      Site Image Display
-    </v-card-title>
     <v-card-title
       v-else
       class="edit-title"
@@ -980,5 +991,9 @@ const setSiteModelStatus = async (status: SiteModelStatus) => {
 
 .edit-title {
   font-size: 0.75em;
+}
+.top-bar {
+  font-size:12px;
+  font-weight: bold;
 }
 </style>

@@ -146,44 +146,84 @@ const toggleRegion = () => {
         align="center"
         class="py-2"
       >
-        <v-chip
-          density="compact"
-          size="small"
-          :variant="state.filters.drawObservations ? 'elevated' : 'outlined'"
-          class="mx-1"
-          @click="toggleObs()"
+        <v-tooltip
+          open-delay="100"
+          location="top"
         >
-          Obs
-        </v-chip>
-        <v-chip
-          density="compact"
-          size="small"
-          :variant="state.filters.drawSiteOutline ? 'elevated' : 'outlined'"
-          class="mx-1"
-          @click="toggleSites()"
+          <template #activator="{ props:subProps }">
+            <v-chip
+              density="compact"
+              v-bind="subProps"
+              size="small"
+              :color="state.filters.drawObservations ? 'rgb(37, 99, 235)' : 'black'"
+              :variant="state.filters.drawObservations ? 'elevated' : 'outlined'"
+              class="mx-1"
+              @click="toggleObs()"
+            >
+              Obs
+            </v-chip>
+          </template>
+          <span>Toggle Site Observations on/off</span>
+        </v-tooltip>
+        <v-tooltip
+          open-delay="100"
+          location="top"
         >
-          Site
-        </v-chip>
+          <template #activator="{ props:subProps }">
+            <v-chip
+              density="compact"
+              v-bind="subProps"
+              size="small"
+              :color="state.filters.drawSiteOutline ? 'rgb(37, 99, 235)' : 'black'"
+              :variant="state.filters.drawSiteOutline ? 'elevated' : 'outlined'"
+              class="mx-1"
+              @click="toggleSites()"
+            >
+              Site
+            </v-chip>
+          </template>
+          <span> Toggle Site Outlines On/Off</span>
+        </v-tooltip>
 
-        <v-chip
-          v-if="scoringApp && (state.filters.drawObservations || state.filters.drawSiteOutline)"
-          density="compact"
-          size="small"
-          :variant="state.filters.drawGroundTruth ? 'elevated' : 'outlined'"
-          class="mx-1"
-          @click="toggleGroundTruth()"
+        <v-tooltip
+          open-delay="100"
+          location="top"
         >
-          GT
-        </v-chip>
-        <v-chip
-          density="compact"
-          size="small"
-          :variant="state.filters.drawRegionPoly ? 'elevated' : 'outlined'"
-          class="mx-1"
-          @click="toggleRegion()"
+          <template #activator="{ props:subProps }">
+            <v-chip
+              v-if="scoringApp && (state.filters.drawObservations || state.filters.drawSiteOutline)"
+              v-bind="subProps"
+              density="compact"
+              :color="state.filters.drawGroundTruth ? 'rgb(37, 99, 235)' : 'black'"
+              size="small"
+              :variant="state.filters.drawGroundTruth ? 'elevated' : 'outlined'"
+              class="mx-1"
+              @click="toggleGroundTruth()"
+            >
+              GT
+            </v-chip>
+          </template>
+          <span>Toggle associated Ground Truth On/Off</span>
+        </v-tooltip>
+        <v-tooltip
+          open-delay="100"
+          location="top"
         >
-          Region
-        </v-chip>
+          <template #activator="{ props:subProps }">
+            <v-chip
+              v-bind="subProps"
+              density="compact"
+              size="small"
+              :color="state.filters.drawRegionPoly ? 'rgb(37, 99, 235)' : 'black'"
+              :variant="state.filters.drawRegionPoly ? 'elevated' : 'outlined'"
+              class="mx-1"
+              @click="toggleRegion()"
+            >
+              Region
+            </v-chip>
+          </template>
+          <span>Toggle Region Polygons On/Off</span>
+        </v-tooltip>
 
         <v-spacer />
         <v-btn

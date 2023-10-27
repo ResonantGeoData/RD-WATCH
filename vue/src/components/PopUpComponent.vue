@@ -114,7 +114,6 @@ const props = defineProps<{
             mdi-clock
           </v-icon>: NULL
         </v-chip>
-
       </v-row>
     </v-row>
   </v-card>

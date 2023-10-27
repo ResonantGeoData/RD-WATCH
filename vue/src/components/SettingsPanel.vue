@@ -244,23 +244,16 @@ watch(hiddenCanvas, () => {
           </div>
           <span> {{ info.date }}</span>
         </v-col>
-        <v-col>const drawSiteOutline = computed({
-  get() {
-    return state.filters.drawSiteOutline || false;
-  },
-  set(val: boolean) {
-    state.filters = { ...state.filters, drawSiteOutline: val,  };
-  },
-});
-
-const drawRegionPoly = computed({
-  get() {
-    return state.filters.drawRegionPoly || false;
-  },
-  set(val: boolean) {
-    state.filters = { ...state.filters, drawRegionPoly: val };
-  },
-});
+        <v-col>
+          <div style="font-weight: bold">
+            Hash:
+          </div>
+          <span> {{ info.hash }}</span>
+        </v-col>
+      </v-row>
+      <v-row dense>
+        <v-col cols="8">
+          <v-checkbox
             v-model="autoZoom"
             label="Auto Zoom"
             density="compact"

@@ -54,11 +54,13 @@ export interface SiteObservationImage {
   bbox: { xmin: number; ymin: number; xmax: number; ymax: number };
 }
 
-export interface ScoringBase {
+export interface ObsDetails {
   region: string;
   configurationId: number;
   siteNumber: number;
   version: string;
+  performer: string;
+  title: string;
 }
 
 export interface EnabledSiteObservations {
@@ -83,7 +85,7 @@ export interface SiteObservationJob {
 
 export interface SiteObservation {
   id: string;
-  scoringBase?: ScoringBase;
+  obsDetails?: ObsDetails;
   timerange: {
     min: number;
     max: number;
@@ -215,7 +217,7 @@ export const selectedObservationList = computed(() => {
 })
 
 
-export const getSiteObservationDetails = async (siteId: string, scoringBase?: ScoringBase, select=true) => {
+export const getSiteObservationDetails = async (siteId: string, obsDetails?: ObsDetails, select=true) => {
   const data = await ApiService.getSiteObservations(siteId);
   const { results } = data;
   const { images } = data;
@@ -256,7 +258,7 @@ export const getSiteObservationDetails = async (siteId: string, scoringBase?: Sc
   const foundIndex = state.selectedObservations.findIndex((item) => item.id === numId);
   const obsData =  {
     id: numId,
-    scoringBase,
+    obsDetails,
     timerange: data.timerange,
     imagesLoaded: false,
     imagesActive: false,

@@ -37,7 +37,6 @@ const popupLogic = async (mapArg: ShallowRef<null | Map>) => {
 };
 const drawPopupObservation = async (e: MapLayerMouseEvent) => {
   if (e.features && e.features[0]?.properties && map.value) {
-    console.log(e.features[0].properties);
     const coordinates = e.lngLat;
     const ids = [];
     const htmlMap: Record<string, boolean> = {};
@@ -76,7 +75,7 @@ const drawPopupObservation = async (e: MapLayerMouseEvent) => {
                   score,
                   groundTruth: item.properties.groundtruth,
                   obsColor: `rgb(${fillColor.r *255}, ${fillColor.g * 255}, ${fillColor.b * 255})`,
-                  siteColor: styles[siteLabel].color,
+                  siteColor: styles[siteLabel]?.color,
                   scoreColor: calculateScoreColor(score),
                   timestamp: item.properties.timestamp,
                   area,
@@ -112,22 +111,23 @@ const drawPopupObservation = async (e: MapLayerMouseEvent) => {
 };
 const clickObservation = async (e: MapLayerMouseEvent) => {
   if (e.features && e.features[0]?.properties && map.value) {
-    const feature = e.features[0];
+    e.features.forEach(async (feature) => {
     if (feature.properties) {
-      const siteId = feature.properties.siteeval_id;
-      const obsDetails = {
-        region: feature.properties.region as string,
-        configurationId: feature.properties.configuration_id as number,
-        siteNumber: feature.properties.site_number as number,
-        version: feature.properties.version,
-        performer: feature.properties.performer_name,
-        title: feature.properties.configuration_name,
-      }
+        const siteId = feature.properties.siteeval_id;
+        const obsDetails = {
+          region: feature.properties.region as string,
+          configurationId: feature.properties.configuration_id as number,
+          siteNumber: feature.properties.site_number as number,
+          version: feature.properties.version,
+          performer: feature.properties.performer_name,
+          title: feature.properties.configuration_name,
+        }
 
-      if (siteId && !selectedObservationList.value.includes(siteId)) {
-        await getSiteObservationDetails(siteId, obsDetails);
+        if (siteId && !selectedObservationList.value.includes(siteId)) {
+          await getSiteObservationDetails(siteId, obsDetails);
+        }
       }
-    }
+    })
   }
 
 }

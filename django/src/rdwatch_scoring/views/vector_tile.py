@@ -9,6 +9,8 @@ from django.db import connections
 from django.db.models import (
     BooleanField,
     Case,
+    CharField,
+    ExpressionWrapper,
     F,
     Field,
     Func,
@@ -18,7 +20,7 @@ from django.db.models import (
     When,
     Window,
 )
-from django.db.models.functions import Lower, Replace, Substr
+from django.db.models.functions import Concat, Lower, Replace, Substr
 from django.http import HttpRequest, HttpResponse
 from django.shortcuts import get_object_or_404
 
@@ -138,6 +140,18 @@ def vector_tile(
                 timestamp=F('date'),
                 mvtgeom=mvtgeom,
                 configuration_id=F('site_uuid__evaluation_run_uuid'),
+                configuration_name=ExpressionWrapper(
+                    Concat(
+                        Value('Eval '),
+                        F('site_uuid__evaluation_run_uuid__evaluation_number'),
+                        Value(' '),
+                        F('site_uuid__evaluation_run_uuid__evaluation_run_number'),
+                        Value(' '),
+                        F('site_uuid__evaluation_run_uuid__performer'),
+                    ),
+                    output_field=CharField(),
+                ),
+                site_label=F('site_uuid__status_annotated'),
                 site_number=Substr(F('site_uuid__site_id'), 9),  # pos is 1 indexed
                 label=Case(
                     When(
@@ -158,6 +172,7 @@ def vector_tile(
                     ),
                 ),  # This probably needs to be using the site tables start/end dates
                 performer_id=F('site_uuid__originator'),
+                performer_name=F('site_uuid__originator'),
                 region=F('site_uuid__region_id'),
                 version=F('site_uuid__version'),
                 score=F('confidence_score'),

@@ -295,8 +295,8 @@ const determineDownload = () => {
         </v-tooltip>
       </v-row>
       <v-row v-if="downloading > 0">
-        <b class="small">Downloading {{ downloading }} site(s) Images</b>
-        <v-progress-linear indeterminate />
+        <b class="small">Downloading {{ downloading }} site(s) Images <v-icon class="fading">mdi-download</v-icon></b>
+        <v-progress-linear :model-value="((modelRun.numsites - downloading)/modelRun.numsites)*100" />
       </v-row>
       <v-row v-if="downloading > 0">
         <v-btn
@@ -374,5 +374,23 @@ const determineDownload = () => {
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
+}
+
+.fading {
+  animation: fadeIcon 2s linear infinite;
+  overflow:hidden;
+}
+
+@keyframes fadeIcon {
+  0% {
+    opacity: 0;
+  }
+  50% {
+    opacity: 1;
+
+  }
+  100% {
+    opacity: 0;
+  }
 }
 </style>

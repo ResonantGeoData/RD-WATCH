@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 from abc import abstractmethod
 
 from django.contrib.gis.db.models import PolygonField
@@ -51,7 +53,16 @@ class BaseSiteImage(models.Model):
         return f'{self.site}.{self.source}@{time}'
 
 
+@receiver(models.signals.pre_delete, sender=BaseSiteImage)
+def delete_content(sender, instance, **kwargs):
+    if instance.image:
+        instance.image.delete(save=False)
+
+
 class SiteImage(BaseSiteImage):
+    class Meta:
+        indexes = [GistIndex(fields=['timestamp'])]
+
     site = models.ForeignKey(
         to='SiteEvaluation',
         on_delete=models.CASCADE,
@@ -63,12 +74,3 @@ class SiteImage(BaseSiteImage):
         null=True,
         db_index=True,
     )
-
-    class Meta:
-        indexes = [GistIndex(fields=['timestamp'])]
-
-
-@receiver(models.signals.pre_delete, sender=SiteImage)
-def delete_content(sender, instance, **kwargs):
-    if instance.image:
-        instance.image.delete(save=False)

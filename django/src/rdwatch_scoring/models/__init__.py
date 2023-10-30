@@ -23,6 +23,7 @@ from .observation_comparison import ObservationComparison
 from .performer import Performer
 from .region import Region
 from .site import Site
+from .site_image import SiteImage
 
 __all__ = [
     'EvaluationActivityClassificationMatrix',
@@ -42,4 +43,5 @@ __all__ = [
     'Site',
     'SiteEvaluation',
     'SiteEvaluationTracking',
+    'SiteImage',
 ]

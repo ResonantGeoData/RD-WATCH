@@ -36,8 +36,8 @@ router = Router()
 
 class SiteObservationSchema(Schema):
     id: UUID4
-    label: str
-    score: float
+    label: str | None
+    score: float | None
     constellation: str | None
     spectrum: str | None
     timestamp: int | None

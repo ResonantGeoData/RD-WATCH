@@ -54,6 +54,7 @@ class ModelRunFilterSchema(FilterSchema):
     performer: list[str] | None = Field(q='performer_slug')
     region: str | None
     proposal: str | None = Field(q='proposal', ignore_none=False)
+    groundtruth: bool | None
 
     def filter_performer(self, value: list[str] | None) -> Q:
         if value is None or not value:
@@ -62,6 +63,14 @@ class ModelRunFilterSchema(FilterSchema):
         for performer_slug in value:
             performer_q |= Q(performer_slug=performer_slug)
         return performer_q
+
+    def filter_groundtruth(self, value: bool | None) -> Q:
+        if not value:
+            return Q()
+        # Filter for ground_truth performer
+        gt_q = Q(performer_slug='TE')
+        gt_q &= Q(ground_truth=True)
+        return gt_q
 
 
 class ModelRunWriteSchema(Schema):

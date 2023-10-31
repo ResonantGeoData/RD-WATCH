@@ -81,9 +81,40 @@ onMounted(() => {
 });
 const scoringApp = computed(()=> ApiService.apiPrefix.includes('scoring'));
 
-const toggleGroundTruth = () => {
-  const val = !state.filters.drawGroundTruth;
-  state.filters = { ...state.filters, drawGroundTruth: val };
+const toggleGroundTruth = async () => {
+  if (scoringApp.value) { 
+    const val = !state.filters.drawGroundTruth;
+    state.filters = { ...state.filters, drawGroundTruth: val };
+  } else {
+    // We need to find the ground-truth model and add it to the visible items
+    const request = await ApiService.getModelRuns({
+      limit: 10,
+      performer: queryFilters.value.performer,
+      region: queryFilters.value.region,
+      groundtruth: true
+    });
+    if (request.items.length) {
+      const id = request.items[0].id;
+      if (!state.filters.drawGroundTruth) {
+        if (state.openedModelRuns) {
+          state.openedModelRuns.add(id);
+        }
+        const configuration_id = Array.from(state.openedModelRuns);
+        state.filters = { ...state.filters, configuration_id};
+        state.filters = { ...state.filters, drawGroundTruth: true };
+      }
+      else if (state.filters.drawGroundTruth) {
+        if (state.openedModelRuns) {
+          if (state.openedModelRuns.has(id)) {
+            state.openedModelRuns.delete(id);
+          }
+        }
+        const configuration_id = Array.from(state.openedModelRuns);
+        state.filters = { ...state.filters, configuration_id};
+        state.filters = { ...state.filters, drawGroundTruth: false };
+      }
+    }
+  }
 }
 
 const toggleText = () => {
@@ -191,7 +222,7 @@ const toggleRegion = () => {
         >
           <template #activator="{ props:subProps }">
             <v-chip
-              v-if="scoringApp && (state.filters.drawObservations || state.filters.drawSiteOutline)"
+              v-if="(state.filters.drawObservations || state.filters.drawSiteOutline)"
               v-bind="subProps"
               density="compact"
               :color="state.filters.drawGroundTruth ? 'rgb(37, 99, 235)' : 'black'"
@@ -224,7 +255,6 @@ const toggleRegion = () => {
           </template>
           <span>Toggle Region Polygons On/Off</span>
         </v-tooltip>
-
         <v-spacer />
         <v-btn
           variant="text"

@@ -63,7 +63,7 @@ async function loadMore() {
     const keyedModelRunResults = modelRunResults.map((val, i) => {
       return {
         ...val,
-        key: `${val.id}|${i + state.modelRuns.length}`,
+        key: `${val.id}`,
       };
     });
 

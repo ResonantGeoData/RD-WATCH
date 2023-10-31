@@ -23,6 +23,7 @@ export interface QueryArguments {
   page?: number;
   limit?: number;
   proposal?: 'PROPOSAL' | 'APPROVED';
+  groundtruth?: boolean;
 }
 
 export interface ScoringResults {

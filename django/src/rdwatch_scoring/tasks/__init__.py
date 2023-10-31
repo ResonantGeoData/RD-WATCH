@@ -6,7 +6,6 @@ from uuid import uuid4
 
 from PIL import Image
 from pydantic import UUID4
-from pyproj import Transformer
 
 from django.contrib.gis.geos import Polygon
 from django.core.files import File
@@ -54,33 +53,32 @@ def get_siteobservations_images(
     site_obs_count = Observation.objects.filter(
         site_uuid=site_eval_id, sensor=baseConstellation
     ).count()
-    transformer = Transformer.from_crs('EPSG:3857', 'EPSG:4326')
     found_timestamps = {}
     max_bbox = [float('inf'), float('inf'), float('-inf'), float('-inf')]
     # Use the base SiteEvaluation extents as the max size
     baseSiteEval = Site.objects.get(pk=site_eval_id)
+
     # use the Eval Start/End date if not null
     min_time = baseSiteEval.start_date
     max_time = baseSiteEval.end_date
-    assert min_time is not None
-    assert max_time is not None
+
     if min_time is None:
         min_time = datetime.strptime(BaseTime, '%Y-%m-%d')
+    else:
+        min_time = datetime.combine(min_time, datetime.min.time())
+
     if max_time is None:
         max_time = datetime.now()
+    else:
+        max_time = datetime.combine(max_time, datetime.min.time())
 
-    mercator: tuple[float, float, float, float] = Polygon.from_ewkt(
+    bbox: tuple[float, float, float, float] = Polygon.from_ewkt(
         baseSiteEval.union_geometry
     ).extent
-    print('mercator')
-    print(mercator)
-    tempbox = transformer.transform_bounds(
-        mercator[0], mercator[1], mercator[2], mercator[3]
-    )
-    bbox = [tempbox[1], tempbox[0], tempbox[3], tempbox[2]]
+
     # if width | height is too small we pad S2/L8 regions for more context
-    bbox_width = (tempbox[2] - tempbox[0]) * ToMeters
-    bbox_height = (tempbox[3] - tempbox[1]) * ToMeters
+    bbox_width = (bbox[2] - bbox[0]) * ToMeters
+    bbox_height = (bbox[3] - bbox[1]) * ToMeters
     if baseConstellation != 'WV' and (
         bbox_width < overrideImageSize or bbox_height < overrideImageSize
     ):
@@ -88,10 +86,10 @@ def get_siteobservations_images(
             overrideImageSize * 0.5
         ) / ToMeters  # find how much to add to each lon/lat
         bbox = [
-            tempbox[1] - size_diff,
-            tempbox[0] - size_diff,
-            tempbox[3] + size_diff,
-            tempbox[2] + size_diff,
+            bbox[1] - size_diff,
+            bbox[0] - size_diff,
+            bbox[3] + size_diff,
+            bbox[2] + size_diff,
         ]
     # add the included padding to the updated BBOX
     bbox = scale_bbox(bbox, bboxScale)
@@ -205,13 +203,6 @@ def get_siteobservations_images(
 
     # Now we get a list of all the timestamps and captures that fall in this range.
     worldView = baseConstellation == 'WV'
-    # if matchConstellation == '':
-    #     matchConstellation = Constellation.objects.filter(
-    #         slug=baseConstellation
-    #     ).first()
-    # logger.warning(
-    #     f'Utilizing Constellation: {matchConstellation} - {matchConstellation.slug}'
-    # )
 
     captures = get_range_captures(
         max_bbox, timestamp, baseConstellation, timebuffer, worldView

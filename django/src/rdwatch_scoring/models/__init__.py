@@ -22,6 +22,7 @@ from .observation import Observation
 from .observation_comparison import ObservationComparison
 from .performer import Performer
 from .region import Region
+from .satellite_fetching import SatelliteFetching
 from .site import Site
 from .site_image import SiteImage
 
@@ -40,6 +41,7 @@ __all__ = [
     'ObservationComparison',
     'Performer',
     'Region',
+    'SatelliteFetching',
     'Site',
     'SiteEvaluation',
     'SiteEvaluationTracking',

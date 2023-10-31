@@ -51,7 +51,7 @@ class SiteImageResponse(Schema):
     evaluationGeoJSON: dict
     evaluationBBox: dict
     status: str | None
-    label: str
+    label: str | None
     notes: str | None
     groundTruth: GroundTruthSchema | None
 

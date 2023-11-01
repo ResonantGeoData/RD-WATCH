@@ -33,9 +33,6 @@ export const buildObservationFilter = (
   timestamp: number,
   filters: MapFilters
 ): FilterSpecification => {
-  if (!filters.drawObservations) {
-    return false;
-  }
   const filter: FilterSpecification = [
     "all",
     [
@@ -69,8 +66,15 @@ export const buildObservationFilter = (
           "any",
           ["==", ["get", "groundtruth"], false]
         ]
-      );
+      ); 
+    } else if (!filters.drawObservations) {
+      filter.push([
+        "any",
+        ["==", ["get", "groundtruth"], true]
+      ]); 
     }
+  } else if (!filters.drawObservations) {
+    return false;
   }
 
   return filter;

@@ -79,6 +79,10 @@ def get_siteobservations_images(
     # if width | height is too small we pad S2/L8 regions for more context
     bbox_width = (bbox[2] - bbox[0]) * ToMeters
     bbox_height = (bbox[3] - bbox[1]) * ToMeters
+    logger.warning('BBOX')
+    logger.warning(bbox)
+    logger.warning(bbox_width)
+    logger.warning(bbox_height)
     if baseConstellation != 'WV' and (
         bbox_width < overrideImageSize or bbox_height < overrideImageSize
     ):
@@ -86,15 +90,16 @@ def get_siteobservations_images(
             overrideImageSize * 0.5
         ) / ToMeters  # find how much to add to each lon/lat
         bbox = [
-            bbox[1] - size_diff,
             bbox[0] - size_diff,
-            bbox[3] + size_diff,
+            bbox[1] - size_diff,
             bbox[2] + size_diff,
+            bbox[3] + size_diff,
         ]
     # add the included padding to the updated BBOX
     bbox = scale_bbox(bbox, bboxScale)
     # get the updated BBOX if it's bigger
     max_bbox = get_max_bbox(bbox, max_bbox)
+    logger.warning(max_bbox)
 
     # First we gather all images that match observations
     count = 0
@@ -147,7 +152,7 @@ def get_siteobservations_images(
                 found_timestamps[observation.date] = True
                 continue
             results = fetch_boundbox_image(
-                bbox, timestamp, constellation, baseConstellation == 'WV', scale
+                bbox, timestamp, constellation.slug, baseConstellation == 'WV', scale
             )
             if results is None:
                 logger.warning(f'COULD NOT FIND ANY IMAGE FOR TIMESTAMP: {timestamp}')
@@ -205,7 +210,11 @@ def get_siteobservations_images(
 
     # Now we get a list of all the timestamps and captures that fall in this range.
     worldView = baseConstellation == 'WV'
-
+    logger.warning('MAXBBOX')
+    logger.warning(max_bbox)
+    logger.warning('timestamp')
+    logger.warning(timestamp)
+    logger.warning(timebuffer)
     captures = get_range_captures(
         max_bbox, timestamp, baseConstellation, timebuffer, worldView
     )

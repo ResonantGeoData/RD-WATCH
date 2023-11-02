@@ -61,17 +61,20 @@ export const buildObservationFilter = (
   ];
   // If Scoring App and have ground truth we filter it out if the drawGT is false
   if (ApiService.apiPrefix.includes('scoring')) {
-    if (!filters.drawGroundTruth) {
+    if (!filters.drawGroundTruth && filters.drawObservations) {
       filter.push([
           "any",
           ["==", ["get", "groundtruth"], false]
         ]
       ); 
-    } else if (!filters.drawObservations) {
+    } else if (!filters.drawObservations && filters.drawGroundTruth && !filters.drawSiteOutline) {
       filter.push([
         "any",
         ["==", ["get", "groundtruth"], true]
       ]); 
+    }
+    else if ((!filters.drawObservations && !filters.drawGroundTruth) || (!filters.drawObservations  && filters.drawGroundTruth && filters.drawSiteOutline)) {
+      return false;
     }
   } else if (!filters.drawObservations) {
     return false;

@@ -2,10 +2,11 @@
 import TimeSlider from "./TimeSlider.vue";
 import { ApiService, ModelRun } from "../client";
 import { state } from "../store";
-import { Ref, onBeforeMount, onBeforeUnmount, ref, withDefaults } from "vue";
+import { Ref, computed, onBeforeMount, onBeforeUnmount, ref, withDefaults } from "vue";
 import { timeRangeFormat } from "../utils";
 import ImagesDownloadDialog from "./ImagesDownloadDialog.vue";
 import { DownloadSettings } from "../client/services/ApiService";
+import { useRoute } from "vue-router";
 
 interface Props {
   modelRun: ModelRun;
@@ -24,6 +25,8 @@ async function handleClick() {
   emit("toggle");
 }
 
+const route = useRoute();
+const scoringApp = computed(() => route.path.includes('scoring'));
 const useScoring = ref(false);
 const downloadImages = ref(false);
 
@@ -246,7 +249,7 @@ const determineDownload = () => {
           {{ modelRun.performer.short_code }}
         </div>
         <v-spacer />
-        <v-tooltip>
+        <v-tooltip v-if="!scoringApp">
           <template #activator="{ props:subProps }">
             <v-btn
               size="x-small"

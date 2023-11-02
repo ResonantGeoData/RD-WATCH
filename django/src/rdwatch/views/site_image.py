@@ -91,7 +91,7 @@ def site_images(request: HttpRequest, id: UUID4):
         .aggregate(
             results=JSONBAgg(
                 JSONObject(
-                    label='label__slug',
+                    label=F('label__slug'),
                     timestamp=ExtractEpoch('timestamp'),
                     geoJSON=Transform('geom', srid=4326),
                     bbox=BoundingBox(Transform('geom', srid=4326)),

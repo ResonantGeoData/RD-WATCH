@@ -21,7 +21,7 @@ const getClosestPoly = (timestamp: number, polys: EvaluationGeoJSON[], evaluatio
       for (let i = 0; i < polys.length; i += 1) {
           if (timestamp > polys[i].timestamp) {
               if (i > 0) {
-                  found = polys[i -1]
+                  found = polys[i - 1]
               }
           }
       }
@@ -218,10 +218,8 @@ const normalizePolygon = (bbox: BaseBBox, imageWidth: number, imageHeight: numbe
   const bboxHeight = bbox.ymax - bbox.ymin;
 
   const imageNormalizePoly: {x: number, y: number}[][] = []
-  console.log(polygon);
   polygon.coordinates.forEach((ring) => {
     imageNormalizePoly.push([]);
-    console.log(ring);
     if (polygon.type === 'Polygon') {
       ring.forEach((baseCoord) => {
         const coord = baseCoord as GeoJSON.Position;

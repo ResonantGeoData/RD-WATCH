@@ -172,7 +172,7 @@ def get_siteobservations_images(
                 found_timestamps[observation.timestamp] = True
                 continue
             results = fetch_boundbox_image(
-                bbox, timestamp, constellation, baseConstellation == 'WV', scale
+                bbox, timestamp, constellation.slug, baseConstellation == 'WV', scale
             )
             if results is None:
                 logger.warning(f'COULD NOT FIND ANY IMAGE FOR TIMESTAMP: {timestamp}')
@@ -238,7 +238,7 @@ def get_siteobservations_images(
         )
 
     captures = get_range_captures(
-        max_bbox, timestamp, matchConstellation, timebuffer, worldView
+        max_bbox, timestamp, matchConstellation.slug, timebuffer, worldView
     )
     self.update_state(
         state='PROGRESS',

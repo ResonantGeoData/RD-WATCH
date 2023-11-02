@@ -117,23 +117,25 @@ const hasLoadedImages = computed(() => (Object.entries(props.siteObservation.ima
           </span>
         </v-col>
         <v-spacer />
-        <v-col class="pl-4">
-          <v-icon
-            size="large"
-            color="rgb(37, 99, 235)"
-            class="mr-2"
-            @click="refresh()"
-          >
-            mdi-sync
-          </v-icon>
+        <v-col class="">
+          <v-row dense>
+            <v-icon
+              size="large"
+              color="rgb(37, 99, 235)"
+              class="mr-2"
+              @click="refresh()"
+            >
+              mdi-sync
+            </v-icon>
 
-          <v-icon
-            size="large"
-            color="red"
-            @click="close()"
-          >
-            mdi-close
-          </v-icon>
+            <v-icon
+              size="large"
+              color="red"
+              @click="close()"
+            >
+              mdi-close
+            </v-icon>
+          </v-row>
         </v-col>
       </v-row>
       <v-row

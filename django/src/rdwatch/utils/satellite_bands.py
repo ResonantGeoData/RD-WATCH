@@ -4,7 +4,7 @@ from dataclasses import dataclass
 from datetime import datetime, timedelta
 from typing import cast
 
-from rdwatch.models.lookups import CommonBand, Constellation, ProcessingLevel
+from rdwatch.models.lookups import CommonBand, ProcessingLevel
 from rdwatch.utils.stac_search import stac_search
 
 logger = logging.getLogger(__name__)
@@ -12,7 +12,7 @@ logger = logging.getLogger(__name__)
 
 @dataclass(frozen=True)
 class Band:
-    constellation: Constellation
+    constellation: str
     spectrum: CommonBand
     level: ProcessingLevel
     timestamp: datetime
@@ -23,16 +23,16 @@ class Band:
 
 
 def get_bands(
-    constellation: Constellation,
+    constellation: str,
     timestamp: datetime,
     bbox: tuple[float, float, float, float],
     timebuffer: timedelta | None = None,
 ) -> Iterator[Band]:
-    if constellation.slug not in ('L8', 'S2'):
-        raise ValueError(f"Unsupported constellation '{constellation.slug}'")
+    if constellation != 'S2' and constellation != 'L8':
+        raise ValueError(f'Unsupported constellation {constellation}')
 
     results = stac_search(
-        constellation.slug,
+        constellation,
         timestamp,
         bbox,
         timebuffer=timebuffer or timedelta(hours=1),

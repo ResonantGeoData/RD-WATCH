@@ -111,7 +111,6 @@ const currentTimestamp = computed(() => {
 
 watch(currentTimestamp, () => {
   currentDate.value = currentTimestamp.value;
-  currentLabel.value = filteredImages.value[currentImage.value].poly.label;
 });
 
 
@@ -121,6 +120,7 @@ const getImageData = async () => {
     const data =  await ApiService.getEvaluationImages(props.siteEvalId);
     const images = data.images.results.sort((a, b) => a.timestamp - b.timestamp);
     const polygons = data.geoJSON;
+    polygons.sort((a,b) => a.timestamp - b.timestamp);
     siteEvaluationNotes.value = data.notes || '';
     siteEvaluationLabel.value = data.label;
     siteStatus.value = data.status;
@@ -284,6 +284,7 @@ watch([currentImage, imageRef, filteredImages, drawGroundTruth, rescaleImage], (
     if (currentImage.value < filteredImages.value.length && imageRef.value !== null) {
         imageRef.value.src = filteredImages.value[currentImage.value].image.image;
     }
+    currentLabel.value = filteredImages.value[currentImage.value].poly.label;
     if (currentImage.value < filteredImages.value.length && canvasRef.value !== null) {
         drawData(
           canvasRef.value,

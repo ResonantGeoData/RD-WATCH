@@ -222,7 +222,7 @@ const toggleRegion = () => {
         >
           <template #activator="{ props:subProps }">
             <v-chip
-              v-if="scoringApp || (state.filters.drawObservations || state.filters.drawSiteOutline)"
+              v-if="state.filters.regions?.length"
               v-bind="subProps"
               density="compact"
               :color="state.filters.drawGroundTruth ? 'rgb(37, 99, 235)' : 'black'"

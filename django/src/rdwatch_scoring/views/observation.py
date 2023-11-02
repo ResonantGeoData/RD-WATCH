@@ -67,7 +67,7 @@ def site_observations(request: HttpRequest, evaluation_id: UUID4):
                     score='score',
                     # Default to worldview if sensor is NULL.
                     # TODO: what is the expected behavior here?
-                    constellation=Coalesce('sensor', Value('WV')),
+                    constellation=Coalesce('sensor', Value(None)),
                     # spectrum="spectrum__slug",
                     timestamp=ExtractEpoch('date'),
                     bbox=BoundingBox(
@@ -205,4 +205,42 @@ def get_site_observation_images(
         )
         fetching_task.celery_id = task_id.id
         fetching_task.save()
+    return 202, True
+
+
+@router.put(
+    '/{evaluation_id}/cancel-generate-images/', response={202: bool, 409: str, 404: str}
+)
+def cancel_site_observation_images(request: HttpRequest, evaluation_id: UUID4):
+    get_object_or_404(Site, pk=evaluation_id)
+
+    with transaction.atomic():
+        # Use select_for_update here to lock the SatelliteFetching row
+        # for the duration of this transaction in order to ensure its
+        # status doesn't change out from under us
+        fetching_task = (
+            SatelliteFetching.objects.select_for_update()
+            .filter(site=evaluation_id)
+            .first()
+        )
+        if fetching_task is not None:
+            if fetching_task.status == SatelliteFetching.Status.RUNNING:
+                if fetching_task.celery_id != '':
+                    task = AsyncResult(fetching_task.celery_id)
+                    task.revoke(terminate=True)
+                fetching_task.status = SatelliteFetching.Status.COMPLETE
+                fetching_task.celery_id = ''
+                fetching_task.save()
+            else:
+                return (
+                    409,
+                    f'There is no running task for Observation Id: {evaluation_id}',
+                )
+
+        else:
+            return (
+                404,
+                f'There is no running task for Observation Id: {evaluation_id}',
+            )
+
     return 202, True

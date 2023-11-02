@@ -2,11 +2,12 @@
 
 import { annotationLegend } from '../mapstyle/annotationStyles';
 import { state } from '../store';
+
 </script>
 
 <template>
   <div
-    v-if="state.mapLegend"
+    v-if="state.mapLegend && (state.filters.drawGroundTruth || state.filters.drawObservations || state.filters.drawSiteOutline)"
     class="legend"
   >
     <v-card density="compact">
@@ -53,7 +54,7 @@ import { state } from '../store';
           </v-card>
 
           <v-card
-            v-if="state.filters.drawObservations"
+            v-if="state.filters.drawObservations || state.filters.drawGroundTruth"
             density="compact"
           >
             <v-card-title

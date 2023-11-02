@@ -138,7 +138,7 @@ export class ApiService {
   ): CancelablePromise<SiteObservationList> {
     return __request(OpenAPI, {
       method: "GET",
-      url: "/api/observations/{id}",
+      url: `${this.apiPrefix}/observations/{id}`,
       path: {
         id: id,
       },
@@ -156,7 +156,7 @@ export class ApiService {
       ): CancelablePromise<boolean> {
         return __request(OpenAPI, {
           method: "POST",
-          url: "/api/observations/{id}/generate-images/",
+          url: `${this.apiPrefix}/observations/{id}/generate-images/`,
           path: {
             id: id,
           },
@@ -461,7 +461,7 @@ export class ApiService {
   public static patchSiteObservation(id: string, data: SiteObservationUpdateQuery): CancelablePromise<boolean> {
     return __request(OpenAPI, {
       method: 'PATCH',
-      url: "/api/observations/{id}/",
+      url: `${this.apiPrefix}/observations/{id}/`,
       path: {
         id: id,
       },

@@ -5,7 +5,9 @@ from rdwatch_scoring import views
 
 api = NinjaAPI(urls_namespace='scoring')
 
+api.add_router('/evaluations/images/', views.site_image.router)
 api.add_router('/model-runs/', views.model_run.router)
+api.add_router('/observations/', views.observation.router)
 api.add_router('/performers/', views.performer.router)
 api.add_router('/regions/', views.region.router)
 

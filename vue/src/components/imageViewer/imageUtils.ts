@@ -119,7 +119,6 @@ const drawData = (
           coords.forEach((ring) => {
             const xPos = standardPoly ? ring[0].x : ring[0].x * widthRatio;
             const yPos = standardPoly ? computedImageHeight - ring[0].y : computedOverrideHeight - (ring[0].y * heightRatio);
-
             context.moveTo(xPos, yPos);
             context.beginPath();
             ring.forEach(({x, y}) => {
@@ -214,20 +213,36 @@ const rescale = (baseBBox: BaseBBox, scale=1.2) => {
   }
 }
 
-const normalizePolygon = (bbox: BaseBBox, imageWidth: number, imageHeight: number, polygon: GeoJSON.Polygon ) => {
+const normalizePolygon = (bbox: BaseBBox, imageWidth: number, imageHeight: number, polygon: GeoJSON.Polygon | GeoJSON.MultiPolygon ) => {
   const bboxWidth = bbox.xmax - bbox.xmin;
   const bboxHeight = bbox.ymax - bbox.ymin;
 
   const imageNormalizePoly: {x: number, y: number}[][] = []
+  console.log(polygon);
   polygon.coordinates.forEach((ring) => {
     imageNormalizePoly.push([]);
-      ring.forEach((coord) => {
-          const normalize_x = (coord[0] - bbox.xmin) / bboxWidth;
-      const normalize_y = (coord[1] - bbox.ymin) / bboxHeight;
-      const image_x = normalize_x * imageWidth;
-      const image_y = normalize_y * imageHeight;
-      imageNormalizePoly[imageNormalizePoly.length -1].push({x: image_x, y: image_y});
+    console.log(ring);
+    if (polygon.type === 'Polygon') {
+      ring.forEach((baseCoord) => {
+        const coord = baseCoord as GeoJSON.Position;
+        const normalize_x = (coord[0] - bbox.xmin) / bboxWidth;
+        const normalize_y = (coord[1] - bbox.ymin) / bboxHeight;
+        const image_x = normalize_x * imageWidth;
+        const image_y = normalize_y * imageHeight;
+        imageNormalizePoly[imageNormalizePoly.length -1].push({x: image_x, y: image_y});
       });
+    }else if (polygon.type === 'MultiPolygon') {
+      ring.forEach((baseCoord) => {
+        const coordList = baseCoord as GeoJSON.Position[];
+        coordList.forEach((coord) => {
+        const normalize_x = (coord[0] - bbox.xmin) / bboxWidth;
+        const normalize_y = (coord[1] - bbox.ymin) / bboxHeight;
+        const image_x = normalize_x * imageWidth;
+        const image_y = normalize_y * imageHeight;
+        imageNormalizePoly[imageNormalizePoly.length -1].push({x: image_x, y: image_y});
+        });
+      });
+    }
   });
   return imageNormalizePoly;
 }

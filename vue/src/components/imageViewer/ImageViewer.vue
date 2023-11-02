@@ -111,6 +111,7 @@ const currentTimestamp = computed(() => {
 
 watch(currentTimestamp, () => {
   currentDate.value = currentTimestamp.value;
+  currentLabel.value = filteredImages.value[currentImage.value].poly.label;
 });
 
 

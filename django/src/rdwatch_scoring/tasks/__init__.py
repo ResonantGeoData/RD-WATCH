@@ -99,6 +99,7 @@ def get_siteobservations_images(
     # First we gather all images that match observations
     count = 0
     for observation in site_observations.iterator():
+        break
         self.update_state(
             state='PROGRESS',
             meta={
@@ -109,8 +110,9 @@ def get_siteobservations_images(
             },
         )
         if observation.date is not None:
-            min_time = min(min_time, observation.date)
-            max_time = max(max_time, observation.date)
+            obs__time = datetime.combine(observation.date, datetime.min.time())
+            min_time = min(min_time, obs__time)
+            max_time = max(max_time, obs__time)
         mercator: tuple[float, float, float, float] = Polygon.from_ewkt(
             observation.geometry
         ).extent

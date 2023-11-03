@@ -96,29 +96,13 @@ const hasLoadedImages = computed(() => (Object.entries(props.siteObservation.ima
     <v-card-text>
       <v-row
         dense
-        justify="center"
-        align="center"
       >
-        <v-col v-if="siteObservation.obsDetails">
-          <span class="model-title">
-            {{ `${siteObservation.obsDetails.region}_${siteObservation.obsDetails.siteNumber.toString().padStart(4, '0')}` }}
-          </span>
-        </v-col>
-        <v-col cols="1">
-          <span>
-            <v-btn
-              variant="text"
-              density="compact"
-              :color="imagesActive ? 'rgb(37, 99, 235)': 'black'"
-              :disabled="!hasImages"
-              icon="mdi-image"
-              @click="hasImages && toggleSatelliteImages(siteObservation)"
-            />
-          </span>
-        </v-col>
         <v-spacer />
-        <v-col class="">
-          <v-row dense>
+        <v-col>
+          <v-row
+            dense
+            justify="end"
+          >
             <v-icon
               size="large"
               color="rgb(37, 99, 235)"
@@ -144,6 +128,30 @@ const hasLoadedImages = computed(() => (Object.entries(props.siteObservation.ima
         align="center"
       >
         <v-col v-if="siteObservation.obsDetails">
+          <span class="model-title">
+            {{ `${siteObservation.obsDetails.region}_${siteObservation.obsDetails.siteNumber.toString().padStart(4, '0')}` }}
+          </span>
+        </v-col>
+        <v-col cols="1">
+          <span>
+            <v-btn
+              variant="text"
+              density="compact"
+              :color="imagesActive ? 'rgb(37, 99, 235)': 'black'"
+              :disabled="!hasImages"
+              icon="mdi-image"
+              @click="hasImages && toggleSatelliteImages(siteObservation)"
+            />
+          </span>
+        </v-col>
+        <v-spacer />
+      </v-row>
+      <v-row
+        dense
+        justify="center"
+        align="center"
+      >
+        <v-col v-if="siteObservation.obsDetails">
           <span>{{ `${siteObservation.obsDetails.performer} ${siteObservation.obsDetails.title}: V${siteObservation.obsDetails.version}` }}</span>
         </v-col>
       </v-row>
@@ -162,7 +170,7 @@ const hasLoadedImages = computed(() => (Object.entries(props.siteObservation.ima
           </v-expansion-panel-text>
         </v-expansion-panel>
         <v-expansion-panel
-          v-if="siteObservation.obsDetails && siteObservation.obsDetails.version && !noScore"
+          v-if="false"
           key="Scoring"
         >
           <v-expansion-panel-title>Scoring</v-expansion-panel-title>

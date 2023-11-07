@@ -1,3 +1,4 @@
+import logging
 from datetime import timedelta
 from typing import Any
 
@@ -35,6 +36,8 @@ from rdwatch_scoring.views.observation import (
     GenerateImagesSchema,
     get_site_observation_images,
 )
+
+logger = logging.getLogger(__name__)
 
 router = RouterPaginated()
 
@@ -145,6 +148,22 @@ class ModelRunPagination(PageNumberPagination):
                 timeout=timedelta(days=30).total_seconds(),
             )
 
+        fetch_counts = (
+            SatelliteFetching.objects.filter(status=SatelliteFetching.Status.RUNNING)
+            .values('model_run_uuid')
+            .order_by('model_run_uuid')
+            .annotate(total=Count('model_run_uuid'))
+        )
+        # convert it into a dictionary for easy indexing
+        fetching = {}
+        for item in fetch_counts:
+            if item['model_run_uuid']:
+                fetching[item['model_run_uuid']] = item['total']
+
+        for item in model_runs['items']:
+            if item['uuid'] in fetching.keys():
+                item['downloading'] = fetching[item['uuid']]
+
         return model_runs
 
 
@@ -169,12 +188,20 @@ def list_model_runs(
     request: HttpRequest,
     filters: ModelRunFilterSchema = Query(...),  # noqa: B008
 ):
-    return filters.filter(get_queryset())
+    data = filters.filter(get_queryset())
+    # lets get the downloading information for model_runs
+
+    return data
 
 
 @router.get('/{id}/', response={200: ModelRunDetailSchema})
 def get_model_run(request: HttpRequest, id: UUID4):
-    return get_object_or_404(get_queryset(), id=id)
+    data = get_object_or_404(get_queryset(), id=id)
+    fetch_counts = SatelliteFetching.objects.filter(
+        model_run_uuid=id, status=SatelliteFetching.Status.RUNNING
+    ).count()
+    data['downloading'] = fetch_counts
+    return data
 
 
 @router.post('/{model_run_id}/generate-images/', response={202: bool})

@@ -15,7 +15,9 @@ from django.db.models import (
     Field,
     Func,
     Min,
+    OuterRef,
     Q,
+    Subquery,
     Value,
     When,
     Window,
@@ -25,7 +27,13 @@ from django.http import HttpRequest, HttpResponse
 from django.shortcuts import get_object_or_404
 
 from rdwatch.db.functions import ExtractEpoch, GroupExcludeRowRange
-from rdwatch_scoring.models import EvaluationRun, Observation, Region, Site
+from rdwatch_scoring.models import (
+    EvaluationBroadAreaSearchProposal,
+    EvaluationRun,
+    Observation,
+    Region,
+    Site,
+)
 
 from .model_run import router
 
@@ -93,10 +101,11 @@ def vector_tile(
             Site.objects.filter(evaluation_run_uuid=evaluation_run_uuid)
             .alias(geomfromtext=geomfromuniongeometrytext)
             .alias(transformedgeom=transform)
+            .alias(base_site_id=F('site_id'))
             .filter(intersects)
             .values()
             .annotate(
-                id=F('site_id'),
+                id=F('base_site_id'),
                 mvtgeom=mvtgeom,
                 configuration_id=F('evaluation_run_uuid'),
                 label=Case(
@@ -120,6 +129,15 @@ def vector_tile(
                     default=False,
                 ),
                 site_polygon=Value(False, output_field=BooleanField()),
+                color_code=Subquery(
+                    EvaluationBroadAreaSearchProposal.objects.filter(
+                        evaluation_run_uuid=evaluation_run_uuid,
+                        activity_type='overall',
+                        rho=0.5,
+                        tau=0.2,
+                        site_proposal=OuterRef('base_site_id'),
+                    ).values('color_code')
+                ),
             )
         )
         (

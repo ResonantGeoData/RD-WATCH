@@ -27,7 +27,6 @@ watch(selectedPerformer, (val) => {
   state.filters = {
     ...state.filters,
     performer_ids: !val.length ? undefined : val.map((item) => item.id),
-    scoringColoring: null,
   };
 });
 watch (() => state.filters.regions, () => {
@@ -46,11 +45,10 @@ const updateRegion = (val?: Region) => {
   state.filters = {
     ...state.filters,
     regions: val === undefined ? undefined : [val],
-    scoringColoring: null,
   };
 };
 watch(drawSiteOutline, (val) => {
-  state.filters = { ...state.filters, drawSiteOutline: val, scoringColoring: null };
+  state.filters = { ...state.filters, drawSiteOutline: val };
 });
 const expandSettings = ref(false);
 
@@ -135,6 +133,11 @@ const toggleSites = () => {
 const toggleRegion = () => {
   const val = !state.filters.drawRegionPoly;
   state.filters = { ...state.filters, drawRegionPoly: val };
+}
+
+const toggleScoring = () => {
+  const val = state.filters.scoringColoring ? undefined : 'simple';
+  state.filters = { ...state.filters, scoringColoring: val };
 }
 
 
@@ -251,6 +254,26 @@ const toggleRegion = () => {
               @click="toggleRegion()"
             >
               Region
+            </v-chip>
+          </template>
+          <span>Toggle Region Polygons On/Off</span>
+        </v-tooltip>
+        <v-tooltip
+          v-if="scoringApp && state.filters.drawSiteOutline"
+          open-delay="100"
+          location="top"
+        >
+          <template #activator="{ props:subProps }">
+            <v-chip
+              v-bind="subProps"
+              density="compact"
+              size="small"
+              :color="state.filters.scoringColoring ? 'rgb(37, 99, 235)' : 'black'"
+              :variant="state.filters.scoringColoring ? 'elevated' : 'outlined'"
+              class="mx-1"
+              @click="toggleScoring()"
+            >
+              Scores
             </v-chip>
           </template>
           <span>Toggle Region Polygons On/Off</span>

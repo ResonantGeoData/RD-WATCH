@@ -30,7 +30,6 @@ onMounted(() => {
     state.filters = {
       ...state.filters,
       regions: [props.region],
-      scoringColoring: null,
     };
   }
 });

@@ -32,30 +32,7 @@ const downloadImages = ref(false);
 
 let loopingInterval: NodeJS.Timeout | null = null;
 
-async function getScoringColoring() {
-  if (!useScoring.value) { // inverted value because of the delay
-    const results = await ApiService.getScoreColoring(props.modelRun.id, props.modelRun.region || '')
-    let tempResults = state.filters.scoringColoring;
-    if (!tempResults) {
-      tempResults = {};
-    }
-    if (tempResults !== undefined && tempResults !== null)  {
-      tempResults[`${props.modelRun.id}_${props.modelRun.region}`] = results;
-    }
-    state.filters = { ...state.filters, scoringColoring: tempResults };
-  } else {
-    let tempResults = state.filters.scoringColoring;
-    if (tempResults) {
-      if (Object.keys(tempResults).includes(`${props.modelRun.id}_${props.modelRun.region}`)) {
-        delete tempResults[`${props.modelRun.id}_${props.modelRun.region}`];
-      }
-      if (Object.values(tempResults).length === 0) {
-        tempResults = null;
-      }
-    }
-    state.filters = { ...state.filters, scoringColoring: tempResults };
-  }
-}
+
 const downloading = ref(props.modelRun.downloading);
 
 const updateDownloading = async () => {
@@ -223,18 +200,6 @@ const determineDownload = () => {
             All Proposals Adjudicated
           </v-chip>
         </div>
-      </v-row>
-
-      <v-row
-        v-if="!compact && modelRun.hasScores && props.open"
-        dense
-      >
-        <input
-          v-model="useScoring"
-          type="checkbox"
-          @click.stop="getScoringColoring()"
-        >
-        <span class="ml-2"> Scoring Coloring</span>
       </v-row>
       <v-row dense>
         <v-icon

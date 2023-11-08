@@ -54,7 +54,7 @@ import { state } from '../store';
           </v-card>
 
           <v-card
-            v-if="state.filters.drawObservations || state.filters.drawGroundTruth"
+            v-if="state.filters.drawObservations || (state.filters.drawGroundTruth && !state.filters.drawSiteOutline)"
             density="compact"
           >
             <v-card-title

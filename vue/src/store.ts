@@ -14,7 +14,7 @@ export interface MapFilters {
   otherPattern?: boolean;
   hoverSiteId?: string;
   showText?: boolean;
-  scoringColoring?: Record<string, Record<string, string>> | null;
+  scoringColoring?: 'simple' | 'detailed';
 }
 
 export interface SatelliteTimeStamp {

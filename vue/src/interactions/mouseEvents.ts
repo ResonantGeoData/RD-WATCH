@@ -131,11 +131,18 @@ const clickObservation = async (e: MapLayerMouseEvent) => {
   }
 
 }
+const drawSitePopupObservation = async (e: MapLayerMouseEvent) => {
+  if (e.features && e.features[0]?.properties && map.value) {
+    console.log(e.features);
+  }
+}
 
 let loadedFunctions: {
   id: string,
   mouseenter: (e: MapLayerMouseEvent) => Promise<void>;
   mouseleave: (e: MapLayerMouseEvent) => Promise<void>;
+  mouseenterSite: (e: MapLayerMouseEvent) => Promise<void>;
+  mouseleaveSite: (e: MapLayerMouseEvent) => Promise<void>;
   clickObservation: (e: MapLayerMouseEvent) => Promise<void>;
 }[] = []
 const setPopupEvents = (map: ShallowRef<null | Map>) => {
@@ -144,6 +151,8 @@ const setPopupEvents = (map: ShallowRef<null | Map>) => {
       const data = loadedFunctions[i];
       map.value.off("mouseenter", `observations-fill-${data.id}`, data.mouseenter);
       map.value.off("mouseleave", `observations-fill-${data.id}`, data.mouseleave);
+      map.value.on("mouseenter", `sites-outline-${data.id}`, data.mouseenterSite);
+      map.value.on("mouseleave", `sites-outline-${data.id}`, data.mouseenterSite);
       map.value.off("click", `observations-fill-${data.id}`, data.clickObservation);
     }
     loadedFunctions = []
@@ -151,8 +160,17 @@ const setPopupEvents = (map: ShallowRef<null | Map>) => {
       const id = m.split('|')[0];
       map.value.on("mouseenter", `observations-fill-${id}`, drawPopupObservation);
       map.value.on("mouseleave", `observations-fill-${id}`, drawPopupObservation);
+      map.value.on("mouseenter", `sites-outline-${id}`, drawSitePopupObservation);
+      map.value.on("mouseleave", `sites-outline-${id}`, drawSitePopupObservation);
+
       map.value.on("click", `observations-fill-${id}`, clickObservation);
-      loadedFunctions.push({id, mouseenter: drawPopupObservation, mouseleave: drawPopupObservation, clickObservation});
+      loadedFunctions.push({
+        id,
+        mouseenter: drawPopupObservation,
+        mouseleave: drawPopupObservation,
+        mouseenterSite: drawSitePopupObservation,
+        mouseleaveSite: drawSitePopupObservation,
+          clickObservation});
     }
   }
 }

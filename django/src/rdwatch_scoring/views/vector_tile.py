@@ -178,7 +178,8 @@ def vector_tile(
                 score=F('confidence_score'),
                 groundtruth=Case(
                     When(
-                        Q(site_uuid__originator='te') | Q(site_uuid__originator='iMERIT'),
+                        Q(site_uuid__originator='te')
+                        | Q(site_uuid__originator='iMERIT'),
                         True,
                     ),
                     default=False,

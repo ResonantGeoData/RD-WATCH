@@ -123,7 +123,7 @@ def vector_tile(
                 region=F('region_id'),
                 groundtruth=Case(
                     When(
-                        Q(originator='te'),
+                        Q(originator='te') | Q(originator='iMERIT'),
                         True,
                     ),
                     default=False,
@@ -196,7 +196,7 @@ def vector_tile(
                 score=F('confidence_score'),
                 groundtruth=Case(
                     When(
-                        Q(site_uuid__originator='te'),
+                        Q(site_uuid__originator='te') | Q(originator='iMERIT'),
                         True,
                     ),
                     default=False,

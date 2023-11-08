@@ -3,7 +3,7 @@ import { Ref, computed, ref, watch, withDefaults } from "vue";
 import { ApiService } from "../../client";
 import { EvaluationImage, EvaluationImageResults } from "../../types";
 import { getColorFromLabel, styles } from '../../mapstyle/annotationStyles';
-import { loadAndToggleSatelliteImages, state } from '../../store'
+import { ObsDetails, loadAndToggleSatelliteImages, state } from '../../store'
 import { VDatePicker } from 'vuetify/labs/VDatePicker'
 import { SiteModelStatus } from "../../client/services/ApiService";
 import { CanvasCapture } from 'canvas-capture';
@@ -16,6 +16,7 @@ interface Props {
   editable?: boolean;
   siteEvaluationName?: string | null;
   dateRange?: number[] | null
+  obsDetails?: ObsDetails;
 }
 
 
@@ -26,6 +27,7 @@ const props = withDefaults(defineProps<Props>(), {
   editable: false,
   siteEvaluationName: null,
   dateRange: null,
+  obsDetails: undefined,
 });
 
 const emit = defineEmits<{
@@ -54,7 +56,7 @@ const siteEvaluationUpdated = ref(false)
 const siteStatus: Ref<string | null> = ref(null);
 const imageRef: Ref<HTMLImageElement | null> = ref(null);
 const canvasRef: Ref<HTMLCanvasElement | null> = ref(null);
-const baseImageSources = ref(['S2', 'WV'])
+const baseImageSources = ref(['S2', 'WV', 'L8'])
 const baseObs = ref(['observations', 'non-observations'])
 const filterSettings = ref(false);
 const combinedImages: Ref<{image: EvaluationImage; poly: PixelPoly, groundTruthPoly?: PixelPoly}[]> = ref([]);
@@ -118,6 +120,7 @@ const getImageData = async () => {
     const data =  await ApiService.getEvaluationImages(props.siteEvalId);
     const images = data.images.results.sort((a, b) => a.timestamp - b.timestamp);
     const polygons = data.geoJSON;
+    polygons.sort((a,b) => a.timestamp - b.timestamp);
     siteEvaluationNotes.value = data.notes || '';
     siteEvaluationLabel.value = data.label;
     siteStatus.value = data.status;
@@ -281,6 +284,7 @@ watch([currentImage, imageRef, filteredImages, drawGroundTruth, rescaleImage], (
     if (currentImage.value < filteredImages.value.length && imageRef.value !== null) {
         imageRef.value.src = filteredImages.value[currentImage.value].image.image;
     }
+    currentLabel.value = filteredImages.value[currentImage.value].poly.label;
     if (currentImage.value < filteredImages.value.length && canvasRef.value !== null) {
         drawData(
           canvasRef.value,
@@ -379,15 +383,24 @@ const setSiteModelStatus = async (status: SiteModelStatus) => {
     <v-row
       v-if="dialog"
       dense
+      class="top-bar"
     >
+      <v-col v-if="obsDetails">
+        <span>{{ obsDetails.performer }} {{ obsDetails.title }} : V{{ obsDetails.version }}</span>
+      </v-col>
+      <v-col v-if="obsDetails">
+        <span>{{ siteEvaluationName }}</span>
+      </v-col>
+
+      <v-col v-if="obsDetails">
+        <span>{{ startDate }}</span> to <span> {{ endDate }}</span>
+      </v-col>
+
       <v-spacer />
       <v-icon @click="emit('close')">
         mdi-close
       </v-icon>
     </v-row>
-    <v-card-title v-if="!editable">
-      Site Image Display
-    </v-card-title>
     <v-card-title
       v-else
       class="edit-title"
@@ -984,5 +997,9 @@ const setSiteModelStatus = async (status: SiteModelStatus) => {
 
 .edit-title {
   font-size: 0.75em;
+}
+.top-bar {
+  font-size:12px;
+  font-weight: bold;
 }
 </style>

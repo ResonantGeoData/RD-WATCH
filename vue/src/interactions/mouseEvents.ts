@@ -4,6 +4,7 @@ import { ShallowRef } from "vue";
 import { getSiteObservationDetails, selectedObservationList, state } from "../store";
 import  createPopup from '../main';
 import { PopUpData } from '../interactions/popUpType';
+import { styles } from "../mapstyle/annotationStyles";
 
 
   const hoveredInfo: Ref<{region: string[], siteId: string[]}> = ref({region: [], siteId:[]});
@@ -34,7 +35,7 @@ const popupLogic = async (mapArg: ShallowRef<null | Map>) => {
   });
   map.value = mapArg.value;
 };
-const drawPopup = async (e: MapLayerMouseEvent) => {
+const drawPopupObservation = async (e: MapLayerMouseEvent) => {
   if (e.features && e.features[0]?.properties && map.value) {
     const coordinates = e.lngLat;
     const ids = [];
@@ -53,6 +54,10 @@ const drawPopup = async (e: MapLayerMouseEvent) => {
           const region: string = item.properties.region;
           const score = item.properties.score;
           const siteId = item.properties.siteeval_id;
+          const configName = item.properties.configuration_name;
+          const performerName = item.properties.performer_name;
+          const version = item.properties.version;
+          const siteLabel = item.properties.site_label;
           hoveredInfo.value.region.push(
             `${item.properties.configuration_id}_${region}_${item.properties.performer_id}`
           );
@@ -69,10 +74,15 @@ const drawPopup = async (e: MapLayerMouseEvent) => {
                   siteId: `${region}_${String(id).padStart(4, '0')}`,
                   score,
                   groundTruth: item.properties.groundtruth,
-                  siteColor: `rgb(${fillColor.r *255}, ${fillColor.g * 255}, ${fillColor.b * 255})`,
+                  obsColor: `rgb(${fillColor.r *255}, ${fillColor.g * 255}, ${fillColor.b * 255})`,
+                  siteColor: styles[siteLabel]?.color,
                   scoreColor: calculateScoreColor(score),
                   timestamp: item.properties.timestamp,
                   area,
+                  version,
+                  configName,
+                  performerName,
+                  siteLabel,
               })
             }
           }
@@ -101,20 +111,23 @@ const drawPopup = async (e: MapLayerMouseEvent) => {
 };
 const clickObservation = async (e: MapLayerMouseEvent) => {
   if (e.features && e.features[0]?.properties && map.value) {
-    const feature = e.features[0];
+    e.features.forEach(async (feature) => {
     if (feature.properties) {
-      const siteId = feature.properties.siteeval_id;
-      const scoringBase = {
-        region: feature.properties.region as string,
-        configurationId: feature.properties.configuration_id as number,
-        siteNumber: feature.properties.site_number as number,
-        version: feature.properties.version,
-      }
+        const siteId = feature.properties.siteeval_id;
+        const obsDetails = {
+          region: feature.properties.region as string,
+          configurationId: feature.properties.configuration_id as number,
+          siteNumber: feature.properties.site_number as number,
+          version: feature.properties.version,
+          performer: feature.properties.performer_name,
+          title: feature.properties.configuration_name,
+        }
 
-      if (siteId && !selectedObservationList.value.includes(siteId)) {
-        await getSiteObservationDetails(siteId, scoringBase);
+        if (siteId && !selectedObservationList.value.includes(siteId)) {
+          await getSiteObservationDetails(siteId, obsDetails);
+        }
       }
-    }
+    })
   }
 
 }
@@ -136,10 +149,10 @@ const setPopupEvents = (map: ShallowRef<null | Map>) => {
     loadedFunctions = []
     for (const m of state.openedModelRuns) {
       const id = m.split('|')[0];
-      map.value.on("mouseenter", `observations-fill-${id}`, drawPopup);
-      map.value.on("mouseleave", `observations-fill-${id}`, drawPopup);
+      map.value.on("mouseenter", `observations-fill-${id}`, drawPopupObservation);
+      map.value.on("mouseleave", `observations-fill-${id}`, drawPopupObservation);
       map.value.on("click", `observations-fill-${id}`, clickObservation);
-      loadedFunctions.push({id, mouseenter: drawPopup, mouseleave: drawPopup, clickObservation});
+      loadedFunctions.push({id, mouseenter: drawPopupObservation, mouseleave: drawPopupObservation, clickObservation});
     }
   }
 }

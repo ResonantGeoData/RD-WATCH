@@ -39,23 +39,6 @@ const cloudCover = computed({
   },
 });
 
-const showSiteOutline = computed({
-  get() {
-    return state.filters.showSiteOutline || false;
-  },
-  set(val: boolean) {
-    state.filters = { ...state.filters, showSiteOutline: val,  };
-  },
-});
-
-const showRegionPolygon = computed({
-  get() {
-    return state.filters.showRegionPolygon || false;
-  },
-  set(val: boolean) {
-    state.filters = { ...state.filters, showRegionPolygon: val };
-  },
-});
 
 const groundTruthPattern = computed({
   get() {
@@ -73,15 +56,6 @@ const otherPattern = computed({
     state.filters = { ...state.filters, otherPattern: val };
   },
 });
-const showText = computed({
-    get() {
-      return state.filters.showText || false;
-    },
-    set(val: boolean) {
-      state.filters = { ...state.filters, showText: val };
-    },
-
-  })
 
 const patternThickness = computed({
   get() {
@@ -368,51 +342,6 @@ watch(hiddenCanvas, () => {
         </v-col>
         <v-col cols="2">
           <span class="label">&lt;{{ cloudCover }}%</span>
-        </v-col>
-      </v-row>
-
-
-      <v-row dense>
-        <v-col cols="8">
-          <v-checkbox
-            v-model="showText"
-            label="Site Label On"
-            density="compact"
-          />
-        </v-col>
-      </v-row>
-      <v-row dense>
-        <v-col cols="8">
-          <v-checkbox
-            v-model="showSiteOutline"
-            label="Site Outline:"
-            density="compact"
-          />
-        </v-col>
-        <v-col>
-          <img
-            ref="siteOutlineImg"
-            height="32"
-            width="32"
-          >
-        </v-col>
-      </v-row>
-      <v-row dense>
-        <v-col cols="8">
-          <v-checkbox
-            v-model="showRegionPolygon"
-            label="Region Polygon:"
-            density="compact"
-          />
-        </v-col>
-        <v-col>
-          <div
-            :style="{
-              border: '1px solid grey',
-              height: '32px',
-              width: '32px'
-            }"
-          />
         </v-col>
       </v-row>
       <v-row dense>

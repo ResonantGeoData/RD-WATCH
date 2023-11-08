@@ -1,3 +1,7 @@
+from __future__ import annotations
+
+from abc import abstractmethod
+
 from django.contrib.gis.db.models import PolygonField
 from django.contrib.postgres.fields import ArrayField
 from django.contrib.postgres.indexes import GistIndex
@@ -5,18 +9,20 @@ from django.db import models
 from django.dispatch import receiver
 
 
-class SiteImage(models.Model):
-    site = models.ForeignKey(
-        to='SiteEvaluation',
-        on_delete=models.CASCADE,
-        db_index=True,
-    )
-    observation = models.ForeignKey(
-        to='SiteObservation',
-        on_delete=models.CASCADE,
-        null=True,
-        db_index=True,
-    )
+class BaseSiteImage(models.Model):
+    class Meta:
+        abstract = True
+
+    @property
+    @abstractmethod
+    def site(self):
+        raise NotImplementedError()
+
+    @property
+    @abstractmethod
+    def observation(self):
+        raise NotImplementedError()
+
     timestamp = models.DateTimeField(
         help_text="The source image's timestamp",
     )
@@ -42,15 +48,29 @@ class SiteImage(models.Model):
         help_text='S3 Link to base file used to download this image',
     )
 
-    def __str__(self):
+    def __str__(self) -> str:
         time = self.timestamp.isoformat()
         return f'{self.site}.{self.source}@{time}'
 
-    class Meta:
-        indexes = [GistIndex(fields=['timestamp'])]
 
-
-@receiver(models.signals.pre_delete, sender=SiteImage)
+@receiver(models.signals.pre_delete, sender=BaseSiteImage)
 def delete_content(sender, instance, **kwargs):
     if instance.image:
         instance.image.delete(save=False)
+
+
+class SiteImage(BaseSiteImage):
+    class Meta:
+        indexes = [GistIndex(fields=['timestamp'])]
+
+    site = models.ForeignKey(
+        to='SiteEvaluation',
+        on_delete=models.CASCADE,
+        db_index=True,
+    )
+    observation = models.ForeignKey(
+        to='SiteObservation',
+        on_delete=models.CASCADE,
+        null=True,
+        db_index=True,
+    )

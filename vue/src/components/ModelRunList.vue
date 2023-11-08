@@ -60,10 +60,10 @@ async function loadMore() {
 
     // sort list to show ground truth near the top
     const modelRunResults = modelRunList.items;
-    const keyedModelRunResults = modelRunResults.map((val, i) => {
+    const keyedModelRunResults = modelRunResults.map((val) => {
       return {
         ...val,
-        key: `${val.id}|${i + state.modelRuns.length}`,
+        key: `${val.id}`,
       };
     });
 

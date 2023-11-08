@@ -1,11 +1,13 @@
 from datetime import timedelta
 from typing import Any
 
+from celery.result import AsyncResult
 from ninja import Field, FilterSchema, Query, Schema
 from ninja.pagination import PageNumberPagination, RouterPaginated, paginate
 from pydantic import UUID4
 
 from django.core.cache import cache
+from django.db import transaction
 from django.db.models import (
     Avg,
     CharField,
@@ -28,7 +30,11 @@ from django.shortcuts import get_object_or_404
 from rdwatch.db.functions import ExtractEpoch
 from rdwatch.schemas.common import TimeRangeSchema
 from rdwatch.views.model_run import ModelRunDetailSchema, ModelRunListSchema
-from rdwatch_scoring.models import EvaluationRun
+from rdwatch_scoring.models import EvaluationRun, SatelliteFetching, Site
+from rdwatch_scoring.views.observation import (
+    GenerateImagesSchema,
+    get_site_observation_images,
+)
 
 router = RouterPaginated()
 
@@ -169,3 +175,49 @@ def list_model_runs(
 @router.get('/{id}/', response={200: ModelRunDetailSchema})
 def get_model_run(request: HttpRequest, id: UUID4):
     return get_object_or_404(get_queryset(), id=id)
+
+
+@router.post('/{model_run_id}/generate-images/', response={202: bool})
+def generate_images(
+    request: HttpRequest,
+    model_run_id: UUID4,
+    params: GenerateImagesSchema = Query(...),  # noqa: B008
+):
+    sites = Site.objects.filter(evaluation_run_uuid=model_run_id)
+    for site in sites:
+        get_site_observation_images(
+            request,
+            site.pk,
+            params,
+        )
+
+    return 202, True
+
+
+@router.put(
+    '/{model_run_id}/cancel-generate-images/',
+    response={202: bool, 409: str, 404: str},
+)
+def cancel_generate_images(request: HttpRequest, model_run_id: UUID4):
+    sites = Site.objects.filter(evaluation_run_uuid=model_run_id)
+
+    for site in sites:
+        with transaction.atomic():
+            # Use select_for_update here to lock the SatelliteFetching row
+            # for the duration of this transaction in order to ensure its
+            # status doesn't change out from under us
+            fetching_task = (
+                SatelliteFetching.objects.select_for_update()
+                .filter(site=site.pk)
+                .first()
+            )
+            if fetching_task is not None:
+                if fetching_task.status == SatelliteFetching.Status.RUNNING:
+                    if fetching_task.celery_id != '':
+                        task = AsyncResult(fetching_task.celery_id)
+                        task.revoke(terminate=True)
+                    fetching_task.status = SatelliteFetching.Status.COMPLETE
+                    fetching_task.celery_id = ''
+                    fetching_task.save()
+
+    return 202, True

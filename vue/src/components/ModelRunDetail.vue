@@ -2,10 +2,11 @@
 import TimeSlider from "./TimeSlider.vue";
 import { ApiService, ModelRun } from "../client";
 import { state } from "../store";
-import { Ref, onBeforeMount, onBeforeUnmount, ref, withDefaults } from "vue";
+import { Ref, computed, onBeforeMount, onBeforeUnmount, ref, withDefaults } from "vue";
 import { timeRangeFormat } from "../utils";
 import ImagesDownloadDialog from "./ImagesDownloadDialog.vue";
 import { DownloadSettings } from "../client/services/ApiService";
+import { useRoute } from "vue-router";
 
 interface Props {
   modelRun: ModelRun;
@@ -24,6 +25,8 @@ async function handleClick() {
   emit("toggle");
 }
 
+const route = useRoute();
+const scoringApp = computed(() => route.path.includes('scoring'));
 const useScoring = ref(false);
 const downloadImages = ref(false);
 
@@ -246,7 +249,7 @@ const determineDownload = () => {
           {{ modelRun.performer.short_code }}
         </div>
         <v-spacer />
-        <v-tooltip>
+        <v-tooltip v-if="!scoringApp">
           <template #activator="{ props:subProps }">
             <v-btn
               size="x-small"
@@ -295,8 +298,8 @@ const determineDownload = () => {
         </v-tooltip>
       </v-row>
       <v-row v-if="downloading > 0">
-        <b class="small">Downloading {{ downloading }} site(s) Images</b>
-        <v-progress-linear indeterminate />
+        <b class="small">Downloading {{ downloading }} site(s) Images <v-icon class="fading">mdi-download</v-icon></b>
+        <v-progress-linear :model-value="((modelRun.numsites - downloading)/modelRun.numsites)*100" />
       </v-row>
       <v-row v-if="downloading > 0">
         <v-btn
@@ -374,5 +377,23 @@ const determineDownload = () => {
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
+}
+
+.fading {
+  animation: fadeIcon 2s linear infinite;
+  overflow:hidden;
+}
+
+@keyframes fadeIcon {
+  0% {
+    opacity: 0;
+  }
+  50% {
+    opacity: 1;
+
+  }
+  100% {
+    opacity: 0;
+  }
 }
 </style>

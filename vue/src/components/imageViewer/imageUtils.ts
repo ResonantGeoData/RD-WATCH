@@ -21,7 +21,7 @@ const getClosestPoly = (timestamp: number, polys: EvaluationGeoJSON[], evaluatio
       for (let i = 0; i < polys.length; i += 1) {
           if (timestamp > polys[i].timestamp) {
               if (i > 0) {
-                  found = polys[i -1]
+                  found = polys[i - 1]
               }
           }
       }
@@ -60,34 +60,34 @@ const drawData = (
       background.width = image.image_dimensions[0];
       background.height = image.image_dimensions[1];
       const coords = rescale && poly.scaled ? poly.scaled.scaledPoly : poly.coords;
-      const renderFunction = () => {
+      const renderFunction = (imageDim: [number, number]) => {
           if (context) {
-          canvas.width = overrideWidth === -1 ? image.image_dimensions[0]: overrideWidth;
-          canvas.height = overrideHeight === -1 ? image.image_dimensions[1]: overrideHeight;
+          canvas.width = overrideWidth === -1 ? imageDim[0]: overrideWidth;
+          canvas.height = overrideHeight === -1 ? imageDim[1]: overrideHeight;
           // draw the offscreen canvas
           if ((overrideWidth !== -1 || overrideHeight !== -1) && background && poly.scaled && rescale) {
             context.drawImage(background, poly.scaled.crop.x, poly.scaled.crop.y, poly.scaled.crop.width, poly.scaled.crop.height, 0, 0, overrideWidth, overrideHeight);
           } else if ((overrideWidth !== -1 || overrideHeight !== -1) && background) {
-            context.drawImage(background, 0, 0, image.image_dimensions[0], image.image_dimensions[1], 0, 0, overrideWidth, overrideHeight);
+            context.drawImage(background, 0, 0, imageDim[0], imageDim[1], 0, 0, overrideWidth, overrideHeight);
           } else if (poly.scaled && background && rescale) {
             context.drawImage(background, poly.scaled.crop.x, poly.scaled.crop.y, poly.scaled.crop.width, poly.scaled.crop.height, 0, 0, canvas.width, canvas.height );
           } else if (background) {
             context.drawImage(background, 0, 0);
           }
 
-          const standardPoly = (overrideHeight === -1 && !rescale) || !poly.scaled;
+          const standardPoly = (overrideHeight === -1 && !rescale) || !(poly.scaled || (overrideHeight !== -1 && overrideHeight !== imageDim[1]));
+          console.log(`StandardPoly: ${standardPoly} overrideHeight: ${overrideHeight} imageDimY: ${imageDim[1]}`)
+          let widthRatio = rescale && poly.scaled ? imageDim[0] / poly.scaled.crop.width  : overrideWidth / imageDim[0];
+          let heightRatio = rescale && poly.scaled  ? imageDim[1] / poly.scaled.crop.height : overrideHeight / imageDim[1];
 
-          let widthRatio = rescale && poly.scaled ? image.image_dimensions[0] / poly.scaled.crop.width  : overrideWidth / image.image_dimensions[0];
-          let heightRatio = rescale && poly.scaled  ? image.image_dimensions[1] / poly.scaled.crop.height : overrideHeight / image.image_dimensions[1];
-
-          let computedImageHeight = rescale && poly.scaled ? poly.scaled.crop.height: image.image_dimensions[1];
-          let computedOverrideHeight = rescale && poly.scaled ? image.image_dimensions[1] : overrideHeight;
+          let computedImageHeight = rescale && poly.scaled ? poly.scaled.crop.height: imageDim[1];
+          let computedOverrideHeight = rescale && poly.scaled ? imageDim[1] : overrideHeight;
           if (overrideHeight !== -1 || overrideWidth !== -1) {
-            computedImageHeight = image.image_dimensions[1];
+            computedImageHeight = imageDim[1];
             computedOverrideHeight = overrideHeight
             if (poly.scaled) {
-              widthRatio = !rescale ? overrideWidth / image.image_dimensions[0] : overrideWidth / poly.scaled.crop.width;
-              heightRatio = !rescale ? overrideHeight / image.image_dimensions[1] : overrideHeight / poly.scaled.crop.height;
+              widthRatio = !rescale ? overrideWidth / imageDim[0] : overrideWidth / poly.scaled.crop.width;
+              heightRatio = !rescale ? overrideHeight / imageDim[1] : overrideHeight / poly.scaled.crop.height;
             }
           }
 
@@ -119,7 +119,6 @@ const drawData = (
           coords.forEach((ring) => {
             const xPos = standardPoly ? ring[0].x : ring[0].x * widthRatio;
             const yPos = standardPoly ? computedImageHeight - ring[0].y : computedOverrideHeight - (ring[0].y * heightRatio);
-
             context.moveTo(xPos, yPos);
             context.beginPath();
             ring.forEach(({x, y}) => {
@@ -136,7 +135,7 @@ const drawData = (
           });
           // Now scale the canvas to the proper size
           if (overrideHeight === -1  && overrideWidth === -1) {
-            let ratio = image.image_dimensions[1] / image.image_dimensions[0];
+            let ratio = imageDim[1] / imageDim[0];
             if (poly.scaled && rescale) {
               ratio  = poly.scaled.crop.height / poly.scaled.crop.width;
             }
@@ -192,10 +191,10 @@ const drawData = (
 
       imageObj.onload = () => {
           if (background && background.ctx) {
-              background.width = image.image_dimensions[0];
-              background.height = image.image_dimensions[1];
-              background.ctx.drawImage(imageObj, 0, 0, image.image_dimensions[0], image.image_dimensions[1]);
-              renderFunction();
+              background.width = imageObj.width;
+              background.height = imageObj.height;
+              background.ctx.drawImage(imageObj, 0, 0, imageObj.width, imageObj.height);
+              renderFunction([imageObj.width, imageObj.height]);
           }
       }
     };
@@ -214,20 +213,34 @@ const rescale = (baseBBox: BaseBBox, scale=1.2) => {
   }
 }
 
-const normalizePolygon = (bbox: BaseBBox, imageWidth: number, imageHeight: number, polygon: GeoJSON.Polygon ) => {
+const normalizePolygon = (bbox: BaseBBox, imageWidth: number, imageHeight: number, polygon: GeoJSON.Polygon | GeoJSON.MultiPolygon ) => {
   const bboxWidth = bbox.xmax - bbox.xmin;
   const bboxHeight = bbox.ymax - bbox.ymin;
 
   const imageNormalizePoly: {x: number, y: number}[][] = []
   polygon.coordinates.forEach((ring) => {
     imageNormalizePoly.push([]);
-      ring.forEach((coord) => {
-          const normalize_x = (coord[0] - bbox.xmin) / bboxWidth;
-      const normalize_y = (coord[1] - bbox.ymin) / bboxHeight;
-      const image_x = normalize_x * imageWidth;
-      const image_y = normalize_y * imageHeight;
-      imageNormalizePoly[imageNormalizePoly.length -1].push({x: image_x, y: image_y});
+    if (polygon.type === 'Polygon') {
+      ring.forEach((baseCoord) => {
+        const coord = baseCoord as GeoJSON.Position;
+        const normalize_x = (coord[0] - bbox.xmin) / bboxWidth;
+        const normalize_y = (coord[1] - bbox.ymin) / bboxHeight;
+        const image_x = normalize_x * imageWidth;
+        const image_y = normalize_y * imageHeight;
+        imageNormalizePoly[imageNormalizePoly.length -1].push({x: image_x, y: image_y});
       });
+    }else if (polygon.type === 'MultiPolygon') {
+      ring.forEach((baseCoord) => {
+        const coordList = baseCoord as GeoJSON.Position[];
+        coordList.forEach((coord) => {
+        const normalize_x = (coord[0] - bbox.xmin) / bboxWidth;
+        const normalize_y = (coord[1] - bbox.ymin) / bboxHeight;
+        const image_x = normalize_x * imageWidth;
+        const image_y = normalize_y * imageHeight;
+        imageNormalizePoly[imageNormalizePoly.length -1].push({x: image_x, y: image_y});
+        });
+      });
+    }
   });
   return imageNormalizePoly;
 }

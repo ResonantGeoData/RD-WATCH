@@ -70,7 +70,7 @@ def get_satelliteimage_raster(
     spectrum = request.GET['spectrum']
 
     # Convert generator to list so we can iterate over it multiple times
-    bands = list(get_bands(constellation, timestamp, bbox))
+    bands = list(get_bands(constellation.slug, timestamp, bbox))
 
     # Filter bands by requested processing level and spectrum
     bands = [
@@ -259,7 +259,7 @@ def satelliteimage_time_list(request: HttpRequest):
     )
 
     # Get all image bands within the given time range and requested constellation/bbox
-    bands = list(get_bands(constellation, timestamp, bbox, timebuffer))
+    bands = list(get_bands(constellation.slug, timestamp, bbox, timebuffer))
 
     # Filter bands by requested processing level and spectrum
     bands = [
@@ -339,7 +339,7 @@ def all_satellite_timestamps(request: HttpRequest):
     )
 
     # Get all image bands within the given time range and requested constellation/bbox
-    bands = list(get_bands(constellation, timestamp, bbox, timebuffer))
+    bands = list(get_bands(constellation.slug, timestamp, bbox, timebuffer))
 
     # Filter bands by requested processing level and spectrum
     bands = [

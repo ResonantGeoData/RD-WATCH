@@ -7,118 +7,94 @@ from ninja import Query, Router, Schema
 from pydantic import UUID4
 
 from django.contrib.gis.db.models.aggregates import Collect
+from django.contrib.gis.db.models.fields import GeometryField
 from django.contrib.gis.db.models.functions import Area, Transform
 from django.contrib.postgres.aggregates import JSONBAgg
 from django.core.files.storage import default_storage
 from django.db import transaction
-from django.db.models import Count, Max, Min
-from django.db.models.functions import JSONObject  # type: ignore
+from django.db.models import Count, F, Func, Max, Min, Value
+from django.db.models.functions import Coalesce, JSONObject
 from django.http import Http404, HttpRequest
 from django.shortcuts import get_object_or_404
 
 from rdwatch.db.functions import BoundingBox, ExtractEpoch
-from rdwatch.models import (
-    SatelliteFetching,
-    SiteEvaluation,
-    SiteImage,
-    SiteObservation,
-    SiteObservationTracking,
-    lookups,
-)
-from rdwatch.schemas import SiteObservationRequest
-from rdwatch.schemas.common import BoundingBoxSchema, TimeRangeSchema
-from rdwatch.tasks import get_siteobservations_images
+from rdwatch.views.site_observation import SiteObservationsListSchema
+from rdwatch_scoring.models import Observation, SatelliteFetching, Site, SiteImage
+from rdwatch_scoring.tasks import get_siteobservations_images
 
 logger = logging.getLogger(__name__)
 
 router = Router()
 
 
-class SiteObservationSchema(Schema):
-    id: UUID4
-    label: str | None
-    score: float | None
-    constellation: str | None
-    spectrum: str | None
-    timestamp: int | None
-    bbox: BoundingBoxSchema
-    area: float
-
-
-class SiteEvaluationImageSchema(Schema):
-    id: str
-    timestamp: int
-    image: str
-    cloudcover: float
-    percent_black: float
-    source: str
-    observation_id: str | None
-    bbox: BoundingBoxSchema
-    image_dimensions: list[int]
-    aws_location: str
-
-
-class SiteEvaluationImageListSchema(Schema):
-    count: int
-    results: list[SiteEvaluationImageSchema]
-
-
-class SiteEvaluationListSchema(Schema):
-    count: int
-    results: list[SiteEvaluationImageSchema]
-
-
-class JobStatusSchema(Schema):
-    status: str
-    error: str | None = None
-    timestamp: int
-    celery: dict  # celery information for task
-
-
-class SiteObservationsListSchema(Schema):
-    count: int
-    timerange: TimeRangeSchema | None
-    timestamp: int | None
-    status: str | None
-    bbox: BoundingBoxSchema
-    results: list[SiteObservationSchema]
-    images: SiteEvaluationImageListSchema
-    job: JobStatusSchema | None
-
-
 @router.get('/{evaluation_id}/', response={200: SiteObservationsListSchema})
 def site_observations(request: HttpRequest, evaluation_id: UUID4):
-    if not SiteEvaluation.objects.filter(pk=evaluation_id).exists():
+    if not Site.objects.filter(pk=evaluation_id).exists():
         raise Http404()
-    site_eval_data = SiteEvaluation.objects.filter(pk=evaluation_id).aggregate(
+    site_eval_data = Site.objects.filter(pk=evaluation_id).aggregate(
         timerange=JSONObject(
             min=ExtractEpoch(Min('start_date')),
             max=ExtractEpoch(Max('end_date')),
         ),
-        bbox=BoundingBox(Collect('geom')),
+        bbox=Collect(
+            Func(
+                F('region__geometry'),
+                4326,
+                function='ST_GeomFromText',
+                output_field=GeometryField(),
+            )
+        ),
     )
     queryset = (
-        SiteObservation.objects.order_by('timestamp')
-        .filter(siteeval__id=evaluation_id)
+        Observation.objects.order_by('date')
+        .filter(site_uuid=evaluation_id)
         .aggregate(
             count=Count('pk'),
-            bbox=BoundingBox(Collect('geom')),
+            bbox=BoundingBox(
+                Collect(
+                    Func(
+                        F('geometry'),
+                        4326,
+                        function='ST_GeomFromText',
+                        output_field=GeometryField(),
+                    )
+                )
+            ),
             results=JSONBAgg(
                 JSONObject(
                     id='pk',
-                    label='label__slug',
+                    label='phase',
                     score='score',
-                    constellation='constellation__slug',
-                    spectrum='spectrum__slug',
-                    timestamp=ExtractEpoch('timestamp'),
-                    bbox=BoundingBox('geom'),
-                    area=Area(Transform('geom', srid=6933)),
+                    # Default to worldview if sensor is NULL.
+                    # TODO: what is the expected behavior here?
+                    constellation=Coalesce('sensor', Value(None)),
+                    # spectrum="spectrum__slug",
+                    timestamp=ExtractEpoch('date'),
+                    bbox=BoundingBox(
+                        Func(
+                            F('geometry'),
+                            4326,
+                            function='ST_GeomFromText',
+                            output_field=GeometryField(),
+                        )
+                    ),
+                    area=Area(
+                        Transform(
+                            Func(
+                                F('geometry'),
+                                4326,
+                                function='ST_GeomFromText',
+                                output_field=GeometryField(),
+                            ),
+                            srid=6933,
+                        )
+                    ),
                 )
             ),
         )
     )
     image_queryset = (
-        SiteImage.objects.filter(site__id=evaluation_id)
+        SiteImage.objects.filter(site=evaluation_id)
         .order_by('timestamp')
         .aggregate(
             count=Count('pk'),
@@ -130,7 +106,7 @@ def site_observations(request: HttpRequest, evaluation_id: UUID4):
                     cloudcover='cloudcover',
                     percent_black='percent_black',
                     source='source',
-                    observation_id='observation_id',
+                    observation_id='observation',
                     bbox=BoundingBox('image_bbox'),
                     image_dimensions='image_dimensions',
                     aws_location='aws_location',
@@ -188,14 +164,16 @@ def get_site_observation_images(
     params: GenerateImagesSchema = Query(...),  # noqa: B008
 ):
     # Make sure site evaluation actually exists
-    siteeval = get_object_or_404(SiteEvaluation, pk=evaluation_id)
+    siteeval = get_object_or_404(Site, pk=evaluation_id)
 
     with transaction.atomic():
         # Use select_for_update here to lock the SatelliteFetching row
         # for the duration of this transaction in order to ensure its
         # status doesn't change out from under us
         fetching_task = (
-            SatelliteFetching.objects.select_for_update().filter(site=siteeval).first()
+            SatelliteFetching.objects.select_for_update()
+            .filter(site=siteeval.pk)
+            .first()
         )
         if fetching_task is not None:
             # If the task already exists and is running, return a 409 and do not
@@ -208,7 +186,7 @@ def get_site_observation_images(
             fetching_task.save()
         else:
             fetching_task = SatelliteFetching.objects.create(
-                site=siteeval,
+                site=siteeval.pk,
                 timestamp=datetime.now(),
                 status=SatelliteFetching.Status.RUNNING,
             )
@@ -234,14 +212,16 @@ def get_site_observation_images(
     '/{evaluation_id}/cancel-generate-images/', response={202: bool, 409: str, 404: str}
 )
 def cancel_site_observation_images(request: HttpRequest, evaluation_id: UUID4):
-    siteeval = get_object_or_404(SiteEvaluation, pk=evaluation_id)
+    get_object_or_404(Site, pk=evaluation_id)
 
     with transaction.atomic():
         # Use select_for_update here to lock the SatelliteFetching row
         # for the duration of this transaction in order to ensure its
         # status doesn't change out from under us
         fetching_task = (
-            SatelliteFetching.objects.select_for_update().filter(site=siteeval).first()
+            SatelliteFetching.objects.select_for_update()
+            .filter(site=evaluation_id)
+            .first()
         )
         if fetching_task is not None:
             if fetching_task.status == SatelliteFetching.Status.RUNNING:
@@ -264,65 +244,3 @@ def cancel_site_observation_images(request: HttpRequest, evaluation_id: UUID4):
             )
 
     return 202, True
-
-
-@router.patch('/{id}/')
-def update_site_observation(
-    request: HttpRequest, id: UUID4, data: SiteObservationRequest
-):
-    with transaction.atomic():
-        site_observation = get_object_or_404(
-            SiteObservation.objects.select_for_update(), pk=id
-        )
-        # create a copy of it in the history log
-        SiteObservationTracking.objects.create(
-            timestamp=site_observation.timestamp,
-            geom=site_observation.geom,
-            score=site_observation.score,
-            siteval=site_observation.siteeval,
-            notes=site_observation.notes,
-            edited=datetime.now(),
-            observation=site_observation.pk,
-        )
-
-        if data.label:
-            site_observation.label = lookups.ObservationLabel.objects.get(
-                slug=data.label
-            )
-        if data.notes:
-            site_observation.notes = data.notes
-        site_observation.timestamp = data.timestamp
-        if data.spectrum:
-            site_observation.spectrum = data.spectrum
-        if data.constellation:
-            site_observation.constellation = lookups.Constellation.objects.get(
-                slug=data.label
-            )
-
-        site_observation.save()
-
-        return site_observation
-
-
-@router.put('/{evaluation_id}/')
-def add_site_observation(
-    request: HttpRequest, evaluation_id: UUID4, data: SiteObservationRequest
-):
-    site_evaluation = get_object_or_404(SiteEvaluation, pk=evaluation_id)
-
-    if data.label:
-        label = lookups.ObservationLabel.objects.get(slug=data.label)
-
-    if data.constellation:
-        constellation = lookups.Constellation.objects.get(slug=data.label)
-
-    new_site_observation = SiteObservation.objects.create(
-        siteeval=site_evaluation,
-        label=label,
-        score=data.score,
-        geom=data.geom,
-        constellation=constellation,
-        spectrum=None,
-        timestamp=data.timestamp,
-    )
-    return new_site_observation

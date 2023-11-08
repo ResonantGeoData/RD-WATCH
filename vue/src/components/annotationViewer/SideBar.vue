@@ -21,7 +21,7 @@ const queryFilters = computed<QueryArguments>(() => ({
 
 const selectedPerformer: Ref<Performer[]> = ref([]);
 const selectedRegion: Ref<Region | undefined> = ref(undefined);
-const showSiteOutline: Ref<boolean> = ref(false);
+const drawSiteOutline: Ref<boolean> = ref(false);
 watch(selectedPerformer, (val) => {
   state.filters = {
     ...state.filters,
@@ -48,8 +48,8 @@ const updateRegion = (val?: Region) => {
     scoringColoring: null,
   };
 };
-watch(showSiteOutline, (val) => {
-  state.filters = { ...state.filters, showSiteOutline: val, scoringColoring: null };
+watch(drawSiteOutline, (val) => {
+  state.filters = { ...state.filters, drawSiteOutline: val, scoringColoring: null };
 });
 
 function nextPage() {

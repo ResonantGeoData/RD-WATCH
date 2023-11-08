@@ -1,35 +1,24 @@
 import io
-import json
 import logging
-import os
-import tempfile
-import zipfile
-from collections.abc import Iterable
-from datetime import datetime, timedelta
+from datetime import date, datetime, timedelta
 from typing import Literal
 from uuid import uuid4
 
-from celery import shared_task
 from PIL import Image
 from pydantic import UUID4
-from pyproj import Transformer
 
 from django.contrib.gis.geos import Polygon
 from django.core.files import File
-from django.db import transaction
-from django.db.models import DateTimeField, ExpressionWrapper, F
-from django.utils import timezone
 
 from rdwatch.celery import app
-from rdwatch.models import (
-    AnnotationExport,
-    ModelRun,
-    SatelliteFetching,
-    SiteEvaluation,
-    SiteImage,
-    SiteObservation,
+from rdwatch.tasks import (
+    BaseTime,
+    BboxScaleDefault,
+    ToMeters,
+    get_worldview_processed_visual_bbox,
+    is_inside_range,
+    overrideImageSize,
 )
-from rdwatch.models.lookups import Constellation
 from rdwatch.utils.images import (
     fetch_boundbox_image,
     get_max_bbox,
@@ -38,33 +27,9 @@ from rdwatch.utils.images import (
     scale_bbox,
 )
 from rdwatch.utils.raster_tile import get_raster_bbox
-from rdwatch.utils.worldview_processed.raster_tile import (
-    get_worldview_processed_visual_bbox,
-)
-from rdwatch.views.site_evaluation import get_site_model_feature_JSON
+from rdwatch_scoring.models import Observation, SatelliteFetching, Site, SiteImage
 
 logger = logging.getLogger(__name__)
-# lowest time to use if time is null for observations
-BaseTime = '2013-01-01'
-# Default scale multiplier for bounding box to provide more area
-BboxScaleDefault = 1.2
-# rough number to convert lat/long to Meters
-ToMeters = 111139.0
-# number in meters to add to the center of small polygons for S2/L8
-overrideImageSize = 1000
-
-
-def is_inside_range(
-    timestamps: Iterable[datetime], check_timestamp: datetime, days_range
-):
-    for timestamp in timestamps:
-        time_difference = check_timestamp - timestamp
-        if abs(time_difference.days) <= days_range:
-            logger.warning(
-                f'Skipping Timestamp because difference is: {time_difference.days}'
-            )
-            return True
-    return False
 
 
 @app.task(bind=True)
@@ -79,38 +44,45 @@ def get_siteobservations_images(
     scale: Literal['default', 'bits'] | list[int] = 'default',
     bboxScale: float = BboxScaleDefault,
 ) -> None:
-    constellationObj = Constellation.objects.filter(slug=baseConstellation).first()
     # Ensure we are using ints for the DayRange and no_data_limit
     dayRange = int(dayRange)
     no_data_limit = int(no_data_limit)
-    site_observations = SiteObservation.objects.filter(
-        siteeval=site_eval_id
+    site_observations = Observation.objects.filter(
+        site_uuid=site_eval_id
     )  # need a full list for min/max times
-    site_obs_count = SiteObservation.objects.filter(
-        siteeval=site_eval_id, constellation_id=constellationObj.pk
+    site_obs_count = Observation.objects.filter(
+        site_uuid=site_eval_id, sensor=baseConstellation
     ).count()
-    transformer = Transformer.from_crs('EPSG:3857', 'EPSG:4326')
     found_timestamps = {}
     max_bbox = [float('inf'), float('inf'), float('-inf'), float('-inf')]
-    matchConstellation = ''
     # Use the base SiteEvaluation extents as the max size
-    baseSiteEval = SiteEvaluation.objects.get(pk=site_eval_id)
+    baseSiteEval = Site.objects.get(pk=site_eval_id)
+
     # use the Eval Start/End date if not null
     min_time = baseSiteEval.start_date
     max_time = baseSiteEval.end_date
+
     if min_time is None:
         min_time = datetime.strptime(BaseTime, '%Y-%m-%d')
+    else:
+        min_time = datetime.combine(min_time, datetime.min.time())
+
     if max_time is None:
         max_time = datetime.now()
+    else:
+        max_time = datetime.combine(max_time, datetime.min.time())
 
-    mercator: tuple[float, float, float, float] = baseSiteEval.geom.extent
-    tempbox = transformer.transform_bounds(
-        mercator[0], mercator[1], mercator[2], mercator[3]
-    )
-    bbox = [tempbox[1], tempbox[0], tempbox[3], tempbox[2]]
+    bbox: tuple[float, float, float, float] = Polygon.from_ewkt(
+        baseSiteEval.union_geometry
+    ).extent
+
     # if width | height is too small we pad S2/L8 regions for more context
-    bbox_width = (tempbox[2] - tempbox[0]) * ToMeters
-    bbox_height = (tempbox[3] - tempbox[1]) * ToMeters
+    bbox_width = (bbox[2] - bbox[0]) * ToMeters
+    bbox_height = (bbox[3] - bbox[1]) * ToMeters
+    logger.warning('BBOX')
+    logger.warning(bbox)
+    logger.warning(bbox_width)
+    logger.warning(bbox_height)
     if baseConstellation != 'WV' and (
         bbox_width < overrideImageSize or bbox_height < overrideImageSize
     ):
@@ -118,19 +90,21 @@ def get_siteobservations_images(
             overrideImageSize * 0.5
         ) / ToMeters  # find how much to add to each lon/lat
         bbox = [
-            tempbox[1] - size_diff,
-            tempbox[0] - size_diff,
-            tempbox[3] + size_diff,
-            tempbox[2] + size_diff,
+            bbox[0] - size_diff,
+            bbox[1] - size_diff,
+            bbox[2] + size_diff,
+            bbox[3] + size_diff,
         ]
     # add the included padding to the updated BBOX
     bbox = scale_bbox(bbox, bboxScale)
     # get the updated BBOX if it's bigger
     max_bbox = get_max_bbox(bbox, max_bbox)
+    logger.warning(max_bbox)
 
     # First we gather all images that match observations
     count = 0
     for observation in site_observations.iterator():
+        break
         self.update_state(
             state='PROGRESS',
             meta={
@@ -140,36 +114,42 @@ def get_siteobservations_images(
                 'siteEvalId': site_eval_id,
             },
         )
-        if observation.timestamp is not None:
-            min_time = min(min_time, observation.timestamp)
-            max_time = max(max_time, observation.timestamp)
-        mercator: tuple[float, float, float, float] = observation.geom.extent
+        if observation.date is not None:
+            obs__time = datetime.combine(observation.date, datetime.min.time())
+            min_time = min(min_time, obs__time)
+            max_time = max(max_time, obs__time)
+        mercator: tuple[float, float, float, float] = Polygon.from_ewkt(
+            observation.geometry
+        ).extent
 
-        timestamp = observation.timestamp
-        constellation = observation.constellation
+        print(mercator)
+
+        timestamp = observation.date
+
+        if isinstance(timestamp, date):
+            timestamp = datetime.combine(timestamp, datetime.min.time())
+
+        constellation = observation.sensor or 'WV'
         # We need to grab the image for this timerange and type
         logger.warning(timestamp)
         if str(constellation) == baseConstellation and timestamp is not None:
             count += 1
-            baseSiteEval = observation.siteeval
-            matchConstellation = constellation
+            baseSiteEval = observation.site_uuid
             found = SiteImage.objects.filter(
-                site=observation.siteeval,
+                site=observation.site_uuid,
                 observation=observation,
-                timestamp=observation.timestamp,
+                timestamp=observation.date,
                 source=baseConstellation,
             )
             if (
                 baseConstellation in ('S2', 'L8')
                 and dayRange > -1
-                and is_inside_range(
-                    found_timestamps.keys(), observation.timestamp, dayRange
-                )
+                and is_inside_range(found_timestamps.keys(), observation.date, dayRange)
             ):
                 logger.warning(f'Skipping Timestamp: {timestamp}')
                 continue
             if found.exists() and not force:
-                found_timestamps[observation.timestamp] = True
+                found_timestamps[observation.date] = True
                 continue
             results = fetch_boundbox_image(
                 bbox, timestamp, constellation.slug, baseConstellation == 'WV', scale
@@ -189,7 +169,7 @@ def get_siteobservations_images(
             elif dayRange == -1:
                 found_timestamps[found_timestamp] = True
             # logger.warning(f'Retrieved Image with timestamp: {timestamp}')
-            output = f'tile_image_{observation.id}.png'
+            output = f'tile_image_{observation.pk}.png'
             image = File(io.BytesIO(bytes), name=output)
             imageObj = Image.open(io.BytesIO(bytes))
             if image is None:  # No null/None images should be set
@@ -206,9 +186,9 @@ def get_siteobservations_images(
                 existing.save()
             else:
                 SiteImage.objects.create(
-                    site=observation.siteeval,
+                    site=observation.site_uuid,
                     observation=observation,
-                    timestamp=observation.timestamp,
+                    timestamp=observation.date,
                     image=image,
                     aws_location=results['uri'],
                     cloudcover=cloudcover,
@@ -225,20 +205,18 @@ def get_siteobservations_images(
         max_time = datetime.strptime(overrideDates[1], '%Y-%m-%d')
 
     timebuffer = ((max_time + timedelta(days=30)) - (min_time - timedelta(days=30))) / 2
+    # print(timebuffer)
     timestamp = (min_time + timedelta(days=30)) + timebuffer
 
     # Now we get a list of all the timestamps and captures that fall in this range.
     worldView = baseConstellation == 'WV'
-    if matchConstellation == '':
-        matchConstellation = Constellation.objects.filter(
-            slug=baseConstellation
-        ).first()
-        logger.warning(
-            f'Utilizing Constellation: {matchConstellation} - {matchConstellation.slug}'
-        )
-
+    logger.warning('MAXBBOX')
+    logger.warning(max_bbox)
+    logger.warning('timestamp')
+    logger.warning(timestamp)
+    logger.warning(timebuffer)
     captures = get_range_captures(
-        max_bbox, timestamp, matchConstellation.slug, timebuffer, worldView
+        max_bbox, timestamp, baseConstellation, timebuffer, worldView
     )
     self.update_state(
         state='PROGRESS',
@@ -252,14 +230,11 @@ def get_siteobservations_images(
     if (
         baseSiteEval is None
     ):  # We need to grab the siteEvaluation directly for a reference
-        baseSiteEval = SiteEvaluation.objects.filter(pk=site_eval_id).first()
+        baseSiteEval = Site.objects.filter(pk=site_eval_id).first()
     count = 1
     logger.warning(f'Found {len(captures)} captures')
-    for (
-        capture
-    ) in (
-        captures
-    ):  # Now we go through the list and add in a timestmap if it doesn't exist
+    # Now we go through the list and add in a timestmap if it doesn't exist
+    for capture in captures:
         self.update_state(
             state='PROGRESS',
             meta={
@@ -301,7 +276,7 @@ def get_siteobservations_images(
                 count += 1
                 continue
             found = SiteImage.objects.filter(
-                site=baseSiteEval,
+                site=baseSiteEval.pk,
                 timestamp=capture_timestamp,
                 source=baseConstellation,
             )
@@ -320,7 +295,7 @@ def get_siteobservations_images(
                 existing.save()
             else:
                 SiteImage.objects.create(
-                    site=baseSiteEval,
+                    site=baseSiteEval.pk,
                     timestamp=capture_timestamp,
                     aws_location=capture.uri,
                     image=image,
@@ -332,87 +307,7 @@ def get_siteobservations_images(
                 )
         else:
             count += 1
-    fetching_task = SatelliteFetching.objects.get(site_id=site_eval_id)
+    fetching_task = SatelliteFetching.objects.get(site=site_eval_id)
     fetching_task.status = SatelliteFetching.Status.COMPLETE
     fetching_task.celery_id = ''
     fetching_task.save()
-
-
-@shared_task
-def delete_temp_model_runs_task() -> None:
-    """Delete all model runs that are due to be deleted."""
-    model_runs_to_delete = (
-        ModelRun.objects.filter(expiration_time__isnull=False)
-        .alias(
-            delete_at=ExpressionWrapper(
-                F('created') + F('expiration_time'), output_field=DateTimeField()
-            )
-        )
-        .filter(delete_at__lte=timezone.now())
-    )
-
-    with transaction.atomic():
-        SiteObservation.objects.filter(
-            siteeval__configuration__in=model_runs_to_delete
-        ).delete()
-        SiteEvaluation.objects.filter(configuration__in=model_runs_to_delete).delete()
-        model_runs_to_delete.delete()
-
-
-@shared_task
-def delete_export_files() -> None:
-    """Delete all S3 Export Files that are over an hour old."""
-    exports_to_delete = AnnotationExport.objects.filter(
-        created__lte=timezone.now() - timedelta(hours=1)
-    )
-    exports_to_delete.delete()
-
-
-@app.task(bind=True)
-def download_annotations(self, id: UUID4, mode: Literal['all', 'approved', 'rejected']):
-    # Needs to go through the siteEvaluations and download one for each file
-    if mode == 'all':
-        site_evals = SiteEvaluation.objects.filter(configuration_id=id)
-    elif mode == 'approved':
-        site_evals = SiteEvaluation.objects.filter(
-            configuration_id=id, status=SiteEvaluation.Status.APPROVED
-        )
-    elif mode == 'rejected':
-        site_evals = SiteEvaluation.objects.filter(
-            configuration_id=id, status=SiteEvaluation.Status.REJECTED
-        )
-    configuration = ModelRun.objects.get(pk=id)
-    task_id = self.request.id
-    temp_zip_file = tempfile.NamedTemporaryFile(delete=False, suffix='.zip')
-
-    with tempfile.TemporaryDirectory() as temp_dir:
-        file_list = []
-        nine_count = 0  # annotations that have Site Id 9999
-        for item in site_evals.iterator():
-            data, site_id, basefilename = get_site_model_feature_JSON(item.pk)
-            modified_site_id = site_id
-            if '9999' in site_id:
-                nine_count += 1
-                modified_site_id = f'{site_id}-{nine_count}'
-            file_name = os.path.join(temp_dir, f'{modified_site_id}.json')
-
-            with open(file_name, 'w') as file:
-                json.dump(data, file)
-            file_list.append(
-                {
-                    'filename': file_name,
-                    'siteId': modified_site_id,
-                    'baseName': basefilename,
-                }
-            )
-        with zipfile.ZipFile(temp_zip_file, 'w') as zipf:
-            for item in file_list:
-                zipf.write(item['filename'], f"{item['siteId']}.geojson")
-        annotation_export = AnnotationExport.objects.create(
-            configuration=configuration,
-            name=configuration.title,
-            celery_id=task_id,
-            created=datetime.now(),
-        )
-        annotation_export.export_file.save(f'{task_id}.zip', File(temp_zip_file))
-        temp_zip_file.close()

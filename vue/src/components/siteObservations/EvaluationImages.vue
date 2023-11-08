@@ -17,7 +17,7 @@ const emit = defineEmits<{
 let loopingInterval: NodeJS.Timeout | null = null;
 
 const checkSiteObs = async () => {
-  await getSiteObservationDetails(props.siteObservation.id.toString(), props.siteObservation.scoringBase);
+  await getSiteObservationDetails(props.siteObservation.id.toString(), props.siteObservation.obsDetails);
   if (loopingInterval !== null && props.siteObservation.job && props.siteObservation.job.status !== 'Running') {
     clearInterval(loopingInterval);
     loopingInterval = null;
@@ -45,7 +45,7 @@ const startDownload = async (data: DownloadSettings) => {
   const id = props.siteObservation.id
   await ApiService.getObservationImages(id.toString(), data);
     // Now we get the results to see if the service is running
-    await getSiteObservationDetails(props.siteObservation.id.toString(), props.siteObservation.scoringBase);
+    await getSiteObservationDetails(props.siteObservation.id.toString(), props.siteObservation.obsDetails);
     // The props should be updated now we start an interval to update until we exist, deselect or other
     if (loopingInterval !== null) {
       clearInterval(loopingInterval);

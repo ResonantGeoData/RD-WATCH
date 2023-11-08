@@ -1,7 +1,7 @@
 import { DataDrivenPropertyValueSpecification, FormattedSpecification } from "maplibre-gl";
 import { MapFilters } from "../store";
 
-export type AnnotationStyle = Record<string, { color: string, type: string }>;
+export type AnnotationStyle = Record<string, { color: string, type: string, label: string }>;
 
 const defaultAnnotationColor = '#7F7F7F'
 
@@ -9,76 +9,95 @@ const defaultLabelText = '';
 
 const styles: AnnotationStyle = {
   active_construction: {
-    color: "#007DFF",
+    color: "#c00000",
     type: "observation",
+    label: 'Active Construction',
   },
   post_construction: {
-    color: "#BE4EFF",
+    color: "#5b9bd5",
     type: "observation",
+    label: 'Post Construction',
   },
   site_preparation: {
-    color: "#FFA100",
+    color: "#ffd966",
     type: "observation",
+    label: 'Site Preparation',
   },
   unknown: {
-    color: "#FFA100",
+    color: "#7030a0",
     type: "observation",
+    label: 'Unknown',
   },
   no_activity: {
-    color: "#228b22",
+    color: "#a6a6a6",
     type: "observation",
+    label: 'No Activity',
   },
   positive_annotated: {
     color: "#7f0000",
     type: "sites",
+    label: 'Positive Annotated',
   },
   positive_partial: {
     color: "#00008b",
     type: "sites",
+    label: 'Positive Partial',
   },
   positive_annotated_static: {
     color: "#ff8c00",
     type: "sites",
+    label: 'Positive Annotated Static',
   },
   positive_partial_static: {
     color: "#ffff00",
     type: "sites",
+    label: 'Positive Partial Static',
   },
   positive_pending: {
     color: "#1e90ff",
     type: "sites",
+    label: 'Positive Pending',
   },
   positive_excluded: {
     color: "#00ffff",
     type: "sites",
+    label: 'Positive Excluded',
+
   },
   negative: {
     color: "#ff00ff",
     type: "sites",
+    label: 'Negative',
   },
   ignore: {
     color: "#00ff00",
     type: "sites",
+    label: 'Ignore',
   },
   transient_positive: {
     color: "#ff69b4",
     type: "sites",
+    label: 'Transient Positive',
   },
   transient_negative: {
     color: "#ffe4c4",
     type: "sites",
+    label: 'Transient Negative',
   },
   system_proposed: {
     color: "#1F77B4",
     type: "sites",
+    label: 'System Proposed',
   },
   system_confirmed: {
     color: "#1F77B4",
     type: "sites",
+    label: 'System Confirmed',
   },
   system_rejected: {
     color: "#1F77B4",
     type: "sites",
+    label: 'System Rejected',
   },
 };
 
@@ -146,7 +165,13 @@ const createAnnotationLegend = () => {
 }
 const annotationLegend = createAnnotationLegend();
 
-const getColorFromLabel = ((label: string) => styles[label].color);
+const getColorFromName = ((label: string) => {
+ const vals = Object.values(styles);
+ const found = vals.find((item) => item.label === label);
+ return found?.color;
+})
+
+const getColorFromLabel = ((label: string) => styles[label]?.color || getColorFromName(label) || 'white');
 
 export {
     annotationColors,

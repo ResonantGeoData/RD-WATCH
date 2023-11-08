@@ -2,11 +2,12 @@
 
 import { annotationLegend } from '../mapstyle/annotationStyles';
 import { state } from '../store';
+
 </script>
 
 <template>
   <div
-    v-if="state.mapLegend"
+    v-if="state.mapLegend && (state.filters.drawGroundTruth || state.filters.drawObservations || state.filters.drawSiteOutline)"
     class="legend"
   >
     <v-card density="compact">
@@ -17,7 +18,10 @@ import { state } from '../store';
       </v-card-title>
       <v-card-text>
         <v-row dense>
-          <v-card density="compact">
+          <v-card
+            v-if="state.filters.drawSiteOutline"
+            density="compact"
+          >
             <v-card-title
               class="legend-title"
               :class="{'legend-title-single': !state.filters.scoringColoring}"
@@ -49,7 +53,10 @@ import { state } from '../store';
             </v-card-text>
           </v-card>
 
-          <v-card density="compact">
+          <v-card
+            v-if="state.filters.drawObservations || state.filters.drawGroundTruth"
+            density="compact"
+          >
             <v-card-title
               class="legend-title"
               :class="{'legend-title-single': !state.filters.scoringColoring}"

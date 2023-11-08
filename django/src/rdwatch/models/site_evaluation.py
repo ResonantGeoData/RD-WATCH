@@ -108,7 +108,7 @@ class SiteEvaluation(models.Model):
         if (
             configuration.ground_truth is False
             and site_feature.properties.validated
-            and site_feature.properties.originator == 'te'
+            and site_feature.properties.originator in ('te', 'iMERIT')
         ):
             configuration.ground_truth = True
             modified = True

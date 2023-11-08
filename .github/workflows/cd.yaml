@@ -3,6 +3,9 @@ on:
   push:
     branches:
       - "main"
+  release:
+    types:
+      - published
 concurrency:
   # Only run the latest workflow.
   # If a build is already happening, cancel it to avoid a race
@@ -24,12 +27,18 @@ jobs:
           registry: ghcr.io
           username: ${{ github.repository_owner }}
           password: ${{ secrets.GITHUB_TOKEN }}
-      - name: Sanitize repo slug
+      - name: Generate image tags
         uses: actions/github-script@v6
-        id: repo-slug
+        id: image-tags
         with:
           result-encoding: string
-          script: return 'ghcr.io/${{ github.repository }}'.toLowerCase()
+          script: |
+            const image = 'ghcr.io/${{ github.repository }}'.toLowerCase();
+            let tags = `${image}/rdwatch:latest`;
+            if ('${{ github.ref }}'.startsWith('refs/tags/v')) {
+              tags += `,${image}/rdwatch:${{ github.ref_name }}`;
+            }
+            return tags;
       - name: Build and push Docker image
         uses: docker/build-push-action@v5
         with:
@@ -38,7 +47,7 @@ jobs:
           context: .
           platforms: linux/amd64
           push: true
-          tags: ${{ steps.repo-slug.outputs.result }}/rdwatch:latest
+          tags: ${{ steps.image-tags.outputs.result }}
   publish-cli:
     name: Build [rdwatch-cli]
     runs-on: ubuntu-latest

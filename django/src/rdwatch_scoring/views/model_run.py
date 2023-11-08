@@ -189,7 +189,6 @@ def list_model_runs(
     filters: ModelRunFilterSchema = Query(...),  # noqa: B008
 ):
     data = filters.filter(get_queryset())
-    # lets get the downloading information for model_runs
 
     return data
 

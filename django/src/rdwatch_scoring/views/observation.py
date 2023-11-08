@@ -183,10 +183,12 @@ def get_site_observation_images(
             # Otherwise, if the task exists but is *not* running, set the status
             # to running and kick off the task
             fetching_task.status = SatelliteFetching.Status.RUNNING
+            fetching_task.model_run_uuid = siteeval.evaluation_run_uuid.pk
             fetching_task.save()
         else:
             fetching_task = SatelliteFetching.objects.create(
                 site=siteeval.pk,
+                model_run_uuid=siteeval.evaluation_run_uuid.pk,
                 timestamp=datetime.now(),
                 status=SatelliteFetching.Status.RUNNING,
             )

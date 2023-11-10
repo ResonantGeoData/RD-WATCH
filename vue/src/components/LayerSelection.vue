@@ -127,7 +127,6 @@ const toggleScoring = (data? : undefined | 'simple' | 'detailed') => {
           class="px-2 mx-2"
           v-bind="props"
           size="large"
-          :variant="!state.filters.drawObservations ? 'outlined' : undefined"
           :color="state.filters.drawObservations ? 'rgb(37, 99, 235)' : ''"
           @click="toggleObs()"
         >
@@ -177,7 +176,6 @@ const toggleScoring = (data? : undefined | 'simple' | 'detailed') => {
           class="px-2 mx-2"
           v-bind="props"
           size="large"
-          :variant="!state.filters.drawSiteOutline ? 'outlined' : undefined"
           :color="state.filters.drawSiteOutline ? 'rgb(37, 99, 235)' : ''"
           @click="toggleSite()"
         >
@@ -222,7 +220,6 @@ const toggleScoring = (data? : undefined | 'simple' | 'detailed') => {
     <v-btn
       class="px-2 mx-2"
       size="large"
-      :variant="!state.filters.drawRegionPoly ? 'outlined' : undefined"
       :color="state.filters.drawRegionPoly ? 'rgb(37, 99, 235)' : ''"
       @click="toggleRegion()"
     >
@@ -237,7 +234,6 @@ const toggleScoring = (data? : undefined | 'simple' | 'detailed') => {
           class="px-2 mx-2"
           v-bind="props"
           size="large"
-          :variant="!state.filters.scoringColoring ? 'outlined' : undefined"
           :color="state.filters.scoringColoring ? 'rgb(37, 99, 235)' : ''"
           @click="toggleScoring()"
         >

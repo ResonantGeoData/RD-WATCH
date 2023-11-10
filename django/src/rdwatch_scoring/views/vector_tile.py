@@ -109,6 +109,17 @@ def vector_tile(
                 id=F('base_site_id'),
                 mvtgeom=mvtgeom,
                 configuration_id=F('evaluation_run_uuid'),
+                configuration_name=ExpressionWrapper(
+                    Concat(
+                        Value('Eval '),
+                        F('evaluation_run_uuid__evaluation_number'),
+                        Value(' '),
+                        F('evaluation_run_uuid__evaluation_run_number'),
+                        Value(' '),
+                        F('evaluation_run_uuid__performer'),
+                    ),
+                    output_field=CharField(),
+                ),
                 label=Case(
                     When(
                         Q(status_annotated__isnull=False),
@@ -121,6 +132,7 @@ def vector_tile(
                 timemin=ExtractEpoch('start_date'),
                 timemax=ExtractEpoch('end_date'),
                 performer_id=F('originator'),
+                performer_name=F('originator'),
                 region=F('region_id'),
                 groundtruth=Case(
                     When(
@@ -130,6 +142,7 @@ def vector_tile(
                     default=False,
                 ),
                 site_polygon=Value(False, output_field=BooleanField()),
+                site_number=Substr(F('site_id'), 9),  # pos is 1 indexed
                 color_code=Case(
                     When(
                         Q(originator='te') | Q(originator='iMERIT'),

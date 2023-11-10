@@ -106,11 +106,13 @@ def vector_tile(request: HttpRequest, model_run_id: UUID4, z: int, x: int, y: in
                 id=F('pk'),
                 mvtgeom=mvtgeom,
                 configuration_id=F('configuration_id'),
+                configuration_name=F('configuration__title'),
                 label=F('label__slug'),
                 timestamp=ExtractEpoch('timestamp'),
                 timemin=ExtractEpoch(Min('observations__timestamp')),
                 timemax=ExtractEpoch(Max('observations__timestamp')),
                 performer_id=F('configuration__performer_id'),
+                performer_name=F('configuration__performer__slug'),
                 region=F('region__name'),
                 groundtruth=Case(
                     When(
@@ -119,6 +121,7 @@ def vector_tile(request: HttpRequest, model_run_id: UUID4, z: int, x: int, y: in
                     ),
                     default=False,
                 ),
+                site_number=F('number'),
                 site_polygon=Case(
                     When(
                         observation_count=0,

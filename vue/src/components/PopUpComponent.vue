@@ -1,9 +1,10 @@
 
 
 <script setup lang="ts">
-import { PopUpData } from '../interactions/popUpType';
+import { PopUpData, PopUpSiteData } from '../interactions/popUpType';
 const props = defineProps<{
-  data:PopUpData[]
+  data:Record<string, PopUpData>;
+  siteData:Record<string, PopUpSiteData>;
 }>();
 
 </script>
@@ -104,6 +105,90 @@ const props = defineProps<{
           <v-icon size="x-small">
             mdi-clock
           </v-icon>: NULL
+        </v-chip>
+      </v-row>
+    </v-row>
+    <v-row
+      v-for="item in props.siteData"
+      :key="item.siteId"
+      dense
+      align="center"
+      justify="center"
+      class="my-1"
+    >
+      <v-row
+        dense
+        align="center"
+        justify="center"
+      >
+        <v-chip
+          label
+          size="small"
+          density="compact"
+          class="mx-1 mb-1"
+        >
+          {{ item.performerName }} : {{ item.configName }}: V{{ item.version }}
+        </v-chip>
+      </v-row>
+      <v-row
+        dense
+        align="center"
+        justify="center"
+        class="mb-1"
+      >
+        <v-chip
+          label
+          :color="item.siteColor"
+          size="small"
+          density="compact"
+          class="mx-1"
+        >
+          <v-icon
+            v-if="item.groundTruth"
+            size="small"
+            :color="item.siteColor"
+          >
+            mdi-check-decagram
+          </v-icon>
+          {{ item.siteLabel }}
+        </v-chip>
+
+        <v-chip
+          label
+          size="small"
+          density="compact"
+          class="mx-1"
+        >
+          <v-icon
+            v-if="item.groundTruth"
+            size="small"
+          >
+            mdi-check-decagram
+          </v-icon>
+          SiteId: {{ item.siteId }}
+        </v-chip>
+        <v-chip
+          v-if="item.timeRange"
+          label
+          variant="elevated"
+          size="small"
+          density="compact"
+          class="mx-1"
+        >
+          <v-icon size="x-small">
+            mdi-clock
+          </v-icon>: {{ item.timeRange }}
+        </v-chip>
+        <v-chip
+          v-if="item.scoreLabel && item.scoreColor"
+          label
+          variant="elevated"
+          :color="item.scoreColor"
+          size="small"
+          density="compact"
+          class="mx-1"
+        >
+          Score: {{ item.scoreLabel }}
         </v-chip>
       </v-row>
     </v-row>

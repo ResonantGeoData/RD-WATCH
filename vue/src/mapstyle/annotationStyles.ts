@@ -101,6 +101,7 @@ const styles: AnnotationStyle = {
   },
 };
 
+export type scoringColorsKeys = keyof typeof scoringColors;
 const scoringColors = {
   2: {
     color: 'lime',

@@ -7,7 +7,7 @@ import { state } from '../store';
 
 <template>
   <div
-    v-if="state.mapLegend && (state.filters.drawObservations || state.filters.drawSiteOutline)"
+    v-if="state.mapLegend && (state.filters.drawObservations || state.filters.drawSiteOutline || state.filters.scoringColoring)"
     class="legend"
   >
     <v-card density="compact">
@@ -24,7 +24,6 @@ import { state } from '../store';
           >
             <v-card-title
               class="legend-title"
-              :class="{'legend-title-single': !state.filters.scoringColoring}"
             >
               Site Models
             </v-card-title>
@@ -43,7 +42,6 @@ import { state } from '../store';
                     />
                     <span
                       class="pl-1 legend-label"
-                      :class="{'legend-label-single': !state.filters.scoringColoring}"
                     >
                       :{{ item.name }}
                     </span>
@@ -59,7 +57,6 @@ import { state } from '../store';
           >
             <v-card-title
               class="legend-title"
-              :class="{'legend-title-single': !state.filters.scoringColoring}"
             >
               Site Observations
             </v-card-title>
@@ -78,7 +75,6 @@ import { state } from '../store';
                     />
                     <span
                       class="pl-1 legend-label"
-                      :class="{'legend-label-single': !state.filters.scoringColoring}"
                     >
                       :{{ item.name }}
                     </span>

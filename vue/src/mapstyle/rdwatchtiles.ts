@@ -264,6 +264,18 @@ export const buildLayerFilter = (
         },
         filter: buildSiteFilter(timestamp, filters),
       },
+      // Site fill is added for Hover Popup to work on the area inside the polygon
+      {
+        id: `sites-fill-${id}`,
+        type: "fill",
+        source: `vectorTileSource_${id}`,
+        "source-layer": `sites-${id}`,
+        paint: {
+          "fill-color": annotationColors(filters),
+          "fill-opacity": 0,
+        },
+        filter: buildSiteFilter(timestamp, filters),
+      },
     ]);
     if (filters.showText) {
       results = results.concat([{

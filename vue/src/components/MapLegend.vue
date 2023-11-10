@@ -122,16 +122,10 @@ import { state } from '../store';
   max-width: 400px;
 }
 .legend-title {
-  font-size:0.50em !important;
+  font-size:1.0em !important;
 }
 .legend-label {
-  font-size: 0.50em;
-}
-.legend-title-single {
-  font-size:1em !important;
-}
-.legend-label-single {
-  font-size: .75em;
+  font-size: 0.75em;
 }
 .color-icon {
   min-width: 15px;

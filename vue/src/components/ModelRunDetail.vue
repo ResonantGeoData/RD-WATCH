@@ -1,7 +1,6 @@
 <script setup lang="ts">
 import TimeSlider from "./TimeSlider.vue";
 import { ApiService, ModelRun } from "../client";
-import { state } from "../store";
 import { Ref, computed, onBeforeMount, onBeforeUnmount, ref, withDefaults } from "vue";
 import { timeRangeFormat } from "../utils";
 import ImagesDownloadDialog from "./ImagesDownloadDialog.vue";
@@ -27,7 +26,6 @@ async function handleClick() {
 
 const route = useRoute();
 const scoringApp = computed(() => route.path.includes('scoring'));
-const useScoring = ref(false);
 const downloadImages = ref(false);
 
 let loopingInterval: NodeJS.Timeout | null = null;

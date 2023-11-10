@@ -7,7 +7,7 @@ import { state } from '../store';
 
 <template>
   <div
-    v-if="state.mapLegend && (state.filters.drawGroundTruth || state.filters.drawObservations || state.filters.drawSiteOutline)"
+    v-if="state.mapLegend && (state.filters.drawObservations || state.filters.drawSiteOutline)"
     class="legend"
   >
     <v-card density="compact">
@@ -19,7 +19,7 @@ import { state } from '../store';
       <v-card-text>
         <v-row dense>
           <v-card
-            v-if="state.filters.drawSiteOutline"
+            v-if="state.filters.drawSiteOutline && !state.filters.scoringColoring"
             density="compact"
           >
             <v-card-title
@@ -54,7 +54,7 @@ import { state } from '../store';
           </v-card>
 
           <v-card
-            v-if="state.filters.drawObservations || (state.filters.drawGroundTruth && !state.filters.drawSiteOutline)"
+            v-if="state.filters.drawObservations"
             density="compact"
           >
             <v-card-title

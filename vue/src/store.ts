@@ -1,20 +1,19 @@
 import { computed, reactive } from "vue";
 
-import { ApiService, ModelRun, Region } from "./client";
+import { ApiService, ModelRun, Performer, Region } from "./client";
 
 export interface MapFilters {
   configuration_id?: string[];
   performer_ids?: number[];
   regions?: Region[];
-  drawSiteOutline?: boolean;
+  drawSiteOutline?: string[]; //looking for either 'model' | 'groundtruth'
+  drawObservations?: string[]; //looking for either 'model' | 'groundtruth'
+  scoringColoring?: 'simple' | 'detailed';
   groundTruthPattern?: boolean;
-  drawGroundTruth?: boolean;
-  drawObservations?: boolean;
   drawRegionPoly?: boolean;
   otherPattern?: boolean;
   hoverSiteId?: string;
   showText?: boolean;
-  scoringColoring?: 'simple' | 'detailed';
 }
 
 export interface SatelliteTimeStamp {
@@ -152,6 +151,7 @@ export const state = reactive<{
   modelRuns: KeyedModelRun[],
   openedModelRuns: Set<KeyedModelRun["key"]>
   gifSettings: { fps: number, quality: number},
+  performerMapping: Record<number, Performer>,
 }>({
   timestamp: Math.floor(Date.now() / 1000),
   timeMin: new Date(0).valueOf(),
@@ -165,8 +165,8 @@ export const state = reactive<{
     ymax: 90,
   },
   filters: {
-    drawObservations: true,
-    drawSiteOutline: false,
+    drawObservations: ['model'],
+    drawSiteOutline: undefined,
     groundTruthPattern: false,
     otherPattern: false,
     showText: false,
@@ -199,7 +199,8 @@ export const state = reactive<{
   loopingId: null,
   modelRuns: [],
   openedModelRuns: new Set<KeyedModelRun["key"]>(),
-  gifSettings: { fps: 1, quality: 1}
+  gifSettings: { fps: 1, quality: 1},
+  performerMapping: {},
 });
 
 export const filteredSatelliteTimeList = computed(() => {

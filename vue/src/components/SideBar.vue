@@ -6,7 +6,7 @@ import RegionFilter from "./filters/RegionFilter.vue";
 import SettingsPanel from "./SettingsPanel.vue";
 import { filteredSatelliteTimeList, state } from "../store";
 import { computed, onMounted, ref, watch } from "vue";
-import { ApiService, Performer, QueryArguments, Region } from "../client";
+import { Performer, QueryArguments, Region } from "../client";
 import type { Ref } from "vue";
 import { changeTime } from "../interactions/timeStepper";
 
@@ -22,7 +22,6 @@ const queryFilters = computed<QueryArguments>(() => ({
 
 const selectedPerformer: Ref<Performer[]> = ref([]);
 const selectedRegion: Ref<Region | undefined> = ref(undefined);
-const drawSiteOutline: Ref<boolean> = ref(false);
 watch(selectedPerformer, (val) => {
   state.filters = {
     ...state.filters,
@@ -47,9 +46,6 @@ const updateRegion = (val?: Region) => {
     regions: val === undefined ? undefined : [val],
   };
 };
-watch(drawSiteOutline, (val) => {
-  state.filters = { ...state.filters, drawSiteOutline: val };
-});
 const expandSettings = ref(false);
 
 const imagesOn = computed({
@@ -77,67 +73,10 @@ onMounted(() => {
     }
   });
 });
-const scoringApp = computed(()=> ApiService.apiPrefix.includes('scoring'));
-
-const toggleGroundTruth = async () => {
-  if (scoringApp.value) { 
-    const val = !state.filters.drawGroundTruth;
-    state.filters = { ...state.filters, drawGroundTruth: val };
-  } else {
-    // We need to find the ground-truth model and add it to the visible items
-    const request = await ApiService.getModelRuns({
-      limit: 10,
-      performer: queryFilters.value.performer,
-      region: queryFilters.value.region,
-      groundtruth: true
-    });
-    if (request.items.length) {
-      const id = request.items[0].id;
-      if (!state.filters.drawGroundTruth) {
-        if (state.openedModelRuns) {
-          state.openedModelRuns.add(id);
-        }
-        const configuration_id = Array.from(state.openedModelRuns);
-        state.filters = { ...state.filters, configuration_id};
-        state.filters = { ...state.filters, drawGroundTruth: true };
-      }
-      else if (state.filters.drawGroundTruth) {
-        if (state.openedModelRuns) {
-          if (state.openedModelRuns.has(id)) {
-            state.openedModelRuns.delete(id);
-          }
-        }
-        const configuration_id = Array.from(state.openedModelRuns);
-        state.filters = { ...state.filters, configuration_id};
-        state.filters = { ...state.filters, drawGroundTruth: false };
-      }
-    }
-  }
-}
 
 const toggleText = () => {
   const val = !state.filters.showText;
   state.filters = { ...state.filters, showText: val };
-}
-
-const toggleObs = () => {
-  const val = !state.filters.drawObservations;
-  state.filters = { ...state.filters, drawObservations: val };
-}
-
-const toggleSites = () => {
-  const val = !state.filters.drawSiteOutline;
-  state.filters = { ...state.filters, drawSiteOutline: val };
-}
-
-const toggleRegion = () => {
-  const val = !state.filters.drawRegionPoly;
-  state.filters = { ...state.filters, drawRegionPoly: val };
-}
-
-const toggleScoring = () => {
-  const val = state.filters.scoringColoring ? undefined : 'simple';
-  state.filters = { ...state.filters, scoringColoring: val };
 }
 
 
@@ -153,6 +92,7 @@ const toggleScoring = () => {
         dense
       >
         <img
+          height="50"
           class="mx-auto pb-4"
           src="../assets/logo.svg"
           alt="Resonant GeoData"
@@ -180,104 +120,6 @@ const toggleScoring = () => {
         align="center"
         class="py-2"
       >
-        <v-tooltip
-          open-delay="100"
-          location="top"
-        >
-          <template #activator="{ props:subProps }">
-            <v-chip
-              density="compact"
-              v-bind="subProps"
-              size="small"
-              :color="state.filters.drawObservations ? 'rgb(37, 99, 235)' : 'black'"
-              :variant="state.filters.drawObservations ? 'elevated' : 'outlined'"
-              class="mx-1"
-              @click="toggleObs()"
-            >
-              Obs
-            </v-chip>
-          </template>
-          <span>Toggle Site Observations on/off</span>
-        </v-tooltip>
-        <v-tooltip
-          open-delay="100"
-          location="top"
-        >
-          <template #activator="{ props:subProps }">
-            <v-chip
-              density="compact"
-              v-bind="subProps"
-              size="small"
-              :color="state.filters.drawSiteOutline ? 'rgb(37, 99, 235)' : 'black'"
-              :variant="state.filters.drawSiteOutline ? 'elevated' : 'outlined'"
-              class="mx-1"
-              @click="toggleSites()"
-            >
-              Site
-            </v-chip>
-          </template>
-          <span> Toggle Site Outlines On/Off</span>
-        </v-tooltip>
-
-        <v-tooltip
-          open-delay="100"
-          location="top"
-        >
-          <template #activator="{ props:subProps }">
-            <v-chip
-              v-if="state.filters.regions?.length"
-              v-bind="subProps"
-              density="compact"
-              :color="state.filters.drawGroundTruth ? 'rgb(37, 99, 235)' : 'black'"
-              size="small"
-              :variant="state.filters.drawGroundTruth ? 'elevated' : 'outlined'"
-              class="mx-1"
-              @click="toggleGroundTruth()"
-            >
-              GT
-            </v-chip>
-          </template>
-          <span>Toggle associated Ground Truth On/Off</span>
-        </v-tooltip>
-        <v-tooltip
-          open-delay="100"
-          location="top"
-        >
-          <template #activator="{ props:subProps }">
-            <v-chip
-              v-bind="subProps"
-              density="compact"
-              size="small"
-              :color="state.filters.drawRegionPoly ? 'rgb(37, 99, 235)' : 'black'"
-              :variant="state.filters.drawRegionPoly ? 'elevated' : 'outlined'"
-              class="mx-1"
-              @click="toggleRegion()"
-            >
-              Region
-            </v-chip>
-          </template>
-          <span>Toggle Region Polygons On/Off</span>
-        </v-tooltip>
-        <v-tooltip
-          v-if="scoringApp && state.filters.drawSiteOutline"
-          open-delay="100"
-          location="top"
-        >
-          <template #activator="{ props:subProps }">
-            <v-chip
-              v-bind="subProps"
-              density="compact"
-              size="small"
-              :color="state.filters.scoringColoring ? 'rgb(37, 99, 235)' : 'black'"
-              :variant="state.filters.scoringColoring ? 'elevated' : 'outlined'"
-              class="mx-1"
-              @click="toggleScoring()"
-            >
-              Scores
-            </v-chip>
-          </template>
-          <span>Toggle Region Polygons On/Off</span>
-        </v-tooltip>
         <v-spacer />
         <v-btn
           variant="text"
@@ -367,4 +209,22 @@ const toggleScoring = () => {
 .animate-flicker {
   animation: flicker-animation 1s infinite;
 }
+.layer-button {
+  border: 1px solid black;
+  padding-top:5px;
+  padding-bottom: 5px;
+  margin-left: auto;
+  margin-right: auto;
+}
+
+.layer-header {
+  border: 2px solid black;
+  border-bottom: 2px double black;
+  padding-top:5px;
+  padding-bottom: 5px;
+  margin-left: auto;
+  margin-right: auto;
+
+}
+
 </style>

@@ -28,6 +28,7 @@ from django.shortcuts import get_object_or_404
 
 from rdwatch.db.functions import ExtractEpoch, GroupExcludeRowRange
 from rdwatch_scoring.models import (
+    EvaluationBroadAreaSearchDetection,
     EvaluationBroadAreaSearchProposal,
     EvaluationRun,
     Observation,
@@ -129,14 +130,32 @@ def vector_tile(
                     default=False,
                 ),
                 site_polygon=Value(False, output_field=BooleanField()),
-                color_code=Subquery(
-                    EvaluationBroadAreaSearchProposal.objects.filter(
-                        evaluation_run_uuid=evaluation_run_uuid,
-                        activity_type='overall',
-                        rho=0.5,
-                        tau=0.2,
-                        site_proposal=OuterRef('base_site_id'),
-                    ).values('color_code')
+                color_code=Case(
+                    When(
+                        Q(originator='te') | Q(originator='iMERIT'),
+                        then=Subquery(
+                            EvaluationBroadAreaSearchDetection.objects.filter(
+                                evaluation_run_uuid=evaluation_run_uuid,
+                                activity_type='overall',
+                                rho=0.5,
+                                tau=0.2,
+                                site_truth=OuterRef('base_site_id'),
+                            ).values('color_code')
+                        ),
+                    ),
+                    When(
+                        ~Q(originator='te') & ~Q(originator='iMERIT'),
+                        then=Subquery(
+                            EvaluationBroadAreaSearchProposal.objects.filter(
+                                evaluation_run_uuid=evaluation_run_uuid,
+                                activity_type='overall',
+                                rho=0.5,
+                                tau=0.2,
+                                site_proposal=OuterRef('base_site_id'),
+                            ).values('color_code')
+                        ),
+                    ),
+                    default=Value(None),  # Set an appropriate default value here
                 ),
             )
         )
@@ -196,7 +215,8 @@ def vector_tile(
                 score=F('confidence_score'),
                 groundtruth=Case(
                     When(
-                        Q(site_uuid__originator='te') | Q(originator='iMERIT'),
+                        Q(site_uuid_id__originator='te')
+                        | Q(site_uuid_id__originator='iMERIT'),
                         True,
                     ),
                     default=False,

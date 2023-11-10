@@ -109,6 +109,7 @@ const scoringColors = {
     description:'Positive site successfully detected (GT)',
     simple: true,
     detailed: true,
+    id: 2,
   },
   3: {
     color: 'black',
@@ -117,6 +118,7 @@ const scoringColors = {
     description:'Positive site not detected (GT)',
     simple: true,
     detailed: true,
+    id: 3,
   },
   5: {
     color: 'red',
@@ -125,6 +127,7 @@ const scoringColors = {
     description:'Negative annotation detected (GT)',
     simple: true,
     detailed: true,
+    id: 5,
   },
   7: {
     color: 'thistle',
@@ -133,6 +136,7 @@ const scoringColors = {
     description:'Positive site - incomplete activity (GT)',
     simple: false,
     detailed: true,
+    id: 7,
   },
   10: {
     color: 'salmon',
@@ -141,6 +145,7 @@ const scoringColors = {
     description:'Ignore Area (GT)',
     simple: false,
     detailed: true,
+    id: 10,
   },
   14: {
     color: 'lime',
@@ -149,6 +154,7 @@ const scoringColors = {
     description:'Positive site successfully detected (GT)',
     simple: true,
     detailed: true,
+    id: 14,
   },
   15: {
     color: 'black',
@@ -157,6 +163,7 @@ const scoringColors = {
     description:'Positive site not detected (GT)',
     simple: true,
     detailed: true,
+    id: 15,
   },
   17: {
     hex: '#FF0000',
@@ -164,6 +171,7 @@ const scoringColors = {
     description:'Negative annotation detected (GT)',
     simple: true,
     detailed: true,
+    id: 17,
   },
   19: {
     color: 'salmon',
@@ -172,6 +180,7 @@ const scoringColors = {
     description:'Ignore Area (GT)',
     simple: false,
     detailed: true,
+    id: 19,
   },
   22: {
     color: 'magenta',
@@ -180,6 +189,7 @@ const scoringColors = {
     description:'False Positive (Proposal)',
     simple: true,
     detailed: true,
+    id: 22,
   },
   23: {
     color: 'orange',
@@ -188,6 +198,7 @@ const scoringColors = {
     description:'Partial positive - Associates with both a positive site and a negative site (Proposal)',
     simple: false,
     detailed: true,
+    id: 23,
   },
   24: {
     color: 'aquamarine',
@@ -196,6 +207,7 @@ const scoringColors = {
     description:'True Positive (Proposal)',
     simple: false,
     detailed: true,
+    id: 24,
   },
   25: {
     color: 'magenta',
@@ -204,6 +216,7 @@ const scoringColors = {
     description:'False Positive (Proposal)',
     simple: false,
     detailed: true,
+    id: 25,
   },
 }
 
@@ -277,4 +290,5 @@ export {
     siteText,
     getColorFromLabel,
     styles,
+    scoringColors,
 }

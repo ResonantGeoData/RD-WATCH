@@ -73,15 +73,6 @@ const props = defineProps<{
         </v-chip>
         <v-chip
           label
-          :color="item.scoreColor"
-          size="small"
-          density="compact"
-          class="mx-1"
-        >
-          Score: {{ item.score?.toFixed(2) }}
-        </v-chip>
-        <v-chip
-          label
           color="black"
           variant="elevated"
           size="small"

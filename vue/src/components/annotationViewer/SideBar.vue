@@ -21,12 +21,10 @@ const queryFilters = computed<QueryArguments>(() => ({
 
 const selectedPerformer: Ref<Performer[]> = ref([]);
 const selectedRegion: Ref<Region | undefined> = ref(undefined);
-const drawSiteOutline: Ref<boolean> = ref(false);
 watch(selectedPerformer, (val) => {
   state.filters = {
     ...state.filters,
     performer_ids: !val.length ? undefined : val.map((item) => item.id),
-    scoringColoring: null,
   };
 });
 watch (() => state.filters.regions, () => {
@@ -45,12 +43,8 @@ const updateRegion = (val?: Region) => {
   state.filters = {
     ...state.filters,
     regions: val === undefined ? undefined : [val],
-    scoringColoring: null,
   };
 };
-watch(drawSiteOutline, (val) => {
-  state.filters = { ...state.filters, drawSiteOutline: val, scoringColoring: null };
-});
 
 function nextPage() {
   page.value += 1;

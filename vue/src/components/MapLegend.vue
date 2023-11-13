@@ -7,7 +7,7 @@ import { state } from '../store';
 
 <template>
   <div
-    v-if="state.mapLegend && (state.filters.drawGroundTruth || state.filters.drawObservations || state.filters.drawSiteOutline)"
+    v-if="state.mapLegend && (state.filters.drawObservations || state.filters.drawSiteOutline || state.filters.scoringColoring)"
     class="legend"
   >
     <v-card density="compact">
@@ -19,12 +19,11 @@ import { state } from '../store';
       <v-card-text>
         <v-row dense>
           <v-card
-            v-if="state.filters.drawSiteOutline"
+            v-if="state.filters.drawSiteOutline && !state.filters.scoringColoring"
             density="compact"
           >
             <v-card-title
               class="legend-title"
-              :class="{'legend-title-single': !state.filters.scoringColoring}"
             >
               Site Models
             </v-card-title>
@@ -43,7 +42,6 @@ import { state } from '../store';
                     />
                     <span
                       class="pl-1 legend-label"
-                      :class="{'legend-label-single': !state.filters.scoringColoring}"
                     >
                       :{{ item.name }}
                     </span>
@@ -54,12 +52,11 @@ import { state } from '../store';
           </v-card>
 
           <v-card
-            v-if="state.filters.drawObservations || state.filters.drawGroundTruth"
+            v-if="state.filters.drawObservations"
             density="compact"
           >
             <v-card-title
               class="legend-title"
-              :class="{'legend-title-single': !state.filters.scoringColoring}"
             >
               Site Observations
             </v-card-title>
@@ -78,7 +75,6 @@ import { state } from '../store';
                     />
                     <span
                       class="pl-1 legend-label"
-                      :class="{'legend-label-single': !state.filters.scoringColoring}"
                     >
                       :{{ item.name }}
                     </span>
@@ -126,16 +122,10 @@ import { state } from '../store';
   max-width: 400px;
 }
 .legend-title {
-  font-size:0.50em !important;
+  font-size:1.0em !important;
 }
 .legend-label {
-  font-size: 0.50em;
-}
-.legend-title-single {
-  font-size:1em !important;
-}
-.legend-label-single {
-  font-size: .75em;
+  font-size: 0.75em;
 }
 .color-icon {
   min-width: 15px;

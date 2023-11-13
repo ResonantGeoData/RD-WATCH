@@ -2,6 +2,7 @@
 import SideBar from "../components/SideBar.vue"
 import MapLibre from "../components/MapLibre.vue";
 import RightBar from "../components/RightBar.vue"
+import LayerSelection from "../components/LayerSelection.vue";
 import { onMounted } from "vue";
 import { state } from "../store";
 
@@ -19,7 +20,6 @@ onMounted(() => {
     state.filters = {
       ...state.filters,
       regions: [props.region],
-      scoringColoring: null,
     };
   }
 });
@@ -38,6 +38,7 @@ onMounted(() => {
     <SideBar />
   </v-navigation-drawer>
   <v-main style="z-index:1">
+    <layer-selection />
     <MapLibre />
   </v-main>
   <RightBar />

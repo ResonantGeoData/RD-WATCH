@@ -15,7 +15,9 @@ from django.db.models import (
     Field,
     Func,
     Min,
+    OuterRef,
     Q,
+    Subquery,
     Value,
     When,
     Window,
@@ -25,7 +27,14 @@ from django.http import HttpRequest, HttpResponse
 from django.shortcuts import get_object_or_404
 
 from rdwatch.db.functions import ExtractEpoch, GroupExcludeRowRange
-from rdwatch_scoring.models import EvaluationRun, Observation, Region, Site
+from rdwatch_scoring.models import (
+    EvaluationBroadAreaSearchDetection,
+    EvaluationBroadAreaSearchProposal,
+    EvaluationRun,
+    Observation,
+    Region,
+    Site,
+)
 
 from .model_run import router
 
@@ -93,12 +102,24 @@ def vector_tile(
             Site.objects.filter(evaluation_run_uuid=evaluation_run_uuid)
             .alias(geomfromtext=geomfromuniongeometrytext)
             .alias(transformedgeom=transform)
+            .alias(base_site_id=F('site_id'))
             .filter(intersects)
             .values()
             .annotate(
-                id=F('site_id'),
+                id=F('base_site_id'),
                 mvtgeom=mvtgeom,
                 configuration_id=F('evaluation_run_uuid'),
+                configuration_name=ExpressionWrapper(
+                    Concat(
+                        Value('Eval '),
+                        F('evaluation_run_uuid__evaluation_number'),
+                        Value(' '),
+                        F('evaluation_run_uuid__evaluation_run_number'),
+                        Value(' '),
+                        F('evaluation_run_uuid__performer'),
+                    ),
+                    output_field=CharField(),
+                ),
                 label=Case(
                     When(
                         Q(status_annotated__isnull=False),
@@ -111,6 +132,7 @@ def vector_tile(
                 timemin=ExtractEpoch('start_date'),
                 timemax=ExtractEpoch('end_date'),
                 performer_id=F('originator'),
+                performer_name=F('originator'),
                 region=F('region_id'),
                 groundtruth=Case(
                     When(
@@ -120,6 +142,34 @@ def vector_tile(
                     default=False,
                 ),
                 site_polygon=Value(False, output_field=BooleanField()),
+                site_number=Substr(F('site_id'), 9),  # pos is 1 indexed
+                color_code=Case(
+                    When(
+                        Q(originator='te') | Q(originator='iMERIT'),
+                        then=Subquery(
+                            EvaluationBroadAreaSearchDetection.objects.filter(
+                                evaluation_run_uuid=evaluation_run_uuid,
+                                activity_type='overall',
+                                rho=0.5,
+                                tau=0.2,
+                                site_truth=OuterRef('base_site_id'),
+                            ).values('color_code')
+                        ),
+                    ),
+                    When(
+                        ~Q(originator='te') & ~Q(originator='iMERIT'),
+                        then=Subquery(
+                            EvaluationBroadAreaSearchProposal.objects.filter(
+                                evaluation_run_uuid=evaluation_run_uuid,
+                                activity_type='overall',
+                                rho=0.5,
+                                tau=0.2,
+                                site_proposal=OuterRef('base_site_id'),
+                            ).values('color_code')
+                        ),
+                    ),
+                    default=Value(None),  # Set an appropriate default value here
+                ),
             )
         )
         (
@@ -178,8 +228,8 @@ def vector_tile(
                 score=F('confidence_score'),
                 groundtruth=Case(
                     When(
-                        Q(site_uuid__originator='te')
-                        | Q(site_uuid__originator='iMERIT'),
+                        Q(site_uuid_id__originator='te')
+                        | Q(site_uuid_id__originator='iMERIT'),
                         True,
                     ),
                     default=False,

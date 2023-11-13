@@ -13,6 +13,7 @@ import type { MapFilters } from "../store";
 import {
   annotationColors,
   observationText,
+  scoringColors,
   siteText,
 } from "./annotationStyles";
 import { ApiService } from '../client/services/ApiService';
@@ -59,24 +60,20 @@ export const buildObservationFilter = (
       [">", ["get", "timemax"], timestamp],
     ],
   ];
-  // If Scoring App and have ground truth we filter it out if the drawGT is false
-  if (ApiService.apiPrefix.includes('scoring')) {
-    if (!filters.drawGroundTruth && filters.drawObservations) {
-      filter.push([
-          "any",
-          ["==", ["get", "groundtruth"], false]
-        ]
-      ); 
-    } else if (!filters.drawObservations && filters.drawGroundTruth && !filters.drawSiteOutline) {
-      filter.push([
+  const hasGroundTruth = filters.drawObservations?.includes('groundtruth');
+  const hasModel = filters.drawObservations?.includes('model');
+  if (!hasGroundTruth && hasModel) {
+    filter.push([
         "any",
-        ["==", ["get", "groundtruth"], true]
-      ]); 
-    }
-    else if ((!filters.drawObservations && !filters.drawGroundTruth) || (!filters.drawObservations  && filters.drawGroundTruth && filters.drawSiteOutline)) {
-      return false;
-    }
-  } else if (!filters.drawObservations) {
+        ["==", ["get", "groundtruth"], false]
+      ]
+    ); 
+  } else if (!hasModel && hasGroundTruth) {
+    filter.push([
+      "any",
+      ["==", ["get", "groundtruth"], true]
+    ]); 
+  } else if (!hasModel && !hasGroundTruth) {
     return false;
   }
 
@@ -97,24 +94,64 @@ export const buildSiteFilter = (
         filters.configuration_id?.length ? filters.configuration_id : [""],
       ],
     ],
-    [
+  ];
+
+  const hasGroundTruth = filters.drawSiteOutline?.includes('groundtruth');
+  const hasModel = filters.drawSiteOutline?.includes('model');
+  if (!filters.drawSiteOutline && !filters.scoringColoring) {
+    return false;
+  }
+  // Scoring:  we need to draw ground truth and sites but filter based on simple/detailed coloring props
+  if (filters.scoringColoring) {
+    filter.push([
+      "any",
+      ["get", "site_polygon"],
+      ["literal", true],
+      ]
+    );
+    // Next filter on the color_code being either simple or detailed
+    const filtered = Object.values(scoringColors).filter((item) => (item.simple && filters.scoringColoring === 'simple') || (item.detailed && filters.scoringColoring === 'detailed'))
+    const renderColorCodes = filtered.map((item) => item.id)
+    // Now we only display items with matching colorcode;
+    filter.push(
+      [
+        "in",
+        ["get", "color_code"],
+        [
+          "literal",
+          renderColorCodes
+        ],
+      ],
+    )
+    return filter;
+
+  }
+
+  if (hasModel) {
+    filter.push([
       "any",
       // When the site_polygon attribute is present, that indicates that there are no
       // observations associated with this model run and that the main site polygon
       // should be rendered regardless of timestamp
       ["get", "site_polygon"],
       ["literal", !!filters.drawSiteOutline],
-      ],
-  ];
+      ]
+    )
+  }
 
-  if (ApiService.apiPrefix.includes('scoring')) {
-    if (!filters.drawGroundTruth) {
-      filter.push([
-          "any",
-          ["==", ["get", "groundtruth"], false]
-        ]
-      );
-    }
+  if (!hasGroundTruth && hasModel) {
+    filter.push([
+        "any",
+        ["==", ["get", "groundtruth"], false]
+      ]
+    ); 
+  } else if (!hasModel && hasGroundTruth) {
+    filter.push([
+      "any",
+      ["==", ["get", "groundtruth"], true]
+    ]); 
+  } else if (!hasModel && !hasGroundTruth && !filters.scoringColoring) {
+    return false;
   }
 
   return filter;
@@ -224,6 +261,18 @@ export const buildLayerFilter = (
         paint: {
           "line-color": annotationColors(filters),
           "line-width": 2,
+        },
+        filter: buildSiteFilter(timestamp, filters),
+      },
+      // Site fill is added for Hover Popup to work on the area inside the polygon
+      {
+        id: `sites-fill-${id}`,
+        type: "fill",
+        source: `vectorTileSource_${id}`,
+        "source-layer": `sites-${id}`,
+        paint: {
+          "fill-color": annotationColors(filters),
+          "fill-opacity": 0,
         },
         filter: buildSiteFilter(timestamp, filters),
       },

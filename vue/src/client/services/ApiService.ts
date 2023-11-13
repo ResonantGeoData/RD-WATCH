@@ -424,17 +424,6 @@ export class ApiService {
       query: { configurationId, region },
     });
   }
-  public static getScoreColoring(
-    configurationId: string,
-    region: string,
-  ): CancelablePromise<Record<string, string>>
-  {
-    return __request(OpenAPI, {
-      method: "GET",
-      url: "/api/scores/region-colors",
-      query: { configurationId, region, },
-    });
-  }
 
   public static getEvaluationImages(id: string): CancelablePromise<EvaluationImageResults> {
     return __request(OpenAPI, {

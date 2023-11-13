@@ -232,13 +232,11 @@ function handleToggle(modelRun: KeyedModelRun) {
       ...state.filters,
       configuration_id: Array.from(configurationIds),
       regions: Array.from(regions),
-      scoringColoring: null,
     };
   } else {
     state.filters = {
       ...state.filters,
       configuration_id: undefined,
-      scoringColoring: null,
     };
     updateCameraBounds(false);
   }
@@ -268,7 +266,6 @@ watch([() => props.filters.region, () => props.filters.performer], () => {
   state.filters = {
     ...state.filters,
     configuration_id: [],
-    scoringColoring: null,
   };
 });
 </script>

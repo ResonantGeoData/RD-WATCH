@@ -3,6 +3,7 @@ import { ref, watch, watchEffect } from "vue";
 import { ApiService, PerformerList } from "../../client";
 import type { Ref } from "vue";
 import type { Performer } from "../../client";
+import { state } from "../../store";
 
 type SelectedPerformers = Performer[];
 
@@ -27,6 +28,7 @@ watchEffect(async () => {
     performerIdMap[item.id] = item;
     performers.value.push({title: item.team_name, value: item.id });
   })
+  state.performerMapping = performerIdMap;
 });
 
 watch(selectedPerformers, () => {

@@ -101,26 +101,135 @@ const styles: AnnotationStyle = {
   },
 };
 
+export type scoringColorsKeys = keyof typeof scoringColors;
+const scoringColors = {
+  2: {
+    color: 'lime',
+    title: 'True Positive (GT)',
+    hex: '#2AFF00',
+    description:'Positive site successfully detected (GT)',
+    simple: true,
+    detailed: true,
+    id: 2,
+  },
+  3: {
+    color: 'black',
+    hex: '#000000',
+    title: 'False Negative (GT)',
+    description:'Positive site not detected (GT)',
+    simple: true,
+    detailed: true,
+    id: 3,
+  },
+  5: {
+    color: 'red',
+    hex: '#FF0000',
+    title: 'False Positive (GT)',
+    description:'Negative annotation detected (GT)',
+    simple: true,
+    detailed: true,
+    id: 5,
+  },
+  7: {
+    color: 'thistle',
+    hex: '#CAA7FF',
+    title: 'Positive Site - Unbounded (GT)',
+    description:'Positive site - incomplete activity (GT)',
+    simple: false,
+    detailed: true,
+    id: 7,
+  },
+  10: {
+    color: 'salmon',
+    hex: '#FF8686',
+    title: 'Ignore Area (GT)',
+    description:'Ignore Area (GT)',
+    simple: false,
+    detailed: true,
+    id: 10,
+  },
+  14: {
+    color: 'lime',
+    title: 'True Positive (GT)',
+    hex: '#2AFF00',
+    description:'Positive site successfully detected (GT)',
+    simple: true,
+    detailed: true,
+    id: 14,
+  },
+  15: {
+    color: 'black',
+    hex: '#000000',
+    title: 'False Negative (GT)',
+    description:'Positive site not detected (GT)',
+    simple: true,
+    detailed: true,
+    id: 15,
+  },
+  17: {
+    hex: '#FF0000',
+    title: 'False Positive (GT)',
+    description:'Negative annotation detected (GT)',
+    simple: true,
+    detailed: true,
+    id: 17,
+  },
+  19: {
+    color: 'salmon',
+    hex: '#FF8686',
+    title: 'Ignore Area (GT)',
+    description:'Ignore Area (GT)',
+    simple: false,
+    detailed: true,
+    id: 19,
+  },
+  22: {
+    color: 'magenta',
+    hex: '#D53FFF',
+    title: 'False Positive (Proposal)',
+    description:'False Positive (Proposal)',
+    simple: true,
+    detailed: true,
+    id: 22,
+  },
+  23: {
+    color: 'orange',
+    title: 'Partial Positive (Proposal)',
+    hex: '#FF9033',
+    description:'Partial positive - Associates with both a positive site and a negative site (Proposal)',
+    simple: false,
+    detailed: true,
+    id: 23,
+  },
+  24: {
+    color: 'aquamarine',
+    hex: '#33FFEF',
+    title: 'True Positive (Proposal)',
+    description:'True Positive (Proposal)',
+    simple: false,
+    detailed: true,
+    id: 24,
+  },
+  25: {
+    color: 'magenta',
+    hex: '#D53FFF',
+    title: 'False Positive (Proposal)',
+    description:'False Positive (Proposal)',
+    simple: false,
+    detailed: true,
+    id: 25,
+  },
+}
+
 const getAnnotationColor = (filters: MapFilters) => {
     const result = [];
     result.push('case');
     if (filters.scoringColoring) {
-        const baseScore = Object.values(filters.scoringColoring)
-        baseScore.forEach((base) => {
-            Object.entries(base).forEach(([key, value]) => {
-                const splits = key.split('_').map((item) => parseInt(item));
-                if (splits.length === 4) {
-                    result.push(['all',
-                        ['==', ['get', 'configuration_id'], splits[0]],
-                        ['==', ['get', 'region'], splits[1]],
-                        ['==', ['get', 'performer_id'], splits[2]],
-                        ['==', ['get', 'site_number'], splits[3]],
-                    ]);
-                    result.push(value);
-                }
-            });
-        });
-    }
+      Object.entries(scoringColors).forEach(([id, { hex }]) => {
+        result.push(['==', ['get', 'color_code'], parseInt(id, 10)])
+        result.push(hex)
+      })
+    } 
     Object.entries(styles).forEach(([label, { color }]) => {
         result.push(['==', ['get', 'label'], label]);
         result.push(color);
@@ -155,12 +264,12 @@ const createAnnotationLegend = () => {
             siteLegend.push({color: color, name: label})
         }
     });
-    const scoringLegend = [
-        { name:'Ignore', color:'lightsalmon' },
-        { name:'Positive Match', color:'#66CCAA' },
-        { name:'Partially Wrong', color:'orange' },
-        { name:'Completely Wrong', color:'magenta' },
-    ]
+    const scoringLegend: {color: string, name: string}[] = [];
+    Object.values(scoringColors).forEach((data) => {
+      if (scoringLegend.findIndex((item) => item.color === data.hex && item.name === data.title) === -1) {
+          scoringLegend.push({ name: data.title, color: data.hex});
+      }
+    })
     return { observationLegend, scoringLegend, siteLegend }
 }
 const annotationLegend = createAnnotationLegend();
@@ -173,6 +282,8 @@ const getColorFromName = ((label: string) => {
 
 const getColorFromLabel = ((label: string) => styles[label]?.color || getColorFromName(label) || 'white');
 
+
+
 export {
     annotationColors,
     observationText,
@@ -180,4 +291,5 @@ export {
     siteText,
     getColorFromLabel,
     styles,
+    scoringColors,
 }

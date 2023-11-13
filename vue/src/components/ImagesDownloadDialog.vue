@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { Ref, ref } from "vue";
 import { VDatePicker } from 'vuetify/labs/VDatePicker'
-import { DownloadSettings } from "../client/services/ApiService";
+import { Constellation, DownloadSettings } from "../client/services/ApiService";
 
 
 const emit = defineEmits<{
@@ -10,7 +10,7 @@ const emit = defineEmits<{
 }>();
 
 const baseList = ref(['S2', 'WV', 'L8'])
-const selectedSource: Ref<'S2' | 'WV' | 'L8'> = ref('WV');
+const selectedSource: Ref<Constellation[]> = ref(['WV']);
 const dayRange = ref(14);
 const noData = ref(50)
 const overrideDates: Ref<[string, string]> = ref(['2013-01-01', new Date().toISOString().split('T')[0]])
@@ -65,6 +65,7 @@ const display = ref(true);
           >
             <v-select
               v-model="selectedSource"
+              multiple
               :items="baseList"
               label="Source"
               class="mr-2"

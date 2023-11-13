@@ -84,8 +84,9 @@ export interface SiteObservationUpdateQuery {
 
 }
 
+export type Constellation  = 'S2' | 'WV' | 'L8';
 export interface DownloadSettings {
-  constellation: 'S2' | 'WV' | 'L8';
+  constellation: Constellation[];
   dayRange?: number;
   noData?: number;
   overrideDates?: [string, string];

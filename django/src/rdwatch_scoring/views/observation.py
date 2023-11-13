@@ -20,7 +20,7 @@ from django.shortcuts import get_object_or_404
 from rdwatch.db.functions import BoundingBox, ExtractEpoch
 from rdwatch.views.site_observation import SiteObservationsListSchema
 from rdwatch_scoring.models import Observation, SatelliteFetching, Site, SiteImage
-from rdwatch_scoring.tasks import get_siteobservations_images
+from rdwatch_scoring.tasks import get_siteobservation_images_task
 
 logger = logging.getLogger(__name__)
 
@@ -147,7 +147,7 @@ def site_observations(request: HttpRequest, evaluation_id: UUID4):
 
 
 class GenerateImagesSchema(Schema):
-    constellation: Literal['WV', 'S2', 'L8'] = 'WV'
+    constellation: list[Literal['WV', 'S2', 'L8']] = ['WV']
     dayRange: int = 14
     noData: int = 50
     overrideDates: None | list[str] = None
@@ -195,7 +195,7 @@ def get_site_observation_images(
         scalVal = params.scale
         if params.scale == 'custom':
             scalVal = params.scaleNum
-        task_id = get_siteobservations_images.delay(
+        task_id = get_siteobservation_images_task.delay(
             evaluation_id,
             params.constellation,
             params.force,

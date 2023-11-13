@@ -68,6 +68,35 @@ def is_inside_range(
 
 
 @app.task(bind=True)
+def get_siteobservation_images_task(
+    self,
+    site_eval_id: UUID4,
+    baseConstellations=['WV'],  # noqa
+    force=False,  # forced downloading found_timestamps again
+    dayRange=14,
+    no_data_limit=50,
+    overrideDates: None | list[datetime, datetime] = None,
+    scale: Literal['default', 'bits'] | list[int] = 'default',
+    bboxScale: float = BboxScaleDefault,
+) -> None:
+    for constellation in baseConstellations:
+        get_siteobservations_images(
+            self,
+            site_eval_id=site_eval_id,
+            baseConstellation=constellation,
+            force=force,
+            dayRange=dayRange,
+            no_data_limit=no_data_limit,
+            overrideDates=overrideDates,
+            scale=scale,
+            bboxScale=bboxScale,
+        )
+    fetching_task = SatelliteFetching.objects.get(site_id=site_eval_id)
+    fetching_task.status = SatelliteFetching.Status.COMPLETE
+    fetching_task.celery_id = ''
+    fetching_task.save()
+
+
 def get_siteobservations_images(
     self,
     site_eval_id: UUID4,
@@ -332,10 +361,6 @@ def get_siteobservations_images(
                 )
         else:
             count += 1
-    fetching_task = SatelliteFetching.objects.get(site_id=site_eval_id)
-    fetching_task.status = SatelliteFetching.Status.COMPLETE
-    fetching_task.celery_id = ''
-    fetching_task.save()
 
 
 @shared_task

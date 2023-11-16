@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { Ref, computed, ref, watch, withDefaults } from "vue";
+import { Ref, computed, onMounted, onUnmounted, ref, watch, withDefaults } from "vue";
 import { ApiService } from "../../client";
 import { EvaluationImage, EvaluationImageResults } from "../../types";
 import { getColorFromLabel, styles } from '../../mapstyle/annotationStyles';
@@ -74,6 +74,7 @@ const drawGroundTruth = ref(false);
 const siteEvaluationList = computed(() => Object.entries(styles).filter(([, { type }]) => type === 'sites').map(([label]) => label));
 const rescaleImage = ref(false);
 
+const playbackEnabled = ref(false); // Auto playback of images
 
 const filteredImages = computed(() => {
   return combinedImages.value.filter((item) => {
@@ -148,7 +149,7 @@ let background: HTMLCanvasElement & { ctx?: CanvasRenderingContext2D | null };
 
 const downloadingGifFPS = computed({
   get() {
-    return state.gifSettings.fps || 1;
+    return state.gifSettings.fps;
   },
   set(val: number) {
     state.gifSettings = { ...state.gifSettings, fps: val };
@@ -372,6 +373,67 @@ const setSiteModelStatus = async (status: SiteModelStatus) => {
     emit('update-list');
   }
 }
+
+const adjustImage = (direction: number) => {
+  if (currentImage.value + direction < 0) {
+    currentImage.value = filteredImages.value.length - 1;
+  } else if (currentImage.value + direction >= filteredImages.value.length) {
+    currentImage.value = 0;
+  } else {
+    currentImage.value = currentImage.value + direction
+  }
+}
+
+let loopingInterval: NodeJS.Timeout | null = null;
+
+
+const togglePlayback = () => {
+
+  if (loopingInterval && playbackEnabled.value) {
+    clearInterval(loopingInterval);
+    playbackEnabled.value = false;
+    return;
+  }
+  loopingInterval =
+  setInterval(() => {
+    adjustImage(1)
+  }, (1.0 / downloadingGifFPS.value) * 1000);
+  playbackEnabled.value = true;
+};
+
+const keyboardEventListener = (e: KeyboardEvent) => {
+  if (e.key === 'ArrowLeft') {
+    if (e.ctrlKey) {
+      currentImage.value = 0;
+    } else {
+      adjustImage(-1);
+    }
+  }
+  if (e.key === 'ArrowRight') {
+    if (e.ctrlKey) {
+      currentImage.value = filteredImages.value.length - 1;
+    } else {
+      adjustImage(1);
+    }
+  }
+  if (e.key === ' ') {
+    togglePlayback();
+  }
+}
+
+onMounted(() => {
+  window.addEventListener('keydown', keyboardEventListener);
+})
+
+onUnmounted(() => {
+  if (loopingInterval) {
+    clearInterval(loopingInterval);
+  }
+  window.removeEventListener('keydown', keyboardEventListener);
+});
+
+// Set Keyboard Shortcuts
+
 
 </script>
 
@@ -798,6 +860,40 @@ const setSiteModelStatus = async (status: SiteModelStatus) => {
       :max="filteredImages.length - 1"
       step="1"
     />
+    <v-row v-if="filteredImages.length">
+      <v-spacer />
+      <v-icon
+        class="mx-2 hover"
+        @click="currentImage = 0"
+      >
+        mdi-skip-backward
+      </v-icon>
+      <v-icon
+        class="mx-2 hover"
+        @click="adjustImage(-1)"
+      >
+        mdi-skip-previous
+      </v-icon>
+      <v-icon
+        class="mx-2 hover"
+        @click="togglePlayback()"
+      >
+        {{ playbackEnabled ? 'mdi-pause' : 'mdi-play' }}
+      </v-icon>
+      <v-icon
+        class="mx-2 hover"
+        @click="adjustImage(1)"
+      >
+        mdi-skip-next
+      </v-icon>
+      <v-icon
+        class="mx-2 hover"
+        @click="currentImage = filteredImages.length -1"
+      >
+        mdi-skip-forward
+      </v-icon>
+      <v-spacer />
+    </v-row>
     <v-progress-linear
       v-if="loading"
       indeterminate
@@ -828,6 +924,7 @@ const setSiteModelStatus = async (status: SiteModelStatus) => {
               v-model.number="downloadingGifFPS"
               type="number"
               label="FPS"
+              step="0.1"
               :rules="[v => v > 0 || 'Value must be greater than 0']"
             />
           </v-row>
@@ -989,6 +1086,11 @@ const setSiteModelStatus = async (status: SiteModelStatus) => {
 </template>
 
 <style scoped>
+.hover:hover {
+  cursor: pointer;
+  color:blue
+}
+
 .review {
   min-height: 50vh;
   max-height: 60vh;

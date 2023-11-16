@@ -76,7 +76,6 @@ const drawData = (
           }
 
           const standardPoly = (overrideHeight === -1 && !rescale) || !(poly.scaled || (overrideHeight !== -1 && overrideHeight !== imageDim[1]));
-          console.log(`StandardPoly: ${standardPoly} overrideHeight: ${overrideHeight} imageDimY: ${imageDim[1]}`)
           let widthRatio = rescale && poly.scaled ? imageDim[0] / poly.scaled.crop.width  : overrideWidth / imageDim[0];
           let heightRatio = rescale && poly.scaled  ? imageDim[1] / poly.scaled.crop.height : overrideHeight / imageDim[1];
 

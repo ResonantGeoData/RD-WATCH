@@ -147,6 +147,29 @@ const clickObservation = async (e: MapLayerMouseEvent) => {
   }
 
 }
+const clickSite = async (e: MapLayerMouseEvent) => {
+  if (e.features && e.features[0]?.properties && map.value) {
+    e.features.forEach(async (feature) => {
+    if (feature.properties) {
+        const siteId = feature.properties.uuid;
+        const obsDetails = {
+          region: feature.properties.region as string,
+          configurationId: feature.properties.configuration_id as number,
+          siteNumber: feature.properties.site_number as number,
+          version: feature.properties.version,
+          performer: feature.properties.performer_name,
+          title: feature.properties.configuration_name,
+        }
+        if (siteId && !selectedObservationList.value.includes(siteId)) {
+          await getSiteObservationDetails(siteId, obsDetails);
+        }
+      }
+    })
+  }
+
+}
+
+
 const removeSitePopupObservation = async (e: MapLayerMouseEvent) => {
   drawSitePopupObservation(e, true);
 }
@@ -240,6 +263,7 @@ let loadedFunctions: {
   mouseenterSite: (e: MapLayerMouseEvent) => Promise<void>;
   mouseleaveSite: (e: MapLayerMouseEvent) => Promise<void>;
   clickObservation: (e: MapLayerMouseEvent) => Promise<void>;
+  clickSite: (e: MapLayerMouseEvent) => Promise<void>;
 }[] = []
 const setPopupEvents = (map: ShallowRef<null | Map>) => {
   if (map.value) {
@@ -250,6 +274,7 @@ const setPopupEvents = (map: ShallowRef<null | Map>) => {
       map.value.off("mouseenter", `sites-fill-${data.id}`, data.mouseenterSite);
       map.value.off("mouseleave", `sites-fill-${data.id}`, data.mouseenterSite);
       map.value.off("click", `observations-fill-${data.id}`, data.clickObservation);
+      map.value.off("click", `sites-fill-${data.id}`, data.clickSite);
     }
     loadedFunctions = []
     for (const m of state.openedModelRuns) {
@@ -258,15 +283,17 @@ const setPopupEvents = (map: ShallowRef<null | Map>) => {
       map.value.on("mouseleave", `observations-fill-${id}`, leavePopupObservation);
       map.value.on("mouseenter", `sites-fill-${id}`, drawSitePopupObservation);
       map.value.on("mouseleave", `sites-fill-${id}`, removeSitePopupObservation);
-
       map.value.on("click", `observations-fill-${id}`, clickObservation);
+      map.value.on("click", `sites-fill-${id}`, clickSite);
       loadedFunctions.push({
         id,
         mouseenter: drawPopupObservation,
         mouseleave: leavePopupObservation,
         mouseenterSite: drawSitePopupObservation,
         mouseleaveSite: removeSitePopupObservation,
-          clickObservation});
+        clickObservation,
+        clickSite,
+      });
     }
   }
 }

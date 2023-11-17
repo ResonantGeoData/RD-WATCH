@@ -215,6 +215,7 @@ const display = ref(true);
               <v-row dense>
                 <v-menu
                   open-delay="20"
+                  :close-on-content-click="false"
                 >
                   <template #activator="{ props }">
                     <v-btn
@@ -234,6 +235,7 @@ const display = ref(true);
                 </v-menu>
                 <v-menu
                   open-delay="20"
+                  :close-on-content-click="false"
                 >
                   <template #activator="{ props }">
                     <v-btn

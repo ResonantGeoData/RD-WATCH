@@ -104,13 +104,16 @@ def vector_tile(request: HttpRequest, model_run_id: UUID4, z: int, x: int, y: in
             .alias(observation_count=Count('observations'))
             .annotate(
                 id=F('pk'),
+                uuid=F(
+                    'pk'
+                ),  # maintain consistency with scoring DB for clicking on items
                 mvtgeom=mvtgeom,
                 configuration_id=F('configuration_id'),
                 configuration_name=F('configuration__title'),
                 label=F('label__slug'),
                 timestamp=ExtractEpoch('timestamp'),
-                timemin=ExtractEpoch(Min('observations__timestamp')),
-                timemax=ExtractEpoch(Max('observations__timestamp')),
+                timemin=ExtractEpoch('start_date'),
+                timemax=ExtractEpoch('end_date'),
                 performer_id=F('configuration__performer_id'),
                 performer_name=F('configuration__performer__slug'),
                 region=F('region__name'),

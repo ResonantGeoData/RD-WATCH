@@ -2,9 +2,12 @@ import { createRouter, createWebHashHistory } from "vue-router";
 
 import RGD from './views/RGD.vue';
 import Annotation from './views/AnnotationViewer.vue';
+import FullScreenImageViewer from './views/FullScreenImageViewer.vue';
 import { ApiService } from './client/services/ApiService'; // Import your ApiService implementation
 
 const routes = [
+  { path: '/imageViewer/:siteEvalId', component: FullScreenImageViewer, props:true, },
+  { path: '/scoring/imageViewer/:siteEvalId', component: FullScreenImageViewer, props:true, },
   { path: '/scoring/:region?/:selected?', component: RGD, props:true, },
   { path: '/scoring/proposals/:region?/:selected?', component: Annotation, props:true, },
   { path: '/:region?/:selected?', component: RGD, props:true, },

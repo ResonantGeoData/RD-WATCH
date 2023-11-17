@@ -17,6 +17,7 @@ interface Props {
   siteEvaluationName?: string | null;
   dateRange?: number[] | null
   obsDetails?: ObsDetails;
+  fullscreen?: boolean;
 }
 
 
@@ -221,6 +222,7 @@ function drawForDownload() {
         background,
         drawGroundTruth.value,
         rescaleImage.value,
+        props.fullscreen,
       );
       CanvasCapture.recordFrame();
       index += 1
@@ -258,6 +260,7 @@ const load = async (newValue?: string, oldValue?: string) => {
         background,
         drawGroundTruth.value,
         rescaleImage.value,
+        props.fullscreen,
         )
   }
   loading.value = false;
@@ -296,10 +299,11 @@ watch([currentImage, imageRef, filteredImages, drawGroundTruth, rescaleImage], (
           -1,
           background,
           drawGroundTruth.value,
-          rescaleImage.value
+          rescaleImage.value,
+          props.fullscreen,
         )
     }
-    if (props.dialog === false && filteredImages.value[currentImage.value]) {
+    if (props.dialog === false && !props.fullscreen && filteredImages.value[currentImage.value]) {
       state.timestamp = filteredImages.value[currentImage.value].image.timestamp;
     }
 
@@ -440,10 +444,10 @@ onUnmounted(() => {
 <template>
   <v-card
     class="pa-4"
-    :class="{review: !dialog}"
+    :class="{review: !dialog && !fullscreen, 'fullscreen': fullscreen}"
   >
     <v-row
-      v-if="dialog"
+      v-if="dialog || fullscreen"
       dense
       class="top-bar"
     >
@@ -459,7 +463,10 @@ onUnmounted(() => {
       </v-col>
 
       <v-spacer />
-      <v-icon @click="emit('close')">
+      <v-icon
+        v-if="dialog"
+        @click="emit('close')"
+      >
         mdi-close
       </v-icon>
     </v-row>
@@ -1094,6 +1101,11 @@ onUnmounted(() => {
 .review {
   min-height: 50vh;
   max-height: 60vh;
+  overflow-y: auto;
+}
+.fullscreen {
+  min-height: 100vh;
+  max-height: 100vh;
   overflow-y: auto;
 }
 

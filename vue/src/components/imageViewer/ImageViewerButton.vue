@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { ref } from "vue";
+import { ApiService } from "../../client";
 import { ObsDetails } from "../../store";
 import ImageViewer from './ImageViewer.vue';
 
@@ -12,13 +13,25 @@ defineProps<{
 
 const displayImage = ref(false);
 
+const openNewTab = (id: string) => {
+  const name = `#${ApiService.apiPrefix.replace('api/','')}/imageViewer/${id}`
+  window.open(name, '_blank');
+};
 
 </script>
 
 <template>
   <div>
-    <v-btn @click="displayImage = true">
-      Show Image Viewer
+    <v-btn
+      @click="displayImage = true"
+    >
+      Image Viewer
+    </v-btn>
+    <v-btn
+      class="ml-2"
+      @click="openNewTab(siteEvalId)"
+    >
+      <v-icon>mdi-tab-plus</v-icon>
     </v-btn>
     <v-dialog
       v-model="displayImage"

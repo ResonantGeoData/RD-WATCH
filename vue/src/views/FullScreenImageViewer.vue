@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import ImageViewer from "../components/imageViewer/ImageViewer.vue"
 import { Ref, onMounted, ref } from "vue";
-import { ObsDetails, getSiteObservationDetails } from "../store";
+import { ObsDetails } from "../store";
 import { ApiService } from "../client";
 
 const props = defineProps(

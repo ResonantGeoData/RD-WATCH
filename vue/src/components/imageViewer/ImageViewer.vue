@@ -453,15 +453,32 @@ onUnmounted(() => {
     >
       <v-col v-if="obsDetails">
         <span>{{ obsDetails.performer }} {{ obsDetails.title }} : V{{ obsDetails.version }}</span>
+        <div v-if="hasGroundTruth">
+          <v-checkbox
+            v-model="drawGroundTruth"
+            density="compact"
+            label="Draw GT"
+          />
+        </div>
       </v-col>
       <v-col v-if="obsDetails">
         <span>{{ siteEvaluationName }}</span>
       </v-col>
 
       <v-col v-if="obsDetails">
+        <b
+          v-if="groundTruth && hasGroundTruth" 
+          class="mr-1"
+        >Model Date Range:</b>
         <span>{{ startDate }}</span> to <span> {{ endDate }}</span>
+        <div v-if="groundTruth && hasGroundTruth">
+          <b class="mr-1">GroundTruth Date Range:</b>
+          <span> {{ new Date(groundTruth.timerange.min * 1000).toISOString().split('T')[0] }}
+          </span>
+          <span> to </span>
+          <span> {{ new Date(groundTruth.timerange.max * 1000).toISOString().split('T')[0] }}</span>
+        </div>
       </v-col>
-
       <v-spacer />
       <v-icon
         v-if="dialog"
@@ -583,14 +600,6 @@ onUnmounted(() => {
             >
               mdi-pencil
             </v-icon>
-          </div>
-          <div v-if="hasGroundTruth">
-            <v-checkbox
-              v-model="drawGroundTruth"
-              density="compact"
-              label="Draw GT"
-              style="max-height:5px"
-            />
           </div>
         </v-col>
         <v-spacer />

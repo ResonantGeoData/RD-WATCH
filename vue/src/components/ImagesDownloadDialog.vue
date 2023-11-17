@@ -24,7 +24,7 @@ const bboxScale: Ref<number> = ref(1.2);
 const validForm = ref(true);
 
 const download = () => {
-    
+
     emit('download', {
         constellation: selectedSource.value,
         dayRange: dayRange.value,
@@ -90,7 +90,7 @@ const display = ref(true);
                 hint="Force redownloading all images"
                 persistent-hint
               />
-            </v-row>        
+            </v-row>
             <v-row
               dense
               align="center"
@@ -103,7 +103,7 @@ const display = ref(true);
                 label="Bit Scaling"
                 persistent-hint
               />
-            </v-row>    
+            </v-row>
             <v-row
               v-if="scale==='custom'"
               dense
@@ -123,7 +123,7 @@ const display = ref(true);
                 label="high"
                 class="mx-2"
               />
-            </v-row>    
+            </v-row>
             <v-row
               dense
               align="center"
@@ -151,7 +151,7 @@ const display = ref(true);
                   Adds a scaling factor to the calculating bounding box to provide more image area around site
                 </span>
               </v-tooltip>
-            </v-row>    
+            </v-row>
 
             <v-row
               dense

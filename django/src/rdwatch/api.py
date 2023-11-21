@@ -1,7 +1,6 @@
 from ninja import NinjaAPI
 from ninja.errors import ValidationError
 
-from .views import site
 from .views.model_run import router as model_run_router
 from .views.performer import router as performer_router
 from .views.region import router as region_router
@@ -19,7 +18,6 @@ api.add_router('/performers/', performer_router)
 api.add_router('/evaluations/images/', images_router)
 api.add_router('/regions/', region_router)
 api.add_router('/status/', server_status_router)
-api.add_router('/sites/', site.router)
 
 
 # useful for getting information back about validation errors

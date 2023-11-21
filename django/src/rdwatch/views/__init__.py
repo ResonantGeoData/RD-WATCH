@@ -1,4 +1,3 @@
-from . import site
 from .satellite_image import (
     all_satellite_timestamps,
     satelliteimage_raster_bbox,
@@ -19,5 +18,4 @@ __all__ = [
     'satelliteimage_visual_time_list',
     'all_satellite_timestamps',
     'vector_tile',
-    'site',
 ]

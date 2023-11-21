@@ -2,6 +2,7 @@ from ninja import Router, Schema
 from pydantic import UUID4
 
 from django.http import HttpRequest
+from django.shortcuts import get_object_or_404
 
 from rdwatch.models import SiteEvaluation
 
@@ -45,8 +46,9 @@ class SiteImageSiteDetailResponse(Schema):
 
 @router.get('/{id}/details', response=SiteImageSiteDetailResponse)
 def siteDetails(request: HttpRequest, id: UUID4):
-    return (
-        SiteEvaluation.objects.filter(pk=id)
-        .select_related('configuration', 'configuration__performer', 'region')
-        .first()
+    return get_object_or_404(
+        SiteEvaluation.objects.select_related(
+            'configuration', 'configuration__performer', 'region'
+        ),
+        id=id,
     )

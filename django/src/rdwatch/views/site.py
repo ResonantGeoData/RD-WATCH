@@ -1,38 +1,52 @@
 from ninja import Router, Schema
 from pydantic import UUID4
 
-from django.db.models import F
 from django.http import HttpRequest
 
-from rdwatch.db.functions import ExtractEpoch
 from rdwatch.models import SiteEvaluation
 
 router = Router()
 
 
 class SiteImageSiteDetailResponse(Schema):
-    regionName: str
-    configurationId: str | int  # some values still ints in my case
-    siteNumber: str
+    region_name: str
+    configuration_id: str | int  # some values still ints in my case
+    number: str
     version: str
     title: str
     performer: str | None
     timemin: int | None
     timemax: int | None
 
+    @staticmethod
+    def resolve_region_name(obj: SiteEvaluation) -> str:
+        return obj.region.name
+
+    @staticmethod
+    def resolve_title(obj: SiteEvaluation) -> str:
+        return obj.configuration.title
+
+    @staticmethod
+    def resolve_performer(obj: SiteEvaluation) -> str:
+        return obj.configuration.performer.slug
+
+    @staticmethod
+    def resolve_timemin(obj: SiteEvaluation) -> int | None:
+        if obj.start_date:
+            return obj.start_date.timestamp()
+        return None
+
+    @staticmethod
+    def resolve_timemax(obj: SiteEvaluation) -> int | None:
+        if obj.end_date:
+            return obj.end_date.timestamp()
+        return None
+
 
 @router.get('/{id}/details', response=SiteImageSiteDetailResponse)
 def siteDetails(request: HttpRequest, id: UUID4):
     return (
         SiteEvaluation.objects.filter(pk=id)
-        .annotate(
-            configurationId=F('configuration'),
-            title=F('configuration__title'),
-            timemin=ExtractEpoch('start_date'),
-            timemax=ExtractEpoch('end_date'),
-            regionName=F('region__name'),
-            performer=F('configuration__performer__slug'),
-            siteNumber=F('number'),
-        )
+        .select_related('configuration', 'configuration__performer', 'region')
         .first()
     )

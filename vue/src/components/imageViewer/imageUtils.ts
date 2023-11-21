@@ -49,6 +49,7 @@ const drawData = (
     background: HTMLCanvasElement & { ctx?: CanvasRenderingContext2D | null } | null = null,
     drawGroundTruth = false,
     rescale = false,
+    fullscreen = false,
     ) => {
       const context = canvas.getContext('2d');
       const imageObj = new Image();
@@ -76,7 +77,6 @@ const drawData = (
           }
 
           const standardPoly = (overrideHeight === -1 && !rescale) || !(poly.scaled || (overrideHeight !== -1 && overrideHeight !== imageDim[1]));
-          console.log(`StandardPoly: ${standardPoly} overrideHeight: ${overrideHeight} imageDimY: ${imageDim[1]}`)
           let widthRatio = rescale && poly.scaled ? imageDim[0] / poly.scaled.crop.width  : overrideWidth / imageDim[0];
           let heightRatio = rescale && poly.scaled  ? imageDim[1] / poly.scaled.crop.height : overrideHeight / imageDim[1];
 
@@ -139,8 +139,14 @@ const drawData = (
             if (poly.scaled && rescale) {
               ratio  = poly.scaled.crop.height / poly.scaled.crop.width;
             }
-            const maxHeight = document.documentElement.clientHeight * 0.30;
-            const maxWidth = document.documentElement.clientWidth - 550;
+            let heightAdjustment = 0.30;
+            let widthAdjustment = - 550;
+            if (fullscreen) {
+              heightAdjustment = 0.70;
+              widthAdjustment = 100;
+            }
+            const maxHeight = document.documentElement.clientHeight * heightAdjustment;
+            const maxWidth = document.documentElement.clientWidth - widthAdjustment;
             let width = maxWidth
             let height = width * ratio;
             if (height > maxHeight) {

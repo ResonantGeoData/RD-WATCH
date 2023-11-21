@@ -42,7 +42,7 @@ class SiteObsGeomSchema(Schema):
 class GroundTruthSchema(Schema):
     timerange: TimeRangeSchema | None = None
     geoJSON: dict
-    label: str
+    label: str | None
 
 
 class SiteImageResponse(Schema):

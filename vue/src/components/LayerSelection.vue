@@ -74,6 +74,7 @@ const toggleSite = (type?: undefined | 'model' | 'groundtruth') => {
   let copy = state.filters.drawSiteOutline;
   if (type === undefined) {
     val = !state.filters.drawSiteOutline ? ['model', 'groundtruth'] : undefined;
+
   } else {
     if (copy) {
         const index = copy.indexOf(type);
@@ -90,8 +91,13 @@ const toggleSite = (type?: undefined | 'model' | 'groundtruth') => {
         val = undefined;
     }
   }
-  state.filters = { ...state.filters, drawSiteOutline: val, scoringColoring: undefined };
+  state.filters = { ...state.filters, drawSiteOutline: val, scoringColoring: undefined, siteTimeLimits: undefined };
   checkGroundTruth();
+}
+
+const toggleSiteTimeLimits = () => {
+    state.filters = { ...state.filters, siteTimeLimits: !state.filters.siteTimeLimits, scoringColoring: undefined };
+
 }
 
 const toggleRegion = () => {
@@ -128,6 +134,7 @@ const toggleScoring = (data? : undefined | 'simple' | 'detailed') => {
           v-bind="props"
           size="large"
           :color="state.filters.drawObservations ? 'rgb(37, 99, 235)' : ''"
+          style="min-width: 200px"
           @click="toggleObs()"
         >
           <span>
@@ -177,6 +184,7 @@ const toggleScoring = (data? : undefined | 'simple' | 'detailed') => {
           v-bind="props"
           size="large"
           :color="state.filters.drawSiteOutline ? 'rgb(37, 99, 235)' : ''"
+          style="min-width:150px"
           @click="toggleSite()"
         >
           <span>
@@ -191,6 +199,11 @@ const toggleScoring = (data? : undefined | 'simple' | 'detailed') => {
             v-if="state.filters.drawSiteOutline?.includes('groundtruth')"
           >
             mdi-alpha-t-box
+          </v-icon>
+          <v-icon
+            v-if="state.filters.siteTimeLimits"
+          >
+            mdi-clock
           </v-icon>
         </v-btn>
       </template>
@@ -214,6 +227,15 @@ const toggleScoring = (data? : undefined | 'simple' | 'detailed') => {
               mdi-alpha-t-box
             </v-icon>
           </v-list-item>
+          <v-list-item
+            value="GroundTruth"
+            @click="toggleSiteTimeLimits()"
+          >
+            Time Limits
+            <v-icon>
+              mdi-clock
+            </v-icon>
+          </v-list-item>
         </v-list>
       </v-card>
     </v-menu>
@@ -235,6 +257,7 @@ const toggleScoring = (data? : undefined | 'simple' | 'detailed') => {
           v-bind="props"
           size="large"
           :color="state.filters.scoringColoring ? 'rgb(37, 99, 235)' : ''"
+          style="min-width:125px"
           @click="toggleScoring()"
         >
           <span>

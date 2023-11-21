@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { Ref, computed, ref, watch, withDefaults } from "vue";
+import { Ref, computed, onMounted, onUnmounted, ref, watch, withDefaults } from "vue";
 import { ApiService } from "../../client";
 import { EvaluationImage, EvaluationImageResults } from "../../types";
 import { getColorFromLabel, styles } from '../../mapstyle/annotationStyles';
@@ -17,6 +17,7 @@ interface Props {
   siteEvaluationName?: string | null;
   dateRange?: number[] | null
   obsDetails?: ObsDetails;
+  fullscreen?: boolean;
 }
 
 
@@ -74,6 +75,7 @@ const drawGroundTruth = ref(false);
 const siteEvaluationList = computed(() => Object.entries(styles).filter(([, { type }]) => type === 'sites').map(([label]) => label));
 const rescaleImage = ref(false);
 
+const playbackEnabled = ref(false); // Auto playback of images
 
 const filteredImages = computed(() => {
   return combinedImages.value.filter((item) => {
@@ -148,7 +150,7 @@ let background: HTMLCanvasElement & { ctx?: CanvasRenderingContext2D | null };
 
 const downloadingGifFPS = computed({
   get() {
-    return state.gifSettings.fps || 1;
+    return state.gifSettings.fps;
   },
   set(val: number) {
     state.gifSettings = { ...state.gifSettings, fps: val };
@@ -220,6 +222,7 @@ function drawForDownload() {
         background,
         drawGroundTruth.value,
         rescaleImage.value,
+        props.fullscreen,
       );
       CanvasCapture.recordFrame();
       index += 1
@@ -257,6 +260,7 @@ const load = async (newValue?: string, oldValue?: string) => {
         background,
         drawGroundTruth.value,
         rescaleImage.value,
+        props.fullscreen,
         )
   }
   loading.value = false;
@@ -295,10 +299,11 @@ watch([currentImage, imageRef, filteredImages, drawGroundTruth, rescaleImage], (
           -1,
           background,
           drawGroundTruth.value,
-          rescaleImage.value
+          rescaleImage.value,
+          props.fullscreen,
         )
     }
-    if (props.dialog === false && filteredImages.value[currentImage.value]) {
+    if (props.dialog === false && !props.fullscreen && filteredImages.value[currentImage.value]) {
       state.timestamp = filteredImages.value[currentImage.value].image.timestamp;
     }
 
@@ -373,31 +378,112 @@ const setSiteModelStatus = async (status: SiteModelStatus) => {
   }
 }
 
+const adjustImage = (direction: number) => {
+  if (currentImage.value + direction < 0) {
+    currentImage.value = filteredImages.value.length - 1;
+  } else if (currentImage.value + direction >= filteredImages.value.length) {
+    currentImage.value = 0;
+  } else {
+    currentImage.value = currentImage.value + direction
+  }
+}
+
+let loopingInterval: NodeJS.Timeout | null = null;
+
+
+const togglePlayback = () => {
+
+  if (loopingInterval && playbackEnabled.value) {
+    clearInterval(loopingInterval);
+    playbackEnabled.value = false;
+    return;
+  }
+  loopingInterval =
+  setInterval(() => {
+    adjustImage(1)
+  }, (1.0 / downloadingGifFPS.value) * 1000);
+  playbackEnabled.value = true;
+};
+
+const keyboardEventListener = (e: KeyboardEvent) => {
+  if (e.key === 'ArrowLeft') {
+    if (e.ctrlKey) {
+      currentImage.value = 0;
+    } else {
+      adjustImage(-1);
+    }
+  }
+  if (e.key === 'ArrowRight') {
+    if (e.ctrlKey) {
+      currentImage.value = filteredImages.value.length - 1;
+    } else {
+      adjustImage(1);
+    }
+  }
+  if (e.key === ' ') {
+    togglePlayback();
+  }
+}
+
+onMounted(() => {
+  window.addEventListener('keydown', keyboardEventListener);
+})
+
+onUnmounted(() => {
+  if (loopingInterval) {
+    clearInterval(loopingInterval);
+  }
+  window.removeEventListener('keydown', keyboardEventListener);
+});
+
+// Set Keyboard Shortcuts
+
+
 </script>
 
 <template>
   <v-card
     class="pa-4"
-    :class="{review: !dialog}"
+    :class="{review: !dialog && !fullscreen, 'fullscreen': fullscreen}"
   >
     <v-row
-      v-if="dialog"
+      v-if="dialog || fullscreen"
       dense
       class="top-bar"
     >
       <v-col v-if="obsDetails">
         <span>{{ obsDetails.performer }} {{ obsDetails.title }} : V{{ obsDetails.version }}</span>
+        <div v-if="hasGroundTruth">
+          <v-checkbox
+            v-model="drawGroundTruth"
+            density="compact"
+            label="Draw GT"
+          />
+        </div>
       </v-col>
       <v-col v-if="obsDetails">
         <span>{{ siteEvaluationName }}</span>
       </v-col>
 
       <v-col v-if="obsDetails">
+        <b
+          v-if="groundTruth && hasGroundTruth" 
+          class="mr-1"
+        >Model Date Range:</b>
         <span>{{ startDate }}</span> to <span> {{ endDate }}</span>
+        <div v-if="groundTruth && hasGroundTruth">
+          <b class="mr-1">GroundTruth Date Range:</b>
+          <span> {{ new Date(groundTruth.timerange.min * 1000).toISOString().split('T')[0] }}
+          </span>
+          <span> to </span>
+          <span> {{ new Date(groundTruth.timerange.max * 1000).toISOString().split('T')[0] }}</span>
+        </div>
       </v-col>
-
       <v-spacer />
-      <v-icon @click="emit('close')">
+      <v-icon
+        v-if="dialog"
+        @click="emit('close')"
+      >
         mdi-close
       </v-icon>
     </v-row>
@@ -514,14 +600,6 @@ const setSiteModelStatus = async (status: SiteModelStatus) => {
             >
               mdi-pencil
             </v-icon>
-          </div>
-          <div v-if="hasGroundTruth">
-            <v-checkbox
-              v-model="drawGroundTruth"
-              density="compact"
-              label="Draw GT"
-              style="max-height:5px"
-            />
           </div>
         </v-col>
         <v-spacer />
@@ -798,6 +876,40 @@ const setSiteModelStatus = async (status: SiteModelStatus) => {
       :max="filteredImages.length - 1"
       step="1"
     />
+    <v-row v-if="filteredImages.length">
+      <v-spacer />
+      <v-icon
+        class="mx-2 hover"
+        @click="currentImage = 0"
+      >
+        mdi-skip-backward
+      </v-icon>
+      <v-icon
+        class="mx-2 hover"
+        @click="adjustImage(-1)"
+      >
+        mdi-skip-previous
+      </v-icon>
+      <v-icon
+        class="mx-2 hover"
+        @click="togglePlayback()"
+      >
+        {{ playbackEnabled ? 'mdi-pause' : 'mdi-play' }}
+      </v-icon>
+      <v-icon
+        class="mx-2 hover"
+        @click="adjustImage(1)"
+      >
+        mdi-skip-next
+      </v-icon>
+      <v-icon
+        class="mx-2 hover"
+        @click="currentImage = filteredImages.length -1"
+      >
+        mdi-skip-forward
+      </v-icon>
+      <v-spacer />
+    </v-row>
     <v-progress-linear
       v-if="loading"
       indeterminate
@@ -828,6 +940,7 @@ const setSiteModelStatus = async (status: SiteModelStatus) => {
               v-model.number="downloadingGifFPS"
               type="number"
               label="FPS"
+              step="0.1"
               :rules="[v => v > 0 || 'Value must be greater than 0']"
             />
           </v-row>
@@ -989,9 +1102,19 @@ const setSiteModelStatus = async (status: SiteModelStatus) => {
 </template>
 
 <style scoped>
+.hover:hover {
+  cursor: pointer;
+  color:blue
+}
+
 .review {
   min-height: 50vh;
   max-height: 60vh;
+  overflow-y: auto;
+}
+.fullscreen {
+  min-height: 100vh;
+  max-height: 100vh;
   overflow-y: auto;
 }
 

@@ -96,6 +96,26 @@ export const buildSiteFilter = (
     ],
   ];
 
+  if (filters.siteTimeLimits) {
+    filter.push(
+      [
+        'all',
+        [
+          "case",
+          ["==", ["to-boolean", ["get", "timemin"]], false], true,
+          ["<=", ["get", "timemin"], timestamp], true,
+          false
+        ],
+        [
+          "case",
+          ["==", ["to-boolean", ["get", "timemax"]], false], true,
+          [">", ["get", "timemax"], timestamp], true,
+          false,
+        ],
+      ]
+    );
+  }
+
   const hasGroundTruth = filters.drawSiteOutline?.includes('groundtruth');
   const hasModel = filters.drawSiteOutline?.includes('model');
   if (!filters.drawSiteOutline && !filters.scoringColoring) {

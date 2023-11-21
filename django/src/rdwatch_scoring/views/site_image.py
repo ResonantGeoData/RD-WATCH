@@ -97,8 +97,7 @@ def site_images(request: HttpRequest, id: UUID4):
     ground_truth = (
         Site.objects.filter(
             region=site.region,
-            evaluation_run_uuid__performer='te',
-            score=1,
+            originator='te',
         )
         .values()
         .annotate(

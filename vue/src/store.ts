@@ -14,6 +14,7 @@ export interface MapFilters {
   otherPattern?: boolean;
   hoverSiteId?: string;
   showText?: boolean;
+  siteTimeLimits?: boolean;
 }
 
 export interface SatelliteTimeStamp {
@@ -216,6 +217,7 @@ export const selectedObservationList = computed(() => {
   const selected = state.selectedObservations;
   return selected.map((item) => item.id);
 })
+
 
 
 export const getSiteObservationDetails = async (siteId: string, obsDetails?: ObsDetails, select=true) => {

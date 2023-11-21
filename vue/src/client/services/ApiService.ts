@@ -98,6 +98,17 @@ export interface DownloadSettings {
 
 export type CeleryStates = 'FAILURE' | 'PENDING' | 'SUCCESS' | 'RETRY' | 'REVOKED' | 'STARTED';
 
+export interface SiteDetails {
+  regionName: string;
+  configurationId: number;
+  siteNumber: string;
+  version: string;
+  performer: string;
+  title: string;
+  timemin: number;
+  timemax: number;
+}
+
 export class ApiService {
   public static apiPrefix = "/api";
 
@@ -146,6 +157,23 @@ export class ApiService {
     });
   }
 
+    /**
+   * @param id
+   * @returns SiteObservationList
+   * @throws ApiError
+   */
+    public static getSiteDetails(
+      id: string
+    ): CancelablePromise<SiteDetails> {
+      return __request(OpenAPI, {
+        method: "GET",
+        url: `${this.apiPrefix}/sites/{id}/details`,
+        path: {
+          id: id,
+        },
+      });
+    }
+  
       /**
    * @param id
    * @returns boolean

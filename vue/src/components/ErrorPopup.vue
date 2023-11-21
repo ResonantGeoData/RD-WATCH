@@ -54,7 +54,7 @@ function copyToClipboard(text: string) {
     <template #actions>
       <v-btn
         color="info"
-        variant="text"
+        variant="flat"
         @click="emit('close')"
       >
         Close

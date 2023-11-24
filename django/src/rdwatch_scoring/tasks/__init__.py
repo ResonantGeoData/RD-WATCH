@@ -4,11 +4,14 @@ from datetime import date, datetime, timedelta
 from typing import Literal
 from uuid import uuid4
 
+from celery import shared_task
+from celery.result import AsyncResult
 from PIL import Image
 from pydantic import UUID4
 
 from django.contrib.gis.geos import Polygon
 from django.core.files import File
+from django.db import transaction
 
 from rdwatch.celery import app
 from rdwatch.tasks import (
@@ -336,3 +339,27 @@ def get_siteobservations_images(
                 )
         else:
             count += 1
+
+
+@shared_task
+def cancel_generate_images_task(model_run_id: UUID4) -> None:
+    sites = Site.objects.filter(evaluation_run_uuid=model_run_id)
+
+    for eval in sites.iterator():
+        with transaction.atomic():
+            # Use select_for_update here to lock the SatelliteFetching row
+            # for the duration of this transaction in order to ensure its
+            # status doesn't change out from under us
+            fetching_task = (
+                SatelliteFetching.objects.select_for_update()
+                .filter(site=eval.pk)
+                .first()
+            )
+            if fetching_task is not None:
+                if fetching_task.status == SatelliteFetching.Status.RUNNING:
+                    if fetching_task.celery_id != '':
+                        task = AsyncResult(fetching_task.celery_id)
+                        task.revoke(terminate=True)
+                    fetching_task.status = SatelliteFetching.Status.COMPLETE
+                    fetching_task.celery_id = ''
+                    fetching_task.save()

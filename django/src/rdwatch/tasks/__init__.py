@@ -10,6 +10,7 @@ from typing import Literal
 from uuid import uuid4
 
 from celery import shared_task
+from celery.result import AsyncResult
 from PIL import Image
 from pydantic import UUID4
 from pyproj import Transformer
@@ -441,3 +442,27 @@ def download_annotations(self, id: UUID4, mode: Literal['all', 'approved', 'reje
         )
         annotation_export.export_file.save(f'{task_id}.zip', File(temp_zip_file))
         temp_zip_file.close()
+
+
+@shared_task
+def cancel_generate_images_task(model_run_id: UUID4) -> None:
+    site_evaluations = SiteEvaluation.objects.filter(configuration=model_run_id)
+
+    for eval in site_evaluations.iterator():
+        with transaction.atomic():
+            # Use select_for_update here to lock the SatelliteFetching row
+            # for the duration of this transaction in order to ensure its
+            # status doesn't change out from under us
+            fetching_task = (
+                SatelliteFetching.objects.select_for_update()
+                .filter(site=eval.pk)
+                .first()
+            )
+            if fetching_task is not None:
+                if fetching_task.status == SatelliteFetching.Status.RUNNING:
+                    if fetching_task.celery_id != '':
+                        task = AsyncResult(fetching_task.celery_id)
+                        task.revoke(terminate=True)
+                    fetching_task.status = SatelliteFetching.Status.COMPLETE
+                    fetching_task.celery_id = ''
+                    fetching_task.save()

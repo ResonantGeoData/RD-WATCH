@@ -9,7 +9,6 @@ from pydantic import UUID4, constr  # type: ignore
 
 from django.contrib.postgres.aggregates import JSONBAgg
 from django.core.cache import cache
-from django.db import transaction
 from django.db.models import (
     Avg,
     Case,
@@ -40,7 +39,7 @@ from rdwatch.models import (
 )
 from rdwatch.schemas import RegionModel, SiteModel
 from rdwatch.schemas.common import TimeRangeSchema
-from rdwatch.tasks import download_annotations
+from rdwatch.tasks import cancel_generate_images_task, download_annotations
 from rdwatch.views.performer import PerformerSchema
 from rdwatch.views.site_observation import (
     GenerateImagesSchema,
@@ -390,26 +389,9 @@ def generate_images(
     response={202: bool, 409: str, 404: str},
 )
 def cancel_generate_images(request: HttpRequest, model_run_id: UUID4):
-    siteEvaluations = SiteEvaluation.objects.filter(configuration=model_run_id)
+    get_object_or_404(ModelRun, id=model_run_id)  # existence check
 
-    for eval in siteEvaluations:
-        with transaction.atomic():
-            # Use select_for_update here to lock the SatelliteFetching row
-            # for the duration of this transaction in order to ensure its
-            # status doesn't change out from under us
-            fetching_task = (
-                SatelliteFetching.objects.select_for_update()
-                .filter(site=eval.pk)
-                .first()
-            )
-            if fetching_task is not None:
-                if fetching_task.status == SatelliteFetching.Status.RUNNING:
-                    if fetching_task.celery_id != '':
-                        task = AsyncResult(fetching_task.celery_id)
-                        task.revoke(terminate=True)
-                    fetching_task.status = SatelliteFetching.Status.COMPLETE
-                    fetching_task.celery_id = ''
-                    fetching_task.save()
+    cancel_generate_images_task.delay(model_run_id)
 
     return 202, True
 

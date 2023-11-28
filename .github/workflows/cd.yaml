@@ -52,6 +52,8 @@ jobs:
     name: Build [rdwatch-cli]
     runs-on: ubuntu-latest
     steps:
+      - name: Update Package References
+        run: sudo apt-get update
       - name: Install system dependencies
         run: apt-fast install --no-install-recommends --yes
           libgdal30

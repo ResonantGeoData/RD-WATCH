@@ -1,12 +1,9 @@
 import logging
-from datetime import timedelta
-from typing import Any
 
-from ninja import Field, FilterSchema, Query, Schema
-from ninja.pagination import PageNumberPagination, RouterPaginated, paginate
+from ninja import FilterSchema, Query
+from ninja.pagination import RouterPaginated
 from pydantic import UUID4
 
-from django.core.cache import cache
 from django.db.models import (
     Avg,
     CharField,
@@ -19,7 +16,6 @@ from django.db.models import (
     Max,
     Min,
     Q,
-    QuerySet,
     Value,
 )
 from django.db.models.functions import Concat, JSONObject, NullIf
@@ -27,8 +23,7 @@ from django.http import HttpRequest
 from django.shortcuts import get_object_or_404
 
 from rdwatch.db.functions import ExtractEpoch
-from rdwatch.schemas.common import TimeRangeSchema
-from rdwatch.views.model_run import ModelRunDetailSchema, ModelRunListSchema
+from rdwatch.views.model_run import ModelRunDetailSchema, ModelRunPagination
 from rdwatch_scoring.models import EvaluationRun, SatelliteFetching, Site
 from rdwatch_scoring.tasks import cancel_generate_images_task
 from rdwatch_scoring.views.observation import (
@@ -42,7 +37,7 @@ router = RouterPaginated()
 
 
 class ModelRunFilterSchema(FilterSchema):
-    performer: list[str] | None = Field(q='performer_slug')
+    performer: list[str] | None
     region: str | None
     # proposal: str | None = Field(q='proposal', ignore_none=False)
 
@@ -51,7 +46,7 @@ class ModelRunFilterSchema(FilterSchema):
             return Q()
         performer_q = Q()
         for performer_slug in value:
-            performer_q |= Q(performer_slug=performer_slug)
+            performer_q |= Q(performer=performer_slug)
         return performer_q
 
 
@@ -100,96 +95,107 @@ def get_queryset():
     )
 
 
-class ModelRunPagination(PageNumberPagination):
-    class Output(Schema):
-        count: int
-        timerange: TimeRangeSchema | None = None
-        bbox: dict | None = None
-        items: list[ModelRunListSchema]
-
-    def paginate_queryset(
-        self,
-        queryset: QuerySet,
-        pagination: PageNumberPagination.Input,
-        filters: ModelRunFilterSchema,
-        **params,
-    ) -> dict[str, Any]:
-        # TODO: remove caching after model runs endpoint is
-        # refactored to be more efficient.
-        cache_key = _get_model_runs_cache_key(filters.dict())
-        model_runs = cache.get(cache_key)
-
-        # If we have a cache miss, execute the query and save the results to cache
-        # before returning.
-        if model_runs is None:
-            qs = super().paginate_queryset(queryset, pagination, **params)
-
-            aggregate_kwargs = {
-                'timerange': JSONObject(
-                    min=ExtractEpoch(Min('site__start_date')),
-                    max=ExtractEpoch(Max('site__end_date')),
-                ),
-            }
-            if filters.region:
-                aggregate_kwargs['bbox'] = Max(
-                    Func(
-                        F('site__region__geometry'),
-                        4326,
-                        function='ST_AsGeoJSON',
-                        output_field=JSONField(),
-                    )
-                )
-
-            model_runs = qs | queryset.aggregate(**aggregate_kwargs)
-            cache.set(
-                key=cache_key,
-                value=model_runs,
-                timeout=timedelta(days=30).total_seconds(),
-            )
-
-        fetch_counts = (
-            SatelliteFetching.objects.filter(status=SatelliteFetching.Status.RUNNING)
-            .values('model_run_uuid')
-            .order_by('model_run_uuid')
-            .annotate(total=Count('model_run_uuid'))
-        )
-        # convert it into a dictionary for easy indexing
-        fetching = {}
-        for item in fetch_counts:
-            if item['model_run_uuid']:
-                fetching[item['model_run_uuid']] = item['total']
-
-        for item in model_runs['items']:
-            if item['uuid'] in fetching.keys():
-                item['downloading'] = fetching[item['uuid']]
-
-        return model_runs
-
-
-def _get_model_runs_cache_key(params: dict) -> str:
-    """Generate a cache key for the model runs listing endpoint."""
-    most_recent_evaluation = EvaluationRun.objects.aggregate(
-        latest_eval=Max('start_datetime')
-    )['latest_eval']
-
-    return '|'.join(
-        [
-            EvaluationRun.__name__,
-            str(most_recent_evaluation),
-            *[f'{key}={value}' for key, value in params.items()],
-        ]
-    ).replace(' ', '_')
-
-
-@router.get('/', response={200: list[ModelRunListSchema]})
-@paginate(ModelRunPagination)
+@router.get('/', response={200: ModelRunPagination.Output})
 def list_model_runs(
     request: HttpRequest,
     filters: ModelRunFilterSchema = Query(...),  # noqa: B008
 ):
-    data = filters.filter(get_queryset())
+    page_size: int = 10  # TODO: use settings.NINJA_PAGINATION_PER_PAGE?
+    page = int(request.GET.get('page', 1))
 
-    return data
+    qs = filters.filter(EvaluationRun.objects.all())
+
+    ids = qs[((page - 1) * page_size) : (page * page_size)].values_list(
+        'uuid', flat=True
+    )
+    total_count = qs.count()
+
+    qs = (
+        EvaluationRun.objects.filter(uuid__in=ids)
+        .values()
+        .annotate(
+            id=F('uuid'),
+            title=Concat(
+                Value('Eval '),
+                'evaluation_number',
+                Value('.'),
+                'evaluation_run_number',
+                Value(' '),
+                'performer',
+                output_field=CharField(),
+            ),
+            performer=JSONObject(
+                id=0, team_name=F('performer'), short_code=F('performer')
+            ),
+            parameters=Value({}, output_field=JSONField()),
+            created=F('start_datetime'),
+            expiration_time=Value(None, output_field=DateTimeField()),
+            evaluation=F('evaluation_number'),
+            evaluation_run=F('evaluation_run_number'),
+            proposal=Value(None, output_field=CharField()),
+            adjudicated=JSONObject(
+                proposed=0,
+                other=0,
+            ),
+            score=Avg(
+                NullIf(
+                    'site__confidence_score', Value('NaN'), output_field=FloatField()
+                )
+            ),
+            numsites=Count('site__uuid'),
+            timestamp=ExtractEpoch(Max('site__end_date')),
+            timerange=JSONObject(
+                min=ExtractEpoch(Min('site__start_date')),
+                max=ExtractEpoch(Max('site__end_date')),
+            ),
+            bbox=Func(
+                F('site__region__geometry'),
+                4326,
+                function='ST_AsGeoJSON',
+                output_field=JSONField(),
+            ),
+        )
+    )
+
+    aggregate_kwargs = {
+        'timerange': JSONObject(
+            min=ExtractEpoch(Min('site__start_date')),
+            max=ExtractEpoch(Max('site__end_date')),
+        ),
+    }
+    if filters.region:
+        aggregate_kwargs['bbox'] = Max(
+            Func(
+                F('site__region__geometry'),
+                4326,
+                function='ST_AsGeoJSON',
+                output_field=JSONField(),
+            )
+        )
+
+    model_runs = {
+        'items': list(qs),
+        'count': total_count,
+        **qs.aggregate(**aggregate_kwargs),
+    }
+
+    fetch_counts = (
+        SatelliteFetching.objects.filter(status=SatelliteFetching.Status.RUNNING)
+        .values('model_run_uuid')
+        .order_by('model_run_uuid')
+        .annotate(total=Count('model_run_uuid'))
+    )
+    # convert it into a dictionary for easy indexing
+    fetching = {}
+    for item in fetch_counts:
+        if item['model_run_uuid']:
+            fetching[item['model_run_uuid']] = item['total']
+
+    for item in model_runs['items']:
+        if item['uuid'] in fetching.keys():
+            item['downloading'] = fetching[item['uuid']]
+
+    return model_runs
 
 
 @router.get('/{id}/', response={200: ModelRunDetailSchema})

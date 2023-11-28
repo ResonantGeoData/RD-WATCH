@@ -96,7 +96,7 @@ class BaseConfiguration(Configuration):
         return db_dict
 
     NINJA_PAGINATION_CLASS = 'ninja.pagination.PageNumberPagination'
-    NINJA_PAGINATION_PAGE_SIZE = 100
+    NINJA_PAGINATION_PER_PAGE = 100
 
     CACHES = {
         'default': {

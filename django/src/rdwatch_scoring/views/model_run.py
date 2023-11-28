@@ -155,7 +155,7 @@ def list_model_runs(
                 output_field=JSONField(),
             ),
         )
-    )
+    ).order_by('-start_datetime')
 
     aggregate_kwargs = {
         'timerange': JSONObject(

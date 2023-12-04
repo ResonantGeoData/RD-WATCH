@@ -37,10 +37,10 @@ const download = debounce(
       bboxScale: bboxScale.value,
     });
   },
-  2000,
+  5000,
 );
 
-const cancel = debounce(() => emit('cancel'), 2000);
+const cancel = debounce(() => emit('cancel'), 5000);
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 const updateTime = (time: any, date: 'StartDate' | 'EndDate') => {

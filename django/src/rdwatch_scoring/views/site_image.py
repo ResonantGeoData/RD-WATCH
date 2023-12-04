@@ -7,7 +7,6 @@ from django.core.files.storage import default_storage
 from django.db.models import Count, F, Func, Value
 from django.db.models.functions import JSONObject
 from django.http import HttpRequest
-from django.shortcuts import get_object_or_404
 
 from rdwatch.db.functions import BoundingBox, ExtractEpoch
 from rdwatch.views.site_image import SiteImageResponse
@@ -18,7 +17,6 @@ router = Router()
 
 @router.get('/{id}/', response=SiteImageResponse)
 def site_images(request: HttpRequest, id: UUID4):
-    site = get_object_or_404(Site, pk=id)
     image_queryset = (
         SiteImage.objects.filter(site=id)
         .order_by('timestamp')
@@ -93,29 +91,8 @@ def site_images(request: HttpRequest, id: UUID4):
             )
         )[0]
     )
-    # get the same Region_#### for ground truth if it exists
-    ground_truth = (
-        Site.objects.filter(
-            region=site.region,
-            originator='te',
-        )
-        .values()
-        .annotate(
-            json=JSONObject(
-                label=F('predicted_phase'),
-                timerange=JSONObject(
-                    min=ExtractEpoch('start_date'),
-                    max=ExtractEpoch('end_date'),
-                ),
-                geoJSON=Func(
-                    F('union_geometry'),
-                    4326,
-                    function='ST_GeomFromText',
-                    output_field=GeometryField(),
-                ),
-            )
-        )
-    )
+    # GroundTruth requires BAS search and looking into an array of
+    # matching generated SiteIds
     output = {}
     # lets get the presigned URL for each image
     for image in image_queryset['results']:
@@ -125,8 +102,6 @@ def site_images(request: HttpRequest, id: UUID4):
     output['label'] = site_eval_data['json']['label']
     output['status'] = site_eval_data['json']['status']
     output['notes'] = site_eval_data['json']['notes']
-    if ground_truth.exists():
-        output['groundTruth'] = ground_truth[0]['json']
     output['evaluationGeoJSON'] = site_eval_data['json']['evaluationGeoJSON']
     output['evaluationBBox'] = site_eval_data['json']['evaluationBBox']
     return output

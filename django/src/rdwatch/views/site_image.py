@@ -36,7 +36,7 @@ class SiteObsGeomSchema(Schema):
     timestamp: int | None
     geoJSON: dict  # TODO: Replace with pydantics geoJSON
     bbox: dict
-    label: str
+    label: str | None
 
 
 class GroundTruthSchema(Schema):

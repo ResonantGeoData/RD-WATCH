@@ -1,3 +1,4 @@
+import logging
 from ninja import Router
 from pydantic import UUID4
 
@@ -11,7 +12,10 @@ from django.shortcuts import get_object_or_404
 
 from rdwatch.db.functions import BoundingBox, ExtractEpoch
 from rdwatch.views.site_image import SiteImageResponse
-from rdwatch_scoring.models import Observation, Site, SiteImage
+from rdwatch_scoring.models import Observation, Site, SiteImage, EvaluationBroadAreaSearchProposal
+
+logger = logging.getLogger(__name__)
+
 
 router = Router()
 
@@ -94,28 +98,6 @@ def site_images(request: HttpRequest, id: UUID4):
         )[0]
     )
     # get the same Region_#### for ground truth if it exists
-    ground_truth = (
-        Site.objects.filter(
-            region=site.region,
-            originator='te',
-        )
-        .values()
-        .annotate(
-            json=JSONObject(
-                label=F('predicted_phase'),
-                timerange=JSONObject(
-                    min=ExtractEpoch('start_date'),
-                    max=ExtractEpoch('end_date'),
-                ),
-                geoJSON=Func(
-                    F('union_geometry'),
-                    4326,
-                    function='ST_GeomFromText',
-                    output_field=GeometryField(),
-                ),
-            )
-        )
-    )
     output = {}
     # lets get the presigned URL for each image
     for image in image_queryset['results']:
@@ -125,8 +107,6 @@ def site_images(request: HttpRequest, id: UUID4):
     output['label'] = site_eval_data['json']['label']
     output['status'] = site_eval_data['json']['status']
     output['notes'] = site_eval_data['json']['notes']
-    if ground_truth.exists():
-        output['groundTruth'] = ground_truth[0]['json']
     output['evaluationGeoJSON'] = site_eval_data['json']['evaluationGeoJSON']
     output['evaluationBBox'] = site_eval_data['json']['evaluationBBox']
     return output

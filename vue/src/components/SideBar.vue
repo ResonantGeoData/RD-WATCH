@@ -57,6 +57,15 @@ const imagesOn = computed({
   },
 });
 
+const drawMap = computed({
+  get() {
+    return state.filters.drawMap || false;
+  },
+  set(val: boolean) {
+    state.filters = { ...state.filters, drawMap: val };
+  },
+});
+
 
 function nextPage() {
   page.value += 1;
@@ -121,6 +130,14 @@ const toggleText = () => {
         class="py-2"
       >
         <v-spacer />
+        <v-btn
+          variant="text"
+          density="compact"
+          class="pa-0 ma-0"
+          :color="drawMap ? 'rgb(37, 99, 235)' : 'black'"
+          icon="mdi-road"
+          @click="drawMap = !drawMap"
+        />
         <v-btn
           variant="text"
           density="compact"

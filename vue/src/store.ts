@@ -15,6 +15,7 @@ export interface MapFilters {
   hoverSiteId?: string;
   showText?: boolean;
   siteTimeLimits?: boolean;
+  drawMap?: boolean;
 }
 
 export interface SatelliteTimeStamp {
@@ -171,6 +172,7 @@ export const state = reactive<{
     groundTruthPattern: false,
     otherPattern: false,
     showText: false,
+    drawMap: true,
   },
   mapLegend: true,
   satellite: {

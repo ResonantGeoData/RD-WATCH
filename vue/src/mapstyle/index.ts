@@ -31,7 +31,7 @@ export const style = (
   version: 8,
   sources: {
     ...naturalearthSources,
-    ...openmaptilesSources,
+    ...openmaptilesSources(filters),
     ...buildSatelliteSourceFilter(timestamp, satellite),
     ...buildImageSourceFilter(timestamp, enabledSiteObservations, settings),
     ...buildRdwatchtilesSources(modelRunIds),
@@ -42,10 +42,10 @@ export const style = (
     {
       id: "background",
       type: "background",
-      paint: { "background-color": "rgb(239,239,239)" },
+      paint: { "background-color": "rgb(133, 133, 133)" },
     },
     ...naturalearthLayers,
-    ...openmaptilesLayers,
+    ...openmaptilesLayers(filters),
     ...satelliteLayers(timestamp, satellite),
     ...buildImageLayerFilter(timestamp, enabledSiteObservations, settings),
     ...rdwatchtilesLayers(timestamp, filters, modelRunIds),

@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { Ref, ref } from "vue";
+import { debounce } from 'lodash';
 import { VDatePicker } from 'vuetify/labs/VDatePicker'
 import { Constellation, DownloadSettings } from "../client/services/ApiService";
 
@@ -23,19 +24,23 @@ const scaleNums: Ref<[number, number]> = ref([0, 10000])
 const bboxScale: Ref<number> = ref(1.2);
 const validForm = ref(true);
 
-const download = () => {
-
+const download = debounce(
+  () => {
     emit('download', {
-        constellation: selectedSource.value,
-        dayRange: dayRange.value,
-        noData: noData.value,
-        overrideDates: customDateRange.value ? overrideDates.value : undefined,
-        force: force.value,
-        scale: scale.value,
-        scaleNum: scale.value === 'custom' ? scaleNums.value : undefined,
-        bboxScale: bboxScale.value,
-    })
-}
+      constellation: selectedSource.value,
+      dayRange: dayRange.value,
+      noData: noData.value,
+      overrideDates: customDateRange.value ? overrideDates.value : undefined,
+      force: force.value,
+      scale: scale.value,
+      scaleNum: scale.value === 'custom' ? scaleNums.value : undefined,
+      bboxScale: bboxScale.value,
+    });
+  },
+  5000,
+);
+
+const cancel = debounce(() => emit('cancel'), 5000);
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 const updateTime = (time: any, date: 'StartDate' | 'EndDate') => {
@@ -264,7 +269,7 @@ const display = ref(true);
           <v-btn
             color="error"
             class="mx-3"
-            @click="emit('cancel')"
+            @click="cancel()"
           >
             Cancel
           </v-btn>

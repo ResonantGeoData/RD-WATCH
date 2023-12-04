@@ -6,6 +6,7 @@ import { timeRangeFormat } from "../utils";
 import ImagesDownloadDialog from "./ImagesDownloadDialog.vue";
 import { DownloadSettings } from "../client/services/ApiService";
 import { useRoute } from "vue-router";
+import { debounce } from 'lodash';
 
 interface Props {
   modelRun: ModelRun;
@@ -43,19 +44,19 @@ const updateDownloading = async () => {
 
 }
 
-const startDownload = (data: DownloadSettings) => {
-  ApiService.getModelRunImages(props.modelRun.id.toString(), data )
+const startDownload = debounce((data: DownloadSettings) => {
+  ApiService.getModelRunImages(props.modelRun.id.toString(), data)
   downloadImages.value = false;
   downloading.value = props.modelRun.numsites;
   setTimeout(() => {
-  updateDownloading();
-  loopingInterval = setInterval(updateDownloading, 1000);
-  }, 2000)
-}
+    updateDownloading();
+    loopingInterval = setInterval(updateDownloading, 1000);
+  }, 2000);
+}, 2000);
 
-const cancelDownload = () => {
+const cancelDownload = debounce(() => {
   ApiService.cancelModelRunsImageTask(props.modelRun.id);
-}
+}, 2000);
 
 onBeforeMount(() => {
   if (loopingInterval !== null) {

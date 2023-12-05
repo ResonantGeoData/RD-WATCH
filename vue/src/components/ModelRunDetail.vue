@@ -140,6 +140,14 @@ const determineDownload = () => {
       </v-row>
       <v-row dense>
         <div>
+          mode:
+        </div>
+        <div>
+          {{ modelRun.mode || "(none)" }}
+        </div>
+      </v-row>
+      <v-row dense>
+        <div>
           last updated:
         </div>
         <div>

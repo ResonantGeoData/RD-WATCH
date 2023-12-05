@@ -52,15 +52,11 @@ const startDownload = debounce((data: DownloadSettings) => {
     updateDownloading();
     loopingInterval = setInterval(updateDownloading, 1000);
   }, 2000);
-}, 5000,
-{ leading: true }
-);
+}, 5000, { leading: true });
 
 const cancelDownload = debounce(() => {
   ApiService.cancelModelRunsImageTask(props.modelRun.id);
-}, 5000,
-{ leading: true }
-);
+}, 5000, { leading: true });
 
 onBeforeMount(() => {
   if (loopingInterval !== null) {

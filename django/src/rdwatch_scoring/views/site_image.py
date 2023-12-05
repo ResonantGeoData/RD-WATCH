@@ -96,7 +96,8 @@ def site_images(request: HttpRequest, id: UUID4):
             )
         )[0]
     )
-    # get the same Region_#### for ground truth if it exists
+    # GroundTruth requires BAS search and looking into an array of
+    # matching generated SiteIds
     output = {}
     # lets get the presigned URL for each image
     for image in image_queryset['results']:

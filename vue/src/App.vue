@@ -1,24 +1,20 @@
 <script setup lang="ts">
-import ErrorPopup from './components/ErrorPopup.vue';
+import { state } from './store';
 
-import { onErrorCaptured, ref } from "vue";
-
-const errorText = ref('');
+import { onErrorCaptured } from "vue";
 
 onErrorCaptured((err) => {
-  errorText.value = [err.name, err.message, err.stack, err.cause].join('\n\n');
+  const error: Record<string, string> = {};
+  for (const [key, val] of Object.entries(err)) {
+    error[key] = JSON.stringify(val);
+  }
+  state.errorText = JSON.stringify(error);
   throw err;
 });
 </script>
 
 <template>
-  <div>
-    <ErrorPopup
-      :error-text="errorText"
-      @close="errorText = ''"
-    />
-    <v-app id="RGD">
-      <router-view />
-    </v-app>
-  </div>
+  <v-app id="RGD">
+    <router-view />
+  </v-app>
 </template>

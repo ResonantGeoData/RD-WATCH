@@ -4,6 +4,7 @@ import TimeSlider from "./TimeSlider.vue";
 import PerformerFilter from "./filters/PerformerFilter.vue";
 import RegionFilter from "./filters/RegionFilter.vue";
 import SettingsPanel from "./SettingsPanel.vue";
+import ErrorPopup from './ErrorPopup.vue';
 import { filteredSatelliteTimeList, state } from "../store";
 import { computed, onMounted, ref, watch } from "vue";
 import { Performer, QueryArguments, Region } from "../client";
@@ -91,6 +92,7 @@ const toggleText = () => {
       <v-row
         dense
       >
+        <ErrorPopup />
         <img
           height="50"
           class="mx-auto pb-4"

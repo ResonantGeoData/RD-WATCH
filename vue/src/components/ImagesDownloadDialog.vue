@@ -38,9 +38,10 @@ const download = debounce(
     });
   },
   5000,
+  { leading: true }
 );
 
-const cancel = debounce(() => emit('cancel'), 5000);
+const cancel = () => emit('cancel');
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 const updateTime = (time: any, date: 'StartDate' | 'EndDate') => {

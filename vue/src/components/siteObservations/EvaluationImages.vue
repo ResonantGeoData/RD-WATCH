@@ -43,6 +43,7 @@ onBeforeUnmount(() => {
 
 const startDownload = async (data: DownloadSettings) => {
   const id = props.siteObservation.id
+  imageDownloadDialog.value = false;
   await ApiService.getObservationImages(id.toString(), data);
     // Now we get the results to see if the service is running
     await getSiteObservationDetails(props.siteObservation.id.toString(), props.siteObservation.obsDetails);
@@ -52,8 +53,6 @@ const startDownload = async (data: DownloadSettings) => {
       loopingInterval = null;
     }
     loopingInterval = setInterval(checkSiteObs, 1000);
-    imageDownloadDialog.value = false;
-
 }
 
 

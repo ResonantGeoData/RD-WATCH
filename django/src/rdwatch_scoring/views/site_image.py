@@ -1,4 +1,5 @@
 import logging
+
 from ninja import Router
 from pydantic import UUID4
 
@@ -8,11 +9,10 @@ from django.core.files.storage import default_storage
 from django.db.models import Count, F, Func, Value
 from django.db.models.functions import JSONObject
 from django.http import HttpRequest
-from django.shortcuts import get_object_or_404
 
 from rdwatch.db.functions import BoundingBox, ExtractEpoch
 from rdwatch.views.site_image import SiteImageResponse
-from rdwatch_scoring.models import Observation, Site, SiteImage, EvaluationBroadAreaSearchProposal
+from rdwatch_scoring.models import Observation, Site, SiteImage
 
 logger = logging.getLogger(__name__)
 
@@ -22,7 +22,6 @@ router = Router()
 
 @router.get('/{id}/', response=SiteImageResponse)
 def site_images(request: HttpRequest, id: UUID4):
-    site = get_object_or_404(Site, pk=id)
     image_queryset = (
         SiteImage.objects.filter(site=id)
         .order_by('timestamp')

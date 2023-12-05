@@ -45,18 +45,22 @@ const updateDownloading = async () => {
 }
 
 const startDownload = debounce((data: DownloadSettings) => {
-  ApiService.getModelRunImages(props.modelRun.id.toString(), data)
   downloadImages.value = false;
+  ApiService.getModelRunImages(props.modelRun.id.toString(), data)
   downloading.value = props.modelRun.numsites;
   setTimeout(() => {
     updateDownloading();
     loopingInterval = setInterval(updateDownloading, 1000);
   }, 2000);
-}, 5000);
+}, 5000,
+{ leading: true }
+);
 
 const cancelDownload = debounce(() => {
   ApiService.cancelModelRunsImageTask(props.modelRun.id);
-}, 5000);
+}, 5000,
+{ leading: true }
+);
 
 onBeforeMount(() => {
   if (loopingInterval !== null) {

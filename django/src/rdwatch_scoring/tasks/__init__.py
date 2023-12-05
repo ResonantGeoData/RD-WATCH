@@ -363,3 +363,80 @@ def cancel_generate_images_task(model_run_id: UUID4) -> None:
                     fetching_task.status = SatelliteFetching.Status.COMPLETE
                     fetching_task.celery_id = ''
                     fetching_task.save()
+
+
+@shared_task
+def generate_site_images(
+    evaluation_id: UUID4,
+    constellation=['WV'],  # noqa
+    force=False,  # forced downloading found_timestamps again
+    dayRange=14,
+    noData=50,
+    overrideDates: None | list[datetime, datetime] = None,
+    scale: Literal['default', 'bits'] | list[int] = 'default',
+    bboxScale: float = BboxScaleDefault,
+):
+    siteeval = Site.objects.get(pk=evaluation_id)
+    with transaction.atomic():
+        # Use select_for_update here to lock the SatelliteFetching row
+        # for the duration of this transaction in order to ensure its
+        # status doesn't change out from under us
+        fetching_task = (
+            SatelliteFetching.objects.select_for_update()
+            .filter(site=siteeval.pk)
+            .first()
+        )
+        if fetching_task is not None:
+            # If the task already exists and is running, return a 409 and do not
+            # start another one.
+            if fetching_task.status == SatelliteFetching.Status.RUNNING:
+                return 409, 'Image generation already in progress.'
+            # Otherwise, if the task exists but is *not* running, set the status
+            # to running and kick off the task
+            fetching_task.status = SatelliteFetching.Status.RUNNING
+            fetching_task.model_run_uuid = siteeval.evaluation_run_uuid.pk
+            fetching_task.save()
+        else:
+            fetching_task = SatelliteFetching.objects.create(
+                site=siteeval.pk,
+                model_run_uuid=siteeval.evaluation_run_uuid.pk,
+                timestamp=datetime.now(),
+                status=SatelliteFetching.Status.RUNNING,
+            )
+        task_id = get_siteobservation_images_task.delay(
+            evaluation_id,
+            constellation,
+            force,
+            dayRange,
+            noData,
+            overrideDates,
+            scale,
+            bboxScale,
+        )
+        fetching_task.celery_id = task_id.id
+        fetching_task.save()
+
+
+@shared_task
+def generate_site_images_for_evaluation_run(
+    model_run_id: UUID4,
+    constellation=['WV'],  # noqa
+    force=False,  # forced downloading found_timestamps again
+    dayRange=14,
+    noData=50,
+    overrideDates: None | list[datetime, datetime] = None,
+    scale: Literal['default', 'bits'] | list[int] = 'default',
+    bboxScale: float = BboxScaleDefault,
+):
+    sites = Site.objects.filter(evaluation_run_uuid=model_run_id)
+    for eval in sites.iterator():
+        generate_site_images.delay(
+            eval.pk,
+            constellation,
+            force,
+            dayRange,
+            noData,
+            overrideDates,
+            scale,
+            bboxScale,
+        )

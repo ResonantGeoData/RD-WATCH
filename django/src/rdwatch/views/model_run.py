@@ -138,6 +138,7 @@ class ModelRunListSchema(Schema):
     evaluation_run: int | None = None
     proposal: str = None
     adjudicated: ModelRunAdjudicated | None = None
+    mode: Literal['batch', 'incremental'] | None = None
 
 
 def get_queryset():

@@ -14,7 +14,7 @@ defineProps<{
 const displayImage = ref(false);
 
 const openNewTab = (id: string) => {
-  const name = `#${ApiService.apiPrefix.replace('api/','')}/imageViewer/${id}`
+  const name = `#${ApiService.apiPrefix.replace('api/','').replace('/api','')}/imageViewer/${id}`
   window.open(name, '_blank');
 };
 

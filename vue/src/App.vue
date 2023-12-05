@@ -1,5 +1,4 @@
 <script setup lang="ts">
-import ErrorPopup from './components/ErrorPopup.vue';
 import { state } from './store';
 
 import { onErrorCaptured } from "vue";
@@ -15,10 +14,7 @@ onErrorCaptured((err) => {
 </script>
 
 <template>
-  <div>
-    <ErrorPopup />
-    <v-app id="RGD">
-      <router-view />
-    </v-app>
-  </div>
+  <v-app id="RGD">
+    <router-view />
+  </v-app>
 </template>

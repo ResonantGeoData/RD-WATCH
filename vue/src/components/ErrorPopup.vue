@@ -10,9 +10,10 @@ function copyToClipboard(text: string) {
   <v-dialog width="500">
     <template #activator="{ props }">
       <v-btn
+        v-show="state.errorText"
         v-bind="props"
         icon="mdi-alert"
-        location="top right"
+        location="top left"
         position="absolute"
         class="ma-4"
         :color="state.errorText ? 'warning' : 'default'"

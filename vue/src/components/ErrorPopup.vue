@@ -1,11 +1,5 @@
 <script setup lang="ts">
-defineProps<{
-  errorText: string
-}>();
-
-const emit = defineEmits<{
-  (e: "close"): void;
-}>();
+import { state } from '../store';
 
 function copyToClipboard(text: string) {
   navigator.clipboard.writeText(text);
@@ -21,9 +15,9 @@ function copyToClipboard(text: string) {
         location="top right"
         position="absolute"
         class="ma-4"
-        :color="errorText ? 'warning' : 'default'"
+        :color="state.errorText ? 'warning' : 'default'"
         style="z-index: 2;"
-        :disabled="!errorText"
+        :disabled="!state.errorText"
       />
     </template>
 
@@ -45,7 +39,7 @@ function copyToClipboard(text: string) {
                     v-bind="props"
                     size="x-large"
                     icon="mdi-content-copy"
-                    @click="copyToClipboard(errorText)"
+                    @click="copyToClipboard(state.errorText)"
                   />
                 </template>
               </v-tooltip>
@@ -54,7 +48,7 @@ function copyToClipboard(text: string) {
               class="overflow-auto"
               style="max-height: 40vh; white-space: pre-line;"
             >
-              {{ errorText }}
+              {{ state.errorText }}
             </div>
           </div>
         </v-card-text>
@@ -64,7 +58,7 @@ function copyToClipboard(text: string) {
 
           <v-btn
             text="Close"
-            @click="isActive.value = false; emit('close')"
+            @click="isActive.value = false; state.errorText = ''"
           />
         </v-card-actions>
       </v-card>

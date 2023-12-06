@@ -256,6 +256,7 @@ const imageDownloadDialog = ref(false);
     </v-row>
     <images-download-dialog
       v-if="imageDownloadDialog"
+      :date-range="siteObservation.timerange"
       @download="startDownload($event)"
       @cancel="imageDownloadDialog = false"
     />

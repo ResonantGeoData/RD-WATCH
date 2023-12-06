@@ -42,7 +42,7 @@ export const style = (
     {
       id: "background",
       type: "background",
-      paint: { "background-color": "rgb(133, 133, 133)" },
+      paint: { "background-color": "rgb(220,220,220)" },
     },
     ...naturalearthLayers,
     ...openmaptilesLayers(filters),

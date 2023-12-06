@@ -83,7 +83,7 @@ onMounted(() => {
         <div
           style="min-width:185px; max-width: 185px;"
         >
-          {{ new Date(state.timestamp * 1000).toLocaleString() }}
+          {{ new Date(state.timestamp * 1000).toISOString().substring(0, 10)}}
         </div>
       </v-row>
       <v-row

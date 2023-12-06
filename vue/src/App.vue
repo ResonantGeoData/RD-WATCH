@@ -8,6 +8,8 @@ onErrorCaptured((err) => {
   for (const [key, val] of Object.entries(err)) {
     error[key] = JSON.stringify(val);
   }
+  // Also include a string-ified version of the exception object.
+  error['error_string'] = err.toString();
   state.errorText = JSON.stringify(error);
   throw err;
 });

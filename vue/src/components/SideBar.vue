@@ -119,6 +119,18 @@ const toggleText = () => {
     style="max-height:100vh; min-height:100vh;"
   >
     <div>
+      <v-row
+        dense
+      >
+        <ErrorPopup />
+        <img
+          height="50"
+          class="mx-auto pb-4"
+          src="../assets/logo.svg"
+          alt="Resonant GeoData"
+          draggable="false"
+        >
+      </v-row>
       <v-row dense>
         <v-spacer />
         <v-btn
@@ -140,18 +152,7 @@ const toggleText = () => {
           Scoring
         </v-btn>
       </v-row>
-      <v-row
-        dense
-      >
-        <ErrorPopup />
-        <img
-          height="50"
-          class="mx-auto pb-4"
-          src="../assets/logo.svg"
-          alt="Resonant GeoData"
-          draggable="false"
-        >
-      </v-row>
+
       <v-row>
         <TimeSlider
           :min="timemin"

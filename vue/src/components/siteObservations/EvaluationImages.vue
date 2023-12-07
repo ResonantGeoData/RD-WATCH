@@ -53,6 +53,7 @@ const startDownload = async (data: DownloadSettings) => {
       loopingInterval = null;
     }
     loopingInterval = setInterval(checkSiteObs, 1000);
+    checkSiteObs();
 }
 
 
@@ -82,12 +83,22 @@ const cancelTask = async (siteId: string) => {
   }
 }
 const progressInfo = computed(() => {
+  if (props.siteObservation.job && props.siteObservation.job.status === 'Complete' && props.siteObservation.job.error) {
+    const state = {
+      title: 'Warning',
+      current:-1,
+      total: -1,
+      error: props.siteObservation.job.error,
+    }
+    return state;
+  }
   if (isRunning.value) {
     if (props.siteObservation.job?.celery?.info) {
       const state = {
         title: props.siteObservation.job.celery.info.mode,
         current:props.siteObservation.job.celery.info.current,
         total: props.siteObservation.job.celery.info.total,
+        error: ''
       }
       return state;
     }
@@ -174,14 +185,26 @@ const imageDownloadDialog = ref(false);
       </v-col>
     </v-row>
     <v-row
-      v-if="isRunning"
+      v-if="isRunning || (progressInfo && progressInfo.error)"
       dense
       justify="center"
       align="center"
       class="my-4"
     >
       <div
-        v-if="isRunning && progressInfo"
+        v-if="progressInfo && progressInfo.error"
+        class="px-2 text-sm col-span-4"
+        style="width: 100%"
+      >
+        <v-icon color="warning">mdi-alert</v-icon>
+        {{ progressInfo.error }}
+        <div v-if="progressInfo.error === 'No Captures found'">
+          Try using custom date ranges
+        </div>
+      </div>
+
+      <div
+        v-else-if="isRunning && progressInfo"
         class="px-2 text-sm col-span-4"
         style="width: 100%"
       >
@@ -191,7 +214,7 @@ const imageDownloadDialog = ref(false);
             style="font-size: 0.75em"
           >  ({{ progressInfo.title }})</span>
         </b>
-        <div v-if="progressInfo !== null && progressInfo.total !== 0">
+        <div v-if="progressInfo !== null && progressInfo.total !== 0 && progressInfo.total > 0">
           {{ progressInfo.current }} of {{ progressInfo.total }}
         </div>
         <v-progress-linear
@@ -201,7 +224,7 @@ const imageDownloadDialog = ref(false);
           indeterminate
         />
         <v-progress-linear
-          v-else-if="progressInfo !== null"
+          v-else-if="progressInfo !== null && progressInfo.total > 0"
           color="primary"
           height="8"
           :model-value="(progressInfo.total / progressInfo.current) * 100.0 "

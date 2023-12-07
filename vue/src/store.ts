@@ -73,13 +73,13 @@ export interface EnabledSiteObservations {
 
 export interface SiteObservationJob {
   status: 'Running' | 'Complete' | 'Error';
-  error?: '';
+  error?: string;
   timestamp: number;
   celery?: {
     info?:  {
       current: number
       total: number;
-      mode: 'Image Captures' | 'Searching All Images' | 'Site Observations'
+      mode: 'Image Captures' | 'Searching All Images' | 'Site Observations' | 'No Captures'
     }
   }
 }

@@ -29,7 +29,7 @@ const openNewTab = (id: string) => {
     </v-btn>
     <v-tooltip
       text="Open Image Viewer in a new tab"
-      location="start"
+      location="bottom"
     >
       <template #activator="{ props }">
         <v-btn

@@ -80,8 +80,9 @@ def get_siteobservation_images_task(
     scale: Literal['default', 'bits'] | list[int] = 'default',
     bboxScale: float = BboxScaleDefault,
 ) -> None:
+    capture_count = 0
     for constellation in baseConstellations:
-        get_siteobservations_images(
+        capture_count += get_siteobservations_images(
             self,
             site_eval_id=site_eval_id,
             baseConstellation=constellation,
@@ -94,6 +95,8 @@ def get_siteobservation_images_task(
         )
     fetching_task = SatelliteFetching.objects.get(site_id=site_eval_id)
     fetching_task.status = SatelliteFetching.Status.COMPLETE
+    if capture_count == 0:
+        fetching_task.error = 'No Captures found'
     fetching_task.celery_id = ''
     fetching_task.save()
 
@@ -160,6 +163,7 @@ def get_siteobservations_images(
 
     # First we gather all images that match observations
     count = 0
+    downloaded_count = 0
     for observation in site_observations.iterator():
         self.update_state(
             state='PROGRESS',
@@ -224,6 +228,7 @@ def get_siteobservations_images(
             imageObj = Image.open(io.BytesIO(bytes))
             if image is None:  # No null/None images should be set
                 continue
+            downloaded_count += 1
             if found.exists():
                 existing = found.first()
                 existing.image.delete()  # remove previous image if new one found
@@ -284,7 +289,20 @@ def get_siteobservations_images(
     ):  # We need to grab the siteEvaluation directly for a reference
         baseSiteEval = SiteEvaluation.objects.filter(pk=site_eval_id).first()
     count = 1
-    logger.warning(f'Found {len(captures)} captures')
+    num_of_captures = len(captures)
+    logger.warning(f'Found {num_of_captures} captures')
+    if num_of_captures == 0:
+        self.update_state(
+            state='PROGRESS',
+            meta={
+                'current': count,
+                'total': num_of_captures,
+                'mode': 'No Captures',
+                'siteEvalId': site_eval_id,
+            },
+        )
+
+    logger.warning(f'Found {num_of_captures} captures')
     for (
         capture
     ) in (
@@ -294,7 +312,7 @@ def get_siteobservations_images(
             state='PROGRESS',
             meta={
                 'current': count,
-                'total': len(captures),
+                'total': num_of_captures,
                 'mode': 'Image Captures',
                 'siteEvalId': site_eval_id,
             },
@@ -339,6 +357,7 @@ def get_siteobservations_images(
                 found_timestamps[capture_timestamp] = True
             elif dayRange == -1:
                 found_timestamps[capture_timestamp] = True
+            downloaded_count += 1
             if found.exists():
                 existing = found.first()
                 existing.image.delete()
@@ -362,6 +381,7 @@ def get_siteobservations_images(
                 )
         else:
             count += 1
+    return downloaded_count
 
 
 @shared_task

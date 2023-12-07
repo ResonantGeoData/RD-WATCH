@@ -10,10 +10,30 @@ import { computed, onMounted, ref, watch } from "vue";
 import { Performer, QueryArguments, Region } from "../client";
 import type { Ref } from "vue";
 import { changeTime } from "../interactions/timeStepper";
+import { useRoute } from "vue-router";
 
 const timemin = ref(Math.floor(new Date(0).valueOf() / 1000));
 
 const page = ref<number>(1);
+const route = useRoute();
+watch(() => route.path, (oldPath, newPath) => {
+  if ((!oldPath.includes('/scoring') && newPath.includes('/scoring')) || (oldPath.includes('/scoring') && !newPath.includes('/scoring'))) {
+    console.log(`Resetting path:  old:${oldPath}  new:${newPath}`);
+    selectedPerformer.value = [];
+    selectedRegion.value = undefined;
+    state.enabledSiteObservations = [];
+    state.selectedObservations = [];
+    state.filters = {
+    ...state.filters,
+    regions: undefined,
+    performer_ids: undefined,
+  };
+
+  }
+});
+
+const scoringApp = computed(()=> route.path.includes('scoring') && !route.path.includes('proposal'));
+
 
 const queryFilters = computed<QueryArguments>(() => ({
   page: page.value,
@@ -90,6 +110,7 @@ const toggleText = () => {
 }
 
 
+
 </script>
 
 <template>
@@ -98,6 +119,27 @@ const toggleText = () => {
     style="max-height:100vh; min-height:100vh;"
   >
     <div>
+      <v-row dense>
+        <v-spacer />
+        <v-btn
+          to="/"
+          :color="!scoringApp? 'rgb(37, 99, 235)': ''"
+          :theme="!scoringApp? 'dark': ''"
+          size="x-small"
+          class="mx-2"
+        >
+          RGD
+        </v-btn>
+        <v-btn
+          to="/scoring"
+          :color="scoringApp? 'rgb(37, 99, 235)': ''"
+          :theme="scoringApp? 'dark': ''"
+          size="x-small"
+          class="mx-2"
+        >
+          Scoring
+        </v-btn>
+      </v-row>
       <v-row
         dense
       >

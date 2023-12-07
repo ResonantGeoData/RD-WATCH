@@ -31,6 +31,11 @@ watchEffect(async () => {
   state.performerMapping = performerIdMap;
 });
 
+watch(() => props.modelValue, () => {
+  selectedPerformers.value = props.modelValue.map((item) => item.id);
+});
+
+
 watch(selectedPerformers, () => {
   if (performerList.value !== null) {
     const newPerformers = selectedPerformers.value.map((item) => performerIdMap[item])

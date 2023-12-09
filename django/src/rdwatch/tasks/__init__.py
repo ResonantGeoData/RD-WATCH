@@ -11,6 +11,7 @@ from uuid import uuid4
 
 from celery import shared_task
 from celery.result import AsyncResult
+from more_itertools import ichunked
 from PIL import Image
 from pydantic import UUID4
 from pyproj import Transformer
@@ -378,11 +379,37 @@ def delete_temp_model_runs_task() -> None:
     )
 
     with transaction.atomic():
-        SiteObservation.objects.filter(
-            siteeval__configuration__in=model_runs_to_delete
-        ).delete()
-        SiteEvaluation.objects.filter(configuration__in=model_runs_to_delete).delete()
-        model_runs_to_delete.delete()
+        # Delete observations first, then evaluations, then finally model runs.
+        # Due to the number of site evaluations/observations we likely have to
+        # delete, we do the deletion in lazily loaded batches of 1,000 rows to
+        # avoid blowing up the celery worker's memory.
+
+        # Delete observations
+        for observations in ichunked(
+            SiteObservation.objects.filter(
+                siteeval__configuration__in=model_runs_to_delete
+            )
+            .values_list('pk', flat=True)
+            .iterator(),
+            1_000,
+        ):
+            SiteObservation.objects.filter(pk__in=observations).delete()
+
+        # Delete evaluations
+        for evaluations in ichunked(
+            SiteEvaluation.objects.filter(configuration__in=model_runs_to_delete)
+            .values_list('pk', flat=True)
+            .iterator(),
+            1_000,
+        ):
+            SiteEvaluation.objects.filter(pk__in=evaluations).delete()
+
+        # Delete model runs
+        for model_runs in ichunked(
+            model_runs_to_delete.values_list('pk', flat=True).iterator(),
+            1_000,
+        ):
+            ModelRun.objects.filter(pk__in=model_runs).delete()
 
 
 @shared_task

@@ -250,7 +250,7 @@ class ModelRunPagination(PageNumberPagination):
     ) -> dict[str, Any]:
         # TODO: remove caching after model runs endpoint is
         # refactored to be more efficient.
-        cache_key = _get_model_runs_cache_key(filters.dict())
+        cache_key = _get_model_runs_cache_key(filters.dict() | pagination.dict())
         model_runs = cache.get(cache_key)
 
         # If we have a cache miss, execute the query and save the results to cache

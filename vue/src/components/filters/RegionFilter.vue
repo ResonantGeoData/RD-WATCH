@@ -30,6 +30,9 @@ watch(() => props.modelValue, () => {
     selectedRegion.value = props.modelValue;
   }
 });
+watch(() => props.modelValue, () => {
+  selectedRegion.value = props.modelValue;
+});
 
 watch(selectedRegion, (val) => {
   let prepend = '/'

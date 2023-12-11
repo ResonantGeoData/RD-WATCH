@@ -14,7 +14,7 @@ defineProps<{
 const displayImage = ref(false);
 
 const openNewTab = (id: string) => {
-  const name = `#${ApiService.apiPrefix.replace('api/','')}/imageViewer/${id}`
+  const name = `#${ApiService.apiPrefix.replace('api/','').replace('/api','')}/imageViewer/${id}`
   window.open(name, '_blank');
 };
 
@@ -27,12 +27,23 @@ const openNewTab = (id: string) => {
     >
       Image Viewer
     </v-btn>
-    <v-btn
-      class="ml-2"
-      @click="openNewTab(siteEvalId)"
+    <v-tooltip
+      text="Open Image Viewer in a new tab"
+      location="bottom"
     >
-      <v-icon>mdi-tab-plus</v-icon>
-    </v-btn>
+      <template #activator="{ props }">
+        <v-btn
+          v-bind="props"
+          class="ml-2"
+          @click="openNewTab(siteEvalId)"
+        >
+          <v-icon v-bind="props">
+            mdi-tab-plus
+          </v-icon>
+        </v-btn>
+      </template>
+    </v-tooltip>
+
     <v-dialog
       v-model="displayImage"
       width="800"

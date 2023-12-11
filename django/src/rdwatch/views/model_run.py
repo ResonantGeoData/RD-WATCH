@@ -39,12 +39,13 @@ from rdwatch.models import (
 )
 from rdwatch.schemas import RegionModel, SiteModel
 from rdwatch.schemas.common import TimeRangeSchema
-from rdwatch.tasks import cancel_generate_images_task, download_annotations
-from rdwatch.views.performer import PerformerSchema
-from rdwatch.views.site_observation import (
-    GenerateImagesSchema,
-    get_site_observation_images,
+from rdwatch.tasks import (
+    cancel_generate_images_task,
+    download_annotations,
+    generate_site_images_for_evaluation_run,
 )
+from rdwatch.views.performer import PerformerSchema
+from rdwatch.views.site_observation import GenerateImagesSchema
 
 router = RouterPaginated()
 
@@ -373,13 +374,20 @@ def generate_images(
     model_run_id: UUID4,
     params: GenerateImagesSchema = Query(...),  # noqa: B008
 ):
-    siteEvaluations = SiteEvaluation.objects.filter(configuration=model_run_id)
-    for eval in siteEvaluations:
-        get_site_observation_images(
-            request,
-            eval.pk,
-            params,
-        )
+    scalVal = params.scale
+    if params.scale == 'custom':
+        scalVal = params.scaleNum
+    generate_site_images_for_evaluation_run(
+        model_run_id,
+        params.constellation,
+        params.force,
+        params.dayRange,
+        params.noData,
+        params.overrideDates,
+        scalVal,
+        params.bboxScale,
+    )
+    return 202, True
 
     return 202, True
 

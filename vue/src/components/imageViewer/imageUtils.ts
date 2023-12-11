@@ -300,11 +300,11 @@ const processImagePoly = (
         // Now we convert the coordinates to image space
         const imageWidth = image.image_dimensions[0];
         const imageHeight = image.image_dimensions[1];
-        const imageNormalizePoly: {x: number, y: number}[][] = normalizePolygon(image.bbox, imageWidth, imageHeight, closestPoly.geoJSON)
+        const imageNormalizePoly: {x: number, y: number}[][] = normalizePolygon(image.bbox, imageWidth, imageHeight, closestPoly.geoJSON);
         let groundTruthPoly;
         if (hasGroundTruth && groundTruth) {
-          const gtNormalizePoly: {x: number, y: number}[][] = normalizePolygon(image.bbox, imageWidth, imageHeight, groundTruth.geoJSON)
-          groundTruthPoly = { coords: gtNormalizePoly, label: groundTruth.label}
+          const gtNormalizePoly: {x: number, y: number}[][] = normalizePolygon(image.bbox, imageWidth, imageHeight, groundTruth.geoJSON);
+          groundTruthPoly = { coords: gtNormalizePoly, label: groundTruth.label};
         }
         const poly: PixelPoly = {coords: imageNormalizePoly, label: closestPoly.label, scaled: false};
         const rescaled = rescalePoly(image, closestPoly.bbox, closestPoly.geoJSON);

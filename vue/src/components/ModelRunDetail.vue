@@ -45,8 +45,8 @@ const updateDownloading = async () => {
 }
 
 const startDownload = debounce((data: DownloadSettings) => {
-  ApiService.getModelRunImages(props.modelRun.id.toString(), data)
   downloadImages.value = false;
+  ApiService.getModelRunImages(props.modelRun.id.toString(), data)
   downloading.value = props.modelRun.numsites;
   setTimeout(() => {
     updateDownloading();
@@ -146,7 +146,7 @@ const determineDownload = () => {
           {{
             modelRun.timestamp === null
               ? "--"
-              : new Date(modelRun.timestamp * 1000).toLocaleString()
+              : new Date(modelRun.timestamp * 1000).toISOString().substring(0, 10)
           }}
         </div>
       </v-row>
@@ -284,6 +284,7 @@ const determineDownload = () => {
     </v-card-actions>
     <images-download-dialog
       v-if="downloadImages"
+      :date-range="modelRun.timerange"
       @download="startDownload($event)"
       @cancel="downloadImages = false"
     />

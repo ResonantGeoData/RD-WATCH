@@ -1165,6 +1165,17 @@ certifi = "*"
 urllib3 = "*"
 
 [[package]]
+name = "more-itertools"
+version = "10.1.0"
+description = "More routines for operating on iterables, beyond itertools"
+optional = false
+python-versions = ">=3.8"
+files = [
+    {file = "more-itertools-10.1.0.tar.gz", hash = "sha256:626c369fa0eb37bac0291bce8259b332fd59ac792fa5497b59837309cd5b114a"},
+    {file = "more_itertools-10.1.0-py3-none-any.whl", hash = "sha256:64e0735fcfdc6f3464ea133afe8ea4483b1c5fe3a3d69852e6503b43a0b222e6"},
+]
+
+[[package]]
 name = "morecantile"
 version = "4.3.0"
 description = "Construct and use map tile grids (a.k.a TileMatrixSet / TMS)."
@@ -2277,4 +2288,4 @@ watchdog = ["watchdog (>=2.3)"]
 [metadata]
 lock-version = "2.0"
 python-versions = "~3.11.0"
-content-hash = "5a11d84a01dd97d5a90d8d0da4c6e2df36b8cffab6b5ab836afca4d6d898ac98"
+content-hash = "91ef4c85a33698e49f59cccd2f7aab4152d35c37c481ef6f0f7d427177284469"

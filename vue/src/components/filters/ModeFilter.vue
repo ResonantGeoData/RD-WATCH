@@ -2,15 +2,15 @@
 import { ref, watch } from "vue";
 
 const props = defineProps<{
-  modelValue?: string;
+  modelValue: string[];
 }>();
 
 const emit = defineEmits<{
-  (e: "update:modelValue", mode?: string): void;
+  (e: "update:modelValue", mode: string[]): void;
 }>();
 
 const modes = ['batch', 'incremental'];
-const selectedMode = ref(props.modelValue);
+const selectedMode = ref<string[]>(props.modelValue);
 
 watch(() => props.modelValue, () => {
   if (props.modelValue) {
@@ -27,6 +27,7 @@ watch(selectedMode, () => {
   <v-select
     v-model="selectedMode"
     clearable
+    multiple
     persistent-clear
     density="compact"
     variant="outlined"

@@ -40,10 +40,10 @@ const queryFilters = computed<QueryArguments>(() => ({
   page: page.value,
   performer: selectedPerformer.value.map((item) => item.short_code),
   region: selectedRegion.value,
-  mode: selectedMode.value,
+  mode: selectedModes.value,
 }));
 
-const selectedMode: Ref<string | undefined> = ref(undefined);
+const selectedModes: Ref<string[]> = ref([]);
 const selectedPerformer: Ref<Performer[]> = ref([]);
 const selectedRegion: Ref<Region | undefined> = ref(undefined);
 watch(selectedPerformer, (val) => {
@@ -71,11 +71,11 @@ const updateRegion = (val?: Region) => {
   };
 };
 
-const updateMode = (mode?: string) => {
+const updateMode = (mode: string[]) => {
   page.value = 1;
   state.filters = {
     ...state.filters,
-    mode: mode,
+    mode,
   };
 };
 
@@ -250,7 +250,7 @@ const toggleText = () => {
         dense
       >
         <ModeFilter
-          v-model="selectedMode"
+          v-model="selectedModes"
           class="pr-2"
           @update:model-value="updateMode($event)"
         />

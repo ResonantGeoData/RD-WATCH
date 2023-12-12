@@ -22,6 +22,7 @@ import { EvaluationImageResults } from "../../types";
 export interface QueryArguments {
   performer?: string[];
   region?: string;
+  mode?: string[];
   page?: number;
   limit?: number;
   proposal?: 'PROPOSAL' | 'APPROVED';

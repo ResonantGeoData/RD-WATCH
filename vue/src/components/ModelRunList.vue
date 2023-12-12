@@ -45,10 +45,11 @@ async function loadMore() {
   if (request !== undefined) {
     request.cancel();
   }
-  const { performer } = props.filters; // unwrap performer array
+  const { mode, performer } = props.filters; // unwrap performer and mode arrays
   request = ApiService.getModelRuns({
     limit,
     ...props.filters,
+    mode,
     performer,
     proposal: props.compact ? 'PROPOSAL' : undefined, // if compact we are doing proposal adjudication
   });

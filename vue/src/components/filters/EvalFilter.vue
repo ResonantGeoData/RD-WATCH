@@ -9,15 +9,17 @@ const props = defineProps<{
 }>();
 
 const emit = defineEmits<{
-  (e: "update:modelValue", eval?: Eval[]): void;
+  (e: "update:modelValue", evaluation?: Eval[]): void;
 }>();
 
 const evals: Ref<Eval[]> = ref([]);
 const selectedEvals: Ref<Eval[]> = ref(props.modelValue);
 watchEffect(async () => {
-  const evalList = await ApiService.getEvals();
-  const evalResults = evalList.items
-  evals.value = evalResults;
+  if (ApiService.getApiPrefix().includes('scoring')) {
+    const evalList = await ApiService.getEvals();
+    const evalResults = evalList.items
+    evals.value = evalResults;
+  }
 });
 
 watch(() => props.modelValue, () => {
@@ -39,8 +41,8 @@ watch(selectedEvals, (l) => {
   <v-select
     v-model="selectedEvals"
     clearable
-    persistent-clear
     multiple
+    persistent-clear
     density="compact"
     variant="outlined"
     :label="`Evaluation (${evals.length})`"

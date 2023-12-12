@@ -237,37 +237,35 @@ const toggleText = () => {
         dense
         class="mt-3"
       >
-        <RegionFilter
-          v-model="selectedRegion"
-          cols="6"
-          hide-details
-          @update:model-value="updateRegion($event)"
-        />
         <PerformerFilter
           v-model="selectedPerformer"
           cols="6"
+          class="px-1"
           hide-details
         />
-      </v-row>
-      <v-row
-        dense
-        v-if="scoringApp"
-        class="mt-3"
-      >
-        <EvalFilter
+        <RegionFilter
+          v-model="selectedRegion"
           cols="6"
-          v-model="selectedEval"
+          class="px-1"
           hide-details
+          @update:model-value="updateRegion($event)"
         />
       </v-row>
       <v-row
         v-if="ApiService.isScoring()"
+        class="pt-2"
         dense
       >
         <ModeFilter
           v-model="selectedModes"
-          class="pr-2"
+          class="px-1"
+          hide-details
           @update:model-value="updateMode($event)"
+        />
+        <EvalFilter
+          v-model="selectedEval"
+          class="px-1"
+          hide-details
         />
       </v-row>
       <SettingsPanel v-if="expandSettings" />

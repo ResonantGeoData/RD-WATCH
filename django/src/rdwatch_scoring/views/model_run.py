@@ -1,4 +1,5 @@
 import logging
+from typing import Literal
 
 from ninja import FilterSchema, Query
 from ninja.pagination import RouterPaginated
@@ -40,6 +41,7 @@ class ModelRunFilterSchema(FilterSchema):
     performer: list[str] | None
     region: str | None
     # proposal: str | None = Field(q='proposal', ignore_none=False)
+    mode: Literal['batch', 'incremental'] | None
 
     def filter_performer(self, value: list[str] | None) -> Q:
         if value is None or not value:

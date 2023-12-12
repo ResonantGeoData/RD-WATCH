@@ -124,6 +124,10 @@ export class ApiService {
     ApiService.apiPrefix.value = prefix;
   }
 
+  public static isScoring(): boolean {
+    return ApiService.apiPrefix.value === '/api/scoring';
+  }
+
   /**
    * @returns ServerStatus
    * @throws ApiError

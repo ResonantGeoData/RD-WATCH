@@ -8,7 +8,7 @@ import SettingsPanel from "./SettingsPanel.vue";
 import ErrorPopup from './ErrorPopup.vue';
 import { filteredSatelliteTimeList, state } from "../store";
 import { computed, onMounted, ref, watch } from "vue";
-import { Performer, QueryArguments, Region } from "../client";
+import { ApiService, Performer, QueryArguments, Region } from "../client";
 import type { Ref } from "vue";
 import { changeTime } from "../interactions/timeStepper";
 import { useRoute } from "vue-router";
@@ -245,7 +245,10 @@ const toggleText = () => {
           @update:model-value="updateRegion($event)"
         />
       </v-row>
-      <v-row dense>
+      <v-row
+        v-if="ApiService.isScoring()"
+        dense
+      >
         <ModeFilter
           v-model="selectedMode"
           class="pr-2"

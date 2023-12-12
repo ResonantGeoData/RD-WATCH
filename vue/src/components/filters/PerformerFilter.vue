@@ -19,7 +19,7 @@ const performers: Ref<{value: number; title: string}[]> = ref([]);
 const selectedPerformers: Ref<number[]> = ref(props.modelValue.map((item) => item.id));
 const performerList: Ref<PerformerList | null> = ref(null);
 const performerIdMap: Record<number, Performer> = {}
-watchEffect(async () => {
+  watchEffect(async () => {
   performerList.value = await ApiService.getPerformers();
   const performerResults = performerList.value.items
   performerResults.sort((a, b) => (a.team_name > b.team_name ? 1 : -1))
@@ -36,21 +36,21 @@ watch(() => props.modelValue, () => {
 });
 
 
-watch(selectedPerformers, () => {
-  if (performerList.value !== null) {
-    const newPerformers = selectedPerformers.value.map((item) => performerIdMap[item])
+const updateSelected =  (data: number[]) => {
+  if (selectedPerformers.value !== null) {
+    const newPerformers = data.map((item) => performerIdMap[item]);
     if (newPerformers.length) {
       emit("update:modelValue", newPerformers);
       return;
     }
   }
   emit("update:modelValue", []);
-});
+};
 </script>
 
 <template>
   <v-select
-    v-model="selectedPerformers"
+    :value="selectedPerformers"
     clearable
     multiple
     persistent-clear
@@ -61,6 +61,7 @@ watch(selectedPerformers, () => {
     :items="performers"
     single-line
     class="dropdown"
+    @update:model-value="updateSelected($event)"
   />
 </template>
 

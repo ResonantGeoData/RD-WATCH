@@ -19,7 +19,6 @@ const page = ref<number>(1);
 const route = useRoute();
 watch(() => route.path, (oldPath, newPath) => {
   if ((!oldPath.includes('/scoring') && newPath.includes('/scoring')) || (oldPath.includes('/scoring') && !newPath.includes('/scoring'))) {
-    console.log(`Resetting path:  old:${oldPath}  new:${newPath}`);
     selectedPerformer.value = [];
     selectedRegion.value = undefined;
     state.enabledSiteObservations = [];
@@ -269,7 +268,7 @@ const toggleText = () => {
         @update:timerange="
           (timerange) => {
             if (timerange !== null) {
-              timemin = timerange.min;
+              timemin = timerange.min || Math.floor(new Date(0).valueOf() / 1000);
               state.timeMin = timemin;
             }
           }

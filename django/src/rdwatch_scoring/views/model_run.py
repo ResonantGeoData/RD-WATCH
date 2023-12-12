@@ -74,6 +74,8 @@ def get_queryset():
                 'evaluation_number',
                 Value('.'),
                 'evaluation_run_number',
+                Value('.'),
+                'evaluation_increment_number',
                 Value(' '),
                 'performer',
                 output_field=CharField(),
@@ -127,7 +129,7 @@ def list_model_runs(
     page = int(request.GET.get('page', 1))
 
     qs = filters.filter(EvaluationRun.objects.all()
-                        .order_by(F('region'), F('performer'), F('evaluation_number'), F('evaluation_run_number')))
+                        .order_by(F('region'), F('performer'), F('evaluation_number'), F('evaluation_run_number'), F('evaluation_increment_number')))
 
     ids = qs[((page - 1) * page_size) : (page * page_size)].values_list(
         'uuid', flat=True
@@ -148,6 +150,8 @@ def list_model_runs(
                 'evaluation_number',
                 Value('.'),
                 'evaluation_run_number',
+                Value('.'),
+                'evaluation_increment_number',
                 Value(' '),
                 'performer',
                 output_field=CharField(),
@@ -189,7 +193,7 @@ def list_model_runs(
                 output_field=JSONField(),
             ),
         )
-    ).order_by(F('region'), F('performer'), F('evaluation_number'), F('evaluation_run_number'))
+    ).order_by(F('region'), F('performer'), F('evaluation_number'), F('evaluation_run_number'), F('evaluation_increment_number'))
 
     print(qs.query)
     aggregate_kwargs = {

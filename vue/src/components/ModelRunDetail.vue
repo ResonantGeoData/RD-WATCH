@@ -127,6 +127,7 @@ const getModeIcon = (mode: ModelRun['mode']) => (mode ? {
     :class="{selectedCard: props.open}"
   >
     <v-card-actions
+      v-if="modelRun.mode"
       class="pa-2"
       style="position: absolute; top: 0; right: 0;"
     >

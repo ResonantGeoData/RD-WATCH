@@ -81,7 +81,7 @@ const checkDownloadStatus = async () => {
   if (taskId.value) {
     const status = await ApiService.getModelRunDownloadStatus(taskId.value);
     if (status === 'SUCCESS') {
-      const url = `${ApiService.apiPrefix}/model-runs/${props.modelRun.id}/download?task_id=${taskId.value}`
+      const url = `${ApiService.getApiPrefix()}/model-runs/${props.modelRun.id}/download?task_id=${taskId.value}`
       window.location.assign(url);
       downloadingModelRun.value = false;
     } else if (['REVOKED', 'FAILURE'].includes(status)) {

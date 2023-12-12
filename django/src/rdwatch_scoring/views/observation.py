@@ -1,5 +1,4 @@
 import logging
-from datetime import datetime
 from typing import Literal
 
 from celery.result import AsyncResult
@@ -20,11 +19,22 @@ from django.shortcuts import get_object_or_404
 from rdwatch.db.functions import BoundingBox, ExtractEpoch
 from rdwatch.views.site_observation import SiteObservationsListSchema
 from rdwatch_scoring.models import Observation, SatelliteFetching, Site, SiteImage
-from rdwatch_scoring.tasks import get_siteobservation_images_task
+from rdwatch_scoring.tasks import generate_site_images
 
 logger = logging.getLogger(__name__)
 
 router = Router()
+
+
+class GenerateImagesSchema(Schema):
+    constellation: list[Literal['WV', 'S2', 'L8']] = ['WV']
+    dayRange: int = 14
+    noData: int = 50
+    overrideDates: None | list[str] = None
+    force: bool = False
+    scale: Literal['default', 'bits', 'custom'] = 'default'
+    scaleNum: None | list[int] = None
+    bboxScale: None | float = 1.2
 
 
 @router.get('/{evaluation_id}/', response={200: SiteObservationsListSchema})
@@ -146,17 +156,6 @@ def site_observations(request: HttpRequest, evaluation_id: UUID4):
     return queryset
 
 
-class GenerateImagesSchema(Schema):
-    constellation: list[Literal['WV', 'S2', 'L8']] = ['WV']
-    dayRange: int = 14
-    noData: int = 50
-    overrideDates: None | list[str] = None
-    force: bool = False
-    scale: Literal['default', 'bits', 'custom'] = 'default'
-    scaleNum: None | list[int] = None
-    bboxScale: None | float = 1.2
-
-
 @router.post('/{evaluation_id}/generate-images/', response={202: bool, 409: str})
 def get_site_observation_images(
     request: HttpRequest,
@@ -164,49 +163,21 @@ def get_site_observation_images(
     params: GenerateImagesSchema = Query(...),  # noqa: B008
 ):
     # Make sure site evaluation actually exists
-    siteeval = get_object_or_404(Site, pk=evaluation_id)
 
-    with transaction.atomic():
-        # Use select_for_update here to lock the SatelliteFetching row
-        # for the duration of this transaction in order to ensure its
-        # status doesn't change out from under us
-        fetching_task = (
-            SatelliteFetching.objects.select_for_update()
-            .filter(site=siteeval.pk)
-            .first()
-        )
-        if fetching_task is not None:
-            # If the task already exists and is running, return a 409 and do not
-            # start another one.
-            if fetching_task.status == SatelliteFetching.Status.RUNNING:
-                return 409, 'Image generation already in progress.'
-            # Otherwise, if the task exists but is *not* running, set the status
-            # to running and kick off the task
-            fetching_task.status = SatelliteFetching.Status.RUNNING
-            fetching_task.model_run_uuid = siteeval.evaluation_run_uuid.pk
-            fetching_task.save()
-        else:
-            fetching_task = SatelliteFetching.objects.create(
-                site=siteeval.pk,
-                model_run_uuid=siteeval.evaluation_run_uuid.pk,
-                timestamp=datetime.now(),
-                status=SatelliteFetching.Status.RUNNING,
-            )
-        scalVal = params.scale
-        if params.scale == 'custom':
-            scalVal = params.scaleNum
-        task_id = get_siteobservation_images_task.delay(
-            evaluation_id,
-            params.constellation,
-            params.force,
-            params.dayRange,
-            params.noData,
-            params.overrideDates,
-            scalVal,
-            params.bboxScale,
-        )
-        fetching_task.celery_id = task_id.id
-        fetching_task.save()
+    scalVal = params.scale
+    if params.scale == 'custom':
+        scalVal = params.scaleNum
+
+    generate_site_images.delay(
+        evaluation_id,
+        params.constellation,
+        params.force,
+        params.dayRange,
+        params.noData,
+        params.overrideDates,
+        scalVal,
+        params.bboxScale,
+    )
     return 202, True
 
 

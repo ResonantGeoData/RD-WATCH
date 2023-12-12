@@ -1,8 +1,18 @@
 <script setup lang="ts">
-import { Ref, ref } from "vue";
+import { Ref, defineProps, ref, withDefaults } from "vue";
 import { debounce } from 'lodash';
 import { VDatePicker } from 'vuetify/labs/VDatePicker'
 import { Constellation, DownloadSettings } from "../client/services/ApiService";
+
+
+interface Props {
+  dateRange?: { min: number, max: number} | null;
+}
+
+
+const props = withDefaults(defineProps<Props>(), {
+  dateRange: null,
+});
 
 
 const emit = defineEmits<{
@@ -14,7 +24,9 @@ const baseList = ref(['S2', 'WV', 'L8'])
 const selectedSource: Ref<Constellation[]> = ref(['WV']);
 const dayRange = ref(14);
 const noData = ref(50)
-const overrideDates: Ref<[string, string]> = ref(['2013-01-01', new Date().toISOString().split('T')[0]])
+const overrideDates: Ref<[string, string]> = ref([
+  props.dateRange?.min ? new Date(props.dateRange.min * 1000).toISOString().split('T')[0] :'2013-01-01',
+  props.dateRange?.max ? new Date(props.dateRange.max * 1000).toISOString().split('T')[0]: new Date().toISOString().split('T')[0]])
 const showAdvanced = ref(false);
 const force =ref(false);
 const customDateRange = ref(false);

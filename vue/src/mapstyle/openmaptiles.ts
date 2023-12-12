@@ -3,6 +3,7 @@
  */
 
 import type { LayerSpecification, SourceSpecification } from "maplibre-gl";
+import { MapFilters } from "../store";
 
 const openmaptiles = "openmaptiles";
 const tileServerURL =
@@ -17,9 +18,21 @@ const source: SourceSpecification = {
     "<a href='https://openmaptiles.org/'>© OpenMapTiles</a> " +
     "<a href='https://www.openstreetmap.org/copyright'>© OpenStreetMap contributors</a>",
 };
-export const sources = { openmaptiles: source };
+export const defaultSources = { openmaptiles: source };
+export const sources = (filters: MapFilters) => {
+  if (filters.drawMap) {
+    return defaultSources;
+  }
+  return {};
+}
 
-export const layers: LayerSpecification[] = [
+export const layers = (filters: MapFilters) => {
+  if (filters.drawMap) {
+    return defaultLayers;
+  }
+  return [];
+}
+export const defaultLayers: LayerSpecification[] = [
   {
     id: "park",
     type: "fill",

@@ -27,7 +27,7 @@ from rdwatch.models import (
 )
 from rdwatch.schemas import SiteObservationRequest
 from rdwatch.schemas.common import BoundingBoxSchema, TimeRangeSchema
-from rdwatch.tasks import get_siteobservation_images_task
+from rdwatch.tasks import generate_site_images
 
 logger = logging.getLogger(__name__)
 
@@ -187,46 +187,19 @@ def get_site_observation_images(
     evaluation_id: UUID4,
     params: GenerateImagesSchema = Query(...),  # noqa: B008
 ):
-    # Make sure site evaluation actually exists
-    siteeval = get_object_or_404(SiteEvaluation, pk=evaluation_id)
-
-    with transaction.atomic():
-        # Use select_for_update here to lock the SatelliteFetching row
-        # for the duration of this transaction in order to ensure its
-        # status doesn't change out from under us
-        fetching_task = (
-            SatelliteFetching.objects.select_for_update().filter(site=siteeval).first()
-        )
-        if fetching_task is not None:
-            # If the task already exists and is running, return a 409 and do not
-            # start another one.
-            if fetching_task.status == SatelliteFetching.Status.RUNNING:
-                return 409, 'Image generation already in progress.'
-            # Otherwise, if the task exists but is *not* running, set the status
-            # to running and kick off the task
-            fetching_task.status = SatelliteFetching.Status.RUNNING
-            fetching_task.save()
-        else:
-            fetching_task = SatelliteFetching.objects.create(
-                site=siteeval,
-                timestamp=datetime.now(),
-                status=SatelliteFetching.Status.RUNNING,
-            )
-        scalVal = params.scale
-        if params.scale == 'custom':
-            scalVal = params.scaleNum
-        task_id = get_siteobservation_images_task.delay(
-            evaluation_id,
-            params.constellation,
-            params.force,
-            params.dayRange,
-            params.noData,
-            params.overrideDates,
-            scalVal,
-            params.bboxScale,
-        )
-        fetching_task.celery_id = task_id.id
-        fetching_task.save()
+    scalVal = params.scale
+    if params.scale == 'custom':
+        scalVal = params.scaleNum
+    generate_site_images.delay(
+        evaluation_id,
+        params.constellation,
+        params.force,
+        params.dayRange,
+        params.noData,
+        params.overrideDates,
+        scalVal,
+        params.bboxScale,
+    )
     return 202, True
 
 

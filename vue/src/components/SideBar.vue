@@ -11,12 +11,32 @@ import { computed, onMounted, ref, watch } from "vue";
 import { ApiService, Performer, QueryArguments, Region, Eval } from "../client";
 import type { Ref } from "vue";
 import { changeTime } from "../interactions/timeStepper";
+import { useRoute } from "vue-router";
 
 const scoringApp = computed(()=> ApiService.apiPrefix.includes('scoring'));
 
 const timemin = ref(Math.floor(new Date(0).valueOf() / 1000));
 
 const page = ref<number>(1);
+const route = useRoute();
+watch(() => route.path, (oldPath, newPath) => {
+  if ((!oldPath.includes('/scoring') && newPath.includes('/scoring')) || (oldPath.includes('/scoring') && !newPath.includes('/scoring'))) {
+    console.log(`Resetting path:  old:${oldPath}  new:${newPath}`);
+    selectedPerformer.value = [];
+    selectedRegion.value = undefined;
+    state.enabledSiteObservations = [];
+    state.selectedObservations = [];
+    state.filters = {
+    ...state.filters,
+    regions: undefined,
+    performer_ids: undefined,
+  };
+
+  }
+});
+
+const scoringApp = computed(()=> route.path.includes('scoring') && !route.path.includes('proposal'));
+
 
 const queryFilters = computed<QueryArguments>(() => ({
   page: page.value,
@@ -63,6 +83,15 @@ const imagesOn = computed({
   },
 });
 
+const drawMap = computed({
+  get() {
+    return state.filters.drawMap || false;
+  },
+  set(val: boolean) {
+    state.filters = { ...state.filters, drawMap: val };
+  },
+});
+
 
 function nextPage() {
   page.value += 1;
@@ -86,6 +115,7 @@ const toggleText = () => {
 }
 
 
+
 </script>
 
 <template>
@@ -106,6 +136,28 @@ const toggleText = () => {
           draggable="false"
         >
       </v-row>
+      <v-row dense>
+        <v-spacer />
+        <v-btn
+          to="/"
+          :color="!scoringApp? 'rgb(37, 99, 235)': ''"
+          :theme="!scoringApp? 'dark': ''"
+          size="x-small"
+          class="mx-2"
+        >
+          RGD
+        </v-btn>
+        <v-btn
+          to="/scoring"
+          :color="scoringApp? 'rgb(37, 99, 235)': ''"
+          :theme="scoringApp? 'dark': ''"
+          size="x-small"
+          class="mx-2"
+        >
+          Scoring
+        </v-btn>
+      </v-row>
+
       <v-row>
         <TimeSlider
           :min="timemin"
@@ -128,6 +180,14 @@ const toggleText = () => {
         class="py-2"
       >
         <v-spacer />
+        <v-btn
+          variant="text"
+          density="compact"
+          class="pa-0 ma-0"
+          :color="drawMap ? 'rgb(37, 99, 235)' : 'black'"
+          icon="mdi-road"
+          @click="drawMap = !drawMap"
+        />
         <v-btn
           variant="text"
           density="compact"

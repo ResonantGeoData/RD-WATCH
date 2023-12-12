@@ -25,4 +25,5 @@ export type ModelRun = {
     proposed: number,
     other: number
   } | null;
+  mode: 'batch' | 'incremental' | null;
 };

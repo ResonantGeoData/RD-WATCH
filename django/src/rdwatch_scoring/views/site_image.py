@@ -1,3 +1,5 @@
+import logging
+
 from ninja import Router
 from pydantic import UUID4
 
@@ -11,6 +13,9 @@ from django.http import HttpRequest
 from rdwatch.db.functions import BoundingBox, ExtractEpoch
 from rdwatch.views.site_image import SiteImageResponse
 from rdwatch_scoring.models import Observation, Site, SiteImage
+
+logger = logging.getLogger(__name__)
+
 
 router = Router()
 

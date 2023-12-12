@@ -24,12 +24,12 @@ from django.shortcuts import get_object_or_404
 
 from rdwatch.db.functions import ExtractEpoch
 from rdwatch.views.model_run import ModelRunDetailSchema, ModelRunPagination
-from rdwatch_scoring.models import EvaluationRun, SatelliteFetching, Site
-from rdwatch_scoring.tasks import cancel_generate_images_task
-from rdwatch_scoring.views.observation import (
-    GenerateImagesSchema,
-    get_site_observation_images,
+from rdwatch_scoring.models import EvaluationRun, SatelliteFetching
+from rdwatch_scoring.tasks import (
+    cancel_generate_images_task,
+    generate_site_images_for_evaluation_run,
 )
+from rdwatch_scoring.views.observation import GenerateImagesSchema
 
 logger = logging.getLogger(__name__)
 
@@ -238,14 +238,19 @@ def generate_images(
     model_run_id: UUID4,
     params: GenerateImagesSchema = Query(...),  # noqa: B008
 ):
-    sites = Site.objects.filter(evaluation_run_uuid=model_run_id)
-    for site in sites:
-        get_site_observation_images(
-            request,
-            site.pk,
-            params,
-        )
-
+    scalVal = params.scale
+    if params.scale == 'custom':
+        scalVal = params.scaleNum
+    generate_site_images_for_evaluation_run(
+        model_run_id,
+        params.constellation,
+        params.force,
+        params.dayRange,
+        params.noData,
+        params.overrideDates,
+        scalVal,
+        params.bboxScale,
+    )
     return 202, True
 
 

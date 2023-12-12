@@ -45,8 +45,8 @@ const updateDownloading = async () => {
 }
 
 const startDownload = debounce((data: DownloadSettings) => {
-  ApiService.getModelRunImages(props.modelRun.id.toString(), data)
   downloadImages.value = false;
+  ApiService.getModelRunImages(props.modelRun.id.toString(), data)
   downloading.value = props.modelRun.numsites;
   setTimeout(() => {
     updateDownloading();
@@ -113,6 +113,10 @@ const determineDownload = () => {
   }
 }
 
+const getModeIcon = (mode: ModelRun['mode']) => (mode ? {
+  batch: 'mdi-checkbox-multiple-blank',
+  incremental: 'mdi-trending-up',
+}[mode] : null);
 
 </script>
 
@@ -122,6 +126,21 @@ const determineDownload = () => {
     class="my-3 modelRunCard"
     :class="{selectedCard: props.open}"
   >
+    <v-card-actions
+      v-if="modelRun.mode"
+      class="pa-2"
+      style="position: absolute; top: 0; right: 0;"
+    >
+      <v-chip
+        label
+        size="x-small"
+      >
+        <span class="text-caption mx-2">{{ modelRun.mode?.toUpperCase() }}</span>
+        <v-icon>
+          {{ getModeIcon(modelRun.mode) }}
+        </v-icon>
+      </v-chip>
+    </v-card-actions>
     <v-card-text
       @click.prevent="handleClick"
     >
@@ -146,7 +165,7 @@ const determineDownload = () => {
           {{
             modelRun.timestamp === null
               ? "--"
-              : new Date(modelRun.timestamp * 1000).toLocaleString()
+              : new Date(modelRun.timestamp * 1000).toISOString().substring(0, 10)
           }}
         </div>
       </v-row>
@@ -284,6 +303,7 @@ const determineDownload = () => {
     </v-card-actions>
     <images-download-dialog
       v-if="downloadImages"
+      :date-range="modelRun.timerange"
       @download="startDownload($event)"
       @cancel="downloadImages = false"
     />

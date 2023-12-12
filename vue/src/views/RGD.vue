@@ -6,6 +6,7 @@ import LayerSelection from "../components/LayerSelection.vue";
 import { onMounted } from "vue";
 import { state } from "../store";
 
+
 interface Props {
   region?: string;
   selected?: number[] | string;
@@ -14,6 +15,7 @@ const props = withDefaults(defineProps<Props>(), {
   region: undefined,
   selected: undefined,
 });
+
 
 onMounted(() => {
   if (props.region) {

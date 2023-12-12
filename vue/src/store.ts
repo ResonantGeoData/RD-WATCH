@@ -15,6 +15,7 @@ export interface MapFilters {
   hoverSiteId?: string;
   showText?: boolean;
   siteTimeLimits?: boolean;
+  drawMap?: boolean;
 }
 
 export interface SatelliteTimeStamp {
@@ -72,13 +73,13 @@ export interface EnabledSiteObservations {
 
 export interface SiteObservationJob {
   status: 'Running' | 'Complete' | 'Error';
-  error?: '';
+  error?: string;
   timestamp: number;
   celery?: {
     info?:  {
       current: number
       total: number;
-      mode: 'Image Captures' | 'Searching All Images' | 'Site Observations'
+      mode: 'Image Captures' | 'Searching All Images' | 'Site Observations' | 'No Captures'
     }
   }
 }
@@ -173,6 +174,7 @@ export const state = reactive<{
     groundTruthPattern: false,
     otherPattern: false,
     showText: false,
+    drawMap: true,
   },
   mapLegend: true,
   satellite: {

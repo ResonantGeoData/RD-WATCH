@@ -1,9 +1,8 @@
 <script setup lang="ts">
 import { ref, watch, watchEffect } from "vue";
-import { ApiService, EvalList } from "../../client";
+import { ApiService } from "../../client";
 import type { Ref } from "vue";
 import type { Eval } from "../../client";
-import { state } from "../../store";
 
 const props = defineProps<{
   modelValue: Eval[];

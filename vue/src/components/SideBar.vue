@@ -8,12 +8,10 @@ import SettingsPanel from "./SettingsPanel.vue";
 import ErrorPopup from './ErrorPopup.vue';
 import { filteredSatelliteTimeList, state } from "../store";
 import { computed, onMounted, ref, watch } from "vue";
-import { ApiService, Performer, QueryArguments, Region, Eval } from "../client";
+import { Eval, Performer, QueryArguments, Region} from "../client";
 import type { Ref } from "vue";
 import { changeTime } from "../interactions/timeStepper";
 import { useRoute } from "vue-router";
-
-const scoringApp = computed(()=> ApiService.apiPrefix.includes('scoring'));
 
 const timemin = ref(Math.floor(new Date(0).valueOf() / 1000));
 
@@ -241,13 +239,13 @@ const toggleText = () => {
       </v-row>
       <v-row
         dense
-        class="mt-3"
         v-if="scoringApp"
+        class="mt-3"
       >
         <EvalFilter
           cols="6"
-          hide-details
           v-model="selectedEval"
+          hide-details
         />
       </v-row>
       <SettingsPanel v-if="expandSettings" />

@@ -5,13 +5,13 @@ import { state } from "../store";
 
 
 
-const scoringApp = computed(()=> ApiService.apiPrefix.includes('scoring'));
+const scoringApp = computed(()=> ApiService.getApiPrefix().includes('scoring'));
 
 
 
 
 const checkGroundTruth = async () => {
-  if (scoringApp.value) { 
+  if (scoringApp.value) {
     return;
   } else {
     // We need to find the ground-truth model and add it to the visible items

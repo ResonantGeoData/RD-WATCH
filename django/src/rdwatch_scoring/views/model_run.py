@@ -1,4 +1,5 @@
 import logging
+from typing import Literal, TypeAlias
 
 from ninja import FilterSchema, Query
 from ninja.pagination import RouterPaginated
@@ -35,12 +36,15 @@ logger = logging.getLogger(__name__)
 
 router = RouterPaginated()
 
+Mode: TypeAlias = Literal['batch', 'incremental']
+
 
 class ModelRunFilterSchema(FilterSchema):
     performer: list[str] | None
     region: str | None
     eval: list[str] | None
     # proposal: str | None = Field(q='proposal', ignore_none=False)
+    mode: list[Mode] | None
 
     def filter_performer(self, value: list[str] | None) -> Q:
         if value is None or not value:
@@ -49,6 +53,14 @@ class ModelRunFilterSchema(FilterSchema):
         for performer_slug in value:
             performer_q |= Q(performer=performer_slug)
         return performer_q
+
+    def filter_mode(self, value: list[Mode] | None) -> Q:
+        if value is None or not value:
+            return Q()
+        mode_q = Q()
+        for mode in value:
+            mode_q |= Q(mode=mode)
+        return mode_q
 
     def filter_eval(self, value: list[str] | None) -> Q:
         if value is None or not value:
@@ -195,7 +207,6 @@ def list_model_runs(
         )
     ).order_by(F('region'), F('performer'), F('evaluation_number'), F('evaluation_run_number'), F('evaluation_increment_number'))
 
-    print(qs.query)
     aggregate_kwargs = {
         'timerange': JSONObject(
             min=ExtractEpoch(Min('site__start_date')),

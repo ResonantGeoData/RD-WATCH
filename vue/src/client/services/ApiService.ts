@@ -1,6 +1,8 @@
 /* istanbul ignore file */
 /* tslint:disable */
 /* eslint-disable */
+import { ref } from 'vue';
+
 import type { ServerStatus } from "../models/ServerStatus";
 import type { SiteEvaluationList } from "../models/SiteEvaluationList";
 import type { SiteObservationList } from "../models/SiteObservationList";
@@ -22,6 +24,7 @@ import { EvaluationImageResults } from "../../types";
 export interface QueryArguments {
   performer?: string[];
   region?: string;
+  mode?: string[];
   eval?: string[];
   page?: number;
   limit?: number;
@@ -112,12 +115,23 @@ export interface SiteDetails {
   timemax: number;
 }
 
-export class ApiService {
-  public static apiPrefix = "/api";
+type ApiPrefix = '/api' | '/api/scoring';
 
-  public static setApiPrefix(prefix: string) {
-    ApiService.apiPrefix = prefix;
+export class ApiService {
+  private static apiPrefix = ref<ApiPrefix>("/api");
+
+  public static getApiPrefix(): ApiPrefix {
+    return ApiService.apiPrefix.value;
   }
+
+  public static setApiPrefix(prefix: ApiPrefix) {
+    ApiService.apiPrefix.value = prefix;
+  }
+
+  public static isScoring(): boolean {
+    return ApiService.apiPrefix.value === '/api/scoring';
+  }
+
   /**
    * @returns ServerStatus
    * @throws ApiError
@@ -138,7 +152,7 @@ export class ApiService {
   ): CancelablePromise<SiteEvaluationList> {
     return __request(OpenAPI, {
       method: "GET",
-      url: `${this.apiPrefix}/evaluations`,
+      url: `${this.getApiPrefix()}/evaluations`,
       query,
     });
   }
@@ -153,7 +167,7 @@ export class ApiService {
   ): CancelablePromise<SiteObservationList> {
     return __request(OpenAPI, {
       method: "GET",
-      url: `${this.apiPrefix}/observations/{id}`,
+      url: `${this.getApiPrefix()}/observations/{id}`,
       path: {
         id: id,
       },
@@ -170,7 +184,7 @@ export class ApiService {
     ): CancelablePromise<SiteDetails> {
       return __request(OpenAPI, {
         method: "GET",
-        url: `${this.apiPrefix}/sites/{id}/details`,
+        url: `${this.getApiPrefix()}/sites/{id}/details`,
         path: {
           id: id,
         },
@@ -188,7 +202,7 @@ export class ApiService {
       ): CancelablePromise<boolean> {
         return __request(OpenAPI, {
           method: "POST",
-          url: `${this.apiPrefix}/observations/{id}/generate-images/`,
+          url: `${this.getApiPrefix()}/observations/{id}/generate-images/`,
           path: {
             id: id,
           },
@@ -210,7 +224,7 @@ export class ApiService {
       ): CancelablePromise<boolean> {
         return __request(OpenAPI, {
           method: "POST",
-          url: `${this.apiPrefix}/model-runs/{id}/generate-images/`,
+          url: `${this.getApiPrefix()}/model-runs/{id}/generate-images/`,
           path: {
             id: id,
           },
@@ -230,7 +244,7 @@ export class ApiService {
       ): CancelablePromise<boolean> {
         return __request(OpenAPI, {
           method: "PUT",
-          url: `${this.apiPrefix}/observations/{id}/cancel-generate-images/`,
+          url: `${this.getApiPrefix()}/observations/{id}/cancel-generate-images/`,
           path: {
             id: id,
           },
@@ -247,7 +261,7 @@ export class ApiService {
       ): CancelablePromise<boolean> {
         return __request(OpenAPI, {
           method: "PUT",
-          url: `${this.apiPrefix}/model-runs/{id}/cancel-generate-images/`,
+          url: `${this.getApiPrefix()}/model-runs/{id}/cancel-generate-images/`,
           path: {
             id: id,
           },
@@ -263,7 +277,7 @@ export class ApiService {
   ): CancelablePromise<ModelRunList> {
     return __request(OpenAPI, {
       method: "GET",
-      url: `${this.apiPrefix}/model-runs`,
+      url: `${this.getApiPrefix()}/model-runs`,
       query: Object.fromEntries(
         Object.entries(query).filter(([key, value]) => value !== undefined)
       ),
@@ -277,7 +291,7 @@ export class ApiService {
     public static getModelRunEvaluations(id: string): CancelablePromise<ModelRunEvaluations> {
       return __request(OpenAPI, {
         method: "GET",
-        url: `${this.apiPrefix}/model-runs/{id}/evaluations`,
+        url: `${this.getApiPrefix()}/model-runs/{id}/evaluations`,
         path: {
           id: id,
         },
@@ -294,7 +308,7 @@ export class ApiService {
   public static getModelRun(id: string): CancelablePromise<ModelRun> {
     return __request(OpenAPI, {
       method: "GET",
-      url: `${this.apiPrefix}/model-runs/{id}`,
+      url: `${this.getApiPrefix()}/model-runs/{id}`,
       path: {
         id: id,
       },
@@ -308,7 +322,7 @@ export class ApiService {
   public static getPerformers(): CancelablePromise<PerformerList> {
     return __request(OpenAPI, {
       method: "GET",
-      url: `${this.apiPrefix}/performers`,
+      url: `${this.getApiPrefix()}/performers`,
     });
   }
 
@@ -320,7 +334,7 @@ export class ApiService {
   public static getPerformer(id: number): CancelablePromise<Performer> {
     return __request(OpenAPI, {
       method: "GET",
-      url: `${this.apiPrefix}/performers/{id}`,
+      url: `${this.getApiPrefix()}/performers/{id}`,
       path: {
         id: id,
       },
@@ -334,7 +348,7 @@ export class ApiService {
   public static getRegions(): CancelablePromise<RegionList> {
     return __request(OpenAPI, {
       method: "GET",
-      url: `${this.apiPrefix}/regions`,
+      url: `${this.getApiPrefix()}/regions`,
     });
   }
 
@@ -345,7 +359,7 @@ export class ApiService {
   public static getEvals(): CancelablePromise<EvalList> {
     return __request(OpenAPI, {
       method: "GET",
-      url: `${this.apiPrefix}/evals`,
+      url: `${this.getApiPrefix()}/evals`,
     });
   }
 
@@ -471,7 +485,7 @@ export class ApiService {
   public static getEvaluationImages(id: string): CancelablePromise<EvaluationImageResults> {
     return __request(OpenAPI, {
       method: "GET",
-      url: `${this.apiPrefix}/evaluations/images/{id}`,
+      url: `${this.getApiPrefix()}/evaluations/images/{id}`,
       path: {
         id: id,
       },
@@ -493,7 +507,7 @@ export class ApiService {
   public static patchSiteObservation(id: string, data: SiteObservationUpdateQuery): CancelablePromise<boolean> {
     return __request(OpenAPI, {
       method: 'PATCH',
-      url: `${this.apiPrefix}/observations/{id}/`,
+      url: `${this.getApiPrefix()}/observations/{id}/`,
       path: {
         id: id,
       },
@@ -515,7 +529,7 @@ export class ApiService {
   public static startModelRunDownload(id: string, mode: 'all' | 'approved' | 'rejected'='all'): CancelablePromise<string> {
     return __request(OpenAPI, {
       method: 'POST',
-      url: `${this.apiPrefix}/model-runs/{id}/download/`,
+      url: `${this.getApiPrefix()}/model-runs/{id}/download/`,
       path: {
         id: id,
       },
@@ -526,7 +540,7 @@ export class ApiService {
   public static getModelRunDownloadStatus(task_id: string): CancelablePromise<CeleryStates> {
     return __request(OpenAPI, {
       method: 'GET',
-      url: `${this.apiPrefix}/model-runs/download_status`,
+      url: `${this.getApiPrefix()}/model-runs/download_status`,
       query: {task_id},
     })
   }

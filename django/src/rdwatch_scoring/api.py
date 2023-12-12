@@ -14,7 +14,6 @@ api.add_router('/sites/', views.site.router)
 api.add_router('/evals/', views.eval.router)
 
 
-
 # useful for getting information back about validation errors
 @api.exception_handler(ValidationError)
 def custom_validation_errors(request, exc):

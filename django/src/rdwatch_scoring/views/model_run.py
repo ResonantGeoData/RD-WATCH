@@ -74,10 +74,12 @@ class ModelRunFilterSchema(FilterSchema):
 
 
 def get_queryset():
-    return (EvaluationRun.objects
-        .filter(evaluationbroadareasearchmetric__activity_type='overall',
-                evaluationbroadareasearchmetric__tau=0.2,
-                evaluationbroadareasearchmetric__rho=0.5)
+    return (
+        EvaluationRun.objects.filter(
+            evaluationbroadareasearchmetric__activity_type='overall',
+            evaluationbroadareasearchmetric__tau=0.2,
+            evaluationbroadareasearchmetric__rho=0.5,
+        )
         .values()
         .annotate(
             id=F('uuid'),
@@ -96,16 +98,20 @@ def get_queryset():
                 'evaluation_number',
                 Value('.'),
                 'evaluation_run_number',
-                output_field=CharField()
+                output_field=CharField(),
             ),
             region=F('region'),
             performer_slug=F('performer'),
-            performer=JSONObject(id=0, team_name=F('performer'), short_code=F('performer')),
+            performer=JSONObject(
+                id=0, team_name=F('performer'), short_code=F('performer')
+            ),
             parameters=Value({}, output_field=JSONField()),
             numsites=F('evaluationbroadareasearchmetric__proposed_sites'),
             downloading=Value(0),
             score=Avg(
-                NullIf('site__confidence_score', Value('NaN'), output_field=FloatField())
+                NullIf(
+                    'site__confidence_score', Value('NaN'), output_field=FloatField()
+                )
             ),
             timestamp=ExtractEpoch(Max('site__end_date')),
             timerange=JSONObject(
@@ -140,8 +146,15 @@ def list_model_runs(
     page_size: int = 10  # TODO: use settings.NINJA_PAGINATION_PER_PAGE?
     page = int(request.GET.get('page', 1))
 
-    qs = filters.filter(EvaluationRun.objects.all()
-                        .order_by(F('region'), F('performer'), F('evaluation_number'), F('evaluation_run_number'), F('evaluation_increment_number')))
+    qs = filters.filter(
+        EvaluationRun.objects.all().order_by(
+            F('region'),
+            F('performer'),
+            F('evaluation_number'),
+            F('evaluation_run_number'),
+            F('evaluation_increment_number'),
+        )
+    )
 
     ids = qs[((page - 1) * page_size) : (page * page_size)].values_list(
         'uuid', flat=True
@@ -149,11 +162,12 @@ def list_model_runs(
     total_count = qs.count()
 
     qs = (
-        EvaluationRun.objects
-        .filter(uuid__in=ids,
-                evaluationbroadareasearchmetric__activity_type='overall',
-                evaluationbroadareasearchmetric__tau=0.2,
-                evaluationbroadareasearchmetric__rho=0.5)
+        EvaluationRun.objects.filter(
+            uuid__in=ids,
+            evaluationbroadareasearchmetric__activity_type='overall',
+            evaluationbroadareasearchmetric__tau=0.2,
+            evaluationbroadareasearchmetric__rho=0.5,
+        )
         .values()
         .annotate(
             id=F('uuid'),
@@ -172,7 +186,7 @@ def list_model_runs(
                 'evaluation_number',
                 Value('.'),
                 'evaluation_run_number',
-                output_field=CharField()
+                output_field=CharField(),
             ),
             performer=JSONObject(
                 id=0, team_name=F('performer'), short_code=F('performer')
@@ -205,7 +219,13 @@ def list_model_runs(
                 output_field=JSONField(),
             ),
         )
-    ).order_by(F('region'), F('performer'), F('evaluation_number'), F('evaluation_run_number'), F('evaluation_increment_number'))
+    ).order_by(
+        F('region'),
+        F('performer'),
+        F('evaluation_number'),
+        F('evaluation_run_number'),
+        F('evaluation_increment_number'),
+    )
 
     aggregate_kwargs = {
         'timerange': JSONObject(

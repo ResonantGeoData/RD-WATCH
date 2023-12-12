@@ -20,7 +20,6 @@ const page = ref<number>(1);
 const route = useRoute();
 watch(() => route.path, (oldPath, newPath) => {
   if ((!oldPath.includes('/scoring') && newPath.includes('/scoring')) || (oldPath.includes('/scoring') && !newPath.includes('/scoring'))) {
-    console.log(`Resetting path:  old:${oldPath}  new:${newPath}`);
     selectedPerformer.value = [];
     selectedRegion.value = undefined;
     state.enabledSiteObservations = [];

@@ -113,6 +113,10 @@ const determineDownload = () => {
   }
 }
 
+const getModeIcon = (mode: ModelRun['mode']) => (mode ? {
+  batch: 'mdi-checkbox-multiple-blank',
+  incremental: 'mdi-trending-up',
+}[mode] : null);
 
 </script>
 
@@ -122,6 +126,20 @@ const determineDownload = () => {
     class="my-3 modelRunCard"
     :class="{selectedCard: props.open}"
   >
+    <v-card-actions
+      class="pa-2"
+      style="position: absolute; top: 0; right: 0;"
+    >
+      <v-chip
+        label
+        size="x-small"
+      >
+        <span class="text-caption mx-2">{{ modelRun.mode?.toUpperCase() }}</span>
+        <v-icon>
+          {{ getModeIcon(modelRun.mode) }}
+        </v-icon>
+      </v-chip>
+    </v-card-actions>
     <v-card-text
       @click.prevent="handleClick"
     >
@@ -136,14 +154,6 @@ const determineDownload = () => {
         </div>
         <div>
           {{ modelRun.region || "(none)" }}
-        </div>
-      </v-row>
-      <v-row dense>
-        <div>
-          mode:
-        </div>
-        <div>
-          {{ modelRun.mode || "(none)" }}
         </div>
       </v-row>
       <v-row dense>

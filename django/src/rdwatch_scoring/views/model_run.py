@@ -39,6 +39,7 @@ router = RouterPaginated()
 class ModelRunFilterSchema(FilterSchema):
     performer: list[str] | None
     region: str | None
+    eval: list[str] | None
     # proposal: str | None = Field(q='proposal', ignore_none=False)
 
     def filter_performer(self, value: list[str] | None) -> Q:
@@ -48,6 +49,16 @@ class ModelRunFilterSchema(FilterSchema):
         for performer_slug in value:
             performer_q |= Q(performer=performer_slug)
         return performer_q
+
+    def filter_eval(self, value: list[str] | None) -> Q:
+        if value is None or not value:
+            return Q()
+        eval_q = Q()
+        for eval in value:
+            eval_num = eval.split('.')[0]
+            eval_run_num = eval.split('.')[1]
+            eval_q |= Q(evaluation_number=eval_num, evaluation_run_number=eval_run_num)
+        return eval_q
 
 
 def get_queryset():
@@ -62,11 +73,17 @@ def get_queryset():
             'performer',
             output_field=CharField(),
         ),
+        eval=Concat(
+            'evaluation_number',
+            Value('.'),
+            'evaluation_run_number',
+            output_field=CharField()
+        ),
         region=F('region'),
         performer_slug=F('performer'),
         performer=JSONObject(id=0, team_name=F('performer'), short_code=F('performer')),
         parameters=Value({}, output_field=JSONField()),
-        numsites=Count('site__uuid'),
+        numsites=F('evaluationbroadareasearchmetric__proposed_sites'),
         downloading=Value(0),
         score=Avg(
             NullIf('site__confidence_score', Value('NaN'), output_field=FloatField())
@@ -103,7 +120,8 @@ def list_model_runs(
     page_size: int = 10  # TODO: use settings.NINJA_PAGINATION_PER_PAGE?
     page = int(request.GET.get('page', 1))
 
-    qs = filters.filter(EvaluationRun.objects.all())
+    qs = filters.filter(EvaluationRun.objects.all()
+                        .order_by(F('region'), F('performer'), F('evaluation_number'), F('evaluation_run_number')))
 
     ids = qs[((page - 1) * page_size) : (page * page_size)].values_list(
         'uuid', flat=True
@@ -124,6 +142,12 @@ def list_model_runs(
                 'performer',
                 output_field=CharField(),
             ),
+            eval=Concat(
+                'evaluation_number',
+                Value('.'),
+                'evaluation_run_number',
+                output_field=CharField()
+            ),
             performer=JSONObject(
                 id=0, team_name=F('performer'), short_code=F('performer')
             ),
@@ -142,7 +166,7 @@ def list_model_runs(
                     'site__confidence_score', Value('NaN'), output_field=FloatField()
                 )
             ),
-            numsites=Count('site__uuid'),
+            numsites=F('evaluationbroadareasearchmetric__proposed_sites'),
             timestamp=ExtractEpoch(Max('site__end_date')),
             timerange=JSONObject(
                 min=ExtractEpoch(Min('site__start_date')),
@@ -155,7 +179,7 @@ def list_model_runs(
                 output_field=JSONField(),
             ),
         )
-    ).order_by('-start_datetime')
+    ).order_by(F('region'), F('performer'), F('evaluation_number'), F('evaluation_run_number'))
 
     aggregate_kwargs = {
         'timerange': JSONObject(

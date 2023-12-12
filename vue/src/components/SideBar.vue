@@ -2,14 +2,17 @@
 import ModelRunList from "./ModelRunList.vue";
 import TimeSlider from "./TimeSlider.vue";
 import PerformerFilter from "./filters/PerformerFilter.vue";
+import EvalFilter from "./filters/EvalFilter.vue";
 import RegionFilter from "./filters/RegionFilter.vue";
 import SettingsPanel from "./SettingsPanel.vue";
 import ErrorPopup from './ErrorPopup.vue';
 import { filteredSatelliteTimeList, state } from "../store";
 import { computed, onMounted, ref, watch } from "vue";
-import { Performer, QueryArguments, Region } from "../client";
+import { ApiService, Performer, QueryArguments, Region, Eval } from "../client";
 import type { Ref } from "vue";
 import { changeTime } from "../interactions/timeStepper";
+
+const scoringApp = computed(()=> ApiService.apiPrefix.includes('scoring'));
 
 const timemin = ref(Math.floor(new Date(0).valueOf() / 1000));
 
@@ -19,10 +22,12 @@ const queryFilters = computed<QueryArguments>(() => ({
   page: page.value,
   performer: selectedPerformer.value.map((item) => item.short_code),
   region: selectedRegion.value,
+  eval: selectedEval.value,
 }));
 
 const selectedPerformer: Ref<Performer[]> = ref([]);
 const selectedRegion: Ref<Region | undefined> = ref(undefined);
+const selectedEval: Ref<Eval[]> = ref([]);
 watch(selectedPerformer, (val) => {
   state.filters = {
     ...state.filters,
@@ -162,15 +167,27 @@ const toggleText = () => {
         dense
         class="mt-3"
       >
-        <PerformerFilter
-          v-model="selectedPerformer"
-          class="pr-2"
-          cols="6"
-        />
         <RegionFilter
           v-model="selectedRegion"
           cols="6"
+          hide-details
           @update:model-value="updateRegion($event)"
+        />
+        <PerformerFilter
+          v-model="selectedPerformer"
+          cols="6"
+          hide-details
+        />
+      </v-row>
+      <v-row
+        dense
+        class="mt-3"
+        v-if="scoringApp"
+      >
+        <EvalFilter
+          cols="6"
+          hide-details
+          v-model="selectedEval"
         />
       </v-row>
       <SettingsPanel v-if="expandSettings" />
@@ -229,4 +246,7 @@ const toggleText = () => {
 
 }
 
+.modelRuns {
+  margin-top: 2em
+}
 </style>

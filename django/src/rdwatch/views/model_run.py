@@ -103,10 +103,11 @@ class ModelRunAdjudicated(Schema):
 class ModelRunDetailSchema(Schema):
     id: UUID4
     title: str
+    eval: str | None = None
     region: str | None = None
     performer: PerformerSchema
     parameters: dict
-    numsites: int
+    numsites: int | None = 0
     downloading: int | None = None
     score: float | None = None
     timestamp: int | None = None
@@ -123,10 +124,11 @@ class ModelRunDetailSchema(Schema):
 class ModelRunListSchema(Schema):
     id: UUID4
     title: str
+    eval: str | None = None
     region: str | None = None
     performer: PerformerSchema
     parameters: dict
-    numsites: int
+    numsites: int | None = 0
     downloading: int | None = None
     score: float | None = None
     timestamp: int | None = None

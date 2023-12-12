@@ -261,7 +261,7 @@ async function handleScroll(event: Event) {
 const hasSatelliteImages = computed(() => filteredSatelliteTimeList.value.length);
 
 watchEffect(loadMore);
-watch([() => props.filters.region, () => props.filters.performer], () => {
+watch([() => props.filters.region, () => props.filters.performer, () => props.filters.eval], () => {
   state.openedModelRuns.clear();
   state.filters = {
     ...state.filters,

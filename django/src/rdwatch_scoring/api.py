@@ -11,6 +11,8 @@ api.add_router('/observations/', views.observation.router)
 api.add_router('/performers/', views.performer.router)
 api.add_router('/regions/', views.region.router)
 api.add_router('/sites/', views.site.router)
+api.add_router('/evals/', views.eval.router)
+
 
 
 # useful for getting information back about validation errors

@@ -15,6 +15,8 @@ export type { PerformerList } from "./models/PerformerList";
 export type { Performer } from "./models/Performer";
 export type { RegionList } from "./models/RegionList";
 export type { Region } from "./models/Region";
+export type { EvalList } from "./models/EvalList";
+export type { Eval } from "./models/Eval";
 
 export type { QueryArguments } from "./services/ApiService";
 export { ApiService } from "./services/ApiService";

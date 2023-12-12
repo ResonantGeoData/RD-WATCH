@@ -38,6 +38,7 @@ router = RouterPaginated()
 
 Mode: TypeAlias = Literal['batch', 'incremental']
 
+
 class ModelRunFilterSchema(FilterSchema):
     performer: list[str] | None
     region: str | None

@@ -3,6 +3,7 @@ import ModelRunList from "./ModelRunList.vue";
 import TimeSlider from "./TimeSlider.vue";
 import PerformerFilter from "./filters/PerformerFilter.vue";
 import RegionFilter from "./filters/RegionFilter.vue";
+import ModeFilter from "./filters/ModeFilter.vue";
 import SettingsPanel from "./SettingsPanel.vue";
 import ErrorPopup from './ErrorPopup.vue';
 import { filteredSatelliteTimeList, state } from "../store";
@@ -39,8 +40,10 @@ const queryFilters = computed<QueryArguments>(() => ({
   page: page.value,
   performer: selectedPerformer.value.map((item) => item.short_code),
   region: selectedRegion.value,
+  mode: selectedMode.value,
 }));
 
+const selectedMode: Ref<string | undefined> = ref(undefined);
 const selectedPerformer: Ref<Performer[]> = ref([]);
 const selectedRegion: Ref<Region | undefined> = ref(undefined);
 watch(selectedPerformer, (val) => {
@@ -67,6 +70,15 @@ const updateRegion = (val?: Region) => {
     regions: val === undefined ? undefined : [val],
   };
 };
+
+const updateMode = (mode?: string) => {
+  page.value = 1;
+  state.filters = {
+    ...state.filters,
+    mode: mode,
+  };
+};
+
 const expandSettings = ref(false);
 
 const imagesOn = computed({
@@ -231,6 +243,13 @@ const toggleText = () => {
           v-model="selectedRegion"
           cols="6"
           @update:model-value="updateRegion($event)"
+        />
+      </v-row>
+      <v-row dense>
+        <ModeFilter
+          v-model="selectedMode"
+          class="pr-2"
+          @update:model-value="updateMode($event)"
         />
       </v-row>
       <SettingsPanel v-if="expandSettings" />

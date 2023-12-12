@@ -6,6 +6,7 @@ export interface MapFilters {
   configuration_id?: string[];
   performer_ids?: number[];
   regions?: Region[];
+  mode?: string;
   drawSiteOutline?: string[]; //looking for either 'model' | 'groundtruth'
   drawObservations?: string[]; //looking for either 'model' | 'groundtruth'
   scoringColoring?: 'simple' | 'detailed';

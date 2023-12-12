@@ -67,12 +67,12 @@ export const buildObservationFilter = (
         "any",
         ["==", ["get", "groundtruth"], false]
       ]
-    ); 
+    );
   } else if (!hasModel && hasGroundTruth) {
     filter.push([
       "any",
       ["==", ["get", "groundtruth"], true]
-    ]); 
+    ]);
   } else if (!hasModel && !hasGroundTruth) {
     return false;
   }
@@ -164,12 +164,12 @@ export const buildSiteFilter = (
         "any",
         ["==", ["get", "groundtruth"], false]
       ]
-    ); 
+    );
   } else if (!hasModel && hasGroundTruth) {
     filter.push([
       "any",
       ["==", ["get", "groundtruth"], true]
-    ]); 
+    ]);
   } else if (!hasModel && !hasGroundTruth && !filters.scoringColoring) {
     return false;
   }
@@ -223,7 +223,7 @@ export const buildSourceFilter = (modelRunIds: string[]) => {
     const source = `vectorTileSource_${id}`;
     results[source] = {
       type: "vector",
-      tiles: [`${urlRoot}${ApiService.apiPrefix}/model-runs/${id}/vector-tile/{z}/{x}/{y}.pbf/`],
+      tiles: [`${urlRoot}${ApiService.getApiPrefix()}/model-runs/${id}/vector-tile/{z}/{x}/{y}.pbf/`],
       minzoom: 0,
       maxzoom: 14,
     };

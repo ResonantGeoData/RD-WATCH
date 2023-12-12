@@ -109,12 +109,19 @@ export interface SiteDetails {
   timemax: number;
 }
 
-export class ApiService {
-  public static apiPrefix = "/api";
+type ApiPrefix = '/api' | '/api/scoring';
 
-  public static setApiPrefix(prefix: string) {
+export class ApiService {
+  private static apiPrefix: ApiPrefix = "/api";
+
+  public static getApiPrefix(): ApiPrefix {
+    return ApiService.apiPrefix;
+  }
+
+  public static setApiPrefix(prefix: ApiPrefix) {
     ApiService.apiPrefix = prefix;
   }
+
   /**
    * @returns ServerStatus
    * @throws ApiError
@@ -173,7 +180,7 @@ export class ApiService {
         },
       });
     }
-  
+
       /**
    * @param id
    * @returns boolean

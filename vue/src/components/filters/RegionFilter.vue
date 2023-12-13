@@ -55,10 +55,10 @@ watch(selectedRegion, (val) => {
 <template>
   <v-select
     v-model="selectedRegion"
-    clearable
-    persistent-clear
     density="compact"
     variant="outlined"
+    clearable
+    persistent-clear
     :label="`Region (${regions.length})`"
     :placeholder="`Region (${regions.length})`"
     :items="regions"

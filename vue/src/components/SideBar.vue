@@ -2,13 +2,14 @@
 import ModelRunList from "./ModelRunList.vue";
 import TimeSlider from "./TimeSlider.vue";
 import PerformerFilter from "./filters/PerformerFilter.vue";
+import EvalFilter from "./filters/EvalFilter.vue";
 import RegionFilter from "./filters/RegionFilter.vue";
 import ModeFilter from "./filters/ModeFilter.vue";
 import SettingsPanel from "./SettingsPanel.vue";
 import ErrorPopup from './ErrorPopup.vue';
 import { filteredSatelliteTimeList, state } from "../store";
 import { computed, onMounted, ref, watch } from "vue";
-import { ApiService, Performer, QueryArguments, Region } from "../client";
+import { ApiService, Eval, Performer, QueryArguments, Region } from "../client";
 import type { Ref } from "vue";
 import { changeTime } from "../interactions/timeStepper";
 import { useRoute } from "vue-router";
@@ -19,7 +20,6 @@ const page = ref<number>(1);
 const route = useRoute();
 watch(() => route.path, (oldPath, newPath) => {
   if ((!oldPath.includes('/scoring') && newPath.includes('/scoring')) || (oldPath.includes('/scoring') && !newPath.includes('/scoring'))) {
-    console.log(`Resetting path:  old:${oldPath}  new:${newPath}`);
     selectedPerformer.value = [];
     selectedRegion.value = undefined;
     state.enabledSiteObservations = [];
@@ -41,11 +41,13 @@ const queryFilters = computed<QueryArguments>(() => ({
   performer: selectedPerformer.value.map((item) => item.short_code),
   region: selectedRegion.value,
   mode: selectedModes.value,
+  eval: selectedEval.value,
 }));
 
 const selectedModes: Ref<string[]> = ref([]);
 const selectedPerformer: Ref<Performer[]> = ref([]);
 const selectedRegion: Ref<Region | undefined> = ref(undefined);
+const selectedEval: Ref<Eval[]> = ref([]);
 watch(selectedPerformer, (val) => {
   state.filters = {
     ...state.filters,
@@ -236,23 +238,33 @@ const toggleText = () => {
       >
         <PerformerFilter
           v-model="selectedPerformer"
-          class="pr-2"
           cols="6"
+          class="px-1"
+          hide-details
         />
         <RegionFilter
           v-model="selectedRegion"
           cols="6"
+          class="px-1"
+          hide-details
           @update:model-value="updateRegion($event)"
         />
       </v-row>
       <v-row
         v-if="ApiService.isScoring()"
+        class="pt-2"
         dense
       >
         <ModeFilter
           v-model="selectedModes"
-          class="pr-2"
+          class="px-1"
+          hide-details
           @update:model-value="updateMode($event)"
+        />
+        <EvalFilter
+          v-model="selectedEval"
+          class="px-1"
+          hide-details
         />
       </v-row>
       <SettingsPanel v-if="expandSettings" />
@@ -311,4 +323,7 @@ const toggleText = () => {
 
 }
 
+.modelRuns {
+  margin-top: 2em
+}
 </style>

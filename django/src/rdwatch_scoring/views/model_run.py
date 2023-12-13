@@ -42,6 +42,7 @@ Mode: TypeAlias = Literal['batch', 'incremental']
 class ModelRunFilterSchema(FilterSchema):
     performer: list[str] | None
     region: str | None
+    eval: list[str] | None
     # proposal: str | None = Field(q='proposal', ignore_none=False)
     mode: list[Mode] | None
 
@@ -61,49 +62,79 @@ class ModelRunFilterSchema(FilterSchema):
             mode_q |= Q(mode=mode)
         return mode_q
 
+    def filter_eval(self, value: list[str] | None) -> Q:
+        if value is None or not value:
+            return Q()
+        eval_q = Q()
+        for eval in value:
+            eval_num = eval.split('.')[0]
+            eval_run_num = eval.split('.')[1]
+            eval_q |= Q(evaluation_number=eval_num, evaluation_run_number=eval_run_num)
+        return eval_q
+
 
 def get_queryset():
-    return EvaluationRun.objects.values().annotate(
-        id=F('uuid'),
-        title=Concat(
-            Value('Eval '),
-            'evaluation_number',
-            Value('.'),
-            'evaluation_run_number',
-            Value(' '),
-            'performer',
-            output_field=CharField(),
-        ),
-        region=F('region'),
-        performer_slug=F('performer'),
-        performer=JSONObject(id=0, team_name=F('performer'), short_code=F('performer')),
-        parameters=Value({}, output_field=JSONField()),
-        numsites=Count('site__uuid'),
-        downloading=Value(0),
-        score=Avg(
-            NullIf('site__confidence_score', Value('NaN'), output_field=FloatField())
-        ),
-        timestamp=ExtractEpoch(Max('site__end_date')),
-        timerange=JSONObject(
-            min=ExtractEpoch(Min('site__start_date')),
-            max=ExtractEpoch(Max('site__end_date')),
-        ),
-        # bbox=Value({}, output_field=JSONField()),
-        bbox=Func(
-            F('site__region__geometry'),
-            4326,
-            function='ST_AsGeoJSON',
-            output_field=JSONField(),
-        ),
-        created=F('start_datetime'),
-        expiration_time=Value(None, output_field=DateTimeField()),
-        evaluation=F('evaluation_number'),
-        evaluation_run=F('evaluation_run_number'),
-        proposal=Value(None, output_field=CharField()),
-        adjudicated=JSONObject(
-            proposed=0,
-            other=0,
-        ),
+    return (
+        EvaluationRun.objects.filter(
+            evaluationbroadareasearchmetric__activity_type='overall',
+            evaluationbroadareasearchmetric__tau=0.2,
+            evaluationbroadareasearchmetric__rho=0.5,
+        )
+        .values()
+        .annotate(
+            id=F('uuid'),
+            title=Concat(
+                Value('Eval '),
+                'evaluation_number',
+                Value('.'),
+                'evaluation_run_number',
+                Value('.'),
+                'evaluation_increment_number',
+                Value(' '),
+                'performer',
+                output_field=CharField(),
+            ),
+            eval=Concat(
+                'evaluation_number',
+                Value('.'),
+                'evaluation_run_number',
+                output_field=CharField(),
+            ),
+            region=F('region'),
+            performer_slug=F('performer'),
+            performer=JSONObject(
+                id=0, team_name=F('performer'), short_code=F('performer')
+            ),
+            parameters=Value({}, output_field=JSONField()),
+            numsites=F('evaluationbroadareasearchmetric__proposed_sites'),
+            downloading=Value(0),
+            score=Avg(
+                NullIf(
+                    'site__confidence_score', Value('NaN'), output_field=FloatField()
+                )
+            ),
+            timestamp=ExtractEpoch(Max('site__end_date')),
+            timerange=JSONObject(
+                min=ExtractEpoch(Min('site__start_date')),
+                max=ExtractEpoch(Max('site__end_date')),
+            ),
+            # bbox=Value({}, output_field=JSONField()),
+            bbox=Func(
+                F('site__region__geometry'),
+                4326,
+                function='ST_AsGeoJSON',
+                output_field=JSONField(),
+            ),
+            created=F('start_datetime'),
+            expiration_time=Value(None, output_field=DateTimeField()),
+            evaluation=F('evaluation_number'),
+            evaluation_run=F('evaluation_run_number'),
+            proposal=Value(None, output_field=CharField()),
+            adjudicated=JSONObject(
+                proposed=0,
+                other=0,
+            ),
+        )
     )
 
 
@@ -115,7 +146,15 @@ def list_model_runs(
     page_size: int = 10  # TODO: use settings.NINJA_PAGINATION_PER_PAGE?
     page = int(request.GET.get('page', 1))
 
-    qs = filters.filter(EvaluationRun.objects.all())
+    qs = filters.filter(
+        EvaluationRun.objects.all().order_by(
+            F('region'),
+            F('performer'),
+            F('evaluation_number'),
+            F('evaluation_run_number'),
+            F('evaluation_increment_number'),
+        )
+    )
 
     ids = qs[((page - 1) * page_size) : (page * page_size)].values_list(
         'uuid', flat=True
@@ -123,7 +162,12 @@ def list_model_runs(
     total_count = qs.count()
 
     qs = (
-        EvaluationRun.objects.filter(uuid__in=ids)
+        EvaluationRun.objects.filter(
+            uuid__in=ids,
+            evaluationbroadareasearchmetric__activity_type='overall',
+            evaluationbroadareasearchmetric__tau=0.2,
+            evaluationbroadareasearchmetric__rho=0.5,
+        )
         .values()
         .annotate(
             id=F('uuid'),
@@ -132,8 +176,16 @@ def list_model_runs(
                 'evaluation_number',
                 Value('.'),
                 'evaluation_run_number',
+                Value('.'),
+                'evaluation_increment_number',
                 Value(' '),
                 'performer',
+                output_field=CharField(),
+            ),
+            eval=Concat(
+                'evaluation_number',
+                Value('.'),
+                'evaluation_run_number',
                 output_field=CharField(),
             ),
             performer=JSONObject(
@@ -154,7 +206,7 @@ def list_model_runs(
                     'site__confidence_score', Value('NaN'), output_field=FloatField()
                 )
             ),
-            numsites=Count('site__uuid'),
+            numsites=F('evaluationbroadareasearchmetric__proposed_sites'),
             timestamp=ExtractEpoch(Max('site__end_date')),
             timerange=JSONObject(
                 min=ExtractEpoch(Min('site__start_date')),
@@ -167,7 +219,13 @@ def list_model_runs(
                 output_field=JSONField(),
             ),
         )
-    ).order_by('-start_datetime')
+    ).order_by(
+        F('region'),
+        F('performer'),
+        F('evaluation_number'),
+        F('evaluation_run_number'),
+        F('evaluation_increment_number'),
+    )
 
     aggregate_kwargs = {
         'timerange': JSONObject(

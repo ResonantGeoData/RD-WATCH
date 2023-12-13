@@ -12,6 +12,8 @@ import type { PerformerList } from "../models/PerformerList";
 import type { Performer } from "../models/Performer";
 import type { RegionList } from "../models/RegionList";
 import type { Region } from "../models/Region";
+import type { EvalList } from "../models/EvalList";
+import type { Eval } from "../models/Eval";
 
 import type { CancelablePromise } from "../core/CancelablePromise";
 import { OpenAPI } from "../core/OpenAPI";
@@ -23,6 +25,7 @@ export interface QueryArguments {
   performer?: string[];
   region?: string;
   mode?: string[];
+  eval?: string[];
   page?: number;
   limit?: number;
   proposal?: 'PROPOSAL' | 'APPROVED';
@@ -346,6 +349,17 @@ export class ApiService {
     return __request(OpenAPI, {
       method: "GET",
       url: `${this.getApiPrefix()}/regions`,
+    });
+  }
+
+  /**
+   * @returns EvalList
+   * @throws ApiError
+   */
+  public static getEvals(): CancelablePromise<EvalList> {
+    return __request(OpenAPI, {
+      method: "GET",
+      url: `${this.getApiPrefix()}/eval-numbers/`,
     });
   }
 

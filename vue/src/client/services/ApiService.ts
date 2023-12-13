@@ -359,7 +359,7 @@ export class ApiService {
   public static getEvals(): CancelablePromise<EvalList> {
     return __request(OpenAPI, {
       method: "GET",
-      url: `${this.getApiPrefix()}/evals`,
+      url: `${this.getApiPrefix()}/eval-numbers/`,
     });
   }
 

@@ -20,7 +20,7 @@ def list_evals(request: HttpRequest):
                 output_field=CharField(),
             )
         )
-        .order_by('evaluation_number', 'evaluation_run_number')
+        .order_by('-evaluation_number', '-evaluation_run_number')
         .values_list('eval', flat=True)
         .distinct()
     )

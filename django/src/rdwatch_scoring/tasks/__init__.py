@@ -240,10 +240,14 @@ def get_siteobservations_images(
     if overrideDates and len(overrideDates) == 2:
         min_time = datetime.strptime(overrideDates[0], '%Y-%m-%d')
         max_time = datetime.strptime(overrideDates[1], '%Y-%m-%d')
-
-    timebuffer = ((max_time + timedelta(days=30)) - (min_time - timedelta(days=30))) / 2
-    # print(timebuffer)
-    timestamp = (min_time + timedelta(days=30)) + timebuffer
+        timebuffer = (max_time - min_time) / 2
+        timestamp = min_time + timebuffer
+    else:
+        timebuffer = (
+            (max_time + timedelta(days=30)) - (min_time - timedelta(days=30))
+        ) / 2
+        # print(timebuffer)
+        timestamp = (min_time - timedelta(days=30)) + timebuffer
 
     # Now we get a list of all the timestamps and captures that fall in this range.
     worldView = baseConstellation == 'WV'

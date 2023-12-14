@@ -265,7 +265,6 @@ def get_siteobservations_images(
         timebuffer = (
             (max_time + timedelta(days=30)) - (min_time - timedelta(days=30))
         ) / 2
-        # print(timebuffer)
         timestamp = (min_time - timedelta(days=30)) + timebuffer
 
     # Now we get a list of all the timestamps and captures that fall in this range.

@@ -93,7 +93,7 @@ services:
     environment:
       VITE_DOCKER_DEVELOPMENT: "true" # tells vite.config to use django:8000 instead of localhost:8000
     volumes:
-      - ./:/usr/src/source # entire directory needs to be mounted for git reference
+      - ./:/usr/src/source:ro # entire directory needs to be mounted for git reference
     ports:
       - "8080:8080"
       # required for the git display of the commit hash

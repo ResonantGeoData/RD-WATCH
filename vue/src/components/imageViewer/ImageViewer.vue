@@ -954,7 +954,7 @@ onUnmounted(() => {
               min="1"
               max="5"
               step="0.1"
-              :label="`Rescale (${rescalingBBox.toFixed(2)})X`"
+              :label="`Zoom out (${rescalingBBox.toFixed(2)})X`"
             />
           </v-row>
 

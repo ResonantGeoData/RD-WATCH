@@ -154,7 +154,7 @@ const toggleText = () => {
           size="x-small"
           class="mx-2"
         >
-          RGD
+          RD-WATCH
         </v-btn>
         <v-btn
           to="/scoring"

@@ -470,18 +470,6 @@ export class ApiService {
     });
   }
 
-  public static hasScores(
-    configurationId: number,
-    region: string,
-  ): CancelablePromise<boolean>
-  {
-    return __request(OpenAPI, {
-      method: "GET",
-      url: "/api/scores/has-scores",
-      query: { configurationId, region },
-    });
-  }
-
   public static getEvaluationImages(id: string): CancelablePromise<EvaluationImageResults> {
     return __request(OpenAPI, {
       method: "GET",

@@ -17,7 +17,6 @@ export type ModelRun = {
     max: number;
   } | null;
   bbox: GeoJSON.Polygon | null;
-  hasScores?: boolean;
   created: string;
   expiration_time: string;
   proposal?: null | 'PROPOSAL' | 'APPROVED';

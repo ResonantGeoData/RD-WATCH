@@ -125,8 +125,7 @@ The [Metrics and Test Framework](https://smartgitlab.com/TE/metrics-and-test-fra
 In development mode a scoring Database is automatically initialized at URI: `postgresql+psycopg2://scoring:secretkey@localhost:5433/scoring`
 
 To score data:
-- Begin by first starting the the score DB using `docker compose up scoredb`
-- After that in the Metrics and Test Framework, copy the `alembic_example.ini` to `alembic.ini` and set the `sqlalchemy.url = postgresql+psycopg2://scoring:secretkey@localhost:5433/scoring`
+- In the Metrics and Test Framework, copy the `alembic_example.ini` to `alembic.ini` and set the `sqlalchemy.url = postgresql+psycopg2://scoring:secretkey@localhost:5433/scoring`
 - install the scoring code `pip install -e .` from the root of the Metrics and Test Framework Repository
 - run `alembic upgrade head` to make sure the database is configured properly to load results.
     - Instead of running the above command you can run the following command from inside the RD-WATCH repository `docker compose run --rm django poetry run django-admin migrate rdwatch_scoring --database scoringdb` this will use the django migrations to initialize the database.

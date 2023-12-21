@@ -16,7 +16,6 @@ import { useRoute } from "vue-router";
 
 const timemin = ref(Math.floor(new Date(0).valueOf() / 1000));
 
-const page = ref<number>(1);
 const route = useRoute();
 watch(() => route.path, (oldPath, newPath) => {
   if ((!oldPath.includes('/scoring') && newPath.includes('/scoring')) || (oldPath.includes('/scoring') && !newPath.includes('/scoring'))) {
@@ -37,7 +36,6 @@ const scoringApp = computed(()=> route.path.includes('scoring') && !route.path.i
 
 
 const queryFilters = computed<QueryArguments>(() => ({
-  page: page.value,
   performer: selectedPerformer.value.map((item) => item.short_code),
   region: selectedRegion.value,
   mode: selectedModes.value,
@@ -60,26 +58,6 @@ watch (() => state.filters.regions, () => {
   }
 });
 
-const updateRegion = (val?: Region) => {
-  page.value = 1;
-  if (selectedRegion.value === undefined) {
-    state.satellite.satelliteImagesOn = false;
-    state.enabledSiteObservations = [];
-    state.selectedObservations = [];
-  }
-  state.filters = {
-    ...state.filters,
-    regions: val === undefined ? undefined : [val],
-  };
-};
-
-const updateMode = (mode: string[]) => {
-  page.value = 1;
-  state.filters = {
-    ...state.filters,
-    mode,
-  };
-};
 
 const expandSettings = ref(false);
 
@@ -100,11 +78,6 @@ const drawMap = computed({
     state.filters = { ...state.filters, drawMap: val };
   },
 });
-
-
-function nextPage() {
-  page.value += 1;
-}
 
 onMounted(() => {
   window.document.addEventListener('keydown', (event) => {
@@ -154,7 +127,7 @@ const toggleText = () => {
           size="x-small"
           class="mx-2"
         >
-          RGD
+          RD-WATCH
         </v-btn>
         <v-btn
           to="/scoring"
@@ -247,7 +220,6 @@ const toggleText = () => {
           cols="6"
           class="px-1"
           hide-details
-          @update:model-value="updateRegion($event)"
         />
       </v-row>
       <v-row
@@ -259,7 +231,6 @@ const toggleText = () => {
           v-model="selectedModes"
           class="px-1"
           hide-details
-          @update:model-value="updateMode($event)"
         />
         <EvalFilter
           v-model="selectedEval"
@@ -277,7 +248,6 @@ const toggleText = () => {
       <ModelRunList
         :filters="queryFilters"
         class="flex-grow-1"
-        @next-page="nextPage"
         @update:timerange="
           (timerange) => {
             if (timerange !== null) {

@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref, watch, watchEffect } from "vue";
+import { onMounted, ref, watch } from "vue";
 import { ApiService } from "../../client";
 import type { Ref } from "vue";
 import type { Eval } from "../../client";
@@ -14,13 +14,17 @@ const emit = defineEmits<{
 
 const evals: Ref<Eval[]> = ref([]);
 const selectedEvals: Ref<Eval[]> = ref(props.modelValue);
-watchEffect(async () => {
+const loadEvals = async () => {
   if (ApiService.getApiPrefix().includes('scoring')) {
     const evalList = await ApiService.getEvals();
     const evalResults = evalList.items
     evals.value = evalResults;
   }
-});
+};
+
+watch(() => ApiService.getApiPrefix(), loadEvals);
+
+onMounted(() => loadEvals());
 
 watch(() => props.modelValue, () => {
   if (props.modelValue) {
@@ -28,9 +32,9 @@ watch(() => props.modelValue, () => {
   }
 });
 
-watch(selectedEvals, (l) => {
-  if (l) {
-    emit("update:modelValue", l);
+watch(selectedEvals, (evals) => {
+  if (evals) {
+    emit("update:modelValue", evals);
     return;
   }
   emit("update:modelValue", []);

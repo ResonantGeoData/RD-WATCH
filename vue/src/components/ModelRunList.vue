@@ -7,7 +7,7 @@ import {
   ModelRun,
   QueryArguments,
 } from "../client";
-import { computed, ref, watch, watchEffect, withDefaults } from "vue";
+import { computed, onMounted, ref, watch, withDefaults } from "vue";
 import { ApiService } from "../client";
 import { filteredSatelliteTimeList, state } from "../store";
 import type { KeyedModelRun } from '../store'
@@ -25,7 +25,6 @@ const props = withDefaults(defineProps<Props>(), {
 
 const emit = defineEmits<{
   (e: "update:timerange", timerange: ModelRun["timerange"]): void;
-  (e: "nextPage"): void;
 }>();
 
 const resultsBoundingBox = ref({
@@ -37,10 +36,11 @@ const resultsBoundingBox = ref({
 const totalModelRuns = ref(1);
 const loading = ref(false);
 const satelliteRegionTooLarge = ref(false);
+const page = ref(1);
 
 let request: CancelablePromise<ModelRunList> | undefined;
 
-async function loadMore() {
+async function loadModelRuns() {
   loading.value = true;
   if (request !== undefined) {
     request.cancel();
@@ -98,7 +98,7 @@ async function loadMore() {
     // If we're on page 1, we *might* have switched to a different filter/grouping in the UI,
     // meaning we would need to clear out any existing results.
     // To account for this, just set the array to the results directly instead of concatenating.
-    if (props.filters.page === 1) {
+    if (page.value === 1) {
       state.modelRuns = keyedModelRunResults;
     } else {
       state.modelRuns = state.modelRuns.concat(keyedModelRunResults);
@@ -188,24 +188,6 @@ async function getSatelliteTimestamps(modelRun: ModelRunList, force=false) {
   state.satellite.satelliteBounds = modelRun.bbox?.coordinates[0] as [];
 }
 
-async function checkScores(modelRun: KeyedModelRun)  {
-  let hasScores = false;
-  try {
-    //hasScores = await ApiService.hasScores(modelRun.id, modelRun.region?.id || 0)
-  } catch (err) {
-    hasScores = false;
-  }
-  const foundIndex = state.modelRuns.findIndex((item) => item === modelRun);
-  if (hasScores) {
-    // Do something to set the value on the keyed Model run
-    if (foundIndex !== -1) {
-      state.modelRuns[foundIndex].hasScores = true;
-    }
-  } else {
-    state.modelRuns[foundIndex].hasScores = undefined;
-  }
-}
-
 function handleToggle(modelRun: KeyedModelRun) {
   if (state.openedModelRuns.has(modelRun.key)) {
     state.openedModelRuns.delete(modelRun.key);
@@ -241,9 +223,6 @@ function handleToggle(modelRun: KeyedModelRun) {
     };
     updateCameraBounds(false);
   }
-  if (modelRun.hasScores === undefined && modelRun.performer.short_code !== 'TE') {
-    checkScores(modelRun);
-  }
 }
 
 async function handleScroll(event: Event) {
@@ -253,22 +232,26 @@ async function handleScroll(event: Event) {
   // fetch, bump the current page to trigger the loadMore function via a watcher.
   const heightPosCheck = Math.floor(target.scrollHeight - target.scrollTop) <= target.clientHeight;
   if (!loading.value && heightPosCheck && state.modelRuns.length < totalModelRuns.value) {
-    if (props.filters.page !== undefined && Math.ceil(totalModelRuns.value / limit) > props.filters.page ) {
-      emit("nextPage");
+    if (page.value !== undefined && Math.ceil(totalModelRuns.value / limit) > page.value ) {
+      page.value += 1;
+      loadModelRuns();
     }
   }
 }
 
 const hasSatelliteImages = computed(() => filteredSatelliteTimeList.value.length);
 
-watchEffect(loadMore);
 watch([() => props.filters.region, () => props.filters.performer, () => props.filters.eval], () => {
+  page.value = 1;
   state.openedModelRuns.clear();
   state.filters = {
     ...state.filters,
     configuration_id: [],
   };
+  loadModelRuns();
 });
+
+onMounted(() => loadModelRuns());
 </script>
 
 <template>

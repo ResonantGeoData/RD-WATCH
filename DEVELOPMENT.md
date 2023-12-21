@@ -13,14 +13,15 @@ This is the simplest configuration for developers to start with.
 5. Run `docker compose run --rm django poetry run django-admin loaddata lookups` to initialize your database with required data.
 6. Optionally, populate your database with test data by running `docker compose run --rm django poetry run django-admin loaddata testdata`
 7. Optionally, create an account for the Django admin (http://localhost:8000/admin) by running `docker compose run --rm django poetry --directory django run django-admin createsuperuser`
-8. Start the client development server:
+8. If running the docker compose by default a client development server should be started at http://localhost:8080/
+9. If doing local Client Development, start the client development server:
    ```sh
    cd vue
    npm install
    npm run dev
    ```
-9. Access the site, starting at http://localhost:8080/
-10. When finished, use `Ctrl+C`
+   The server will be started at http://localhost:3000 as to not conflict with the docker compose development service
+   When finished, use `Ctrl+C`
 
 ## Develop Natively (advanced)
 This configuration still uses Docker to run attached services in the background,

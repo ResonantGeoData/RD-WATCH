@@ -86,3 +86,30 @@ services:
       RDWATCH_CELERY_BROKER_URL: amqp://rdwatch:secretkey@rabbitmq:5672/
     volumes:
       - ./django:/app/django
+  rdwatch-client:
+    image: node:20
+    container_name: rd-watch-client
+    working_dir: /usr/src/app
+    environment:
+      VITE_DEV_PROXY_TARGET: "django" # tells vite.config to use django:8000 instead of localhost:8000
+    volumes:
+      - ./:/usr/src/source:ro # entire directory needs to be mounted for git reference
+    ports:
+      - "8080:8080"
+      # required for the git display of the commit hash
+    command: >
+      sh -c "
+        # Copy the contents of /usr/src/source to /usr/src/app to prevent overwriting local node_modules
+        cp -r /usr/src/source /usr/src/app &&
+        # Configure git to treat /usr/src/app/source/ as a safe directory for client hash displaying
+        git config --global --add safe.directory /usr/src/app/source/ &&
+
+        # Change directory to /usr/src/app/source/vue
+        cd /usr/src/app/source/vue &&
+
+        # Install npm dependencies
+        npm install &&
+
+        # Run the npm development script
+        npm run dev
+      "

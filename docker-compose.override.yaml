@@ -91,7 +91,7 @@ services:
     container_name: rd-watch-client
     working_dir: /usr/src/app
     environment:
-      VITE_DOCKER_DEVELOPMENT: "true" # tells vite.config to use django:8000 instead of localhost:8000
+      VITE_DEV_PROXY_TARGET: "django" # tells vite.config to use django:8000 instead of localhost:8000
     volumes:
       - ./:/usr/src/source:ro # entire directory needs to be mounted for git reference
     ports:

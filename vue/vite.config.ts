@@ -3,7 +3,7 @@ import vue from "@vitejs/plugin-vue";
 import { execSync } from "child_process";
 
 export default ({ mode}) => {
-  // Loads all environment variables to see if we are in VITE_DOCKER_DEVELOPMENT
+  // Loads all environment variables to see if we are in VITE_DEV_PROXY_TARGET
   process.env = {...process.env, ...loadEnv(mode, process.cwd())};
   // Load env file based on `mode` in the current working directory.
   // Set the third parameter to '' to load all env regardless of the `VITE_` prefix.
@@ -20,10 +20,9 @@ export default ({ mode}) => {
   process.env.VITE_GIT_BRANCH_NAME = branchName;
   process.env.VITE_GIT_COMMIT_HASH = commitHash;
   process.env.VITE_GIT_LAST_COMMIT_MESSAGE = lastCommitMessage;
-  const dockerDev = process.env.VITE_DOCKER_DEVELOPMENT;
+  const devHost = process.env.VITE_DEV_PROXY_TARGET || 'localhost';
   // Change host to django when running vite inside docker
-  const devHost = dockerDev ? 'django' : 'localhost';
-  const devPort = dockerDev ? 8080 : 3000;
+  const devPort = process.env.VITE_DEV_PROXY_TARGET ? 8080 : 3000;
   return defineConfig({
       plugins: [vue()],
       server: {

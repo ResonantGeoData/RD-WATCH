@@ -50,6 +50,7 @@ const drawData = (
     drawGroundTruth = false,
     rescale = false,
     fullscreen = false,
+    canvasScale = 1,
     ) => {
       const context = canvas.getContext('2d');
       const imageObj = new Image();
@@ -63,17 +64,40 @@ const drawData = (
       const coords = rescale && poly.scaled ? poly.scaled.scaledPoly : poly.coords;
       const renderFunction = (imageDim: [number, number]) => {
           if (context) {
-          canvas.width = overrideWidth === -1 ? imageDim[0]: overrideWidth;
-          canvas.height = overrideHeight === -1 ? imageDim[1]: overrideHeight;
+          canvas.width = overrideWidth === -1 ? imageDim[0] : overrideWidth;
+          canvas.height = overrideHeight === -1 ? imageDim[1] : overrideHeight;
+          const canvasWidth = canvas.width;
+          const canvasHeight = canvas.height;
+          if (rescale) {
+            canvas.width = canvas.width * canvasScale;
+            canvas.height = canvas.height * canvasScale;  
+          }
           // draw the offscreen canvas
-          if ((overrideWidth !== -1 || overrideHeight !== -1) && background && poly.scaled && rescale) {
-            context.drawImage(background, poly.scaled.crop.x, poly.scaled.crop.y, poly.scaled.crop.width, poly.scaled.crop.height, 0, 0, overrideWidth, overrideHeight);
-          } else if ((overrideWidth !== -1 || overrideHeight !== -1) && background) {
-            context.drawImage(background, 0, 0, imageDim[0], imageDim[1], 0, 0, overrideWidth, overrideHeight);
-          } else if (poly.scaled && background && rescale) {
-            context.drawImage(background, poly.scaled.crop.x, poly.scaled.crop.y, poly.scaled.crop.width, poly.scaled.crop.height, 0, 0, canvas.width, canvas.height );
-          } else if (background) {
-            context.drawImage(background, 0, 0);
+            let destWidth = canvasWidth;
+            let destHeight = canvasHeight;
+            const offsetX = rescale ? (canvas.width - destWidth) / 2.0 : 0;
+            const offsetY = rescale ? (canvas.height - destHeight) / 2.0 : 0;
+            let destOffsetX = offsetX;
+            let destOffsetY = offsetY
+            let computedX =  rescale && poly.scaled ? poly.scaled.crop.x : 0;
+            let computedY = rescale && poly.scaled ? poly.scaled.crop.y: 0;
+            let imageWidth = rescale && poly.scaled ? poly.scaled.crop.width: imageDim[0];
+            let imageHeight = rescale && poly.scaled ? poly.scaled.crop.height: imageDim[1];
+            //Now if we have more image data than the scaled width and height are available we can take additional pixel information
+            if (rescale && poly.scaled) { //Implies S3/L8 data where more pixel data can be taken
+              computedX = poly.scaled.crop.x - (((poly.scaled.crop.width  * canvasScale) - poly.scaled.crop.width ) / 2.0);
+              computedY = poly.scaled.crop.y - (((poly.scaled.crop.height * canvasScale) - poly.scaled.crop.height) / 2.0);
+              imageWidth = poly.scaled.crop.width * canvasScale;
+              imageHeight = poly.scaled.crop.height * canvasScale;
+              destWidth = canvasWidth * canvasScale;
+              destHeight = canvasHeight * canvasScale;
+              destOffsetX = (canvas.width - destWidth) / 2.0;
+              destOffsetY = (canvas.height - destHeight) / 2.0;
+            }
+          context.fillStyle = 'lightgray';
+          context.fillRect(0,0, canvas.width, canvas.height);
+          if (background) {
+            context.drawImage(background, computedX, computedY, imageWidth, imageHeight, destOffsetX, destOffsetY, destWidth, destHeight);
           }
 
           const standardPoly = (overrideHeight === -1 && !rescale) || !(poly.scaled || (overrideHeight !== -1 && overrideHeight !== imageDim[1]));
@@ -117,13 +141,13 @@ const drawData = (
           }
 
           coords.forEach((ring) => {
-            const xPos = standardPoly ? ring[0].x : ring[0].x * widthRatio;
-            const yPos = standardPoly ? computedImageHeight - ring[0].y : computedOverrideHeight - (ring[0].y * heightRatio);
+            const xPos = (standardPoly ? ring[0].x : ring[0].x * widthRatio) + offsetX;
+            const yPos = (standardPoly ? computedImageHeight - ring[0].y : computedOverrideHeight - (ring[0].y * heightRatio)) + offsetY;
             context.moveTo(xPos, yPos);
             context.beginPath();
             ring.forEach(({x, y}) => {
-              const yPosEnd =  standardPoly ? computedImageHeight - y : computedOverrideHeight - (y * heightRatio);
-              const xPos = standardPoly ? x : x * widthRatio;
+              const yPosEnd =  (standardPoly ? computedImageHeight - y : computedOverrideHeight - (y * heightRatio)) + offsetY;
+              const xPos = (standardPoly ? x : x * widthRatio) + offsetX;
               if (context){
                   context.lineTo(xPos, yPosEnd);
               }

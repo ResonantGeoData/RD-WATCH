@@ -74,6 +74,7 @@ const groundTruth: Ref<EvaluationImageResults['groundTruth'] | null > = ref(null
 const drawGroundTruth = ref(false);
 const siteEvaluationList = computed(() => Object.entries(styles).filter(([, { type }]) => type === 'sites').map(([label]) => label));
 const rescaleImage = ref(false);
+const rescalingBBox = ref(1);
 
 const playbackEnabled = ref(false); // Auto playback of images
 
@@ -199,7 +200,7 @@ function drawForDownload() {
       width = ratio * 500;
     }
   }
-  const offScreenCanvas = createCanvas(width, height);
+  const offScreenCanvas = createCanvas(width * rescalingBBox.value, height * rescalingBBox.value);
   downloadingGifState.value = 'drawing';
   CanvasCapture.init(offScreenCanvas, { verbose: false});
   CanvasCapture.beginGIFRecord({
@@ -223,6 +224,7 @@ function drawForDownload() {
         drawGroundTruth.value,
         rescaleImage.value,
         props.fullscreen,
+        rescalingBBox.value,
       );
       CanvasCapture.recordFrame();
       index += 1
@@ -261,6 +263,7 @@ const load = async (newValue?: string, oldValue?: string) => {
         drawGroundTruth.value,
         rescaleImage.value,
         props.fullscreen,
+        rescalingBBox.value,
         )
   }
   loading.value = false;
@@ -284,7 +287,7 @@ const copyURL = async (mytext: string) => {
   }
 
 
-watch([currentImage, imageRef, filteredImages, drawGroundTruth, rescaleImage], () => {
+watch([currentImage, imageRef, filteredImages, drawGroundTruth, rescaleImage, rescalingBBox], () => {
     if (currentImage.value < filteredImages.value.length && imageRef.value !== null) {
         imageRef.value.src = filteredImages.value[currentImage.value].image.image;
     }
@@ -301,6 +304,7 @@ watch([currentImage, imageRef, filteredImages, drawGroundTruth, rescaleImage], (
           drawGroundTruth.value,
           rescaleImage.value,
           props.fullscreen,
+          rescalingBBox.value,
         )
     }
     if (props.dialog === false && !props.fullscreen && filteredImages.value[currentImage.value]) {
@@ -944,6 +948,16 @@ onUnmounted(() => {
               :rules="[v => v > 0 || 'Value must be greater than 0']"
             />
           </v-row>
+          <v-row dense>
+            <v-slider
+              v-model="rescalingBBox"
+              min="1"
+              max="5"
+              step="0.1"
+              :label="`Zoom out (${rescalingBBox.toFixed(2)})X`"
+            />
+          </v-row>
+
           <v-row dense>
             <v-slider
               v-model="downloadingGifQuality"

@@ -11,10 +11,7 @@ import { changeTime } from "../../interactions/timeStepper";
 
 const timemin = ref(Math.floor(new Date(0).valueOf() / 1000));
 
-const page = ref<number>(1);
-
 const queryFilters = computed<QueryArguments>(() => ({
-  page: page.value,
   performer: selectedPerformer.value.map((item) => item.short_code),
   region: selectedRegion.value,
 }));
@@ -33,22 +30,6 @@ watch (() => state.filters.regions, () => {
   }
 });
 
-const updateRegion = (val?: Region) => {
-  page.value = 1;
-  if (selectedRegion.value === undefined) {
-    state.satellite.satelliteImagesOn = false;
-    state.enabledSiteObservations = [];
-    state.selectedObservations = [];
-  }
-  state.filters = {
-    ...state.filters,
-    regions: val === undefined ? undefined : [val],
-  };
-};
-
-function nextPage() {
-  page.value += 1;
-}
 
 onMounted(() => {
   window.document.addEventListener('keydown', (event) => {
@@ -98,7 +79,6 @@ onMounted(() => {
         <RegionFilter
           v-model="selectedRegion"
           cols="6"
-          @update:model-value="updateRegion($event)"
         />
       </v-row>
     </div>
@@ -110,7 +90,6 @@ onMounted(() => {
         :filters="queryFilters"
         class="flex-grow-1"
         compact
-        @next-page="nextPage"
         @update:timerange="
           (timerange) => {
             if (timerange !== null) {

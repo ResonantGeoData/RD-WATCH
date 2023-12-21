@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref, watch, watchEffect } from "vue";
+import { onMounted, ref, watch } from "vue";
 import { ApiService } from "../../client";
 import type { Ref } from "vue";
 import type { Region } from "../../client";
@@ -18,12 +18,15 @@ const emit = defineEmits<{
 
 const regions: Ref<Region[]> = ref([]);
 const selectedRegion: Ref<string | undefined> = ref(props.modelValue);
-watchEffect(async () => {
+const loadRegions =  async () => {
   const regionList = await ApiService.getRegions();
   const regionResults = regionList.items;
   regionResults.sort((a, b) => (a > b ? 1 : -1));
   regions.value = regionResults;
-});
+};
+onMounted(() => loadRegions());
+
+watch(() => ApiService.getRegions(), loadRegions);
 
 watch(() => props.modelValue, () => {
   if (props.modelValue) {

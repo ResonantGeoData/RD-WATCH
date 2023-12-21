@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref, watch, watchEffect } from "vue";
+import { onMounted, ref, watch } from "vue";
 import { ApiService, PerformerList } from "../../client";
 import type { Ref } from "vue";
 import type { Performer } from "../../client";
@@ -19,7 +19,7 @@ const performers: Ref<{value: number; title: string}[]> = ref([]);
 const selectedPerformers: Ref<number[]> = ref(props.modelValue.map((item) => item.id));
 const performerList: Ref<PerformerList | null> = ref(null);
 const performerIdMap: Record<number, Performer> = {}
-  watchEffect(async () => {
+const loadPerformers = async () => {
   performerList.value = await ApiService.getPerformers();
   const performerResults = performerList.value.items
   performerResults.sort((a, b) => (a.team_name > b.team_name ? 1 : -1))
@@ -29,8 +29,10 @@ const performerIdMap: Record<number, Performer> = {}
     performers.value.push({title: item.team_name, value: item.id });
   })
   state.performerMapping = performerIdMap;
-});
+};
+onMounted(() => loadPerformers());
 
+watch(() => ApiService.getPerformers(), loadPerformers);
 watch(() => props.modelValue, () => {
   selectedPerformers.value = props.modelValue.map((item) => item.id);
 });

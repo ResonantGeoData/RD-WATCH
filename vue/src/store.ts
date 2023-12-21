@@ -331,7 +331,7 @@ export const toggleSatelliteImages = (siteObs: SiteObservation, off= false) => {
   }
 }
 
-export const loadAndToggleSatelliteImages = async (siteId: string) => {
+const loadAndToggleSatelliteImages = async (siteId: string) => {
   const index = state.enabledSiteObservations.findIndex((item) => item.id === siteId);
   if (index !== -1) {
     const tempArr = [...state.enabledSiteObservations];
@@ -341,6 +341,8 @@ export const loadAndToggleSatelliteImages = async (siteId: string) => {
   const data = await getSiteObservationDetails(siteId, undefined, false);
   toggleSatelliteImages(data);
   }
+}
 
-
+export {
+  loadAndToggleSatelliteImages,
 }

@@ -16,14 +16,14 @@ export default ({ mode}) => {
     .toString()
     .trimEnd();
 
-    process.env.VITE_GIT_COMMIT_DATE = commitDate;
-    process.env.VITE_GIT_BRANCH_NAME = branchName;
-    process.env.VITE_GIT_COMMIT_HASH = commitHash;
-    process.env.VITE_GIT_LAST_COMMIT_MESSAGE = lastCommitMessage;
-    const dockerDev = process.env.VITE_DOCKER_DEVELOPMENT;
-    // Change host to django when running vite inside docker
-    const devHost = dockerDev ? 'django' : 'localhost';
-    const devPort = dockerDev ? 8080 : 3000;
+  process.env.VITE_GIT_COMMIT_DATE = commitDate;
+  process.env.VITE_GIT_BRANCH_NAME = branchName;
+  process.env.VITE_GIT_COMMIT_HASH = commitHash;
+  process.env.VITE_GIT_LAST_COMMIT_MESSAGE = lastCommitMessage;
+  const dockerDev = process.env.VITE_DOCKER_DEVELOPMENT;
+  // Change host to django when running vite inside docker
+  const devHost = dockerDev ? 'django' : 'localhost';
+  const devPort = dockerDev ? 8080 : 3000;
   return defineConfig({
       plugins: [vue()],
       server: {

@@ -2,6 +2,7 @@
 import SideBar from "../components/annotationViewer/SideBar.vue"
 import ImageViewer from "../components/imageViewer/ImageViewer.vue"
 import MapLibre from "../components/MapLibre.vue";
+import LayerSelection from "../components/LayerSelection.vue";
 import ModelRunSiteEvalList from "../components/annotationViewer/ModelRunSiteEvalList.vue"
 import { ModelRunEvaluationDisplay } from "../components/annotationViewer/ModelRunSiteEvalList.vue"
 import { Ref, computed, onMounted, ref, watch } from "vue";
@@ -37,13 +38,24 @@ onMounted(() => {
 const selectedEval: Ref<string | null> = ref(null);
 const selectedName: Ref<string | null> = ref(null);
 const selectedDateRange: Ref<number[] | null> = ref(null);
-
-const setSelectedEval = (val: ModelRunEvaluationDisplay) => {
-  if (val.id !== null) {
+const regionBBox: Ref<ModelRunEvaluationDisplay['bbox'] | null> = ref(null);
+const setSelectedEval = (val: ModelRunEvaluationDisplay | null) => {
+  
+  if (val && val.id !== null) {
+    if (selectedEval.value === null) { // set region bbox if previous val was null
+      regionBBox.value = state.bbox;
+    }
     selectedEval.value = val.id
     selectedName.value = val.name
     state.bbox = val.bbox;
     selectedDateRange.value = [val.startDate, val.endDate]
+  } else {
+    selectedEval.value = null;
+    selectedName.value = null;
+    selectedDateRange.value = null;
+    if (regionBBox.value) {
+      state.bbox = regionBBox.value;
+    }
   }
 }
 
@@ -70,6 +82,7 @@ const updateSiteModels = () => {
     <SideBar />
   </v-navigation-drawer>
   <v-main style="z-index:1">
+    <layer-selection />
     <MapLibre :compact="selectedEval !== null" />
     <ImageViewer
       v-if="selectedEval !== null"

@@ -2,6 +2,8 @@
 import { Ref, computed, ref, watch } from "vue";
 import { ApiService } from "../../client";
 import { ModelRunEvaluations, SiteModelStatus } from "../../client/services/ApiService";
+import { state } from "../../store";
+import { clickedInfo, hoveredInfo } from "../../interactions/mouseEvents";
 
 export interface ModelRunEvaluationDisplay {
   number: number;
@@ -27,11 +29,11 @@ const props = defineProps<{
 }>();
 
 const emit = defineEmits<{
-  (e: "selected", val: ModelRunEvaluationDisplay): void;
+  (e: "selected", val: ModelRunEvaluationDisplay | null): void;
 }>();
 
 const evaluationsList: Ref<ModelRunEvaluations | null> = ref(null);
-
+const modifiedList: Ref<ModelRunEvaluationDisplay[]> =ref([]);
 const statusMap: Record<SiteModelStatus, { name: string, color: string }> = {
   'PROPOSAL': { name: 'Proposed', color: 'orange'},
   'REJECTED': { name: 'Rejected', color: 'error'},
@@ -43,21 +45,12 @@ const getSiteEvalIds = async () => {
   if (props.modelRun !== null) {
     const results = await ApiService.getModelRunEvaluations(props.modelRun);
     evaluationsList.value = results;
-  }
-};
-
-defineExpose({ getSiteEvalIds });
-
-watch(() => props.modelRun, () => {
-  getSiteEvalIds();
-});
-getSiteEvalIds();
-
-const modifiedList = computed(() => {
-  const modList: ModelRunEvaluationDisplay[] = []
-  let newNumbers = 0;
+    let newNumbers = 0;
   if (evaluationsList.value?.evaluations) {
+    const modList: ModelRunEvaluationDisplay[] = []
     const regionName: string = evaluationsList.value.region;
+    const accepted: string[] = [];
+    const rejected: string[] = [];
     evaluationsList.value.evaluations.forEach((item) => {
       const newNum = item.number.toString().padStart(4, '0')
       if (newNum === '9999') {
@@ -66,6 +59,11 @@ const modifiedList = computed(() => {
       let name = `${regionName}_${newNum}`
       if (newNumbers > 1) {
         name = `${name}-${newNumbers}`
+      }
+      if (item.status === 'APPROVED') {
+        accepted.push(item.id);
+      } else if (item.status === 'REJECTED'){
+        rejected.push(item.id);
       }
 
       modList.push(
@@ -87,8 +85,31 @@ const modifiedList = computed(() => {
         }
         );
     });
+    state.filters.proposals = {
+      accepted,
+      rejected,
+    }
+    modifiedList.value = modList;
   }
-  return modList;
+  }
+};
+defineExpose({ getSiteEvalIds });
+
+watch(() => props.modelRun, () => {
+  getSiteEvalIds();
+});
+getSiteEvalIds();
+watch(clickedInfo, () => {
+  console.log(clickedInfo.value.siteId);
+  if (clickedInfo.value.siteId.length) {
+    console.log(clickedInfo.value.siteId);
+    const found = modifiedList.value.find((item) => item.id === clickedInfo.value.siteId[0]);
+    if (found) {
+      emit('selected', found);
+    }
+  } else {
+    emit('selected', null);
+  }
 });
 
 const download = (id: string) => {
@@ -119,7 +140,9 @@ const download = (id: string) => {
           v-for="item in modifiedList"
           :key="`${item.name}_${item.id}_${item.selected}`"
           class="modelRunCard"
-          :class="{selectedCard: item.selected}"
+          :class="{selectedCard: item.selected, hoveredCard: hoveredInfo.siteId.includes(item.id)}"
+          @mouseenter="state.filters.hoverSiteId = item.id"
+          @mouseleave="state.filters.hoverSiteId = undefined"
           @click="emit('selected', item)"
         >
           <v-card-title class="title">
@@ -212,6 +235,7 @@ const download = (id: string) => {
   cursor: pointer;
   border: 3px solid blue;
 }
+
 .title {
   font-size: 12px;
 }
@@ -227,4 +251,10 @@ const download = (id: string) => {
   text-overflow: ellipsis;
   white-space: nowrap;
 }
+
+.hoveredCard {
+  background-color: orange;
+  border: 3px solid orange;
+}
+
 </style>

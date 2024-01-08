@@ -203,6 +203,21 @@ const buildObservationThick = (
   ];
 };
 
+const buildObservationFillOpacity = (filters: MapFilters, fillProposals?: 'site' | 'observation'): DataDrivenPropertyValueSpecification<number> | number =>  {
+  if (filters.proposals && (filters.proposals.accepted?.length || filters.proposals.rejected?.length)) {
+    const result = [];
+    const idKey = fillProposals === 'site' ? 'id' : 'siteeval_id'
+    result.push('case');
+    result.push(['in', ['get', idKey], ['literal', filters.proposals.accepted]])
+    result.push(0.25);
+    result.push(['in', ['get', idKey], ['literal', filters.proposals.rejected]])
+    result.push(0.25);
+    result.push(0);
+    return result as DataDrivenPropertyValueSpecification<number>;
+  }
+  return 1;
+}
+
 const buildObservationFill = (
   timestamp: number,
   filters: MapFilters
@@ -238,19 +253,25 @@ export const buildLayerFilter = (
 ): LayerSpecification[] => {
   let results: LayerSpecification[] = [];
   modelRunIds.forEach((id) => {
-    results = results.concat([
-      {
-        id: `observations-fill-${id}`,
-        type: "fill",
-        source: `vectorTileSource_${id}`,
-        "source-layer": `observations-${id}`,
-        paint: {
-          "fill-color": annotationColors(filters),
-          "fill-opacity": 1,
-          "fill-pattern": buildObservationFill(timestamp, filters),
-        },
-        filter: buildObservationFilter(timestamp, filters),
+
+    results.push()
+    const observationSpec: LayerSpecification =       {
+      id: `observations-fill-${id}`,
+      type: "fill",
+      source: `vectorTileSource_${id}`,
+      "source-layer": `observations-${id}`,
+      paint: {
+        "fill-color": annotationColors(filters, 'observations'),
+        "fill-opacity": buildObservationFillOpacity(filters, 'observations'),
       },
+      filter: buildObservationFilter(timestamp, filters),
+    };
+    if (observationSpec.paint && (!filters.proposals || (!filters.proposals.accepted && !filters.proposals.rejected))) {
+      observationSpec.paint['fill-pattern'] = buildObservationFill(timestamp, filters);
+    }
+    results.push(observationSpec);
+
+    results = results.concat([
       {
         id: `observations-outline-${id}`,
         type: "line",

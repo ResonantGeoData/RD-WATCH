@@ -221,7 +221,7 @@ const scoringColors = {
   },
 }
 
-const getAnnotationColor = (filters: MapFilters) => {
+const getAnnotationColor = (filters: MapFilters, fillProposals?: 'site' | 'observations') => {
     const result = [];
     result.push('case');
     if (filters.scoringColoring) {
@@ -230,6 +230,14 @@ const getAnnotationColor = (filters: MapFilters) => {
         result.push(hex)
       })
     } 
+    if (filters.proposals && fillProposals) {  
+      const idKey = fillProposals === 'site' ? 'id' : 'siteeval_id'
+      result.push(['in', ['get', idKey], ['literal', filters.proposals.accepted]])
+      result.push('green');
+      result.push(['in', ['get', idKey], ['literal', filters.proposals.rejected]])
+      result.push('red');
+    }
+
     Object.entries(styles).forEach(([label, { color }]) => {
         result.push(['==', ['get', 'label'], label]);
         result.push(color);

@@ -99,6 +99,7 @@ class ModelRunWriteSchema(Schema):
 class ModelRunAdjudicated(Schema):
     proposed: int
     other: int
+    groundTruths: str | None
 
 
 class ModelRunDetailSchema(Schema):
@@ -229,6 +230,12 @@ def get_queryset():
                     then=JSONObject(
                         proposed=Coalesce(Subquery(proposed_count_subquery), 0),
                         other=Coalesce(Subquery(other_count_subquery), 0),
+                        groundTruths=Subquery(
+                            ModelRun.objects.filter(
+                                evaluations__region_id=OuterRef('region_id'),
+                                proposal=None,
+                            ).values_list('pk')[:1]
+                        ),
                     ),
                 ),
                 default=None,

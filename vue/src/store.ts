@@ -17,6 +17,10 @@ export interface MapFilters {
   showText?: boolean;
   siteTimeLimits?: boolean;
   drawMap?: boolean;
+  proposals?: {
+    accepted?: string[],
+    rejected?: string[],
+  }
 }
 
 export interface SatelliteTimeStamp {
@@ -156,6 +160,10 @@ export const state = reactive<{
   openedModelRuns: Set<KeyedModelRun["key"]>
   gifSettings: { fps: number, quality: number},
   performerMapping: Record<number, Performer>,
+  proposals: {
+    groundTruths?: string | null,
+  }
+
 }>({
   errorText: '',
   timestamp: Math.floor(Date.now() / 1000),
@@ -207,6 +215,7 @@ export const state = reactive<{
   openedModelRuns: new Set<KeyedModelRun["key"]>(),
   gifSettings: { fps: 1, quality: 1},
   performerMapping: {},
+  proposals: {},
 });
 
 export const filteredSatelliteTimeList = computed(() => {

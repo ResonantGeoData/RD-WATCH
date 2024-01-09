@@ -100,9 +100,7 @@ watch(() => props.modelRun, () => {
 });
 getSiteEvalIds();
 watch(clickedInfo, () => {
-  console.log(clickedInfo.value.siteId);
   if (clickedInfo.value.siteId.length) {
-    console.log(clickedInfo.value.siteId);
     const found = modifiedList.value.find((item) => item.id === clickedInfo.value.siteId[0]);
     if (found) {
       emit('selected', found);

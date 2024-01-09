@@ -148,7 +148,7 @@ const getModeIcon = (mode: ModelRun['mode']) => (mode ? {
       </v-chip>
     </v-card-actions>
     <v-card-text
-      @click.prevent="handleClick"
+      @click.prevent="handleClick(modelRun)"
     >
       <v-row dense>
         <div class="model-title">

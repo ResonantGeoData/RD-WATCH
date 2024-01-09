@@ -76,7 +76,6 @@ export const buildObservationFilter = (
   } else if (!hasModel && !hasGroundTruth) {
     return false;
   }
-
   return filter;
 };
 
@@ -186,14 +185,16 @@ export const buildRegionFilter = (filters: MapFilters): FilterSpecification => {
 const urlRoot = `${location.protocol}//${location.host}`;
 
 const buildObservationThick = (
-  filters: MapFilters
+  filters: MapFilters,
+  siteObs: 'site' | 'observation'
 ): DataDrivenPropertyValueSpecification<number> => {
   // If this observation is a grouth truth, make the width 4. Otherwise, make it 2.
+  const idVal = siteObs === 'site' ? 'id' : 'siteeval_id'
   return [
     "case",
     [
       "==",
-      ["get", "siteeval_id"],
+      ["get", idVal],
       filters.hoverSiteId ? filters.hoverSiteId : "",
     ],
     6,
@@ -254,7 +255,6 @@ export const buildLayerFilter = (
   let results: LayerSpecification[] = [];
   modelRunIds.forEach((id) => {
 
-    results.push()
     const observationSpec: LayerSpecification =       {
       id: `observations-fill-${id}`,
       type: "fill",
@@ -279,7 +279,7 @@ export const buildLayerFilter = (
         "source-layer": `observations-${id}`,
         paint: {
           "line-color": annotationColors(filters),
-          "line-width": buildObservationThick(filters),
+          "line-width": buildObservationThick(filters, 'observation'),
         },
         filter: buildObservationFilter(timestamp, filters),
       },
@@ -301,23 +301,29 @@ export const buildLayerFilter = (
         "source-layer": `sites-${id}`,
         paint: {
           "line-color": annotationColors(filters),
-          "line-width": 2,
+          "line-width": buildObservationThick(filters, 'site'),
         },
         filter: buildSiteFilter(timestamp, filters),
       },
       // Site fill is added for Hover Popup to work on the area inside the polygon
-      {
-        id: `sites-fill-${id}`,
-        type: "fill",
-        source: `vectorTileSource_${id}`,
-        "source-layer": `sites-${id}`,
-        paint: {
-          "fill-color": annotationColors(filters),
-          "fill-opacity": 0,
-        },
-        filter: buildSiteFilter(timestamp, filters),
-      },
     ]);
+    const siteFill: LayerSpecification =   {
+      id: `sites-fill-${id}`,
+      type: "fill",
+      source: `vectorTileSource_${id}`,
+      "source-layer": `sites-${id}`,
+      paint: {
+        "fill-color": annotationColors(filters, 'site'),
+        "fill-opacity": buildObservationFillOpacity(filters, 'site'),
+      },
+      filter: buildSiteFilter(timestamp, filters),
+    };
+    if (siteFill.paint && (!filters.proposals || (!filters.proposals.accepted && !filters.proposals.rejected))) {
+      siteFill.paint['fill-pattern'] = buildObservationFill(timestamp, filters);
+    }
+    results.push(siteFill);
+
+
     if (filters.showText) {
       results = results.concat([{
         id: `sites-text-${id}`,

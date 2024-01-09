@@ -232,6 +232,7 @@ def get_queryset():
                         other=Coalesce(Subquery(other_count_subquery), 0),
                         groundTruths=Subquery(
                             ModelRun.objects.filter(
+                                performer__slug='TE',
                                 evaluations__region_id=OuterRef('region_id'),
                                 proposal=None,
                             ).values_list('pk')[:1]

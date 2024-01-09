@@ -103,6 +103,12 @@ watch([() => state.timestamp, () => state.filters, () => state.satellite, () => 
   }
 
   const openedModelRunIds = state.modelRuns.filter((m) => state.openedModelRuns.has(m.key)).map((m) => m.id);
+  // Add in grounTruth for proposals if they aren't in the model-run list.
+  state.filters.configuration_id?.forEach((item) => {
+   if (!openedModelRunIds.includes(item)) {
+    openedModelRunIds.push(item);
+   }
+  });
 
   // Add opened model runs to list of vector tile layers
   openedModelRunIds.forEach((m) => { modelRunVectorLayers.add(m) })

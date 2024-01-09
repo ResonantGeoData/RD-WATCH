@@ -103,7 +103,6 @@ const drawPopupObservation = async (e: MapLayerMouseEvent, remove=false) => {
         }
       }
     );
-    console.log(hoveredInfo.value.siteId);
     popup.setLngLat(coordinates).setHTML('<div id="popup-content"></div>').addTo(map.value);
     nextTick(() => {
       if (app !== null) {
@@ -217,7 +216,7 @@ const drawSitePopupObservation = async (e: MapLayerMouseEvent, remove=false) => 
             hoveredInfo.value.region.push(
               `${item.properties.configuration_id}_${region}_${item.properties.performer_id}`
             );
-            hoveredInfo.value.siteId.push(siteId);
+            hoveredInfo.value.siteId.push(item.properties.id);
             if (!htmlMap[id]) {
               if (item.layer?.paint) {
                   ids.push(id);

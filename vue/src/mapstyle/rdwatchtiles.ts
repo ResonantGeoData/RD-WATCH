@@ -204,15 +204,20 @@ const buildObservationThick = (
   ];
 };
 
-const buildObservationFillOpacity = (filters: MapFilters, fillProposals?: 'site' | 'observation'): DataDrivenPropertyValueSpecification<number> | number =>  {
+const buildObservationFillOpacity = (filters: MapFilters, fillProposals?: 'sites' | 'observations'): DataDrivenPropertyValueSpecification<number> | number =>  {
   if (filters.proposals && (filters.proposals.accepted?.length || filters.proposals.rejected?.length)) {
     const result = [];
-    const idKey = fillProposals === 'site' ? 'id' : 'siteeval_id'
+    const idKey = fillProposals === 'sites' ? 'id' : 'siteeval_id'
     result.push('case');
     result.push(['in', ['get', idKey], ['literal', filters.proposals.accepted]])
     result.push(0.25);
     result.push(['in', ['get', idKey], ['literal', filters.proposals.rejected]])
     result.push(0.25);
+    if (filters.groundTruthPattern) {
+      result.push(['get', "groundtruth"])
+      result.push(0.45);
+    }
+
     result.push(0);
     return result as DataDrivenPropertyValueSpecification<number>;
   }
@@ -313,8 +318,8 @@ export const buildLayerFilter = (
       source: `vectorTileSource_${id}`,
       "source-layer": `sites-${id}`,
       paint: {
-        "fill-color": annotationColors(filters, 'site'),
-        "fill-opacity": buildObservationFillOpacity(filters, 'site'),
+        "fill-color": annotationColors(filters, 'sites'),
+        "fill-opacity": buildObservationFillOpacity(filters, 'sites'),
       },
       filter: buildSiteFilter(timestamp, filters),
     };

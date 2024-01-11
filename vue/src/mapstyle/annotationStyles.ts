@@ -221,7 +221,7 @@ const scoringColors = {
   },
 }
 
-const getAnnotationColor = (filters: MapFilters, fillProposals?: 'site' | 'observations') => {
+const getAnnotationColor = (filters: MapFilters, fillProposals?: 'sites' | 'observations') => {
     const result = [];
     result.push('case');
     if (filters.scoringColoring) {
@@ -231,7 +231,7 @@ const getAnnotationColor = (filters: MapFilters, fillProposals?: 'site' | 'obser
       })
     } 
     if (filters.proposals && fillProposals) {  
-      const idKey = fillProposals === 'site' ? 'id' : 'siteeval_id'
+      const idKey = fillProposals === 'sites' ? 'id' : 'siteeval_id'
       result.push(['in', ['get', idKey], ['literal', filters.proposals.accepted]])
       result.push('green');
       result.push(['in', ['get', idKey], ['literal', filters.proposals.rejected]])

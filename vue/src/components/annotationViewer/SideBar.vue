@@ -3,7 +3,7 @@ import ModelRunList from "../ModelRunList.vue";
 import TimeSlider from "../TimeSlider.vue";
 import PerformerFilter from "../filters/PerformerFilter.vue";
 import RegionFilter from "../filters/RegionFilter.vue";
-import { state } from "../../store";
+import { filteredSatelliteTimeList, state } from "../../store";
 import { computed, onMounted, ref, watch } from "vue";
 import type { Performer, QueryArguments, Region } from "../../client";
 import type { Ref } from "vue";
@@ -43,6 +43,32 @@ onMounted(() => {
   });
 });
 
+const groundTruthPattern = computed({
+  get() {
+    return state.filters.groundTruthPattern || false;
+  },
+  set(val: boolean) {
+    state.filters = { ...state.filters, groundTruthPattern: val };
+  },
+});
+const drawMap = computed({
+  get() {
+    return state.filters.drawMap || false;
+  },
+  set(val: boolean) {
+    state.filters = { ...state.filters, drawMap: val };
+  },
+});
+
+const imagesOn = computed({
+  get() {
+    return state.satellite.satelliteImagesOn || false;
+  },
+  set(val: boolean) {
+    state.satellite = { ...state.satellite, satelliteImagesOn: val };
+  },
+});
+
 </script>
 
 <template>
@@ -61,11 +87,47 @@ onMounted(() => {
         align="center"
         justify="center"
       >
-        <div
-          style="min-width:185px; max-width: 185px;"
-        >
+        <div>
           {{ new Date(state.timestamp * 1000).toISOString().substring(0, 10) }}
         </div>
+      </v-row>
+      <v-row class="mt-2">
+        <v-spacer />
+        <v-btn
+          variant="text"
+          density="compact"
+          class="pa-0 ma-0"
+          :color="groundTruthPattern ? 'rgb(37, 99, 235)' : 'black'"
+          icon="mdi-gradient-horizontal"
+          @click="groundTruthPattern = !groundTruthPattern"
+        />
+        <v-btn
+          variant="text"
+          density="compact"
+          class="pa-0 ma-0"
+          :color="drawMap ? 'rgb(37, 99, 235)' : 'black'"
+          icon="mdi-road"
+          @click="drawMap = !drawMap"
+        />
+        <v-btn
+          variant="text"
+          density="compact"
+          class="pa-0 ma-0"
+          :class="{
+            'animate-flicker': state.satellite.loadingSatelliteImages,
+          }"
+          :color="imagesOn ? 'rgb(37, 99, 235)' : 'black'"
+          :disabled="selectedRegion === null || (filteredSatelliteTimeList.length === 0 && state.satellite.satelliteSources.length !== 0)"
+          icon="mdi-image"
+          @click="imagesOn = selectedRegion !== null && (filteredSatelliteTimeList.length !== 0 || state.satellite.satelliteSources.length === 0) ? !imagesOn : imagesOn"
+        />
+        <v-btn
+          :color="state.mapLegend ? 'rgb(37, 99, 235)' : 'gray'"
+          variant="text"
+          density="compact"
+          icon="mdi-map-legend"
+          @click="state.mapLegend = !state.mapLegend"
+        />
       </v-row>
       <v-row
         dense

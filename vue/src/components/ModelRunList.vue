@@ -81,9 +81,7 @@ async function loadModelRuns() {
         ymax: bounds.getNorth(),
       };
       resultsBoundingBox.value = bbox;
-      if (!props.compact) {
-          getSatelliteTimestamps(modelRunList)
-      }
+      getSatelliteTimestamps(modelRunList)
       state.bbox = bbox;
     } else if (!state.filters.regions?.length) {
       const bbox = {
@@ -256,7 +254,7 @@ onMounted(() => loadModelRuns());
 
 <template>
   <div>
-    <v-row v-if="!compact">
+    <v-row>
       <v-chip
         v-if="!loading && !loadingSatelliteTimestamps"
         style="font-size: 0.75em"

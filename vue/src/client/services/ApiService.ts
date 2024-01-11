@@ -434,8 +434,8 @@ export class ApiService {
     bbox=[],
   ): CancelablePromise<SatelliteTimeStamp[]>
   {
-    const startTime = new Date(startTimestamp * 1000).toISOString().substring(0, 10);
-    const endTime = new Date(endTimestamp * 1000).toISOString().substring(0, 10);
+    const startTime = startTimestamp ? new Date(startTimestamp * 1000).toISOString().substring(0, 10) : '2013-01-01';
+    const endTime = endTimestamp ? new Date(endTimestamp * 1000).toISOString().substring(0, 10): new Date().toISOString().substring(0, 10);
     // Convert bbox into array of numbers, min/max
     let minX = Infinity;
     let maxX = -Infinity;

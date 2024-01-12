@@ -264,7 +264,9 @@ class ModelRunPagination(PageNumberPagination):
         # refactored to be more efficient.
         model_runs = None
         cache_key = _get_model_runs_cache_key(filters.dict() | pagination.dict())
-        if ('proposal' not in filters.dict().keys()): # adjudicated status can't be cached for proposals
+        if (
+            'proposal' not in filters.dict().keys()
+        ):  # adjudicated status can't be cached for proposals
             model_runs = cache.get(cache_key)
 
         # If we have a cache miss, execute the query and save the results to cache
@@ -452,7 +454,7 @@ def get_proposals_query(model_run_id: UUID4):
                     site=OuterRef('pk'),
                     status=SatelliteFetching.Status.RUNNING,
                 )
-            )
+            ),
         )
         .aggregate(
             proposedSites=JSONBAgg(
@@ -469,7 +471,7 @@ def get_proposals_query(model_run_id: UUID4):
                     end_date=ExtractEpoch('end_date'),
                     status='status',
                     filename='cache_originator_file',
-                    downloading='downloading'
+                    downloading='downloading',
                 ),
                 ordering='number',
             ),

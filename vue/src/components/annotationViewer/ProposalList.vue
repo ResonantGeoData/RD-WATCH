@@ -2,13 +2,15 @@
 import { Ref, computed, ref, watch } from "vue";
 import { ApiService } from "../../client";
 import {
-  ModelRunEvaluations,
+  DownloadSettings,
+  Proposals,
   SiteModelStatus,
 } from "../../client/services/ApiService";
 import { state } from "../../store";
 import { clickedInfo, hoveredInfo } from "../../interactions/mouseEvents";
+import ImagesDownloadDialog from "../ImagesDownloadDialog.vue";
 
-export interface ModelRunEvaluationDisplay {
+export interface ProposalDisplay {
   number: number;
   id: string;
   name: string;
@@ -23,6 +25,7 @@ export interface ModelRunEvaluationDisplay {
   L8: number;
   status: SiteModelStatus;
   timestamp: number;
+  downloading: boolean;
 }
 
 const props = defineProps<{
@@ -30,28 +33,34 @@ const props = defineProps<{
   selectedEval: string | null;
 }>();
 const emit = defineEmits<{
-  (e: "selected", val: ModelRunEvaluationDisplay | null): void;
+  (e: "selected", val: ProposalDisplay | null): void;
 }>();
 
-const evaluationsList: Ref<ModelRunEvaluations | null> = ref(null);
-const modifiedList: Ref<ModelRunEvaluationDisplay[]> = ref([]);
+const proposalList: Ref<Proposals | null> = ref(null);
+const modifiedList: Ref<ProposalDisplay[]> = ref([]);
+const anyDownloading = ref(false);
+const imageDownloadDialog = ref(false);
+const imageTimeRange: Ref<{min: number, max: number} | null> = ref(null);
+const imageDownloadingId: Ref<null | string> = ref(null)
+let downloadCheckInterval: NodeJS.Timeout | null = null;
+
 const statusMap: Record<SiteModelStatus, { name: string; color: string }> = {
   PROPOSAL: { name: "Proposed", color: "orange" },
   REJECTED: { name: "Rejected", color: "error" },
   APPROVED: { name: "Approved", color: "success" },
 };
 
-const getSiteEvalIds = async () => {
+const getSiteProposals = async () => {
   if (props.modelRun !== null) {
-    const results = await ApiService.getModelRunEvaluations(props.modelRun);
-    evaluationsList.value = results;
+    const results = await ApiService.getProposals(props.modelRun);
+    proposalList.value = results;
     let newNumbers = 0;
-    if (evaluationsList.value?.evaluations) {
-      const modList: ModelRunEvaluationDisplay[] = [];
-      const regionName: string = evaluationsList.value.region;
+    if (proposalList.value?.proposedSites) {
+      const modList: ProposalDisplay[] = [];
+      const regionName: string = proposalList.value.region;
       const accepted: string[] = [];
       const rejected: string[] = [];
-      evaluationsList.value.evaluations.forEach((item) => {
+      proposalList.value.proposedSites.forEach((item) => {
         const newNum = item.number.toString().padStart(4, "0");
         if (newNum === "9999") {
           newNumbers += 1;
@@ -65,7 +74,9 @@ const getSiteEvalIds = async () => {
         } else if (item.status === "REJECTED") {
           rejected.push(item.id);
         }
-
+        if (item.downloading) {
+          anyDownloading.value = true;
+        }
         modList.push({
           number: item.number,
           id: item.id,
@@ -81,6 +92,7 @@ const getSiteEvalIds = async () => {
           L8: item.L8,
           status: item.status,
           timestamp: item.timestamp,
+          downloading: item.downloading,
         });
       });
       state.filters.proposals = {
@@ -88,18 +100,27 @@ const getSiteEvalIds = async () => {
         rejected,
       };
       modifiedList.value = modList;
+      // We need to start checking if there are downloading sites to update every once in a while
+      if (anyDownloading.value) {
+        downloadCheckInterval = setInterval(() => getSiteProposals(), 15000);
+      } else {
+        if (downloadCheckInterval !== null) {
+          clearInterval(downloadCheckInterval);
+        }
+      }
+
     }
   }
 };
-defineExpose({ getSiteEvalIds });
+defineExpose({ getSiteProposals });
 
 watch(
   () => props.modelRun,
   () => {
-    getSiteEvalIds();
+    getSiteProposals();
   }
 );
-getSiteEvalIds();
+getSiteProposals();
 watch(clickedInfo, () => {
   if (clickedInfo.value.siteId.length) {
     const found = modifiedList.value.find(
@@ -129,6 +150,29 @@ watch(() => hoveredInfo.value.siteId, () => {
     }
   }
 });
+const setImageDownloadDialog = (item: ProposalDisplay) => {
+  if (item.startDate && item.endDate) {
+    imageTimeRange.value = {
+      min: item.startDate,
+      max: item.endDate,
+    }
+  } else {
+    imageTimeRange.value = null;
+  }
+  imageDownloadDialog.value = true;
+  imageDownloadingId.value = item.id;
+};
+
+const startDownload = async (data: DownloadSettings) => {
+  const id = imageDownloadingId.value;
+  imageDownloadDialog.value = false;
+  if (id) {
+  await ApiService.getObservationImages(id, data);
+    // Now we get the results to see if the service is running
+    getSiteProposals(); // this will start the interval if downloading items are detected
+  }
+}
+
 </script>
 
 <template>
@@ -155,17 +199,35 @@ watch(() => hoveredInfo.value.siteId, () => {
           {{ item.name }}
         </v-card-title>
         <v-card-text>
-          <v-row dense justify="center">
+          <v-row
+            dense
+            justify="center"
+          >
             <div v-if="item.images">
-              <v-chip size="x-small"> WV: {{ item.WV }} </v-chip>
-              <v-chip size="x-small"> S2: {{ item.S2 }} </v-chip>
-              <v-chip size="x-small"> L8: {{ item.L8 }} </v-chip>
+              <v-chip size="x-small">
+                WV: {{ item.WV }}
+              </v-chip>
+              <v-chip size="x-small">
+                S2: {{ item.S2 }}
+              </v-chip>
+              <v-chip size="x-small">
+                L8: {{ item.L8 }}
+              </v-chip>
             </div>
             <div v-else>
-              <v-chip size="x-small" color="error"> No Images Loaded </v-chip>
+              <v-chip
+                size="x-small"
+                color="error"
+              >
+                No Images Loaded
+              </v-chip>
             </div>
           </v-row>
-          <v-row dense justify="center" class="pa-2">
+          <v-row
+            dense
+            justify="center"
+            class="pa-2"
+          >
             <v-chip
               v-if="item.status"
               size="small"
@@ -182,15 +244,49 @@ watch(() => hoveredInfo.value.siteId, () => {
                   v-bind="subProps"
                   @click.stop="download(item.id)"
                 >
-                  <v-icon size="small"> mdi-export </v-icon>
+                  <v-icon size="small">
+                    mdi-export
+                  </v-icon>
                 </v-btn>
               </template>
               <span>Download JSON</span>
             </v-tooltip>
             <v-spacer />
-            <v-tooltip v-if="item.filename" open-delay="50" bottom>
+            <v-tooltip>
+              <template #activator="{ props:subProps }">
+                <v-btn 
+                  v-if="!item.downloading"
+                  size="x-small"
+                  v-bind="subProps"
+                  class="mx-1"
+                  @click.stop="setImageDownloadDialog(item)"
+                >
+                  Get <v-icon>mdi-image</v-icon>
+                </v-btn>
+                <v-btn 
+                  v-else-if="item.downloading"
+                  size="x-small"
+                  v-bind="subProps"
+                  class="mx-1"
+                >
+                  <v-icon>mdi-spin mdi-sync</v-icon>
+                </v-btn>
+              </template>
+              <span> {{ item.downloading ? 'Downloading Images' : 'Download Satellite Images' }} </span>
+            </v-tooltip>
+            <v-spacer />
+            <v-tooltip
+              v-if="item.filename"
+              open-delay="50"
+              bottom
+            >
               <template #activator="{ props: subProps }">
-                <v-icon x-small v-bind="subProps"> mdi-file-outline </v-icon>
+                <v-icon
+                  x-small
+                  v-bind="subProps"
+                >
+                  mdi-file-outline
+                </v-icon>
               </template>
               <span>
                 {{ item.filename }}
@@ -199,6 +295,12 @@ watch(() => hoveredInfo.value.siteId, () => {
           </v-row>
         </v-card-text>
       </v-card>
+      <images-download-dialog
+        v-if="imageDownloadDialog"
+        :date-range="imageTimeRange"
+        @download="startDownload($event)"
+        @cancel="imageDownloadDialog = false"
+      />
     </div>
   </v-card>
 </template>

@@ -51,10 +51,10 @@ export interface ScoringResults {
 
 export type SiteModelStatus = 'PROPOSAL' | 'APPROVED' | 'REJECTED'
 
-export interface ModelRunEvaluations {
+export interface Proposals {
   region: Region;
 
-  evaluations: {
+  proposedSites: {
     images: number,
     S2: number,
     WV: number,
@@ -67,6 +67,7 @@ export interface ModelRunEvaluations {
     status: SiteModelStatus
     timestamp: number;
     filename?: string | null;
+    downloading: boolean;
   }[];
 }
 export interface SiteEvaluationUpdateQuery {
@@ -288,10 +289,10 @@ export class ApiService {
    * @returns EvaluationsList
    * @throws ApiError
    */
-    public static getModelRunEvaluations(id: string): CancelablePromise<ModelRunEvaluations> {
+    public static getProposals(id: string): CancelablePromise<Proposals> {
       return __request(OpenAPI, {
         method: "GET",
-        url: `${this.getApiPrefix()}/model-runs/{id}/evaluations`,
+        url: `${this.getApiPrefix()}/model-runs/{id}/proposals`,
         path: {
           id: id,
         },

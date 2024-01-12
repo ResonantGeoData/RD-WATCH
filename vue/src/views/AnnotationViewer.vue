@@ -5,7 +5,7 @@ import MapLibre from "../components/MapLibre.vue";
 import LayerSelection from "../components/LayerSelection.vue";
 import ProposalList from "../components/annotationViewer/ProposalList.vue"
 import MapLegend from "../components/MapLegend.vue";
-import { ModelRunEvaluationDisplay } from "../components/annotationViewer/ProposalList.vue"
+import { ProposalDisplay } from "../components/annotationViewer/ProposalList.vue"
 import { Ref, computed, onMounted, ref, watch } from "vue";
 import { state } from "../store";
 
@@ -39,8 +39,8 @@ onMounted(() => {
 const selectedEval: Ref<string | null> = ref(null);
 const selectedName: Ref<string | null> = ref(null);
 const selectedDateRange: Ref<number[] | null> = ref(null);
-const regionBBox: Ref<ModelRunEvaluationDisplay['bbox'] | null> = ref(null);
-const setSelectedEval = (val: ModelRunEvaluationDisplay | null) => {
+const regionBBox: Ref<ProposalDisplay['bbox'] | null> = ref(null);
+const setSelectedEval = (val: ProposalDisplay | null) => {
   
   if (val && val.id !== null) {
     if (selectedEval.value === null) { // set region bbox if previous val was null
@@ -67,7 +67,7 @@ watch(selectedModelRun, () => {
 
 const updateSiteModels = () => {
   if (siteEvalList.value !== null) {
-    siteEvalList.value.getSiteEvalIds();
+    siteEvalList.value.getSiteProposals();
   }
 }
 </script>

@@ -140,10 +140,8 @@ const download = (id: string) => {
 };
 
 watch(() => hoveredInfo.value.siteId, () => {
-  console.log('hovered info update');
   if (hoveredInfo.value.siteId.length) {
     const id = hoveredInfo.value.siteId[0];
-    console.log(`proposal-id-${id}`);
     const el = document.getElementById(`proposal-id-${id}`);
     if (el) {
       el.scrollIntoView({block: 'end', behavior: 'smooth'});

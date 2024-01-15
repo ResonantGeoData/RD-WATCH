@@ -517,13 +517,35 @@ onUnmounted(() => {
               Toggle Map Images
             </span>
           </v-tooltip>
+          <br>
+          <v-tooltip
+            v-if="hasGroundTruth"
+            open-delay="50"
+            bottom
+          >
+            <template #activator="{ props:subProps }">
+              <v-icon
+                v-bind="subProps"
+                :color="drawGroundTruth ? 'rgb(37, 99, 235)' : ''"
+                @click="drawGroundTruth = !drawGroundTruth"
+              >
+                {{ drawGroundTruth ? 'mdi-checkbox-marked' : 'mdi-checkbox-blank-outline' }}
+              </v-icon>
+            </template>
+            <span>
+              Toggle Map Images
+            </span>
+          </v-tooltip>
         </v-col>
         <v-col>
           <h3 class="mr-3">
             {{ siteEvaluationName }}:
           </h3>
-          <h3 v-if="hasGroundTruth">
-            Ground Truth:
+          <h3
+            v-if="hasGroundTruth"
+            class="mr-3"
+          >
+            Ground Truth
           </h3>
         </v-col>
         <v-col>

@@ -19,6 +19,10 @@ class SiteEvaluation(models.Model):
     id = models.UUIDField(primary_key=True, default=uuid4, editable=False)
 
     timestamp = CreationDateTimeField()
+    modified_timestamp = models.DateTimeField(
+        auto_now=True,
+        help_text='Timestamp of the last modification',
+    )
     configuration = models.ForeignKey(
         to='ModelRun',
         on_delete=models.PROTECT,

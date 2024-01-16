@@ -9,7 +9,7 @@ import { SiteModelStatus } from "../../client/services/ApiService";
 import { CanvasCapture } from 'canvas-capture';
 import type { PixelPoly } from './imageUtils';
 import { createCanvas, drawData, processImagePoly } from './imageUtils';
-
+import maplibregl from 'maplibre-gl';
 interface Props {
   siteEvalId: string;
   dialog?: boolean;
@@ -237,7 +237,6 @@ function drawForDownload() {
   }
   drawImageForRecord();
 }
-
 const load = async (newValue?: string, oldValue?: string) => {
   const index = state.enabledSiteObservations.findIndex((item) => item.id === oldValue);
 
@@ -251,6 +250,9 @@ const load = async (newValue?: string, oldValue?: string) => {
   }
   loading.value = true;
   await getImageData();
+  if (props.editable) {
+    loadAndToggleSatelliteImages(props.siteEvalId);
+  }
   if (currentImage.value < filteredImages.value.length && canvasRef.value !== null) {
       drawData(
         canvasRef.value,
@@ -370,6 +372,8 @@ const saveSiteEvaluationChanges = async () => {
   });
   siteEvaluationUpdated.value = false;
   emit('update-list');
+  // reset cache after changing siteEvals for vector tiles
+  maplibregl.clearStorage();
 }
 
 const setSiteModelStatus = async (status: SiteModelStatus) => {
@@ -438,6 +442,9 @@ onUnmounted(() => {
     clearInterval(loopingInterval);
   }
   window.removeEventListener('keydown', keyboardEventListener);
+  if (props.editable && state.enabledSiteObservations.find((item) => item.id === props.siteEvalId)) {
+    loadAndToggleSatelliteImages(props.siteEvalId);
+  }
 });
 
 // Set Keyboard Shortcuts

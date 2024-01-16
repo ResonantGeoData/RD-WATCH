@@ -483,6 +483,7 @@ export class ApiService {
   }
 
   public static patchSiteEvaluation(id: string, data: SiteEvaluationUpdateQuery): CancelablePromise<boolean> {
+    // We clear the cache so it will reload the tiles and display the new color.
     return __request(OpenAPI, {
       method: 'PATCH',
       url: "/api/evaluations/{id}/",

@@ -21,6 +21,7 @@ export interface MapFilters {
     accepted?: string[],
     rejected?: string[],
   }
+  randomKey?: string;
 }
 
 export interface SatelliteTimeStamp {

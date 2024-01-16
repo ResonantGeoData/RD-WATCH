@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { computed } from "vue";
+import { computed, onMounted } from "vue";
 import { ApiService } from "../client";
 import { state } from "../store";
 import { useRoute } from 'vue-router';
@@ -30,6 +30,16 @@ const toggleGroundTruth = (id: string) => {
       }
 
 }
+
+onMounted(() => {
+  // For proposal view we default to sites
+  if (proposals.value) {
+    const drawObservations = undefined;
+    const drawSiteOutline = ['model'];
+    state.filters = { ...state.filters, drawSiteOutline, drawObservations, scoringColoring: undefined, siteTimeLimits: undefined };
+
+  }
+})
 
 const checkGroundTruth = async () => {
   if (scoringApp.value) {

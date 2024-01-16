@@ -88,7 +88,7 @@ const throttledSetSatelliteTimeStamp = throttle(setSatelliteTimeStamp, 300);
 
 watch([() => state.timestamp, () => state.filters, () => state.satellite, () => state.filters.scoringColoring,
 () => state.satellite.satelliteSources, () => state.enabledSiteObservations, () => state.filters.hoverSiteId,
-() => state.modelRuns, () => state.openedModelRuns, () => state.filters.proposals], (newVals, oldVals) => {
+() => state.modelRuns, () => state.openedModelRuns, () => state.filters.proposals, () => state.filters.randomKey], (newVals, oldVals) => {
 
   if (state.satellite.satelliteImagesOn) {
     throttledSetSatelliteTimeStamp(state, filteredSatelliteTimeList.value);
@@ -117,7 +117,7 @@ watch([() => state.timestamp, () => state.filters, () => state.satellite, () => 
     updateImageMapSources(state.timestamp, state.enabledSiteObservations, state.siteObsSatSettings, map.value )
   }
   map.value?.setStyle(
-    style(state.timestamp, state.filters, state.satellite, state.enabledSiteObservations, state.siteObsSatSettings, Array.from(modelRunVectorLayers)),
+    style(state.timestamp, state.filters, state.satellite, state.enabledSiteObservations, state.siteObsSatSettings, Array.from(modelRunVectorLayers), state.filters.randomKey),
   );
 
   const siteFilter = buildSiteFilter(state.timestamp, state.filters);

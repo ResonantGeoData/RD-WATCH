@@ -373,7 +373,11 @@ const saveSiteEvaluationChanges = async () => {
   siteEvaluationUpdated.value = false;
   emit('update-list');
   // reset cache after changing siteEvals for vector tiles
+  await getImageData();
   maplibregl.clearStorage();
+  // We need to update the source to get information
+  // This reloads the source vector-tile to color it properly after data has been changed.
+  state.filters.randomKey = `?randomKey=randomKey_${Math.random()*1000}`;
 }
 
 const setSiteModelStatus = async (status: SiteModelStatus) => {
@@ -383,6 +387,7 @@ const setSiteModelStatus = async (status: SiteModelStatus) => {
     });
     siteStatus.value = status;
     emit('update-list');
+    load();
   }
 }
 

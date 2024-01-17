@@ -186,7 +186,7 @@ const startDownload = async (data: DownloadSettings) => {
         :key="`${item.name}_${item.id}_${item.selected}`"
         class="modelRunCard"
         :class="{
-          selectedCard: item.selected,
+          selectedCard: item.id === selectedEval,
           hoveredCard: hoveredInfo.siteId.includes(item.id),
         }"
         @mouseenter="state.filters.hoverSiteId = item.id"
@@ -315,9 +315,6 @@ const startDownload = async (data: DownloadSettings) => {
 .title {
   font-size: 12px;
 }
-.selectedCard {
-  background-color: lightblue;
-}
 .errorCard {
   background-color: lightcoral;
 }
@@ -340,4 +337,8 @@ const startDownload = async (data: DownloadSettings) => {
   background-color: white;
   overflow-y: auto;
 }
+.selectedCard {
+  background-color: lightblue;
+}
+
 </style>

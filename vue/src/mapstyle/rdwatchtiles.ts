@@ -226,7 +226,7 @@ const buildObservationFillOpacity = (filters: MapFilters, fillProposals?: 'sites
     result.push('case');
     result.push(['get', "groundtruth"])
     result.push(0.45);
-    result.push(0);
+    result.push(0.45);
     return result as DataDrivenPropertyValueSpecification<number>;
   } else if (filters.proposals) {
     return 0;

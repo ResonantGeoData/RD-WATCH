@@ -469,7 +469,7 @@ onUnmounted(() => {
     >
       <v-col v-if="obsDetails">
         <span>{{ obsDetails.performer }} {{ obsDetails.title }} : V{{ obsDetails.version }}</span>
-        <div v-if="hasGroundTruth">
+        <div v-if="hasGroundTruth && editable">
           <v-checkbox
             v-model="drawGroundTruth"
             density="compact"

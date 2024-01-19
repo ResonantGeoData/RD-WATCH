@@ -280,7 +280,7 @@ def download_annotations(request: HttpRequest, id: UUID4):
         # Return the temporary file for download
         with open(temp_file.name, 'rb') as f:
             response = HttpResponse(f.read(), content_type='application/octet-stream')
-            response['Content-Disposition'] = f'attachment; filename={site_id}.json'
+            response['Content-Disposition'] = f'attachment; filename={site_id}.geojson'
 
             return response
     # TODO: Some Better Error response

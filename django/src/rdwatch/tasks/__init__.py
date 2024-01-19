@@ -471,7 +471,7 @@ def download_annotations(self, id: UUID4, mode: Literal['all', 'approved', 'reje
             if '9999' in site_id:
                 nine_count += 1
                 modified_site_id = f'{site_id}-{nine_count}'
-            file_name = os.path.join(temp_dir, f'{modified_site_id}.json')
+            file_name = os.path.join(temp_dir, f'{modified_site_id}.geojson')
 
             with open(file_name, 'w') as file:
                 json.dump(data, file)

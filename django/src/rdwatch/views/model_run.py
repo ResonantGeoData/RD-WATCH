@@ -231,7 +231,7 @@ def get_queryset():
                     then=JSONObject(
                         proposed=Coalesce(Subquery(proposed_count_subquery), 0),
                         other=Coalesce(Subquery(other_count_subquery), 0),
-                        groundTruths=Subquery(
+                        ground_truths=Subquery(
                             ModelRun.objects.filter(
                                 performer__slug='TE',
                                 evaluations__region_id=OuterRef('region_id'),

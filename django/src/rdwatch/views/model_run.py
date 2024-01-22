@@ -457,7 +457,7 @@ def get_proposals_query(model_run_id: UUID4):
             ),
         )
         .aggregate(
-            proposedSites=JSONBAgg(
+            proposed_sites=JSONBAgg(
                 JSONObject(
                     id='pk',
                     timestamp='time',

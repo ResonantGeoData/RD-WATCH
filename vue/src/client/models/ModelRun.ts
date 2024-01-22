@@ -23,7 +23,7 @@ export type ModelRun = {
   adjudicated?: {
     proposed: number,
     other: number,
-    groundTruths?: string,
+    ground_truths?: string,
   } | null;
   mode: 'batch' | 'incremental' | null;
 };

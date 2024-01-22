@@ -23,10 +23,10 @@ const emit = defineEmits<{
 }>();
 
 async function handleClick(modelRun: ModelRun) {
-  if (modelRun.adjudicated?.groundTruths) {
-    state.proposals.groundTruths = modelRun.adjudicated?.groundTruths
+  if (modelRun.adjudicated?.ground_truths) {
+    state.proposals.ground_truths = modelRun.adjudicated?.ground_truths
   } else {
-    state.proposals.groundTruths = undefined;
+    state.proposals.ground_truths = undefined;
   }
   emit("toggle");
 }

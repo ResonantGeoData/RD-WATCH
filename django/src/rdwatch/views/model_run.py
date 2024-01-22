@@ -100,7 +100,7 @@ class ModelRunWriteSchema(Schema):
 class ModelRunAdjudicated(Schema):
     proposed: int
     other: int
-    groundTruths: str | None
+    ground_truths: str | None
 
 
 class ModelRunDetailSchema(Schema):

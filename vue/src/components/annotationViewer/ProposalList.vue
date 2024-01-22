@@ -55,12 +55,12 @@ const getSiteProposals = async () => {
     const results = await ApiService.getProposals(props.modelRun);
     proposalList.value = results;
     let newNumbers = 0;
-    if (proposalList.value?.proposedSites) {
+    if (proposalList.value?.proposed_sites) {
       const modList: ProposalDisplay[] = [];
       const regionName: string = proposalList.value.region;
       const accepted: string[] = [];
       const rejected: string[] = [];
-      proposalList.value.proposedSites.forEach((item) => {
+      proposalList.value.proposed_sites.forEach((item) => {
         const newNum = item.number.toString().padStart(4, "0");
         if (newNum === "9999") {
           newNumbers += 1;

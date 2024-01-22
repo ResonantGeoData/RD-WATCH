@@ -46,8 +46,8 @@ const checkGroundTruth = async () => {
     return;
   } else if (proposals.value) {
     // We need to get the groundTruth value and toggle that instead.
-    if (state.proposals.groundTruths) {
-      const id = state.proposals.groundTruths;
+    if (state.proposals.ground_truths) {
+      const id = state.proposals.ground_truths;
       toggleGroundTruth(id);
     }
   } else {

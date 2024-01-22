@@ -162,7 +162,7 @@ export const state = reactive<{
   gifSettings: { fps: number, quality: number},
   performerMapping: Record<number, Performer>,
   proposals: {
-    groundTruths?: string | null,
+    ground_truths?: string | null,
   }
 
 }>({

@@ -54,7 +54,7 @@ export type SiteModelStatus = 'PROPOSAL' | 'APPROVED' | 'REJECTED'
 export interface Proposals {
   region: Region;
 
-  proposedSites: {
+  proposed_sites: {
     images: number,
     S2: number,
     WV: number,

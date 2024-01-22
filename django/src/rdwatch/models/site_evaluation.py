@@ -154,6 +154,7 @@ class SiteEvaluation(models.Model):
                 cache_originator_file=cache_originator_file,
                 cache_timestamp=cache_timestamp,
                 cache_commit_hash=cache_commit_hash,
+                modified_timestamp=datetime.now(),
             )
 
             SiteObservation.bulk_create_from_site_evaluation(site_eval, site_model)

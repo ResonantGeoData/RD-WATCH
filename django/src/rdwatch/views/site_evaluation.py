@@ -187,6 +187,7 @@ def patch_site_evaluation(request: HttpRequest, id: UUID4, data: SiteEvaluationR
         for field in filter(lambda f: f in data_dict, FIELDS):
             setattr(site_evaluation, field, data_dict[field])
 
+        site_evaluation.modified_timestamp = datetime.now()
         site_evaluation.save()
 
     return 200

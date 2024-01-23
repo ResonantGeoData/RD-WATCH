@@ -187,6 +187,7 @@ def patch_site_evaluation(request: HttpRequest, id: UUID4, data: SiteEvaluationR
         for field in filter(lambda f: f in data_dict, FIELDS):
             setattr(site_evaluation, field, data_dict[field])
 
+        site_evaluation.modified_timestamp = datetime.now()
         site_evaluation.save()
 
     return 200
@@ -280,7 +281,7 @@ def download_annotations(request: HttpRequest, id: UUID4):
         # Return the temporary file for download
         with open(temp_file.name, 'rb') as f:
             response = HttpResponse(f.read(), content_type='application/octet-stream')
-            response['Content-Disposition'] = f'attachment; filename={site_id}.json'
+            response['Content-Disposition'] = f'attachment; filename={site_id}.geojson'
 
             return response
     # TODO: Some Better Error response

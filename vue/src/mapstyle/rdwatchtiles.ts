@@ -76,7 +76,6 @@ export const buildObservationFilter = (
   } else if (!hasModel && !hasGroundTruth) {
     return false;
   }
-
   return filter;
 };
 
@@ -186,14 +185,16 @@ export const buildRegionFilter = (filters: MapFilters): FilterSpecification => {
 const urlRoot = `${location.protocol}//${location.host}`;
 
 const buildObservationThick = (
-  filters: MapFilters
+  filters: MapFilters,
+  siteObs: 'site' | 'observation'
 ): DataDrivenPropertyValueSpecification<number> => {
   // If this observation is a grouth truth, make the width 4. Otherwise, make it 2.
+  const idVal = siteObs === 'site' ? 'id' : 'siteeval_id'
   return [
     "case",
     [
       "==",
-      ["get", "siteeval_id"],
+      ["get", idVal],
       filters.hoverSiteId ? filters.hoverSiteId : "",
     ],
     6,
@@ -202,6 +203,38 @@ const buildObservationThick = (
     2,
   ];
 };
+
+const buildObservationFillOpacity = (filters: MapFilters, fillProposals?: 'sites' | 'observations'): DataDrivenPropertyValueSpecification<number> | number =>  {
+  if (filters.proposals && (filters.proposals.accepted?.length || filters.proposals.rejected?.length)) {
+    const result = [];
+    const idKey = fillProposals === 'sites' ? 'id' : 'siteeval_id'
+    result.push('case');
+    result.push(['in', ['get', idKey], ['literal', filters.proposals.accepted]])
+    result.push(0.25);
+    result.push(['in', ['get', idKey], ['literal', filters.proposals.rejected]])
+    result.push(0.25);
+    if (filters.groundTruthPattern) {
+      result.push(['get', "groundtruth"])
+      result.push(0.45);
+    }
+
+    result.push(0);
+    return result as DataDrivenPropertyValueSpecification<number>;
+  }
+  else if (filters.groundTruthPattern) {
+    const result = [];
+    result.push('case');
+    result.push(['get', "groundtruth"])
+    result.push(0.45);
+    result.push(0.45);
+    return result as DataDrivenPropertyValueSpecification<number>;
+  } else if (filters.proposals) {
+    return 0;
+  }
+
+
+  return 1;
+}
 
 const buildObservationFill = (
   timestamp: number,
@@ -217,13 +250,14 @@ const buildObservationFill = (
   ];
 };
 
-export const buildSourceFilter = (modelRunIds: string[]) => {
+// Nudge is used to refresh vector tiles when modified by proposal view
+export const buildSourceFilter = (modelRunIds: string[], randomKey='') => {
   const results: Record<string, SourceSpecification> = {};
   modelRunIds.forEach((id) => {
     const source = `vectorTileSource_${id}`;
     results[source] = {
       type: "vector",
-      tiles: [`${urlRoot}${ApiService.getApiPrefix()}/model-runs/${id}/vector-tile/{z}/{x}/{y}.pbf/`],
+      tiles: [`${urlRoot}${ApiService.getApiPrefix()}/model-runs/${id}/vector-tile/{z}/{x}/{y}.pbf${randomKey}/`],
       minzoom: 0,
       maxzoom: 14,
     };
@@ -238,19 +272,24 @@ export const buildLayerFilter = (
 ): LayerSpecification[] => {
   let results: LayerSpecification[] = [];
   modelRunIds.forEach((id) => {
-    results = results.concat([
-      {
-        id: `observations-fill-${id}`,
-        type: "fill",
-        source: `vectorTileSource_${id}`,
-        "source-layer": `observations-${id}`,
-        paint: {
-          "fill-color": annotationColors(filters),
-          "fill-opacity": 1,
-          "fill-pattern": buildObservationFill(timestamp, filters),
-        },
-        filter: buildObservationFilter(timestamp, filters),
+
+    const observationSpec: LayerSpecification =       {
+      id: `observations-fill-${id}`,
+      type: "fill",
+      source: `vectorTileSource_${id}`,
+      "source-layer": `observations-${id}`,
+      paint: {
+        "fill-color": annotationColors(filters, 'observations'),
+        "fill-opacity": buildObservationFillOpacity(filters, 'observations'),
       },
+      filter: buildObservationFilter(timestamp, filters),
+    };
+    if (observationSpec.paint && (!filters.proposals || (!filters.proposals.accepted && !filters.proposals.rejected))) {
+      observationSpec.paint['fill-pattern'] = buildObservationFill(timestamp, filters);
+    }
+    results.push(observationSpec);
+
+    results = results.concat([
       {
         id: `observations-outline-${id}`,
         type: "line",
@@ -258,7 +297,7 @@ export const buildLayerFilter = (
         "source-layer": `observations-${id}`,
         paint: {
           "line-color": annotationColors(filters),
-          "line-width": buildObservationThick(filters),
+          "line-width": buildObservationThick(filters, 'observation'),
         },
         filter: buildObservationFilter(timestamp, filters),
       },
@@ -280,23 +319,29 @@ export const buildLayerFilter = (
         "source-layer": `sites-${id}`,
         paint: {
           "line-color": annotationColors(filters),
-          "line-width": 2,
+          "line-width": buildObservationThick(filters, 'site'),
         },
         filter: buildSiteFilter(timestamp, filters),
       },
       // Site fill is added for Hover Popup to work on the area inside the polygon
-      {
-        id: `sites-fill-${id}`,
-        type: "fill",
-        source: `vectorTileSource_${id}`,
-        "source-layer": `sites-${id}`,
-        paint: {
-          "fill-color": annotationColors(filters),
-          "fill-opacity": 0,
-        },
-        filter: buildSiteFilter(timestamp, filters),
-      },
     ]);
+    const siteFill: LayerSpecification =   {
+      id: `sites-fill-${id}`,
+      type: "fill",
+      source: `vectorTileSource_${id}`,
+      "source-layer": `sites-${id}`,
+      paint: {
+        "fill-color": annotationColors(filters, 'sites'),
+        "fill-opacity": buildObservationFillOpacity(filters, 'sites'),
+      },
+      filter: buildSiteFilter(timestamp, filters),
+    };
+    if (siteFill.paint && (!filters.proposals || (!filters.proposals.accepted && !filters.proposals.rejected))) {
+      siteFill.paint['fill-pattern'] = buildObservationFill(timestamp, filters);
+    }
+    results.push(siteFill);
+
+
     if (filters.showText) {
       results = results.concat([{
         id: `sites-text-${id}`,

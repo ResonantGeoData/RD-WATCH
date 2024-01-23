@@ -7,7 +7,8 @@ import { PopUpData, PopUpSiteData } from '../interactions/popUpType';
 import { scoringColors, scoringColorsKeys, styles } from "../mapstyle/annotationStyles";
 
 
-  const hoveredInfo: Ref<{region: string[], siteId: string[]}> = ref({region: [], siteId:[]});
+const hoveredInfo: Ref<{region: string[], siteId: string[]}> = ref({region: [], siteId:[]});
+const clickedInfo: Ref<{region: string[], siteId: string[], names: string[]}> = ref({region: [], siteId:[], names: []});
 
 let app: App | null = null;
 const popUpProps: Record<string, PopUpData> = reactive({});
@@ -126,6 +127,10 @@ const drawPopupObservation = async (e: MapLayerMouseEvent, remove=false) => {
   }
 };
 const clickObservation = async (e: MapLayerMouseEvent) => {
+  e.preventDefault();
+  const regions: string[] = [];
+  const siteIds: string[] = [];
+  const names: string[] = [];
   if (e.features && e.features[0]?.properties && map.value) {
     e.features.forEach(async (feature) => {
     if (feature.properties) {
@@ -138,16 +143,24 @@ const clickObservation = async (e: MapLayerMouseEvent) => {
           performer: feature.properties.performer_name,
           title: feature.properties.configuration_name,
         }
+        regions.push(feature.properties.region as string);
+        siteIds.push(siteId);
+        names.push(`${feature.properties.region as string}_${feature.properties.site_number as number}`)
 
         if (siteId && !selectedObservationList.value.includes(siteId)) {
           await getSiteObservationDetails(siteId, obsDetails);
         }
       }
-    })
+    });
   }
+  clickedInfo.value = {region: regions, siteId: siteIds, names};
 
 }
 const clickSite = async (e: MapLayerMouseEvent) => {
+  e.preventDefault();
+  const regions: string[] = [];
+  const siteIds: string[] = [];
+  const names: string[] = [];
   if (e.features && e.features[0]?.properties && map.value) {
     e.features.forEach(async (feature) => {
     if (feature.properties) {
@@ -160,13 +173,16 @@ const clickSite = async (e: MapLayerMouseEvent) => {
           performer: feature.properties.performer_name,
           title: feature.properties.configuration_name,
         }
+        regions.push(feature.properties.region as string);
+        siteIds.push(siteId);
+        names.push(`${feature.properties.region as string}_${feature.properties.site_number as number}`)
         if (siteId && !selectedObservationList.value.includes(siteId)) {
           await getSiteObservationDetails(siteId, obsDetails);
         }
       }
     })
   }
-
+  clickedInfo.value = {region: regions, siteId: siteIds, names};
 }
 
 
@@ -192,7 +208,6 @@ const drawSitePopupObservation = async (e: MapLayerMouseEvent, remove=false) => 
           const id = item.properties.site_number;
           const region: string = item.properties.region;
           if (!remove) {
-            const siteId = item.properties.siteeval_id;
             const configName = item.properties.configuration_name;
             const performerName = item.properties.performer_name;
             const version = item.properties.version;
@@ -200,7 +215,7 @@ const drawSitePopupObservation = async (e: MapLayerMouseEvent, remove=false) => 
             hoveredInfo.value.region.push(
               `${item.properties.configuration_id}_${region}_${item.properties.performer_id}`
             );
-            hoveredInfo.value.siteId.push(siteId);
+            hoveredInfo.value.siteId.push(item.properties.id);
             if (!htmlMap[id]) {
               if (item.layer?.paint) {
                   ids.push(id);
@@ -256,6 +271,14 @@ const drawSitePopupObservation = async (e: MapLayerMouseEvent, remove=false) => 
   }
 };
 
+const clickOutside = (e: MapLayerMouseEvent) => {
+  if (e.defaultPrevented === false) { // only clear when clicked not on a site/obs
+    clickedInfo.value = {region: [], siteId: [], names: []};
+  }
+
+
+}
+
 let loadedFunctions: {
   id: string,
   mouseenter: (e: MapLayerMouseEvent) => Promise<void>;
@@ -276,6 +299,7 @@ const setPopupEvents = (map: ShallowRef<null | Map>) => {
       map.value.off("click", `observations-fill-${data.id}`, data.clickObservation);
       map.value.off("click", `sites-fill-${data.id}`, data.clickSite);
     }
+    map.value.off("click", clickOutside);
     loadedFunctions = []
     for (const m of state.openedModelRuns) {
       const id = m.split('|')[0];
@@ -285,6 +309,7 @@ const setPopupEvents = (map: ShallowRef<null | Map>) => {
       map.value.on("mouseleave", `sites-fill-${id}`, removeSitePopupObservation);
       map.value.on("click", `observations-fill-${id}`, clickObservation);
       map.value.on("click", `sites-fill-${id}`, clickSite);
+      map.value.on("click", clickOutside);
       loadedFunctions.push({
         id,
         mouseenter: drawPopupObservation,
@@ -298,4 +323,4 @@ const setPopupEvents = (map: ShallowRef<null | Map>) => {
   }
 }
 
-export { popupLogic, hoveredInfo, setPopupEvents };
+export { popupLogic, hoveredInfo, clickedInfo, setPopupEvents };

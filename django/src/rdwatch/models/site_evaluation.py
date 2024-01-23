@@ -1,3 +1,4 @@
+from datetime import datetime
 from typing import Self
 from uuid import uuid4
 
@@ -19,6 +20,11 @@ class SiteEvaluation(models.Model):
     id = models.UUIDField(primary_key=True, default=uuid4, editable=False)
 
     timestamp = CreationDateTimeField()
+    # This is not an auto-field, and is used for cache invalidation.
+    # it must be manually set when SiteEvaluation is edited
+    modified_timestamp = models.DateTimeField(
+        help_text='Timestamp of the last modification',
+    )
     configuration = models.ForeignKey(
         to='ModelRun',
         on_delete=models.PROTECT,
@@ -148,6 +154,7 @@ class SiteEvaluation(models.Model):
                 cache_originator_file=cache_originator_file,
                 cache_timestamp=cache_timestamp,
                 cache_commit_hash=cache_commit_hash,
+                modified_timestamp=datetime.now(),
             )
 
             SiteObservation.bulk_create_from_site_evaluation(site_eval, site_model)
@@ -190,6 +197,7 @@ class SiteEvaluation(models.Model):
                     geom=geometry,
                     label=label_map[feature.properties.status],
                     score=feature.properties.score,
+                    modified_timestamp=datetime.now(),
                 )
                 site_evals.append(site_eval)
 

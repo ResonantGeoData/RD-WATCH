@@ -51,10 +51,10 @@ export interface ScoringResults {
 
 export type SiteModelStatus = 'PROPOSAL' | 'APPROVED' | 'REJECTED'
 
-export interface ModelRunEvaluations {
+export interface Proposals {
   region: Region;
 
-  evaluations: {
+  proposed_sites: {
     images: number,
     S2: number,
     WV: number,
@@ -67,6 +67,7 @@ export interface ModelRunEvaluations {
     status: SiteModelStatus
     timestamp: number;
     filename?: string | null;
+    downloading: boolean;
   }[];
 }
 export interface SiteEvaluationUpdateQuery {
@@ -288,10 +289,10 @@ export class ApiService {
    * @returns EvaluationsList
    * @throws ApiError
    */
-    public static getModelRunEvaluations(id: string): CancelablePromise<ModelRunEvaluations> {
+    public static getProposals(id: string): CancelablePromise<Proposals> {
       return __request(OpenAPI, {
         method: "GET",
-        url: `${this.getApiPrefix()}/model-runs/{id}/evaluations`,
+        url: `${this.getApiPrefix()}/model-runs/{id}/proposals`,
         path: {
           id: id,
         },
@@ -434,8 +435,8 @@ export class ApiService {
     bbox=[],
   ): CancelablePromise<SatelliteTimeStamp[]>
   {
-    const startTime = new Date(startTimestamp * 1000).toISOString().substring(0, 10);
-    const endTime = new Date(endTimestamp * 1000).toISOString().substring(0, 10);
+    const startTime = startTimestamp ? new Date(startTimestamp * 1000).toISOString().substring(0, 10) : '2013-01-01';
+    const endTime = endTimestamp ? new Date(endTimestamp * 1000).toISOString().substring(0, 10): new Date().toISOString().substring(0, 10);
     // Convert bbox into array of numbers, min/max
     let minX = Infinity;
     let maxX = -Infinity;

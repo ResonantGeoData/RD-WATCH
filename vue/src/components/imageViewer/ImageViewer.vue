@@ -9,7 +9,7 @@ import { SiteModelStatus } from "../../client/services/ApiService";
 import { CanvasCapture } from 'canvas-capture';
 import type { PixelPoly } from './imageUtils';
 import { createCanvas, drawData, processImagePoly } from './imageUtils';
-
+import maplibregl from 'maplibre-gl';
 interface Props {
   siteEvalId: string;
   dialog?: boolean;
@@ -237,7 +237,6 @@ function drawForDownload() {
   }
   drawImageForRecord();
 }
-
 const load = async (newValue?: string, oldValue?: string) => {
   const index = state.enabledSiteObservations.findIndex((item) => item.id === oldValue);
 
@@ -251,6 +250,9 @@ const load = async (newValue?: string, oldValue?: string) => {
   }
   loading.value = true;
   await getImageData();
+  if (props.editable) {
+    loadAndToggleSatelliteImages(props.siteEvalId);
+  }
   if (currentImage.value < filteredImages.value.length && canvasRef.value !== null) {
       drawData(
         canvasRef.value,
@@ -370,6 +372,12 @@ const saveSiteEvaluationChanges = async () => {
   });
   siteEvaluationUpdated.value = false;
   emit('update-list');
+  // reset cache after changing siteEvals for vector tiles
+  await getImageData();
+  maplibregl.clearStorage();
+  // We need to update the source to get information
+  // This reloads the source vector-tile to color it properly after data has been changed.
+  state.filters.randomKey = `?randomKey=randomKey_${Math.random()*1000}`;
 }
 
 const setSiteModelStatus = async (status: SiteModelStatus) => {
@@ -379,6 +387,7 @@ const setSiteModelStatus = async (status: SiteModelStatus) => {
     });
     siteStatus.value = status;
     emit('update-list');
+    load();
   }
 }
 
@@ -438,6 +447,9 @@ onUnmounted(() => {
     clearInterval(loopingInterval);
   }
   window.removeEventListener('keydown', keyboardEventListener);
+  if (props.editable && state.enabledSiteObservations.find((item) => item.id === props.siteEvalId)) {
+    loadAndToggleSatelliteImages(props.siteEvalId);
+  }
 });
 
 // Set Keyboard Shortcuts
@@ -457,7 +469,7 @@ onUnmounted(() => {
     >
       <v-col v-if="obsDetails">
         <span>{{ obsDetails.performer }} {{ obsDetails.title }} : V{{ obsDetails.version }}</span>
-        <div v-if="hasGroundTruth">
+        <div v-if="hasGroundTruth && editable">
           <v-checkbox
             v-model="drawGroundTruth"
             density="compact"
@@ -517,13 +529,35 @@ onUnmounted(() => {
               Toggle Map Images
             </span>
           </v-tooltip>
+          <br>
+          <v-tooltip
+            v-if="hasGroundTruth"
+            open-delay="50"
+            bottom
+          >
+            <template #activator="{ props:subProps }">
+              <v-icon
+                v-bind="subProps"
+                :color="drawGroundTruth ? 'rgb(37, 99, 235)' : ''"
+                @click="drawGroundTruth = !drawGroundTruth"
+              >
+                {{ drawGroundTruth ? 'mdi-checkbox-marked' : 'mdi-checkbox-blank-outline' }}
+              </v-icon>
+            </template>
+            <span>
+              Toggle Map Images
+            </span>
+          </v-tooltip>
         </v-col>
         <v-col>
           <h3 class="mr-3">
             {{ siteEvaluationName }}:
           </h3>
-          <h3 v-if="hasGroundTruth">
-            Ground Truth:
+          <h3
+            v-if="hasGroundTruth"
+            class="mr-3"
+          >
+            Ground Truth
           </h3>
         </v-col>
         <v-col>

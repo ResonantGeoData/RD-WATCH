@@ -7,6 +7,7 @@ import ImagesDownloadDialog from "./ImagesDownloadDialog.vue";
 import { DownloadSettings } from "../client/services/ApiService";
 import { useRoute } from "vue-router";
 import { debounce } from 'lodash';
+import { state } from "../store";
 
 interface Props {
   modelRun: ModelRun;
@@ -21,7 +22,12 @@ const emit = defineEmits<{
   (e: "toggle"): void;
 }>();
 
-async function handleClick() {
+async function handleClick(modelRun: ModelRun) {
+  if (modelRun.adjudicated?.ground_truths) {
+    state.proposals.ground_truths = modelRun.adjudicated?.ground_truths
+  } else {
+    state.proposals.ground_truths = undefined;
+  }
   emit("toggle");
 }
 
@@ -142,7 +148,7 @@ const getModeIcon = (mode: ModelRun['mode']) => (mode ? {
       </v-chip>
     </v-card-actions>
     <v-card-text
-      @click.prevent="handleClick"
+      @click.prevent="handleClick(modelRun)"
     >
       <v-row dense>
         <div class="model-title">

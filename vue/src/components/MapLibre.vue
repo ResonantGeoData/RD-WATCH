@@ -88,7 +88,7 @@ const throttledSetSatelliteTimeStamp = throttle(setSatelliteTimeStamp, 300);
 
 watch([() => state.timestamp, () => state.filters, () => state.satellite, () => state.filters.scoringColoring,
 () => state.satellite.satelliteSources, () => state.enabledSiteObservations, () => state.filters.hoverSiteId,
-() => state.modelRuns, () => state.openedModelRuns], (newVals, oldVals) => {
+() => state.modelRuns, () => state.openedModelRuns, () => state.filters.proposals, () => state.filters.randomKey], (newVals, oldVals) => {
 
   if (state.satellite.satelliteImagesOn) {
     throttledSetSatelliteTimeStamp(state, filteredSatelliteTimeList.value);
@@ -103,6 +103,12 @@ watch([() => state.timestamp, () => state.filters, () => state.satellite, () => 
   }
 
   const openedModelRunIds = state.modelRuns.filter((m) => state.openedModelRuns.has(m.key)).map((m) => m.id);
+  // Add in grounTruth for proposals if they aren't in the model-run list.
+  state.filters.configuration_id?.forEach((item) => {
+   if (!openedModelRunIds.includes(item)) {
+    openedModelRunIds.push(item);
+   }
+  });
 
   // Add opened model runs to list of vector tile layers
   openedModelRunIds.forEach((m) => { modelRunVectorLayers.add(m) })
@@ -111,7 +117,7 @@ watch([() => state.timestamp, () => state.filters, () => state.satellite, () => 
     updateImageMapSources(state.timestamp, state.enabledSiteObservations, state.siteObsSatSettings, map.value )
   }
   map.value?.setStyle(
-    style(state.timestamp, state.filters, state.satellite, state.enabledSiteObservations, state.siteObsSatSettings, Array.from(modelRunVectorLayers)),
+    style(state.timestamp, state.filters, state.satellite, state.enabledSiteObservations, state.siteObsSatSettings, Array.from(modelRunVectorLayers), state.filters.randomKey),
   );
 
   const siteFilter = buildSiteFilter(state.timestamp, state.filters);

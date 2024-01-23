@@ -53,7 +53,7 @@ def vector_tile(request: HttpRequest, model_run_id: UUID4, z: int, x: int, y: in
         datetime | None,
     ] = ModelRun.objects.filter(id=model_run_id).aggregate(
         # Get timestamp of most recent site evaluation so we can use it as a cache key
-        latest_evaluation_timestamp=Max('evaluations__timestamp'),
+        latest_evaluation_timestamp=Max('evaluations__modified_timestamp'),
         # Also include the timestamp of the model run itself. A model
         # run with no evaluations will use this for the cache key. The
         # `Max()` aggregation has no effect here, but we need to call
@@ -68,7 +68,6 @@ def vector_tile(request: HttpRequest, model_run_id: UUID4, z: int, x: int, y: in
     # this model run doesn't exist.
     if timestamps['model_run_timestamp'] is None:
         raise Http404()
-
     latest_timestamp = (
         timestamps['latest_evaluation_timestamp'] or timestamps['model_run_timestamp']
     )

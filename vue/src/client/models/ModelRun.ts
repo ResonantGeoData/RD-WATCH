@@ -22,7 +22,8 @@ export type ModelRun = {
   proposal?: null | 'PROPOSAL' | 'APPROVED';
   adjudicated?: {
     proposed: number,
-    other: number
+    other: number,
+    ground_truths?: string,
   } | null;
   mode: 'batch' | 'incremental' | null;
 };

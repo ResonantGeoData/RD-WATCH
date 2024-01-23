@@ -1,18 +1,53 @@
 <script setup lang="ts">
-import { computed } from "vue";
+import { computed, onMounted } from "vue";
 import { ApiService } from "../client";
 import { state } from "../store";
+import { useRoute } from 'vue-router';
 
 
 
 const scoringApp = computed(()=> ApiService.getApiPrefix().includes('scoring'));
+const route = useRoute();
+const proposals = computed(() => route.path.includes('proposals'));
 
 
+const toggleGroundTruth = (id: string) => {
+  if (state.filters.drawObservations?.includes('groundtruth') || state.filters.drawSiteOutline?.includes('groundtruth')) {
+        if (state.openedModelRuns) {
+          state.openedModelRuns.add(id);
+        }
+        const configuration_id = Array.from(state.openedModelRuns);
+        state.filters = { ...state.filters, configuration_id};
+      }
+      else if (!state.filters.drawObservations?.includes('groundtruth') && !state.filters.drawSiteOutline?.includes('groundtruth')) {
+        if (state.openedModelRuns) {
+          state.openedModelRuns.delete(id);
+        }
+        const configuration_id = Array.from(state.openedModelRuns);
+        state.filters = { ...state.filters, configuration_id};
+      }
 
+}
+
+onMounted(() => {
+  // For proposal view we default to sites
+  if (proposals.value) {
+    const drawObservations = undefined;
+    const drawSiteOutline = ['model'];
+    state.filters = { ...state.filters, drawSiteOutline, drawObservations, scoringColoring: undefined, siteTimeLimits: undefined };
+
+  }
+})
 
 const checkGroundTruth = async () => {
   if (scoringApp.value) {
     return;
+  } else if (proposals.value) {
+    // We need to get the groundTruth value and toggle that instead.
+    if (state.proposals.ground_truths) {
+      const id = state.proposals.ground_truths;
+      toggleGroundTruth(id);
+    }
   } else {
     // We need to find the ground-truth model and add it to the visible items
     const performer = state.filters.performer_ids?.map((item) => state.performerMapping[item].short_code)
@@ -24,22 +59,7 @@ const checkGroundTruth = async () => {
     });
     if (request.items.length) {
       const id = request.items[0].id;
-      if (state.filters.drawObservations?.includes('groundtruth') || state.filters.drawSiteOutline?.includes('groundtruth')) {
-        if (state.openedModelRuns) {
-          state.openedModelRuns.add(id);
-        }
-        const configuration_id = Array.from(state.openedModelRuns);
-        state.filters = { ...state.filters, configuration_id};
-      }
-      else if (!state.filters.drawObservations?.includes('groundtruth') && !state.filters.drawSiteOutline?.includes('groundtruth')) {
-        if (state.openedModelRuns) {
-          if (state.openedModelRuns.has(id)) {
-            state.openedModelRuns.delete(id);
-          }
-        }
-        const configuration_id = Array.from(state.openedModelRuns);
-        state.filters = { ...state.filters, configuration_id};
-      }
+      toggleGroundTruth(id)
     }
   }
 }

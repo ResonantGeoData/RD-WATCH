@@ -27,6 +27,7 @@ export const style = (
   enabledSiteObservations: EnabledSiteObservations[],
   settings: siteObsSatSettings,
   modelRunIds: string[],
+  randomKey=''
 ): StyleSpecification => ({
   version: 8,
   sources: {
@@ -34,7 +35,7 @@ export const style = (
     ...openmaptilesSources(filters),
     ...buildSatelliteSourceFilter(timestamp, satellite),
     ...buildImageSourceFilter(timestamp, enabledSiteObservations, settings),
-    ...buildRdwatchtilesSources(modelRunIds),
+    ...buildRdwatchtilesSources(modelRunIds, randomKey),
   },
   sprite: `${tileServerURL}/sprites/osm-liberty`,
   glyphs: `${tileServerURL}/fonts/{fontstack}/{range}.pbf`,

@@ -13,6 +13,7 @@ from django.db.models import (
     Avg,
     Case,
     Count,
+    Exists,
     F,
     Func,
     JSONField,
@@ -99,6 +100,7 @@ class ModelRunWriteSchema(Schema):
 class ModelRunAdjudicated(Schema):
     proposed: int
     other: int
+    ground_truths: str | None
 
 
 class ModelRunDetailSchema(Schema):
@@ -229,6 +231,13 @@ def get_queryset():
                     then=JSONObject(
                         proposed=Coalesce(Subquery(proposed_count_subquery), 0),
                         other=Coalesce(Subquery(other_count_subquery), 0),
+                        ground_truths=Subquery(
+                            ModelRun.objects.filter(
+                                performer__slug='TE',
+                                evaluations__region_id=OuterRef('region_id'),
+                                proposal=None,
+                            ).values_list('pk')[:1]
+                        ),
                     ),
                 ),
                 default=None,
@@ -253,8 +262,12 @@ class ModelRunPagination(PageNumberPagination):
     ) -> dict[str, Any]:
         # TODO: remove caching after model runs endpoint is
         # refactored to be more efficient.
+        model_runs = None
         cache_key = _get_model_runs_cache_key(filters.dict() | pagination.dict())
-        model_runs = cache.get(cache_key)
+        if (
+            'proposal' not in filters.dict().keys()
+        ):  # adjudicated status can't be cached for proposals
+            model_runs = cache.get(cache_key)
 
         # If we have a cache miss, execute the query and save the results to cache
         # before returning.
@@ -425,9 +438,9 @@ def get_region(model_run_id: UUID4):
     )
 
 
-def get_evaluations_query(model_run_id: UUID4):
+def get_proposals_query(model_run_id: UUID4):
     return (
-        SiteEvaluation.objects.select_related('siteimage')
+        SiteEvaluation.objects.select_related('siteimage', 'satellite_fetching')
         .filter(configuration=model_run_id)
         .annotate(
             siteimage_count=Count('siteimage'),
@@ -435,9 +448,16 @@ def get_evaluations_query(model_run_id: UUID4):
             WV=Count(Case(When(siteimage__source='WV', then=1))),
             L8=Count(Case(When(siteimage__source='L8', then=1))),
             time=ExtractEpoch('timestamp'),
+            site_id=F('id'),
+            downloading=Exists(
+                SatelliteFetching.objects.filter(
+                    site=OuterRef('pk'),
+                    status=SatelliteFetching.Status.RUNNING,
+                )
+            ),
         )
         .aggregate(
-            evaluations=JSONBAgg(
+            proposed_sites=JSONBAgg(
                 JSONObject(
                     id='pk',
                     timestamp='time',
@@ -451,6 +471,7 @@ def get_evaluations_query(model_run_id: UUID4):
                     end_date=ExtractEpoch('end_date'),
                     status='status',
                     filename='cache_originator_file',
+                    downloading='downloading',
                 ),
                 ordering='number',
             ),
@@ -458,13 +479,13 @@ def get_evaluations_query(model_run_id: UUID4):
     )
 
 
-@router.get('/{model_run_id}/evaluations')
-def get_modelrun_evaluations(request: HttpRequest, model_run_id: UUID4):
+@router.get('/{model_run_id}/proposals')
+def get_proposals(request: HttpRequest, model_run_id: UUID4):
     region = get_region(model_run_id).values_list('json', flat=True)
     if not region.exists():
         raise Http404()
 
-    query = get_evaluations_query(model_run_id)
+    query = get_proposals_query(model_run_id)
     model_run = region[0]
     query['region'] = model_run['region']
     return 200, query

@@ -21,9 +21,7 @@ const toggleGroundTruth = (id: string) => {
       }
       else if (!state.filters.drawObservations?.includes('groundtruth') && !state.filters.drawSiteOutline?.includes('groundtruth')) {
         if (state.openedModelRuns) {
-          if (state.openedModelRuns.has(id)) {
-            state.openedModelRuns.delete(id);
-          }
+          state.openedModelRuns.delete(id);
         }
         const configuration_id = Array.from(state.openedModelRuns);
         state.filters = { ...state.filters, configuration_id};

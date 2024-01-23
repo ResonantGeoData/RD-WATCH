@@ -235,10 +235,10 @@ const display = ref(true);
                   open-delay="20"
                   :close-on-content-click="false"
                 >
-                  <template #activator="{ props }">
+                  <template #activator="{ props:subProps }">
                     <v-btn
                       color="primary"
-                      v-bind="props"
+                      v-bind="subProps"
                       class="mr-2"
                     >
                       <b>Start:</b>
@@ -255,10 +255,10 @@ const display = ref(true);
                   open-delay="20"
                   :close-on-content-click="false"
                 >
-                  <template #activator="{ props }">
+                  <template #activator="{ props:subProps }">
                     <v-btn
                       color="primary"
-                      v-bind="props"
+                      v-bind="subProps"
                       class="ml-2"
                     >
                       <b>End:</b>

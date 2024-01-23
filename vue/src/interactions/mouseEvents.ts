@@ -208,7 +208,6 @@ const drawSitePopupObservation = async (e: MapLayerMouseEvent, remove=false) => 
           const id = item.properties.site_number;
           const region: string = item.properties.region;
           if (!remove) {
-            const siteId = item.properties.siteeval_id;
             const configName = item.properties.configuration_name;
             const performerName = item.properties.performer_name;
             const version = item.properties.version;

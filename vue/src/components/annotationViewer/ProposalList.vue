@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { Ref, computed, ref, watch } from "vue";
+import { Ref, ref, watch } from "vue";
 import { ApiService } from "../../client";
 import {
   DownloadSettings,

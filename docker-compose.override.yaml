@@ -113,3 +113,21 @@ services:
         # Run the npm development script
         npm run dev
       "
+
+  vector-tileserver:
+    build:
+      context: tileserver/
+      dockerfile: Dockerfile.dev
+    environment:
+      PORT: 8001
+      RDWATCH_POSTGRESQL_URI: "postgresql://rdwatch:secretkey@postgresql:5432/rdwatch"
+      RDWATCH_POSTGRESQL_SCORING_URI: "postgresql://scoring:secretkey@scoredb:5432/scoring"
+      RDWATCH_REDIS_URI: "redis://redis:6379"
+    ports:
+      - 8001:8001
+    volumes:
+      - ./tileserver:/app/
+    depends_on:
+      - postgresql
+      - scoredb
+      - redis

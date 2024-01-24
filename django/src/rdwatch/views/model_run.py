@@ -7,6 +7,7 @@ from ninja.pagination import PageNumberPagination, RouterPaginated, paginate
 from ninja.schema import validator
 from pydantic import UUID4, constr  # type: ignore
 
+from django.conf import settings
 from django.contrib.postgres.aggregates import JSONBAgg
 from django.core.cache import cache
 from django.db.models import (
@@ -27,7 +28,7 @@ from django.db.models import (
 )
 from django.db.models.functions import Coalesce, JSONObject
 from django.http import Http404, HttpRequest, HttpResponse
-from django.shortcuts import get_object_or_404
+from django.shortcuts import get_object_or_404, redirect
 
 from rdwatch.db.functions import BoundingBox, BoundingBoxGeoJSON, ExtractEpoch
 from rdwatch.models import (
@@ -523,3 +524,12 @@ def get_downloaded_annotations(request: HttpRequest, id: UUID4, task_id: str):
             'Content-Disposition'
         ] = f'attachment; filename="{annotation_export.name}.zip"'
         return response
+
+
+@router.get('/{model_run_id}/vector-tile/{z}/{x}/{y}.pbf/')
+def vector_tile(request: HttpRequest, model_run_id: UUID4, z: int, x: int, y: int):
+    redirect_url = (
+        f'{settings.VECTOR_TILE_SERVER_URL.rstrip("/")}/tile.pbf/'
+        f'?modelRunId={model_run_id}&z={z}&x={x}&y={y}'
+    )
+    return redirect(to=redirect_url)

@@ -5,6 +5,7 @@ from ninja import FilterSchema, Query
 from ninja.pagination import RouterPaginated
 from pydantic import UUID4
 
+from django.conf import settings
 from django.db.models import (
     Avg,
     CharField,
@@ -21,7 +22,7 @@ from django.db.models import (
 )
 from django.db.models.functions import Concat, JSONObject, NullIf
 from django.http import HttpRequest
-from django.shortcuts import get_object_or_404
+from django.shortcuts import get_object_or_404, redirect
 
 from rdwatch.db.functions import ExtractEpoch
 from rdwatch.views.model_run import ModelRunDetailSchema, ModelRunPagination
@@ -312,3 +313,12 @@ def cancel_generate_images(request: HttpRequest, model_run_id: UUID4):
     cancel_generate_images_task.delay(model_run_id)
 
     return 202, True
+
+
+@router.get('/{model_run_id}/vector-tile/{z}/{x}/{y}.pbf/')
+def vector_tile(request: HttpRequest, model_run_id: UUID4, z: int, x: int, y: int):
+    redirect_url = (
+        f'{settings.VECTOR_TILE_SERVER_URL.rstrip("/")}/scoring/tile.pbf/'
+        f'?modelRunId={model_run_id}&z={z}&x={x}&y={y}'
+    )
+    return redirect(to=redirect_url)

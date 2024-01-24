@@ -126,6 +126,10 @@ class BaseConfiguration(Configuration):
         environ_required=True, environ_prefix=_ENVIRON_PREFIX
     )
 
+    VECTOR_TILE_SERVER_URL = values.URLValue(
+        environ_required=True, environ_prefix=_ENVIRON_PREFIX
+    )
+
     # django-celery-results configuration
     CELERY_RESULT_BACKEND = 'django-db'
     CELERY_CACHE_BACKEND = 'django-cache'

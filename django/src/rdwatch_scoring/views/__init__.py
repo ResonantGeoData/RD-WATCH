@@ -1,13 +1,4 @@
-from . import (
-    eval,
-    model_run,
-    observation,
-    performer,
-    region,
-    site,
-    site_image,
-    vector_tile,
-)
+from . import eval, model_run, observation, performer, region, site, site_image
 
 __all__ = [
     'model_run',
@@ -15,7 +6,6 @@ __all__ = [
     'performer',
     'region',
     'site_image',
-    'vector_tile',
     'site',
     'eval',
 ]

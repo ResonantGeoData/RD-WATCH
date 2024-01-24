@@ -78,6 +78,8 @@ const rescalingBBox = ref(1);
 
 const playbackEnabled = ref(false); // Auto playback of images
 
+const evaluationGeoJSON: Ref<GeoJSON.Polygon | null> = ref(null); // holds the site geoJSON so it can be edited
+
 const filteredImages = computed(() => {
   return combinedImages.value.filter((item) => {
     let add = true;
@@ -123,6 +125,7 @@ const getImageData = async () => {
     const data =  await ApiService.getEvaluationImages(props.siteEvalId);
     const images = data.images.results.sort((a, b) => a.timestamp - b.timestamp);
     const polygons = data.geoJSON;
+    evaluationGeoJSON.value = data.evaluationGeoJSON;
     polygons.sort((a,b) => a.timestamp - b.timestamp);
     siteEvaluationNotes.value = data.notes || '';
     siteEvaluationLabel.value = data.label;
@@ -452,6 +455,15 @@ onUnmounted(() => {
   }
 });
 
+
+const startEditingPolygon = () => {
+  console.log(state.editPolygon);
+  console.log(evaluationGeoJSON.value);
+  if (state.editPolygon && evaluationGeoJSON.value) {
+    state.editPolygon.setPolygonEdit(evaluationGeoJSON.value);
+  }
+}
+
 // Set Keyboard Shortcuts
 
 
@@ -641,6 +653,11 @@ onUnmounted(() => {
           </div>
         </v-col>
         <v-spacer />
+        <v-col>
+          <v-btn @click="startEditingPolygon()">
+            Edit Polygon
+          </v-btn>
+        </v-col>
         <v-col>
           <v-btn
             v-if="siteEvaluationUpdated"

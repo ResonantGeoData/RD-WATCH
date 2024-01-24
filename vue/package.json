@@ -19,6 +19,9 @@
   "dependencies": {
     "@fontsource/inter": "^4.5.12",
     "@fontsource/iosevka": "^4.5.4",
+    "@mapbox/mapbox-gl-draw": "^1.4.3",
+    "@turf/turf": "^6.5.0",
+    "@types/mapbox__mapbox-gl-draw": "^1.4.6",
     "canvas-capture": "^2.1.1",
     "lodash": "^4.17.21",
     "maplibre-gl": "^2.1.9",

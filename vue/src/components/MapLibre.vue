@@ -10,12 +10,15 @@ import { markRaw, onMounted, onUnmounted, reactive, shallowRef, watch, withDefau
 import type { FilterSpecification } from "maplibre-gl";
 import type { ShallowRef } from "vue";
 import { popupLogic, setPopupEvents } from "../interactions/mouseEvents";
+import useEditPolygon from "../interactions/editPolygon";
 import { satelliteLoading } from "../interactions/satelliteLoading";
 import { setReference } from "../interactions/fillPatterns";
 import { setSatelliteTimeStamp } from "../mapstyle/satellite-image";
 import { isEqual, throttle } from 'lodash';
 import { nextTick } from "vue";
 import { updateImageMapSources } from "../mapstyle/images";
+import MapboxDraw from "@mapbox/mapbox-gl-draw";
+import { area as turfArea } from '@turf/turf';
 
 interface Props {
   compact?: boolean
@@ -72,11 +75,19 @@ onMounted(() => {
         ],
       })
     );
+
     map.value.keyboard.disable();
     popupLogic(map);
     setPopupEvents(map);
     satelliteLoading(map);
     setReference(map);
+    if (map.value) {
+    const editPolygon = useEditPolygon(map.value);
+    editPolygon.initialize();
+    console.log('setting edit Polygon');
+    console.log(editPolygon);
+    state.editPolygon = editPolygon;
+  }
   }
 });
 
@@ -84,7 +95,6 @@ onUnmounted(() => {
   map.value?.remove();
 });
 const throttledSetSatelliteTimeStamp = throttle(setSatelliteTimeStamp, 300);
-
 
 watch([() => state.timestamp, () => state.filters, () => state.satellite, () => state.filters.scoringColoring,
 () => state.satellite.satelliteSources, () => state.enabledSiteObservations, () => state.filters.hoverSiteId,
@@ -134,7 +144,8 @@ watch([() => state.timestamp, () => state.filters, () => state.satellite, () => 
     }
   })
 
-  setPopupEvents(map);
+  //setPopupEvents(map);
+
 });
 
 watch(
@@ -157,7 +168,7 @@ watch(() => props.compact, () => {
 <template>
   <div
     ref="mapContainer"
-    :class="{map: !compact, compactMap: compact}"
+    :class="{map: !compact, compactMap: compact, mapProposalAdjust: compact}"
   />
 </template>
 

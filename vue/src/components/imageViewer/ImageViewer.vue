@@ -629,15 +629,22 @@ onUnmounted(() => {
           </div>
         </v-col>
         <v-col>
-          <div class="ml-3">
+          <div class="notesPreview">
             <b>Notes:</b>
-            <span> {{ siteEvaluationNotes }}</span>
             <v-icon
               v-if="editMode"
               @click="setEditingMode('SiteEvaluationNotes')"
             >
               mdi-pencil
             </v-icon>
+            <v-tooltip
+              :text="siteEvaluationNotes"
+              location="bottom center"
+            >
+              <template #activator="{ props:subProps }">
+                <span v-bind="subProps"> {{ siteEvaluationNotes }}</span>
+              </template>
+            </v-tooltip>
           </div>
         </v-col>
         <v-spacer />
@@ -1121,13 +1128,14 @@ onUnmounted(() => {
       <v-card v-if="currentEditMode === 'SiteEvaluationNotes'">
         <v-card-title>Edit Site Model Notes</v-card-title>
         <v-card-text>
-          <v-text-field
+          <v-textarea
             v-model="siteEvaluationNotes"
             label="Notes"
           />
         </v-card-text>
         <v-card-actions>
           <v-row dense>
+            <v-spacer />
             <v-btn
               color="error"
               class="mx-3"
@@ -1172,5 +1180,13 @@ onUnmounted(() => {
 .top-bar {
   font-size:12px;
   font-weight: bold;
+}
+
+.notesPreview {
+  min-width: 150px;
+  max-width: 150px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 </style>

@@ -277,8 +277,7 @@ const load = async (newValue?: string, oldValue?: string) => {
 
 watch(() => props.siteEvalId , () => {
   load();
-  state.filters.editingPolygonSiteId = null;
-  editingPolygon.value = false;
+  cancelEditingPolygon();
 
 });
 load();

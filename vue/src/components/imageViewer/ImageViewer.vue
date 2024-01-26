@@ -75,6 +75,7 @@ const drawGroundTruth = ref(false);
 const siteEvaluationList = computed(() => Object.entries(styles).filter(([, { type }]) => type === 'sites').map(([label]) => label));
 const rescaleImage = ref(false);
 const rescalingBBox = ref(1);
+const editingPolygon = ref(false);
 
 const playbackEnabled = ref(false); // Auto playback of images
 
@@ -274,7 +275,12 @@ const load = async (newValue?: string, oldValue?: string) => {
   loading.value = false;
 }
 
-watch(() => props.siteEvalId , load);
+watch(() => props.siteEvalId , () => {
+  load();
+  state.filters.editingPolygonSiteId = null;
+  editingPolygon.value = false;
+
+});
 load();
 
 watch([percentBlackFilter, cloudFilter, siteObsFilter, imageSourcesFilter], () => {
@@ -453,14 +459,40 @@ onUnmounted(() => {
   if (props.editable && state.enabledSiteObservations.find((item) => item.id === props.siteEvalId)) {
     loadAndToggleSatelliteImages(props.siteEvalId);
   }
+  if (editingPolygon.value) {
+    state.filters.editingPolygonSiteId = null;
+    editingPolygon.value = false;
+  }
 });
 
 
 const startEditingPolygon = () => {
-  console.log(state.editPolygon);
-  console.log(evaluationGeoJSON.value);
+  state.filters.editingPolygonSiteId = props.siteEvalId;
   if (state.editPolygon && evaluationGeoJSON.value) {
     state.editPolygon.setPolygonEdit(evaluationGeoJSON.value);
+    editingPolygon.value = true;
+  }
+}
+
+const cancelEditingPolygon = () => {
+  state.filters.editingPolygonSiteId = null;
+  if (state.editPolygon && evaluationGeoJSON.value) {
+    state.editPolygon.cancelPolygonEdit();
+    editingPolygon.value = false;
+  }
+}
+
+const saveEditingPolygon = async () => {
+  if (state.editPolygon) {
+    const polyGeoJSON = state.editPolygon.getEditingPolygon();
+    if (polyGeoJSON) {
+      await ApiService.patchSiteEvaluation(props.siteEvalId, { geom: polyGeoJSON });
+      cancelEditingPolygon();
+      maplibregl.clearStorage();
+      // We need to update the source to get information
+      // This reloads the source vector-tile to color it properly after data has been changed.
+      state.filters.randomKey = `?randomKey=randomKey_${Math.random()*1000}`;
+    }
   }
 }
 
@@ -660,12 +692,38 @@ const startEditingPolygon = () => {
           </div>
         </v-col>
         <v-spacer />
-        <v-col>
-          <v-btn @click="startEditingPolygon()">
+        <v-col v-if="!siteEvaluationUpdated">
+          <v-btn
+            v-if="!editingPolygon"
+            size="small"
+            :disabled="editingPolygon"
+            @click="startEditingPolygon()"
+          >
             Edit Polygon
           </v-btn>
+          <span
+            v-if="editingPolygon"
+          >
+            <h3 style="display:inline">Polygon:</h3>
+            <v-btn
+              size="small"
+              color="error"
+              class="mx-2"
+              @click="cancelEditingPolygon()"
+            >
+              Cancel
+            </v-btn>
+            <v-btn
+              size="small"
+              color="success"
+              class="mx-2"
+              @click="saveEditingPolygon()"
+            >
+              Save
+            </v-btn>
+          </span>
         </v-col>
-        <v-col>
+        <v-col v-if="!editingPolygon">
           <v-btn
             v-if="siteEvaluationUpdated"
             size="small"
@@ -717,21 +775,6 @@ const startEditingPolygon = () => {
       dense
       class="my-1"
     >
-      <v-btn
-        v-if="editable && false"
-        :color="editMode ? 'success' : ''"
-        class="mx-3"
-        size="x-small"
-        @click="editMode = !editMode"
-      >
-        Edit Mode
-        <v-icon
-          class="mx-3"
-          @click="editMode = !editMode"
-        >
-          mdi-pencil
-        </v-icon>
-      </v-btn>
       <v-icon @click="filterSettings = !filterSettings">
         mdi-filter
       </v-icon>

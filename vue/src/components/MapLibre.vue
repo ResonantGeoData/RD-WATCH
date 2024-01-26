@@ -17,8 +17,6 @@ import { setSatelliteTimeStamp } from "../mapstyle/satellite-image";
 import { isEqual, throttle } from 'lodash';
 import { nextTick } from "vue";
 import { updateImageMapSources } from "../mapstyle/images";
-import MapboxDraw from "@mapbox/mapbox-gl-draw";
-import { area as turfArea } from '@turf/turf';
 
 interface Props {
   compact?: boolean
@@ -98,7 +96,7 @@ const throttledSetSatelliteTimeStamp = throttle(setSatelliteTimeStamp, 300);
 
 watch([() => state.timestamp, () => state.filters, () => state.satellite, () => state.filters.scoringColoring,
 () => state.satellite.satelliteSources, () => state.enabledSiteObservations, () => state.filters.hoverSiteId,
-() => state.modelRuns, () => state.openedModelRuns, () => state.filters.proposals, () => state.filters.randomKey], (newVals, oldVals) => {
+() => state.modelRuns, () => state.openedModelRuns, () => state.filters.proposals, () => state.filters.randomKey, () => state.filters.editingPolygonSiteId], (newVals, oldVals) => {
 
   if (state.satellite.satelliteImagesOn) {
     throttledSetSatelliteTimeStamp(state, filteredSatelliteTimeList.value);
@@ -200,5 +198,10 @@ watch(() => props.compact, () => {
 
 .mapboxgl-popup ul {
   opacity: 1;
+}
+
+/* hides the editing controls in the viewer */
+.mapboxgl-ctrl-group {
+  display: none; 
 }
 </style>

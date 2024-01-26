@@ -493,6 +493,7 @@ export class ApiService {
     })
   }
 
+
   public static patchSiteObservation(id: string, data: SiteObservationUpdateQuery): CancelablePromise<boolean> {
     return __request(OpenAPI, {
       method: 'PATCH',
@@ -533,6 +534,4 @@ export class ApiService {
       query: {task_id},
     })
   }
-
-
 }

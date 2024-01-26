@@ -7,7 +7,7 @@ from pydantic import validator
 
 class SiteEvaluationRequest(Schema):
     label: str | None
-    geom: dict | None = None  # TODO: Replace with pydantics geoJSON
+    geom: dict | None = None
     score: float | None
     start_date: datetime | None
     end_date: datetime | None

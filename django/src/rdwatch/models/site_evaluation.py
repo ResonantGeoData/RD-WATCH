@@ -246,3 +246,10 @@ class SiteEvaluationTracking(models.Model):
         help_text='Score of site footprint',
     )
     notes = models.TextField(null=True, blank=True)
+
+    geom = PolygonField(
+        help_text="Polygon from this site's Site Feature",
+        srid=3857,
+        spatial_index=True,
+        null=True,
+    )

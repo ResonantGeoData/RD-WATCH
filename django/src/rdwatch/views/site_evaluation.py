@@ -9,6 +9,7 @@ from pydantic import UUID4
 from django.conf import settings
 from django.contrib.gis.db.models.aggregates import Collect
 from django.contrib.gis.db.models.functions import Transform
+from django.contrib.gis.geos import GEOSGeometry
 from django.contrib.postgres.aggregates import JSONBAgg
 from django.core.paginator import Paginator
 from django.db import transaction
@@ -163,7 +164,10 @@ def patch_site_evaluation(request: HttpRequest, id: UUID4, data: SiteEvaluationR
         site_evaluation = get_object_or_404(
             SiteEvaluation.objects.select_for_update(), pk=id
         )
-        # create a copy of it in the history log
+        old_geom = None
+        if data.geom:
+            old_geom = site_evaluation.geom  # if geom is modified, backup
+            site_evaluation.geom = GEOSGeometry(json.dumps(data.geom))
         SiteEvaluationTracking.objects.create(
             score=site_evaluation.score,
             label=site_evaluation.label,
@@ -172,8 +176,8 @@ def patch_site_evaluation(request: HttpRequest, id: UUID4, data: SiteEvaluationR
             notes=site_evaluation.notes,
             edited=datetime.now(),
             evaluation=site_evaluation,
+            geom=old_geom,
         )
-
         if data.label:
             site_evaluation.label = lookups.ObservationLabel.objects.get(
                 slug=data.label

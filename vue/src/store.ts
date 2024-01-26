@@ -1,7 +1,7 @@
 import { computed, reactive } from "vue";
 
 import { ApiService, ModelRun, Performer, Region } from "./client";
-import useEditPolygon, { EditPolygonType } from "./interactions/editPolygon";
+import { EditPolygonType } from "./interactions/editPolygon";
 export interface MapFilters {
   configuration_id?: string[];
   performer_ids?: number[];
@@ -22,6 +22,7 @@ export interface MapFilters {
     rejected?: string[],
   }
   randomKey?: string;
+  editingPolygonSiteId?: string | null; //currently editing a polygon
 }
 
 export interface SatelliteTimeStamp {

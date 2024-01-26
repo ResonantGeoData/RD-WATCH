@@ -10,6 +10,7 @@ class EvaluationBroadAreaSearchDetection(models.Model):
     rho = models.FloatField()
     tau = models.FloatField()
     min_area = models.FloatField()
+    min_confidence_score = models.FloatField()
     site_truth = models.CharField(max_length=255)
     site_truth_type = models.CharField(max_length=255)
     site_truth_area = models.FloatField()

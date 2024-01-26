@@ -165,6 +165,9 @@ const clickSite = async (e: MapLayerMouseEvent) => {
     e.features.forEach(async (feature) => {
     if (feature.properties) {
         const siteId = feature.properties.uuid;
+        if (siteId === state.filters.editingPolygonSiteId) {
+          return;
+        }
         const obsDetails = {
           region: feature.properties.region as string,
           configurationId: feature.properties.configuration_id as number,

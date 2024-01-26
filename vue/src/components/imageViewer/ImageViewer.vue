@@ -81,6 +81,8 @@ const playbackEnabled = ref(false); // Auto playback of images
 
 const evaluationGeoJSON: Ref<GeoJSON.Polygon | null> = ref(null); // holds the site geoJSON so it can be edited
 
+const showSitePoly = ref(props.editable); // Swap between showing the site polygon and the site observation polygon
+
 const filteredImages = computed(() => {
   return combinedImages.value.filter((item) => {
     let add = true;
@@ -144,11 +146,15 @@ const getImageData = async () => {
     // Lets process the polygons to get them in pixel space.
     // For each polygon we need to convert it to the proper image sizing result.
     images.forEach((image) => {
-        const result = processImagePoly(image, polygons, data.evaluationGeoJSON, data.evaluationBBox, data.label, hasGroundTruth.value, groundTruth.value);
+        const result = processImagePoly(image, polygons, data.evaluationGeoJSON, data.evaluationBBox, data.label, hasGroundTruth.value, groundTruth.value, showSitePoly.value);
         combinedImages.value.push(result);
     })
 }
 let background: HTMLCanvasElement & { ctx?: CanvasRenderingContext2D | null };
+
+watch(showSitePoly, () => {
+  getImageData();
+})
 
 // GIF Settings and Variables
 
@@ -276,8 +282,9 @@ const load = async (newValue?: string, oldValue?: string) => {
 }
 
 watch(() => props.siteEvalId , () => {
-  load();
+  state.enabledSiteObservations = []; // toggle off all other satellite images
   cancelEditingPolygon();
+  load();
 
 });
 load();
@@ -485,12 +492,14 @@ const saveEditingPolygon = async () => {
   if (state.editPolygon) {
     const polyGeoJSON = state.editPolygon.getEditingPolygon();
     if (polyGeoJSON) {
+      evaluationGeoJSON.value = polyGeoJSON;
       await ApiService.patchSiteEvaluation(props.siteEvalId, { geom: polyGeoJSON });
       cancelEditingPolygon();
       maplibregl.clearStorage();
       // We need to update the source to get information
       // This reloads the source vector-tile to color it properly after data has been changed.
       state.filters.randomKey = `?randomKey=randomKey_${Math.random()*1000}`;
+      await getImageData();
     }
   }
 }
@@ -778,8 +787,27 @@ const saveEditingPolygon = async () => {
         mdi-filter
       </v-icon>
       <div>
-        Displaying {{ filteredImages.length }} of {{ combinedImages.length }} images
+        {{ filteredImages.length }} of {{ combinedImages.length }} images
       </div>
+      <v-tooltip
+        open-delay="50"
+        bottom
+      >
+        <template #activator="{ props:subProps }">
+          <v-icon
+            v-bind="subProps"
+            :color="showSitePoly ? 'blue' : ''"
+            class="mx-2"
+            @click="showSitePoly = !showSitePoly"
+          >
+            mdi-vector-polygon
+          </v-icon>
+        </template>
+        <span>
+          Toggle between Site Polygon and Observation Polygon
+        </span>
+      </v-tooltip>
+
       <v-spacer />
       <v-tooltip
         open-delay="50"

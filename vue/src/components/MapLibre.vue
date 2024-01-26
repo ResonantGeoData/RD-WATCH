@@ -142,7 +142,7 @@ watch([() => state.timestamp, () => state.filters, () => state.satellite, () => 
     }
   })
 
-  //setPopupEvents(map);
+  setPopupEvents(map);
 
 });
 

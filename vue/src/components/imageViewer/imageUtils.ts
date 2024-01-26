@@ -13,8 +13,8 @@ export interface PixelPoly {
 }
 
 
-const getClosestPoly = (timestamp: number, polys: EvaluationGeoJSON[], evaluationPoly: EvaluationGeoJSON['geoJSON'], siteEvalLabel: string, baseBBox: BaseBBox) => {
-    if (polys.length === 0) {
+const getClosestPoly = (timestamp: number, polys: EvaluationGeoJSON[], evaluationPoly: EvaluationGeoJSON['geoJSON'], siteEvalLabel: string, baseBBox: BaseBBox, defaultSitePoly = false) => {
+    if (polys.length === 0 || defaultSitePoly) {
       return {geoJSON: evaluationPoly, label:siteEvalLabel, bbox: baseBBox};
     }
       let found = polys[0];
@@ -319,8 +319,9 @@ const processImagePoly = (
     label: string,
     hasGroundTruth: boolean,
     groundTruth: EvaluationImageResults['groundTruth'] | null,
+    defaultSitePoly = false,
     ) => {
-    const closestPoly = getClosestPoly(image.timestamp, polygons, evaluationGeoJSON, label, evaluationBBox );
+    const closestPoly = getClosestPoly(image.timestamp, polygons, evaluationGeoJSON, label, evaluationBBox, defaultSitePoly );
         // Now we convert the coordinates to image space
         const imageWidth = image.image_dimensions[0];
         const imageHeight = image.image_dimensions[1];

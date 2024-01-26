@@ -9,6 +9,7 @@ class EvaluationBroadAreaSearchMetric(models.Model):
     rho = models.FloatField()
     tau = models.FloatField()
     min_area = models.FloatField()
+    min_confidence_score = models.FloatField()
     tp_sites = models.IntegerField(blank=True, null=True)
     tp_exact = models.IntegerField(blank=True, null=True)
     tp_under = models.IntegerField(blank=True, null=True)

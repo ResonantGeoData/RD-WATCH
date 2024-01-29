@@ -82,8 +82,6 @@ onMounted(() => {
     if (map.value) {
     const editPolygon = useEditPolygon(map.value);
     editPolygon.initialize();
-    console.log('setting edit Polygon');
-    console.log(editPolygon);
     state.editPolygon = editPolygon;
   }
   }

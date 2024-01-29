@@ -503,6 +503,13 @@ const saveEditingPolygon = async () => {
     }
   }
 }
+const selectedPoints = computed(() => state.editPolygon && (state.editPolygon.selectedPoints).length);
+
+const deleteSelectedPoints = () => {
+  if (state.editPolygon && selectedPoints.value) {
+    state.editPolygon.deleteSelectedPoints();
+  }
+}
 
 // Set Keyboard Shortcuts
 
@@ -713,6 +720,17 @@ const saveEditingPolygon = async () => {
             v-if="editingPolygon"
           >
             <h3 style="display:inline">Polygon:</h3>
+            <v-btn
+              v-if="selectedPoints"
+              size="small"
+              color="error"
+              class="mx-2"
+              @click="deleteSelectedPoints()"
+            >
+              <v-icon>mdi-delete</v-icon>
+              points
+            </v-btn>
+
             <v-btn
               size="small"
               color="error"

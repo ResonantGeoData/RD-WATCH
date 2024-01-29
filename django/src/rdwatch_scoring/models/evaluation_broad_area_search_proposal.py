@@ -10,6 +10,7 @@ class EvaluationBroadAreaSearchProposal(models.Model):
     rho = models.FloatField()
     tau = models.FloatField()
     min_area = models.FloatField()
+    min_confidence_score = models.FloatField()
     site_proposal = models.CharField(max_length=255)
     site_proposal_area = models.FloatField()
     site_truth_matched = models.TextField(

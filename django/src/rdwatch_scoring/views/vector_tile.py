@@ -152,6 +152,7 @@ def vector_tile(
                                 activity_type='overall',
                                 rho=0.5,
                                 tau=0.2,
+                                min_confidence_score=0.0,
                                 site_truth=OuterRef('base_site_id'),
                             ).values('color_code')
                         ),
@@ -164,6 +165,7 @@ def vector_tile(
                                 activity_type='overall',
                                 rho=0.5,
                                 tau=0.2,
+                                min_confidence_score=0.0,
                                 site_proposal=OuterRef('base_site_id'),
                             ).values('color_code')
                         ),

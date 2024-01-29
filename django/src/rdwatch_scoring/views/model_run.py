@@ -79,6 +79,7 @@ def get_queryset():
             evaluationbroadareasearchmetric__activity_type='overall',
             evaluationbroadareasearchmetric__tau=0.2,
             evaluationbroadareasearchmetric__rho=0.5,
+            evaluationbroadareasearchmetric__min_confidence_score=0.0,
         )
         .values()
         .annotate(
@@ -167,6 +168,7 @@ def list_model_runs(
             evaluationbroadareasearchmetric__activity_type='overall',
             evaluationbroadareasearchmetric__tau=0.2,
             evaluationbroadareasearchmetric__rho=0.5,
+            evaluationbroadareasearchmetric__min_confidence_score=0.0,
         )
         .values()
         .annotate(

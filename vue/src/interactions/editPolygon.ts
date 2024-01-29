@@ -15,7 +15,7 @@ export default function useEditPolygon(mapObj: Map): EditPolygonType {
   const map: ShallowRef<Map> = shallowRef(mapObj);
   const draw: Ref<MapboxDraw | null> = ref(null);
   const editingPolygon: Ref<GeoJSON.Polygon | null> = ref(null);
-  const selectedPoints: Ref<DrawSelectionChangeEvent['points']> = ref([]);
+  const selectedPoints: Ref<DrawSelectionChangeEvent['points']> = ref([] as DrawSelectionChangeEvent['points']);
 
   const updated = (e: MapboxDraw.DrawUpdateEvent) => {
     if (e.features.length) {

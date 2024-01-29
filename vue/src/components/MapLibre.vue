@@ -82,6 +82,9 @@ onMounted(() => {
     if (map.value) {
     const editPolygon = useEditPolygon(map.value);
     editPolygon.initialize();
+    // Having an issue with the selectedPoints Ref, although it is the true type.
+    // eslint-disable-next-line @typescript-eslint/ban-ts-comment
+    // @ts-ignore
     state.editPolygon = editPolygon;
   }
   }

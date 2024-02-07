@@ -590,3 +590,27 @@ def generate_site_images_for_evaluation_run(
             scale,
             bboxScale,
         )
+
+
+@shared_task
+def generate_image_embedding(id: int):
+    site_image = SiteImage.objects.get(pk=id)
+    if site_image:
+        import numpy as np
+        import cv2
+        from segment_anything import sam_model_registry, SamPredictor
+
+        checkpoint = "/data/SAM/sam_vit_h_4b8939.pth"
+        model_type = "vit_h"
+        sam = sam_model_registry[model_type](checkpoint=checkpoint)
+
+        sam.to(device='cpu')
+        predictor = SamPredictor(sam)
+        image = cv2.imread(site_image.image)
+        predictor.set_image(image)
+        image_embedding = predictor.get_image_embedding().cpu().numpy()
+        np.save("sampleImage.npy", image_embedding)
+        site_image.image_bbox = "sampleImage.npy"
+        os.remove('sampleImage.npy')
+
+

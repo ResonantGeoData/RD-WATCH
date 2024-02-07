@@ -1,4 +1,6 @@
-from django.contrib import admin
+from django.contrib import admin, messages
+from django.db.models import QuerySet
+from django.http import HttpRequest
 
 from rdwatch.models import (
     ModelRun,
@@ -95,15 +97,42 @@ class SiteEvaluationAdmin(admin.ModelAdmin):
 class SiteImageAdmin(admin.ModelAdmin):
     list_display = (
         'id',
-        'site',
-        'observation',
         'timestamp',
         'image',
+        'image_embedding',
         'cloudcover',
         'percent_black',
         'source',
     )
-    list_filter = ('site', 'observation', 'timestamp')
+    list_filter = ('timestamp',)
+    actions = ['compute_embedding']
+
+    @admin.action(description='Compute Embedding')
+    def compute_embedding(self, request: HttpRequest, queryset: QuerySet):
+        counter = 0
+        for site_image in queryset:
+            if not site_image.image_embedding:
+                # generate_image_embedding.delay(site_image.pk)
+                if site_image:
+                    import numpy as np
+                    import cv2
+                    import os
+                    from segment_anything import sam_model_registry, SamPredictor
+
+                    checkpoint = "/data/SAM/sam_vit_    h_4b8939.pth"
+                    model_type = "vit_h"
+                    sam = sam_model_registry[model_type](checkpoint=checkpoint)
+
+                    sam.to(device='cpu')
+                    predictor = SamPredictor(sam)
+                    image = cv2.imread(site_image.image)
+                    predictor.set_image(image)
+                    image_embedding = predictor.get_image_embedding().cpu().numpy()
+                    np.save("sampleImage.npy", image_embedding)
+                    site_image.image_bbox = "sampleImage.npy"
+                    os.remove('sampleImage.npy')
+                    counter += 1
+        self.message_user(request, f'{counter} images queued', messages.SUCCESS)
 
 
 @admin.register(SiteObservation)

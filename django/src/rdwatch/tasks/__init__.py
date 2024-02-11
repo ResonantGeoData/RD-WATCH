@@ -9,15 +9,19 @@ from datetime import datetime, timedelta
 from typing import Literal
 from uuid import uuid4
 
+import cv2
+import numpy as np
 from celery import shared_task
 from celery.result import AsyncResult
 from more_itertools import ichunked
 from PIL import Image
 from pydantic import UUID4
 from pyproj import Transformer
+from segment_anything import SamPredictor, sam_model_registry
 
 from django.contrib.gis.geos import Polygon
 from django.core.files import File
+from django.core.files.base import ContentFile
 from django.db import transaction
 from django.db.models import DateTimeField, ExpressionWrapper, F
 from django.utils import timezone
@@ -596,12 +600,8 @@ def generate_site_images_for_evaluation_run(
 def generate_image_embedding(id: int):
     site_image = SiteImage.objects.get(pk=id)
     if site_image:
-        import numpy as np
-        import cv2
-        from segment_anything import sam_model_registry, SamPredictor
-
-        checkpoint = "/data/SAM/sam_vit_h_4b8939.pth"
-        model_type = "vit_h"
+        checkpoint = '/data/SAM/sam_vit_h_4b8939.pth'
+        model_type = 'vit_h'
         sam = sam_model_registry[model_type](checkpoint=checkpoint)
 
         sam.to(device='cpu')
@@ -609,8 +609,6 @@ def generate_image_embedding(id: int):
         image = cv2.imread(site_image.image)
         predictor.set_image(image)
         image_embedding = predictor.get_image_embedding().cpu().numpy()
-        np.save("sampleImage.npy", image_embedding)
-        site_image.image_bbox = "sampleImage.npy"
+        np.save('sampleImage.npy', image_embedding)
+        site_image.image_bbox = 'sampleImage.npy'
         os.remove('sampleImage.npy')
-
-

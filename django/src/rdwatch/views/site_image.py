@@ -11,6 +11,7 @@ from django.http import Http404, HttpRequest
 from rdwatch.db.functions import BoundingBox, ExtractEpoch
 from rdwatch.models import SiteEvaluation, SiteImage, SiteObservation
 from rdwatch.schemas.common import BoundingBoxSchema, TimeRangeSchema
+from rdwatch.tasks import generate_image_embedding
 
 router = Router()
 
@@ -146,3 +147,13 @@ def site_images(request: HttpRequest, id: UUID4):
     output['evaluationGeoJSON'] = site_eval_data['json']['evaluationGeoJSON']
     output['evaluationBBox'] = site_eval_data['json']['evaluationBBox']
     return output
+
+
+@router.post('/{id}/site_embedding', response=SiteImageResponse)
+def site_images(request: HttpRequest, id: int):
+    if not SiteImage.objects.filter(pk=id).exists():
+        raise Http404()
+    else:
+        site_eval_obj = SiteImage.objects.get(pk=id)
+
+    generate_image_embedding.delay(id)

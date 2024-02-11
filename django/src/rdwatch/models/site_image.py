@@ -62,7 +62,6 @@ def delete_content(sender, instance, **kwargs):
         instance.image_embedding.delete(save=False)
 
 
-
 class SiteImage(BaseSiteImage):
     class Meta:
         indexes = [GistIndex(fields=['timestamp'])]

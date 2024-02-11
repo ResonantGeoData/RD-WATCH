@@ -1,4 +1,10 @@
+import os
+
+import cv2
+from segment_anything import SamPredictor, sam_model_registry
+
 from django.contrib import admin, messages
+from django.core.files.base import ContentFile
 from django.db.models import QuerySet
 from django.http import HttpRequest
 
@@ -110,28 +116,41 @@ class SiteImageAdmin(admin.ModelAdmin):
     @admin.action(description='Compute Embedding')
     def compute_embedding(self, request: HttpRequest, queryset: QuerySet):
         counter = 0
+
         for site_image in queryset:
-            if not site_image.image_embedding:
-                # generate_image_embedding.delay(site_image.pk)
-                if site_image:
-                    import numpy as np
-                    import cv2
-                    import os
-                    from segment_anything import sam_model_registry, SamPredictor
+            try:
+                checkpoint = '/data/SAM/sam_vit_h_4b8939.pth'
+                model_type = 'vit_h'
+                sam = sam_model_registry[model_type](checkpoint=checkpoint)
+                sam.to(device='cpu')
+                predictor = SamPredictor(sam)
 
-                    checkpoint = "/data/SAM/sam_vit_    h_4b8939.pth"
-                    model_type = "vit_h"
-                    sam = sam_model_registry[model_type](checkpoint=checkpoint)
+                image_file = site_image.image.open(mode='rb')
+                local_file_path = '/tmp/image.png'
+                with open(local_file_path, 'wb') as local_file:
+                    local_file.write(image_file.read())
 
-                    sam.to(device='cpu')
-                    predictor = SamPredictor(sam)
-                    image = cv2.imread(site_image.image)
-                    predictor.set_image(image)
-                    image_embedding = predictor.get_image_embedding().cpu().numpy()
-                    np.save("sampleImage.npy", image_embedding)
-                    site_image.image_bbox = "sampleImage.npy"
-                    os.remove('sampleImage.npy')
-                    counter += 1
+                print('Reading local image file')
+
+                image = cv2.imread(local_file_path)
+                print('Setting the predictor for the file')
+                predictor.set_image(image)
+                print('Creating the embedding')
+                image_embedding = predictor.get_image_embedding().cpu().numpy()
+                print('Saving the npy')
+
+                # Assuming you want to save the numpy array to the image_embedding field
+                site_image.image_embedding.save(
+                    'sampleImage.npy', ContentFile(image_embedding.tobytes())
+                )
+
+                os.remove(local_file_path)
+                counter += 1
+
+            except Exception as e:
+                # Handle exceptions (e.g., logging, showing error messages)
+                print(f'Error processing image {site_image.id}: {e}')
+
         self.message_user(request, f'{counter} images queued', messages.SUCCESS)
 
 

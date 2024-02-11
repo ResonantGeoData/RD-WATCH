@@ -47,6 +47,8 @@ opencv-python = "^4.9.0.80"
 numpy = "^1.26.4"
 onnx = "^1.15.0"
 onnxruntime = "^1.17.0"
+torch = "^2.2.0"
+torchvision = "^0.17.0"
 
 [tool.poetry.group.dev.dependencies]
 black = "^23.3.0"

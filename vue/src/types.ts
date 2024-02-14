@@ -18,6 +18,7 @@ export interface EvaluationImage {
     bbox: BaseBBox;
     image_dimensions: [number, number];
     aws_location: string;
+    image_embedding?: string;
 }
 
 export interface EvaluationGeoJSON {

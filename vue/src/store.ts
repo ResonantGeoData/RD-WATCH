@@ -60,6 +60,8 @@ export interface SiteObservationImage {
   observation_id: string | null;
   disabled?: boolean;
   bbox: { xmin: number; ymin: number; xmax: number; ymax: number };
+  id: number;
+  image_embedding? : string;
 }
 
 export interface ObsDetails {

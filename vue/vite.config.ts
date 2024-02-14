@@ -1,6 +1,9 @@
 import { defineConfig, loadEnv } from "vite";
 import vue from "@vitejs/plugin-vue";
 import { execSync } from "child_process";
+import wasm from "vite-plugin-wasm";
+import topLevelAwait from "vite-plugin-top-level-await";
+import { viteStaticCopy } from "vite-plugin-static-copy";
 
 export default ({ mode}) => {
   // Loads all environment variables to see if we are in VITE_DEV_PROXY_TARGET
@@ -24,7 +27,30 @@ export default ({ mode}) => {
   // Change host to django when running vite inside docker
   const devPort = process.env.VITE_DEV_PROXY_TARGET ? 8080 : 3000;
   return defineConfig({
-      plugins: [vue()],
+      plugins: [vue(),
+        viteStaticCopy({
+          targets: [
+            {
+              src: "node_modules/onnxruntime-web/dist/*.wasm",
+              dest: ".",
+            },
+          ],
+        }),
+        {
+          name: "configure-response-headers",
+          configureServer: (server) => {
+            server.middlewares.use((req, res, next) => {
+              // res.setHeader("Cross-Origin-Opener-Policy", "same-origin");
+              // res.setHeader("Cross-Origin-Embedder-Policy", "require-corp");
+              if (req.url.endsWith(".wasm")) {
+                res.setHeader("Content-Type", "application/wasm");
+              }
+              next();
+            });
+          },
+        },
+        // wasm(),
+        topLevelAwait(),],
       server: {
         host: "0.0.0.0",
         port: devPort,

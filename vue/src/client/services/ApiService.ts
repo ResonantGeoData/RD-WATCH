@@ -18,7 +18,7 @@ import type { Eval } from "../models/Eval";
 import type { CancelablePromise } from "../core/CancelablePromise";
 import { OpenAPI } from "../core/OpenAPI";
 import { request as __request } from "../core/request";
-import { SatelliteTimeStamp } from "../../store";
+import { SatelliteTimeStamp, SiteObservationImage } from "../../store";
 import { EvaluationImageResults } from "../../types";
 
 export interface QueryArguments {
@@ -475,6 +475,29 @@ export class ApiService {
     return __request(OpenAPI, {
       method: "GET",
       url: `${this.getApiPrefix()}/evaluations/images/{id}`,
+      path: {
+        id: id,
+      },
+    });
+
+  }
+
+
+  public static postSiteImageEmbedding(id: number): CancelablePromise<boolean> {
+    return __request(OpenAPI, {
+      method: "POST",
+      url: `${this.getApiPrefix()}/evaluations/images/{id}/site_embedding`,
+      path: {
+        id: id,
+      },
+    });
+
+  }
+
+  public static getSiteImage(id: number): CancelablePromise<SiteObservationImage> {
+    return __request(OpenAPI, {
+      method: "GET",
+      url: `${this.getApiPrefix()}/evaluations/images/{id}/image`,
       path: {
         id: id,
       },

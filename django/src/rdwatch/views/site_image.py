@@ -26,6 +26,8 @@ class SiteImageSchema(Schema):
     bbox: BoundingBoxSchema
     image_dimensions: list[int]
     aws_location: str
+    image_embedding: str | None
+    id: int
 
 
 class SiteImageListSchema(Schema):
@@ -80,6 +82,7 @@ def site_images(request: HttpRequest, id: UUID4):
                     bbox=BoundingBox('image_bbox'),
                     image_dimensions='image_dimensions',
                     aws_location='aws_location',
+                    image_embedding='image_embedding'
                 )
             ),
         )
@@ -149,7 +152,7 @@ def site_images(request: HttpRequest, id: UUID4):
     return output
 
 
-@router.post('/{id}/site_embedding', response=SiteImageResponse)
+@router.post('/{id}/site_embedding', response={202: bool, 409: str})
 def site_images(request: HttpRequest, id: int):
     if not SiteImage.objects.filter(pk=id).exists():
         raise Http404()
@@ -157,3 +160,52 @@ def site_images(request: HttpRequest, id: int):
         site_eval_obj = SiteImage.objects.get(pk=id)
 
     generate_image_embedding.delay(id)
+    return 202, True
+
+from django.db.models import F
+
+@router.get('/{id}/image', response=SiteImageSchema)
+def get_site_image(request: HttpRequest, id: int):
+    try:
+        site_image = (
+            SiteImage.objects.filter(pk=id)
+            .annotate(
+                timestamp_epoch=ExtractEpoch('timestamp'),
+                bbox=BoundingBox('image_bbox'),
+            )
+            .values(
+                'timestamp_epoch',
+                'source',
+                'cloudcover',
+                'image',
+                'observation_id',
+                'bbox',
+                'percent_black',
+                'image_dimensions',
+                'aws_location',
+                'image_embedding',
+                'pk'  # Assuming 'pk' is the primary key field name
+            )
+            .first()
+        )
+    except SiteImage.DoesNotExist:
+        raise Http404()
+
+    if site_image:
+        response_data = {
+            'timestamp': site_image['timestamp_epoch'],
+            'source': site_image['source'],
+            'cloudcover': site_image['cloudcover'],
+            'image': default_storage.url(site_image['image']),
+            'observation_id': site_image['observation_id'],
+            'percent_black': site_image['percent_black'],
+            'bbox':  site_image['bbox'],
+            'image_dimensions': site_image['image_dimensions'],
+            'aws_location': site_image['aws_location'],
+            'image_embedding':  default_storage.url(site_image['image_embedding']),
+            'id': site_image['pk'],
+        }
+
+        return response_data
+    else:
+        raise Http404()

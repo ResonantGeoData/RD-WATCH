@@ -3,7 +3,7 @@ import { Ref, computed, onMounted, onUnmounted, ref, watch, withDefaults } from 
 import { ApiService } from "../../client";
 import { EvaluationImage, EvaluationImageResults } from "../../types";
 import { getColorFromLabel, styles } from '../../mapstyle/annotationStyles';
-import { ObsDetails, loadAndToggleSatelliteImages, state } from '../../store'
+import { ObsDetails, SiteObservationImage, loadAndToggleSatelliteImages, state } from '../../store'
 import { VDatePicker } from 'vuetify/labs/VDatePicker'
 import { SiteModelStatus } from "../../client/services/ApiService";
 import { CanvasCapture } from 'canvas-capture';
@@ -511,6 +511,23 @@ const deleteSelectedPoints = () => {
   }
 }
 
+
+const generateImageEmbedding = (image: SiteObservationImage) => {
+  ApiService.postSiteImageEmbedding(image.id);
+}
+const openSAMView = (id: number) => {
+  const name = `#${ApiService.getApiPrefix().replace('api/','').replace('/api','')}/SAM/${id}`
+  window.open(name, '_blank');
+};
+
+const processImageEmbeddingButton = (image: SiteObservationImage) => {
+  if (image && !image.image_embedding) {
+    generateImageEmbedding(image);
+  } else {
+    openSAMView(image.id);
+  }
+}
+
 // Set Keyboard Shortcuts
 
 
@@ -825,7 +842,26 @@ const deleteSelectedPoints = () => {
           Toggle between Site Polygon and Observation Polygon
         </span>
       </v-tooltip>
-
+      <v-tooltip
+      v-if="filteredImages.length && filteredImages[currentImage]"
+        open-delay="50"
+        bottom
+      >
+        <template #activator="{ props:subProps }">
+          <v-icon
+            v-bind="subProps"
+            :color="filteredImages[currentImage].image.image_embedding ? 'blue' : ''"
+            :disabled="filteredImages[currentImage].image.image_embedding"
+            class="mx-2"
+            @click="processImageEmbeddingButton(filteredImages[currentImage].image)"
+          >
+            {{filteredImages[currentImage].image.image_embedding ? 'mdi-image-plus-outline' : 'mdi-image-refresh-outline'}}
+          </v-icon>
+        </template>
+        <span>
+          Has or Generate Image embedding
+        </span>
+      </v-tooltip>
       <v-spacer />
       <v-tooltip
         open-delay="50"

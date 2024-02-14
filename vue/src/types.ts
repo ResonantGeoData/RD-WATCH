@@ -10,6 +10,7 @@ export interface BaseBBox {
   }
 export interface EvaluationImage {
     timestamp: number;
+    id: number;
     source: SiteObservationImage['source'];
     cloudcover: number;
     image: string;

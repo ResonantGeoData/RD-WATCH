@@ -1,7 +1,6 @@
 <script setup lang="ts">
 import { Ref, defineProps, ref, withDefaults } from "vue";
 import { debounce } from 'lodash';
-import { VDatePicker } from 'vuetify/labs/VDatePicker'
 import { Constellation, DownloadSettings } from "../client/services/ApiService";
 
 

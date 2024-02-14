@@ -622,11 +622,21 @@ def generate_image_embedding(id: int):
             print('Saving the npy')
 
             # Assuming you want to save the numpy array to the image_embedding field
-            site_image.image_embedding.save(
-                'sampleImage.npy', ContentFile(image_embedding.tobytes())
-            )
+            np.save('sampleImage.npy', image_embedding)
+
+            with open('sampleImage.npy', 'rb') as f:
+                embedding_data = f.read()
+
+                # Step 2: Set the image data to image_embedding
+                site_image.image_embedding.save(
+                    os.path.basename('sampleImage.npy'), ContentFile(embedding_data)
+                )
+
+                # Step 3: Save the SiteImage instance
+                site_image.save()
 
             os.remove(local_file_path)
+            os.remove('sampleImage.npy')
 
         except Exception as e:
             # Handle exceptions (e.g., logging, showing error messages)

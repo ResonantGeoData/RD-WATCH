@@ -1,10 +1,9 @@
 <script setup lang="ts">
 import { Ref, computed, onMounted, onUnmounted, ref, watch, withDefaults } from "vue";
-import { ApiService } from "../../client";
+import { ApiService, SiteEvaluationList } from "../../client";
 import { EvaluationImage, EvaluationImageResults } from "../../types";
 import { getColorFromLabel, styles } from '../../mapstyle/annotationStyles';
 import { ObsDetails, SiteObservationImage, loadAndToggleSatelliteImages, state } from '../../store'
-import { VDatePicker } from 'vuetify/labs/VDatePicker'
 import { SiteModelStatus } from "../../client/services/ApiService";
 import { CanvasCapture } from 'canvas-capture';
 import type { PixelPoly } from './imageUtils';
@@ -512,7 +511,7 @@ const deleteSelectedPoints = () => {
 }
 
 
-const generateImageEmbedding = (image: SiteObservationImage) => {
+const generateImageEmbedding = (image: SiteObservationImage | EvaluationImage) => {
   ApiService.postSiteImageEmbedding(image.id);
 }
 const openSAMView = (id: number) => {
@@ -520,7 +519,7 @@ const openSAMView = (id: number) => {
   window.open(name, '_blank');
 };
 
-const processImageEmbeddingButton = (image: SiteObservationImage) => {
+const processImageEmbeddingButton = (image: SiteObservationImage | EvaluationImage) => {
   if (image && !image.image_embedding) {
     generateImageEmbedding(image);
   } else {

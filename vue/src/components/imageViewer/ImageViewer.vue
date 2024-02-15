@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { Ref, computed, onMounted, onUnmounted, ref, watch, withDefaults } from "vue";
-import { ApiService, SiteEvaluationList } from "../../client";
+import { ApiService } from "../../client";
 import { EvaluationImage, EvaluationImageResults } from "../../types";
 import { getColorFromLabel, styles } from '../../mapstyle/annotationStyles';
 import { ObsDetails, SiteObservationImage, loadAndToggleSatelliteImages, state } from '../../store'
@@ -468,6 +468,9 @@ onUnmounted(() => {
     state.filters.editingPolygonSiteId = null;
     editingPolygon.value = false;
   }
+  Object.keys(embeddingCheckInterval).forEach((key) => {
+    clearInterval(embeddingCheckInterval.value[key]);
+  });
 });
 
 
@@ -510,9 +513,31 @@ const deleteSelectedPoints = () => {
   }
 }
 
+//SAM Integration
+const embeddingCheckInterval: Ref<Record<string, NodeJS.Timeout>> = ref({});
 
-const generateImageEmbedding = (image: SiteObservationImage | EvaluationImage) => {
-  ApiService.postSiteImageEmbedding(image.id);
+const checkSAMStatus = async (id: number, uuid: string) => {
+  const result = await ApiService.getSiteImageEmbeddingStatus(id, uuid);
+  if (result.state === 'SUCCESS' || result.status === 'SUCCESS') {
+    // We update the button status to open in a new tab instead
+    const index = combinedImages.value.findIndex((item) => item.image.id === id);
+    if (index !== -1) {
+      const base = combinedImages.value[index];
+      // Get the image Embedding so we can replace it in the list
+      const newData = await ApiService.getSiteImage(id);
+      base.image.image_embedding = newData.image_embedding;
+      combinedImages.value.splice(index, 1, base);
+      if (embeddingCheckInterval.value[id]) {
+        clearInterval(embeddingCheckInterval.value[id]);
+        delete embeddingCheckInterval.value[id];
+      }
+    }
+  }
+}
+
+const generateImageEmbedding = async (image: SiteObservationImage | EvaluationImage) => {
+  const result = await ApiService.postSiteImageEmbedding(image.id);
+  embeddingCheckInterval.value[image.id] = setInterval(() => checkSAMStatus(image.id, result), 1000);
 }
 const openSAMView = (id: number) => {
   const name = `#${ApiService.getApiPrefix().replace('api/','').replace('/api','')}/SAM/${id}`
@@ -842,19 +867,27 @@ const processImageEmbeddingButton = (image: SiteObservationImage | EvaluationIma
         </span>
       </v-tooltip>
       <v-tooltip
-      v-if="filteredImages.length && filteredImages[currentImage]"
+        v-if="filteredImages.length && filteredImages[currentImage]"
         open-delay="50"
         bottom
       >
         <template #activator="{ props:subProps }">
           <v-icon
+            v-if="!embeddingCheckInterval[filteredImages[currentImage].image.id]"
             v-bind="subProps"
             :color="filteredImages[currentImage].image.image_embedding ? 'blue' : ''"
             :disabled="filteredImages[currentImage].image.image_embedding"
             class="mx-2"
             @click="processImageEmbeddingButton(filteredImages[currentImage].image)"
           >
-            {{filteredImages[currentImage].image.image_embedding ? 'mdi-image-plus-outline' : 'mdi-image-refresh-outline'}}
+            {{ filteredImages[currentImage].image.image_embedding ? 'mdi-image-plus-outline' : 'mdi-image-refresh-outline' }}
+          </v-icon>
+          <v-icon
+            v-else
+            v-bind="subProps"
+            class="mx-2"
+          >
+            mdi-spin mdi-sync
           </v-icon>
         </template>
         <span>

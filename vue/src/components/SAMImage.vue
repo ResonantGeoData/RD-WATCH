@@ -3,8 +3,6 @@ import { defineComponent, onMounted } from "vue";
 
 import useSAM from "../use/useSAM";
 
-const IMAGE_PATH = "/sampleImage.png";
-const IMAGE_EMBEDDING = "/sampleImage.npy";
 const MODEL_DIR = "/sam_onnx_quantized_example.onnx";
 
 export default defineComponent({

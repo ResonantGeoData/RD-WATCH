@@ -19,7 +19,7 @@ import type { CancelablePromise } from "../core/CancelablePromise";
 import { OpenAPI } from "../core/OpenAPI";
 import { request as __request } from "../core/request";
 import { SatelliteTimeStamp, SiteObservationImage } from "../../store";
-import { EvaluationImageResults } from "../../types";
+import { EvaluationImage, EvaluationImageResults } from "../../types";
 
 export interface QueryArguments {
   performer?: string[];
@@ -483,12 +483,26 @@ export class ApiService {
   }
 
 
-  public static postSiteImageEmbedding(id: number): CancelablePromise<boolean> {
+
+
+  public static postSiteImageEmbedding(id: number): CancelablePromise<string> {
     return __request(OpenAPI, {
       method: "POST",
-      url: `${this.getApiPrefix()}/evaluations/images/{id}/site_embedding`,
+      url: `${this.getApiPrefix()}/evaluations/images/{id}/image_embedding`,
       path: {
         id: id,
+      },
+    });
+
+  }
+
+  public static getSiteImageEmbeddingStatus(id: number, uuid: string): CancelablePromise<{state: string, status: string}> {
+    return __request(OpenAPI, {
+      method: "GET",
+      url: `${this.getApiPrefix()}/evaluations/images/{id}/image_embedding_status/{uuid}`,
+      path: {
+        id: id,
+        uuid: uuid,
       },
     });
 

@@ -87,11 +87,9 @@ export default function useSAM() {
             tensor.value = embedding;           
           };
       
-          const loadNpyTensor = async (tensorFile: string, dType: string) => {
+          const loadNpyTensor = async (tensorFile: string, dType: keyof Tensor.DataTypeMap) => {
             const npLoader = new npyjs();
-            console.log(tensorFile);
             const arrBuff = await fetchPresignedUrlAndConvertToArrayBuffer(tensorFile);
-            console.log(arrBuff);
             const npArray = await npLoader.load(arrBuff);
             const tensor = new ort.Tensor(dType, npArray.data, npArray.shape);
             return tensor;

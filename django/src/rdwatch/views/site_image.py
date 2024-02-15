@@ -1,3 +1,4 @@
+from celery.result import AsyncResult
 from ninja import Router, Schema
 from pydantic import UUID4
 
@@ -152,13 +153,25 @@ def site_images(request: HttpRequest, id: UUID4):
     return output
 
 
-@router.post('/{id}/site_embedding', response={202: bool, 409: str})
-def generate_site_images(request: HttpRequest, id: int):
+@router.post('/{id}/image_embedding', response=UUID4)
+def post_image_embedding(request: HttpRequest, id: int):
     if not SiteImage.objects.filter(pk=id).exists():
         raise Http404()
     else:
-        generate_image_embedding.delay(id)
-    return 202, True
+        return generate_image_embedding.delay(id).id
+
+
+@router.get('/{id}/image_embedding_status/{uuid}')
+def get_image_embedding_status(request: HttpRequest, id: int, uuid: UUID4):
+    if not SiteImage.objects.filter(pk=id).exists():
+        raise Http404()
+    else:
+        task = AsyncResult(uuid)
+        result = {
+            'state': task.state,
+            'status': task.status,
+        }
+        return result
 
 
 @router.get('/{id}/image', response=SiteImageSchema)

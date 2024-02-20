@@ -131,7 +131,6 @@ To score data:
   - Copy the `alembic_example.ini` to `alembic.ini` and set the `sqlalchemy.url = postgresql+psycopg2://scoring:secretkey@localhost:5433/scoring`
   - Run `pip install -e .` to install the metrics-and-test-framework package
   - Run `alembic upgrade head` to initialize the scoring database schema
-    - Instead of running the above command you can run the following command from inside the RD-WATCH repository `docker compose run --rm django poetry run django-admin migrate rdwatch_scoring --database scoringdb` this will use the django migrations to initialize the database.
   - Execute the scoring code from inside the metrics and test framework:
 ```
   python -m iarpa_smart_metrics.run_evaluation \

@@ -1,9 +1,3 @@
-// Copyright (c) Meta Platforms, Inc. and affiliates.
-// All rights reserved.
-
-// This source code is licensed under the license found in the
-// LICENSE file in the root directory of this source tree.
-
 // Convert the onnx model mask prediction to ImageData
 export function arrayToImageData(input: any, width: number, height: number, color: [number, number, number, number] = [0, 114, 189, 255]) {
   const [r, g, b, a] = color; // the masks's blue color

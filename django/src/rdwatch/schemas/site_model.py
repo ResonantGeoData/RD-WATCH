@@ -58,10 +58,13 @@ class SiteFeature(Schema):
     score: confloat(ge=0.0, le=1.0) | None
     validated: Literal['True', 'False'] | None
     cache: SiteFeatureCache | None
-    predicted_phase_transition: Literal[
-        'Active Construction',
-        'Post Construction',
-    ] | None
+    predicted_phase_transition: (
+        Literal[
+            'Active Construction',
+            'Post Construction',
+        ]
+        | None
+    )
     predicted_phase_transition_date: str | None
     misc_info: dict[str, Any] | None
 
@@ -91,15 +94,18 @@ class ObservationFeature(Schema):
     observation_date: datetime | None
     source: str | None
     sensor_name: Literal['Landsat 8', 'Sentinel-2', 'WorldView', 'Planet'] | None
-    current_phase: list[
-        Literal[
-            'No Activity',
-            'Site Preparation',
-            'Active Construction',
-            'Post Construction',
-            'Unknown',
+    current_phase: (
+        list[
+            Literal[
+                'No Activity',
+                'Site Preparation',
+                'Active Construction',
+                'Post Construction',
+                'Unknown',
+            ]
         ]
-    ] | None
+        | None
+    )
     is_occluded: list[bool] | None
     is_site_boundary: list[bool] | None
 

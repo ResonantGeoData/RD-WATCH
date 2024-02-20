@@ -24,6 +24,7 @@
     "@turf/turf": "7.0.0-alpha.113",
     "npyjs": "^0.6.0",
     "onnxruntime-web": "^1.17.0",
+    "@types/mapbox__mapbox-gl-draw": "^1.4.6",
     "canvas-capture": "^2.1.1",
     "lodash": "^4.17.21",
     "maplibre-gl": "^2.1.9",

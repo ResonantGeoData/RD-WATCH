@@ -244,15 +244,19 @@ def get_site_model_feature_JSON(id: UUID4, obsevations=False):
                         'version': version,
                         'status': data['status'],
                         'score': data['score'],
-                        'start_date': None
-                        if data['start_date'] is None
-                        else datetime.fromisoformat(data['start_date']).strftime(
-                            '%Y-%m-%d'
+                        'start_date': (
+                            None
+                            if data['start_date'] is None
+                            else datetime.fromisoformat(data['start_date']).strftime(
+                                '%Y-%m-%d'
+                            )
                         ),
-                        'end_date': None
-                        if data['end_date'] is None
-                        else datetime.fromisoformat(data['end_date']).strftime(
-                            '%Y-%m-%d'
+                        'end_date': (
+                            None
+                            if data['end_date'] is None
+                            else datetime.fromisoformat(data['end_date']).strftime(
+                                '%Y-%m-%d'
+                            )
                         ),
                         'model_content': 'annotation',
                         'originator': data['performer']['short_code'],

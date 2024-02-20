@@ -37,7 +37,7 @@ class BoundingBox(JSONObject):
 
     def __init__(self, field):
         geom = Transform(Envelope(field), 4326)
-        return super().__init__(
+        return super().__init__(  # noqa: B037
             xmin=Func(
                 geom,
                 function='ST_XMin',
@@ -75,7 +75,7 @@ class BoundingBoxGeoJSON(Cast):
     def __init__(self, field):
         bbox = BoundingBoxPolygon(field)
         json_str = AsGeoJSON(bbox)
-        return super().__init__(json_str, JSONField())
+        return super().__init__(json_str, JSONField())  # noqa: B037
 
 
 class TimeRangeJSON(NullIf):
@@ -87,7 +87,7 @@ class TimeRangeJSON(NullIf):
             max=ExtractEpoch(Max(field)),
         )
         null = Value({'min': None, 'max': None}, output_field=JSONField())
-        return super().__init__(json, null)
+        return super().__init__(json, null)  # noqa: B037
 
 
 class AggregateArraySubquery(Max):
@@ -100,7 +100,9 @@ class AggregateArraySubquery(Max):
 
     def __init__(self, *args, **kwargs):
         null = Value(None, output_field=ArrayField(base_field=JSONField()))
-        return super().__init__(null, default=ArraySubquery(*args, **kwargs))
+        return super().__init__(  # noqa: B037
+            null, default=ArraySubquery(*args, **kwargs)
+        )
 
 
 class GroupExcludeRowRange(RowRange):

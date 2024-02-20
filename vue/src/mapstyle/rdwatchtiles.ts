@@ -114,6 +114,18 @@ export const buildSiteFilter = (
       ]
     );
   }
+  if (filters.editingPolygonSiteId) {
+    filter.push(
+      [
+        'all',
+        [
+          "case",
+          ["==", ["get", "id"], filters.editingPolygonSiteId], false,
+          true
+        ],
+      ]
+    )
+  }
 
   const hasGroundTruth = filters.drawSiteOutline?.includes('groundtruth');
   const hasModel = filters.drawSiteOutline?.includes('model');

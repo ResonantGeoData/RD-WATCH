@@ -1,7 +1,7 @@
 import { computed, reactive } from "vue";
 
 import { ApiService, ModelRun, Performer, Region } from "./client";
-
+import { EditPolygonType } from "./interactions/editPolygon";
 export interface MapFilters {
   configuration_id?: string[];
   performer_ids?: number[];
@@ -22,6 +22,7 @@ export interface MapFilters {
     rejected?: string[],
   }
   randomKey?: string;
+  editingPolygonSiteId?: string | null; //currently editing a polygon
 }
 
 export interface SatelliteTimeStamp {
@@ -164,6 +165,7 @@ export const state = reactive<{
   proposals: {
     ground_truths?: string | null,
   }
+  editPolygon: EditPolygonType | null,
 
 }>({
   errorText: '',
@@ -217,6 +219,7 @@ export const state = reactive<{
   gifSettings: { fps: 1, quality: 1},
   performerMapping: {},
   proposals: {},
+  editPolygon: null,
 });
 
 export const filteredSatelliteTimeList = computed(() => {

@@ -75,8 +75,13 @@ const drawGroundTruth = ref(false);
 const siteEvaluationList = computed(() => Object.entries(styles).filter(([, { type }]) => type === 'sites').map(([label]) => label));
 const rescaleImage = ref(false);
 const rescalingBBox = ref(1);
+const editingPolygon = ref(false);
 
 const playbackEnabled = ref(false); // Auto playback of images
+
+const evaluationGeoJSON: Ref<GeoJSON.Polygon | null> = ref(null); // holds the site geoJSON so it can be edited
+
+const showSitePoly = ref(props.editable); // Swap between showing the site polygon and the site observation polygon
 
 const filteredImages = computed(() => {
   return combinedImages.value.filter((item) => {
@@ -123,6 +128,7 @@ const getImageData = async () => {
     const data =  await ApiService.getEvaluationImages(props.siteEvalId);
     const images = data.images.results.sort((a, b) => a.timestamp - b.timestamp);
     const polygons = data.geoJSON;
+    evaluationGeoJSON.value = data.evaluationGeoJSON;
     polygons.sort((a,b) => a.timestamp - b.timestamp);
     siteEvaluationNotes.value = data.notes || '';
     siteEvaluationLabel.value = data.label;
@@ -140,11 +146,15 @@ const getImageData = async () => {
     // Lets process the polygons to get them in pixel space.
     // For each polygon we need to convert it to the proper image sizing result.
     images.forEach((image) => {
-        const result = processImagePoly(image, polygons, data.evaluationGeoJSON, data.evaluationBBox, data.label, hasGroundTruth.value, groundTruth.value);
+        const result = processImagePoly(image, polygons, data.evaluationGeoJSON, data.evaluationBBox, data.label, hasGroundTruth.value, groundTruth.value, showSitePoly.value);
         combinedImages.value.push(result);
     })
 }
 let background: HTMLCanvasElement & { ctx?: CanvasRenderingContext2D | null };
+
+watch(showSitePoly, () => {
+  getImageData();
+})
 
 // GIF Settings and Variables
 
@@ -271,7 +281,12 @@ const load = async (newValue?: string, oldValue?: string) => {
   loading.value = false;
 }
 
-watch(() => props.siteEvalId , load);
+watch(() => props.siteEvalId , () => {
+  state.enabledSiteObservations = []; // toggle off all other satellite images
+  cancelEditingPolygon();
+  load();
+
+});
 load();
 
 watch([percentBlackFilter, cloudFilter, siteObsFilter, imageSourcesFilter], () => {
@@ -450,7 +465,51 @@ onUnmounted(() => {
   if (props.editable && state.enabledSiteObservations.find((item) => item.id === props.siteEvalId)) {
     loadAndToggleSatelliteImages(props.siteEvalId);
   }
+  if (editingPolygon.value) {
+    state.filters.editingPolygonSiteId = null;
+    editingPolygon.value = false;
+  }
 });
+
+
+const startEditingPolygon = () => {
+  state.filters.editingPolygonSiteId = props.siteEvalId;
+  if (state.editPolygon && evaluationGeoJSON.value) {
+    state.editPolygon.setPolygonEdit(evaluationGeoJSON.value);
+    editingPolygon.value = true;
+  }
+}
+
+const cancelEditingPolygon = () => {
+  state.filters.editingPolygonSiteId = null;
+  if (state.editPolygon && evaluationGeoJSON.value) {
+    state.editPolygon.cancelPolygonEdit();
+    editingPolygon.value = false;
+  }
+}
+
+const saveEditingPolygon = async () => {
+  if (state.editPolygon) {
+    const polyGeoJSON = state.editPolygon.getEditingPolygon();
+    if (polyGeoJSON) {
+      evaluationGeoJSON.value = polyGeoJSON;
+      await ApiService.patchSiteEvaluation(props.siteEvalId, { geom: polyGeoJSON });
+      cancelEditingPolygon();
+      maplibregl.clearStorage();
+      // We need to update the source to get information
+      // This reloads the source vector-tile to color it properly after data has been changed.
+      state.filters.randomKey = `?randomKey=randomKey_${Math.random()*1000}`;
+      await getImageData();
+    }
+  }
+}
+const selectedPoints = computed(() => state.editPolygon && (state.editPolygon.selectedPoints).length);
+
+const deleteSelectedPoints = () => {
+  if (state.editPolygon && selectedPoints.value) {
+    state.editPolygon.deleteSelectedPoints();
+  }
+}
 
 // Set Keyboard Shortcuts
 
@@ -648,7 +707,49 @@ onUnmounted(() => {
           </div>
         </v-col>
         <v-spacer />
-        <v-col>
+        <v-col v-if="!siteEvaluationUpdated">
+          <v-btn
+            v-if="!editingPolygon"
+            size="small"
+            :disabled="editingPolygon"
+            @click="startEditingPolygon()"
+          >
+            Edit Polygon
+          </v-btn>
+          <span
+            v-if="editingPolygon"
+          >
+            <h3 style="display:inline">Polygon:</h3>
+            <v-btn
+              v-if="selectedPoints"
+              size="small"
+              color="error"
+              class="mx-2"
+              @click="deleteSelectedPoints()"
+            >
+              <v-icon>mdi-delete</v-icon>
+              points
+            </v-btn>
+
+            <v-btn
+              size="small"
+              color="error"
+              class="mx-2"
+              @click="cancelEditingPolygon()"
+            >
+              Cancel
+            </v-btn>
+            <v-btn
+              size="small"
+              color="success"
+              class="mx-2"
+              @click="saveEditingPolygon()"
+            >
+              Save
+            </v-btn>
+          </span>
+        </v-col>
+        <v-col v-if="!editingPolygon">
           <v-btn
             v-if="siteEvaluationUpdated"
             size="small"
@@ -700,27 +801,31 @@ onUnmounted(() => {
       dense
       class="my-1"
     >
-      <v-btn
-        v-if="editable && false"
-        :color="editMode ? 'success' : ''"
-        class="mx-3"
-        size="x-small"
-        @click="editMode = !editMode"
-      >
-        Edit Mode
-        <v-icon
-          class="mx-3"
-          @click="editMode = !editMode"
-        >
-          mdi-pencil
-        </v-icon>
-      </v-btn>
       <v-icon @click="filterSettings = !filterSettings">
         mdi-filter
       </v-icon>
       <div>
-        Displaying {{ filteredImages.length }} of {{ combinedImages.length }} images
+        {{ filteredImages.length }} of {{ combinedImages.length }} images
       </div>
+      <v-tooltip
+        open-delay="50"
+        bottom
+      >
+        <template #activator="{ props:subProps }">
+          <v-icon
+            v-bind="subProps"
+            :color="showSitePoly ? 'blue' : ''"
+            class="mx-2"
+            @click="showSitePoly = !showSitePoly"
+          >
+            mdi-vector-polygon
+          </v-icon>
+        </template>
+        <span>
+          Toggle between Site Polygon and Observation Polygon
+        </span>
+      </v-tooltip>
+
       <v-spacer />
       <v-tooltip
         open-delay="50"

@@ -10,6 +10,7 @@ import { markRaw, onMounted, onUnmounted, reactive, shallowRef, watch, withDefau
 import type { FilterSpecification } from "maplibre-gl";
 import type { ShallowRef } from "vue";
 import { popupLogic, setPopupEvents } from "../interactions/mouseEvents";
+import useEditPolygon from "../interactions/editPolygon";
 import { satelliteLoading } from "../interactions/satelliteLoading";
 import { setReference } from "../interactions/fillPatterns";
 import { setSatelliteTimeStamp } from "../mapstyle/satellite-image";
@@ -72,11 +73,20 @@ onMounted(() => {
         ],
       })
     );
+
     map.value.keyboard.disable();
     popupLogic(map);
     setPopupEvents(map);
     satelliteLoading(map);
     setReference(map);
+    if (map.value) {
+    const editPolygon = useEditPolygon(map.value);
+    editPolygon.initialize();
+    // Having an issue with the selectedPoints Ref, although it is the true type.
+    // eslint-disable-next-line @typescript-eslint/ban-ts-comment
+    // @ts-ignore
+    state.editPolygon = editPolygon;
+  }
   }
 });
 
@@ -85,10 +95,9 @@ onUnmounted(() => {
 });
 const throttledSetSatelliteTimeStamp = throttle(setSatelliteTimeStamp, 300);
 
-
 watch([() => state.timestamp, () => state.filters, () => state.satellite, () => state.filters.scoringColoring,
 () => state.satellite.satelliteSources, () => state.enabledSiteObservations, () => state.filters.hoverSiteId,
-() => state.modelRuns, () => state.openedModelRuns, () => state.filters.proposals, () => state.filters.randomKey], (newVals, oldVals) => {
+() => state.modelRuns, () => state.openedModelRuns, () => state.filters.proposals, () => state.filters.randomKey, () => state.filters.editingPolygonSiteId], (newVals, oldVals) => {
 
   if (state.satellite.satelliteImagesOn) {
     throttledSetSatelliteTimeStamp(state, filteredSatelliteTimeList.value);
@@ -135,6 +144,7 @@ watch([() => state.timestamp, () => state.filters, () => state.satellite, () => 
   })
 
   setPopupEvents(map);
+
 });
 
 watch(
@@ -157,7 +167,7 @@ watch(() => props.compact, () => {
 <template>
   <div
     ref="mapContainer"
-    :class="{map: !compact, compactMap: compact}"
+    :class="{map: !compact, compactMap: compact, mapProposalAdjust: compact}"
   />
 </template>
 
@@ -189,5 +199,10 @@ watch(() => props.compact, () => {
 
 .mapboxgl-popup ul {
   opacity: 1;
+}
+
+/* hides the editing controls in the viewer */
+.mapboxgl-ctrl-group {
+  display: none; 
 }
 </style>

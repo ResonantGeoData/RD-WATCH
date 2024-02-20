@@ -1,5 +1,5 @@
 <script lang="ts">
-import { defineComponent, onMounted } from "vue";
+import { Ref, computed, defineComponent, onMounted, ref, watch } from "vue";
 
 import useSAM from "../use/useSAM";
 
@@ -15,10 +15,18 @@ export default defineComponent({
     embeddingURL: {
       type: String,
       required: true,
+    },
+    width: {
+      type: Number,
+      default: -1,
+    },
+    height: {
+      type: Number,
+      default: -1,
     }
   },
   setup(props) {
-    const { state, initModel, loadImage, mouseOut, handleMouse } = useSAM();
+    const { state, initModel, loadImage, mouseOut, handleMouse, undo, convertMasksToPoly, } = useSAM();
     const { image, polygons, maskImg, smoothing, selectedMasks } = state;
     onMounted(async () => {
       await initModel(MODEL_DIR);
@@ -29,15 +37,26 @@ export default defineComponent({
       smoothing.value = parseInt((e.target as HTMLInputElement).value);
     };
 
+    const widthGreater = computed(() => {
+      if (image.value?.src) {
+        return (image.value.width > image.value.height);
+      }
+      return false;
+    })
+
     return {
       image,
       polygons,
       maskImg,
       smoothing,
       selectedMasks,
+      widthGreater,
       mouseOut,
       handleMouse,
       updateSmoothing,
+      convertMasksToPoly,
+      undo
+
     };
   },
 });
@@ -57,31 +76,51 @@ export default defineComponent({
       >
       <label for="smoothness">Smoothness ({{ smoothing }})</label>
     </div>
+    <v-btn
+      :disabled="!selectedMasks.length"
+      @click="undo"
+    >
+      Undo
+    </v-btn>
+    <v-btn
+      v-if="selectedMasks.length"
+      :disabled="!selectedMasks.length"
+      @click="convertMasksToPoly"
+    >
+      generate
+    </v-btn>
     <div class="custom-flex-center full-size">
       <div class="custom-flex-center custom-size">
-        <img
-          v-if="image"
-          :src="image.src"
-          class="full-width"
-          @mousemove="handleMouse($event, 'hover')"
-          @mouseout="mouseOut"
-          @click="handleMouse($event, 'click')"
-        >
-        <img
-          v-if="maskImg"
-          :src="maskImg.src"
-          class="full-width mask custom-styles"
-        >
-        <img
-          v-for="(maskImage, index) in selectedMasks"
-          :key="`image_${index}`"
-          :src="maskImage.src"
-          class="full-width selected-mask"
-        >
-        <canvas
-          id="geoJSONCanvas"
-          class="selected-mask"
-        />
+        <div style="position: relative;">
+          <img
+            v-if="image"
+            id="baseSAMImage"
+            :src="image.src"
+            :class="`${widthGreater ? 'full-width' : 'full-height'}`"
+            @mousemove="handleMouse($event, 'hover')"
+            @mouseout="mouseOut"
+            @click="handleMouse($event, 'click')"
+          >
+          <img
+            v-if="maskImg"
+            :src="maskImg.src"
+            class="mask custom-styles"
+            :class="`${widthGreater ? 'full-width' : 'full-height'}`"
+          >
+          <img
+            v-for="(maskImage, index) in selectedMasks"
+            :key="`image_${index}`"
+            :src="maskImage.src"
+            class="selected-mask"
+            :class="`${widthGreater ? 'full-width' : 'full-height'}`"
+          >
+          <canvas
+            id="geoJSONCanvas"
+            class="selected-mask"
+            :class="`${widthGreater ? 'full-width' : 'full-height'}`"
+            style="position: absolute; top: 0; left: 0;"
+          />
+        </div>
       </div>
     </div>
   </div>
@@ -104,7 +143,10 @@ export default defineComponent({
   height: 90%;
 }
 .full-width {
-  width: 100%;
+  width: 90vw;
+}
+.full-height {
+  height: 80vh;
 }
 
 .full-height {

@@ -110,6 +110,7 @@ const QUERY = `
               AND U0."site_truth" = ("site"."site_id")
               AND U0."tau" = 0.2
             )
+          LIMIT 1
         )
         WHEN (
           NOT ("site"."originator" = 'te')
@@ -127,6 +128,7 @@ const QUERY = `
               AND U0."site_proposal" = ("site"."site_id")
               AND U0."tau" = 0.2
             )
+          LIMIT 1
         )
         ELSE NULL
       END AS "color_code"

@@ -235,7 +235,7 @@ const startDownload = async (data: DownloadSettings) => {
             </v-chip>
           </v-row>
           <v-row dense>
-            <v-tooltip>
+            <v-tooltip open-delay="300">
               <template #activator="{ props: subProps }">
                 <v-btn
                   size="x-small"
@@ -250,7 +250,7 @@ const startDownload = async (data: DownloadSettings) => {
               <span>Download JSON</span>
             </v-tooltip>
             <v-spacer />
-            <v-tooltip>
+            <v-tooltip open-delay="300">
               <template #activator="{ props:subProps }">
                 <v-btn 
                   v-if="!item.downloading"
@@ -275,7 +275,7 @@ const startDownload = async (data: DownloadSettings) => {
             <v-spacer />
             <v-tooltip
               v-if="item.filename"
-              open-delay="50"
+              open-delay="0"
               bottom
             >
               <template #activator="{ props: subProps }">

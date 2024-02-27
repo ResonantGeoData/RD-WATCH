@@ -17,10 +17,7 @@ import {
   drawGeoJSONPolygon,
 } from "./helpers/maskToPolygon";
 import { defer, throttle } from "lodash";
-import { combine, union, polygon } from "@turf/turf";
 
-const IMAGE_PATH = "/sampleImage.png";
-const IMAGE_EMBEDDING = "/sampleImage.npy";
 const MODEL_DIR = "/sam_onnx_quantized_example.onnx";
 
 const getHover = (x: number, y: number): modelInputProps => {
@@ -233,7 +230,9 @@ export default function useSAM() {
     tempCanvas.height = height;
 
     const ctx = tempCanvas.getContext("2d");
-    ctx.clearRect(0, 0, tempCanvas.width, tempCanvas.height);
+    if (ctx) {
+      ctx.clearRect(0, 0, tempCanvas.width, tempCanvas.height);
+    }
     selectedMasks.value.forEach((image) => {
       if (ctx) {
         ctx.drawImage(image, 0, 0, tempCanvas.width, tempCanvas.height);

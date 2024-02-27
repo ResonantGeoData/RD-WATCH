@@ -137,6 +137,7 @@ export function drawGeoJSONPolygon(
   ctx.stroke();
 }
 
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
 function flattenCoordinates(coordinates: any[]): number[] {
   return coordinates.reduce<number[]>((acc, coord) => {
     if (Array.isArray(coord[0])) {

@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { Ref, computed, onMounted, onUnmounted, ref, watch, withDefaults } from "vue";
+import { Ref, computed, ref, watch, withDefaults } from "vue";
 import { EvaluationImage } from "../../types";
 import { PixelPoly } from "./imageUtils";
 

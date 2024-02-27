@@ -9,6 +9,8 @@ const redisClient = createClient({
   url: process.env.RDWATCH_REDIS_URI,
 });
 
+const suppresLogging = process.env.RDWATCH_SUPPRESS_VECTOR_TILE_LOGGING
+
 await redisClient.connect();
 
 const QUERY = `
@@ -251,7 +253,7 @@ const QUERY = `
     )
 `;
 
-async function getCacheKey(modelRunId, z, x, y) {
+async function getCacheKey(modelRunId, z, x, y, randomKey) {
   const result = await dbPool.query(`
     SELECT
       MAX(rdwatch_siteevaluation.timestamp) AS latestEvaluationTimestamp,
@@ -266,25 +268,33 @@ async function getCacheKey(modelRunId, z, x, y) {
 
   const { latestEvaluationTimestamp, modelRunTimestamp } = result.rows[0];
 
-  console.log(result.rows[0])
+  if (!suppresLogging) {
+    console.log(result.rows[0])
+  }
 
   const latestTimestamp = latestEvaluationTimestamp || modelRunTimestamp;
 
-  return `rgd-vector-tile-${modelRunId}-${z}-${x}-${y}-${latestTimestamp}`;
+  return `rgd-vector-tile-${modelRunId}-${z}-${x}-${y}-${latestTimestamp}${randomKey ? "-"+randomKey : ''}`;
 }
 
-export async function getVectorTiles(modelRunId, z, x, y) {
-  const cacheKey = await getCacheKey(modelRunId, z, x, y);
-  console.log(`cacheKey: ${cacheKey}`)
+export async function getVectorTiles(modelRunId, z, x, y, randomKey) {
+  const cacheKey = await getCacheKey(modelRunId, z, x, y, randomKey);
+  if (!suppresLogging) {
+    console.log(`cacheKey: ${cacheKey}`);
+  }
 
   let vectorTileData = await redisClient.get(commandOptions({ returnBuffers: true }), cacheKey);
   // TODO: re-enable caching
   vectorTileData = null;
   if (!vectorTileData) {
     const params = [z, x, y, modelRunId, `sites-${modelRunId}`, `observations-${modelRunId}`, `regions-${modelRunId}`];
-    console.log(params)
+    if (!suppresLogging) {
+      console.log(params);
+    }
     const result = await dbPool.query(QUERY, params);
-    console.log(result)
+    if (!suppresLogging) {
+      console.log(result);
+    }
     vectorTileData = result.rows[0]['?column?'];
 
     // Cache for 7 days. Don't bother awaiting, as we can do this in the background after this function returns.

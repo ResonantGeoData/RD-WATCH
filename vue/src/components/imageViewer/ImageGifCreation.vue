@@ -19,6 +19,7 @@ interface Props {
 const props = withDefaults(defineProps<Props>(), {
 });
 
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
 const emit = defineEmits<{
     (e: "rescaleBBox", data: number): void;
 }>();

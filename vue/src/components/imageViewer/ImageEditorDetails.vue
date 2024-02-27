@@ -1,10 +1,9 @@
 <script setup lang="ts">
-import { Ref, computed, onMounted, onUnmounted, ref, watch, withDefaults } from "vue";
+import { Ref, computed, ref, watch, withDefaults } from "vue";
 import { ApiService } from "../../client";
 import { SiteModelStatus } from "../../client/services/ApiService";
 import { getColorFromLabel, styles } from '../../mapstyle/annotationStyles';
 import { state } from '../../store'
-import maplibregl from 'maplibre-gl';
 import { EvaluationImageResults } from "../../types";
 
 type EditModes = 'SiteEvaluationLabel' | 'StartDate' | 'EndDate' | 'SiteObservationLabel' | 'SiteEvaluationNotes' | 'SiteObservationNotes'
@@ -14,7 +13,13 @@ interface Props {
     editable: boolean;
     dateRange?: number[] | null;
     groundTruth: EvaluationImageResults['groundTruth'] | null;
-    hasGroundTruth: number;
+    hasGroundTruth: boolean;
+    evaluationLabel: string;
+    evaluationNotes: string;
+    evalCurrentDate: string;
+    status: string | null;
+    evalGeoJSON: GeoJSON.Polygon | null;
+    currentTimestamp: string;
 }
 const props = withDefaults(defineProps<Props>(), {
   dateRange: null,
@@ -29,20 +34,35 @@ const editMode = ref(props.editable);
 
 const editDialog = ref(false);
 const currentEditMode: Ref<null | EditModes> = ref(null);
-const notes = ref('');
-const siteEvaluationLabel = ref('unknown');
+const siteEvaluationLabel = ref(props.evaluationLabel);
 const startDate: Ref<string|null> = ref(props.dateRange && props.dateRange[0] ? new Date(props.dateRange[0] * 1000).toISOString().split('T')[0] : null);
 const endDate: Ref<string|null> = ref(props.dateRange && props.dateRange[1] ? new Date(props.dateRange[1] * 1000).toISOString().split('T')[0] : null);
 const siteEvaluationList = computed(() => Object.entries(styles).filter(([, { type }]) => type === 'sites').map(([label]) => label));
-const siteEvaluationNotes = ref('');
+const siteEvaluationNotes = ref(props.evaluationNotes);
 const siteEvaluationUpdated = ref(false)
 const siteStatus: Ref<string | null> = ref(null);
 const startDateTemp: Ref<string | null> = ref(null);
 const endDateTemp: Ref<string | null> = ref(null);
-const currentDate = ref('');
+const currentDate = ref(props.evalCurrentDate);
 const editingPolygon = ref(false);
+const evaluationGeoJSON: Ref<GeoJSON.Polygon | null> = ref(props.evalGeoJSON); // holds the site geoJSON so it can be edited
 
-const evaluationGeoJSON: Ref<GeoJSON.Polygon | null> = ref(null); // holds the site geoJSON so it can be edited
+watch([() => props.siteEvalId], () => {
+  cancelEditingPolygon();
+  siteEvaluationLabel.value = props.evaluationLabel;
+  siteEvaluationNotes.value = props.evaluationNotes;
+  startDate.value = props.dateRange && props.dateRange[0] ? new Date(props.dateRange[0] * 1000).toISOString().split('T')[0] : null;
+  endDate.value = props.dateRange && props.dateRange[1] ? new Date(props.dateRange[1] * 1000).toISOString().split('T')[0] : null;
+  currentDate.value = props.evalCurrentDate;
+  siteStatus.value = props.status;
+  evaluationGeoJSON.value = props.evalGeoJSON;
+  
+  
+});
+watch(() => props.evalGeoJSON, () => {
+  evaluationGeoJSON.value = props.evalGeoJSON;
+})
+
 
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
 const updateTime = (time: any, date: 'StartDate' | 'EndDate'| 'StartDateTemp' | 'EndDateTemp') => {
@@ -99,11 +119,7 @@ const saveSiteEvaluationChanges = async () => {
   siteEvaluationUpdated.value = false;
   emit('clear-storage');
   // reset cache after changing siteEvals for vector tiles
-  await getImageData();
-  maplibregl.clearStorage();
-  // We need to update the source to get information
-  // This reloads the source vector-tile to color it properly after data has been changed.
-  state.filters.randomKey = `?randomKey=randomKey_${Math.random()*1000}`;
+  emit('update-list');
 }
 
 const setSiteModelStatus = async (status: SiteModelStatus) => {
@@ -140,11 +156,6 @@ const saveEditingPolygon = async () => {
       await ApiService.patchSiteEvaluation(props.siteEvalId, { geom: polyGeoJSON });
       cancelEditingPolygon();
       emit('clear-storage');
-      maplibregl.clearStorage();
-      // We need to update the source to get information
-      // This reloads the source vector-tile to color it properly after data has been changed.
-      state.filters.randomKey = `?randomKey=randomKey_${Math.random()*1000}`;
-      await getImageData();
     }
   }
 }

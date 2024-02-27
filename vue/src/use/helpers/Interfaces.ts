@@ -19,5 +19,6 @@ export interface modeDataProps {
 }
 
 export interface ToolProps {
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   handleMouseMove: (e: any) => void;
 }

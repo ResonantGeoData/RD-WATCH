@@ -1,5 +1,5 @@
 <script lang="ts">
-import { Ref, computed, defineComponent, onMounted, ref, watch } from "vue";
+import { computed, defineComponent, onMounted } from "vue";
 
 import useSAM from "../use/useSAM";
 

@@ -1,28 +1,46 @@
 <script setup lang="ts">
-import { Ref, computed, onMounted, onUnmounted, ref, watch, withDefaults } from "vue";
+import {
+  Ref,
+  computed,
+  onMounted,
+  onUnmounted,
+  ref,
+  watch,
+  withDefaults,
+} from "vue";
 import { ApiService } from "../../client";
 import { EvaluationImage, EvaluationImageResults } from "../../types";
-import { getColorFromLabel, styles } from '../../mapstyle/annotationStyles';
-import { ObsDetails, SiteObservationImage, loadAndToggleSatelliteImages, state } from '../../store'
-import { SiteModelStatus } from "../../client/services/ApiService";
-import type { PixelPoly } from './imageUtils';
-import { drawData, processImagePoly } from './imageUtils';
-import maplibregl from 'maplibre-gl';
+import {
+  ObsDetails,
+  SiteObservationImage,
+  loadAndToggleSatelliteImages,
+  state,
+} from "../../store";
+import type { PixelPoly } from "./imageUtils";
+import { drawData, processImagePoly } from "./imageUtils";
+import maplibregl from "maplibre-gl";
 import ImageGifCreation from "./ImageGifCreation.vue";
 import ImageFilter from "./ImageFilter.vue";
+import ImageEditorDetails from "./ImageEditorDetails.vue";
+import { getColorFromLabel } from "../../mapstyle/annotationStyles";
 
 interface Props {
   siteEvalId: string;
   dialog?: boolean;
   editable?: boolean;
   siteEvaluationName?: string | null;
-  dateRange?: number[] | null
+  dateRange?: number[] | null;
   obsDetails?: ObsDetails;
   fullscreen?: boolean;
 }
 
-
-type EditModes = 'SiteEvaluationLabel' | 'StartDate' | 'EndDate' | 'SiteObservationLabel' | 'SiteEvaluationNotes' | 'SiteObservationNotes'
+type EditModes =
+  | "SiteEvaluationLabel"
+  | "StartDate"
+  | "EndDate"
+  | "SiteObservationLabel"
+  | "SiteEvaluationNotes"
+  | "SiteObservationNotes";
 
 const props = withDefaults(defineProps<Props>(), {
   dialog: false,
@@ -35,12 +53,20 @@ const props = withDefaults(defineProps<Props>(), {
 const emit = defineEmits<{
   (e: "close"): void;
   (e: "update-list"): void;
-  (e: "eval-save", {label, startDate, endDate, notes} :{
-    label: string;
-    startDate: string | null
-    endDate: string | null;
-    notes: string;
-  }): void;
+  (
+    e: "eval-save",
+    {
+      label,
+      startDate,
+      endDate,
+      notes,
+    }: {
+      label: string;
+      startDate: string | null;
+      endDate: string | null;
+      notes: string;
+    }
+  ): void;
 }>();
 
 const loading = ref(false);
@@ -49,25 +75,35 @@ const editMode = ref(props.editable);
 
 const editDialog = ref(false);
 const currentEditMode: Ref<null | EditModes> = ref(null);
-const notes = ref('');
-const siteEvaluationLabel = ref('unknown');
-const startDate: Ref<string|null> = ref(props.dateRange && props.dateRange[0] ? new Date(props.dateRange[0] * 1000).toISOString().split('T')[0] : null);
-const endDate: Ref<string|null> = ref(props.dateRange && props.dateRange[1] ? new Date(props.dateRange[1] * 1000).toISOString().split('T')[0] : null);
-const siteEvaluationNotes = ref('');
-const siteEvaluationUpdated = ref(false)
+const siteEvaluationLabel = ref("unknown");
+const startDate: Ref<string | null> = ref(
+  props.dateRange && props.dateRange[0]
+    ? new Date(props.dateRange[0] * 1000).toISOString().split("T")[0]
+    : null
+);
+const endDate: Ref<string | null> = ref(
+  props.dateRange && props.dateRange[1]
+    ? new Date(props.dateRange[1] * 1000).toISOString().split("T")[0]
+    : null
+);
+const siteEvaluationNotes = ref("");
 const siteStatus: Ref<string | null> = ref(null);
 const imageRef: Ref<HTMLImageElement | null> = ref(null);
 const canvasRef: Ref<HTMLCanvasElement | null> = ref(null);
-const combinedImages: Ref<{image: EvaluationImage; poly: PixelPoly, groundTruthPoly?: PixelPoly}[]> = ref([]);
-const filteredImages: Ref<{image: EvaluationImage; poly: PixelPoly, groundTruthPoly?: PixelPoly}[]> = ref([]);
+const combinedImages: Ref<
+  { image: EvaluationImage; poly: PixelPoly; groundTruthPoly?: PixelPoly }[]
+> = ref([]);
+const filteredImages: Ref<
+  { image: EvaluationImage; poly: PixelPoly; groundTruthPoly?: PixelPoly }[]
+> = ref([]);
 // Ease of display refs
-const currentLabel = ref('unknown')
-const currentDate = ref('');
+const currentLabel = ref("unknown");
+const currentDate = ref("");
 // Ground Truth Values
 const hasGroundTruth = ref(false);
-const groundTruth: Ref<EvaluationImageResults['groundTruth'] | null > = ref(null);
+const groundTruth: Ref<EvaluationImageResults["groundTruth"] | null> =
+  ref(null);
 const drawGroundTruth = ref(false);
-const siteEvaluationList = computed(() => Object.entries(styles).filter(([, { type }]) => type === 'sites').map(([label]) => label));
 const rescaleImage = ref(false);
 const rescalingBBox = ref(1);
 const editingPolygon = ref(false);
@@ -78,62 +114,76 @@ const evaluationGeoJSON: Ref<GeoJSON.Polygon | null> = ref(null); // holds the s
 
 const showSitePoly = ref(props.editable); // Swap between showing the site polygon and the site observation polygon
 
-
-
-
-
 const currentTimestamp = computed(() => {
-    if (filteredImages.value[currentImage.value]) {
+  if (filteredImages.value[currentImage.value]) {
     const time = filteredImages.value[currentImage.value].image.timestamp;
-    return new Date(time * 1000).toISOString().split('T')[0]
-    }
-    return new Date().toISOString().split('T')[0]
-})
+    return new Date(time * 1000).toISOString().split("T")[0];
+  }
+  return new Date().toISOString().split("T")[0];
+});
 
 watch(currentTimestamp, () => {
   currentDate.value = currentTimestamp.value;
 });
 
-
 const getImageData = async () => {
-    combinedImages.value = [];
-    currentImage.value = 0;
-    const data =  await ApiService.getEvaluationImages(props.siteEvalId);
-    const images = data.images.results.sort((a, b) => a.timestamp - b.timestamp);
-    const polygons = data.geoJSON;
-    evaluationGeoJSON.value = data.evaluationGeoJSON;
-    polygons.sort((a,b) => a.timestamp - b.timestamp);
-    siteEvaluationNotes.value = data.notes || '';
-    siteEvaluationLabel.value = data.label;
-    siteStatus.value = data.status;
-    if (data.groundTruth) {
-      hasGroundTruth.value = true;
-      groundTruth.value = data.groundTruth;
-    } else {
-      hasGroundTruth.value = false;
-      groundTruth.value = null;
-    }
-    if (imageRef.value !== null) {
-        imageRef.value.src = images[currentImage.value].image;
-    }
-    // Lets process the polygons to get them in pixel space.
-    // For each polygon we need to convert it to the proper image sizing result.
-    images.forEach((image) => {
-        const result = processImagePoly(image, polygons, data.evaluationGeoJSON, data.evaluationBBox, data.label, hasGroundTruth.value, groundTruth.value, showSitePoly.value);
-        combinedImages.value.push(result);
-    })
-}
-const background: Ref<HTMLCanvasElement & { ctx?: CanvasRenderingContext2D | null } | undefined> = ref();
+  combinedImages.value = [];
+  currentImage.value = 0;
+  const data = await ApiService.getEvaluationImages(props.siteEvalId);
+  const images = data.images.results.sort((a, b) => a.timestamp - b.timestamp);
+  const polygons = data.geoJSON;
+  evaluationGeoJSON.value = data.evaluationGeoJSON;
+  polygons.sort((a, b) => a.timestamp - b.timestamp);
+  siteEvaluationNotes.value = data.notes || "";
+  siteEvaluationLabel.value = data.label;
+  siteStatus.value = data.status;
+  if (data.groundTruth) {
+    hasGroundTruth.value = true;
+    groundTruth.value = data.groundTruth;
+  } else {
+    hasGroundTruth.value = false;
+    groundTruth.value = null;
+  }
+  if (imageRef.value !== null) {
+    imageRef.value.src = images[currentImage.value].image;
+  }
+  // Lets process the polygons to get them in pixel space.
+  // For each polygon we need to convert it to the proper image sizing result.
+  images.forEach((image) => {
+    const result = processImagePoly(
+      image,
+      polygons,
+      data.evaluationGeoJSON,
+      data.evaluationBBox,
+      data.label,
+      hasGroundTruth.value,
+      groundTruth.value,
+      showSitePoly.value
+    );
+    combinedImages.value.push(result);
+  });
+};
+const background: Ref<
+  (HTMLCanvasElement & { ctx?: CanvasRenderingContext2D | null }) | undefined
+> = ref();
 
 watch(showSitePoly, () => {
   getImageData();
-})
+});
 
 const load = async (newValue?: string, oldValue?: string) => {
-  const index = state.enabledSiteObservations.findIndex((item) => item.id === oldValue);
+  const index = state.enabledSiteObservations.findIndex(
+    (item) => item.id === oldValue
+  );
 
-  startDate.value = (props.dateRange && props.dateRange[0] ? new Date(props.dateRange[0] * 1000).toISOString().split('T')[0] : null);
-  endDate.value= (props.dateRange && props.dateRange[1] ? new Date(props.dateRange[1] * 1000).toISOString().split('T')[0] : null);
+  startDate.value =
+    props.dateRange && props.dateRange[0]
+      ? new Date(props.dateRange[0] * 1000).toISOString().split("T")[0]
+      : null;
+  endDate.value =
+    props.dateRange && props.dateRange[1]
+      ? new Date(props.dateRange[1] * 1000).toISOString().split("T")[0]
+      : null;
 
   if (index !== -1) {
     const tempArr = [...state.enabledSiteObservations];
@@ -145,30 +195,34 @@ const load = async (newValue?: string, oldValue?: string) => {
   if (props.editable) {
     loadAndToggleSatelliteImages(props.siteEvalId);
   }
-  if (currentImage.value < filteredImages.value.length && canvasRef.value !== null) {
-      drawData(
-        canvasRef.value,
-        filteredImages.value[currentImage.value].image,
-        filteredImages.value[currentImage.value].poly,
-        filteredImages.value[currentImage.value].groundTruthPoly,
-        -1,
-        -1,
-        background.value,
-        drawGroundTruth.value,
-        rescaleImage.value,
-        props.fullscreen,
-        rescalingBBox.value,
-        )
+  if (
+    currentImage.value < filteredImages.value.length &&
+    canvasRef.value !== null
+  ) {
+    drawData(
+      canvasRef.value,
+      filteredImages.value[currentImage.value].image,
+      filteredImages.value[currentImage.value].poly,
+      filteredImages.value[currentImage.value].groundTruthPoly,
+      -1,
+      -1,
+      background.value,
+      drawGroundTruth.value,
+      rescaleImage.value,
+      props.fullscreen,
+      rescalingBBox.value
+    );
   }
   loading.value = false;
-}
+};
 
-watch(() => props.siteEvalId , () => {
-  state.enabledSiteObservations = []; // toggle off all other satellite images
-  cancelEditingPolygon();
-  load();
-
-});
+watch(
+  () => props.siteEvalId,
+  () => {
+    state.enabledSiteObservations = []; // toggle off all other satellite images
+    load();
+  }
+);
 load();
 
 watch(filteredImages, () => {
@@ -178,20 +232,35 @@ watch(filteredImages, () => {
 });
 
 const copyURL = async (mytext: string) => {
-    try {
-      await navigator.clipboard.writeText(mytext);
-    } catch($e) {
-      alert('Cannot copy');
-    }
+  try {
+    await navigator.clipboard.writeText(mytext);
+  } catch ($e) {
+    alert("Cannot copy");
   }
+};
 
-
-watch([currentImage, imageRef, filteredImages, drawGroundTruth, rescaleImage, rescalingBBox], () => {
-    if (currentImage.value < filteredImages.value.length && imageRef.value !== null) {
-        imageRef.value.src = filteredImages.value[currentImage.value].image.image;
+watch(
+  [
+    currentImage,
+    imageRef,
+    filteredImages,
+    drawGroundTruth,
+    rescaleImage,
+    rescalingBBox,
+  ],
+  () => {
+    if (
+      currentImage.value < filteredImages.value.length &&
+      imageRef.value !== null
+    ) {
+      imageRef.value.src = filteredImages.value[currentImage.value].image.image;
     }
-    currentLabel.value = filteredImages.value[currentImage.value].poly.label;
-    if (currentImage.value < filteredImages.value.length && canvasRef.value !== null) {
+    if (filteredImages.value.length) {
+      currentLabel.value = filteredImages.value[currentImage.value].poly.label;
+      if (
+        currentImage.value < filteredImages.value.length &&
+        canvasRef.value !== null
+      ) {
         drawData(
           canvasRef.value,
           filteredImages.value[currentImage.value].image,
@@ -203,47 +272,31 @@ watch([currentImage, imageRef, filteredImages, drawGroundTruth, rescaleImage, re
           drawGroundTruth.value,
           rescaleImage.value,
           props.fullscreen,
-          rescalingBBox.value,
-        )
-    }
-    if (props.dialog === false && !props.fullscreen && filteredImages.value[currentImage.value]) {
-      state.timestamp = filteredImages.value[currentImage.value].image.timestamp;
-    }
-
-});
-
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-const updateTime = (time: any, date: 'StartDate' | 'EndDate'| 'StartDateTemp' | 'EndDateTemp') => {
-  if (time === null) {
-    if (date === 'StartDate') {
-      startDate.value = null;
-    } else if (date === 'EndDate') {
-      endDate.value = null
-    } else if (date === 'StartDateTemp') {
-      startDateTemp.value = null;
-    }  else if (date === 'EndDateTemp') {
-      endDateTemp.value = null;
-    }
-    editDialog.value = false;
-  } else {
-    if (date === 'StartDate') {
-      startDate.value = new Date(time as string).toISOString().split('T')[0];
-    } else if (date === 'EndDate') {
-      endDate.value = new Date(time as string).toISOString().split('T')[0];
-    } else if (date === 'StartDateTemp') {
-      startDateTemp.value = new Date(time as string).toISOString().split('T')[0];
-    } else if (date === 'EndDateTemp') {
-      endDateTemp.value = new Date(time as string).toISOString().split('T')[0];
+          rescalingBBox.value
+        );
+      }
+      if (
+        props.dialog === false &&
+        !props.fullscreen &&
+        filteredImages.value[currentImage.value]
+      ) {
+        state.timestamp =
+          filteredImages.value[currentImage.value].image.timestamp;
+      }
     }
   }
-  siteEvaluationUpdated.value = true;
-}
+);
 
-const mapImagesOn = computed(() => (state.enabledSiteObservations.findIndex((item) => item.id === props.siteEvalId) !== -1));
+const mapImagesOn = computed(
+  () =>
+    state.enabledSiteObservations.findIndex(
+      (item) => item.id === props.siteEvalId
+    ) !== -1
+);
 const startDateTemp: Ref<string | null> = ref(null);
 const endDateTemp: Ref<string | null> = ref(null);
 const setEditingMode = (mode: EditModes) => {
-  if (['StartDate', 'EndDate'].includes(mode)){
+  if (["StartDate", "EndDate"].includes(mode)) {
     if (startDate.value === null) {
       startDateTemp.value = currentDate.value;
     } else {
@@ -257,36 +310,7 @@ const setEditingMode = (mode: EditModes) => {
   }
   editDialog.value = true;
   currentEditMode.value = mode;
-}
-
-
-const saveSiteEvaluationChanges = async () => {
- await  ApiService.patchSiteEvaluation(props.siteEvalId, {
-    label: siteEvaluationLabel.value,
-    start_date: startDate.value,
-    end_date: endDate.value,
-    notes: siteEvaluationNotes.value ? siteEvaluationNotes.value : undefined,
-  });
-  siteEvaluationUpdated.value = false;
-  emit('update-list');
-  // reset cache after changing siteEvals for vector tiles
-  await getImageData();
-  maplibregl.clearStorage();
-  // We need to update the source to get information
-  // This reloads the source vector-tile to color it properly after data has been changed.
-  state.filters.randomKey = `?randomKey=randomKey_${Math.random()*1000}`;
-}
-
-const setSiteModelStatus = async (status: SiteModelStatus) => {
-  if (status) {
-    await ApiService.patchSiteEvaluation(props.siteEvalId, {
-      status
-    });
-    siteStatus.value = status;
-    emit('update-list');
-    load();
-  }
-}
+};
 
 const adjustImage = (direction: number) => {
   if (currentImage.value + direction < 0) {
@@ -294,57 +318,57 @@ const adjustImage = (direction: number) => {
   } else if (currentImage.value + direction >= filteredImages.value.length) {
     currentImage.value = 0;
   } else {
-    currentImage.value = currentImage.value + direction
+    currentImage.value = currentImage.value + direction;
   }
-}
+};
 
 let loopingInterval: NodeJS.Timeout | null = null;
 
-
 const togglePlayback = () => {
-
   if (loopingInterval && playbackEnabled.value) {
     clearInterval(loopingInterval);
     playbackEnabled.value = false;
     return;
   }
-  loopingInterval =
-  setInterval(() => {
-    adjustImage(1)
+  loopingInterval = setInterval(() => {
+    adjustImage(1);
   }, (1.0 / state.gifSettings.fps) * 1000);
   playbackEnabled.value = true;
 };
 
 const keyboardEventListener = (e: KeyboardEvent) => {
-  if (e.key === 'ArrowLeft') {
+  if (e.key === "ArrowLeft") {
     if (e.ctrlKey) {
       currentImage.value = 0;
     } else {
       adjustImage(-1);
     }
   }
-  if (e.key === 'ArrowRight') {
+  if (e.key === "ArrowRight") {
     if (e.ctrlKey) {
       currentImage.value = filteredImages.value.length - 1;
     } else {
       adjustImage(1);
     }
   }
-  if (e.key === ' ') {
+  if (e.key === " ") {
     togglePlayback();
   }
-}
+};
 
 onMounted(() => {
-  window.addEventListener('keydown', keyboardEventListener);
-})
+  window.addEventListener("keydown", keyboardEventListener);
+});
 
 onUnmounted(() => {
   if (loopingInterval) {
     clearInterval(loopingInterval);
   }
-  window.removeEventListener('keydown', keyboardEventListener);
-  if (props.editable && state.enabledSiteObservations.find((item) => item.id === props.siteEvalId)) {
+  window.removeEventListener("keydown", keyboardEventListener);
+  if (
+    props.editable &&
+    state.enabledSiteObservations.find((item) => item.id === props.siteEvalId)
+  ) {
     loadAndToggleSatelliteImages(props.siteEvalId);
   }
   if (editingPolygon.value) {
@@ -356,54 +380,16 @@ onUnmounted(() => {
   });
 });
 
-
-const startEditingPolygon = () => {
-  state.filters.editingPolygonSiteId = props.siteEvalId;
-  if (state.editPolygon && evaluationGeoJSON.value) {
-    state.editPolygon.setPolygonEdit(evaluationGeoJSON.value);
-    editingPolygon.value = true;
-  }
-}
-
-const cancelEditingPolygon = () => {
-  state.filters.editingPolygonSiteId = null;
-  if (state.editPolygon && evaluationGeoJSON.value) {
-    state.editPolygon.cancelPolygonEdit();
-    editingPolygon.value = false;
-  }
-}
-
-const saveEditingPolygon = async () => {
-  if (state.editPolygon) {
-    const polyGeoJSON = state.editPolygon.getEditingPolygon();
-    if (polyGeoJSON) {
-      evaluationGeoJSON.value = polyGeoJSON;
-      await ApiService.patchSiteEvaluation(props.siteEvalId, { geom: polyGeoJSON });
-      cancelEditingPolygon();
-      maplibregl.clearStorage();
-      // We need to update the source to get information
-      // This reloads the source vector-tile to color it properly after data has been changed.
-      state.filters.randomKey = `?randomKey=randomKey_${Math.random()*1000}`;
-      await getImageData();
-    }
-  }
-}
-const selectedPoints = computed(() => state.editPolygon && (state.editPolygon.selectedPoints).length);
-
-const deleteSelectedPoints = () => {
-  if (state.editPolygon && selectedPoints.value) {
-    state.editPolygon.deleteSelectedPoints();
-  }
-}
-
 //SAM Integration
 const embeddingCheckInterval: Ref<Record<string, NodeJS.Timeout>> = ref({});
 
 const checkSAMStatus = async (id: number, uuid: string) => {
   const result = await ApiService.getSiteImageEmbeddingStatus(id, uuid);
-  if (result.state === 'SUCCESS' || result.status === 'SUCCESS') {
+  if (result.state === "SUCCESS" || result.status === "SUCCESS") {
     // We update the button status to open in a new tab instead
-    const index = combinedImages.value.findIndex((item) => item.image.id === id);
+    const index = combinedImages.value.findIndex(
+      (item) => item.image.id === id
+    );
     if (index !== -1) {
       const base = combinedImages.value[index];
       // Get the image Embedding so we can replace it in the list
@@ -416,34 +402,48 @@ const checkSAMStatus = async (id: number, uuid: string) => {
       }
     }
   }
-}
-
-const generateImageEmbedding = async (image: SiteObservationImage | EvaluationImage) => {
-  const result = await ApiService.postSiteImageEmbedding(image.id);
-  embeddingCheckInterval.value[image.id] = setInterval(() => checkSAMStatus(image.id, result), 1000);
-}
-const openSAMView = (id: number) => {
-  const name = `#${ApiService.getApiPrefix().replace('api/','').replace('/api','')}/SAM/${id}`
-  window.open(name, '_blank');
 };
 
-const processImageEmbeddingButton = (image: SiteObservationImage | EvaluationImage) => {
+const generateImageEmbedding = async (
+  image: SiteObservationImage | EvaluationImage
+) => {
+  const result = await ApiService.postSiteImageEmbedding(image.id);
+  embeddingCheckInterval.value[image.id] = setInterval(
+    () => checkSAMStatus(image.id, result),
+    1000
+  );
+};
+const openSAMView = (id: number) => {
+  const name = `#${ApiService.getApiPrefix()
+    .replace("api/", "")
+    .replace("/api", "")}/SAM/${id}`;
+  window.open(name, "_blank");
+};
+
+const processImageEmbeddingButton = (
+  image: SiteObservationImage | EvaluationImage
+) => {
   if (image && !image.image_embedding) {
     generateImageEmbedding(image);
   } else {
     openSAMView(image.id);
   }
-}
+};
 
-// Set Keyboard Shortcuts
-
-
+// Clearing Storage
+const clearStorage = async () => {
+  maplibregl.clearStorage();
+  // We need to update the source to get information
+  // This reloads the source vector-tile to color it properly after data has been changed.
+  state.filters.randomKey = `&randomKey=randomKey_${Math.random() * 1000}`;
+  await getImageData();
+};
 </script>
 
 <template>
   <v-card
     class="pa-4"
-    :class="{review: !dialog && !fullscreen, 'fullscreen': fullscreen}"
+    :class="{ review: !dialog && !fullscreen, fullscreen: fullscreen }"
   >
     <v-row
       v-if="dialog || fullscreen"
@@ -451,7 +451,9 @@ const processImageEmbeddingButton = (image: SiteObservationImage | EvaluationIma
       class="top-bar"
     >
       <v-col v-if="obsDetails">
-        <span>{{ obsDetails.performer }} {{ obsDetails.title }} : V{{ obsDetails.version }}</span>
+        <span>{{ obsDetails.performer }} {{ obsDetails.title }} : V{{
+          obsDetails.version
+        }}</span>
         <div v-if="hasGroundTruth && editable">
           <v-checkbox
             v-model="drawGroundTruth"
@@ -466,16 +468,26 @@ const processImageEmbeddingButton = (image: SiteObservationImage | EvaluationIma
 
       <v-col v-if="obsDetails">
         <b
-          v-if="groundTruth && hasGroundTruth" 
+          v-if="groundTruth && hasGroundTruth"
           class="mr-1"
         >Model Date Range:</b>
         <span>{{ startDate }}</span> to <span> {{ endDate }}</span>
         <div v-if="groundTruth && hasGroundTruth">
           <b class="mr-1">GroundTruth Date Range:</b>
-          <span> {{ new Date(groundTruth.timerange.min * 1000).toISOString().split('T')[0] }}
+          <span>
+            {{
+              new Date(groundTruth.timerange.min * 1000)
+                .toISOString()
+                .split("T")[0]
+            }}
           </span>
           <span> to </span>
-          <span> {{ new Date(groundTruth.timerange.max * 1000).toISOString().split('T')[0] }}</span>
+          <span>
+            {{
+              new Date(groundTruth.timerange.max * 1000)
+                .toISOString()
+                .split("T")[0]
+            }}</span>
         </div>
       </v-col>
       <v-spacer />
@@ -493,13 +505,13 @@ const processImageEmbeddingButton = (image: SiteObservationImage | EvaluationIma
       <v-row dense>
         <v-col
           v-if="editable"
-          style="max-width:20px"
+          style="max-width: 20px"
         >
           <v-tooltip
             open-delay="50"
             bottom
           >
-            <template #activator="{ props:subProps }">
+            <template #activator="{ props: subProps }">
               <v-icon
                 v-bind="subProps"
                 :color="mapImagesOn ? 'rgb(37, 99, 235)' : ''"
@@ -508,9 +520,7 @@ const processImageEmbeddingButton = (image: SiteObservationImage | EvaluationIma
                 mdi-image
               </v-icon>
             </template>
-            <span>
-              Toggle Map Images
-            </span>
+            <span> Toggle Map Images </span>
           </v-tooltip>
           <br>
           <v-tooltip
@@ -518,18 +528,20 @@ const processImageEmbeddingButton = (image: SiteObservationImage | EvaluationIma
             open-delay="50"
             bottom
           >
-            <template #activator="{ props:subProps }">
+            <template #activator="{ props: subProps }">
               <v-icon
                 v-bind="subProps"
                 :color="drawGroundTruth ? 'rgb(37, 99, 235)' : ''"
                 @click="drawGroundTruth = !drawGroundTruth"
               >
-                {{ drawGroundTruth ? 'mdi-checkbox-marked' : 'mdi-checkbox-blank-outline' }}
+                {{
+                  drawGroundTruth
+                    ? "mdi-checkbox-marked"
+                    : "mdi-checkbox-blank-outline"
+                }}
               </v-icon>
             </template>
-            <span>
-              Toggle Map Images
-            </span>
+            <span> Toggle Map Images </span>
           </v-tooltip>
         </v-col>
         <v-col>
@@ -543,189 +555,28 @@ const processImageEmbeddingButton = (image: SiteObservationImage | EvaluationIma
             Ground Truth
           </h3>
         </v-col>
-        <v-col>
-          <div>
-            <b class="mr-1">Date Range:</b>
-            <span> {{ startDate ? startDate : 'null' }}
-              <v-icon
-                v-if="editMode"
-                class="ma-0"
-                @click="setEditingMode('StartDate')"
-              >
-                mdi-pencil
-              </v-icon>
-
-            </span>
-            <span class="mx-1"> to</span>
-            <span> {{ endDate ? endDate : 'null' }}
-              <v-icon
-                v-if="editMode"
-                class="ma-0"
-                @click="setEditingMode('EndDate')"
-              >
-                mdi-pencil
-              </v-icon>
-
-            </span>
-          </div>
-          <div v-if="groundTruth && hasGroundTruth">
-            <b class="mr-1">Date Range:</b>
-            <span> {{ new Date(groundTruth.timerange.min * 1000).toISOString().split('T')[0] }}
-              <v-icon
-                class="ma-0"
-                color="white"
-              />
-            </span>
-            <span class="mx-1"> to</span>
-            <span> {{ new Date(groundTruth.timerange.max * 1000).toISOString().split('T')[0] }}</span>
-          </div>
-        </v-col>
-        <v-col>
-          <div class="ml-5">
-            <b>Label:</b>
-            <v-chip
-              size="small"
-              :color="getColorFromLabel(siteEvaluationLabel)"
-              class="ml-2"
-            >
-              {{ siteEvaluationLabel }}
-            </v-chip>
-            <v-icon
-              v-if="editMode"
-              @click="setEditingMode('SiteEvaluationLabel')"
-            >
-              mdi-pencil
-            </v-icon>
-          </div>
-          <div
-            v-if="hasGroundTruth && groundTruth"
-            class="ml-5"
-          >
-            <b>Label:</b>
-            <v-chip
-              size="small"
-              :color="getColorFromLabel(groundTruth.label)"
-              class="ml-2"
-            >
-              {{ groundTruth.label }}
-            </v-chip>
-          </div>
-        </v-col>
-        <v-col>
-          <div class="notesPreview">
-            <b>Notes:</b>
-            <v-icon
-              v-if="editMode"
-              @click="setEditingMode('SiteEvaluationNotes')"
-            >
-              mdi-pencil
-            </v-icon>
-            <v-tooltip
-              :text="siteEvaluationNotes"
-              location="bottom center"
-            >
-              <template #activator="{ props:subProps }">
-                <span v-bind="subProps"> {{ siteEvaluationNotes }}</span>
-              </template>
-            </v-tooltip>
-          </div>
-        </v-col>
-        <v-spacer />
-        <v-col v-if="!siteEvaluationUpdated">
-          <v-btn
-            v-if="!editingPolygon"
-            size="small"
-            :disabled="editingPolygon"
-            @click="startEditingPolygon()"
-          >
-            Edit Polygon
-          </v-btn>
-          <span
-            v-if="editingPolygon"
-          >
-            <h3 style="display:inline">Polygon:</h3>
-            <v-btn
-              v-if="selectedPoints"
-              size="small"
-              color="error"
-              class="mx-2"
-              @click="deleteSelectedPoints()"
-            >
-              <v-icon>mdi-delete</v-icon>
-              points
-            </v-btn>
-
-            <v-btn
-              size="small"
-              color="error"
-              class="mx-2"
-              @click="cancelEditingPolygon()"
-            >
-              Cancel
-            </v-btn>
-            <v-btn
-              size="small"
-              color="success"
-              class="mx-2"
-              @click="saveEditingPolygon()"
-            >
-              Save
-            </v-btn>
-          </span>
-        </v-col>
-        <v-col v-if="!editingPolygon">
-          <v-btn
-            v-if="siteEvaluationUpdated"
-            size="small"
-            color="success"
-            @click="saveSiteEvaluationChanges"
-          >
-            Save Changes
-          </v-btn>
-          <v-btn
-            v-if="siteStatus !== 'APPROVED'"
-            size="small"
-            class="mx-1"
-            color="success"
-            @click="setSiteModelStatus('APPROVED')"
-          >
-            Approve
-          </v-btn>
-          <v-btn
-            v-if="siteStatus === 'APPROVED'"
-            size="small"
-            class="mx-1"
-            color="warning"
-            @click="setSiteModelStatus('PROPOSAL')"
-          >
-            Un-Approve
-          </v-btn>
-          <v-btn
-            v-if="siteStatus !== 'REJECTED'"
-            size="small"
-            class="mx-1"
-            color="error"
-            @click="setSiteModelStatus('REJECTED')"
-          >
-            Reject
-          </v-btn>
-          <v-btn
-            v-if="siteStatus === 'REJECTED'"
-            size="small"
-            class="mx-1"
-            color="warning"
-            @click="setSiteModelStatus('PROPOSAL')"
-          >
-            Un-Reject
-          </v-btn>
-        </v-col>
+        <image-editor-details
+          :site-eval-id="siteEvalId"
+          :editable="editable"
+          :date-range="dateRange"
+          :ground-truth="groundTruth"
+          :has-ground-truth="hasGroundTruth"
+          :evaluation-label="siteEvaluationLabel"
+          :evaluation-notes="siteEvaluationNotes"
+          :eval-current-date="currentDate"
+          :status="siteStatus"
+          :eval-geo-j-s-o-n="evaluationGeoJSON"
+          :current-timestamp="currentTimestamp"
+          @clear-storage="clearStorage()"
+          @update-list="$emit('update-list')"
+        />
       </v-row>
     </v-card-title>
     <v-row
       dense
       class="my-1"
     >
-      <image-filter 
+      <image-filter
         :combined-images="combinedImages"
         @image-filter="filteredImages = $event"
       />
@@ -733,7 +584,7 @@ const processImageEmbeddingButton = (image: SiteObservationImage | EvaluationIma
         open-delay="50"
         bottom
       >
-        <template #activator="{ props:subProps }">
+        <template #activator="{ props: subProps }">
           <v-icon
             v-bind="subProps"
             :color="showSitePoly ? 'blue' : ''"
@@ -743,25 +594,37 @@ const processImageEmbeddingButton = (image: SiteObservationImage | EvaluationIma
             mdi-vector-polygon
           </v-icon>
         </template>
-        <span>
-          Toggle between Site Polygon and Observation Polygon
-        </span>
+        <span> Toggle between Site Polygon and Observation Polygon </span>
       </v-tooltip>
       <v-tooltip
-        v-if="filteredImages.length && filteredImages[currentImage]"
+        v-if="
+          filteredImages.length &&
+            filteredImages[currentImage] &&
+            filteredImages[currentImage].image
+        "
         open-delay="50"
         bottom
       >
-        <template #activator="{ props:subProps }">
+        <template #activator="{ props: subProps }">
           <v-icon
-            v-if="!embeddingCheckInterval[filteredImages[currentImage].image.id]"
+            v-if="
+              !embeddingCheckInterval[filteredImages[currentImage].image.id]
+            "
             v-bind="subProps"
-            :color="filteredImages[currentImage].image.image_embedding ? 'blue' : ''"
+            :color="
+              filteredImages[currentImage].image.image_embedding ? 'blue' : ''
+            "
             :disabled="filteredImages[currentImage].image.image_embedding"
             class="mx-2"
-            @click="processImageEmbeddingButton(filteredImages[currentImage].image)"
+            @click="
+              processImageEmbeddingButton(filteredImages[currentImage].image)
+            "
           >
-            {{ filteredImages[currentImage].image.image_embedding ? 'mdi-image-plus-outline' : 'mdi-image-refresh-outline' }}
+            {{
+              filteredImages[currentImage].image.image_embedding
+                ? "mdi-image-plus-outline"
+                : "mdi-image-refresh-outline"
+            }}
           </v-icon>
           <v-icon
             v-else
@@ -771,16 +634,14 @@ const processImageEmbeddingButton = (image: SiteObservationImage | EvaluationIma
             mdi-spin mdi-sync
           </v-icon>
         </template>
-        <span>
-          Has or Generate Image embedding
-        </span>
+        <span> Has or Generate Image embedding </span>
       </v-tooltip>
       <v-spacer />
       <v-tooltip
         open-delay="50"
         bottom
       >
-        <template #activator="{ props:subProps }">
+        <template #activator="{ props: subProps }">
           <v-icon
             v-bind="subProps"
             :color="rescaleImage ? 'blue' : ''"
@@ -789,9 +650,7 @@ const processImageEmbeddingButton = (image: SiteObservationImage | EvaluationIma
             mdi-resize
           </v-icon>
         </template>
-        <span>
-          Rescale Images
-        </span>
+        <span> Rescale Images </span>
       </v-tooltip>
       <image-gif-creation
         :background="background"
@@ -806,9 +665,7 @@ const processImageEmbeddingButton = (image: SiteObservationImage | EvaluationIma
     </v-row>
     <v-row>
       <v-spacer />
-      <canvas
-        ref="canvasRef"
-      />
+      <canvas ref="canvasRef" />
       <v-spacer />
     </v-row>
     <v-row
@@ -827,7 +684,7 @@ const processImageEmbeddingButton = (image: SiteObservationImage | EvaluationIma
           open-delay="50"
           bottom
         >
-          <template #activator="{ props:subProps }">
+          <template #activator="{ props: subProps }">
             <v-icon
               v-bind="subProps"
               @click="copyURL(filteredImages[currentImage].image.aws_location)"
@@ -856,7 +713,10 @@ const processImageEmbeddingButton = (image: SiteObservationImage | EvaluationIma
               {{ currentLabel }}
             </v-chip>
             <v-icon
-              v-if="editMode && filteredImages[currentImage].image.observation_id !== null"
+              v-if="
+                editMode &&
+                  filteredImages[currentImage].image.observation_id !== null
+              "
               size="small"
               @click="setEditingMode('SiteObservationLabel')"
             >
@@ -871,8 +731,14 @@ const processImageEmbeddingButton = (image: SiteObservationImage | EvaluationIma
         cols="3"
       >
         <div>
-          <div>NODATA: {{ filteredImages[currentImage].image.percent_black.toFixed(0) }}%</div>
-          <div>Cloud: {{ filteredImages[currentImage].image.cloudcover.toFixed(0) }}%</div>
+          <div>
+            NODATA:
+            {{ filteredImages[currentImage].image.percent_black.toFixed(0) }}%
+          </div>
+          <div>
+            Cloud:
+            {{ filteredImages[currentImage].image.cloudcover.toFixed(0) }}%
+          </div>
         </div>
       </v-col>
     </v-row>
@@ -901,7 +767,7 @@ const processImageEmbeddingButton = (image: SiteObservationImage | EvaluationIma
         class="mx-2 hover"
         @click="togglePlayback()"
       >
-        {{ playbackEnabled ? 'mdi-pause' : 'mdi-play' }}
+        {{ playbackEnabled ? "mdi-pause" : "mdi-play" }}
       </v-icon>
       <v-icon
         class="mx-2 hover"
@@ -911,7 +777,7 @@ const processImageEmbeddingButton = (image: SiteObservationImage | EvaluationIma
       </v-icon>
       <v-icon
         class="mx-2 hover"
-        @click="currentImage = filteredImages.length -1"
+        @click="currentImage = filteredImages.length - 1"
       >
         mdi-skip-forward
       </v-icon>
@@ -930,7 +796,7 @@ const processImageEmbeddingButton = (image: SiteObservationImage | EvaluationIma
 <style scoped>
 .hover:hover {
   cursor: pointer;
-  color:blue
+  color: blue;
 }
 
 .review {
@@ -948,7 +814,7 @@ const processImageEmbeddingButton = (image: SiteObservationImage | EvaluationIma
   font-size: 0.75em;
 }
 .top-bar {
-  font-size:12px;
+  font-size: 12px;
   font-weight: bold;
 }
 

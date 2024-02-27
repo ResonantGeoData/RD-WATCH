@@ -1,4 +1,5 @@
 // Convert the onnx model mask prediction to ImageData
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
 export function arrayToImageData(input: any, width: number, height: number, color: [number, number, number, number] = [0, 114, 189, 255]) {
   const [r, g, b, a] = color; // the masks's blue color
   const arr = new Uint8ClampedArray(4 * width * height).fill(0);
@@ -35,6 +36,7 @@ export function imageDataToCanvas(imageData: ImageData) {
 }
 
 // Convert the onnx model mask output to an HTMLImageElement
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
 export function onnxMaskToImage(input: any, width: number, height: number) {
   return imageDataToImage(arrayToImageData(input, width, height));
 }

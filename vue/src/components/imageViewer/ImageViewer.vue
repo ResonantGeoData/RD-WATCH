@@ -5,10 +5,12 @@ import { EvaluationImage, EvaluationImageResults } from "../../types";
 import { getColorFromLabel, styles } from '../../mapstyle/annotationStyles';
 import { ObsDetails, SiteObservationImage, loadAndToggleSatelliteImages, state } from '../../store'
 import { SiteModelStatus } from "../../client/services/ApiService";
-import { CanvasCapture } from 'canvas-capture';
 import type { PixelPoly } from './imageUtils';
-import { createCanvas, drawData, processImagePoly } from './imageUtils';
+import { drawData, processImagePoly } from './imageUtils';
 import maplibregl from 'maplibre-gl';
+import ImageGifCreation from "./ImageGifCreation.vue";
+import ImageFilter from "./ImageFilter.vue";
+
 interface Props {
   siteEvalId: string;
   dialog?: boolean;
@@ -56,14 +58,8 @@ const siteEvaluationUpdated = ref(false)
 const siteStatus: Ref<string | null> = ref(null);
 const imageRef: Ref<HTMLImageElement | null> = ref(null);
 const canvasRef: Ref<HTMLCanvasElement | null> = ref(null);
-const baseImageSources = ref(['S2', 'WV', 'L8'])
-const baseObs = ref(['observations', 'non-observations'])
-const filterSettings = ref(false);
 const combinedImages: Ref<{image: EvaluationImage; poly: PixelPoly, groundTruthPoly?: PixelPoly}[]> = ref([]);
-const imageSourcesFilter: Ref<EvaluationImage['source'][]> = ref(['S2', 'WV', 'L8']);
-const percentBlackFilter: Ref<number> = ref(100);
-const cloudFilter: Ref<number> = ref(100);
-const siteObsFilter: Ref<('observations' | 'non-observations')[]> = ref(['observations', 'non-observations'])
+const filteredImages: Ref<{image: EvaluationImage; poly: PixelPoly, groundTruthPoly?: PixelPoly}[]> = ref([]);
 // Ease of display refs
 const currentLabel = ref('unknown')
 const currentDate = ref('');
@@ -82,28 +78,6 @@ const evaluationGeoJSON: Ref<GeoJSON.Polygon | null> = ref(null); // holds the s
 
 const showSitePoly = ref(props.editable); // Swap between showing the site polygon and the site observation polygon
 
-const filteredImages = computed(() => {
-  return combinedImages.value.filter((item) => {
-    let add = true;
-    if (!imageSourcesFilter.value.includes(item.image.source)) {
-      add = false;
-    }
-    if (siteObsFilter.value.includes('observations') && siteObsFilter.value.length ===1 && item.image.observation_id === null) {
-      add = false;
-    }
-    if (siteObsFilter.value.includes('non-observations') && siteObsFilter.value.length ===1 && item.image.observation_id !== null) {
-      add = false;
-    }
-    if (item.image.percent_black > percentBlackFilter.value) {
-      add = false;
-    }
-    if (item.image.cloudcover > cloudFilter.value) {
-      add = false;
-    }
-    return add;
-  })
-
-})
 
 
 
@@ -149,103 +123,12 @@ const getImageData = async () => {
         combinedImages.value.push(result);
     })
 }
-let background: HTMLCanvasElement & { ctx?: CanvasRenderingContext2D | null };
+const background: Ref<HTMLCanvasElement & { ctx?: CanvasRenderingContext2D | null } | undefined> = ref();
 
 watch(showSitePoly, () => {
   getImageData();
 })
 
-// GIF Settings and Variables
-
-
-const downloadingGifFPS = computed({
-  get() {
-    return state.gifSettings.fps;
-  },
-  set(val: number) {
-    state.gifSettings = { ...state.gifSettings, fps: val };
-  },
-});
-const downloadingGifQuality = computed({
-  get() {
-    return state.gifSettings.quality || 0.01;
-  },
-  set(val: number) {
-    state.gifSettings = { ...state.gifSettings, quality: val };
-  },
-});
-
-
-const downloadingGif = ref(false);
-const downloadingGifState: Ref<null | 'drawing' | 'generating'> = ref(null);
-const downloadingGifProgress = ref(0);
-const GifSettingsDialog = ref(false);
-const exportProgress = (progress: number) => {
-  downloadingGifProgress.value = progress * 100;
-  if (progress === 1) {
-    downloadingGif.value = false;
-    downloadingGifState.value = null;
-    downloadingGifProgress.value = 0;
-  }
-}
-
-function drawForDownload() {
-  downloadingGif.value = true;
-  let width = -Infinity;
-  let height = -Infinity;
-  for (let i = 0; i< filteredImages.value.length; i += 1) {
-    const [imgWidth, imgHeight ] =filteredImages.value[i].image.image_dimensions;
-    width = Math.max(width, imgWidth);
-    height = Math.max(height, imgHeight);
-  }
-  if (width < 500 || height < 500) {
-    const ratio = width / height;
-    if (width < 500) {
-      width = 500;
-      height = ratio / 500;
-    }
-    if (height < 500) {
-      height = 500;
-      width = ratio * 500;
-    }
-  }
-  const offScreenCanvas = createCanvas(width * rescalingBBox.value, height * rescalingBBox.value);
-  downloadingGifState.value = 'drawing';
-  CanvasCapture.init(offScreenCanvas, { verbose: false});
-  CanvasCapture.beginGIFRecord({
-    name: props.siteEvaluationName || 'download',
-    fps: downloadingGifFPS.value,
-    quality: downloadingGifQuality.value,
-    onExportProgress: exportProgress,
-  });
-  let index = 0;
-  function drawImageForRecord(){
-    requestAnimationFrame(drawImageForRecord);
-    if (index < filteredImages.value.length ) {
-      drawData(
-        offScreenCanvas,
-        filteredImages.value[index].image,
-        filteredImages.value[index].poly,
-        filteredImages.value[index].groundTruthPoly,
-        width,
-        height,
-        background,
-        drawGroundTruth.value,
-        rescaleImage.value,
-        props.fullscreen,
-        rescalingBBox.value,
-      );
-      CanvasCapture.recordFrame();
-      index += 1
-      downloadingGifProgress.value = (index / filteredImages.value.length) * 100;
-    } else {
-      CanvasCapture.stopRecord();
-      downloadingGifState.value = 'generating';
-      downloadingGifProgress.value = 0;
-    }
-  }
-  drawImageForRecord();
-}
 const load = async (newValue?: string, oldValue?: string) => {
   const index = state.enabledSiteObservations.findIndex((item) => item.id === oldValue);
 
@@ -270,7 +153,7 @@ const load = async (newValue?: string, oldValue?: string) => {
         filteredImages.value[currentImage.value].groundTruthPoly,
         -1,
         -1,
-        background,
+        background.value,
         drawGroundTruth.value,
         rescaleImage.value,
         props.fullscreen,
@@ -288,7 +171,7 @@ watch(() => props.siteEvalId , () => {
 });
 load();
 
-watch([percentBlackFilter, cloudFilter, siteObsFilter, imageSourcesFilter], () => {
+watch(filteredImages, () => {
   if (currentImage.value > filteredImages.value.length) {
     currentImage.value = 0;
   }
@@ -316,7 +199,7 @@ watch([currentImage, imageRef, filteredImages, drawGroundTruth, rescaleImage, re
           filteredImages.value[currentImage.value].groundTruthPoly,
           -1,
           -1,
-          background,
+          background.value,
           drawGroundTruth.value,
           rescaleImage.value,
           props.fullscreen,
@@ -428,7 +311,7 @@ const togglePlayback = () => {
   loopingInterval =
   setInterval(() => {
     adjustImage(1)
-  }, (1.0 / downloadingGifFPS.value) * 1000);
+  }, (1.0 / state.gifSettings.fps) * 1000);
   playbackEnabled.value = true;
 };
 
@@ -842,12 +725,10 @@ const processImageEmbeddingButton = (image: SiteObservationImage | EvaluationIma
       dense
       class="my-1"
     >
-      <v-icon @click="filterSettings = !filterSettings">
-        mdi-filter
-      </v-icon>
-      <div>
-        {{ filteredImages.length }} of {{ combinedImages.length }} images
-      </div>
+      <image-filter 
+        :combined-images="combinedImages"
+        @image-filter="filteredImages = $event"
+      />
       <v-tooltip
         open-delay="50"
         bottom
@@ -912,109 +793,17 @@ const processImageEmbeddingButton = (image: SiteObservationImage | EvaluationIma
           Rescale Images
         </span>
       </v-tooltip>
-      <div v-if="downloadingGif">
-        <span> {{ downloadingGifState === 'drawing' ? 'Drawing' : 'GIF Creation' }}</span>
-        <v-progress-linear
-          v-model="downloadingGifProgress"
-          width="50"
-        />
-      </div>
-      <v-tooltip
-        open-delay="50"
-        bottom
-      >
-        <template #activator="{ props:subProps }">
-          <v-icon
-            v-if="!downloadingGif"
-            v-bind="subProps"
-            @click="drawForDownload()"
-          >
-            mdi-download-box-outline
-          </v-icon>
-          <v-icon v-else>
-            mdi-spin mdi-sync
-          </v-icon>
-          <v-icon @click="GifSettingsDialog = true">
-            mdi-cog
-          </v-icon>
-        </template>
-        <span>
-          Download Images to GIF.
-        </span>
-      </v-tooltip>
+      <image-gif-creation
+        :background="background"
+        :filtered-images="filteredImages"
+        :fullscreen="fullscreen"
+        :rescale-image="rescaleImage"
+        :site-evaluation-name="siteEvaluationName"
+        :rescaling-b-box="rescalingBBox"
+        :draw-ground-truth="drawGroundTruth"
+        @rescale-b-box="rescalingBBox = $event"
+      />
     </v-row>
-    <div v-if="filterSettings">
-      <v-row dense>
-        <v-select
-          v-model="siteObsFilter"
-          label="Site Observations"
-          :items="baseObs"
-          multiple
-          closable-chips
-          chips
-          class="mx-2"
-        />
-        <v-select
-          v-model="imageSourcesFilter"
-          label="Sources"
-          :items="baseImageSources"
-          multiple
-          closable-chips
-          chips
-          class="mx-2"
-        />
-      </v-row>
-      <v-row
-        dense
-        justify="center"
-        align="center"
-      >
-        <v-col cols="3">
-          <span>Cloud Cover:</span>
-        </v-col>
-        <v-col cols="7">
-          <v-slider
-            v-model.number="cloudFilter"
-            min="0"
-            max="100"
-            step="1"
-            color="primary"
-            density="compact"
-            class="mt-5"
-          />
-        </v-col>
-        <v-col>
-          <span class="pl-2">
-            {{ cloudFilter }}%
-          </span>
-        </v-col>
-      </v-row>
-      <v-row
-        dense
-        justify="center"
-        align="center"
-      >
-        <v-col cols="3">
-          <span>NoData:</span>
-        </v-col>
-        <v-col cols="7">
-          <v-slider
-            v-model.number="percentBlackFilter"
-            min="0"
-            max="100"
-            step="1"
-            color="primary"
-            density="compact"
-            class="mt-5"
-          />
-        </v-col>
-        <v-col>
-          <span class="pl-2">
-            {{ percentBlackFilter }}%
-          </span>
-        </v-col>
-      </v-row>
-    </div>
     <v-row>
       <v-spacer />
       <canvas
@@ -1135,198 +924,6 @@ const processImageEmbeddingButton = (image: SiteObservationImage | EvaluationIma
       height="15"
       class="mt-4"
     />
-    <div v-if="false">
-      <v-icon
-        v-if="editMode && filteredImages[currentImage] && filteredImages[currentImage].image.observation_id !== null"
-        @click="setEditingMode('SiteObservationNotes')"
-      >
-        mdi-pencil
-      </v-icon>Notes:
-      <p>
-        {{ notes }}
-      </p>
-    </div>
-    <v-dialog
-      v-model="GifSettingsDialog"
-      width="400"
-    >
-      <v-card>
-        <v-card-title> GIF Downloading Settings</v-card-title>
-        <v-card-text>
-          <v-row dense>
-            <v-text-field
-              v-model.number="downloadingGifFPS"
-              type="number"
-              label="FPS"
-              step="0.1"
-              :rules="[v => v > 0 || 'Value must be greater than 0']"
-            />
-          </v-row>
-          <v-row dense>
-            <v-slider
-              v-model="rescalingBBox"
-              min="1"
-              max="5"
-              step="0.1"
-              :label="`Zoom out (${rescalingBBox.toFixed(2)})X`"
-            />
-          </v-row>
-
-          <v-row dense>
-            <v-slider
-              v-model="downloadingGifQuality"
-              min="0"
-              max="1"
-              step="0.1"
-              :label="`Quality (${downloadingGifQuality.toFixed(2)})`"
-            />
-          </v-row>
-        </v-card-text>
-        <v-card-actions>
-          <v-row>
-            <v-spacer />
-            <v-btn
-              color="success"
-              @click="GifSettingsDialog = false"
-            >
-              OK
-            </v-btn>
-          </v-row>
-        </v-card-actions>
-      </v-card>
-    </v-dialog>
-    <v-dialog
-      v-model="editDialog"
-      width="400"
-    >
-      <v-card v-if="currentEditMode === 'SiteEvaluationLabel'">
-        <v-card-title>Edit Site Model Label</v-card-title>
-        <v-card-text>
-          <v-select
-            v-model="siteEvaluationLabel"
-            :items="siteEvaluationList"
-            label="Label"
-            class="mx-2"
-          />
-        </v-card-text>
-        <v-card-actions>
-          <v-row dense>
-            <v-btn
-              color="error"
-              class="mx-3"
-              @click="editDialog = false"
-            >
-              Cancel
-            </v-btn>
-            <v-btn
-              color="success"
-              class="mx-3"
-              @click="editDialog = false; siteEvaluationUpdated = true"
-            >
-              Save
-            </v-btn>
-          </v-row>
-        </v-card-actions>
-      </v-card>
-      <v-card v-if="currentEditMode === 'StartDate'">
-        <v-card>
-          <v-card-title>Observation Time</v-card-title>
-          <v-card-text>
-            <v-row
-              dense
-              justify="center"
-            >
-              <v-btn
-                color="error"
-                class="mb-2 mx-1"
-                size="small"
-                @click="updateTime(null, 'StartDate'); editDialog=false"
-              >
-                Set Time to Null
-              </v-btn>
-              <v-btn
-                color="primary"
-                class="mb-2 mx-1"
-                size="small"
-                @click="updateTime(currentDate, 'StartDate'); editDialog=false"
-              >
-                Current: {{ currentDate }}
-              </v-btn>
-            </v-row>
-            <v-date-picker
-              v-if="startDateTemp !== null"
-              :model-value="[startDateTemp ? startDateTemp : currentTimestamp]"
-              @update:model-value="updateTime($event, 'StartDate')"
-              @click:cancel="editDialog = false"
-              @click:save="editDialog = false"
-            />
-          </v-card-text>
-        </v-card>
-      </v-card>
-      <v-card v-if="currentEditMode === 'EndDate'">
-        <v-card>
-          <v-card-title>Observation Time</v-card-title>
-          <v-card-text>
-            <v-row
-              dense
-              justify="center"
-            >
-              <v-btn
-                color="error"
-                class="mb-2 mx-1"
-                size="small"
-                @click="updateTime(null, 'EndDate'); editDialog=false"
-              >
-                Set Time to Null
-              </v-btn>
-              <v-btn
-                color="primary"
-                class="mb-2 mx-1"
-                size="small"
-                @click="updateTime(currentDate, 'EndDate'); editDialog=false"
-              >
-                Current: {{ currentDate }}
-              </v-btn>
-            </v-row>
-            <v-date-picker
-              v-if="endDateTemp !== null"
-              :model-value="[endDateTemp ? endDateTemp : currentTimestamp]"
-              @update:model-value="updateTime($event, 'EndDate')"
-              @click:cancel="editDialog = false"
-              @click:save="editDialog = false"
-            />
-          </v-card-text>
-        </v-card>
-      </v-card>
-      <v-card v-if="currentEditMode === 'SiteEvaluationNotes'">
-        <v-card-title>Edit Site Model Notes</v-card-title>
-        <v-card-text>
-          <v-textarea
-            v-model="siteEvaluationNotes"
-            label="Notes"
-          />
-        </v-card-text>
-        <v-card-actions>
-          <v-row dense>
-            <v-spacer />
-            <v-btn
-              color="error"
-              class="mx-3"
-              @click="editDialog = false"
-            >
-              Cancel
-            </v-btn>
-            <v-btn
-              color="success"
-              class="mx-3"
-              @click="editDialog = false; siteEvaluationUpdated = true"
-            >
-              Save
-            </v-btn>
-          </v-row>
-        </v-card-actions>
-      </v-card>
-    </v-dialog>
   </v-card>
 </template>
 

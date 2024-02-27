@@ -2,7 +2,6 @@
 import {
   Ref,
   computed,
-  onMounted,
   onUnmounted,
   ref,
   watch,
@@ -22,7 +21,7 @@ import maplibregl from "maplibre-gl";
 import ImageGifCreation from "./ImageGifCreation.vue";
 import ImageFilter from "./ImageFilter.vue";
 import ImageEditorDetails from "./ImageEditorDetails.vue";
-import { getColorFromLabel } from "../../mapstyle/annotationStyles";
+import ImageSliderDetails from "./ImageSliderDetails.vue";
 
 interface Props {
   siteEvalId: string;
@@ -108,7 +107,6 @@ const rescaleImage = ref(false);
 const rescalingBBox = ref(1);
 const editingPolygon = ref(false);
 
-const playbackEnabled = ref(false); // Auto playback of images
 
 const evaluationGeoJSON: Ref<GeoJSON.Polygon | null> = ref(null); // holds the site geoJSON so it can be edited
 
@@ -231,13 +229,6 @@ watch(filteredImages, () => {
   }
 });
 
-const copyURL = async (mytext: string) => {
-  try {
-    await navigator.clipboard.writeText(mytext);
-  } catch ($e) {
-    alert("Cannot copy");
-  }
-};
 
 watch(
   [
@@ -293,78 +284,9 @@ const mapImagesOn = computed(
       (item) => item.id === props.siteEvalId
     ) !== -1
 );
-const startDateTemp: Ref<string | null> = ref(null);
-const endDateTemp: Ref<string | null> = ref(null);
-const setEditingMode = (mode: EditModes) => {
-  if (["StartDate", "EndDate"].includes(mode)) {
-    if (startDate.value === null) {
-      startDateTemp.value = currentDate.value;
-    } else {
-      startDateTemp.value = startDate.value;
-    }
-    if (endDate.value === null) {
-      endDateTemp.value = currentDate.value;
-    } else {
-      endDateTemp.value = endDate.value;
-    }
-  }
-  editDialog.value = true;
-  currentEditMode.value = mode;
-};
 
-const adjustImage = (direction: number) => {
-  if (currentImage.value + direction < 0) {
-    currentImage.value = filteredImages.value.length - 1;
-  } else if (currentImage.value + direction >= filteredImages.value.length) {
-    currentImage.value = 0;
-  } else {
-    currentImage.value = currentImage.value + direction;
-  }
-};
-
-let loopingInterval: NodeJS.Timeout | null = null;
-
-const togglePlayback = () => {
-  if (loopingInterval && playbackEnabled.value) {
-    clearInterval(loopingInterval);
-    playbackEnabled.value = false;
-    return;
-  }
-  loopingInterval = setInterval(() => {
-    adjustImage(1);
-  }, (1.0 / state.gifSettings.fps) * 1000);
-  playbackEnabled.value = true;
-};
-
-const keyboardEventListener = (e: KeyboardEvent) => {
-  if (e.key === "ArrowLeft") {
-    if (e.ctrlKey) {
-      currentImage.value = 0;
-    } else {
-      adjustImage(-1);
-    }
-  }
-  if (e.key === "ArrowRight") {
-    if (e.ctrlKey) {
-      currentImage.value = filteredImages.value.length - 1;
-    } else {
-      adjustImage(1);
-    }
-  }
-  if (e.key === " ") {
-    togglePlayback();
-  }
-};
-
-onMounted(() => {
-  window.addEventListener("keydown", keyboardEventListener);
-});
 
 onUnmounted(() => {
-  if (loopingInterval) {
-    clearInterval(loopingInterval);
-  }
-  window.removeEventListener("keydown", keyboardEventListener);
   if (
     props.editable &&
     state.enabledSiteObservations.find((item) => item.id === props.siteEvalId)
@@ -668,121 +590,17 @@ const clearStorage = async () => {
       <canvas ref="canvasRef" />
       <v-spacer />
     </v-row>
-    <v-row
-      v-if="filteredImages.length && filteredImages[currentImage]"
-      dense
-      class="mt-2"
-    >
-      <v-col cols="3">
-        <div v-if="filteredImages[currentImage].image.observation_id !== null">
-          <div>Site Observation</div>
-        </div>
-        <div v-else>
-          <div>Non Site Observation</div>
-        </div>
-        <v-tooltip
-          open-delay="50"
-          bottom
-        >
-          <template #activator="{ props: subProps }">
-            <v-icon
-              v-bind="subProps"
-              @click="copyURL(filteredImages[currentImage].image.aws_location)"
-            >
-              mdi-information
-            </v-icon>
-          </template>
-          <span>
-            Click to Copy: {{ filteredImages[currentImage].image.aws_location }}
-          </span>
-        </v-tooltip>
-      </v-col>
-      <v-spacer />
-      <v-col class="text-center">
-        <div>
-          <div>{{ filteredImages[currentImage].image.source }}</div>
-
-          <div>
-            {{ currentDate }}
-          </div>
-          <div>
-            <v-chip
-              size="small"
-              :color="getColorFromLabel(currentLabel)"
-            >
-              {{ currentLabel }}
-            </v-chip>
-            <v-icon
-              v-if="
-                editMode &&
-                  filteredImages[currentImage].image.observation_id !== null
-              "
-              size="small"
-              @click="setEditingMode('SiteObservationLabel')"
-            >
-              mdi-pencil
-            </v-icon>
-          </div>
-        </div>
-      </v-col>
-      <v-spacer />
-      <v-col
-        class="text-right"
-        cols="3"
-      >
-        <div>
-          <div>
-            NODATA:
-            {{ filteredImages[currentImage].image.percent_black.toFixed(0) }}%
-          </div>
-          <div>
-            Cloud:
-            {{ filteredImages[currentImage].image.cloudcover.toFixed(0) }}%
-          </div>
-        </div>
-      </v-col>
-    </v-row>
-    <v-slider
-      v-if="filteredImages.length && filteredImages[currentImage]"
-      v-model="currentImage"
-      min="0"
-      :max="filteredImages.length - 1"
-      step="1"
+    <image-slider-details
+      :filtered-images="filteredImages"
+      :current-date="currentDate"
+      :current-label="currentLabel"
+      :edit-mode="editMode"
+      :start-date="startDate"
+      :end-date="endDate"
+      :image-index="currentImage"
+      @current-image="currentImage = $event"
+      @edit-dialog="editDialog = true; currentEditMode = $event"
     />
-    <v-row v-if="filteredImages.length">
-      <v-spacer />
-      <v-icon
-        class="mx-2 hover"
-        @click="currentImage = 0"
-      >
-        mdi-skip-backward
-      </v-icon>
-      <v-icon
-        class="mx-2 hover"
-        @click="adjustImage(-1)"
-      >
-        mdi-skip-previous
-      </v-icon>
-      <v-icon
-        class="mx-2 hover"
-        @click="togglePlayback()"
-      >
-        {{ playbackEnabled ? "mdi-pause" : "mdi-play" }}
-      </v-icon>
-      <v-icon
-        class="mx-2 hover"
-        @click="adjustImage(1)"
-      >
-        mdi-skip-next
-      </v-icon>
-      <v-icon
-        class="mx-2 hover"
-        @click="currentImage = filteredImages.length - 1"
-      >
-        mdi-skip-forward
-      </v-icon>
-      <v-spacer />
-    </v-row>
     <v-progress-linear
       v-if="loading"
       indeterminate
@@ -816,13 +634,5 @@ const clearStorage = async () => {
 .top-bar {
   font-size: 12px;
   font-weight: bold;
-}
-
-.notesPreview {
-  min-width: 150px;
-  max-width: 150px;
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
 }
 </style>

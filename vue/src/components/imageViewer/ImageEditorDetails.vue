@@ -478,3 +478,13 @@ const deleteSelectedPoints = () => {
     </v-card>
   </v-dialog>
 </template>
+
+<style scoped>
+.notesPreview {
+  min-width: 150px;
+  max-width: 150px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+</style>

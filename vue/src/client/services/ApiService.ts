@@ -59,6 +59,7 @@ export interface Proposals {
     S2: number,
     WV: number,
     L8: number,
+    PL: number,
     number: number,
     start_date: number;
     end_date: number;
@@ -91,7 +92,7 @@ export interface SiteObservationUpdateQuery {
 
 }
 
-export type Constellation  = 'S2' | 'WV' | 'L8';
+export type Constellation  = 'S2' | 'WV' | 'L8' | 'PL';
 export interface DownloadSettings {
   constellation: Constellation[];
   dayRange?: number;

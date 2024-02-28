@@ -447,6 +447,7 @@ def get_proposals_query(model_run_id: UUID4):
             S2=Count(Case(When(siteimage__source='S2', then=1))),
             WV=Count(Case(When(siteimage__source='WV', then=1))),
             L8=Count(Case(When(siteimage__source='L8', then=1))),
+            PL=Count(Case(When(siteimage__source='PL', then=1))),
             time=ExtractEpoch('timestamp'),
             site_id=F('id'),
             downloading=Exists(

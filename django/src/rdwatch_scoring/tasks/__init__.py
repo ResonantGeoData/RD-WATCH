@@ -111,7 +111,7 @@ def get_siteobservations_images(
         baseSiteEval.union_geometry
     ).extent
 
-    # if width | height is too small we pad S2/L8 regions for more context
+    # if width | height is too small we pad S2/L8/PL regions for more context
     bbox_width = (bbox[2] - bbox[0]) * ToMeters
     bbox_height = (bbox[3] - bbox[1]) * ToMeters
     logger.warning('BBOX')
@@ -178,7 +178,7 @@ def get_siteobservations_images(
                 source=baseConstellation,
             )
             if (
-                baseConstellation in ('S2', 'L8')
+                baseConstellation in ('S2', 'L8', 'PL')
                 and dayRange > -1
                 and is_inside_range(found_timestamps.keys(), observation.date, dayRange)
             ):
@@ -298,7 +298,7 @@ def get_siteobservations_images(
         )
         capture_timestamp = capture.timestamp.replace(microsecond=0)
         if (
-            (baseConstellation == 'S2' or baseConstellation == 'L8')
+            baseConstellation in ('S2', 'L8', 'PL')
             and dayRange > -1
             and is_inside_range(found_timestamps.keys(), capture_timestamp, dayRange)
         ):

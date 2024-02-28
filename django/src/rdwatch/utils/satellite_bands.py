@@ -28,7 +28,7 @@ def get_bands(
     bbox: tuple[float, float, float, float],
     timebuffer: timedelta | None = None,
 ) -> Iterator[Band]:
-    if constellation != 'S2' and constellation != 'L8':
+    if constellation not in ('S2', 'L8', 'PL'):
         raise ValueError(f'Unsupported constellation {constellation}')
 
     results = stac_search(
@@ -77,6 +77,7 @@ def get_bands(
                     )
                     or collection.startswith('ta1-s2-acc-')
                     or collection.startswith('ta1-ls-acc-')
+                    or collection.startswith('ta1-pd-acc-')
                 ):
                     level, _ = ProcessingLevel.objects.get_or_create(
                         slug='2A',

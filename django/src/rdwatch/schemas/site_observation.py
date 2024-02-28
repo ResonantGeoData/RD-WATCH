@@ -9,7 +9,7 @@ class SiteObservationRequest(Schema):
     geom: dict | None = None  # TODO: Replace with pydantics geoJSON
     score: float | None
     timestamp: datetime
-    constellation: str  # WV, S8, L8
+    constellation: str  # WV, S8, L8, PL
     spectrum: str | None
     notes: str | None
 

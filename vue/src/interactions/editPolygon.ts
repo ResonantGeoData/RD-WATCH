@@ -27,7 +27,8 @@ export default function useEditPolygon(mapObj: Map): EditPolygonType {
     if (draw.value) {
       map.value.removeControl(draw.value as unknown as IControl);
     }
-    const styles =  [
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
+    const _styles =  [
       // ACTIVE (being drawn)
       // line stroke
       {

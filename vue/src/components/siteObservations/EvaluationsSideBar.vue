@@ -31,9 +31,9 @@ const updateSources = () => {
   state.enabledSiteObservations = newObservations;
 }
 
-const baseSources: Ref<('S2' |'WV' | 'L8')[]> = ref(['S2', 'WV', 'L8'])
+const baseSources: Ref<('S2' |'WV' | 'L8' | 'PL')[]> = ref(['S2', 'WV', 'L8', 'PL'])
 
-const sources: Ref<('S2' |'WV' | 'L8')[]> = ref(['S2', 'WV', 'L8']);
+const sources: Ref<('S2' |'WV' | 'L8' | 'PL')[]> = ref(['S2', 'WV', 'L8', 'PL']);
 const updateSatSources = () => {
   state.siteObsSatSettings = {...state.siteObsSatSettings, observationSources: sources.value };
   updateSources();

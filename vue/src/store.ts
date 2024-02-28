@@ -54,7 +54,7 @@ export type ImageBBox = [
 export interface SiteObservationImage {
   image: string; // URL string toImage
   timestamp: number;
-  source: 'S2' | 'WV' | 'L8';
+  source: 'S2' | 'WV' | 'L8' | 'PL';
   cloudcover?: number;
   percent_black?: number;
   observation_id: string | null;
@@ -104,6 +104,7 @@ export interface SiteObservation {
   imageCounts: {
     L8: {total:number, unmatched:number | null, loaded: number, images?: SiteObservationImage[]};
     S2: {total:number, unmatched:number | null, loaded: number, images?: SiteObservationImage[]};
+    PL: {total:number, unmatched:number | null, loaded: number, images?: SiteObservationImage[]};
     WV: {total:number, unmatched:number | null, loaded: number, images?: SiteObservationImage[]};
   }
   score: {
@@ -121,16 +122,16 @@ export interface SatelliteData {
   satelliteImagesOn: boolean;
   imageOpacity: number;
   satelliteTimeList: SatelliteTimeStamp[];
-  satelliteTimeSource: 'S2' | 'WorldView'
+  satelliteTimeSource: 'S2' | 'WorldView' | 'Planet'
   satelliteTimeStamp: string | null,
   satelliteBounds:[number,number][];
   loadingSatelliteImages: boolean;
   cloudCover: number;
-  satelliteSources: ('S2' |'WorldView')[];
+  satelliteSources: ('S2' |'WorldView' | 'Planet')[];
 }
 
 export interface siteObsSatSettings {
-  observationSources: ('S2' | 'WV' | 'L8')[];
+  observationSources: ('S2' | 'WV' | 'L8' | 'PL')[];
   percentBlackFilter: number;
   cloudCoverFilter: number;
   imageOpacity: number;
@@ -209,7 +210,7 @@ export const state = reactive<{
   selectedObservations: [],
   enabledSiteObservations: [],
   siteObsSatSettings: {
-    observationSources: ['S2', 'WV', 'L8'],
+    observationSources: ['S2', 'WV', 'L8', 'PL'],
     cloudCoverFilter: 70,
     percentBlackFilter: 70,
     imageOpacity: 100.0,
@@ -248,6 +249,7 @@ export const getSiteObservationDetails = async (siteId: string, obsDetails?: Obs
     .sort((a, b) => (a.timestamp - b.timestamp));
   const S2List = images.results.filter((item) => item.source === 'S2' && item.image !== null).sort((a, b) => (a.timestamp - b.timestamp));
   const L8List = images.results.filter((item) => item.source === 'L8' && item.image !== null).sort((a, b) => (a.timestamp - b.timestamp));
+  const PLList = images.results.filter((item) => item.source === 'PL' && item.image !== null).sort((a, b) => (a.timestamp - b.timestamp));
 
   const L8 = {
     total: results.filter((item) => item.constellation === 'L8').length,
@@ -262,6 +264,12 @@ export const getSiteObservationDetails = async (siteId: string, obsDetails?: Obs
     images: S2List,
     unmatched: null,
   };
+  const PL = {
+    total: results.filter((item) => item.constellation === 'PL').length,
+    loaded:PLList.length,
+    images: PLList,
+    unmatched: null,
+  }
   const WV = {
     total: results.filter((item) => item.constellation === 'WV').length,
     loaded:worldViewList.length,
@@ -289,6 +297,7 @@ export const getSiteObservationDetails = async (siteId: string, obsDetails?: Obs
       L8,
       S2,
       WV,
+      PL,
     },
     score: {
       min: minScore,
@@ -327,6 +336,9 @@ export const toggleSatelliteImages = (siteObs: SiteObservation, off= false) => {
           }
           if (siteObs.imageCounts.L8.images && state.siteObsSatSettings.observationSources.includes('L8')) {
             imageList = [...imageList, ...siteObs.imageCounts.L8.images]
+          }
+          if (siteObs.imageCounts.PL.images && state.siteObsSatSettings.observationSources.includes('PL')) {
+            imageList = [...imageList, ...siteObs.imageCounts.PL.images]
           }
           tempArr.push({
               id: siteObs.id,

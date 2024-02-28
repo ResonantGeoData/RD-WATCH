@@ -109,6 +109,7 @@ const QUERY = `
               AND U0."rho" = 0.5
               AND U0."site_truth" = ("site"."site_id")
               AND U0."tau" = 0.2
+              AND U0."min_confidence_score" = 0.0
             )
         )
         WHEN (
@@ -126,6 +127,7 @@ const QUERY = `
               AND U0."rho" = 0.5
               AND U0."site_proposal" = ("site"."site_id")
               AND U0."tau" = 0.2
+              AND U0."min_confidence_score" = 0.0
             )
         )
         ELSE NULL

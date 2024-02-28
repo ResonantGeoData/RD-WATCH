@@ -23,6 +23,7 @@ export interface ProposalDisplay {
   S2: number;
   WV: number;
   L8: number;
+  PL: number;
   status: SiteModelStatus;
   timestamp: number;
   downloading: boolean;
@@ -90,6 +91,7 @@ const getSiteProposals = async () => {
           S2: item.S2,
           WV: item.WV,
           L8: item.L8,
+          PL: item.PL,
           status: item.status,
           timestamp: item.timestamp,
           downloading: item.downloading,
@@ -211,6 +213,9 @@ const startDownload = async (data: DownloadSettings) => {
               <v-chip size="x-small">
                 L8: {{ item.L8 }}
               </v-chip>
+              <v-chip size="x-small">
+                PL: {{ item.PL }}
+              </v-chip>
             </div>
             <div v-else>
               <v-chip
@@ -252,7 +257,7 @@ const startDownload = async (data: DownloadSettings) => {
             <v-spacer />
             <v-tooltip open-delay="300">
               <template #activator="{ props:subProps }">
-                <v-btn 
+                <v-btn
                   v-if="!item.downloading"
                   size="x-small"
                   v-bind="subProps"
@@ -261,7 +266,7 @@ const startDownload = async (data: DownloadSettings) => {
                 >
                   Get <v-icon>mdi-image</v-icon>
                 </v-btn>
-                <v-btn 
+                <v-btn
                   v-else-if="item.downloading"
                   size="x-small"
                   v-bind="subProps"

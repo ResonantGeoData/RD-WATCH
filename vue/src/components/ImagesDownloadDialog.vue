@@ -19,7 +19,7 @@ const emit = defineEmits<{
     (e: "cancel"): void;
 }>();
 
-const baseList = ref(['S2', 'WV', 'L8'])
+const baseList = ref(['S2', 'WV', 'L8', 'PL'])
 const selectedSource: Ref<Constellation[]> = ref(['WV']);
 const dayRange = ref(14);
 const noData = ref(50)
@@ -193,7 +193,7 @@ const display = ref(true);
                   </v-icon>
                 </template>
                 <span>
-                  Day Limit applies to S2/L8 imagery to grab one image every X days.  This is to prevent loading hundreds of images
+                  Day Limit applies to S2/L8/PL imagery to grab one image every X days.  This is to prevent loading hundreds of images
                 </span>
               </v-tooltip>
             </v-row>

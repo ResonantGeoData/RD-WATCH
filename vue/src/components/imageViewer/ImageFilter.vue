@@ -13,13 +13,14 @@ const emit = defineEmits<{
     (e: "imageFilter", data: {image: EvaluationImage; poly: PixelPoly, groundTruthPoly?: PixelPoly}[]): void;
 }>();
 
-const baseImageSources = ref(['S2', 'WV', 'L8'])
+const baseImageSources = ref(['S2', 'WV', 'L8', 'PL'])
 const baseObs = ref(['observations', 'non-observations'])
 const filterSettings = ref(false);
-const imageSourcesFilter: Ref<EvaluationImage['source'][]> = ref(['S2', 'WV', 'L8']);
+const imageSourcesFilter: Ref<EvaluationImage['source'][]> = ref(['S2', 'WV', 'L8', 'PL']);
 const percentBlackFilter: Ref<number> = ref(100);
 const cloudFilter: Ref<number> = ref(100);
 const siteObsFilter: Ref<('observations' | 'non-observations')[]> = ref(['observations', 'non-observations'])
+
 
 const filteredImages = computed(() => {
   return props.combinedImages.filter((item) => {

@@ -185,6 +185,24 @@ const imageDownloadDialog = ref(false);
       </v-col>
     </v-row>
     <v-row
+      dense
+      justify="center"
+      align="center"
+    >
+      <v-col cols="3">
+        <b>PL</b>
+      </v-col>
+      <v-col cols="3">
+        <b>{{ siteObservation.imageCounts.PL.loaded }}</b>
+      </v-col>
+      <v-col cols="3">
+        <b>{{ siteObservation.imageCounts.PL.total }}</b>
+      </v-col>
+      <v-col cols="3">
+        <b>{{ siteObservation.imageCounts.PL.loaded !== 0 ? Math.max(siteObservation.imageCounts.PL.loaded - siteObservation.imageCounts.PL.total, 0) : '-' }}</b>
+      </v-col>
+    </v-row>
+    <v-row
       v-if="isRunning || (progressInfo && progressInfo.error)"
       dense
       justify="center"

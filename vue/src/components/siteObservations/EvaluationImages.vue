@@ -199,7 +199,7 @@ const imageDownloadDialog = ref(false);
         <b>{{ siteObservation.imageCounts.PL.total }}</b>
       </v-col>
       <v-col cols="3">
-        <b>{{ siteObservation.imageCounts.PL.loaded !== 0 ?Math.max(siteObservation.imageCounts.PL.loaded - siteObservation.imageCounts.PL.total, 0) : '-' }}</b>
+        <b>{{ siteObservation.imageCounts.PL.loaded !== 0 ? Math.max(siteObservation.imageCounts.PL.loaded - siteObservation.imageCounts.PL.total, 0) : '-' }}</b>
       </v-col>
     </v-row>
     <v-row

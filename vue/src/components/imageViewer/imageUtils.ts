@@ -70,7 +70,7 @@ const drawData = (
           const canvasHeight = canvas.height;
           if (rescale) {
             canvas.width = canvas.width * canvasScale;
-            canvas.height = canvas.height * canvasScale;  
+            canvas.height = canvas.height * canvasScale;
           }
           // draw the offscreen canvas
             let destWidth = canvasWidth;
@@ -84,7 +84,7 @@ const drawData = (
             let imageWidth = rescale && poly.scaled ? poly.scaled.crop.width: imageDim[0];
             let imageHeight = rescale && poly.scaled ? poly.scaled.crop.height: imageDim[1];
             //Now if we have more image data than the scaled width and height are available we can take additional pixel information
-            if (rescale && poly.scaled) { //Implies S3/L8 data where more pixel data can be taken
+            if (rescale && poly.scaled) { //Implies S2/L8/PL data where more pixel data can be taken
               computedX = poly.scaled.crop.x - (((poly.scaled.crop.width  * canvasScale) - poly.scaled.crop.width ) / 2.0);
               computedY = poly.scaled.crop.y - (((poly.scaled.crop.height * canvasScale) - poly.scaled.crop.height) / 2.0);
               imageWidth = poly.scaled.crop.width * canvasScale;

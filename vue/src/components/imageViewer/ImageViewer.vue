@@ -57,11 +57,11 @@ const siteEvaluationUpdated = ref(false)
 const siteStatus: Ref<string | null> = ref(null);
 const imageRef: Ref<HTMLImageElement | null> = ref(null);
 const canvasRef: Ref<HTMLCanvasElement | null> = ref(null);
-const baseImageSources = ref(['S2', 'WV', 'L8'])
+const baseImageSources = ref(['S2', 'WV', 'L8', 'PL'])
 const baseObs = ref(['observations', 'non-observations'])
 const filterSettings = ref(false);
 const combinedImages: Ref<{image: EvaluationImage; poly: PixelPoly, groundTruthPoly?: PixelPoly}[]> = ref([]);
-const imageSourcesFilter: Ref<EvaluationImage['source'][]> = ref(['S2', 'WV', 'L8']);
+const imageSourcesFilter: Ref<EvaluationImage['source'][]> = ref(['S2', 'WV', 'L8', 'PL']);
 const percentBlackFilter: Ref<number> = ref(100);
 const cloudFilter: Ref<number> = ref(100);
 const siteObsFilter: Ref<('observations' | 'non-observations')[]> = ref(['observations', 'non-observations'])
@@ -542,7 +542,7 @@ const deleteSelectedPoints = () => {
 
       <v-col v-if="obsDetails">
         <b
-          v-if="groundTruth && hasGroundTruth" 
+          v-if="groundTruth && hasGroundTruth"
           class="mr-1"
         >Model Date Range:</b>
         <span>{{ startDate }}</span> to <span> {{ endDate }}</span>

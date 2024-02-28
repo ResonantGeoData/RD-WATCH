@@ -27,7 +27,7 @@ router = Router()
 
 
 class GenerateImagesSchema(Schema):
-    constellation: list[Literal['WV', 'S2', 'L8']] = ['WV']
+    constellation: list[Literal['WV', 'S2', 'L8', 'PL']] = ['WV']
     dayRange: int = 14
     noData: int = 50
     overrideDates: None | list[str] = None

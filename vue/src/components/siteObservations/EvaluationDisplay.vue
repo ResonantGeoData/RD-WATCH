@@ -24,7 +24,7 @@ const close = () => {
   }
 }
 const imagesActive = computed(() => state.enabledSiteObservations.findIndex((item) => item.id === props.siteObservation.id) !== -1);
-const hasImages = computed(() => props.siteObservation.imageCounts.WV.loaded > 0 || props.siteObservation.imageCounts.S2.loaded > 0);
+const hasImages = computed(() => props.siteObservation.imageCounts.WV.loaded > 0 || props.siteObservation.imageCounts.S2.loaded > 0 || props.siteObservation.imageCounts.PL.loaded > 0);
 
 const currentClosestTimestamp = computed(() => {
   const observation = state.enabledSiteObservations.find((item) => item.id === props.siteObservation.id);

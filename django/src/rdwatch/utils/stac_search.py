@@ -53,15 +53,17 @@ def _fmt_time(time: datetime):
 COLLECTIONS: dict[str, list[str]] = {
     'L8': [],
     'S2': [],
+    'PL': [],
 }
 
 if settings.ACCENTURE_VERSION is not None:
     COLLECTIONS['S2'].append(f'ta1-s2-acc-{settings.ACCENTURE_VERSION}')
     COLLECTIONS['L8'].append(f'ta1-ls-acc-{settings.ACCENTURE_VERSION}')
+    COLLECTIONS['PL'].append(f'ta1-pd-acc-{settings.ACCENTURE_VERSION}')
 
 
 def stac_search(
-    source: Literal['S2', 'L8'],
+    source: Literal['S2', 'L8', 'PL'],
     timestamp: datetime,
     bbox: tuple[float, float, float, float],
     timebuffer: timedelta | None = None,

@@ -63,6 +63,12 @@ watch(() => props.evalGeoJSON, () => {
   evaluationGeoJSON.value = props.evalGeoJSON;
 })
 
+watch(() => state.filters.editingPolygonSiteId, () => {
+  if (state.filters.editingPolygonSiteId !== null) {
+    editingPolygon.value = true;
+  }
+});
+
 
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
 const updateTime = (time: any, date: 'StartDate' | 'EndDate'| 'StartDateTemp' | 'EndDateTemp') => {

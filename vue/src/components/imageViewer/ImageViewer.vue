@@ -22,7 +22,7 @@ import ImageGifCreation from "./ImageGifCreation.vue";
 import ImageFilter from "./ImageFilter.vue";
 import ImageEditorDetails from "./ImageEditorDetails.vue";
 import ImageSliderDetails from "./ImageSliderDetails.vue";
-
+import ImageSAM from "./ImageSAM.vue";
 interface Props {
   siteEvalId: string;
   dialog?: boolean;
@@ -335,11 +335,14 @@ const generateImageEmbedding = async (
     1000
   );
 };
+
+const SAMViewer: Ref<number | null> = ref(null);
 const openSAMView = (id: number) => {
-  const name = `#${ApiService.getApiPrefix()
-    .replace("api/", "")
-    .replace("/api", "")}/SAM/${id}`;
-  window.open(name, "_blank");
+  SAMViewer.value = id;
+  // const name = `#${ApiService.getApiPrefix()
+  //   .replace("api/", "")
+  //   .replace("/api", "")}/SAM/${id}`;
+  // window.open(name, "_blank");
 };
 
 const processImageEmbeddingButton = (
@@ -495,6 +498,7 @@ const clearStorage = async () => {
       </v-row>
     </v-card-title>
     <v-row
+      v-if="SAMViewer === null"
       dense
       class="my-1"
     >
@@ -575,6 +579,7 @@ const clearStorage = async () => {
         <span> Rescale Images </span>
       </v-tooltip>
       <image-gif-creation
+        v-if="SAMViewer === null"
         :background="background"
         :filtered-images="filteredImages"
         :fullscreen="fullscreen"
@@ -585,12 +590,20 @@ const clearStorage = async () => {
         @rescale-b-box="rescalingBBox = $event"
       />
     </v-row>
-    <v-row>
+    <v-row v-if="SAMViewer === null">
       <v-spacer />
       <canvas ref="canvasRef" />
       <v-spacer />
     </v-row>
+    <v-row v-if="SAMViewer !== null">
+      <ImageSAM
+        :id="SAMViewer.toString()"
+        :site-eval-id="siteEvalId"
+        :image="filteredImages[currentImage].image"
+      />
+    </v-row>
     <image-slider-details
+      v-if="SAMViewer === null"
       :filtered-images="filteredImages"
       :current-date="currentDate"
       :current-label="currentLabel"

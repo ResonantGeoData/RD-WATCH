@@ -10,7 +10,7 @@ import * as ort from "onnxruntime-web";
 
 import { InferenceSession, Tensor } from "onnxruntime-web";
 import { modelInputProps, modelScaleProps } from "./helpers/Interfaces";
-import { handleImageScale } from "./helpers/scaleHelper";
+import { handleImageScale, handlePolyUnscale } from "./helpers/scaleHelper";
 import {
   combinePolygons,
   convertImageToPoly,
@@ -59,6 +59,8 @@ const tensor: Ref<Tensor | null> = ref(null);
 const modelScale: Ref<modelScaleProps | null> = ref(null);
 
 export default function useSAM() {
+  const baseDimensions = ref([0,0]);
+  const scaledDimensions = ref([0,0]);
   const initModel = async (modelDIR?: string) => {
     const modelLocation = modelDIR || MODEL_DIR;
     try {
@@ -78,7 +80,10 @@ export default function useSAM() {
       img.crossOrigin = "Anonymous";
 
       img.onload = () => {
+        baseDimensions.value = [img.naturalWidth, img.naturalHeight];
+
         const { height, width, samScale } = handleImageScale(img);
+        scaledDimensions.value = [width, height];
         modelScale.value = {
           height: height, // original image height
           width: width, // original image width
@@ -140,7 +145,30 @@ export default function useSAM() {
     }
   };
 
+  const scalePolyForExport = (poly: GeoJSON.Polygon) => {
+    const canvas = document.getElementById(
+      "geoJSONCanvas"
+    ) as HTMLCanvasElement;
+    const baseImage = document.getElementById(
+      "baseSAMImage"
+    ) as HTMLImageElement;
+
+    canvas.style.width = `${baseImage.clientWidth}px`;
+    canvas.style.height = `${baseImage.clientHeight}px`;
+    let width = 0;
+    let height = 0;
+    const masks = document.getElementsByClassName("selected-mask");
+    for (let i = 0; i < masks.length; i += 1) {
+      width = Math.max(masks[i].clientWidth, width);
+      height = Math.max(masks[i].clientHeight, height);
+    }
+    return handlePolyUnscale(selectedMasks.value[0].width, selectedMasks.value[0].height, width, height, poly)
+  }
+
   const processPolygons = () => {
+    if (selectedMasks.value.length === 0) {
+      return;
+    }
     const canvas = document.getElementById(
       "geoJSONCanvas"
     ) as HTMLCanvasElement;
@@ -215,66 +243,91 @@ export default function useSAM() {
     // }
   };
 
-  const convertMasksToPoly = () => {
-    // We take the multiple masks and try to convert into a single polygon by drawing them into a single image
-    const baseImage = document.getElementById(
-      "baseSAMImage"
-    ) as HTMLImageElement;
-    const tempCanvas = document.createElement("canvas") as HTMLCanvasElement;
-
-    tempCanvas.style.width = `${baseImage.clientWidth}px`;
-    tempCanvas.style.height = `${baseImage.clientHeight}px`;
-    const width = selectedMasks.value[0].width;
-    const height = selectedMasks.value[0].height;
-    tempCanvas.width = width;
-    tempCanvas.height = height;
-
-    const ctx = tempCanvas.getContext("2d");
-    if (ctx) {
-      ctx.clearRect(0, 0, tempCanvas.width, tempCanvas.height);
-    }
-    selectedMasks.value.forEach((image) => {
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const convertMasksToPoly = async (): Promise<any> => {
+    return new Promise((resolve, reject) => {
+      const baseImage = document.getElementById(
+        "baseSAMImage"
+      ) as HTMLImageElement;
+      const tempCanvas = document.createElement("canvas") as HTMLCanvasElement;
+  
+      tempCanvas.style.width = `${baseImage.clientWidth}px`;
+      tempCanvas.style.height = `${baseImage.clientHeight}px`;
+      const width = selectedMasks.value[0].width;
+      const height = selectedMasks.value[0].height;
+      tempCanvas.width = width;
+      tempCanvas.height = height;
+  
+      const ctx = tempCanvas.getContext("2d");
       if (ctx) {
-        ctx.drawImage(image, 0, 0, tempCanvas.width, tempCanvas.height);
+        ctx.clearRect(0, 0, tempCanvas.width, tempCanvas.height);
       }
-    });
-    const mergedImage = new Image(width, height);
-    mergedImage.src = tempCanvas.toDataURL();
-    mergedImage.onload = () => {
-      const result = convertImageToPoly(mergedImage, smoothing.value, true);
-      if (result) {
-        if (result.length > 1) {
-          const combined = combinePolygons(result);
-          if (combined) {
-            polygons.value = [
-              {
+      selectedMasks.value.forEach((image) => {
+        if (ctx) {
+          ctx.drawImage(image, 0, 0, tempCanvas.width, tempCanvas.height);
+        }
+      });
+      const mergedImage = new Image(width, height);
+      mergedImage.src = tempCanvas.toDataURL();
+      mergedImage.onload = async () => {
+        const result = await convertImageToPoly(mergedImage, smoothing.value, true);
+        if (result) {
+          if (result.length > 1) {
+            const combined = combinePolygons(result);
+            if (combined) {
+              polygons.value = [{
                 type: "Polygon",
                 coordinates: combined.geometry.coordinates,
-              },
-            ];
-          }
-        } else {
-          polygons.value = [
-            {
+              }];
+              const unscaledPoly = scalePolyForExport(polygons.value[0]);
+              resolve(unscaledPoly);
+            }
+          } else {
+            polygons.value = [{
               type: "Polygon",
               coordinates: result[0].geometry.coordinates,
-            },
-          ];
+            }];
+            const unscaledPoly = scalePolyForExport(polygons.value[0]);
+            resolve(unscaledPoly);
+          }
         }
-      }
-    };
+      };
+      mergedImage.onerror = (error) => {
+        reject(error); // Reject the promise if there's an error loading the image
+      };
+    });
   };
+  
 
   const undo = () => {
     if (selectedMasks.value.length) {
       selectedMasks.value.pop();
     }
   };
-  const updateSmoothing = (num: number) => {
+
+  const clearMasks = () => {
+    if (selectedMasks.value.length) {
+      selectedMasks.value = [];
+        if (polygons.value.length) {
+        const canvas = document.getElementById(
+          "geoJSONCanvas"
+        ) as HTMLCanvasElement;
+        const ctx = canvas.getContext('2d')
+        if (ctx) {
+          ctx.clearRect(0, 0, canvas.width, canvas.height);
+        }
+      }
+      polygons.value = [];
+
+    }
+  };
+
+  const updateSmoothing = async (num: number) => {
     smoothing.value = num;
     if (selectedMasks.value.length) {
-      convertMasksToPoly();
+      return await convertMasksToPoly();
     }
+    return null;
   };
 
   const handleMouse = throttle((e: MouseEvent, type: "hover" | "click") => {
@@ -306,6 +359,8 @@ export default function useSAM() {
   watch(smoothing, () => updateSmoothing(smoothing.value));
   watch(polygons, () => processPolygons());
 
+  const getPolygons = () => polygons;
+
   return {
     // Functions
     initModel,
@@ -313,7 +368,10 @@ export default function useSAM() {
     processHovered,
     processClicks,
     convertMasksToPoly,
+    updateSmoothing,
+    getPolygons,
     undo,
+    clearMasks,
     handleMouse,
     mouseOut,
     state: {

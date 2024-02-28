@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { onMounted } from "vue";
 import { ApiService } from "../client";
-import SAMImage from "../components/SAMImage.vue";
+import SAMEditor from "../components/imageViewer/SAMEditor.vue";
 import { ref } from 'vue';
 
 
@@ -34,7 +34,7 @@ onMounted(async () => {
     v-if="imageURL && embeddingURL"
     style="z-index:1"
   >
-    <SAMImage
+    <SAMEditor
       :image-url="imageURL"
       :embedding-u-r-l="embeddingURL"
     />

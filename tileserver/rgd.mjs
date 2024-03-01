@@ -9,7 +9,7 @@ const redisClient = createClient({
   url: process.env.RDWATCH_REDIS_URI,
 });
 
-const suppresLogging = process.env.RDWATCH_SUPPRESS_VECTOR_TILE_LOGGING
+const logging = process.env.RDWATCH_VECTOR_TILE_LOGGING || false;
 
 await redisClient.connect();
 
@@ -268,8 +268,8 @@ async function getCacheKey(modelRunId, z, x, y, randomKey) {
 
   const { latestEvaluationTimestamp, modelRunTimestamp } = result.rows[0];
 
-  if (!suppresLogging) {
-    console.log(result.rows[0])
+  if (logging) {
+  console.log(result.rows[0]);
   }
 
   const latestTimestamp = latestEvaluationTimestamp || modelRunTimestamp;
@@ -279,27 +279,27 @@ async function getCacheKey(modelRunId, z, x, y, randomKey) {
 
 export async function getVectorTiles(modelRunId, z, x, y, randomKey) {
   const cacheKey = await getCacheKey(modelRunId, z, x, y, randomKey);
-  if (!suppresLogging) {
+  if (logging) {
     console.log(`cacheKey: ${cacheKey}`);
-  }
-
+  }    
   let vectorTileData = await redisClient.get(commandOptions({ returnBuffers: true }), cacheKey);
   // TODO: re-enable caching
   vectorTileData = null;
   if (!vectorTileData) {
     const params = [z, x, y, modelRunId, `sites-${modelRunId}`, `observations-${modelRunId}`, `regions-${modelRunId}`];
-    if (!suppresLogging) {
-      console.log(params);
+    if (logging) {
+      console.log(params)
     }
     const result = await dbPool.query(QUERY, params);
-    if (!suppresLogging) {
-      console.log(result);
+    if (logging) {
+    console.log(result)
     }
     vectorTileData = result.rows[0]['?column?'];
 
     // Cache for 7 days. Don't bother awaiting, as we can do this in the background after this function returns.
+    // We want to remove the randomKey if it exists so it caches the edited data
+    cacheKey.replace(`-${randomKey}`, '');
     redisClient.set(cacheKey, vectorTileData, 'EX', 60 * 60 * 24 * 7);
   }
-
   return vectorTileData;
 }

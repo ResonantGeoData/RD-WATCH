@@ -264,11 +264,11 @@ const imageDownloadDialog = ref(false);
       align="center"
     >
       <v-tooltip>
-        <template #activator="{ props:subProps }">
+        <template #activator="{ props }">
           <v-btn
             :disabled="isRunning"
             size="x-small"
-            v-bind="subProps"
+            v-bind="props"
             class="mx-1"
             @click.stop="imageDownloadDialog = true"
           >

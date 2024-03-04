@@ -25,7 +25,7 @@ export default defineComponent({
       default: -1,
     }
   },
-  emits: ['updatePolygon'],
+  emits: ['updatePolygon', 'clear', 'cancel'],
   setup(props, { emit }) {
     const { state, initModel, loadImage, mouseOut, handleMouse, undo, convertMasksToPoly, clearMasks, updateSmoothing } = useSAM();
     const { image, polygons, maskImg, smoothing, selectedMasks } = state;
@@ -57,6 +57,16 @@ export default defineComponent({
       }
     }
 
+    const clearPoly = () => {
+      clearMasks();
+      emit('clear');
+    }
+
+    const cancel = () => {
+      clearMasks();
+      emit('cancel');
+    }
+
     return {
       image,
       polygons,
@@ -68,8 +78,9 @@ export default defineComponent({
       handleMouse,
       adjustSmoothing,
       generatePolys,
+      cancel,
       undo,
-      clearMasks
+      clearPoly
 
     };
   },
@@ -79,7 +90,16 @@ export default defineComponent({
 <template>
   <div>
     <v-row>
-      <div>
+      <v-btn
+        size="small"
+        color="error"
+        @click="cancel()"
+      >
+        Cancel
+      </v-btn>
+      <div
+        v-if="polygons.length"
+      >
         <input
           id="smoothness"
           type="range"
@@ -92,19 +112,22 @@ export default defineComponent({
         <label for="smoothness">Smoothness ({{ smoothing }})</label>
       </div>
       <v-btn
-        :disabled="!selectedMasks.length"
+        v-if="selectedMasks.length"
+        size="small"
         @click="undo()"
       >
         Undo
       </v-btn>
       <v-btn
         v-if="selectedMasks.length"
-        @click="clearMasks()"
+        size="small"
+        @click="clearPoly()"
       >
         Clear
       </v-btn>
       <v-btn
         v-if="selectedMasks.length"
+        size="small"
         :disabled="!selectedMasks.length"
         @click="generatePolys()"
       >
@@ -118,7 +141,7 @@ export default defineComponent({
           v-if="image"
           id="baseSAMImage"
           :src="image.src"
-          :class="`${widthGreater ? 'full-width' : 'full-height'}`"
+          :style="`width: ${width}px; height: ${height}px`"
           @mousemove="handleMouse($event, 'hover')"
           @mouseout="mouseOut"
           @click="handleMouse($event, 'click')"
@@ -127,19 +150,19 @@ export default defineComponent({
           v-if="maskImg"
           :src="maskImg.src"
           class="mask custom-styles"
-          :class="`${widthGreater ? 'full-width' : 'full-height'}`"
+          :style="`width: ${width}px; height: ${height}px`"
         >
         <img
           v-for="(maskImage, index) in selectedMasks"
           :key="`image_${index}`"
           :src="maskImage.src"
           class="selected-mask"
-          :class="`${widthGreater ? 'full-width' : 'full-height'}`"
+          :style="`width: ${width}px; height: ${height}px`"
         >
         <canvas
           id="geoJSONCanvas"
           class="selected-mask"
-          :class="`${widthGreater ? 'full-width' : 'full-height'}`"
+          :style="`width: ${width}px; height: ${height}px`"
           style="position: absolute; top: 0; left: 0;"
         />
       </div>

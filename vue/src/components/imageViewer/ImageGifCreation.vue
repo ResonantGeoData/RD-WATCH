@@ -133,10 +133,10 @@ function drawForDownload() {
       open-delay="50"
       bottom
     >
-      <template #activator="{ props:subProps }">
+      <template #activator="{ props }">
         <v-icon
           v-if="!downloadingGif"
-          v-bind="subProps"
+          v-bind="props"
           @click="drawForDownload()"
         >
           mdi-download-box-outline

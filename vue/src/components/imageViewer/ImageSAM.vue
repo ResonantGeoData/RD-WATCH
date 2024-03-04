@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { PropType, onMounted } from "vue";
+import { PropType, Ref, onMounted, watch } from "vue";
 import { ApiService } from "../../client";
 import SAMEditor from "./SAMEditor.vue";
 import { ref } from 'vue';
@@ -34,6 +34,8 @@ const emit = defineEmits<{
 
 const imageURL = ref('');
 const embeddingURL = ref('');
+const SAMEditorRef: Ref<HTMLDivElement | null> = ref(null);
+const divSize = ref([0, 0]);
 
 onMounted(async () => {
   const image = await ApiService.getSiteImage(parseInt(props.id, 10));
@@ -42,31 +44,56 @@ onMounted(async () => {
     embeddingURL.value = image.image_embedding;
   }
   // Now we need to set the numpy value image value for the image display
+  if (image.image_dimensions) {
+    let ratio = image.image_dimensions[1] / image.image_dimensions[0];
+    let heightAdjustment = 0.45;
+    let widthAdjustment = -550;
+    const maxHeight = document.documentElement.clientHeight * heightAdjustment;
+    const maxWidth = document.documentElement.clientWidth - widthAdjustment;
+    let width = maxWidth
+    let height = width * ratio;
+    if (height > maxHeight) {
+        height = maxHeight;
+        width = height / ratio;
+    }
+    divSize.value = [width, height];
+}
+
+
 });
 
 const updatePolygon = (polygon: GeoJSON.Polygon) => {
-    console.log('updatePolygon');
-    console.log(polygon);
     // We need to set it to edit mode if it isn't in edit mode already.
     state.filters.editingPolygonSiteId = props.siteEvalId;
   if (state.editPolygon && polygon) {
-    const [imageWidth, imageHeight] =  props.image.image_dimensions;
+    const [imageWidth, imageHeight] =  divSize.value;
     const geoPoly = denormalizePolygon(props.image.bbox, imageWidth, imageHeight, polygon);
     if (geoPoly) {
         state.editPolygon.setPolygonEdit(geoPoly);
     }
   }
 
+};
+
+const cancel = () => {
+    state.editPolygon?.cancelPolygonEdit();
+    state.filters.editingPolygonSiteId = null;
+    emit('cancel');
 }
+
 
 </script>
 
 <template>
   <v-container>
     <SAMEditor
+      ref="SAMEditorRef"
       :image-url="imageURL"
       :embedding-u-r-l="embeddingURL"
+      :width="divSize[0]"
+      :height="divSize[1]"
       @update-polygon="updatePolygon"
+      @cancel="cancel"
     />
   </v-container>
 </template>

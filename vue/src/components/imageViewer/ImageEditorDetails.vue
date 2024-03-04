@@ -47,6 +47,10 @@ const currentDate = ref(props.evalCurrentDate);
 const editingPolygon = ref(false);
 const evaluationGeoJSON: Ref<GeoJSON.Polygon | null> = ref(props.evalGeoJSON); // holds the site geoJSON so it can be edited
 
+watch(() => props.editable, () => {
+  editMode.value = props.editable;
+})
+
 watch([() => props.siteEvalId], () => {
   cancelEditingPolygon();
   siteEvaluationLabel.value = props.evaluationLabel;
@@ -256,14 +260,14 @@ const deleteSelectedPoints = () => {
         :text="siteEvaluationNotes"
         location="bottom center"
       >
-        <template #activator="{ props:subProps }">
-          <span v-bind="subProps"> {{ siteEvaluationNotes }}</span>
+        <template #activator="{ props }">
+          <span v-bind="props"> {{ siteEvaluationNotes }}</span>
         </template>
       </v-tooltip>
     </div>
   </v-col>
   <v-spacer />
-  <v-col v-if="!siteEvaluationUpdated">
+  <v-col v-if="!siteEvaluationUpdated && editMode">
     <v-btn
       v-if="!editingPolygon"
       size="small"
@@ -305,7 +309,7 @@ const deleteSelectedPoints = () => {
       </v-btn>
     </span>
   </v-col>
-  <v-col v-if="!editingPolygon">
+  <v-col v-if="!editingPolygon && editMode">
     <v-btn
       v-if="siteEvaluationUpdated"
       size="small"

@@ -106,6 +106,7 @@ const drawGroundTruth = ref(false);
 const rescaleImage = ref(false);
 const rescalingBBox = ref(1);
 const editingPolygon = ref(false);
+const SAMViewer: Ref<number | null> = ref(null);
 
 
 const evaluationGeoJSON: Ref<GeoJSON.Polygon | null> = ref(null); // holds the site geoJSON so it can be edited
@@ -135,6 +136,7 @@ const getImageData = async () => {
   siteEvaluationNotes.value = data.notes || "";
   siteEvaluationLabel.value = data.label;
   siteStatus.value = data.status;
+  
   if (data.groundTruth) {
     hasGroundTruth.value = true;
     groundTruth.value = data.groundTruth;
@@ -336,7 +338,6 @@ const generateImageEmbedding = async (
   );
 };
 
-const SAMViewer: Ref<number | null> = ref(null);
 const openSAMView = (id: number) => {
   SAMViewer.value = id;
   // const name = `#${ApiService.getApiPrefix()
@@ -436,9 +437,9 @@ const clearStorage = async () => {
             open-delay="50"
             bottom
           >
-            <template #activator="{ props: subProps }">
+            <template #activator="{ props }">
               <v-icon
-                v-bind="subProps"
+                v-bind="props"
                 :color="mapImagesOn ? 'rgb(37, 99, 235)' : ''"
                 @click="loadAndToggleSatelliteImages(siteEvalId)"
               >
@@ -453,9 +454,9 @@ const clearStorage = async () => {
             open-delay="50"
             bottom
           >
-            <template #activator="{ props: subProps }">
+            <template #activator="{ props }">
               <v-icon
-                v-bind="subProps"
+                v-bind="props"
                 :color="drawGroundTruth ? 'rgb(37, 99, 235)' : ''"
                 @click="drawGroundTruth = !drawGroundTruth"
               >
@@ -482,7 +483,7 @@ const clearStorage = async () => {
         </v-col>
         <image-editor-details
           :site-eval-id="siteEvalId"
-          :editable="editable"
+          :editable="editable && SAMViewer === null"
           :date-range="dateRange"
           :ground-truth="groundTruth"
           :has-ground-truth="hasGroundTruth"
@@ -510,9 +511,9 @@ const clearStorage = async () => {
         open-delay="50"
         bottom
       >
-        <template #activator="{ props: subProps }">
+        <template #activator="{ props }">
           <v-icon
-            v-bind="subProps"
+            v-bind="props"
             :color="showSitePoly ? 'blue' : ''"
             class="mx-2"
             @click="showSitePoly = !showSitePoly"
@@ -531,12 +532,12 @@ const clearStorage = async () => {
         open-delay="50"
         bottom
       >
-        <template #activator="{ props: subProps }">
+        <template #activator="{ props }">
           <v-icon
             v-if="
               !embeddingCheckInterval[filteredImages[currentImage].image.id]
             "
-            v-bind="subProps"
+            v-bind="props"
             :color="
               filteredImages[currentImage].image.image_embedding ? 'blue' : ''
             "
@@ -554,7 +555,7 @@ const clearStorage = async () => {
           </v-icon>
           <v-icon
             v-else
-            v-bind="subProps"
+            v-bind="props"
             class="mx-2"
           >
             mdi-spin mdi-sync
@@ -567,9 +568,9 @@ const clearStorage = async () => {
         open-delay="50"
         bottom
       >
-        <template #activator="{ props: subProps }">
+        <template #activator="{ props }">
           <v-icon
-            v-bind="subProps"
+            v-bind="props"
             :color="rescaleImage ? 'blue' : ''"
             @click="rescaleImage = !rescaleImage"
           >
@@ -590,7 +591,7 @@ const clearStorage = async () => {
         @rescale-b-box="rescalingBBox = $event"
       />
     </v-row>
-    <v-row v-if="SAMViewer === null">
+    <v-row v-show="SAMViewer === null">
       <v-spacer />
       <canvas ref="canvasRef" />
       <v-spacer />
@@ -600,6 +601,7 @@ const clearStorage = async () => {
         :id="SAMViewer.toString()"
         :site-eval-id="siteEvalId"
         :image="filteredImages[currentImage].image"
+        @cancel="SAMViewer = null"
       />
     </v-row>
     <image-slider-details

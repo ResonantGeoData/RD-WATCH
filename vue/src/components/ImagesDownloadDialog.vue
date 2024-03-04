@@ -157,9 +157,9 @@ const display = ref(true);
                 open-delay="50"
                 bottom
               >
-                <template #activator="{ props:subProps }">
+                <template #activator="{ props }">
                   <v-icon
-                    v-bind="subProps"
+                    v-bind="props"
                   >
                     mdi-information
                   </v-icon>
@@ -185,9 +185,9 @@ const display = ref(true);
                 open-delay="50"
                 bottom
               >
-                <template #activator="{ props:subProps }">
+                <template #activator="{ props }">
                   <v-icon
-                    v-bind="subProps"
+                    v-bind="props"
                   >
                     mdi-information
                   </v-icon>
@@ -210,9 +210,9 @@ const display = ref(true);
                 open-delay="50"
                 bottom
               >
-                <template #activator="{ props:subProps }">
+                <template #activator="{ props }">
                   <v-icon
-                    v-bind="subProps"
+                    v-bind="props"
                   >
                     mdi-information
                   </v-icon>
@@ -234,10 +234,10 @@ const display = ref(true);
                   open-delay="20"
                   :close-on-content-click="false"
                 >
-                  <template #activator="{ props:subProps }">
+                  <template #activator="{ props }">
                     <v-btn
                       color="primary"
-                      v-bind="subProps"
+                      v-bind="props"
                       class="mr-2"
                     >
                       <b>Start:</b>
@@ -254,10 +254,10 @@ const display = ref(true);
                   open-delay="20"
                   :close-on-content-click="false"
                 >
-                  <template #activator="{ props:subProps }">
+                  <template #activator="{ props }">
                     <v-btn
                       color="primary"
-                      v-bind="subProps"
+                      v-bind="props"
                       class="ml-2"
                     >
                       <b>End:</b>

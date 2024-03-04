@@ -141,9 +141,9 @@ onUnmounted(() => {
         open-delay="50"
         bottom
       >
-        <template #activator="{ props: subProps }">
+        <template #activator="{ props }">
           <v-icon
-            v-bind="subProps"
+            v-bind="props"
             @click="copyURL(filteredImages[currentImage].image.aws_location)"
           >
             mdi-information

@@ -62,6 +62,7 @@ export interface SiteObservationImage {
   bbox: { xmin: number; ymin: number; xmax: number; ymax: number };
   id: number;
   image_embedding? : string;
+  image_dimensions?: [number, number];
 }
 
 export interface ObsDetails {

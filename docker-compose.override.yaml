@@ -92,6 +92,7 @@ services:
     working_dir: /usr/src/app
     environment:
       VITE_DEV_PROXY_TARGET: "django" # tells vite.config to use django:8000 instead of localhost:8000
+      VITE_DEV_VECTOR_PROXY_TARGET: "vectorserver" # tells vite.config to use vectorserver:8001 instead of localhost:8001
     volumes:
       - ./:/usr/src/source:ro # entire directory needs to be mounted for git reference
     ports:
@@ -113,3 +114,20 @@ services:
         # Run the npm development script
         npm run dev
       "
+  vectorserver:
+    image: node:20
+    container_name: rd-watch-vectorserver
+    working_dir: /usr/tileserver
+    environment:
+        RDWATCH_POSTGRESQL_URI: "${RDWATCH_POSTGRESQL_URI-postgresql://rdwatch:secretkey@postgresql:5432/rdwatch}"
+        PORT: "8001"
+        RDWATCH_REDIS_URI: "${RDWATHC_REDIS_URI-redis://redis:6379}"
+        RDWATCH_POSTGRESQL_SCORING_URI: "${RDWATCH_POSTGRESQL_SCORING_URI-postgresql://scoring:secretkey@localhost:5433/scoring}"
+        RDWATCH_SUPPRESS_VECTOR_TILE_LOGGING: "true" # prevent console logging of information for dev server
+    volumes:
+      - ./tileserver:/usr/tileserver
+    ports:
+      - "8001:8001"
+      # required for the git display of the commit hash
+    command: >
+      sh -c "npm install && node devServer.mjs"

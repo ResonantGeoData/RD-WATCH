@@ -77,6 +77,7 @@
       "@typescript-eslint"
     ],
     "rules": {
+      "vue/no-template-shadow": 0,
       "vue/no-setup-props-destructure": 0,
       "sort-imports": [
         "error",

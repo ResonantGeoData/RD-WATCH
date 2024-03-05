@@ -20,6 +20,7 @@ interface Props {
     status: string | null;
     evalGeoJSON: GeoJSON.Polygon | null;
     currentTimestamp: string;
+    samViewer: null | number;
 }
 const props = withDefaults(defineProps<Props>(), {
   dateRange: null,
@@ -28,6 +29,8 @@ const props = withDefaults(defineProps<Props>(), {
 const emit = defineEmits<{
   (e: "clear-storage"): void;
   (e: "update-list"): void;
+  (e: 'cancel'): void;
+  (e: 'save'): void;
 }>();
 
 const editMode = ref(props.editable);
@@ -70,6 +73,8 @@ watch(() => props.evalGeoJSON, () => {
 watch(() => state.filters.editingPolygonSiteId, () => {
   if (state.filters.editingPolygonSiteId !== null) {
     editingPolygon.value = true;
+  } else {
+    editingPolygon.value = false;
   }
 });
 
@@ -184,7 +189,7 @@ const deleteSelectedPoints = () => {
       <b class="mr-1">Date Range:</b>
       <span> {{ startDate ? startDate : 'null' }}
         <v-icon
-          v-if="editMode"
+          v-if="editMode && samViewer === null"
           class="ma-0"
           @click="setEditingMode('StartDate')"
         >
@@ -195,7 +200,7 @@ const deleteSelectedPoints = () => {
       <span class="mx-1"> to</span>
       <span> {{ endDate ? endDate : 'null' }}
         <v-icon
-          v-if="editMode"
+          v-if="editMode && samViewer === null"
           class="ma-0"
           @click="setEditingMode('EndDate')"
         >
@@ -227,7 +232,7 @@ const deleteSelectedPoints = () => {
         {{ siteEvaluationLabel }}
       </v-chip>
       <v-icon
-        v-if="editMode"
+        v-if="editMode && samViewer === null"
         @click="setEditingMode('SiteEvaluationLabel')"
       >
         mdi-pencil
@@ -251,7 +256,7 @@ const deleteSelectedPoints = () => {
     <div class="notesPreview">
       <b>Notes:</b>
       <v-icon
-        v-if="editMode"
+        v-if="editMode && samViewer === null"
         @click="setEditingMode('SiteEvaluationNotes')"
       >
         mdi-pencil
@@ -267,9 +272,9 @@ const deleteSelectedPoints = () => {
     </div>
   </v-col>
   <v-spacer />
-  <v-col v-if="!siteEvaluationUpdated && editMode">
+  <v-col v-if="!siteEvaluationUpdated && editMode ">
     <v-btn
-      v-if="!editingPolygon"
+      v-if="!editingPolygon && samViewer === null"
       size="small"
       :disabled="editingPolygon"
       @click="startEditingPolygon()"
@@ -309,7 +314,7 @@ const deleteSelectedPoints = () => {
       </v-btn>
     </span>
   </v-col>
-  <v-col v-if="!editingPolygon && editMode">
+  <v-col v-if="!editingPolygon && editMode && samViewer === null">
     <v-btn
       v-if="siteEvaluationUpdated"
       size="small"

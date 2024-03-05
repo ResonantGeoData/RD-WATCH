@@ -172,6 +172,7 @@ watch(showSitePoly, () => {
 });
 
 const load = async (newValue?: string, oldValue?: string) => {
+  currentImage.value = 0;
   const index = state.enabledSiteObservations.findIndex(
     (item) => item.id === oldValue
   );
@@ -483,7 +484,7 @@ const clearStorage = async () => {
         </v-col>
         <image-editor-details
           :site-eval-id="siteEvalId"
-          :editable="editable && SAMViewer === null"
+          :editable="editable"
           :date-range="dateRange"
           :ground-truth="groundTruth"
           :has-ground-truth="hasGroundTruth"
@@ -491,6 +492,7 @@ const clearStorage = async () => {
           :evaluation-notes="siteEvaluationNotes"
           :eval-current-date="currentDate"
           :status="siteStatus"
+          :sam-viewer="SAMViewer"
           :eval-geo-j-s-o-n="evaluationGeoJSON"
           :current-timestamp="currentTimestamp"
           @clear-storage="clearStorage()"
@@ -525,9 +527,10 @@ const clearStorage = async () => {
       </v-tooltip>
       <v-tooltip
         v-if="
-          filteredImages.length &&
+          !loading && filteredImages.length &&
             filteredImages[currentImage] &&
-            filteredImages[currentImage].image
+            filteredImages[currentImage].image &&
+            filteredImages[currentImage].image.source === 'WV'
         "
         open-delay="50"
         bottom

@@ -1,7 +1,8 @@
 <script setup lang="ts">
-import { Ref, computed, ref, watch, withDefaults } from "vue";
+import { computed, ref, watch, withDefaults } from "vue";
 import { EvaluationImage } from "../../types";
 import { PixelPoly } from "./imageUtils";
+import { state } from '../../store';
 
 interface Props {
     combinedImages: {image: EvaluationImage; poly: PixelPoly, groundTruthPoly?: PixelPoly}[];
@@ -16,28 +17,25 @@ const emit = defineEmits<{
 const baseImageSources = ref(['S2', 'WV', 'L8', 'PL'])
 const baseObs = ref(['observations', 'non-observations'])
 const filterSettings = ref(false);
-const imageSourcesFilter: Ref<EvaluationImage['source'][]> = ref(['S2', 'WV', 'L8', 'PL']);
-const percentBlackFilter: Ref<number> = ref(100);
-const cloudFilter: Ref<number> = ref(100);
-const siteObsFilter: Ref<('observations' | 'non-observations')[]> = ref(['observations', 'non-observations'])
 
 
 const filteredImages = computed(() => {
   return props.combinedImages.filter((item) => {
     let add = true;
-    if (!imageSourcesFilter.value.includes(item.image.source)) {
+    if (!state.imageFilter.sources.includes(item.image.source)) {
       add = false;
     }
-    if (siteObsFilter.value.includes('observations') && siteObsFilter.value.length ===1 && item.image.observation_id === null) {
+    if (state.imageFilter.obsFilter.includes('observations') && state.imageFilter.obsFilter.length ===1 && item.image.observation_id === null) {
       add = false;
     }
-    if (siteObsFilter.value.includes('non-observations') && siteObsFilter.value.length ===1 && item.image.observation_id !== null) {
+    if (state.imageFilter.obsFilter.includes('non-observations') && state.imageFilter.obsFilter.length ===1 && item.image.observation_id !== null) {
       add = false;
     }
-    if (item.image.percent_black > percentBlackFilter.value) {
+    if (item.image.percent_black > state.imageFilter.noData) {
       add = false;
     }
-    if (item.image.cloudcover > cloudFilter.value) {
+    if (item.image.cloudcover > state.imageFilter.cloudCover
+) {
       add = false;
     }
     return add;
@@ -50,16 +48,28 @@ watch(filteredImages, () => {
 
 <template>
   <div>
-    <v-icon @click="filterSettings = !filterSettings">
+    <v-icon
+      :color="filterSettings ? 'blue' : ''"
+      @click="filterSettings = !filterSettings"
+    >
       mdi-filter
     </v-icon>
     <span>
-      {{ filteredImages.length }} of {{ combinedImages.length }} images
+      {{ filteredImages.length }}/{{ combinedImages.length }}
+    </span>
+    <span v-if="state.imageFilter.sources.length !== 4">
+      <v-chip
+        v-for="item in state.imageFilter.sources"
+        :key="`filterChip_${item}`"
+        size="small"
+      >
+        {{ item }}
+      </v-chip>
     </span>
     <div v-if="filterSettings">
       <v-row dense>
         <v-select
-          v-model="siteObsFilter"
+          v-model="state.imageFilter.obsFilter"
           label="Site Observations"
           :items="baseObs"
           multiple
@@ -68,7 +78,7 @@ watch(filteredImages, () => {
           class="mx-2"
         />
         <v-select
-          v-model="imageSourcesFilter"
+          v-model="state.imageFilter.sources"
           label="Sources"
           :items="baseImageSources"
           multiple
@@ -87,7 +97,7 @@ watch(filteredImages, () => {
         </v-col>
         <v-col cols="7">
           <v-slider
-            v-model.number="cloudFilter"
+            v-model.number="state.imageFilter.cloudCover"
             min="0"
             max="100"
             step="1"
@@ -98,7 +108,7 @@ watch(filteredImages, () => {
         </v-col>
         <v-col>
           <span class="pl-2">
-            {{ cloudFilter }}%
+            {{ state.imageFilter.cloudCover }}%
           </span>
         </v-col>
       </v-row>
@@ -112,7 +122,7 @@ watch(filteredImages, () => {
         </v-col>
         <v-col cols="7">
           <v-slider
-            v-model.number="percentBlackFilter"
+            v-model.number="state.imageFilter.noData"
             min="0"
             max="100"
             step="1"
@@ -123,7 +133,7 @@ watch(filteredImages, () => {
         </v-col>
         <v-col>
           <span class="pl-2">
-            {{ percentBlackFilter }}%
+            {{ state.imageFilter.noData }}%
           </span>
         </v-col>
       </v-row>

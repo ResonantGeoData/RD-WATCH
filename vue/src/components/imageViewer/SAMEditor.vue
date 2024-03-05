@@ -34,8 +34,8 @@ export default defineComponent({
       const url = (props.imageUrl);
       await loadImage(url, props.embeddingURL);
     });
-    const adjustSmoothing = async (e: Event) => {
-      smoothing.value = parseInt((e.target as HTMLInputElement).value);
+    const adjustSmoothing = async (e: number) => {
+      smoothing.value = e;
       const polygon = await updateSmoothing(smoothing.value);
       if (polygon) {
         emit('updatePolygon',  polygon);
@@ -93,27 +93,15 @@ export default defineComponent({
       <v-btn
         size="small"
         color="error"
+        class="mx-2"
         @click="cancel()"
       >
         Cancel
       </v-btn>
-      <div
-        v-if="polygons.length"
-      >
-        <input
-          id="smoothness"
-          type="range"
-          name="smoothness"
-          min="0"
-          max="30"
-          :value="smoothing"
-          @change="adjustSmoothing($event)"
-        >
-        <label for="smoothness">Smoothness ({{ smoothing }})</label>
-      </div>
       <v-btn
         v-if="selectedMasks.length"
         size="small"
+        class="mx-2"
         @click="undo()"
       >
         Undo
@@ -121,6 +109,7 @@ export default defineComponent({
       <v-btn
         v-if="selectedMasks.length"
         size="small"
+        class="mx-2"
         @click="clearPoly()"
       >
         Clear
@@ -128,11 +117,24 @@ export default defineComponent({
       <v-btn
         v-if="selectedMasks.length"
         size="small"
+        class="mx-2"
         :disabled="!selectedMasks.length"
         @click="generatePolys()"
       >
         generate
       </v-btn>
+      <v-slider
+        v-if="polygons.length"
+        :model-value="smoothing"
+        min="0"
+        max="30"
+        step="1"
+        :label="`Smoothness: ${smoothing}`"
+        color="primary"
+        thumb-label
+        density="compact"
+        @end="adjustSmoothing($event)"
+      />
     </v-row>
     <v-row>
       <v-spacer />

@@ -340,9 +340,10 @@ export default function useSAM() {
     const rect = el.getBoundingClientRect();
     let x = e.clientX - rect.left;
     let y = e.clientY - rect.top;
-    const imageScale = image.value ? image.value.width / el.offsetWidth : 1;
-    x *= imageScale;
-    y *= imageScale;
+    const xImageScale = image.value ? image.value.width / el.offsetWidth : 1;
+    const yImageScale = image.value ? image.value.height / el.offsetHeight : 1;
+    x *= xImageScale;
+    y *= yImageScale;
     const newHover = getHover(x, y);
     if (type === "hover" && newHover && hovered.value) {
       hovered.value = [newHover];

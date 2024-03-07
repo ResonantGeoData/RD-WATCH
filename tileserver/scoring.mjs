@@ -95,7 +95,7 @@ const QUERY = `
       SUBSTRING("site"."site_id", 9) AS "site_number",
       CASE
         WHEN (
-          "site"."originator" = 'TE'
+          "site"."originator" = 'te'
           OR "site"."originator" = 'iMERIT'
         ) THEN (
           SELECT

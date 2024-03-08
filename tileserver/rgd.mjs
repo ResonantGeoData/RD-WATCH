@@ -281,10 +281,18 @@ export async function getVectorTiles(modelRunId, z, x, y, randomKey) {
   const cacheKey = await getCacheKey(modelRunId, z, x, y, randomKey);
   if (logging) {
     console.log(`cacheKey: ${cacheKey}`);
-  }    
+  }
+
   let vectorTileData = await redisClient.get(commandOptions({ returnBuffers: true }), cacheKey);
-  // TODO: re-enable caching
-  vectorTileData = null;
+
+  if (logging) {
+    if (vectorTileData) {
+      console.log('cache hit!');
+    } else {
+      console.log('cache miss!')
+    }
+  }
+
   if (!vectorTileData) {
     const params = [z, x, y, modelRunId, `sites-${modelRunId}`, `observations-${modelRunId}`, `regions-${modelRunId}`];
     if (logging) {

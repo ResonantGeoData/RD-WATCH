@@ -130,4 +130,4 @@ services:
       - "8001:8001"
       # required for the git display of the commit hash
     command: >
-      sh -c "npm install && node devServer.mjs"
+      sh -c "npm install && npm run dev"

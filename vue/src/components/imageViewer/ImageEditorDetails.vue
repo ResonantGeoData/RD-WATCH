@@ -5,7 +5,7 @@ import { SiteModelStatus } from "../../client/services/ApiService";
 import { getColorFromLabel, styles } from '../../mapstyle/annotationStyles';
 import { state } from '../../store'
 import { EvaluationImageResults } from "../../types";
-
+import { useDate } from "vuetify/lib/framework.mjs";
 type EditModes = 'SiteEvaluationLabel' | 'StartDate' | 'EndDate' | 'SiteObservationLabel' | 'SiteEvaluationNotes' | 'SiteObservationNotes'
 
 interface Props {
@@ -33,6 +33,7 @@ const emit = defineEmits<{
   (e: 'save'): void;
 }>();
 
+const dateAdpter = useDate();
 const editMode = ref(props.editable);
 
 const editDialog = ref(false);
@@ -420,7 +421,7 @@ const deleteSelectedPoints = () => {
           </v-row>
           <v-date-picker
             v-if="startDateTemp !== null"
-            :model-value="[startDateTemp ? startDateTemp : currentTimestamp]"
+            :model-value="dateAdpter.parseISO(startDateTemp ? startDateTemp : currentTimestamp)"
             @update:model-value="updateTime($event, 'StartDate')"
             @click:cancel="editDialog = false"
             @click:save="editDialog = false"
@@ -455,7 +456,7 @@ const deleteSelectedPoints = () => {
           </v-row>
           <v-date-picker
             v-if="endDateTemp !== null"
-            :model-value="[endDateTemp ? endDateTemp : currentTimestamp]"
+            :model-value="dateAdpter.parseISO(endDateTemp ? endDateTemp : currentTimestamp)"
             @update:model-value="updateTime($event, 'EndDate')"
             @click:cancel="editDialog = false"
             @click:save="editDialog = false"

@@ -538,7 +538,7 @@ const clearStorage = async () => {
         <template #activator="{ props }">
           <v-icon
             v-if="
-              !embeddingCheckInterval[filteredImages[currentImage].image.id]
+              filteredImages[currentImage] && filteredImages[currentImage].image && !embeddingCheckInterval[filteredImages[currentImage].image.id]
             "
             v-bind="props"
             :color="

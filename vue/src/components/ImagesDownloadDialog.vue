@@ -2,7 +2,7 @@
 import { Ref, defineProps, ref, withDefaults } from "vue";
 import { debounce } from 'lodash';
 import { Constellation, DownloadSettings } from "../client/services/ApiService";
-
+import { useDate } from "vuetify/lib/framework.mjs";
 
 interface Props {
   dateRange?: { min: number, max: number} | null;
@@ -34,6 +34,7 @@ const scale: Ref<'default' | 'bits' | 'custom'> = ref('default')
 const scaleNums: Ref<[number, number]> = ref([0, 10000])
 const bboxScale: Ref<number> = ref(1.2);
 const validForm = ref(true);
+const dateAdpter = useDate();
 
 const download = debounce(
   () => {
@@ -245,7 +246,7 @@ const display = ref(true);
                     </v-btn>
                   </template>
                   <v-date-picker
-                    :model-value="[overrideDates[0]]"
+                    :model-value="dateAdpter.parseISO(overrideDates[0])"
                     hide-actions
                     @update:model-value="updateTime($event, 'StartDate')"
                   />
@@ -265,7 +266,7 @@ const display = ref(true);
                     </v-btn>
                   </template>
                   <v-date-picker
-                    :model-value="[overrideDates[1]]"
+                    :model-value="dateAdpter.parseISO(overrideDates[1])"
                     hide-actions
                     @update:model-value="updateTime($event, 'EndDate')"
                   />

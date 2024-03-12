@@ -31,9 +31,9 @@ psycopg2 = "~2.9.9"
 redis = { version = "~5.0.3", extras = [ "hiredis" ] }
 uritemplate = "^4.1.1"
 iso3166 = "^2.1.1"
-rio-tiler = "5.0.3"
+rio-tiler = "5.0.3" # TODO: upgrade blocked on pydantic 2
 mercantile = "^1.2.1"
-django-ninja = "^0.21.0"
+django-ninja = "~0.22.2" # TODO: upgrade blocked on pydantic 2
 celery = "^5.2.7"
 django-extensions = "^3.2.1"
 pillow = "^9.5.0"

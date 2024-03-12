@@ -647,13 +647,13 @@ test = ["coverage", "requests"]
 
 [[package]]
 name = "django-ninja"
-version = "0.21.0"
+version = "0.22.2"
 description = "Django Ninja - Fast Django REST framework"
 optional = false
 python-versions = ">=3.7"
 files = [
-    {file = "django-ninja-0.21.0.tar.gz", hash = "sha256:3ed90fc55877408d5c42ec3d3cec8384c9a0cc7adf2cd66d6669561bed10a485"},
-    {file = "django_ninja-0.21.0-py3-none-any.whl", hash = "sha256:b6ed7647212a4647682b134a6f82277ecf02e9d99960777aa75d124685682d25"},
+    {file = "django_ninja-0.22.2-py3-none-any.whl", hash = "sha256:c53b098a8190f373ea2605c276a6061d48b2626500a9c6b9916c503e4b4a20eb"},
+    {file = "django_ninja-0.22.2.tar.gz", hash = "sha256:913ebde7571d6a6968c9ac0b9e8a24680c46444d44fdd552f8831dbeede1292c"},
 ]
 
 [package.dependencies]
@@ -2307,4 +2307,4 @@ watchdog = ["watchdog (>=2.3)"]
 [metadata]
 lock-version = "2.0"
 python-versions = "~3.11.0"
-content-hash = "455c917256237fb91bcdbb324dcdf21d4cf56e8fe5e26ec8adba6b255b1b2125"
+content-hash = "1b20ecc8667199595c2060c3f4dbfc4472b57e7d6c244c632950f8be0d35a895"

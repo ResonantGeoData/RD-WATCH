@@ -41,7 +41,7 @@ django-configurations = {version = "^2.5", extras = ["database", "email"]}
 django-storages = {version = "^1.14.2", extras = ["s3"]}
 django-celery-results = "^2.5.1"
 pystac-client = "^0.7.6"
-more-itertools = "^10.1.0"
+more-itertools = "^10.2.0"
 
 [tool.poetry.group.dev.dependencies]
 black = "^23.3.0"

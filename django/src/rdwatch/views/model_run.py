@@ -475,6 +475,7 @@ def get_proposals_query(model_run_id: UUID4):
                     downloading='downloading',
                 ),
                 ordering='number',
+                default=[],
             ),
         )
     )

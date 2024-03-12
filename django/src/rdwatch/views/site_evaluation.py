@@ -151,7 +151,8 @@ def list_site_evaluations(
                     min=ExtractEpoch('timemin'),
                     max=ExtractEpoch('timemax'),
                 ),
-            )
+            ),
+            default=[],
         ),
     )
 

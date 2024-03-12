@@ -44,7 +44,7 @@ const endDate: Ref<string|null> = ref(props.dateRange && props.dateRange[1] ? ne
 const siteEvaluationList = computed(() => Object.entries(styles).filter(([, { type }]) => type === 'sites').map(([label]) => label));
 const siteEvaluationNotes = ref(props.evaluationNotes);
 const siteEvaluationUpdated = ref(false)
-const siteStatus: Ref<string | null> = ref(null);
+const siteStatus: Ref<string | null> = ref(props.status || null);
 const startDateTemp: Ref<string | null> = ref(null);
 const endDateTemp: Ref<string | null> = ref(null);
 const currentDate = ref(props.evalCurrentDate);

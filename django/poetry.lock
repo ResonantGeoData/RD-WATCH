@@ -1802,13 +1802,13 @@ validation = ["jsonschema (>=4.0.1,<4.18)"]
 
 [[package]]
 name = "pystac-client"
-version = "0.7.5"
+version = "0.7.6"
 description = "Python library for working with SpatioTemporal Asset Catalog (STAC) APIs."
 optional = false
 python-versions = ">=3.8"
 files = [
-    {file = "pystac-client-0.7.5.tar.gz", hash = "sha256:4b0ed0f7177dfc6e394aeb3ecf1236364f315b1d38c107afbcbbef17c2f7db8b"},
-    {file = "pystac_client-0.7.5-py3-none-any.whl", hash = "sha256:b07c21f0bfbe7ea19cd23e535406ee08ee604b8ff8d9afcee666c0b1fe017dc4"},
+    {file = "pystac-client-0.7.6.tar.gz", hash = "sha256:9a45cd0296e48a55c5e2cb77a752e2236a7226e96b4804584851d1c6c52b0345"},
+    {file = "pystac_client-0.7.6-py3-none-any.whl", hash = "sha256:221800ea54f408557fc947be08928638fb83b3e7506d3629f9a7ad594c577975"},
 ]
 
 [package.dependencies]
@@ -1817,8 +1817,8 @@ python-dateutil = ">=2.8.2"
 requests = ">=2.28.2"
 
 [package.extras]
-dev = ["black (>=23.3,<24.0)", "codespell (>=2.2.4,<2.3.0)", "coverage (>=7.2,<8.0)", "doc8 (>=1.1.1,<1.2.0)", "importlib-metadata (>=6.7,<7.0)", "mypy (>=1.2,<2.0)", "orjson (>=3.8,<4.0)", "pre-commit (>=3.2,<4.0)", "pytest (>=7.4,<8.0)", "pytest-benchmark (>=4.0.0,<4.1.0)", "pytest-console-scripts (>=1.4.0,<1.5.0)", "pytest-cov (>=4.1.0,<4.2.0)", "pytest-recording (>=0.13,<1.0)", "recommonmark (>=0.7.1,<0.8.0)", "requests-mock (>=1.11.0,<1.12.0)", "ruff (==0.0.287)", "tomli (>=2.0,<3.0)", "types-python-dateutil (>=2.8.19,<2.9.0)", "types-requests (>=2.31.0,<2.32.0)", "urllib3 (<2)"]
-docs = ["Sphinx (>=6.2,<7.0)", "boto3 (>=1.26,<2.0)", "cartopy (>=0.21,<1.0)", "geojson (>=3.0.1,<3.1.0)", "geopandas (>=0.13.0,<0.14.0)", "geoviews (>=1.9,<2.0)", "hvplot (>=0.8.3,<0.9.0)", "ipykernel (>=6.22,<7.0)", "ipython (>=8.12,<9.0)", "jinja2 (<4.0)", "matplotlib (>=3.7.1,<3.8.0)", "myst-parser (>=2.0,<3.0)", "nbsphinx (>=0.9,<1.0)", "pydata-sphinx-theme (>=0.13,<1.0)", "pygeoif (>=1.0,<2.0)", "scipy (>=1.10,<2.0)", "sphinxcontrib-fulltoc (>=1.2,<2.0)"]
+dev = ["black (>=24.0,<25.0)", "codespell (>=2.2.4,<2.3.0)", "coverage (>=7.2,<8.0)", "doc8 (>=1.1.1,<1.2.0)", "importlib-metadata (>=7.0,<8.0)", "mypy (>=1.2,<2.0)", "orjson (>=3.8,<4.0)", "pre-commit (>=3.2,<4.0)", "pytest (>=8.0,<9.0)", "pytest-benchmark (>=4.0.0,<4.1.0)", "pytest-console-scripts (>=1.4.0,<1.5.0)", "pytest-cov (>=4.1.0,<4.2.0)", "pytest-recording (>=0.13,<1.0)", "recommonmark (>=0.7.1,<0.8.0)", "requests-mock (>=1.11.0,<1.12.0)", "ruff (==0.2.2)", "tomli (>=2.0,<3.0)", "types-python-dateutil (>=2.8.19,<2.9.0)", "types-requests (>=2.31.0,<2.32.0)", "urllib3 (<2)"]
+docs = ["Sphinx (>=6.2,<7.0)", "boto3 (>=1.26,<2.0)", "cartopy (>=0.21,<1.0)", "geojson (>=3.1.0,<3.2.0)", "geopandas (>=0.14.0,<0.15.0)", "geoviews (>=1.9,<2.0)", "hvplot (>=0.9.0,<0.10.0)", "ipykernel (>=6.22,<7.0)", "ipython (>=8.12,<9.0)", "jinja2 (<4.0)", "matplotlib (>=3.8,<4.0)", "myst-parser (>=2.0,<3.0)", "nbsphinx (>=0.9,<1.0)", "pydata-sphinx-theme (>=0.13,<1.0)", "pygeoif (>=1.0,<2.0)", "scipy (>=1.10,<2.0)", "sphinxcontrib-fulltoc (>=1.2,<2.0)"]
 
 [[package]]
 name = "python-dateutil"
@@ -2299,4 +2299,4 @@ watchdog = ["watchdog (>=2.3)"]
 [metadata]
 lock-version = "2.0"
 python-versions = "~3.11.0"
-content-hash = "1fec217a99de75b2c48634c05d30cab866ba1da206ca0d42122456d05d60d2cb"
+content-hash = "d17669176838cc0e0dc27cba6b37b6d733f3c16b3d4ae7300b1674d441d0769b"

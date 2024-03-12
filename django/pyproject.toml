@@ -40,7 +40,7 @@ pillow = "^9.5.0"
 django-configurations = {version = "^2.5", extras = ["database", "email"]}
 django-storages = {version = "^1.14.2", extras = ["s3"]}
 django-celery-results = "^2.5.1"
-pystac-client = "^0.7.5"
+pystac-client = "^0.7.6"
 more-itertools = "^10.1.0"
 
 [tool.poetry.group.dev.dependencies]

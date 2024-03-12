@@ -35,7 +35,7 @@ rio-tiler = "5.0.3" # TODO: upgrade blocked on pydantic 2
 mercantile = "^1.2.1"
 django-ninja = "~0.22.2" # TODO: upgrade blocked on pydantic 2
 celery = "^5.3.6"
-django-extensions = "^3.2.1"
+django-extensions = "^3.2.3"
 pillow = "^9.5.0"
 django-configurations = {extras = ["database", "email"], version = "^2.4.1"}
 django-storages = {extras = ["boto3"], version = "^1.13.2"}

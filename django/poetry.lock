@@ -578,13 +578,13 @@ Django = ">=3.2.18"
 
 [[package]]
 name = "django-configurations"
-version = "2.4.1"
+version = "2.5"
 description = "A helper for organizing Django settings."
 optional = false
-python-versions = ">=3.7, <4.0"
+python-versions = ">=3.8, <4.0"
 files = [
-    {file = "django-configurations-2.4.1.tar.gz", hash = "sha256:a6c25c143834e67b20d34751512d08b3290684f25098ee212b1ee36804a59085"},
-    {file = "django_configurations-2.4.1-py3-none-any.whl", hash = "sha256:8bf8866ae29db89ecf93a7743450b5d8974073cf7c194fd98764fd16deac218d"},
+    {file = "django-configurations-2.5.tar.gz", hash = "sha256:63fa252c40dc88ea17b8b90f5f4a31a2726e586acb1ff0edc74c228c61f19e5d"},
+    {file = "django_configurations-2.5-py3-none-any.whl", hash = "sha256:cf063b99ad30013df49eaa971bd8543deffb008ff080cf3a92955dbccfe81a5c"},
 ]
 
 [package.dependencies]
@@ -2298,4 +2298,4 @@ watchdog = ["watchdog (>=2.3)"]
 [metadata]
 lock-version = "2.0"
 python-versions = "~3.11.0"
-content-hash = "72520e5e792c2725385046c2febb0dd5fb995ec1a6b388299177521a9309e930"
+content-hash = "cd76ad6444863842659a67a60037e0a3cc9b8e2a99f0313345c46f1f3d703afa"

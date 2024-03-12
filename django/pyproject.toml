@@ -37,7 +37,7 @@ django-ninja = "~0.22.2" # TODO: upgrade blocked on pydantic 2
 celery = "^5.3.6"
 django-extensions = "^3.2.3"
 pillow = "^9.5.0"
-django-configurations = {extras = ["database", "email"], version = "^2.4.1"}
+django-configurations = {version = "^2.5", extras = ["database", "email"]}
 django-storages = {extras = ["boto3"], version = "^1.13.2"}
 django-celery-results = "^2.5.1"
 pystac-client = "^0.7.5"

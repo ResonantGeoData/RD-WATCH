@@ -16,7 +16,7 @@ keywords = [ "django", "geospatial", "machine learning" ]
 classifiers = [
   "Development Status :: 3 - Alpha",
   "Environment :: Web Environment",
-  "Framework :: Django :: 4.0",
+  "Framework :: Django :: 5.0",
   "Framework :: Django",
 ]
 packages = [

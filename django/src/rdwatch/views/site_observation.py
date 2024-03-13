@@ -113,7 +113,8 @@ def site_observations(request: HttpRequest, evaluation_id: UUID4):
                     timestamp=ExtractEpoch('timestamp'),
                     bbox=BoundingBox('geom'),
                     area=Area(Transform('geom', srid=6933)),
-                )
+                ),
+                default=[],
             ),
         )
     )
@@ -134,10 +135,12 @@ def site_observations(request: HttpRequest, evaluation_id: UUID4):
                     bbox=BoundingBox('image_bbox'),
                     image_dimensions='image_dimensions',
                     aws_location='aws_location',
-                )
+                ),
+                default=[],
             ),
         )
     )
+    print(image_queryset)
 
     for image in image_queryset['results']:
         image['image'] = default_storage.url(image['image'])

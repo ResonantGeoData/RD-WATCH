@@ -13,10 +13,13 @@ _ENVIRON_PREFIX = 'RDWATCH'
 # expect env vars to be set.
 values.Value.late_binding = True
 
-GIT_VERSION = subprocess.check_output(
-    ['git', 'describe', '--tags'],
-    encoding='utf-8',
-).strip()
+try:
+    GIT_VERSION = subprocess.check_output(
+        ['git', 'describe', '--tags'],
+        encoding='utf-8',
+    ).strip()
+except subprocess.CalledProcessError:
+    GIT_VERSION = 'unknown'
 
 
 class BaseConfiguration(Configuration):

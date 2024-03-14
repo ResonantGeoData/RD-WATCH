@@ -16,7 +16,7 @@ keywords = [ "django", "geospatial", "machine learning" ]
 classifiers = [
   "Development Status :: 3 - Alpha",
   "Environment :: Web Environment",
-  "Framework :: Django :: 4.0",
+  "Framework :: Django :: 5.0",
   "Framework :: Django",
 ]
 packages = [
@@ -25,23 +25,21 @@ packages = [
 ]
 
 [tool.poetry.dependencies]
-python = "~3.11.0"
-django = ">=4.1,<4.2"
-psycopg2 = "~2.9.3"
-redis = { version = "~4.3.4", extras = [ "hiredis" ] }
+python = ">=3.11.8,<4"
+django = ">=5.0.3,<5.1"
+psycopg2 = "~2.9.9"
+redis = { version = "~5.0.3", extras = [ "hiredis" ] }
 uritemplate = "^4.1.1"
 iso3166 = "^2.1.1"
-rio-tiler = "5.0.3"
+rio-tiler = "5.0.3" # TODO: upgrade blocked on pydantic 2
 mercantile = "^1.2.1"
-django-ninja = "^0.21.0"
-celery = "^5.2.7"
-django-extensions = "^3.2.1"
+django-ninja = "~0.22.2" # TODO: upgrade blocked on pydantic 2
+celery = "^5.3.6"
+django-extensions = "^3.2.3"
 pillow = "^9.5.0"
-django-configurations = {extras = ["database", "email"], version = "^2.4.1"}
-django-storages = {extras = ["boto3"], version = "^1.13.2"}
+django-configurations = {version = "^2.5", extras = ["database", "email"]}
+django-storages = {version = "^1.14.2", extras = ["s3"]}
 django-celery-results = "^2.5.1"
-pystac-client = "^0.7.5"
-more-itertools = "^10.1.0"
 segment-anything = {git = "https://github.com/facebookresearch/segment-anything.git"}
 opencv-python = "^4.9.0.80"
 numpy = "^1.26.4"
@@ -49,6 +47,8 @@ onnx = "^1.15.0"
 onnxruntime = "^1.17.0"
 torch = "^2.2.0"
 torchvision = "^0.17.0"
+pystac-client = "^0.7.6"
+more-itertools = "^10.2.0"
 
 [tool.poetry.group.dev.dependencies]
 black = "^23.3.0"

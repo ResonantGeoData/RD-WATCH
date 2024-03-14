@@ -154,7 +154,15 @@ class BaseConfiguration(Configuration):
 class DevelopmentConfiguration(BaseConfiguration):
     SECRET_KEY = 'secretkey'  # Dummy value for local development configuration
 
-    DEFAULT_FILE_STORAGE = 'minio_storage.storage.MinioMediaStorage'
+    STORAGES = {
+        'default': {
+            'BACKEND': 'minio_storage.storage.MinioMediaStorage',
+        },
+        'staticfiles': {
+            'BACKEND': 'django.contrib.staticfiles.storage.StaticFilesStorage',
+        },
+    }
+
     MINIO_STORAGE_ENDPOINT = values.Value(
         'localhost:9000', environ_prefix=_ENVIRON_PREFIX
     )
@@ -189,7 +197,14 @@ class DevelopmentConfiguration(BaseConfiguration):
 class ProductionConfiguration(BaseConfiguration):
     SECRET_KEY = values.Value(environ_required=True, environ_prefix=_ENVIRON_PREFIX)
 
-    DEFAULT_FILE_STORAGE = 'storages.backends.s3boto3.S3Boto3Storage'
+    STORAGES = {
+        'default': {
+            'BACKEND': 'storages.backends.s3boto3.S3Boto3Storage',
+        },
+        'staticfiles': {
+            'BACKEND': 'django.contrib.staticfiles.storage.StaticFilesStorage',
+        },
+    }
 
     AWS_STORAGE_BUCKET_NAME = values.Value(
         environ_prefix=_ENVIRON_PREFIX,

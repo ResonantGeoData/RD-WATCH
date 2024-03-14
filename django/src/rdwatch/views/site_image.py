@@ -100,7 +100,8 @@ def site_images(request: HttpRequest, id: UUID4):
                     timestamp=ExtractEpoch('timestamp'),
                     geoJSON=Transform('geom', srid=4326),
                     bbox=BoundingBox(Transform('geom', srid=4326)),
-                )
+                ),
+                default=[],
             )
         )
     )

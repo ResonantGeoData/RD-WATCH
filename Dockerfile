@@ -1,12 +1,12 @@
 # Base runtime environment for rdwatch
-FROM ubuntu:23.04 AS base
+FROM python:3.11.8 AS base
 COPY docker/nginx.json /usr/local/etc/unit/config.json
 COPY docker/docker-entrypoint.sh /docker-entrypoint.sh
 COPY docker/keyrings/nginx.gpg /usr/share/keyrings/nginx.gpg
 RUN apt-get update \
  && apt-get install --no-install-recommends --yes ca-certificates curl gnupg
-RUN echo "deb [signed-by=/usr/share/keyrings/nginx.gpg] http://packages.nginx.org/unit/ubuntu/ lunar unit" > /etc/apt/sources.list.d/unit.list \
- && echo "deb-src [signed-by=/usr/share/keyrings/nginx.gpg] http://packages.nginx.org/unit/ubuntu/ lunar unit" >> /etc/apt/sources.list.d/unit.list
+RUN echo "deb [signed-by=/usr/share/keyrings/nginx.gpg] https://packages.nginx.org/unit/debian/ bookworm unit" > /etc/apt/sources.list.d/unit.list \
+ && echo "deb-src [signed-by=/usr/share/keyrings/nginx.gpg] https://packages.nginx.org/unit/debian/ bookworm unit" >> /etc/apt/sources.list.d/unit.list
 RUN apt-get update \
  && apt-get install --no-install-recommends --yes \
       libproj25 \

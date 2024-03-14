@@ -99,7 +99,8 @@ def site_observations(request: HttpRequest, evaluation_id: UUID4):
                             srid=6933,
                         )
                     ),
-                )
+                ),
+                default=[],
             ),
         )
     )
@@ -120,7 +121,8 @@ def site_observations(request: HttpRequest, evaluation_id: UUID4):
                     bbox=BoundingBox('image_bbox'),
                     image_dimensions='image_dimensions',
                     aws_location='aws_location',
-                )
+                ),
+                default=[],
             ),
         )
     )

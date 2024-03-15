@@ -57,9 +57,13 @@ watch (() => state.filters.regions, () => {
   if (state.filters.regions?.length) {
     selectedRegion.value = state.filters.regions[0];
   }
-  satelliteRegionTooLarge.value = false;
 });
 
+watch(selectedRegion, () => {
+  // Reset satellite time list when on other regions
+  satelliteRegionTooLarge.value = false;
+  state.satellite = { ...state.satellite, satelliteImagesOn: false, satelliteTimeList: []};
+});
 
 const expandSettings = ref(false);
 

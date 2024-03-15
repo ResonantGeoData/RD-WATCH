@@ -2,9 +2,7 @@
 
 
 # RDWATCH
-
-<img width="1857" alt="Screenshot 2024-02-17 at 3 40 47 PM" src="https://github.com/ResonantGeoData/RD-WATCH/assets/146527/a2c3431b-2d0a-4295-b302-5d4e08c84b84">
-
+<img width="1907" alt="Screenshot 2024-03-15 at 12 15 26 PM" src="https://github.com/ResonantGeoData/RD-WATCH/assets/146527/48ecc69e-d5dd-4ff3-beca-00f1cc7a37cb">
 
 ## Introduction
 

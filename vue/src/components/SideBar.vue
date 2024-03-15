@@ -257,8 +257,8 @@ const satelliteLoadingColor = computed(() => {
           <v-alert
             v-if="!satelliteRegionTooLarge"
             type="warning"
-            title="Download Region Satellitle Timestamps"
-            text="This is a long running process that could cause instability on the server.  Please only run this if you are sure you need to use the region satellite feature"
+            title="Download Region Satellite Timestamps"
+            text="This is a long running process that could cause instability on the server.  Please only run this if you are sure you need to use the region satellite feature."
           />
           <v-alert
             v-else
@@ -351,7 +351,7 @@ const satelliteLoadingColor = computed(() => {
         <v-card-title>Download Satellite Timestamps</v-card-title>
         <v-card-text>
           <v-alert type="warning">
-            Downloading Satellite Timestamps can cause the server to become unstable.  Only use this feature if you need to view full region satellite images and realize that usage will impact other users on the server.
+            Downloading satellite timestamps can cause the server to become unstable.  Only use this feature if you need to view full region satellite images and realize that usage will impact other users on the server.
           </v-alert>
         </v-card-text>
         <v-card-actions>

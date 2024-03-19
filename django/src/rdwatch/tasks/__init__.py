@@ -596,48 +596,47 @@ def generate_site_images_for_evaluation_run(
 @shared_task
 def generate_image_embedding(id: int):
     site_image = SiteImage.objects.get(pk=id)
-    if site_image:
-        with transaction.atomic():
-            try:
-                logger.warning('Loading checkpoint Model')
-                checkpoint = '/data/SAM/sam_vit_h_4b8939.pth'
-                model_type = 'vit_h'
-                sam = sam_model_registry[model_type](checkpoint=checkpoint)
-                sam.to(device='cpu')
-                predictor = SamPredictor(sam)
+    try:
+        logger.warning('Loading checkpoint Model')
+        checkpoint = '/data/SAM/sam_vit_h_4b8939.pth'
+        model_type = 'vit_h'
+        sam = sam_model_registry[model_type](checkpoint=checkpoint)
+        sam.to(device='cpu')
+        predictor = SamPredictor(sam)
 
-                image_file = site_image.image.open(mode='rb')
-                local_file_path = '/tmp/image.png'
-                with open(local_file_path, 'wb') as local_file:
-                    local_file.write(image_file.read())
+        image_file = site_image.image.open(mode='rb')
+        local_file_path = tempfile.NamedTemporaryFile(delete=False, suffix='.png')
+        with open(local_file_path, 'wb') as local_file:
+            local_file.write(image_file.read())
 
-                logger.warning('Reading local image file')
+        logger.warning('Reading local image file')
 
-                image = cv2.imread(local_file_path)
-                logger.warning('Setting the predictor for the file')
-                predictor.set_image(image)
-                logger.warning('Creating the embedding')
-                image_embedding = predictor.get_image_embedding().cpu().numpy()
-                logger.warning('Saving the npy')
+        image = cv2.imread(local_file_path)
+        logger.warning('Setting the predictor for the file')
+        predictor.set_image(image)
+        logger.warning('Creating the embedding')
+        image_embedding = predictor.get_image_embedding().cpu().numpy()
+        logger.warning('Saving the npy')
 
-                # Assuming you want to save the numpy array to the image_embedding
-                np.save('sampleImage.npy', image_embedding)
+        # Assuming you want to save the numpy array to the image_embedding
+        numpy_image_embedding = tempfile.NamedTemporaryFile(delete=False, suffix='.npy')
+        np.save(numpy_image_embedding, image_embedding)
 
-                with open('sampleImage.npy', 'rb') as f:
-                    embedding_data = f.read()
+        with open(numpy_image_embedding, 'rb') as f:
+            embedding_data = f.read()
 
-                    # Step 2: Set the image data to image_embedding file
-                    site_image.image_embedding.save(
-                        os.path.basename('sampleImage.npy'), ContentFile(embedding_data)
-                    )
+            # Step 2: Set the image data to image_embedding file
+            site_image.image_embedding.save(
+                os.path.basename(numpy_image_embedding), ContentFile(embedding_data)
+            )
 
-                    # Step 3: Save the SiteImage instance
-                    site_image.save()
+            # Step 3: Save the SiteImage instance
+            site_image.save()
 
-                # Step 4: Clean up local files
-                os.remove(local_file_path)
-                os.remove('sampleImage.npy')
+        # Step 4: Clean up local temporary files
+        os.remove(local_file_path)
+        os.remove(numpy_image_embedding)
 
-            except Exception as e:
-                # Handle exceptions (e.g., logging, showing error messages)
-                print(f'Error processing image {site_image.id}: {e}')
+    except Exception as e:
+        # Handle exceptions (e.g., logging, showing error messages)
+        print(f'Error processing image {site_image.id}: {e}')

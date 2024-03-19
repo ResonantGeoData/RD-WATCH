@@ -1,5 +1,5 @@
 from celery.result import AsyncResult
-from ninja import Router, Schema
+from ninja import Field, Router, Schema
 from pydantic import UUID4
 
 from django.contrib.gis.db.models.functions import Transform
@@ -8,6 +8,7 @@ from django.core.files.storage import default_storage
 from django.db.models import Count, F
 from django.db.models.functions import JSONObject  # type: ignore
 from django.http import Http404, HttpRequest
+from django.shortcuts import get_object_or_404
 
 from rdwatch.db.functions import BoundingBox, ExtractEpoch
 from rdwatch.models import SiteEvaluation, SiteImage, SiteObservation
@@ -18,17 +19,18 @@ router = Router()
 
 
 class SiteImageSchema(Schema):
-    timestamp: int  # type: ignore
+    timestamp: int = Field(..., alias='timestamp_epoch')
     source: str
     cloudcover: float
     image: str
+    custom: str | None = None
     observation_id: str | None
     percent_black: float
     bbox: BoundingBoxSchema
     image_dimensions: list[int]
     aws_location: str
     image_embedding: str | None
-    id: int
+    id: int = Field(..., alias='pk')
 
 
 class SiteImageListSchema(Schema):
@@ -156,52 +158,44 @@ def site_images(request: HttpRequest, id: UUID4):
 
 @router.post('/{id}/image_embedding', response=UUID4)
 def post_image_embedding(request: HttpRequest, id: int):
-    if not SiteImage.objects.filter(pk=id).exists():
-        raise Http404()
-    else:
-        return generate_image_embedding.delay(id).id
+    get_object_or_404(SiteImage, pk=id)
+    return generate_image_embedding.delay(id).id
 
 
 @router.get('/{id}/image_embedding_status/{uuid}')
 def get_image_embedding_status(request: HttpRequest, id: int, uuid: UUID4):
-    if not SiteImage.objects.filter(pk=id).exists():
-        raise Http404()
-    else:
-        task = AsyncResult(uuid)
-        result = {
-            'state': task.state,
-            'status': task.status,
-        }
-        return result
+    get_object_or_404(SiteImage, pk=id)
+    task = AsyncResult(uuid)
+    result = {
+        'state': task.state,
+        'status': task.status,
+    }
+    return result
 
 
 @router.get('/{id}/image', response=SiteImageSchema)
 def get_site_image(request: HttpRequest, id: int):
-    try:
-        site_image = (
-            SiteImage.objects.filter(pk=id)
-            .annotate(
-                timestamp_epoch=ExtractEpoch('timestamp'),
-                bbox=BoundingBox('image_bbox'),
-            )
-            .values(
-                'timestamp_epoch',
-                'source',
-                'cloudcover',
-                'image',
-                'observation_id',
-                'bbox',
-                'percent_black',
-                'image_dimensions',
-                'aws_location',
-                'image_embedding',
-                'pk',  # Assuming 'pk' is the primary key field name
-            )
-            .first()
+    site_image = (
+        SiteImage.objects.filter(pk=id)
+        .annotate(
+            timestamp_epoch=ExtractEpoch('timestamp'),
+            bbox=BoundingBox('image_bbox'),
         )
-    except SiteImage.DoesNotExist:
-        raise Http404()
-
+        .values(
+            'timestamp_epoch',
+            'source',
+            'cloudcover',
+            'image',
+            'observation_id',
+            'bbox',
+            'percent_black',
+            'image_dimensions',
+            'aws_location',
+            'image_embedding',
+            'pk',  # Assuming 'pk' is the primary key field name
+        )
+        .first()
+    )
     if site_image:
         response_data = {
             'timestamp': site_image['timestamp_epoch'],

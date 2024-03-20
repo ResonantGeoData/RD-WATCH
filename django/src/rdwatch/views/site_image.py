@@ -162,7 +162,7 @@ def post_image_embedding(request: HttpRequest, id: int):
     return generate_image_embedding.delay(id).id
 
 
-@router.get('/{id}/image_embedding_status/{uuid}')
+@router.get('/{id}/image_embedding_status/{uuid}/')
 def get_image_embedding_status(request: HttpRequest, id: int, uuid: UUID4):
     get_object_or_404(SiteImage, pk=id)
     task = AsyncResult(uuid)

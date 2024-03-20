@@ -40,8 +40,6 @@ export default ({ mode}) => {
           name: "configure-response-headers",
           configureServer: (server) => {
             server.middlewares.use((req, res, next) => {
-              // res.setHeader("Cross-Origin-Opener-Policy", "same-origin");
-              // res.setHeader("Cross-Origin-Embedder-Policy", "require-corp");
               if (req.url.endsWith(".wasm")) {
                 res.setHeader("Content-Type", "application/wasm");
               }

@@ -156,7 +156,7 @@ def site_images(request: HttpRequest, id: UUID4):
     return output
 
 
-@router.post('/{id}/image_embedding', response=UUID4)
+@router.post('/{id}/image_embedding/', response=UUID4)
 def post_image_embedding(request: HttpRequest, id: int):
     get_object_or_404(SiteImage, pk=id)
     return generate_image_embedding.delay(id).id

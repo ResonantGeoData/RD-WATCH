@@ -173,7 +173,7 @@ def get_image_embedding_status(request: HttpRequest, id: int, uuid: UUID4):
     return result
 
 
-@router.get('/{id}/image', response=SiteImageSchema)
+@router.get('/{id}/image/', response=SiteImageSchema)
 def get_site_image(request: HttpRequest, id: int):
     site_image = (
         SiteImage.objects.filter(pk=id)

@@ -1,5 +1,5 @@
 from celery.result import AsyncResult
-from ninja import Field, Router, Schema
+from ninja import Router, Schema
 from pydantic import UUID4
 
 from django.contrib.gis.db.models.functions import Transform
@@ -19,18 +19,17 @@ router = Router()
 
 
 class SiteImageSchema(Schema):
-    timestamp: int = Field(..., alias='timestamp_epoch')
+    timestamp: int
     source: str
     cloudcover: float
     image: str
-    custom: str | None = None
     observation_id: str | None
     percent_black: float
     bbox: BoundingBoxSchema
     image_dimensions: list[int]
     aws_location: str
     image_embedding: str | None
-    id: int = Field(..., alias='pk')
+    id: int
 
 
 class SiteImageListSchema(Schema):
@@ -210,7 +209,6 @@ def get_site_image(request: HttpRequest, id: int):
             'image_embedding': default_storage.url(site_image['image_embedding']),
             'id': site_image['pk'],
         }
-
         return response_data
     else:
         raise Http404()

@@ -489,7 +489,7 @@ export class ApiService {
   public static postSiteImageEmbedding(id: number): CancelablePromise<string> {
     return __request(OpenAPI, {
       method: "POST",
-      url: `${this.getApiPrefix()}/evaluations/images/{id}/image_embedding`,
+      url: `${this.getApiPrefix()}/evaluations/images/{id}/image_embedding/`,
       path: {
         id: id,
       },

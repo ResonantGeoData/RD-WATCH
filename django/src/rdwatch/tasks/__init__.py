@@ -604,38 +604,39 @@ def generate_image_embedding(id: int):
         sam.to(device='cpu')
         predictor = SamPredictor(sam)
 
-        image_file = site_image.image.open(mode='rb')
-        local_file_path = tempfile.NamedTemporaryFile(delete=False, suffix='.png')
-        with open(local_file_path, 'wb') as local_file:
-            local_file.write(image_file.read())
+        with tempfile.NamedTemporaryFile(delete=False) as temp_image_file:
+            site_image.image.open(mode='rb')
+            temp_image_file.write(site_image.image.read())
 
-        logger.warning('Reading local image file')
+            logger.warning('Reading local image file')
 
-        image = cv2.imread(local_file_path)
-        logger.warning('Setting the predictor for the file')
-        predictor.set_image(image)
-        logger.warning('Creating the embedding')
-        image_embedding = predictor.get_image_embedding().cpu().numpy()
-        logger.warning('Saving the npy')
+            image = cv2.imread(temp_image_file.name)
+            logger.warning('Setting the predictor for the file')
+            predictor.set_image(image)
+            logger.warning('Creating the embedding')
+            image_embedding = predictor.get_image_embedding().cpu().numpy()
+            logger.warning('Saving the npy')
 
-        # Assuming you want to save the numpy array to the image_embedding
-        numpy_image_embedding = tempfile.NamedTemporaryFile(delete=False, suffix='.npy')
-        np.save(numpy_image_embedding, image_embedding)
+            # Assuming you want to save the numpy array to the image_embedding
+            with tempfile.NamedTemporaryFile(
+                suffix='.npy', delete=False
+            ) as temp_embedding_file:
+                np.save(temp_embedding_file, image_embedding)
+                temp_embedding_file.seek(0)
+                embedding_data = temp_embedding_file.read()
 
-        with open(numpy_image_embedding, 'rb') as f:
-            embedding_data = f.read()
+                # Step 2: Set the image data to image_embedding field
+                site_image.image_embedding.save(
+                    os.path.basename(temp_embedding_file.name),
+                    ContentFile(embedding_data),
+                )
 
-            # Step 2: Set the image data to image_embedding file
-            site_image.image_embedding.save(
-                os.path.basename(numpy_image_embedding), ContentFile(embedding_data)
-            )
+                # Step 3: Save the SiteImage instance
+                site_image.save()
 
-            # Step 3: Save the SiteImage instance
-            site_image.save()
-
-        # Step 4: Clean up local temporary files
-        os.remove(local_file_path)
-        os.remove(numpy_image_embedding)
+            # Step 4: Clean up temporary files
+            os.remove(temp_image_file.name)
+            os.remove(temp_embedding_file.name)
 
     except Exception as e:
         # Handle exceptions (e.g., logging, showing error messages)

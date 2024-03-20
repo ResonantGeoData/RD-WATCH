@@ -25,6 +25,7 @@ const props = withDefaults(defineProps<Props>(), {
 
 const emit = defineEmits<{
   (e: "update:timerange", timerange: ModelRun["timerange"]): void;
+  (e: "modelrunlist", modelRunList: ModelRunList): void;
 }>();
 
 const resultsBoundingBox = ref({
@@ -81,7 +82,6 @@ async function loadModelRuns() {
         ymax: bounds.getNorth(),
       };
       resultsBoundingBox.value = bbox;
-      getSatelliteTimestamps(modelRunList)
       state.bbox = bbox;
     } else if (!state.filters.regions?.length) {
       const bbox = {
@@ -102,6 +102,7 @@ async function loadModelRuns() {
       state.modelRuns = state.modelRuns.concat(keyedModelRunResults);
     }
     emit("update:timerange", modelRunList["timerange"]);
+    emit("modelrunlist", modelRunList);
   } catch (e) {
     if (e instanceof CancelError) {
       console.log('Request has been cancelled');
@@ -153,38 +154,6 @@ function updateCameraBounds(filtered = true) {
 }
 
 const loadingSatelliteTimestamps = ref(false);
-
-async function getSatelliteTimestamps(modelRun: ModelRunList, force=false) {
-  satelliteRegionTooLarge.value = false;
-  loadingSatelliteTimestamps.value = true;
-  state.satellite.satelliteTimeList = [];
-  const bbox = modelRun.bbox?.coordinates[0];
-  if (bbox && !force) {
-    let minX = Infinity;
-    let maxX = -Infinity;
-    let minY = Infinity;
-    let maxY = -Infinity;
-    (bbox as []).forEach((item: [number, number]) => {
-      minX = Math.min(minX, item[1]);
-      minY = Math.min(minY, item[0]);
-      maxX = Math.max(maxX, item[1]);
-      maxY = Math.max(maxY, item[0]);
-    })
-    const xSize = maxX - minX;
-    const ySize = maxY - minY;
-    if (xSize > 1 || ySize > 1) {
-      loadingSatelliteTimestamps.value = false;
-      satelliteRegionTooLarge.value = true;
-      return;
-    }
-  }
-  const results = await ApiService.getAllSatelliteTimestamps(
-      'S2', 'visual','2A', modelRun.timerange?.min, modelRun.timerange?.max, modelRun.bbox?.coordinates[0] as []);
-
-  loadingSatelliteTimestamps.value = false;
-  state.satellite.satelliteTimeList = results;
-  state.satellite.satelliteBounds = modelRun.bbox?.coordinates[0] as [];
-}
 
 function handleToggle(modelRun: KeyedModelRun) {
   if (state.openedModelRuns.has(modelRun.key)) {

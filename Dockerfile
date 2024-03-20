@@ -32,7 +32,7 @@ RUN apt-get update \
 RUN python3 -m venv /poetry/venvs/rdwatch
 ENV PATH="/poetry/venvs/rdwatch/bin:$PATH"
 ENV VIRTUAL_ENV=/poetry/venvs/rdwatch
-RUN $VIRTUAL_ENV/bin/python -m pip install poetry==1.6.1
+RUN $VIRTUAL_ENV/bin/python -m pip install poetry==1.8.2
 RUN mkdir -p /data/SAM
 RUN wget -P /data/SAM https://dl.fbaipublicfiles.com/segment_anything/sam_vit_h_4b8939.pth
 WORKDIR /app

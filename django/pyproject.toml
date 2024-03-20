@@ -1,5 +1,5 @@
 [build-system]
-requires = [ "poetry-core>=1.6.1" ]
+requires = [ "poetry-core>=1.8.2" ]
 build-backend = "poetry.core.masonry.api"
 
 
@@ -36,7 +36,7 @@ mercantile = "^1.2.1"
 django-ninja = "~0.22.2" # TODO: upgrade blocked on pydantic 2
 celery = "^5.3.6"
 django-extensions = "^3.2.3"
-pillow = "^9.5.0"
+pillow = "^10.2.0"
 django-configurations = {version = "^2.5", extras = ["database", "email"]}
 django-storages = {version = "^1.14.2", extras = ["s3"]}
 django-celery-results = "^2.5.1"
@@ -51,14 +51,9 @@ pystac-client = "^0.7.6"
 more-itertools = "^10.2.0"
 
 [tool.poetry.group.dev.dependencies]
-black = "^23.3.0"
 django-stubs = "^4.2.0"
 djangorestframework-stubs = "^3.14.0"
-isort = "^5.12.0"
-mypy = "^1.3.0"
 taskipy = "^1.10.4"
-flake8 = "^6.0.0"
-flake8-django = "^1.2"
 pre-commit = "^3.3.1"
 tox = "^4.5.1"
 django-minio-storage = "^0.5.2"
@@ -66,15 +61,6 @@ werkzeug = "^2.3.7"
 django-debug-toolbar = "^4.2.0"
 
 [tool.taskipy.tasks]
-"build:openapi" = "DJANGO_SETTINGS_MODULE=rdwatch.server.settings django-admin generateschema --format openapi-json --file openapi.json"
-"lint" = "task lint:black; task lint:isort; task lint:flake8"
-"lint:fix" = "task lint:black:fix; task lint:isort:fix; task lint:flake8"
-"lint:flake8" = "flake8 src"
-"lint:black" = "black --check --diff --quiet src"
-"lint:black:fix" = "black  --quiet src"
-"lint:isort" = "isort --check --diff src"
-"lint:isort:fix" = "isort src"
-"lint:mypy" = "mypy src"
 "test" = "tox"
 
 [tool.black]

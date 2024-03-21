@@ -9,15 +9,19 @@ from datetime import datetime, timedelta
 from typing import Literal
 from uuid import uuid4
 
+import cv2
+import numpy as np
 from celery import shared_task
 from celery.result import AsyncResult
 from more_itertools import ichunked
 from PIL import Image
 from pydantic import UUID4
 from pyproj import Transformer
+from segment_anything import SamPredictor, sam_model_registry
 
 from django.contrib.gis.geos import Polygon
 from django.core.files import File
+from django.core.files.base import ContentFile
 from django.db import transaction
 from django.db.models import DateTimeField, ExpressionWrapper, F
 from django.utils import timezone
@@ -587,3 +591,53 @@ def generate_site_images_for_evaluation_run(
             scale,
             bboxScale,
         )
+
+
+@shared_task
+def generate_image_embedding(id: int):
+    site_image = SiteImage.objects.get(pk=id)
+    try:
+        logger.warning('Loading checkpoint Model')
+        checkpoint = '/data/SAM/sam_vit_h_4b8939.pth'
+        model_type = 'vit_h'
+        sam = sam_model_registry[model_type](checkpoint=checkpoint)
+        sam.to(device='cpu')
+        predictor = SamPredictor(sam)
+
+        with tempfile.NamedTemporaryFile(delete=False) as temp_image_file:
+            site_image.image.open(mode='rb')
+            temp_image_file.write(site_image.image.read())
+
+            logger.warning('Reading local image file')
+
+            image = cv2.imread(temp_image_file.name)
+            logger.warning('Setting the predictor for the file')
+            predictor.set_image(image)
+            logger.warning('Creating the embedding')
+            image_embedding = predictor.get_image_embedding().cpu().numpy()
+            logger.warning('Saving the npy')
+
+            # Assuming you want to save the numpy array to the image_embedding
+            with tempfile.NamedTemporaryFile(
+                suffix='.npy', delete=False
+            ) as temp_embedding_file:
+                np.save(temp_embedding_file, image_embedding)
+                temp_embedding_file.seek(0)
+                embedding_data = temp_embedding_file.read()
+
+                # Step 2: Set the image data to image_embedding field
+                site_image.image_embedding.save(
+                    os.path.basename(temp_embedding_file.name),
+                    ContentFile(embedding_data),
+                )
+
+                # Step 3: Save the SiteImage instance
+                site_image.save()
+
+            # Step 4: Clean up temporary files
+            os.remove(temp_image_file.name)
+            os.remove(temp_embedding_file.name)
+
+    except Exception as e:
+        # Handle exceptions (e.g., logging, showing error messages)
+        print(f'Error processing image {site_image.id}: {e}')

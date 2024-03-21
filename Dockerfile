@@ -18,6 +18,11 @@ RUN apt-get update \
       tzdata \
       unit \
       unit-python3.11 \
+      wget \
+      # opencv dependencies
+      ffmpeg \
+      libsm6 \
+      libxext6 \
  && rm -rf /var/lib/apt/lists/* \
  && mkdir /run/unit \
  && chmod +x /docker-entrypoint.sh \
@@ -28,6 +33,8 @@ RUN python3 -m venv /poetry/venvs/rdwatch
 ENV PATH="/poetry/venvs/rdwatch/bin:$PATH"
 ENV VIRTUAL_ENV=/poetry/venvs/rdwatch
 RUN $VIRTUAL_ENV/bin/python -m pip install poetry==1.8.2
+RUN mkdir -p /data/SAM
+RUN wget -P /data/SAM https://dl.fbaipublicfiles.com/segment_anything/sam_vit_h_4b8939.pth
 WORKDIR /app
 EXPOSE 80
 ENTRYPOINT [ "/docker-entrypoint.sh" ]

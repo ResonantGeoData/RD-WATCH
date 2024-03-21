@@ -32,10 +32,10 @@ export const style = (
   version: 8,
   sources: {
     ...naturalearthSources,
-    ...openmaptilesSources(filters),
     ...buildSatelliteSourceFilter(timestamp, satellite),
     ...buildImageSourceFilter(timestamp, enabledSiteObservations, settings),
     ...buildRdwatchtilesSources(modelRunIds, randomKey),
+    ...openmaptilesSources(filters),
   },
   sprite: `${tileServerURL}/sprites/osm-liberty`,
   glyphs: `${tileServerURL}/fonts/{fontstack}/{range}.pbf`,

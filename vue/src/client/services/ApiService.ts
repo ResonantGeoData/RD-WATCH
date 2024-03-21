@@ -18,8 +18,8 @@ import type { Eval } from "../models/Eval";
 import type { CancelablePromise } from "../core/CancelablePromise";
 import { OpenAPI } from "../core/OpenAPI";
 import { request as __request } from "../core/request";
-import { SatelliteTimeStamp } from "../../store";
-import { EvaluationImageResults } from "../../types";
+import { SatelliteTimeStamp, SiteObservationImage } from "../../store";
+import { EvaluationImage, EvaluationImageResults } from "../../types";
 
 export interface QueryArguments {
   performer?: string[];
@@ -476,6 +476,43 @@ export class ApiService {
     return __request(OpenAPI, {
       method: "GET",
       url: `${this.getApiPrefix()}/evaluations/images/{id}`,
+      path: {
+        id: id,
+      },
+    });
+
+  }
+
+
+
+
+  public static postSiteImageEmbedding(id: number): CancelablePromise<string> {
+    return __request(OpenAPI, {
+      method: "POST",
+      url: `${this.getApiPrefix()}/evaluations/images/{id}/image_embedding/`,
+      path: {
+        id: id,
+      },
+    });
+
+  }
+
+  public static getSiteImageEmbeddingStatus(id: number, uuid: string): CancelablePromise<{state: string, status: string}> {
+    return __request(OpenAPI, {
+      method: "GET",
+      url: `${this.getApiPrefix()}/evaluations/images/{id}/image_embedding_status/{uuid}`,
+      path: {
+        id: id,
+        uuid: uuid,
+      },
+    });
+
+  }
+
+  public static getSiteImage(id: number): CancelablePromise<SiteObservationImage> {
+    return __request(OpenAPI, {
+      method: "GET",
+      url: `${this.getApiPrefix()}/evaluations/images/{id}/image`,
       path: {
         id: id,
       },

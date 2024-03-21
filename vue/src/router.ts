@@ -3,6 +3,7 @@ import { createRouter, createWebHashHistory } from "vue-router";
 import RGD from './views/RGD.vue';
 import Annotation from './views/AnnotationViewer.vue';
 import FullScreenImageViewer from './views/FullScreenImageViewer.vue';
+import SAM from './views/SAM.vue';
 import { ApiService } from './client/services/ApiService'; // Import your ApiService implementation
 
 const routes = [
@@ -12,6 +13,7 @@ const routes = [
   { path: '/scoring/proposals/:region?/:selected?', component: Annotation, props:true, },
   { path: '/:region?/:selected?', component: RGD, props:true, },
   { path: '/proposals/:region?/:selected?', component: Annotation, props:true, },
+  { path: '/SAM/:id', component: SAM, props:true, },
 ]
 
 const router = createRouter({

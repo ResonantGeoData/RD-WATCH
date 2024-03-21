@@ -243,6 +243,31 @@ const rescale = (baseBBox: BaseBBox, scale=1.2) => {
   }
 }
 
+// Convert Image-Space GeoJSON.Polygon to GeoSpatial Polygon
+const denormalizePolygon = (bbox: BaseBBox, imageWidth: number, imageHeight: number, polygon: GeoJSON.Polygon ): GeoJSON.Polygon | null => {
+  const bboxWidth = bbox.xmax - bbox.xmin;
+  const bboxHeight = bbox.ymax - bbox.ymin;
+
+  const geoSpatialPoly: GeoJSON.Position[][] = [];
+
+  polygon.coordinates.forEach((ring) => {
+    geoSpatialPoly.push([]);
+    ring.forEach((coord) => {
+      const normalize_x = coord[0] / imageWidth;
+      const normalize_y = coord[1] / imageHeight;
+      const geo_x = normalize_x * bboxWidth + bbox.xmin;
+      const geo_y = normalize_y * bboxHeight + bbox.ymin;
+      geoSpatialPoly[geoSpatialPoly.length - 1].push([geo_x, geo_y]);
+    });
+  });
+
+  if (geoSpatialPoly.length === 1) {
+    return { type: "Polygon", coordinates: geoSpatialPoly } as GeoJSON.Polygon;
+  }
+  return null;
+};
+
+
 const normalizePolygon = (bbox: BaseBBox, imageWidth: number, imageHeight: number, polygon: GeoJSON.Polygon | GeoJSON.MultiPolygon ) => {
   const bboxWidth = bbox.xmax - bbox.xmin;
   const bboxHeight = bbox.ymax - bbox.ymin;
@@ -371,4 +396,6 @@ export {
     getClosestPoly,
     processImagePoly,
     scaleBoundingBox,
+    normalizePolygon,
+    denormalizePolygon,
 }

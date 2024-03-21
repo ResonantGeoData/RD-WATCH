@@ -27,6 +27,7 @@ class BaseSiteImage(models.Model):
         help_text="The source image's timestamp",
     )
     image = models.FileField(null=True, blank=True)
+    image_embedding = models.FileField(null=True, blank=True)
     cloudcover = models.FloatField(
         null=True, help_text='Cloud Cover associated with Image'
     )
@@ -57,6 +58,8 @@ class BaseSiteImage(models.Model):
 def delete_content(sender, instance, **kwargs):
     if instance.image:
         instance.image.delete(save=False)
+    if instance.image_embedding:
+        instance.image_embedding.delete(save=False)
 
 
 class SiteImage(BaseSiteImage):

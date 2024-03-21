@@ -185,6 +185,7 @@ export default function useEditPolygon(mapObj: Map): EditPolygonType {
 
   const setPolygonEdit = (polygon: GeoJSON.Polygon) => {
     if (draw.value) {
+      draw.value.deleteAll();
       const featureIds = draw.value.add(polygon);
       editingPolygon.value = polygon;
       selectedPoints.value = [];

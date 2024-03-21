@@ -10,6 +10,7 @@ export interface BaseBBox {
   }
 export interface EvaluationImage {
     timestamp: number;
+    id: number;
     source: SiteObservationImage['source'];
     cloudcover: number;
     image: string;
@@ -18,6 +19,7 @@ export interface EvaluationImage {
     bbox: BaseBBox;
     image_dimensions: [number, number];
     aws_location: string;
+    image_embedding?: string;
 }
 
 export interface EvaluationGeoJSON {

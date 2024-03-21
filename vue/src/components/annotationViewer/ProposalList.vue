@@ -240,11 +240,11 @@ const startDownload = async (data: DownloadSettings) => {
             </v-chip>
           </v-row>
           <v-row dense>
-            <v-tooltip>
-              <template #activator="{ props: subProps }">
+            <v-tooltip open-delay="300">
+              <template #activator="{ props }">
                 <v-btn
                   size="x-small"
-                  v-bind="subProps"
+                  v-bind="props"
                   @click.stop="download(item.id)"
                 >
                   <v-icon size="small">
@@ -255,12 +255,12 @@ const startDownload = async (data: DownloadSettings) => {
               <span>Download JSON</span>
             </v-tooltip>
             <v-spacer />
-            <v-tooltip>
-              <template #activator="{ props:subProps }">
+            <v-tooltip open-delay="300">
+              <template #activator="{ props }">
                 <v-btn
                   v-if="!item.downloading"
                   size="x-small"
-                  v-bind="subProps"
+                  v-bind="props"
                   class="mx-1"
                   @click.stop="setImageDownloadDialog(item)"
                 >
@@ -269,7 +269,7 @@ const startDownload = async (data: DownloadSettings) => {
                 <v-btn
                   v-else-if="item.downloading"
                   size="x-small"
-                  v-bind="subProps"
+                  v-bind="props"
                   class="mx-1"
                 >
                   <v-icon>mdi-spin mdi-sync</v-icon>
@@ -280,13 +280,13 @@ const startDownload = async (data: DownloadSettings) => {
             <v-spacer />
             <v-tooltip
               v-if="item.filename"
-              open-delay="50"
+              open-delay="0"
               bottom
             >
-              <template #activator="{ props: subProps }">
+              <template #activator="{ props }">
                 <v-icon
                   x-small
-                  v-bind="subProps"
+                  v-bind="props"
                 >
                   mdi-file-outline
                 </v-icon>

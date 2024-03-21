@@ -40,8 +40,15 @@ pillow = "^10.2.0"
 django-configurations = {version = "^2.5", extras = ["database", "email"]}
 django-storages = {version = "^1.14.2", extras = ["s3"]}
 django-celery-results = "^2.5.1"
+segment-anything = {git = "https://github.com/facebookresearch/segment-anything.git"}
+opencv-python = "^4.9.0.80"
+numpy = "^1.26.4"
+onnx = "^1.15.0"
+onnxruntime = "^1.17.0"
 pystac-client = "^0.7.6"
 more-itertools = "^10.2.0"
+torch = "^2.2.0"
+torchvision = "^0.17.0"
 
 [tool.poetry.group.dev.dependencies]
 django-stubs = "^4.2.0"
@@ -52,6 +59,7 @@ tox = "^4.5.1"
 django-minio-storage = "^0.5.2"
 werkzeug = "^2.3.7"
 django-debug-toolbar = "^4.2.0"
+
 
 [tool.taskipy.tasks]
 "test" = "tox"

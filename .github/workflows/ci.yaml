@@ -3,8 +3,8 @@ on:
   pull_request:
     types: [opened, synchronize]
   push:
-    branches:
-      - "main"
+    # branches:
+    #   - "main"
 env:
   # using a dummy secret key
   DJANGO_CONFIGURATION: DevelopmentConfiguration

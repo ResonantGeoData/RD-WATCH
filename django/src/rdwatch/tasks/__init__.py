@@ -3,6 +3,7 @@ import json
 import logging
 import os
 import tempfile
+import requests
 import zipfile
 from collections.abc import Iterable
 from datetime import datetime, timedelta
@@ -13,6 +14,7 @@ import cv2
 import numpy as np
 from celery import shared_task
 from celery.result import AsyncResult
+from celery import signals
 from more_itertools import ichunked
 from PIL import Image
 from pydantic import UUID4
@@ -641,3 +643,37 @@ def generate_image_embedding(id: int):
     except Exception as e:
         # Handle exceptions (e.g., logging, showing error messages)
         print(f'Error processing image {site_image.id}: {e}')
+
+@signals.worker_ready.connect
+def download_sam_model_if_not_exists(**kwargs):
+    file_path = '/data/SAM/sam_vit_h_4b8939.pth'
+    logger.warning('Trying to download SAM')
+    
+    # Check if the file exists
+    if not os.path.exists(file_path):
+        # If file doesn't exist, download it using requests
+        try:
+            url = 'https://dl.fbaipublicfiles.com/segment_anything/sam_vit_h_4b8939.pth'
+            response = requests.get(url, stream=True)
+            
+            # Check if the request was successful (status code 200)
+            if response.status_code == 200:
+                total_size = int(response.headers.get('content-length', 0))
+                bytes_downloaded = 0
+                
+                with open(file_path, 'wb') as file:
+                    for chunk in response.iter_content(chunk_size=1024):
+                        if chunk:
+                            file.write(chunk)
+                            bytes_downloaded += len(chunk)
+                            progress = (bytes_downloaded / total_size) * 100
+                            logger.info(f"Download progress: {progress:.2f}%")
+                
+                return f"File downloaded successfully at {file_path}"
+            else:
+                return f"Error downloading file. Status code: {response.status_code}"
+        except Exception as e:
+            logger.exception("Error downloading file:")
+            return f"Error downloading file: {e}"
+    else:
+        return f"File already exists at {file_path}"

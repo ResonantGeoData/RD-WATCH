@@ -54,6 +54,8 @@ services:
       RDWATCH_CELERY_BROKER_URL: amqp://rdwatch:secretkey@rabbitmq:5672/
     volumes:
       - ./django:/app/django
+      - celery-SAM-model:/data/SAM
+
     depends_on:
       postgresql:
         condition: service_started
@@ -131,3 +133,6 @@ services:
       # required for the git display of the commit hash
     command: >
       sh -c "npm install && npm run dev"
+
+volumes:
+  celery-SAM-model:

@@ -3,6 +3,7 @@ import json
 import logging
 import os
 import tempfile
+import time
 import zipfile
 from collections.abc import Iterable
 from datetime import datetime, timedelta
@@ -597,11 +598,27 @@ def generate_site_images_for_evaluation_run(
 @shared_task
 def generate_image_embedding(id: int):
     site_image = SiteImage.objects.get(pk=id)
+    timeout = 1200  # timeout for downloading if it takes longer than 20 minutes
+    polling_interval = 30
     try:
         logger.warning('Loading checkpoint Model')
         checkpoint = '/data/SAM/sam_vit_h_4b8939.pth'
-        if not os.path.exists(checkpoint):
+        if not os.path.exists(
+            checkpoint
+        ):  # somehow the initial download didn't happen so we download the model again
+            #  This may download the file twice if the user attempts
+            # to do SAM before the initial download completes
+            # this is a temporary solution until we start reporting SAM model
+            # status in the /status endpoint and reflect this
+            # in the front-end to prevent SAM before the model is downloaded.
             download_sam_model_if_not_exists()
+            logger.warning('Downloading the SAM Model')
+            start_time = time.time()
+            while not os.path.exists(checkpoint):
+                if time.time() - start_time > timeout:
+                    raise TimeoutError(f'Timed out waiting for file: {checkpoint}')
+                time.sleep(polling_interval)
+
         model_type = 'vit_h'
         sam = sam_model_registry[model_type](checkpoint=checkpoint)
         sam.to(device='cpu')

@@ -481,7 +481,7 @@ def get_proposals_query(model_run_id: UUID4):
     )
 
 
-@router.get('/{model_run_id}/proposals')
+@router.get('/{model_run_id}/proposals/')
 def get_proposals(request: HttpRequest, model_run_id: UUID4):
     region = get_region(model_run_id).values_list('json', flat=True)
     if not region.exists():
@@ -504,14 +504,14 @@ def start_download(
     return task_id.id
 
 
-@router.get('/download_status')
+@router.get('/download_status/')
 def check_download(request: HttpRequest, task_id: str):
     task = AsyncResult(task_id)
     print(task)
     return task.status
 
 
-@router.get('/{id}/download')
+@router.get('/{id}/download/')
 def get_downloaded_annotations(request: HttpRequest, id: UUID4, task_id: str):
     annotation_export = AnnotationExport.objects.filter(
         configuration=id, celery_id=task_id

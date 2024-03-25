@@ -279,7 +279,7 @@ def get_site_model_feature_JSON(id: UUID4, obsevations=False):
     return None, None
 
 
-@router.get('/{id}/download')
+@router.get('/{id}/download/')
 def download_annotations(request: HttpRequest, id: UUID4):
     output, site_id, filename = get_site_model_feature_JSON(id)
     if output is not None:

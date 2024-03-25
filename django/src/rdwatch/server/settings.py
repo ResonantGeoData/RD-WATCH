@@ -1,6 +1,7 @@
 import os
 import subprocess
 from datetime import timedelta
+from pathlib import Path
 
 from configurations import Configuration, values
 
@@ -17,6 +18,7 @@ try:
     GIT_VERSION = subprocess.check_output(
         ['git', 'describe', '--tags'],
         encoding='utf-8',
+        cwd=str(Path(__file__).parents[4].resolve()),
     ).strip()
 except subprocess.CalledProcessError:
     GIT_VERSION = 'unknown'

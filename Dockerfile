@@ -84,6 +84,8 @@ RUN mkdir /app/django/src \
 FROM builder AS dev
 WORKDIR /app/django
 COPY django/pyproject.toml django/poetry.lock /app/django/
+# Copy git metadata to enable display of version information
+COPY .git/ /app/.git/
 RUN mkdir /app/django/src \
  && mkdir /app/django/src/rdwatch \
  && touch /app/django/src/rdwatch/__init__.py \
@@ -132,5 +134,5 @@ COPY --from=vue-dist \
      /app/vue/dist
 # Copy git metadata to enable display of version information
 COPY --chown=rdwatch:rdwatch \
-     .git/ /app/ \
+     .git/ \
      /app/.git/

@@ -141,7 +141,7 @@ export class ApiService {
   public static getStatus(): CancelablePromise<ServerStatus> {
     return __request(OpenAPI, {
       method: "GET",
-      url: "/api/status",
+      url: "/api/status/",
     });
   }
 
@@ -154,7 +154,7 @@ export class ApiService {
   ): CancelablePromise<SiteEvaluationList> {
     return __request(OpenAPI, {
       method: "GET",
-      url: `${this.getApiPrefix()}/evaluations`,
+      url: `${this.getApiPrefix()}/evaluations/`,
       query,
     });
   }
@@ -169,7 +169,7 @@ export class ApiService {
   ): CancelablePromise<SiteObservationList> {
     return __request(OpenAPI, {
       method: "GET",
-      url: `${this.getApiPrefix()}/observations/{id}`,
+      url: `${this.getApiPrefix()}/observations/{id}/`,
       path: {
         id: id,
       },
@@ -186,7 +186,7 @@ export class ApiService {
     ): CancelablePromise<SiteDetails> {
       return __request(OpenAPI, {
         method: "GET",
-        url: `${this.getApiPrefix()}/sites/{id}/details`,
+        url: `${this.getApiPrefix()}/sites/{id}/details/`,
         path: {
           id: id,
         },
@@ -279,7 +279,7 @@ export class ApiService {
   ): CancelablePromise<ModelRunList> {
     return __request(OpenAPI, {
       method: "GET",
-      url: `${this.getApiPrefix()}/model-runs`,
+      url: `${this.getApiPrefix()}/model-runs/`,
       query: Object.fromEntries(
         Object.entries(query).filter(([key, value]) => value !== undefined)
       ),
@@ -293,7 +293,7 @@ export class ApiService {
     public static getProposals(id: string): CancelablePromise<Proposals> {
       return __request(OpenAPI, {
         method: "GET",
-        url: `${this.getApiPrefix()}/model-runs/{id}/proposals`,
+        url: `${this.getApiPrefix()}/model-runs/{id}/proposals/`,
         path: {
           id: id,
         },
@@ -324,7 +324,7 @@ export class ApiService {
   public static getPerformers(): CancelablePromise<PerformerList> {
     return __request(OpenAPI, {
       method: "GET",
-      url: `${this.getApiPrefix()}/performers`,
+      url: `${this.getApiPrefix()}/performers/`,
     });
   }
 
@@ -350,7 +350,7 @@ export class ApiService {
   public static getRegions(): CancelablePromise<RegionList> {
     return __request(OpenAPI, {
       method: "GET",
-      url: `${this.getApiPrefix()}/regions`,
+      url: `${this.getApiPrefix()}/regions/`,
     });
   }
 
@@ -390,7 +390,7 @@ export class ApiService {
     const bboxstr = `${minY},${minX},${maxY},${maxX}`;;
     return __request(OpenAPI, {
       method: "GET",
-      url: "/api/satellite-image/timestamps",
+      url: "/api/satellite-image/timestamps/",
       query: { constellation, level, spectrum, start_timestamp: startTime, end_timestamp: endTime, bbox: bboxstr,
       }
     });
@@ -422,7 +422,7 @@ export class ApiService {
     const bboxstr = `${minY},${minX},${maxY},${maxX}`;
     return __request(OpenAPI, {
       method: "GET",
-      url: "/api/satellite-image/visual-timestamps",
+      url: "/api/satellite-image/visual-timestamps/",
       query: { constellation, level, spectrum, start_timestamp: startTime, end_timestamp: endTime, bbox: bboxstr,
       }
     });
@@ -452,7 +452,7 @@ export class ApiService {
     const bboxstr = `${minY},${minX},${maxY},${maxX}`;
     return __request(OpenAPI, {
       method: "GET",
-      url: "/api/satellite-image/all-timestamps",
+      url: "/api/satellite-image/all-timestamps/",
       query: { constellation, level, spectrum, start_timestamp: startTime, end_timestamp: endTime, bbox: bboxstr,
       }
     });
@@ -467,7 +467,7 @@ export class ApiService {
   {
     return __request(OpenAPI, {
       method: "GET",
-      url: "/api/scores/details",
+      url: "/api/scores/details/",
       query: { configurationId, region, siteNumber, version },
     });
   }
@@ -475,7 +475,7 @@ export class ApiService {
   public static getEvaluationImages(id: string): CancelablePromise<EvaluationImageResults> {
     return __request(OpenAPI, {
       method: "GET",
-      url: `${this.getApiPrefix()}/evaluations/images/{id}`,
+      url: `${this.getApiPrefix()}/evaluations/images/{id}/`,
       path: {
         id: id,
       },
@@ -568,7 +568,7 @@ export class ApiService {
   public static getModelRunDownloadStatus(task_id: string): CancelablePromise<CeleryStates> {
     return __request(OpenAPI, {
       method: 'GET',
-      url: `${this.getApiPrefix()}/model-runs/download_status`,
+      url: `${this.getApiPrefix()}/model-runs/download_status/`,
       query: {task_id},
     })
   }

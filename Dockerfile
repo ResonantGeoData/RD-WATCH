@@ -114,15 +114,22 @@ RUN chmod -R u=rX,g=rX,o= .
 
 # Final image
 FROM base
+# Copy python virtual environment
 COPY --from=django-builder \
      --chown=rdwatch:rdwatch \
      /poetry/venvs \
      /poetry/venvs
+# Copy django source code
 COPY --from=django-dist \
      --chown=rdwatch:rdwatch \
      /app/django \
      /app/django
+# Copy vue static assets
 COPY --from=vue-dist \
      --chown=unit:unit \
      /app/vue/dist \
      /app/vue/dist
+# Copy git metadata to enable display of version information
+COPY --chown=rdwatch:rdwatch \
+     .git/ /app/ \
+     /app/.git/

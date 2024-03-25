@@ -93,6 +93,7 @@ RUN mkdir /app/django/src \
  && touch /app/django/src/rdwatch_scoring/__init__.py \
  && touch /app/django/README.md \
  && poetry install --with dev
+RUN git config --global --add safe.directory /app/django
 
 
 # Built static assets for vue-rdwatch

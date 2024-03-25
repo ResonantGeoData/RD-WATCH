@@ -24,6 +24,7 @@ services:
 
     volumes:
       - ./django:/app/django
+      - ./.git:/app/django/.git
     ports:
       - 8000:8000
     depends_on:

@@ -1,5 +1,5 @@
 from datetime import datetime, timedelta
-from typing import Literal
+from typing import Literal, TypeAlias
 
 from pydantic import UUID4
 
@@ -26,9 +26,16 @@ from rdwatch.models import ModelRun, Region, SiteEvaluation, SiteObservation
 
 from .model_run import router
 
+VectorTileType: TypeAlias = Literal['sites', 'observations', 'regions']
+
 
 def _get_vector_tile_cache_key(
-    model_run_id: UUID4, z: int, x: int, y: int, timestamp: datetime
+    kind: VectorTileType,
+    model_run_id: UUID4,
+    z: int,
+    x: int,
+    y: int,
+    timestamp: datetime,
 ) -> str:
     return '|'.join(
         [
@@ -43,8 +50,13 @@ def _get_vector_tile_cache_key(
     ).replace(' ', '_')
 
 
-@router.get('/{model_run_id}/vector-tile/{z}/{x}/{y}.pbf/')
-def vector_tile(request: HttpRequest, model_run_id: UUID4, z: int, x: int, y: int):
+def _get_vector_tile(
+    kind: VectorTileType,
+    model_run_id: UUID4,
+    z: int,
+    x: int,
+    y: int,
+) -> tuple[bytes, str]:
     timestamps: dict[
         Literal[
             'latest_evaluation_timestamp',
@@ -74,12 +86,24 @@ def vector_tile(request: HttpRequest, model_run_id: UUID4, z: int, x: int, y: in
 
     # Generate a unique cache key based on the model run ID, vector tile coordinates,
     # and the latest timestamp
-    cache_key = _get_vector_tile_cache_key(model_run_id, z, x, y, latest_timestamp)
+    cache_key = _get_vector_tile_cache_key(
+        type, model_run_id, z, x, y, latest_timestamp
+    )
 
-    tile = cache.get(cache_key)
+    return cache.get(cache_key), cache_key
 
-    # Generate the vector tiles and cache them if there's no hit
-    if tile is None:
+
+@router.get('/{model_run_id}/vector-tile/sites/{z}/{x}/{y}.pbf/')
+def sites_vector_tiles(
+    request: HttpRequest,
+    model_run_id: UUID4,
+    z: int,
+    x: int,
+    y: int,
+):
+    tile, cache_key = _get_vector_tile('sites', model_run_id, z, x, y)
+
+    if not tile:
         envelope = Func(z, x, y, function='ST_TileEnvelope')
         intersects = Q(
             Func(
@@ -138,6 +162,55 @@ def vector_tile(request: HttpRequest, model_run_id: UUID4, z: int, x: int, y: in
             evaluations_params,
         ) = evaluations_queryset.query.sql_with_params()
 
+        sql = f"""
+            WITH
+                evaluations AS ({evaluations_sql})
+            SELECT (
+                (
+                    SELECT ST_AsMVT(evaluations.*, %s, 4096, 'mvtgeom')
+                    FROM evaluations
+                )
+            )
+        """  # noqa: E501
+        params = evaluations_params + (f'sites-{model_run_id}',)
+
+        with connection.cursor() as cursor:
+            cursor.execute(sql, params)
+            row = cursor.fetchone()
+        tile = row[0]
+
+        cache.set(cache_key, tile.tobytes(), timedelta(days=30).total_seconds())
+
+    return HttpResponse(
+        tile,
+        content_type='application/octet-stream',
+        status=200 if tile else 204,
+    )
+
+
+@router.get('/{model_run_id}/vector-tile/observations/{z}/{x}/{y}.pbf/')
+def observations_vector_tiles(
+    request: HttpRequest, model_run_id: UUID4, z: int, x: int, y: int
+):
+    tile, cache_key = _get_vector_tile('observations', model_run_id, z, x, y)
+
+    if not tile:
+        envelope = Func(z, x, y, function='ST_TileEnvelope')
+        intersects = Q(
+            Func(
+                'geom',
+                envelope,
+                function='ST_Intersects',
+                output_field=BooleanField(),
+            )
+        )
+        mvtgeom = Func(
+            'geom',
+            envelope,
+            function='ST_AsMVTGeom',
+            output_field=Field(),
+        )
+
         observations_queryset = (
             SiteObservation.objects.filter(siteeval__configuration_id=model_run_id)
             .filter(intersects)
@@ -179,6 +252,55 @@ def vector_tile(request: HttpRequest, model_run_id: UUID4, z: int, x: int, y: in
             observations_params,
         ) = observations_queryset.query.sql_with_params()
 
+        sql = f"""
+            WITH
+                observations AS ({observations_sql})
+            SELECT (
+                (
+                    SELECT ST_AsMVT(observations.*, %s, 4096, 'mvtgeom')
+                    FROM observations
+                )
+            )
+        """  # noqa: E501
+        params = observations_params + (f'observations-{model_run_id}',)
+
+        with connection.cursor() as cursor:
+            cursor.execute(sql, params)
+            row = cursor.fetchone()
+        tile = row[0]
+
+        cache.set(cache_key, tile.tobytes(), timedelta(days=30).total_seconds())
+
+    return HttpResponse(
+        tile,
+        content_type='application/octet-stream',
+        status=200 if tile else 204,
+    )
+
+
+@router.get('/{model_run_id}/vector-tile/regions/{z}/{x}/{y}.pbf/')
+def regions_vector_tiles(
+    request: HttpRequest, model_run_id: UUID4, z: int, x: int, y: int
+):
+    tile, cache_key = _get_vector_tile('regions', model_run_id, z, x, y)
+
+    if not tile:
+        envelope = Func(z, x, y, function='ST_TileEnvelope')
+        intersects = Q(
+            Func(
+                'geom',
+                envelope,
+                function='ST_Intersects',
+                output_field=BooleanField(),
+            )
+        )
+        mvtgeom = Func(
+            'geom',
+            envelope,
+            function='ST_AsMVTGeom',
+            output_field=Field(),
+        )
+
         regions_queryset = (
             Region.objects.filter(evaluations__configuration_id=model_run_id)
             .filter(intersects)
@@ -195,43 +317,21 @@ def vector_tile(request: HttpRequest, model_run_id: UUID4, z: int, x: int, y: in
 
         sql = f"""
             WITH
-                evaluations AS ({evaluations_sql}),
-                observations AS ({observations_sql}),
                 regions AS ({regions_sql})
             SELECT (
-                (
-                    SELECT ST_AsMVT(evaluations.*, %s, 4096, 'mvtgeom')
-                    FROM evaluations
-                )
-                ||
-                (
-                    SELECT ST_AsMVT(observations.*, %s, 4096, 'mvtgeom')
-                    FROM observations
-                )
-                ||
                 (
                     SELECT ST_AsMVT(regions.*, %s, 4096, 'mvtgeom')
                     FROM regions
                 )
             )
         """  # noqa: E501
-        params = (
-            evaluations_params
-            + observations_params
-            + regions_params
-            + (
-                f'sites-{model_run_id}',
-                f'observations-{model_run_id}',
-                f'regions-{model_run_id}',
-            )
-        )
+        params = regions_params + (f'regions-{model_run_id}',)
 
         with connection.cursor() as cursor:
             cursor.execute(sql, params)
             row = cursor.fetchone()
         tile = row[0]
 
-        # Cache this for 30 days
         cache.set(cache_key, tile.tobytes(), timedelta(days=30).total_seconds())
 
     return HttpResponse(

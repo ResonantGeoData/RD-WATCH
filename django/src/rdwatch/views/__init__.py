@@ -8,7 +8,11 @@ from .satellite_image import (
     satelliteimage_visual_tile,
     satelliteimage_visual_time_list,
 )
-from .vector_tile import vector_tile
+from .vector_tile import (
+    observations_vector_tiles,
+    regions_vector_tiles,
+    sites_vector_tiles,
+)
 
 __all__ = [
     'satelliteimage_raster_tile',
@@ -18,6 +22,8 @@ __all__ = [
     'satelliteimage_visual_bbox',
     'satelliteimage_visual_time_list',
     'all_satellite_timestamps',
-    'vector_tile',
+    'sites_vector_tiles',
+    'regions_vector_tiles',
+    'observations_vector_tiles',
     'site',
 ]

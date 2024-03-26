@@ -27,6 +27,7 @@ from django.http import HttpRequest, HttpResponse
 from django.shortcuts import get_object_or_404
 
 from rdwatch.db.functions import ExtractEpoch, GroupExcludeRowRange
+from rdwatch.views.vector_tile import VectorTileType
 from rdwatch_scoring.models import (
     EvaluationBroadAreaSearchDetection,
     EvaluationBroadAreaSearchProposal,
@@ -55,24 +56,37 @@ def _get_vector_tile_cache_key(
     ).replace(' ', '_')
 
 
-@router.get('/{evaluation_run_uuid}/vector-tile/{z}/{x}/{y}.pbf/')
-def vector_tile(
-    request: HttpRequest, evaluation_run_uuid: UUID4, z: int, x: int, y: int
-):
+def _get_vector_tile(
+    kind: VectorTileType,
+    evaluation_run_uuid: UUID4,
+    z: int,
+    x: int,
+    y: int,
+) -> tuple[bytes, str]:
+
     evaluation_run = get_object_or_404(EvaluationRun, pk=evaluation_run_uuid)
 
     latest_timestamp = evaluation_run.start_datetime
 
-    # Generate a unique cache key based on the model run ID, vector tile coordinates,
-    # and the latest timestamp
     cache_key = _get_vector_tile_cache_key(
         evaluation_run_uuid, z, x, y, latest_timestamp
     )
 
-    tile = cache.get(cache_key)
+    # return cache.get(cache_key), cache_key
+    return None, cache_key
 
-    # Generate the vector tiles and cache them if there's no hit
-    if tile is None:
+
+@router.get('/{evaluation_run_uuid}/vector-tile/sites/{z}/{x}/{y}.pbf/')
+def sites_vector_tiles(
+    request: HttpRequest,
+    evaluation_run_uuid: UUID4,
+    z: int,
+    x: int,
+    y: int,
+):
+    tile, cache_key = _get_vector_tile('sites', evaluation_run_uuid, z, x, y)
+
+    if not tile:
         envelope = Func(z, x, y, function='ST_TileEnvelope')
         intersects = Q(
             Func(
@@ -93,9 +107,6 @@ def vector_tile(
         )
         geomfromuniongeometrytext = Func(
             'union_geometry', 4326, function='ST_GeomFromText', output_field=Field()
-        )
-        geomfromobservationtext = Func(
-            'geometry', 4326, function='ST_GeomFromText', output_field=Field()
         )
 
         site_queryset = (
@@ -179,6 +190,65 @@ def vector_tile(
             site_params,
         ) = site_queryset.query.sql_with_params()
 
+        sql = f"""
+            WITH
+                sites AS ({site_sql})
+            SELECT(
+                (
+                    SELECT ST_AsMVT(sites.*, %s, 4096, 'mvtgeom')
+                    FROM sites
+                )
+            )
+        """  # noqa: E501
+        params = site_params + (f'sites-{evaluation_run_uuid}',)
+
+        with connections['scoringdb'].cursor() as cursor:
+            cursor.execute(sql, params)
+            row = cursor.fetchone()
+        tile = row[0]
+
+        cache.set(cache_key, tile.tobytes(), timedelta(days=30).total_seconds())
+
+    return HttpResponse(
+        tile,
+        content_type='application/octet-stream',
+        status=200 if tile else 204,
+    )
+
+
+@router.get('/{evaluation_run_uuid}/vector-tile/observations/{z}/{x}/{y}.pbf/')
+def observations_vector_tiles(
+    request: HttpRequest,
+    evaluation_run_uuid: UUID4,
+    z: int,
+    x: int,
+    y: int,
+):
+    tile, cache_key = _get_vector_tile('observations', evaluation_run_uuid, z, x, y)
+
+    if not tile:
+        envelope = Func(z, x, y, function='ST_TileEnvelope')
+        intersects = Q(
+            Func(
+                'transformedgeom',
+                envelope,
+                function='ST_Intersects',
+                output_field=BooleanField(),
+            )
+        )
+        transform = Func(
+            'geomfromtext', 3857, function='ST_Transform', output_field=GeometryField()
+        )
+        mvtgeom = Func(
+            'transformedgeom',
+            envelope,
+            function='ST_AsMVTGeom',
+            output_field=Field(),
+        )
+        geomfromobservationtext = Func(
+            'geometry', 4326, function='ST_GeomFromText', output_field=Field()
+        )
+
         observations_queryset = (
             Observation.objects.filter(
                 site_uuid__evaluation_run_uuid=evaluation_run_uuid
@@ -243,6 +313,75 @@ def vector_tile(
             observations_params,
         ) = observations_queryset.query.sql_with_params()
 
+        sql = f"""
+            WITH
+                observations AS ({observations_sql})
+            SELECT(
+                (
+                    SELECT ST_AsMVT(observations.*, %s, 4096, 'mvtgeom')
+                    FROM observations
+                )
+            )
+        """  # noqa: E501
+        params = observations_params + (f'observations-{evaluation_run_uuid}',)
+
+        with connections['scoringdb'].cursor() as cursor:
+            cursor.execute(sql, params)
+            row = cursor.fetchone()
+        tile = row[0]
+
+        cache.set(cache_key, tile.tobytes(), timedelta(days=30).total_seconds())
+
+    return HttpResponse(
+        tile,
+        content_type='application/octet-stream',
+        status=200 if tile else 204,
+    )
+
+
+@router.get('/{evaluation_run_uuid}/vector-tile/regions/{z}/{x}/{y}.pbf/')
+def regions_vector_tiles(
+    request: HttpRequest,
+    evaluation_run_uuid: UUID4,
+    z: int,
+    x: int,
+    y: int,
+):
+    tile, cache_key = _get_vector_tile('regions', evaluation_run_uuid, z, x, y)
+
+    if not tile:
+        envelope = Func(z, x, y, function='ST_TileEnvelope')
+        intersects = Q(
+            Func(
+                'transformedgeom',
+                envelope,
+                function='ST_Intersects',
+                output_field=BooleanField(),
+            )
+        )
+        transform = Func(
+            'geomfromtext', 3857, function='ST_Transform', output_field=GeometryField()
+        )
+        mvtgeom = Func(
+            'transformedgeom',
+            envelope,
+            function='ST_AsMVTGeom',
+            output_field=Field(),
+        )
+        geomfromuniongeometrytext = Func(
+            'union_geometry', 4326, function='ST_GeomFromText', output_field=Field()
+        )
+        geomfromobservationtext = Func(
+            'geometry', 4326, function='ST_GeomFromText', output_field=Field()
+        )
+
+        site_queryset = (
+            Site.objects.filter(evaluation_run_uuid=evaluation_run_uuid)
+            .alias(geomfromtext=geomfromuniongeometrytext)
+            .alias(transformedgeom=transform)
+            .filter(intersects)
+        )
+
         region_queryset = (
             Region.objects.filter(id=site_queryset.values('region_id')[:1])
             .alias(geomfromtext=geomfromobservationtext)
@@ -258,43 +397,21 @@ def vector_tile(
 
         sql = f"""
             WITH
-                sites AS ({site_sql}),
-                observations AS ({observations_sql}),
                 regions AS ({region_sql})
             SELECT(
-                (
-                    SELECT ST_AsMVT(sites.*, %s, 4096, 'mvtgeom')
-                    FROM sites
-                )
-                ||
-                (
-                    SELECT ST_AsMVT(observations.*, %s, 4096, 'mvtgeom')
-                    FROM observations
-                )
-                ||
                 (
                     SELECT ST_AsMVT(regions.*, %s, 4096, 'mvtgeom')
                     FROM regions
                 )
             )
         """  # noqa: E501
-        params = (
-            site_params
-            + observations_params
-            + region_params
-            + (
-                f'sites-{evaluation_run_uuid}',
-                f'observations-{evaluation_run_uuid}',
-                f'regions-{evaluation_run_uuid}',
-            )
-        )
+        params = region_params + (f'regions-{evaluation_run_uuid}',)
 
         with connections['scoringdb'].cursor() as cursor:
             cursor.execute(sql, params)
             row = cursor.fetchone()
         tile = row[0]
 
-        # Cache this for 30 days
         cache.set(cache_key, tile.tobytes(), timedelta(days=30).total_seconds())
 
     return HttpResponse(

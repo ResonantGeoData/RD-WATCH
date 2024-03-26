@@ -265,15 +265,18 @@ const buildObservationFill = (
 // Nudge is used to refresh vector tiles when modified by proposal view
 export const buildSourceFilter = (modelRunIds: string[], randomKey='') => {
   const results: Record<string, SourceSpecification> = {};
+  const sources = ['sites', 'observations', 'regions'];
   modelRunIds.forEach((id) => {
-    const source = `vectorTileSource_${id}`;
-    results[source] = {
-      type: "vector",
-      tiles: [`${urlRoot}${ApiService.getApiPrefix()}/vector-tiles/tile.pbf?modelRunId=${id}&z={z}&x={x}&y={y}${randomKey}`],
-      minzoom: 0,
-      maxzoom: 14,
-    };
+    sources.forEach((source) => {
+      results[`${source}_${id}`] = {
+        type: "vector",
+        tiles: [`${urlRoot}${ApiService.getApiPrefix()}/model-runs/${id}/vector-tile/${source}/{z}/{x}/{y}.pbf/?${randomKey}`],
+        minzoom: 0,
+        maxzoom: 14,
+      };
+    });
   });
+  console.log(results)
   return results;
 };
 
@@ -288,7 +291,7 @@ export const buildLayerFilter = (
     const observationSpec: LayerSpecification =       {
       id: `observations-fill-${id}`,
       type: "fill",
-      source: `vectorTileSource_${id}`,
+      source: `observations_${id}`,
       "source-layer": `observations-${id}`,
       paint: {
         "fill-color": annotationColors(filters, 'observations'),
@@ -305,7 +308,7 @@ export const buildLayerFilter = (
       {
         id: `observations-outline-${id}`,
         type: "line",
-        source: `vectorTileSource_${id}`,
+        source: `observations_${id}`,
         "source-layer": `observations-${id}`,
         paint: {
           "line-color": annotationColors(filters),
@@ -316,7 +319,7 @@ export const buildLayerFilter = (
       {
         id: `regions-outline-${id}`,
         type: "line",
-        source: `vectorTileSource_${id}`,
+        source: `regions_${id}`,
         "source-layer": `regions-${id}`,
         paint: {
           "line-color": annotationColors(filters),
@@ -327,7 +330,7 @@ export const buildLayerFilter = (
       {
         id: `sites-outline-${id}`,
         type: "line",
-        source: `vectorTileSource_${id}`,
+        source: `sites_${id}`,
         "source-layer": `sites-${id}`,
         paint: {
           "line-color": annotationColors(filters),
@@ -340,7 +343,7 @@ export const buildLayerFilter = (
     const siteFill: LayerSpecification =   {
       id: `sites-fill-${id}`,
       type: "fill",
-      source: `vectorTileSource_${id}`,
+      source: `sites_${id}`,
       "source-layer": `sites-${id}`,
       paint: {
         "fill-color": annotationColors(filters, 'sites'),
@@ -358,7 +361,7 @@ export const buildLayerFilter = (
       results = results.concat([{
         id: `sites-text-${id}`,
         type: "symbol",
-        source: `vectorTileSource_${id}`,
+        source: `sites_${id}`,
         "source-layer": `sites-${id}`,
         layout: {
           "text-anchor": "center",
@@ -377,7 +380,7 @@ export const buildLayerFilter = (
       {
         id: `observations-text-${id}`,
         type: "symbol",
-        source: `vectorTileSource_${id}`,
+        source: `observations_${id}`,
         "source-layer": `observations-${id}`,
         layout: {
           "text-anchor": "center",

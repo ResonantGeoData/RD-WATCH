@@ -1,5 +1,7 @@
 import os
+import subprocess
 from datetime import timedelta
+from pathlib import Path
 
 from configurations import Configuration, values
 
@@ -11,6 +13,15 @@ _ENVIRON_PREFIX = 'RDWATCH'
 # classes (e.g. `AWS_DEFAULT_REGION) get immediately evaluated and
 # expect env vars to be set.
 values.Value.late_binding = True
+
+try:
+    GIT_VERSION = subprocess.check_output(
+        ['git', 'describe', '--tags'],
+        encoding='utf-8',
+        cwd=str(Path(__file__).parents[4].resolve()),
+    ).strip()
+except subprocess.CalledProcessError:
+    GIT_VERSION = 'unknown'
 
 
 class BaseConfiguration(Configuration):
@@ -24,6 +35,8 @@ class BaseConfiguration(Configuration):
     # Django's docs suggest that STATIC_URL should be a relative path,
     # for convenience serving a site on a subpath.
     STATIC_URL = 'static/'
+
+    GIT_VERSION = GIT_VERSION
 
     @property
     def INSTALLED_APPS(self):

@@ -21,7 +21,7 @@ class SiteImageSiteDetailResponse(Schema):
     timemax: int | None
 
 
-@router.get('/{id}/details', response=SiteImageSiteDetailResponse)
+@router.get('/{id}/details/', response=SiteImageSiteDetailResponse)
 def siteDetails(request: HttpRequest, id: UUID4):
     return (
         SiteEvaluation.objects.filter(pk=id)

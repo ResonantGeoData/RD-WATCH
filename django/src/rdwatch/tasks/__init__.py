@@ -3,7 +3,6 @@ import json
 import logging
 import os
 import tempfile
-import time
 import zipfile
 from collections.abc import Iterable
 from datetime import datetime, timedelta
@@ -21,6 +20,7 @@ from pydantic import UUID4
 from pyproj import Transformer
 from segment_anything import SamPredictor, sam_model_registry
 
+from django.conf import settings
 from django.contrib.gis.geos import Polygon
 from django.core.files import File
 from django.core.files.base import ContentFile
@@ -598,27 +598,9 @@ def generate_site_images_for_evaluation_run(
 @shared_task
 def generate_image_embedding(id: int):
     site_image = SiteImage.objects.get(pk=id)
-    timeout = 1200  # timeout for downloading if it takes longer than 20 minutes
-    polling_interval = 30
     try:
         logger.warning('Loading checkpoint Model')
-        checkpoint = '/data/SAM/sam_vit_h_4b8939.pth'
-        if not os.path.exists(
-            checkpoint
-        ):  # somehow the initial download didn't happen so we download the model again
-            #  This may download the file twice if the user attempts
-            # to do SAM before the initial download completes
-            # this is a temporary solution until we start reporting SAM model
-            # status in the /status endpoint and reflect this
-            # in the front-end to prevent SAM before the model is downloaded.
-            download_sam_model_if_not_exists()
-            logger.warning('Downloading the SAM Model')
-            start_time = time.time()
-            while not os.path.exists(checkpoint):
-                if time.time() - start_time > timeout:
-                    raise TimeoutError(f'Timed out waiting for file: {checkpoint}')
-                time.sleep(polling_interval)
-
+        checkpoint = settings.SAM_CHECKPOINT_MODEL
         model_type = 'vit_h'
         sam = sam_model_registry[model_type](checkpoint=checkpoint)
         sam.to(device='cpu')
@@ -665,7 +647,7 @@ def generate_image_embedding(id: int):
 
 @signals.worker_ready.connect
 def download_sam_model_if_not_exists(**kwargs):
-    file_path = '/data/SAM/sam_vit_h_4b8939.pth'
+    file_path = settings.SAM_CHECKPOINT_MODEL
     logger.warning('Trying to download SAM')
 
     # Check if the file exists
@@ -681,13 +663,22 @@ def download_sam_model_if_not_exists(**kwargs):
                 bytes_downloaded = 0
 
                 with open(file_path, 'wb+') as file:
+                    last_progress = 0
                     for chunk in response.iter_content(chunk_size=1024):
                         if chunk:
                             file.write(chunk)
                             bytes_downloaded += len(chunk)
                             progress = (bytes_downloaded / total_size) * 100
-                            if progress.is_integer():
-                                logger.info(f'Download progress: {progress:.2f}%')
+                            rounded_progress = round(progress)
+                            if (
+                                last_progress is None
+                                or rounded_progress != last_progress
+                            ):
+                                if rounded_progress % 5 == 0:
+                                    logger.info(
+                                        f'Download progress: {rounded_progress:.2f}%'
+                                    )
+                                    last_progress = rounded_progress
 
                 return f'File downloaded successfully at {file_path}'
             else:

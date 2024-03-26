@@ -240,6 +240,7 @@ const QUERY = `
     WHERE
       (
         "site"."evaluation_run_uuid" = $4
+        AND EXTRACT(YEAR FROM "observation"."date") = $5
         AND ST_Intersects(
           ST_Transform(
             ST_GeomFromText("observation"."geometry", 4326),
@@ -294,17 +295,17 @@ const QUERY = `
   (
       (
         SELECT
-          ST_AsMVT(sites.*, $5, 4096, 'mvtgeom')
+          ST_AsMVT(sites.*, $6, 4096, 'mvtgeom')
         FROM
           sites
       ) || (
         SELECT
-          ST_AsMVT(observations.*, $6, 4096, 'mvtgeom')
+          ST_AsMVT(observations.*, $7, 4096, 'mvtgeom')
         FROM
           observations
       ) || (
         SELECT
-          ST_AsMVT(regions.*, $7, 4096, 'mvtgeom')
+          ST_AsMVT(regions.*, $8, 4096, 'mvtgeom')
         FROM
           regions
       )
@@ -327,8 +328,8 @@ async function getCacheKey(modelRunId, z, x, y) {
   return `scoring-vector-tile-${modelRunId}-${z}-${x}-${y}-${start_datetime}`;
 }
 
-export async function getVectorTiles(modelRunId, z, x, y) {
-  const cacheKey = await getCacheKey(modelRunId, z, x, y);
+export async function getVectorTiles(modelRunId, z, x, y, year) {
+  const cacheKey = await getCacheKey(modelRunId, z, x, y, year);
 
   let vectorTileData = await redisClient.get(commandOptions({ returnBuffers: true }), cacheKey);
 
@@ -341,7 +342,7 @@ export async function getVectorTiles(modelRunId, z, x, y) {
   }
 
   if (!vectorTileData) {
-    const params = [z, x, y, modelRunId, `sites-${modelRunId}`, `observations-${modelRunId}`, `regions-${modelRunId}`];
+    const params = [z, x, y, modelRunId, year, `sites-${modelRunId}`, `observations-${modelRunId}`, `regions-${modelRunId}`];
     const result = await dbPool.query(QUERY, params);
     vectorTileData = result.rows[0]['?column?'];
 

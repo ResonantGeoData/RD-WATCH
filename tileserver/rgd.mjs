@@ -206,6 +206,7 @@ const QUERY = `
           "rdwatch_siteobservation"."geom",
           ST_TileEnvelope($1, $2, $3)
         )
+        AND EXTRACT(YEAR FROM "rdwatch_siteobservation"."timestamp") = $5
       )
   ),
   regions AS (
@@ -236,24 +237,24 @@ const QUERY = `
     (
       (
         SELECT
-          ST_AsMVT(evaluations.*, $5, 4096, 'mvtgeom')
+          ST_AsMVT(evaluations.*, $6, 4096, 'mvtgeom')
         FROM
           evaluations
       ) || (
         SELECT
-          ST_AsMVT(observations.*, $6, 4096, 'mvtgeom')
+          ST_AsMVT(observations.*, $7, 4096, 'mvtgeom')
         FROM
           observations
       ) || (
         SELECT
-          ST_AsMVT(regions.*, $7, 4096, 'mvtgeom')
+          ST_AsMVT(regions.*, $8, 4096, 'mvtgeom')
         FROM
           regions
       )
     )
 `;
 
-async function getCacheKey(modelRunId, z, x, y, randomKey) {
+async function getCacheKey(modelRunId, z, x, y, year, randomKey) {
   const result = await dbPool.query(`
     SELECT
       MAX(rdwatch_siteevaluation.timestamp) AS latestEvaluationTimestamp,
@@ -274,16 +275,17 @@ async function getCacheKey(modelRunId, z, x, y, randomKey) {
 
   const latestTimestamp = latestEvaluationTimestamp || modelRunTimestamp;
 
-  return `rgd-vector-tile-${modelRunId}-${z}-${x}-${y}-${latestTimestamp}${randomKey ? "-"+randomKey : ''}`;
+  return `rgd-vector-tile-${modelRunId}-${z}-${x}-${y}-${latestTimestamp}-${year}${randomKey ? "-"+randomKey : ''}`;
 }
 
-export async function getVectorTiles(modelRunId, z, x, y, randomKey) {
-  const cacheKey = await getCacheKey(modelRunId, z, x, y, randomKey);
+export async function getVectorTiles(modelRunId, z, x, y, year, randomKey) {
+  const cacheKey = await getCacheKey(modelRunId, z, x, y, year, randomKey);
   if (logging) {
     console.log(`cacheKey: ${cacheKey}`);
   }
 
   let vectorTileData = await redisClient.get(commandOptions({ returnBuffers: true }), cacheKey);
+  vectorTileData = null;
 
   if (logging) {
     if (vectorTileData) {
@@ -294,7 +296,7 @@ export async function getVectorTiles(modelRunId, z, x, y, randomKey) {
   }
 
   if (!vectorTileData) {
-    const params = [z, x, y, modelRunId, `sites-${modelRunId}`, `observations-${modelRunId}`, `regions-${modelRunId}`];
+    const params = [z, x, y, modelRunId, year, `sites-${modelRunId}`, `observations-${modelRunId}`, `regions-${modelRunId}`];
     if (logging) {
       console.log(params)
     }

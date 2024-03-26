@@ -686,7 +686,8 @@ def download_sam_model_if_not_exists(**kwargs):
                             file.write(chunk)
                             bytes_downloaded += len(chunk)
                             progress = (bytes_downloaded / total_size) * 100
-                            logger.info(f'Download progress: {progress:.2f}%')
+                            if progress.is_integer():
+                                logger.info(f'Download progress: {progress:.2f}%')
 
                 return f'File downloaded successfully at {file_path}'
             else:

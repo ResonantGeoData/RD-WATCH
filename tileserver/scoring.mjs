@@ -167,26 +167,18 @@ const QUERY = `
       "observation"."confidence_score",
       "observation"."uuid" AS "id",
       "observation"."date" AS "timestamp",
-      ST_AsMVTGeom(
-        ST_Transform(
-          ST_GeomFromText("observation"."geometry", 4326),
-          3857
-        ),
-        ST_TileEnvelope($1, $2, $3)
-      ) AS "mvtgeom",
+      CASE
+        WHEN EXTRACT(YEAR FROM "observation"."date") < $5 THEN ST_AsMVTGeom(ST_Transform(ST_GeomFromText("prev_obs"."prev_observation_geom", 4326), 3857), ST_TileEnvelope($1, $2, $3))
+        ELSE ST_AsMVTGeom(ST_Transform(ST_GeomFromText("observation"."geometry", 4326), 3857), ST_TileEnvelope($1, $2, $3))
+      END AS mvtgeom,
       "site"."evaluation_run_uuid" AS "configuration_id",
       CONCAT(
         'Eval ',
-        CONCAT(
-          "evaluation_run"."evaluation_number",
-          CONCAT(
-            ' ',
-            CONCAT(
-              "evaluation_run"."evaluation_run_number",
-              CONCAT(' ', "evaluation_run"."performer")
-            )
-          )
-        )
+        "evaluation_run"."evaluation_number",
+        ' ',
+        "evaluation_run"."evaluation_run_number",
+        ' ',
+        "evaluation_run"."performer"
       ) AS "configuration_name",
       "site"."status_annotated" AS "site_label",
       SUBSTRING("site"."site_id", 9) AS "site_number",
@@ -237,16 +229,39 @@ const QUERY = `
       INNER JOIN "evaluation_run" ON (
         "site"."evaluation_run_uuid" = "evaluation_run"."uuid"
       )
+      LEFT JOIN LATERAL (
+        SELECT
+          "uuid" AS "prev_observation_uuid",
+          "geometry" AS "prev_observation_geom"
+        FROM
+          "observation" AS "prev_observation"
+        WHERE
+          "prev_observation"."site_uuid" = "observation"."site_uuid"
+          AND EXTRACT(YEAR FROM "prev_observation"."date") < $5
+        ORDER BY
+          "prev_observation"."date" DESC
+        LIMIT 1
+      ) AS "prev_obs" ON TRUE
+
     WHERE
       (
         "site"."evaluation_run_uuid" = $4
-        AND EXTRACT(YEAR FROM "observation"."date") = $5
         AND ST_Intersects(
           ST_Transform(
-            ST_GeomFromText("observation"."geometry", 4326),
+            ST_GeomFromText(
+              CASE WHEN EXTRACT(YEAR FROM "observation"."date") < $5
+                THEN "prev_obs"."prev_observation_geom"
+                ELSE "observation"."geometry"
+              END,
+              4326
+            ),
             3857
           ),
           ST_TileEnvelope($1, $2, $3)
+        )
+        AND (
+          EXTRACT(YEAR FROM "observation"."date") = $5
+          OR prev_obs."prev_observation_uuid" IS NOT NULL
         )
       )
   ),
@@ -312,7 +327,7 @@ const QUERY = `
     )
 `;
 
-async function getCacheKey(modelRunId, z, x, y) {
+async function getCacheKey(modelRunId, z, x, y, year) {
   // TODO: is this cache key sufficiently unique?
   const result = await dbPool.query(`
     SELECT
@@ -325,7 +340,7 @@ async function getCacheKey(modelRunId, z, x, y) {
 
   const { start_datetime } = result.rows[0];
 
-  return `scoring-vector-tile-${modelRunId}-${z}-${x}-${y}-${start_datetime}`;
+  return `scoring-vector-tile-${modelRunId}-${z}-${x}-${y}-${start_datetime}-${year}`;
 }
 
 export async function getVectorTiles(modelRunId, z, x, y, year) {

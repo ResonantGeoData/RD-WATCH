@@ -143,10 +143,11 @@ const QUERY = `
       "rdwatch_siteobservation"."timestamp",
       "rdwatch_siteobservation"."notes",
       "rdwatch_siteobservation"."id" AS "id",
-      ST_AsMVTGeom(
-        "rdwatch_siteobservation"."geom",
-        ST_TileEnvelope($1, $2, $3)
-      ) AS "mvtgeom",
+      -- Use previous polygon if current observation is from a different year
+      CASE
+        WHEN EXTRACT(YEAR FROM "rdwatch_siteobservation"."timestamp") != $5 THEN ST_AsMVTGeom("prev_obs"."prev_observation_geom", ST_TileEnvelope($1, $2, $3))
+        ELSE ST_AsMVTGeom("rdwatch_siteobservation"."geom", ST_TileEnvelope($1, $2, $3))
+      END AS "mvtgeom",
       "rdwatch_siteevaluation"."configuration_id" AS "configuration_id",
       "rdwatch_modelrun"."title" AS "configuration_name",
       T7."slug" AS "site_label",
@@ -199,14 +200,34 @@ const QUERY = `
       INNER JOIN "rdwatch_region" ON (
         "rdwatch_siteevaluation"."region_id" = "rdwatch_region"."id"
       )
+      -- Join in the previous observation for the same site if it exists
+      LEFT JOIN LATERAL (
+        SELECT
+          "id" AS "prev_observation_id",
+          "geom" AS "prev_observation_geom"
+        FROM
+          "rdwatch_siteobservation" AS "prev_observation"
+        WHERE
+          "prev_observation"."siteeval_id" = "rdwatch_siteevaluation"."id"
+          AND EXTRACT(YEAR FROM "prev_observation"."timestamp") < $5
+        ORDER BY
+          "prev_observation"."timestamp" DESC
+        LIMIT 1
+      ) AS prev_obs ON TRUE
     WHERE
       (
         "rdwatch_siteevaluation"."configuration_id" = $4
         AND ST_Intersects(
-          "rdwatch_siteobservation"."geom",
+          CASE WHEN EXTRACT(YEAR FROM "rdwatch_siteobservation"."timestamp") < $5
+            THEN "prev_obs"."prev_observation_geom"
+            ELSE "rdwatch_siteobservation"."geom"
+          END,
           ST_TileEnvelope($1, $2, $3)
         )
-        AND EXTRACT(YEAR FROM "rdwatch_siteobservation"."timestamp") = $5
+        AND (
+          EXTRACT(YEAR FROM "rdwatch_siteobservation"."timestamp") = $5
+          OR prev_obs."prev_observation_id" IS NOT NULL
+        )
       )
   ),
   regions AS (

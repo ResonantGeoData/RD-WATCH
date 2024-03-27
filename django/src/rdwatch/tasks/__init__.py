@@ -662,7 +662,7 @@ def download_sam_model_if_not_exists(**kwargs):
                 total_size = int(response.headers.get('content-length', 0))
                 bytes_downloaded = 0
 
-                with open(file_path, 'wb+') as file:
+                with open(file_path, 'wb') as file:
                     last_progress = 0
                     for chunk in response.iter_content(chunk_size=1024):
                         if chunk:

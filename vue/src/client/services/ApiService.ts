@@ -500,7 +500,7 @@ export class ApiService {
   public static getSiteImageEmbeddingStatus(id: number, uuid: string): CancelablePromise<{state: string, status: string}> {
     return __request(OpenAPI, {
       method: "GET",
-      url: `${this.getApiPrefix()}/evaluations/images/{id}/image_embedding_status/{uuid}`,
+      url: `${this.getApiPrefix()}/evaluations/images/{id}/image_embedding_status/{uuid}/`,
       path: {
         id: id,
         uuid: uuid,
@@ -512,7 +512,7 @@ export class ApiService {
   public static getSiteImage(id: number): CancelablePromise<SiteObservationImage> {
     return __request(OpenAPI, {
       method: "GET",
-      url: `${this.getApiPrefix()}/evaluations/images/{id}/image`,
+      url: `${this.getApiPrefix()}/evaluations/images/{id}/image/`,
       path: {
         id: id,
       },

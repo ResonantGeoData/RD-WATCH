@@ -38,6 +38,12 @@ class BaseConfiguration(Configuration):
 
     GIT_VERSION = GIT_VERSION
 
+    SAM_CHECKPOINT_MODEL = values.PathValue(
+        '/data/SAM/sam_vit_h_4b8939.pth',
+        environ_prefix='RDWATCH_DJANGO',
+        check_exists=False,
+    )
+
     @property
     def INSTALLED_APPS(self):
         base_applications = [

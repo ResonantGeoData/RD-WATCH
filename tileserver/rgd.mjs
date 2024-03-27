@@ -143,10 +143,11 @@ const QUERY = `
       "rdwatch_siteobservation"."timestamp",
       "rdwatch_siteobservation"."notes",
       "rdwatch_siteobservation"."id" AS "id",
-      ST_AsMVTGeom(
-        "rdwatch_siteobservation"."geom",
-        ST_TileEnvelope($1, $2, $3)
-      ) AS "mvtgeom",
+      -- Use previous polygon if current observation is from a different year
+      CASE
+        WHEN EXTRACT(YEAR FROM "rdwatch_siteobservation"."timestamp") != $5 THEN ST_AsMVTGeom("prev_obs"."prev_observation_geom", ST_TileEnvelope($1, $2, $3))
+        ELSE ST_AsMVTGeom("rdwatch_siteobservation"."geom", ST_TileEnvelope($1, $2, $3))
+      END AS "mvtgeom",
       "rdwatch_siteevaluation"."configuration_id" AS "configuration_id",
       "rdwatch_modelrun"."title" AS "configuration_name",
       T7."slug" AS "site_label",
@@ -199,12 +200,33 @@ const QUERY = `
       INNER JOIN "rdwatch_region" ON (
         "rdwatch_siteevaluation"."region_id" = "rdwatch_region"."id"
       )
+      -- Join in the previous observation for the same site if it exists
+      LEFT JOIN LATERAL (
+        SELECT
+          "id" AS "prev_observation_id",
+          "geom" AS "prev_observation_geom"
+        FROM
+          "rdwatch_siteobservation" AS "prev_observation"
+        WHERE
+          "prev_observation"."siteeval_id" = "rdwatch_siteevaluation"."id"
+          AND EXTRACT(YEAR FROM "prev_observation"."timestamp") < $5
+        ORDER BY
+          "prev_observation"."timestamp" DESC
+        LIMIT 1
+      ) AS prev_obs ON TRUE
     WHERE
       (
         "rdwatch_siteevaluation"."configuration_id" = $4
         AND ST_Intersects(
-          "rdwatch_siteobservation"."geom",
+          CASE WHEN EXTRACT(YEAR FROM "rdwatch_siteobservation"."timestamp") < $5
+            THEN "prev_obs"."prev_observation_geom"
+            ELSE "rdwatch_siteobservation"."geom"
+          END,
           ST_TileEnvelope($1, $2, $3)
+        )
+        AND (
+          EXTRACT(YEAR FROM "rdwatch_siteobservation"."timestamp") = $5
+          OR prev_obs."prev_observation_id" IS NOT NULL
         )
       )
   ),
@@ -236,24 +258,24 @@ const QUERY = `
     (
       (
         SELECT
-          ST_AsMVT(evaluations.*, $5, 4096, 'mvtgeom')
+          ST_AsMVT(evaluations.*, $6, 4096, 'mvtgeom')
         FROM
           evaluations
       ) || (
         SELECT
-          ST_AsMVT(observations.*, $6, 4096, 'mvtgeom')
+          ST_AsMVT(observations.*, $7, 4096, 'mvtgeom')
         FROM
           observations
       ) || (
         SELECT
-          ST_AsMVT(regions.*, $7, 4096, 'mvtgeom')
+          ST_AsMVT(regions.*, $8, 4096, 'mvtgeom')
         FROM
           regions
       )
     )
 `;
 
-async function getCacheKey(modelRunId, z, x, y, randomKey) {
+async function getCacheKey(modelRunId, z, x, y, year, randomKey) {
   const result = await dbPool.query(`
     SELECT
       MAX(rdwatch_siteevaluation.timestamp) AS latestEvaluationTimestamp,
@@ -274,16 +296,17 @@ async function getCacheKey(modelRunId, z, x, y, randomKey) {
 
   const latestTimestamp = latestEvaluationTimestamp || modelRunTimestamp;
 
-  return `rgd-vector-tile-${modelRunId}-${z}-${x}-${y}-${latestTimestamp}${randomKey ? "-"+randomKey : ''}`;
+  return `rgd-vector-tile-${modelRunId}-${z}-${x}-${y}-${latestTimestamp}-${year}${randomKey ? "-"+randomKey : ''}`;
 }
 
-export async function getVectorTiles(modelRunId, z, x, y, randomKey) {
-  const cacheKey = await getCacheKey(modelRunId, z, x, y, randomKey);
+export async function getVectorTiles(modelRunId, z, x, y, year, randomKey) {
+  const cacheKey = await getCacheKey(modelRunId, z, x, y, year, randomKey);
   if (logging) {
     console.log(`cacheKey: ${cacheKey}`);
   }
 
   let vectorTileData = await redisClient.get(commandOptions({ returnBuffers: true }), cacheKey);
+  vectorTileData = null;
 
   if (logging) {
     if (vectorTileData) {
@@ -294,7 +317,7 @@ export async function getVectorTiles(modelRunId, z, x, y, randomKey) {
   }
 
   if (!vectorTileData) {
-    const params = [z, x, y, modelRunId, `sites-${modelRunId}`, `observations-${modelRunId}`, `regions-${modelRunId}`];
+    const params = [z, x, y, modelRunId, year, `sites-${modelRunId}`, `observations-${modelRunId}`, `regions-${modelRunId}`];
     if (logging) {
       console.log(params)
     }

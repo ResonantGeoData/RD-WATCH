@@ -34,7 +34,7 @@ export const style = (
     ...naturalearthSources,
     ...buildSatelliteSourceFilter(timestamp, satellite),
     ...buildImageSourceFilter(timestamp, enabledSiteObservations, settings),
-    ...buildRdwatchtilesSources(modelRunIds, randomKey),
+    ...buildRdwatchtilesSources(timestamp, modelRunIds, randomKey),
     ...openmaptilesSources(filters),
   },
   sprite: `${tileServerURL}/sprites/osm-liberty`,

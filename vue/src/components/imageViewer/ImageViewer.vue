@@ -483,6 +483,7 @@ const clearStorage = async () => {
           </h3>
         </v-col>
         <image-editor-details
+          v-if="combinedImages.length"
           :site-eval-id="siteEvalId"
           :editable="editable"
           :date-range="dateRange"

@@ -61,6 +61,7 @@ const getSiteProposals = async () => {
       const regionName: string = proposalList.value.region;
       const accepted: string[] = [];
       const rejected: string[] = [];
+      let selected: ProposalDisplay | null = null;
       proposalList.value.proposed_sites.forEach((item) => {
         const newNum = item.number.toString().padStart(4, "0");
         if (newNum === "9999") {
@@ -96,6 +97,9 @@ const getSiteProposals = async () => {
           timestamp: item.timestamp,
           downloading: item.downloading,
         });
+        if (item.id === props.selectedEval) {
+          selected = modList[modList.length - 1];
+        }
       });
       state.filters.proposals = {
         accepted,
@@ -110,7 +114,9 @@ const getSiteProposals = async () => {
           clearInterval(downloadCheckInterval);
         }
       }
-
+      if (selected) {
+        emit('selected', selected);
+      }
     }
   }
 };

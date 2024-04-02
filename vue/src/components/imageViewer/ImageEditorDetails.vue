@@ -130,7 +130,7 @@ const saveSiteEvaluationChanges = async () => {
     label: siteEvaluationLabel.value,
     start_date: startDate.value,
     end_date: endDate.value,
-    notes: siteEvaluationNotes.value ? siteEvaluationNotes.value : undefined,
+    notes: siteEvaluationNotes.value || '',
   });
   siteEvaluationUpdated.value = false;
   emit('clear-storage');

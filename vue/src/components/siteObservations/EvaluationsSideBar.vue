@@ -67,7 +67,7 @@ onUnmounted(() => {
       </v-btn>
       <v-spacer />
       <v-icon
-        :color="expandSettings ? 'rgb(37, 99, 235)' : 'black'"
+        :color="expandSettings ? 'primary' : 'black'"
         @click="expandSettings = !expandSettings"
       >
         mdi-cog

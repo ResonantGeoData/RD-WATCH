@@ -441,7 +441,7 @@ const clearStorage = async () => {
             <template #activator="{ props }">
               <v-icon
                 v-bind="props"
-                :color="mapImagesOn ? 'rgb(37, 99, 235)' : ''"
+                :color="mapImagesOn ? 'primary' : ''"
                 @click="loadAndToggleSatelliteImages(siteEvalId)"
               >
                 mdi-image
@@ -458,7 +458,7 @@ const clearStorage = async () => {
             <template #activator="{ props }">
               <v-icon
                 v-bind="props"
-                :color="drawGroundTruth ? 'rgb(37, 99, 235)' : ''"
+                :color="drawGroundTruth ? 'primary' : ''"
                 @click="drawGroundTruth = !drawGroundTruth"
               >
                 {{

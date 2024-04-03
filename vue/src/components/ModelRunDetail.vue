@@ -228,7 +228,7 @@ const getModeIcon = (mode: ModelRun['mode']) => (mode ? {
       <v-row dense>
         <v-icon
           v-if="modelRun.performer.short_code === 'TE' && modelRun.score == 1"
-          color="rgb(37, 99, 235)"
+          color="primary"
         >
           mdi-check-decagram
         </v-icon>

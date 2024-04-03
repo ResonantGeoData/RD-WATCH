@@ -105,7 +105,7 @@ const hasLoadedImages = computed(() => (Object.entries(props.siteObservation.ima
           >
             <v-icon
               size="large"
-              color="rgb(37, 99, 235)"
+              color="primary"
               class="mr-2"
               @click="refresh()"
             >
@@ -137,7 +137,7 @@ const hasLoadedImages = computed(() => (Object.entries(props.siteObservation.ima
             <v-btn
               variant="text"
               density="compact"
-              :color="imagesActive ? 'rgb(37, 99, 235)': 'black'"
+              :color="imagesActive ? 'primary': 'black'"
               :disabled="!hasImages"
               icon="mdi-image"
               @click="hasImages && toggleSatelliteImages(siteObservation)"
@@ -254,7 +254,7 @@ const hasLoadedImages = computed(() => (Object.entries(props.siteObservation.ima
         <v-icon
           size="35"
           :disabled="!currentClosestTimestamp.prev"
-          :color="currentClosestTimestamp.prev ? 'rgb(37, 99, 235)' : 'gray'"
+          :color="currentClosestTimestamp.prev ? 'primary' : 'gray'"
           @click="goToTimestamp(-1)"
         >
           mdi-chevron-left
@@ -269,7 +269,7 @@ const hasLoadedImages = computed(() => (Object.entries(props.siteObservation.ima
         <v-icon
           size="35"
           :disabled="!currentClosestTimestamp.next"
-          :color="currentClosestTimestamp.next ? 'rgb(37, 99, 235)' : 'gray'"
+          :color="currentClosestTimestamp.next ? 'primary' : 'gray'"
           @click="goToTimestamp(1)"
         >
           mdi-chevron-right

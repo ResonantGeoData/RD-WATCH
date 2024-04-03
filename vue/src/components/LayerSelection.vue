@@ -153,23 +153,25 @@ const toggleScoring = (data? : undefined | 'simple' | 'detailed') => {
           class="px-2 mx-2"
           v-bind="props"
           size="large"
-          :color="state.filters.drawObservations ? 'rgb(37, 99, 235)' : ''"
+          :color="state.filters.drawObservations ? 'primary' : ''"
           style="min-width: 200px"
           @click="toggleObs()"
         >
           <span>
             Observations
           </span>
-          <v-icon
+          <div
             v-if="state.filters.drawObservations?.includes('model')"
+            class="layer-icon mx-1"
           >
-            mdi-alpha-m-box
-          </v-icon>
-          <v-icon
+            M
+          </div>
+          <div
             v-if="state.filters.drawObservations?.includes('groundtruth')"
+            class="layer-icon mx-1"
           >
-            mdi-alpha-t-box
-          </v-icon>
+            G
+          </div>
         </v-btn>
       </template>
       <v-card outlined>
@@ -178,19 +180,33 @@ const toggleScoring = (data? : undefined | 'simple' | 'detailed') => {
             value="Model"
             @click="toggleObs('model')"
           >
-            Model
-            <v-icon>
-              mdi-alpha-m-box
-            </v-icon>
+            <v-btn
+              size="large"
+              variant="text"
+            >
+              Model
+              <div
+                class="layer-icon mx-1"
+              >
+                M
+              </div>
+            </v-btn>
           </v-list-item>
           <v-list-item
             value="GroundTruth"
             @click="toggleObs('groundtruth')"
           >
-            GroundTruth
-            <v-icon>
-              mdi-alpha-t-box
-            </v-icon>
+            <v-btn
+              size="large"
+              variant="text"
+            >
+              GroundTruth
+              <div
+                class="layer-icon mx-1"
+              >
+                G
+              </div>
+            </v-btn>
           </v-list-item>
         </v-list>
       </v-card>
@@ -203,28 +219,32 @@ const toggleScoring = (data? : undefined | 'simple' | 'detailed') => {
           class="px-2 mx-2"
           v-bind="props"
           size="large"
-          :color="state.filters.drawSiteOutline ? 'rgb(37, 99, 235)' : ''"
+          :color="state.filters.drawSiteOutline ? 'primary' : ''"
           style="min-width:150px"
           @click="toggleSite()"
         >
           <span>
             Sites
           </span>
-          <v-icon
+          <div
             v-if="state.filters.drawSiteOutline?.includes('model')"
+            class="layer-icon mx-1"
           >
-            mdi-alpha-m-box
-          </v-icon>
-          <v-icon
+            M
+          </div>
+          <div
             v-if="state.filters.drawSiteOutline?.includes('groundtruth')"
+            class="layer-icon mx-1"
           >
-            mdi-alpha-t-box
-          </v-icon>
-          <v-icon
+            G
+          </div>
+          <div
             v-if="state.filters.siteTimeLimits"
+            size="x-large"
+            class="layer-icon mx-1"
           >
-            mdi-clock
-          </v-icon>
+            <v-icon>mdi-clock </v-icon>
+          </div>
         </v-btn>
       </template>
       <v-card outlined>
@@ -233,28 +253,49 @@ const toggleScoring = (data? : undefined | 'simple' | 'detailed') => {
             value="Model"
             @click="toggleSite('model')"
           >
-            Model
-            <v-icon>
-              mdi-alpha-m-box
-            </v-icon>
+            <v-btn
+              size="large"
+              variant="text"
+            >
+              Model
+              <div
+                class="layer-icon mx-1"
+              >
+                M
+              </div>
+            </v-btn>
           </v-list-item>
           <v-list-item
             value="GroundTruth"
             @click="toggleSite('groundtruth')"
           >
-            GroundTruth
-            <v-icon>
-              mdi-alpha-t-box
-            </v-icon>
+            <v-btn
+              size="large"
+              variant="text"
+            >
+              GroundTruth
+              <div
+                class="layer-icon mx-1"
+              >
+                T
+              </div>
+            </v-btn>
           </v-list-item>
           <v-list-item
             value="GroundTruth"
             @click="toggleSiteTimeLimits()"
           >
-            Time Limits
-            <v-icon>
-              mdi-clock
-            </v-icon>
+            <v-btn
+              size="large"
+              variant="text"
+            >
+              Time Limits
+              <div
+                class="layer-icon mx-1"
+              >
+                <v-icon>mdi-clock</v-icon>
+              </div>
+            </v-btn>
           </v-list-item>
         </v-list>
       </v-card>
@@ -262,7 +303,7 @@ const toggleScoring = (data? : undefined | 'simple' | 'detailed') => {
     <v-btn
       class="px-2 mx-2"
       size="large"
-      :color="state.filters.drawRegionPoly ? 'rgb(37, 99, 235)' : ''"
+      :color="state.filters.drawRegionPoly ? 'primary' : ''"
       @click="toggleRegion()"
     >
       Region
@@ -276,23 +317,25 @@ const toggleScoring = (data? : undefined | 'simple' | 'detailed') => {
           class="px-2 mx-2"
           v-bind="props"
           size="large"
-          :color="state.filters.scoringColoring ? 'rgb(37, 99, 235)' : ''"
+          :color="state.filters.scoringColoring ? 'primary' : ''"
           style="min-width:125px"
           @click="toggleScoring()"
         >
           <span>
             Scoring
           </span>
-          <v-icon
+          <div
             v-if="state.filters.scoringColoring == 'simple'"
+            class="layer-icon mx-1"
           >
-            mdi-alpha-s-box
-          </v-icon>
-          <v-icon
+            S
+          </div>
+          <div
             v-if="state.filters.scoringColoring == 'detailed'"
+            class="layer-icon mx-1"
           >
-            mdi-alpha-d-box
-          </v-icon>
+            D
+          </div>
         </v-btn>
       </template>
       <v-card outlined>
@@ -301,19 +344,33 @@ const toggleScoring = (data? : undefined | 'simple' | 'detailed') => {
             value="Simple"
             @click="toggleScoring('simple')"
           >
-            Simple
-            <v-icon>
-              mdi-alpha-s-box
-            </v-icon>
+            <v-btn
+              size="large"
+              variant="text"
+            >
+              Simple
+              <div
+                class="layer-icon mx-1"
+              >
+                S
+              </div>
+            </v-btn>
           </v-list-item>
           <v-list-item
             value="Detailed"
             @click="toggleScoring('detailed')"
           >
-            Detailed
-            <v-icon>
-              mdi-alpha-d-box
-            </v-icon>
+            <v-btn
+              size="large"
+              variant="text"
+            >
+              Detailed
+              <div
+                class="layer-icon mx-1"
+              >
+                D
+              </div>
+            </v-btn>
           </v-list-item>
         </v-list>
       </v-card>
@@ -329,5 +386,18 @@ const toggleScoring = (data? : undefined | 'simple' | 'detailed') => {
 }
 .button-label {
     font-size: 8px;
+}
+
+.layer-icon {
+  color: #FFFFFF !important;
+  background-color: #37474F;
+  width: 30px !important;
+  height: 30px !important;
+  border-radius: 5px !important;
+  font-size: 20px !important;
+  text-align: center !important;
+  font-weight: 800 !important;
+  line-height: 30px !important;
+  display: inline;
 }
 </style>

@@ -83,21 +83,13 @@ const imagesOn = computed({
           :max="Math.floor(Date.now() / 1000)"
         />
       </v-row>
-      <v-row
-        align="center"
-        justify="center"
-      >
-        <div>
-          {{ new Date(state.timestamp * 1000).toISOString().substring(0, 10) }}
-        </div>
-      </v-row>
       <v-row class="mt-2">
         <v-spacer />
         <v-btn
           variant="text"
           density="compact"
           class="pa-0 ma-0"
-          :color="groundTruthPattern ? 'rgb(37, 99, 235)' : 'black'"
+          :color="groundTruthPattern ? 'primary' : 'black'"
           icon="mdi-gradient-horizontal"
           @click="groundTruthPattern = !groundTruthPattern"
         />
@@ -105,7 +97,7 @@ const imagesOn = computed({
           variant="text"
           density="compact"
           class="pa-0 ma-0"
-          :color="drawMap ? 'rgb(37, 99, 235)' : 'black'"
+          :color="drawMap ? 'primary' : 'black'"
           icon="mdi-road"
           @click="drawMap = !drawMap"
         />
@@ -116,13 +108,13 @@ const imagesOn = computed({
           :class="{
             'animate-flicker': state.satellite.loadingSatelliteImages,
           }"
-          :color="imagesOn ? 'rgb(37, 99, 235)' : 'black'"
+          :color="imagesOn ? 'primary' : 'black'"
           :disabled="selectedRegion === null || (filteredSatelliteTimeList.length === 0 && state.satellite.satelliteSources.length !== 0)"
           icon="mdi-image"
           @click="imagesOn = selectedRegion !== null && (filteredSatelliteTimeList.length !== 0 || state.satellite.satelliteSources.length === 0) ? !imagesOn : imagesOn"
         />
         <v-btn
-          :color="state.mapLegend ? 'rgb(37, 99, 235)' : 'gray'"
+          :color="state.mapLegend ? 'primary' : 'gray'"
           variant="text"
           density="compact"
           icon="mdi-map-legend"

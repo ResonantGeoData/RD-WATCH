@@ -177,36 +177,68 @@ const toggleScoring = (data? : undefined | 'simple' | 'detailed') => {
       <v-card outlined>
         <v-list>
           <v-list-item
+            value="All"
+            class="rootItem"
+            @click="toggleObs()"
+          >
+            <v-row
+              dense
+              align="center"
+              justify="middle"
+              class="pa-0 ma-0"
+            >
+              <v-spacer />
+              <v-checkbox
+                :model-value="state.filters.drawObservations?.includes('model') && state.filters.drawObservations?.includes('groundtruth')"
+                density="compact"
+                hide-details
+                class="item-checkbox"
+              />
+            </v-row>
+          </v-list-item>
+          <v-list-item
             value="Model"
             @click="toggleObs('model')"
           >
-            <v-btn
-              size="large"
-              variant="text"
+            <div
+              class="layer-icon pl-1"
+            >
+              M
+            </div>
+            <div
+              class="layer-text"
             >
               Model
-              <div
-                class="layer-icon mx-1"
-              >
-                M
-              </div>
-            </v-btn>
+            </div>
+            <v-checkbox-btn
+              :model-value="state.filters.drawObservations?.includes('model')"
+              density="compact"
+              hide-details
+              readonly
+              class="item-checkbox"
+            />
           </v-list-item>
           <v-list-item
             value="GroundTruth"
             @click="toggleObs('groundtruth')"
           >
-            <v-btn
-              size="large"
-              variant="text"
+            <div
+              class="layer-icon pl-1"
+            >
+              G
+            </div>
+            <div
+              class="layer-text"
             >
               GroundTruth
-              <div
-                class="layer-icon mx-1"
-              >
-                G
-              </div>
-            </v-btn>
+            </div>
+            <v-checkbox-btn
+              :model-value="state.filters.drawObservations?.includes('groundtruth')"
+              density="compact"
+              hide-details
+              readonly
+              class="item-checkbox"
+            />
           </v-list-item>
         </v-list>
       </v-card>
@@ -240,62 +272,100 @@ const toggleScoring = (data? : undefined | 'simple' | 'detailed') => {
           </div>
           <div
             v-if="state.filters.siteTimeLimits"
-            size="x-large"
             class="layer-icon mx-1"
           >
-            <v-icon>mdi-clock </v-icon>
+            T
           </div>
         </v-btn>
       </template>
       <v-card outlined>
         <v-list>
           <v-list-item
+            value="All"
+            class="rootItem"
+            @click="toggleSite()"
+          >
+            <v-row
+              dense
+              align="center"
+              justify="middle"
+              class="pa-0 ma-0"
+            >
+              <v-spacer />
+              <v-checkbox
+                :model-value="state.filters.drawSiteOutline?.includes('model') && state.filters.drawSiteOutline?.includes('groundtruth')"
+                density="compact"
+                hide-details
+                class="item-checkbox"
+              />
+            </v-row>
+          </v-list-item>
+          <v-list-item
             value="Model"
             @click="toggleSite('model')"
           >
-            <v-btn
-              size="large"
-              variant="text"
+            <div
+              class="layer-icon pl-1"
+            >
+              M
+            </div>
+            <div
+              class="layer-text"
             >
               Model
-              <div
-                class="layer-icon mx-1"
-              >
-                M
-              </div>
-            </v-btn>
+            </div>
+            <v-checkbox-btn
+              :model-value="state.filters.drawSiteOutline?.includes('model')"
+              density="compact"
+              hide-details
+              readonly
+              class="item-checkbox"
+            />
           </v-list-item>
           <v-list-item
             value="GroundTruth"
             @click="toggleSite('groundtruth')"
           >
-            <v-btn
-              size="large"
-              variant="text"
+            <div
+              class="layer-icon pl-1"
+            >
+              G
+            </div>
+            <div
+              class="layer-text"
             >
               GroundTruth
-              <div
-                class="layer-icon mx-1"
-              >
-                T
-              </div>
-            </v-btn>
+            </div>
+            <v-checkbox-btn
+              :model-value="state.filters.drawSiteOutline?.includes('groundtruth')"
+              density="compact"
+              hide-details
+              readonly
+              class="item-checkbox"
+            />
           </v-list-item>
           <v-list-item
             value="GroundTruth"
             @click="toggleSiteTimeLimits()"
           >
-            <v-btn
-              size="large"
-              variant="text"
+            <div
+              class="layer-icon pl-1"
+            >
+              T
+            </div>
+
+            <div
+              class="layer-text"
             >
               Time Limits
-              <div
-                class="layer-icon mx-1"
-              >
-                <v-icon>mdi-clock</v-icon>
-              </div>
-            </v-btn>
+            </div>
+            <v-checkbox-btn
+              :model-value="state.filters.siteTimeLimits"
+              density="compact"
+              hide-details
+              readonly
+              class="item-checkbox"
+            />
           </v-list-item>
         </v-list>
       </v-card>
@@ -344,33 +414,46 @@ const toggleScoring = (data? : undefined | 'simple' | 'detailed') => {
             value="Simple"
             @click="toggleScoring('simple')"
           >
-            <v-btn
-              size="large"
-              variant="text"
+            <div
+              class="layer-icon pl-1"
+            >
+              S
+            </div>
+
+            <div
+              class="layer-text"
             >
               Simple
-              <div
-                class="layer-icon mx-1"
-              >
-                S
-              </div>
-            </v-btn>
+            </div>
+            <v-radio
+              :model-value="state.filters.scoringColoring == 'simple'"
+              density="compact"
+              hide-details
+              readonly
+              class="item-checkbox"
+            />
           </v-list-item>
           <v-list-item
             value="Detailed"
             @click="toggleScoring('detailed')"
           >
-            <v-btn
-              size="large"
-              variant="text"
+            <div
+              class="layer-icon pl-1"
+            >
+              D
+            </div>
+            <div
+              class="layer-text"
             >
               Detailed
-              <div
-                class="layer-icon mx-1"
-              >
-                D
-              </div>
-            </v-btn>
+            </div>
+            <v-radio
+              :model-value="state.filters.scoringColoring == 'detailed'"
+              density="compact"
+              hide-details
+              readonly
+              class="item-checkbox"
+            />
           </v-list-item>
         </v-list>
       </v-card>
@@ -381,23 +464,45 @@ const toggleScoring = (data? : undefined | 'simple' | 'detailed') => {
 <style scoped>
 .base {
     position: absolute;
-    left: 400px;
+    left: 650px;
+    top:8px;
     margin-left: 10px;
 }
 .button-label {
     font-size: 8px;
 }
 
+.layer-text {
+  text-transform: uppercase;
+  font-size: 16px;
+  display: inline;
+  margin-left: 5px;
+}
+
 .layer-icon {
   color: #FFFFFF !important;
   background-color: #37474F;
-  width: 30px !important;
+  min-width: 30px !important;
+  width:30px !important;
   height: 30px !important;
+  min-height: 30px !important;
+  max-width: 30px !important;
+  max-height: 30px !important;
   border-radius: 5px !important;
   font-size: 20px !important;
   text-align: center !important;
   font-weight: 800 !important;
   line-height: 30px !important;
   display: inline;
+}
+
+.rootItem {
+  border-bottom: 1px solid gray;
+  height: 35px;
+}
+
+.item-checkbox {
+  display:inline;
+  float:right;
 }
 </style>

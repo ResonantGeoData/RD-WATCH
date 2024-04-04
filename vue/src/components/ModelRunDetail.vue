@@ -132,42 +132,57 @@ const getModeIcon = (mode: ModelRun['mode']) => (mode ? {
     class="my-3 modelRunCard"
     :class="{selectedCard: props.open}"
   >
-    <v-card-actions
-      v-if="modelRun.mode"
-      class="pa-2"
-      style="position: absolute; top: 0; right: 0;"
-    >
-      <v-chip
-        label
-        size="x-small"
+    <v-card-text>
+      <v-row
+        dense
+        align="center"
       >
-        <span class="text-caption mx-2">{{ modelRun.mode?.toUpperCase() }}</span>
-        <v-icon>
-          {{ getModeIcon(modelRun.mode) }}
-        </v-icon>
-      </v-chip>
-    </v-card-actions>
-    <v-card-text
-      @click.prevent="handleClick(modelRun)"
-    >
-      <v-row dense>
         <div class="model-title">
           {{ modelRun.title }}
         </div>
+        <v-spacer />
+        <v-col cols="1">
+          <v-checkbox 
+            v-if="!props.modelRun.proposal"
+            :model-value="props.open"
+            density="compact"
+            color="#29B6F6"
+            hide-details
+            @update:model-value="handleClick(modelRun)"
+          />
+          <v-radio 
+            v-else-if="props.modelRun.proposal"
+            :model-value="props.open"
+            density="compact"
+            color="#29B6F6"
+            hide-details
+            @click="handleClick(modelRun)"
+          />
+        </v-col>
       </v-row>
       <v-row dense>
-        <div>
-          region:
+        <div class="label-text">
+          Region:
         </div>
-        <div>
+        <div class="value-text">
           {{ modelRun.region || "(none)" }}
         </div>
       </v-row>
       <v-row dense>
-        <div>
-          last updated:
+        <div class="label-text">
+          Date Coverage:
         </div>
-        <div>
+        <div class="value-text">
+          {{
+            timeRangeFormat(modelRun.timerange)
+          }}
+        </div>
+      </v-row>
+      <v-row dense>
+        <div class="label-text">
+          Last Updated:
+        </div>
+        <div class="value-text">
           {{
             modelRun.timestamp === null
               ? "--"
@@ -176,82 +191,113 @@ const getModeIcon = (mode: ModelRun['mode']) => (mode ? {
         </div>
       </v-row>
       <v-row dense>
-        <div>
-          number of sites:
-        </div>
-        <div>
-          {{ modelRun.numsites }}
-        </div>
-      </v-row>
-      <v-row
-        v-if="!compact"
-        dense
-      >
-        <div>
-          average score:
-        </div>
-        <div>
-          {{ modelRun.score === null ? "--" : modelRun.score.toFixed(2) }}
-        </div>
-      </v-row>
-      <v-row dense>
-        <div>
-          date coverage:
-        </div>
-        <div>
-          {{
-            timeRangeFormat(modelRun.timerange)
-          }}
-        </div>
-      </v-row>
-      <v-row
-        v-if="modelRun.proposal && modelRun.adjudicated"
-        dense
-      >
-        <div v-if="modelRun.adjudicated.proposed !== 0">
-          <v-chip
-            size="small"
-            color="warning"
-          >
-            {{ modelRun.adjudicated.other }} / {{ modelRun.adjudicated.other + modelRun.adjudicated.proposed }} Adjudicated
-          </v-chip>
-        </div>
-        <div v-else>
-          <v-chip
-            size="small"
-            color="success"
-          >
-            All Proposals Adjudicated
-          </v-chip>
-        </div>
-      </v-row>
-      <v-row dense>
-        <v-icon
-          v-if="modelRun.performer.short_code === 'TE' && modelRun.score == 1"
-          color="primary"
-        >
-          mdi-check-decagram
-        </v-icon>
+        <v-tooltip>
+          <template #activator="{ props }">
+            <v-icon
+              v-if="modelRun.performer.short_code === 'TE' && modelRun.score == 1"
+              v-bind="props"
+              color="primary"
+            >
+              mdi-check-decagram
+            </v-icon>
+          </template>
+          <span>Ground Truth</span>
+        </v-tooltip>
         <div
-          class="float-right "
+          class="performer"
         >
           {{ modelRun.performer.short_code }}
         </div>
+      </v-row>
+      <v-row
+        dense
+        align="center"
+      >
+        <v-tooltip>
+          <template #activator="{ props }">
+            <v-icon
+              v-bind="props"
+              color="#BDBDBD"
+              size="x-large"
+              style="left:-5px"
+            >
+              mdi-map-marker-outline
+            </v-icon>
+          </template>
+          <span>Site Count</span>
+        </v-tooltip>
+        <div class="site-count">
+          {{ modelRun.numsites }}
+        </div>
+        <v-tooltip v-if="!modelRun.proposal">
+          <template #activator="{ props }">
+            <v-icon
+              v-bind="props"
+              color="#BDBDBD"
+              size="x-large"
+            >
+              mdi-license
+            </v-icon>
+          </template>
+          <span>Average Score</span>
+        </v-tooltip>
+        <div
+          v-if="!modelRun.proposal"
+          class="site-score"
+        >
+          {{ modelRun.score === null ? "--" : modelRun.score.toFixed(2) }}
+        </div>
+        <v-tooltip
+          v-if="modelRun.mode"
+        >
+          <template #activator="{ props }">
+            <v-icon
+              v-bind="props"
+              color="#BDBDBD"
+              size="x-large"
+              class="pl-2"
+            >
+              {{ getModeIcon(modelRun.mode) }}
+            </v-icon>
+          </template>
+          <span>Mode: <b style="text-transform: uppercase">{{ modelRun.mode }}</b></span>
+        </v-tooltip>
+        <v-tooltip
+          v-if="modelRun.proposal && modelRun.adjudicated"
+        >
+          <template #activator="{ props }">
+            <div v-if="modelRun.adjudicated.proposed !== 0">
+              <v-chip
+                v-bind="props"
+                size="small"
+                variant="elevated"
+                class="ml-2"
+                :color="modelRun.adjudicated.other === 0 ? 'error' : modelRun.adjudicated.proposed === 0 ? 'success' : 'warning'"
+              >
+                <b>{{ modelRun.adjudicated.other }} / {{ modelRun.adjudicated.other + modelRun.adjudicated.proposed }}</b>
+              </v-chip>
+            </div>
+          </template>
+          <span><b>Number of Sites Adjudicated</b></span>
+        </v-tooltip>
+
         <v-spacer />
         <v-tooltip v-if="!scoringApp">
           <template #activator="{ props }">
+            <v-spacer />
             <v-btn
-              size="x-small"
               v-bind="props"
+              variant="tonal"
+              density="compact"
+              class="pa-0 ma-1 modelrun-icon"
               :disabled="downloadingModelRun"
-              class="mx-1"
+              :color="downloadError ? 'error' : 'primary'"
               @click.stop="determineDownload()"
             >
               <v-icon
                 v-if="!downloadingModelRun"
-                size="small"
               >
-                mdi-export
+                mdi-download-box-outline
               </v-icon>
               <v-icon
                 v-else-if="downloadError"
@@ -269,23 +315,34 @@ const getModeIcon = (mode: ModelRun['mode']) => (mode ? {
               </v-icon>
             </v-btn>
           </template>
-          <span>Download JSON</span>
+          <div>
+            <span v-if="!downloadingModelRun">Download JSON</span>
+            <span v-else-if="downloadError">Downloading Error</span>
+            <span v-else-if="downloadingModelRun">Downloading Model Run</span>
+          </div>
         </v-tooltip>
         <v-tooltip>
           <template #activator="{ props }">
             <v-btn
-              :disabled="downloading > 0"
-              size="x-small"
               v-bind="props"
-              class="mx-1"
+              variant="tonal"
+              density="compact"
+              class="pa-0 ma-1 modelrun-icon"
+              :disabled="downloading > 0"
+              color="primary"
               @click.stop="downloadImages = true"
             >
-              Get <v-icon>mdi-image</v-icon>
+              <v-icon
+                v-if="!downloadingModelRun"
+              >
+                mdi-image
+              </v-icon>
             </v-btn>
           </template>
           <span> Download Satellite Images</span>
         </v-tooltip>
       </v-row>
+      <v-row dense />
       <v-row v-if="downloading > 0">
         <b class="small">Downloading {{ downloading }} site(s) Images <v-icon class="fading">mdi-download</v-icon></b>
         <v-progress-linear :model-value="((modelRun.numsites - downloading)/modelRun.numsites)*100" />
@@ -305,6 +362,7 @@ const getModeIcon = (mode: ModelRun['mode']) => (mode ? {
       <TimeSlider
         :min="modelRun.timerange?.min || 0"
         :max="modelRun.timerange?.max || 0"
+        compact
       />
     </v-card-actions>
     <images-download-dialog
@@ -354,25 +412,58 @@ const getModeIcon = (mode: ModelRun['mode']) => (mode ? {
 <style scoped>
 .modelRunCard{
   border: 3px solid transparent;
+  background-color: white;
 }
 .modelRunCard:hover {
-  cursor: pointer;
   border: 3px solid blue;
 }
+.baseCard {
+  background-color: #166DB7;
+}
 .selectedCard{
-  background-color: lightblue;
+  background-color: #e8f1f8;
 }
 .model-title {
   max-width: 250px;
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
+  font-weight: bolder;
 }
 
 .fading {
   animation: fadeIcon 2s linear infinite;
   overflow:hidden;
 }
+
+.label-text {
+  color: gray
+}
+
+.value-text {
+  color: black;
+  font-weight: bolder;
+  margin-left: 5px;
+}
+
+.performer {
+  text-transform: uppercase;
+  font-weight: bold;
+}
+.site-count {
+  margin-left: -5px;
+  font-weight: bolder;
+}
+.site-score {
+  margin-left: 0px;
+  font-weight: bolder;
+}
+
+.modelrun-icon {
+  min-width: 40px;
+  min-height: 40px;;
+}
+
 
 @keyframes fadeIcon {
   0% {

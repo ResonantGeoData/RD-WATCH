@@ -86,40 +86,46 @@ const imagesOn = computed({
       <v-row class="mt-2">
         <v-spacer />
         <v-btn
-          variant="text"
+          variant="tonal"
           density="compact"
-          class="pa-0 ma-0"
+          class="pa-0 ma-1 sidebar-icon"
           :color="groundTruthPattern ? 'primary' : 'black'"
-          icon="mdi-gradient-horizontal"
           @click="groundTruthPattern = !groundTruthPattern"
-        />
+        >
+          <v-icon>mdi-gradient-horizontal</v-icon>
+        </v-btn>
         <v-btn
-          variant="text"
+          variant="tonal"
           density="compact"
-          class="pa-0 ma-0"
+          class="pa-0 ma-1 sidebar-icon"
           :color="drawMap ? 'primary' : 'black'"
-          icon="mdi-road"
           @click="drawMap = !drawMap"
-        />
+        >
+          <v-icon>mdi-road</v-icon>
+        </v-btn>
+
         <v-btn
-          variant="text"
+          variant="tonal"
           density="compact"
-          class="pa-0 ma-0"
+          class="pa-0 ma-1 sidebar-icon"
           :class="{
             'animate-flicker': state.satellite.loadingSatelliteImages,
           }"
           :color="imagesOn ? 'primary' : 'black'"
           :disabled="selectedRegion === null || (filteredSatelliteTimeList.length === 0 && state.satellite.satelliteSources.length !== 0)"
-          icon="mdi-image"
           @click="imagesOn = selectedRegion !== null && (filteredSatelliteTimeList.length !== 0 || state.satellite.satelliteSources.length === 0) ? !imagesOn : imagesOn"
-        />
+        >
+          <v-icon>mdi-image</v-icon>
+        </v-btn>
         <v-btn
           :color="state.mapLegend ? 'primary' : 'gray'"
-          variant="text"
+          variant="tonal"
           density="compact"
-          icon="mdi-map-legend"
+          class="pa-0 ma-1 sidebar-icon"
           @click="state.mapLegend = !state.mapLegend"
-        />
+        >
+          <v-icon>mdi-map-legend</v-icon>
+        </v-btn>
       </v-row>
       <v-row
         dense
@@ -171,4 +177,10 @@ const imagesOn = computed({
 .animate-flicker {
   animation: flicker-animation 1s infinite;
 }
+
+.sidebar-icon {
+  min-width: 40px;
+  min-height: 40px;;
+}
+
 </style>

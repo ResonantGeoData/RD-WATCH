@@ -213,40 +213,44 @@ const satelliteLoadingColor = computed(() => {
       >
         <v-spacer />
         <v-btn
-          variant="text"
+          variant="tonal"
           density="compact"
-          class="pa-0 ma-0"
+          class="pa-0 ma-1 sidebar-icon"
           :color="drawMap ? 'primary' : 'black'"
-          icon="mdi-road"
           @click="drawMap = !drawMap"
-        />
+        >
+          <v-icon>mdi-road</v-icon>
+        </v-btn>
         <v-btn
           v-if="selectedRegion !== null && !(filteredSatelliteTimeList.length === 0 && state.satellite.satelliteSources.length !== 0)"
-          variant="text"
+          variant="tonal"
           density="compact"
-          class="pa-0 ma-0"
+          class="pa-0 ma-1 sidebar-icon"
           :class="{
             'animate-flicker': state.satellite.loadingSatelliteImages,
           }"
           :color="imagesOn ? 'primary' : 'black'"
           :disabled="selectedRegion === null || (filteredSatelliteTimeList.length === 0 && state.satellite.satelliteSources.length !== 0)"
-          icon="mdi-image"
           @click="imagesOn = selectedRegion !== null && (filteredSatelliteTimeList.length !== 0 || state.satellite.satelliteSources.length === 0) ? !imagesOn : imagesOn"
-        />
+        >
+          <v-icon>mdi-image</v-icon>
+        </v-btn>
         <v-tooltip v-else>
           <template #activator="{ props: props }">
             <v-btn
-              variant="text"
+              variant="tonal"
               v-bind="props"
               :disabled="!selectedRegion"
               density="compact"
               :class="{
                 'animate-flicker': loadingSatelliteTimestamps,
               }"
+              class="pa-0 ma-1 sidebar-icon"
               :color="satelliteLoadingColor"
-              icon="mdi-satellite-variant"
               @click="askDownloadSatelliteTimestamps = true"
-            />
+            >
+              <v-icon>mdi-satellite-variant</v-icon>
+            </v-btn>
           </template>
           <v-alert
             v-if="!satelliteRegionTooLarge"
@@ -263,25 +267,31 @@ const satelliteLoadingColor = computed(() => {
         </v-tooltip>
         <v-btn
           :color="state.filters.showText ? 'primary' : 'gray'"
-          variant="text"
+          variant="tonal"
+          class="pa-0 ma-1 sidebar-icon"
           density="compact"
-          icon="mdi-format-text"
           @click="toggleText()"
-        />
+        >
+          <v-icon>mdi-format-text</v-icon>
+        </v-btn>
         <v-btn
           :color="state.mapLegend ? 'primary' : 'gray'"
-          variant="text"
+          variant="tonal"
+          class="pa-0 ma-1 sidebar-icon"
           density="compact"
-          icon="mdi-map-legend"
           @click="state.mapLegend = !state.mapLegend"
-        />
+        >
+          <v-icon>mdi-map-legend</v-icon>
+        </v-btn>
         <v-btn
           :color="expandSettings ? 'primary' : 'gray'"
-          variant="text"
+          variant="tonal"
+          class="pa-0 ma-1 sidebar-icon"
           density="compact"
-          icon="mdi-cog"
           @click="expandSettings = !expandSettings"
-        />
+        >
+          <v-icon>mdi-cog</v-icon>
+        </v-btn>
       </v-row>
       <v-row
         dense
@@ -408,5 +418,10 @@ const satelliteLoadingColor = computed(() => {
 
 .modelRuns {
   margin-top: 2em
+}
+
+.sidebar-icon {
+  min-width: 40px;
+  min-height: 40px;;
 }
 </style>

@@ -2,10 +2,16 @@
 import { computed } from "vue";
 import { state } from "../store";
 
-const props = defineProps<{
+interface Props {
   min: number;
   max: number;
-}>();
+  compact?: boolean;
+}
+
+const props = withDefaults(defineProps<Props>(), {
+  compact: false,
+});
+
 
 const convertUnixToDate = (timestamp:number) => {
   const date = new Date(timestamp * 1000);
@@ -33,7 +39,7 @@ const maxDate = computed(() => convertUnixToDate(props.max));
       justify="center"
     >
       <v-col>
-        <v-row>
+        <v-row v-if="!compact">
           <v-spacer />
           <span>{{ date }}</span>
           <v-spacer />
@@ -49,12 +55,13 @@ const maxDate = computed(() => convertUnixToDate(props.max));
                 class="date-slider w-100 mb-0 pb-0"
                 type="range"
                 color="primary"
-                track-size="10"
+                :track-size="compact ? 5 : 10"
+                track-color="#E0E0E0"
                 density="compact"
                 hide-details
               />
             </v-row>
-            <v-row>
+            <v-row v-if="!compact">
               <span>{{ minDate }}</span>
               <v-spacer />
               <span>{{ maxDate }}</span>
@@ -64,10 +71,9 @@ const maxDate = computed(() => convertUnixToDate(props.max));
       </v-col>
       <v-col
         cols="1"
-        justify="middle"
       >
         <v-icon
-          size="large"
+          :size="compact ? 'small' : 'large'"
           color="primary"
           class="calender"
         >

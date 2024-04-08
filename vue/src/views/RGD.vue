@@ -102,3 +102,12 @@ onMounted(() => {
   </span>
   <RightBar />
 </template>
+
+<style scoped>
+.static-map-legend {
+    position: absolute;
+    top: 0px;
+    right: 0px;
+    z-index: 2;
+}
+</style>

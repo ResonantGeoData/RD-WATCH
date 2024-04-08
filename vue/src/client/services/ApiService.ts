@@ -51,10 +51,20 @@ export interface ScoringResults {
 
 export type SiteModelStatus = 'PROPOSAL' | 'APPROVED' | 'REJECTED'
 
-export interface Proposals {
+export interface SiteList {
   region: Region;
-
-  proposed_sites: {
+  modelRunDetails: {
+    region: string;
+    version: string;
+    title: string;
+    proposal: boolean | null;
+    performer: {
+      id: number;
+      team_name: string;
+      short_code: string;
+    }
+  }
+  sites: {
     images: number,
     S2: number,
     WV: number,
@@ -290,7 +300,7 @@ export class ApiService {
    * @returns EvaluationsList
    * @throws ApiError
    */
-    public static getProposals(id: string): CancelablePromise<Proposals> {
+    public static getProposals(id: string): CancelablePromise<SiteList> {
       return __request(OpenAPI, {
         method: "GET",
         url: `${this.getApiPrefix()}/model-runs/{id}/proposals/`,
@@ -300,7 +310,20 @@ export class ApiService {
       });
     }
 
-
+    /**
+    * @returns EvaluationsList
+    * @throws ApiError
+    */
+     public static getSitesList(id: string): CancelablePromise<SiteList> {
+       return __request(OpenAPI, {
+         method: "GET",
+         url: `${this.getApiPrefix()}/model-runs/{id}/sites/`,
+         path: {
+           id: id,
+         },
+       });
+     }
+ 
 
   /**
    * @param id

@@ -5,8 +5,11 @@ import RightBar from "../components/RightBar.vue"
 import LayerSelection from "../components/LayerSelection.vue";
 import { onMounted } from "vue";
 import { state } from "../store";
-
-
+import SiteEvalList from "../components/siteEvalList/SiteEvalList.vue";
+import MapLegend from "../components/MapLegend.vue";
+import { Ref } from "vue";
+import { ref } from "vue";
+import { SiteDisplay } from "../components/siteList/SiteListCard.vue";
 interface Props {
   region?: string;
   selected?: number[] | string;
@@ -16,6 +19,29 @@ const props = withDefaults(defineProps<Props>(), {
   selected: undefined,
 });
 
+const selectedEval: Ref<string | null> = ref(null);
+const selectedName: Ref<string | null> = ref(null);
+const selectedDateRange: Ref<number[] | null> = ref(null);
+const regionBBox: Ref<SiteDisplay['bbox'] | null> = ref(null);
+const setSelectedEval = (val: SiteDisplay | null) => {
+  
+  if (val && val.id !== null) {
+    if (selectedEval.value === null) { // set region bbox if previous val was null
+      regionBBox.value = state.bbox;
+    }
+    selectedEval.value = val.id
+    selectedName.value = val.name
+    state.bbox = val.bbox;
+    selectedDateRange.value = [val.startDate, val.endDate]
+  } else {
+    selectedEval.value = null;
+    selectedName.value = null;
+    selectedDateRange.value = null;
+    if (regionBBox.value) {
+      state.bbox = regionBBox.value;
+    }
+  }
+}
 
 onMounted(() => {
   if (props.region) {
@@ -43,5 +69,36 @@ onMounted(() => {
     <layer-selection />
     <MapLibre />
   </v-main>
+  <span>
+    <span>
+    <v-navigation-drawer
+      v-if="state.filters.configuration_id?.length"
+      location="left"
+      floating
+      width="200"
+      sticky
+      permanent
+      class="fill-height site-list"
+      style="overflow-y: hidden;"
+    >
+      <v-row dense>
+        <v-col
+          class="navcolumn"
+        >
+          <SiteEvalList
+            v-if="state.filters.configuration_id"
+            :model-runs="state.filters.configuration_id"
+            :selected-eval="selectedEval"
+            style="flex-grow: 1;"
+            @selected="setSelectedEval($event)"
+          />          
+        </v-col>
+      </v-row>
+    </v-navigation-drawer>
+    <MapLegend
+      class="static-map-legend"
+    />
+  </span>
+  </span>
   <RightBar />
 </template>

@@ -437,8 +437,39 @@ def get_region(model_run_id: UUID4):
         )
     )
 
+def get_model_run_details(model_run_id: UUID4):
+    return (
+        ModelRun.objects.select_related('evaluations')
+        .filter(pk=model_run_id)
+        .alias(
+            region_id=F('evaluations__region_id'),
+            version=F('evaluations__version')
+        )
+        .annotate(
+            json=JSONObject(
+                region=Subquery(  # prevents including "region" in slow GROUP BY
+                    Region.objects.filter(pk=OuterRef('region_id')).values('name')[:1],
+                    output_field=JSONField(),
+                ),
+                performer=Subquery(  # prevents including "performer" in slow GROUP BY
+                    lookups.Performer.objects.filter(pk=OuterRef('performer_id')).values(
+                        json=JSONObject(
+                            id='id',
+                            team_name='description',
+                            short_code='slug',
+                        )
+                    ),
+                    output_field=JSONField(),
+                ),
+                version=F('version'),
+                proposal=F('proposal'),
+                title=F('title'),
+            ),
+        )
+    )
 
-def get_proposals_query(model_run_id: UUID4):
+
+def get_sites_query(model_run_id: UUID4):
     return (
         SiteEvaluation.objects.select_related('siteimage', 'satellite_fetching')
         .filter(configuration=model_run_id)
@@ -458,7 +489,7 @@ def get_proposals_query(model_run_id: UUID4):
             ),
         )
         .aggregate(
-            proposed_sites=JSONBAgg(
+            sites=JSONBAgg(
                 JSONObject(
                     id='pk',
                     timestamp='time',
@@ -483,13 +514,29 @@ def get_proposals_query(model_run_id: UUID4):
 
 @router.get('/{model_run_id}/proposals/')
 def get_proposals(request: HttpRequest, model_run_id: UUID4):
-    region = get_region(model_run_id).values_list('json', flat=True)
-    if not region.exists():
+    data = get_model_run_details(model_run_id).values_list('json', flat=True)
+    if not data.exists():
         raise Http404()
 
-    query = get_proposals_query(model_run_id)
-    model_run = region[0]
+    query = get_sites_query(model_run_id)
+    model_run = data[0]
+    # TODO: Remove the region in the client side to focus on modelRunDetails
     query['region'] = model_run['region']
+    query['modelRunDetails'] = model_run
+    return 200, query
+
+
+@router.get('/{model_run_id}/sites/')
+def get_sites(request: HttpRequest, model_run_id: UUID4):
+    data = get_model_run_details(model_run_id).values_list('json', flat=True)
+    if not data.exists():
+        raise Http404()
+
+    query = get_sites_query(model_run_id)
+    model_run = data[0]
+    # TODO: Remove the region in the client side to focus on modelRunDetails
+    query['region'] = model_run['region']
+    query['modelRunDetails'] = model_run
     return 200, query
 
 

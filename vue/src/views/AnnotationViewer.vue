@@ -29,7 +29,7 @@ const selectedModelRun = computed(() => {
 
 onMounted(() => {
   if (props.region) {
-    state.filters = {
+    state.filters = { 
       ...state.filters,
       regions: [props.region],
     };

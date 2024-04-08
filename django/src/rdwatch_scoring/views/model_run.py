@@ -4,8 +4,15 @@ from typing import Literal, TypeAlias
 from ninja import FilterSchema, Query
 from ninja.pagination import RouterPaginated
 from pydantic import UUID4
+from django.contrib.postgres.aggregates import JSONBAgg
+from django.contrib.gis.db.models import GeometryField
+
+from rdwatch_scoring.models import Site, SiteImage, SatelliteFetching
+from django.db.models.functions import Coalesce, JSONObject, Substr
+from rdwatch.db.functions import BoundingBox, ExtractEpoch
 
 from django.db.models import (
+    ExpressionWrapper,
     Avg,
     CharField,
     Count,
@@ -18,9 +25,16 @@ from django.db.models import (
     Min,
     Q,
     Value,
+    Case,
+    Count,
+    Exists,
+    OuterRef,
+    Subquery,
+    When,
+
 )
 from django.db.models.functions import Concat, JSONObject, NullIf
-from django.http import HttpRequest
+from django.http import Http404, HttpRequest, HttpResponse
 from django.shortcuts import get_object_or_404
 
 from rdwatch.db.functions import ExtractEpoch
@@ -312,3 +326,93 @@ def cancel_generate_images(request: HttpRequest, model_run_id: UUID4):
     cancel_generate_images_task.delay(model_run_id)
 
     return 202, True
+
+
+def get_sites_query(model_run_id: UUID4):
+    return (
+        Site.objects
+        .filter(evaluation_run_uuid=model_run_id)
+        .aggregate(
+            sites=JSONBAgg(
+                JSONObject(
+                    id='pk',
+                    number=Substr(F('site_id'), 9, 4),  # pos is 1 indexed,
+                    bbox=BoundingBox(
+                        Func(
+                            F('union_geometry'),
+                            4326,
+                            function='ST_GeomFromText',
+                            output_field=GeometryField(),
+                        )
+                    ),
+                    # images='siteimage_count',
+                    # S2='S2',
+                    # WV='WV',
+                    # L8='L8',
+                    start_date=ExtractEpoch('start_date'),
+                    end_date=ExtractEpoch('end_date'),
+                    # status='status',
+                    # filename='cache_originator_file',
+                    # downloading='downloading',
+                ),
+                ordering='site_id',
+                default=[],
+            ),
+        )
+    )
+
+def get_model_run_details(model_run_id: UUID4):
+    return (
+        EvaluationRun.objects.select_related('evaluations')
+        .filter(pk=model_run_id,)
+        .annotate(
+            json=JSONObject(
+                region=F('region'),
+                performer=JSONObject(
+                    id=0, team_name=F('performer'), short_code=F('performer')
+                ),
+                version=Coalesce('site__version', Value(None)),
+                proposal=False,
+                title=ExpressionWrapper(
+                    Concat(
+                        Value('Eval '),
+                        F('evaluation_number'),
+                        Value(' '),
+                        F('evaluation_run_number'),
+                        Value(' '),
+                        F('performer'),
+                    ),
+                    output_field=CharField(),
+                ),
+            ),
+        )
+    )
+
+
+
+@router.get('/{model_run_id}/proposals/')
+def get_proposals(request: HttpRequest, model_run_id: UUID4):
+    data = get_model_run_details(model_run_id).values_list('json', flat=True)
+    if not data.exists():
+        raise Http404()
+
+    query = get_sites_query(model_run_id)
+    model_run = data[0]
+    # TODO: Remove the region in the client side to focus on modelRunDetails
+    query['region'] = model_run['region']
+    query['modelRunDetails'] = model_run
+    return 200, query
+
+
+@router.get('/{model_run_id}/sites/')
+def get_sites(request: HttpRequest, model_run_id: UUID4):
+    data = get_model_run_details(model_run_id).values_list('json', flat=True)
+    if not data.exists():
+        raise Http404()
+
+    query = get_sites_query(model_run_id)
+    model_run = data[0]
+    # TODO: Remove the region in the client side to focus on modelRunDetails
+    query['region'] = model_run['region']
+    query['modelRunDetails'] = model_run
+    return 200, query

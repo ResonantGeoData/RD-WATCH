@@ -184,7 +184,6 @@ const toggleScoring = (data? : undefined | 'simple' | 'detailed') => {
             <v-row
               dense
               align="center"
-              justify="middle"
               class="pa-0 ma-0"
             >
               <v-spacer />
@@ -288,7 +287,6 @@ const toggleScoring = (data? : undefined | 'simple' | 'detailed') => {
             <v-row
               dense
               align="center"
-              justify="middle"
               class="pa-0 ma-0"
             >
               <v-spacer />

@@ -14,14 +14,13 @@ import { SiteDisplay } from "../siteList/SiteListCard.vue";
 import SiteListHeader from "../siteList/SiteListHeader.vue";
 
 const props = defineProps<{
-  modelRun: string | null;
+  modelRuns: string[];
   selectedEval: string | null;
 }>();
 const emit = defineEmits<{
   (e: "selected", val: SiteDisplay | null): void;
 }>();
 
-const proposalList: Ref<SiteList | null> = ref(null);
 const baseModifiedList: Ref<SiteDisplay[]> = ref([]);
 const modifiedList: Ref<SiteDisplay[]> = ref([]);
 const anyDownloading = ref(false);
@@ -31,31 +30,23 @@ const imageDownloadingId: Ref<null | string> = ref(null)
 const filter = ref("");
 let downloadCheckInterval: NodeJS.Timeout | null = null;
 
-const statusMap: Record<SiteModelStatus, { name: string; color: string }> = {
-  PROPOSAL: { name: "Proposed", color: "orange" },
-  REJECTED: { name: "Rejected", color: "error" },
-  APPROVED: { name: "Approved", color: "success" },
-};
 
-const getSiteProposals = async () => {
-  if (props.modelRun !== null) {
-    const results = await ApiService.getProposals(props.modelRun);
-    proposalList.value = results;
+const getSiteProposal = async (modelRun: string) => {
+    const results = await ApiService.getSitesList(modelRun);
+    const regionName = results.region;
     let newNumbers = 0;
-    if (proposalList.value?.sites) {
+    if (results.sites) {
       const modList: SiteDisplay[] = [];
-      const regionName: string = proposalList.value.region;
-      const accepted: string[] = [];
-      const rejected: string[] = [];
       let selected: SiteDisplay | null = null;
-      const details = proposalList.value.modelRunDetails ? {
-        title: proposalList.value.modelRunDetails.title,
-        version: proposalList.value.modelRunDetails.version,
-        performer: proposalList.value.modelRunDetails.performer.short_code,
-        region: proposalList.value.modelRunDetails.region,
-        proposal: proposalList.value.modelRunDetails.proposal,
+      const details = results.modelRunDetails ? {
+        title: results.modelRunDetails.title,
+        version: results.modelRunDetails.version,
+        performer: results.modelRunDetails.performer.short_code,
+        region: results.modelRunDetails.region,
+        proposal: results.modelRunDetails.proposal,
       } : undefined
-      proposalList.value.sites.forEach((item) => {
+
+      results.sites.forEach((item) => {
         const newNum = item.number.toString().padStart(4, "0");
         if (newNum === "9999") {
           newNumbers += 1;
@@ -63,11 +54,6 @@ const getSiteProposals = async () => {
         let name = `${regionName}_${newNum}`;
         if (newNumbers > 1) {
           name = `${name}-${newNumbers}`;
-        }
-        if (item.status === "APPROVED") {
-          accepted.push(item.id);
-        } else if (item.status === "REJECTED") {
-          rejected.push(item.id);
         }
         if (item.downloading) {
           anyDownloading.value = true;
@@ -96,15 +82,9 @@ const getSiteProposals = async () => {
           selected = modList[modList.length - 1];
         }
       });
-      state.filters.proposals = {
-        accepted,
-        rejected,
-      };
-      modifiedList.value = modList;
-      baseModifiedList.value = modList;
       // We need to start checking if there are downloading sites to update every once in a while
       if (anyDownloading.value) {
-        downloadCheckInterval = setInterval(() => getSiteProposals(), 15000);
+        downloadCheckInterval = setInterval(() => getSiteProposal(modelRun), 15000);
       } else {
         if (downloadCheckInterval !== null) {
           clearInterval(downloadCheckInterval);
@@ -113,18 +93,28 @@ const getSiteProposals = async () => {
       if (selected) {
         emit('selected', selected);
       }
+      return modList;
     }
-  }
+    return [];
 };
-defineExpose({ getSiteProposals });
+
+const getAllSiteProposals = async () => {
+    let mainList: SiteDisplay[] = [];
+    for (let i = 0; i < props.modelRuns.length; i += 1) {
+        const results = await getSiteProposal(props.modelRuns[i]);
+        mainList = mainList.concat(results);
+    }
+    baseModifiedList.value = mainList;
+    modifiedList.value = mainList;
+}
 
 watch(
-  () => props.modelRun,
+  () => props.modelRuns,
   () => {
-    getSiteProposals();
+    getAllSiteProposals();
   }
 );
-getSiteProposals();
+getAllSiteProposals();
 watch(clickedInfo, () => {
   if (clickedInfo.value.siteId.length) {
     const found = modifiedList.value.find(
@@ -171,7 +161,7 @@ const startDownload = async (data: DownloadSettings) => {
   if (id) {
   await ApiService.getObservationImages(id, data);
     // Now we get the results to see if the service is running
-    getSiteProposals(); // this will start the interval if downloading items are detected
+    getAllSiteProposals(); // this will start the interval if downloading items are detected
   }
 }
 watch(filter, () => {

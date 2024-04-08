@@ -17,7 +17,7 @@ watch(filter, () => {
 </script>
 
 <template>
-    <v-row class="pa-2 search" align="center" justify="middle">
+    <v-row class="pa-2 search" align="center">
         <v-text-field
         v-model="filter"
         label="Search"

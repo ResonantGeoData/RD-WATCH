@@ -1,13 +1,10 @@
 <script setup lang="ts">
-import { Ref, ref, watch } from "vue";
-import { ApiService } from "../../client";
 import {
-  DownloadSettings,
-  Proposals,
   SiteModelStatus,
 } from "../../client/services/ApiService";
 import { state } from "../../store";
 import { clickedInfo, hoveredInfo } from "../../interactions/mouseEvents";
+import { timeRangeFormat } from "../../utils";
 
 export interface SiteDisplay {
   number: number;
@@ -27,6 +24,13 @@ export interface SiteDisplay {
   status?: SiteModelStatus;
   timestamp: number;
   downloading: boolean;
+  proposal?: boolean;
+  details?: {
+    performer: string;
+    version: string;
+    region: string;
+    title: string;
+  };
 }
 
 const props = defineProps<{
@@ -98,10 +102,16 @@ const setImageDownloadDialog = () => {
             </v-row>
         </v-card-title>
         <v-card-text>
+          <v-row v-if="!site.proposal && site.details" dense>
+            <span class="site-model-info"> {{ site.details.performer }} {{ site.details.title}}: {{site.details.version}} </span>
+          </v-row>
+          <v-row v-if="!site.proposal" dense>
+            <span>Date range:</span><span class=" ml-1 site-model-dates"> {{ timeRangeFormat({min: site.startDate, max: site.endDate })}} </span>
+          </v-row>
+
           <v-row
           v-if="site.images"
             dense
-            justify="center"
           >
             <v-col>
                 <span class="image-label">WV:</span>
@@ -124,8 +134,8 @@ const setImageDownloadDialog = () => {
               
             </v-col>
           </v-row>
-          <v-row v-else-if="site.status">
-            <span>No Images Downloaded</span>
+          <v-row v-else align="center">
+            <span class="no-images">No Images Downloaded</span>
           </v-row>
           <v-row dense class=pt-2>
             <v-tooltip
@@ -241,5 +251,17 @@ const setImageDownloadDialog = () => {
   min-width: 25px;
   min-height: 25px;;
 }
-
+.no-images {
+  font-size:14px;
+  color: red;
+}
+.site-model-info {
+  font-size: 12px;
+}
+.site-dates-label {
+  color: gray
+}
+.site-model-dates {
+  font-size: 10px;
+}
 </style>

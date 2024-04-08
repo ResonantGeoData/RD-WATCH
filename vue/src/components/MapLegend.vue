@@ -13,7 +13,7 @@ import { state } from '../store';
     <v-card density="compact" color="black" class="legend-base">
       <v-card-title
       >
-      <v-row justify="middle" align="center" class="px-4">
+      <v-row align="center" class="px-4">
         <span
         :class="{'legend-title-single': !state.filters.scoringColoring, 'legend-title': state.filters.scoringColoring}"
         >Legend</span>

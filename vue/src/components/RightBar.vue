@@ -23,14 +23,9 @@ import MapLegend from "./MapLegend.vue"
           class="navcolumn"
         >
           <EvaluationsSideBar style="flex-grow: 1;" />
-          <MapLegend class="mx-auto mt-5" />
         </v-col>
       </v-row>
     </v-navigation-drawer>
-    <MapLegend
-      v-else
-      class="static-map-legend"
-    />
   </span>
 </template>
 

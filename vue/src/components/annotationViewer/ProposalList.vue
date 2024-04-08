@@ -9,40 +9,26 @@ import {
 import { state } from "../../store";
 import { clickedInfo, hoveredInfo } from "../../interactions/mouseEvents";
 import ImagesDownloadDialog from "../ImagesDownloadDialog.vue";
-
-export interface ProposalDisplay {
-  number: number;
-  id: string;
-  name: string;
-  bbox: { xmin: number; ymin: number; xmax: number; ymax: number };
-  startDate: number;
-  endDate: number;
-  selected: boolean;
-  filename?: string | null;
-  images: number;
-  S2: number;
-  WV: number;
-  L8: number;
-  PL: number;
-  status: SiteModelStatus;
-  timestamp: number;
-  downloading: boolean;
-}
+import SiteListCard from "../siteList/SiteListCard.vue";
+import { SiteDisplay } from "../siteList/SiteListCard.vue";
+import SiteListHeader from "../siteList/SiteListHeader.vue";
 
 const props = defineProps<{
   modelRun: string | null;
   selectedEval: string | null;
 }>();
 const emit = defineEmits<{
-  (e: "selected", val: ProposalDisplay | null): void;
+  (e: "selected", val: SiteDisplay | null): void;
 }>();
 
 const proposalList: Ref<Proposals | null> = ref(null);
-const modifiedList: Ref<ProposalDisplay[]> = ref([]);
+const baseModifiedList: Ref<SiteDisplay[]> = ref([]);
+const modifiedList: Ref<SiteDisplay[]> = ref([]);
 const anyDownloading = ref(false);
 const imageDownloadDialog = ref(false);
 const imageTimeRange: Ref<{min: number, max: number} | null> = ref(null);
 const imageDownloadingId: Ref<null | string> = ref(null)
+const filter = ref("");
 let downloadCheckInterval: NodeJS.Timeout | null = null;
 
 const statusMap: Record<SiteModelStatus, { name: string; color: string }> = {
@@ -57,11 +43,11 @@ const getSiteProposals = async () => {
     proposalList.value = results;
     let newNumbers = 0;
     if (proposalList.value?.proposed_sites) {
-      const modList: ProposalDisplay[] = [];
+      const modList: SiteDisplay[] = [];
       const regionName: string = proposalList.value.region;
       const accepted: string[] = [];
       const rejected: string[] = [];
-      let selected: ProposalDisplay | null = null;
+      let selected: SiteDisplay | null = null;
       proposalList.value.proposed_sites.forEach((item) => {
         const newNum = item.number.toString().padStart(4, "0");
         if (newNum === "9999") {
@@ -106,6 +92,7 @@ const getSiteProposals = async () => {
         rejected,
       };
       modifiedList.value = modList;
+      baseModifiedList.value = modList;
       // We need to start checking if there are downloading sites to update every once in a while
       if (anyDownloading.value) {
         downloadCheckInterval = setInterval(() => getSiteProposals(), 15000);
@@ -150,13 +137,13 @@ const download = (id: string) => {
 watch(() => hoveredInfo.value.siteId, () => {
   if (hoveredInfo.value.siteId.length) {
     const id = hoveredInfo.value.siteId[0];
-    const el = document.getElementById(`proposal-id-${id}`);
+    const el = document.getElementById(`site-id-${id}`);
     if (el) {
       el.scrollIntoView({block: 'end', behavior: 'smooth'});
     }
   }
 });
-const setImageDownloadDialog = (item: ProposalDisplay) => {
+const setImageDownloadDialog = (item: SiteDisplay) => {
   if (item.startDate && item.endDate) {
     imageTimeRange.value = {
       min: item.startDate,
@@ -178,150 +165,39 @@ const startDownload = async (data: DownloadSettings) => {
     getSiteProposals(); // this will start the interval if downloading items are detected
   }
 }
+watch(filter, () => {
+  if (filter.value) {
+    modifiedList.value = baseModifiedList.value.filter((item) => item.name.includes(filter.value))
+  } else {
+    modifiedList.value = baseModifiedList.value;
+  }
+});
 
 </script>
 
 <template>
-  <v-card class="pb-5 proposal-list">
-    <div v-if="modelRun === null">
-      Select a Model Run to display Site Models
-    </div>
-    <div v-else>
-      <h3>Site Models:</h3>
-      <v-card
+  <v-card class="pb-5">
+      <v-card-title><h5>Site Models</h5></v-card-title>
+      <site-list-header v-model="filter" />
+      <div class="proposal-list">
+      <site-list-card
         v-for="item in modifiedList"
-        :id="`proposal-id-${item.id}`"
-        :key="`${item.name}_${item.id}_${item.selected}`"
-        class="modelRunCard"
-        :class="{
-          selectedCard: item.id === selectedEval,
-          hoveredCard: hoveredInfo.siteId.includes(item.id),
-        }"
-        @mouseenter="state.filters.hoverSiteId = item.id"
-        @mouseleave="state.filters.hoverSiteId = undefined"
-        @click="emit('selected', item)"
-      >
-        <v-card-title class="title">
-          {{ item.name }}
-        </v-card-title>
-        <v-card-text>
-          <v-row
-            dense
-            justify="center"
-          >
-            <div v-if="item.images">
-              <v-chip size="x-small">
-                WV: {{ item.WV }}
-              </v-chip>
-              <v-chip size="x-small">
-                S2: {{ item.S2 }}
-              </v-chip>
-              <v-chip size="x-small">
-                L8: {{ item.L8 }}
-              </v-chip>
-              <v-chip size="x-small">
-                PL: {{ item.PL }}
-              </v-chip>
-            </div>
-            <div v-else>
-              <v-chip
-                size="x-small"
-                color="error"
-              >
-                No Images Loaded
-              </v-chip>
-            </div>
-          </v-row>
-          <v-row
-            dense
-            justify="center"
-            class="pa-2"
-          >
-            <v-chip
-              v-if="item.status"
-              size="small"
-              :color="statusMap[item.status].color"
-            >
-              {{ statusMap[item.status].name }}
-            </v-chip>
-          </v-row>
-          <v-row dense>
-            <v-tooltip open-delay="300">
-              <template #activator="{ props }">
-                <v-btn
-                  size="x-small"
-                  v-bind="props"
-                  @click.stop="download(item.id)"
-                >
-                  <v-icon size="small">
-                    mdi-export
-                  </v-icon>
-                </v-btn>
-              </template>
-              <span>Download JSON</span>
-            </v-tooltip>
-            <v-spacer />
-            <v-tooltip open-delay="300">
-              <template #activator="{ props }">
-                <v-btn
-                  v-if="!item.downloading"
-                  size="x-small"
-                  v-bind="props"
-                  class="mx-1"
-                  @click.stop="setImageDownloadDialog(item)"
-                >
-                  Get <v-icon>mdi-image</v-icon>
-                </v-btn>
-                <v-btn
-                  v-else-if="item.downloading"
-                  size="x-small"
-                  v-bind="props"
-                  class="mx-1"
-                >
-                  <v-icon>mdi-spin mdi-sync</v-icon>
-                </v-btn>
-              </template>
-              <span> {{ item.downloading ? 'Downloading Images' : 'Download Satellite Images' }} </span>
-            </v-tooltip>
-            <v-spacer />
-            <v-tooltip
-              v-if="item.filename"
-              open-delay="0"
-              bottom
-            >
-              <template #activator="{ props }">
-                <v-icon
-                  x-small
-                  v-bind="props"
-                >
-                  mdi-file-outline
-                </v-icon>
-              </template>
-              <span>
-                {{ item.filename }}
-              </span>
-            </v-tooltip>
-          </v-row>
-        </v-card-text>
-      </v-card>
+        :site="item"
+        :selected-eval="selectedEval"
+        @selected="emit('selected', item)"
+        @image-download="setImageDownloadDialog($event)"
+        />
+      </div>
       <images-download-dialog
         v-if="imageDownloadDialog"
         :date-range="imageTimeRange"
         @download="startDownload($event)"
         @cancel="imageDownloadDialog = false"
       />
-    </div>
   </v-card>
 </template>
 
 <style scoped>
-.modelRunCard {
-  border: 3px solid transparent;
-}
-.modelRunCard:hover {
-  cursor: pointer;
-  border: 3px solid blue;
-}
 
 .title {
   font-size: 12px;
@@ -336,10 +212,6 @@ const startDownload = async (data: DownloadSettings) => {
   white-space: nowrap;
 }
 
-.hoveredCard {
-  background-color: orange;
-  border: 3px solid orange;
-}
 
 .proposal-list {
   position: sticky;
@@ -347,9 +219,7 @@ const startDownload = async (data: DownloadSettings) => {
   z-index: 2;
   background-color: white;
   overflow-y: auto;
-}
-.selectedCard {
-  background-color: lightblue;
+  max-height: calc(100vh - 150px);
 }
 
 </style>

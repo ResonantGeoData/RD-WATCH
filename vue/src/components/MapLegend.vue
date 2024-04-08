@@ -10,17 +10,27 @@ import { state } from '../store';
     v-if="state.mapLegend && (state.filters.drawObservations || state.filters.drawSiteOutline || state.filters.scoringColoring)"
     class="legend"
   >
-    <v-card density="compact">
+    <v-card density="compact" color="black" class="legend-base">
       <v-card-title
-        :class="{'legend-title-single': !state.filters.scoringColoring, 'legend-title': state.filters.scoringColoring}"
       >
-        Legend
+      <v-row justify="middle" align="center" class="px-4">
+        <span
+        :class="{'legend-title-single': !state.filters.scoringColoring, 'legend-title': state.filters.scoringColoring}"
+        >Legend</span>
+        <v-spacer />
+        <v-col cols="1">
+          <v-icon size="small"
+          @click="state.mapLegend = false"
+          >mdi-close-circle</v-icon>
+        </v-col>
+        </v-row>
       </v-card-title>
-      <v-card-text>
+      <v-card-text >
         <v-row dense>
           <v-card
             v-if="state.filters.drawSiteOutline && !state.filters.scoringColoring"
             density="compact"
+            class="white"
           >
             <v-card-title
               class="legend-title"
@@ -132,5 +142,12 @@ import { state } from '../store';
   max-width: 15px;
   min-height: 15px;
   max-height: 15px;;
+}
+.legend-card-text {
+  background-color: white;
+  opacity: 1.0;
+}
+.legend-base {
+  opacity: 0.75;
 }
 </style>

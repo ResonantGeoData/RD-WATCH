@@ -98,12 +98,12 @@ const updateSiteModels = () => {
   <span>
     <v-navigation-drawer
       v-if="selectedModelRun !== null "
-      location="right"
+      location="left"
       floating
       width="200"
       sticky
       permanent
-      class="fill-height"
+      class="fill-height site-list"
       style="overflow-y: hidden;"
     >
       <v-row dense>
@@ -118,12 +118,10 @@ const updateSiteModels = () => {
             style="flex-grow: 1;"
             @selected="setSelectedEval($event)"
           />          
-          <MapLegend class="mx-auto mt-5" />
         </v-col>
       </v-row>
     </v-navigation-drawer>
     <MapLegend
-      v-else
       class="static-map-legend"
     />
   </span>
@@ -132,7 +130,7 @@ const updateSiteModels = () => {
 <style scoped>
 .static-map-legend {
     position: absolute;
-    bottom: 0px;
+    top: 0px;
     right: 0px;
     z-index: 2;
 }

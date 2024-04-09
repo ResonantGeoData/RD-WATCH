@@ -1,3 +1,7 @@
+from .region import Region
+from .annotation_proposal_set import AnnotationProposalSet
+from .annotation_proposal_site import AnnotationProposalSite
+from .annotation_proposal_observation import AnnotationProposalObservation
 from .evaluation_activity_classification_f1 import EvaluationActivityClassificationF1
 from .evaluation_activity_classification_matrix import (
     EvaluationActivityClassificationMatrix,
@@ -21,12 +25,15 @@ from .evaluation_run import EvaluationRun
 from .observation import Observation
 from .observation_comparison import ObservationComparison
 from .performer import Performer
-from .region import Region
 from .satellite_fetching import SatelliteFetching
 from .site import Site
 from .site_image import SiteImage
 
 __all__ = [
+    'Region',
+    'AnnotationProposalSet',
+    'AnnotationProposalSite',
+    'AnnotationProposalObservation',
     'EvaluationActivityClassificationMatrix',
     'EvaluationActivityClassificationPhase',
     'EvaluationActivityClassificationF1',

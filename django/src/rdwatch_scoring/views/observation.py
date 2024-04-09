@@ -18,7 +18,7 @@ from django.shortcuts import get_object_or_404
 
 from rdwatch.db.functions import BoundingBox, ExtractEpoch
 from rdwatch.views.site_observation import SiteObservationsListSchema
-from rdwatch_scoring.models import Observation, SatelliteFetching, Site, SiteImage
+from rdwatch_scoring.models import Observation, SatelliteFetching, Site, SiteImage, AnnotationProposalObservation, AnnotationProposalSite
 from rdwatch_scoring.tasks import generate_site_images
 
 logger = logging.getLogger(__name__)
@@ -39,25 +39,59 @@ class GenerateImagesSchema(Schema):
 
 @router.get('/{evaluation_id}/', response={200: SiteObservationsListSchema})
 def site_observations(request: HttpRequest, evaluation_id: UUID4):
-    if not Site.objects.filter(pk=evaluation_id).exists():
+    proposal = True if request.GET.get('proposal') else False
+    print('here')
+
+    if proposal:
+        site_db_model = AnnotationProposalSite
+        site_db_model_cols = {
+            'region__geometry': 'region_id__geometry'
+        }
+        observations = (
+            AnnotationProposalObservation.objects.order_by('observation_date')
+            .filter(annotation_proposal_site_uuid=evaluation_id)
+        )
+        observation_db_model_cols = {
+            'date': 'observation_date',
+            'phase': 'current_phase',
+            'sensor': 'sensor_name'
+        }
+    else:
+        print('normal')
+        site_db_model = Site
+        site_db_model_cols = {
+            'region__geometry': 'region__geometry'
+        }
+        observations = (
+            Observation.objects.order_by('date')
+            .filter(site_uuid=evaluation_id)
+        )
+        observation_db_model_cols = {
+            'date': 'date',
+            'phase': 'phase',
+            'sensor': 'sensor'
+        }
+
+    print(site_db_model.objects.filter(pk=evaluation_id).exists())
+    if not site_db_model.objects.filter(pk=evaluation_id).exists():
         raise Http404()
-    site_eval_data = Site.objects.filter(pk=evaluation_id).aggregate(
+
+    site_eval_data = site_db_model.objects.filter(pk=evaluation_id).aggregate(
         timerange=JSONObject(
             min=ExtractEpoch(Min('start_date')),
             max=ExtractEpoch(Max('end_date')),
         ),
-        bbox=Collect(
+        bbox=BoundingBox(Collect(
             Func(
-                F('region__geometry'),
+                F(site_db_model_cols['region__geometry']),
                 4326,
                 function='ST_GeomFromText',
                 output_field=GeometryField(),
             )
-        ),
+        )),
     )
     queryset = (
-        Observation.objects.order_by('date')
-        .filter(site_uuid=evaluation_id)
+        observations
         .aggregate(
             count=Count('pk'),
             bbox=BoundingBox(
@@ -73,13 +107,13 @@ def site_observations(request: HttpRequest, evaluation_id: UUID4):
             results=JSONBAgg(
                 JSONObject(
                     id='pk',
-                    label='phase',
+                    label=observation_db_model_cols['phase'],
                     score='score',
                     # Default to worldview if sensor is NULL.
                     # TODO: what is the expected behavior here?
-                    constellation=Coalesce('sensor', Value(None)),
+                    constellation=Coalesce(observation_db_model_cols['sensor'], Value(None)),
                     # spectrum="spectrum__slug",
-                    timestamp=ExtractEpoch('date'),
+                    timestamp=ExtractEpoch(observation_db_model_cols['date']),
                     bbox=BoundingBox(
                         Func(
                             F('geometry'),

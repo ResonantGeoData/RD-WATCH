@@ -267,9 +267,13 @@ export const buildSourceFilter = (modelRunIds: string[], randomKey='') => {
   const results: Record<string, SourceSpecification> = {};
   modelRunIds.forEach((id) => {
     const source = `vectorTileSource_${id}`;
+    const proposal = ApiService.getProposalsQuery()
     results[source] = {
       type: "vector",
-      tiles: [`${urlRoot}${ApiService.getApiPrefix()}/vector-tiles/tile.pbf?modelRunId=${id}&z={z}&x={x}&y={y}${randomKey}`],
+      tiles: [`${urlRoot}${ApiService.getApiPrefix()}/model-runs/${id}/vector-tile/{z}/{x}/{y}.pbf${randomKey}/${proposal ? "?proposal=PROPOSAL" : ""}`],
+
+//       /{evaluation_run_uuid}/vector-tile/{z}/{x}/{y}.pbf/
+//       tiles: [`${urlRoot}${ApiService.getApiPrefix()}/vector-tiles/tile.pbf?modelRunId=${id}&z={z}&x={x}&y={y}${randomKey}`],
       minzoom: 0,
       maxzoom: 14,
     };

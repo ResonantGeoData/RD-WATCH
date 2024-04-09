@@ -61,6 +61,9 @@ if settings.ACCENTURE_VERSION is not None:
     COLLECTIONS['L8'].append(f'ta1-ls-acc-{settings.ACCENTURE_VERSION}')
     COLLECTIONS['PL'].append(f'ta1-pd-acc-{settings.ACCENTURE_VERSION}')
 
+def request_modifier(x):
+    print('here')
+    print(x)
 
 def stac_search(
     source: Literal['S2', 'L8', 'PL'],
@@ -73,6 +76,7 @@ def stac_search(
         # (https://earth-search.aws.element84.com/v0/search)
         settings.SMART_STAC_URL,
         headers={'x-api-key': settings.SMART_STAC_KEY},
+        request_modifier=request_modifier
     )
 
     if timebuffer is not None:

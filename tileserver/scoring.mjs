@@ -131,6 +131,7 @@ const QUERY = `
               AND U0."tau" = 0.2
               AND U0."min_confidence_score" = 0.0
             )
+          LIMIT 1 -- TODO: remove this when T&E updates their scoring code to only include one
         )
         ELSE NULL
       END AS "color_code"
@@ -242,7 +243,7 @@ const QUERY = `
               AND U0."tau" = 0.2
               AND U0."min_confidence_score" = 0.0
             )
-          LIMIT 1 -- TODO: remove this
+          LIMIT 1 -- TODO: remove this when T&E updates their scoring code to only include one
         )
         ELSE NULL
       END AS "color_code"

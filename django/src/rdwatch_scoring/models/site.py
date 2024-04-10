@@ -33,6 +33,12 @@ class Site(models.Model):
     last_obs_date = models.DateField(blank=True, null=True)
     confidence_score = models.FloatField(blank=True, null=True)
 
+    point_geometry = models.TextField(blank=True, null=True)
+    point_status = models.CharField(max_length=255, blank=True, null=True)
+    point_date = models.DateField(blank=True, null=True)
+    point_version = models.CharField(max_length=255, blank=True, null=True)
+    point_date_version = models.CharField(max_length=255, blank=True, null=True)
+
     class Meta:
         managed = False
         db_table = 'site'

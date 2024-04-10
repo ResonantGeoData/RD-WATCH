@@ -51,20 +51,7 @@ export interface ScoringResults {
 
 export type SiteModelStatus = 'PROPOSAL' | 'APPROVED' | 'REJECTED'
 
-export interface SiteList {
-  region: Region;
-  modelRunDetails: {
-    region: string;
-    version: string;
-    title: string;
-    proposal: boolean | null;
-    performer: {
-      id: number;
-      team_name: string;
-      short_code: string;
-    }
-  }
-  sites: {
+export interface SiteInfo {
     images: number,
     S2: number,
     WV: number,
@@ -79,7 +66,21 @@ export interface SiteList {
     timestamp: number;
     filename?: string | null;
     downloading: boolean;
-  }[];
+}
+export interface SiteList {
+  region: Region;
+  modelRunDetails: {
+    region: string;
+    version: string;
+    title: string;
+    proposal: boolean | null;
+    performer: {
+      id: number;
+      team_name: string;
+      short_code: string;
+    }
+  }
+  sites: SiteInfo[];
 }
 export interface SiteEvaluationUpdateQuery {
   label?: string;
@@ -185,6 +186,24 @@ export class ApiService {
       },
     });
   }
+
+    /**
+   * @param id
+   * @returns SiteObservationList
+   * @throws ApiError
+   */
+    public static getSite(
+      id: string
+    ): CancelablePromise<SiteInfo> {
+      return __request(OpenAPI, {
+        method: "GET",
+        url: `${this.getApiPrefix()}/sites/{id}`,
+        path: {
+          id: id,
+        },
+      });
+    }
+
 
     /**
    * @param id

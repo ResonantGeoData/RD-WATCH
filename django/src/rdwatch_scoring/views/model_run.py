@@ -4,19 +4,15 @@ from typing import Literal, TypeAlias
 from ninja import FilterSchema, Query
 from ninja.pagination import RouterPaginated
 from pydantic import UUID4
-from django.contrib.postgres.aggregates import JSONBAgg
+
 from django.contrib.gis.db.models import GeometryField
-
-from rdwatch_scoring.models import Site, SiteImage, SatelliteFetching
-from django.db.models.functions import Coalesce, JSONObject, Substr
-from rdwatch.db.functions import BoundingBox, ExtractEpoch
-
+from django.contrib.postgres.aggregates import JSONBAgg
 from django.db.models import (
-    ExpressionWrapper,
     Avg,
     CharField,
     Count,
     DateTimeField,
+    ExpressionWrapper,
     F,
     FloatField,
     Func,
@@ -25,21 +21,14 @@ from django.db.models import (
     Min,
     Q,
     Value,
-    Case,
-    Count,
-    Exists,
-    OuterRef,
-    Subquery,
-    When,
-
 )
-from django.db.models.functions import Concat, JSONObject, NullIf
-from django.http import Http404, HttpRequest, HttpResponse
+from django.db.models.functions import Coalesce, Concat, JSONObject, NullIf, Substr
+from django.http import Http404, HttpRequest
 from django.shortcuts import get_object_or_404
 
-from rdwatch.db.functions import ExtractEpoch
+from rdwatch.db.functions import BoundingBox, ExtractEpoch
 from rdwatch.views.model_run import ModelRunDetailSchema, ModelRunPagination
-from rdwatch_scoring.models import EvaluationRun, SatelliteFetching
+from rdwatch_scoring.models import EvaluationRun, SatelliteFetching, Site
 from rdwatch_scoring.tasks import (
     cancel_generate_images_task,
     generate_site_images_for_evaluation_run,
@@ -329,42 +318,41 @@ def cancel_generate_images(request: HttpRequest, model_run_id: UUID4):
 
 
 def get_sites_query(model_run_id: UUID4):
-    return (
-        Site.objects
-        .filter(evaluation_run_uuid=model_run_id)
-        .aggregate(
-            sites=JSONBAgg(
-                JSONObject(
-                    id='pk',
-                    number=Substr(F('site_id'), 9, 4),  # pos is 1 indexed,
-                    bbox=BoundingBox(
-                        Func(
-                            F('union_geometry'),
-                            4326,
-                            function='ST_GeomFromText',
-                            output_field=GeometryField(),
-                        )
-                    ),
-                    # images='siteimage_count',
-                    # S2='S2',
-                    # WV='WV',
-                    # L8='L8',
-                    start_date=ExtractEpoch('start_date'),
-                    end_date=ExtractEpoch('end_date'),
-                    # status='status',
-                    # filename='cache_originator_file',
-                    # downloading='downloading',
+    return Site.objects.filter(evaluation_run_uuid=model_run_id).aggregate(
+        sites=JSONBAgg(
+            JSONObject(
+                id='pk',
+                number=Substr(F('site_id'), 9, 4),  # pos is 1 indexed,
+                bbox=BoundingBox(
+                    Func(
+                        F('union_geometry'),
+                        4326,
+                        function='ST_GeomFromText',
+                        output_field=GeometryField(),
+                    )
                 ),
-                ordering='site_id',
-                default=[],
+                # images='siteimage_count',
+                # S2='S2',
+                # WV='WV',
+                # L8='L8',
+                start_date=ExtractEpoch('start_date'),
+                end_date=ExtractEpoch('end_date'),
+                # status='status',
+                # filename='cache_originator_file',
+                # downloading='downloading',
             ),
-        )
+            ordering='site_id',
+            default=[],
+        ),
     )
+
 
 def get_model_run_details(model_run_id: UUID4):
     return (
         EvaluationRun.objects.select_related('evaluations')
-        .filter(pk=model_run_id,)
+        .filter(
+            pk=model_run_id,
+        )
         .annotate(
             json=JSONObject(
                 region=F('region'),
@@ -387,7 +375,6 @@ def get_model_run_details(model_run_id: UUID4):
             ),
         )
     )
-
 
 
 @router.get('/{model_run_id}/proposals/')

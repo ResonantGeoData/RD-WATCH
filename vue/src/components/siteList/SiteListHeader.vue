@@ -1,7 +1,7 @@
 <script setup lang="ts">
-import { onMounted, ref, watch } from "vue";
+import { ref, watch } from "vue";
 
-const props = defineProps<{
+defineProps<{
     modelValue: string;
 }>();
 
@@ -17,34 +17,37 @@ watch(filter, () => {
 </script>
 
 <template>
-    <v-row class="pa-2 search" align="center">
-        <v-text-field
-        v-model="filter"
-        label="Search"
-        variant="outlined"
-        class="text-field"
-        hide-details
-        density="compact"
-        single-line
-      ></v-text-field>
-      <div
+  <v-row
+    class="pa-2 search"
+    align="center"
+  >
+    <v-text-field
+      v-model="filter"
+      label="Search"
+      variant="outlined"
+      class="text-field"
+      hide-details
+      density="compact"
+      single-line
+    />
+    <div
       class="search-icon"
-      size="small">
+      size="small"
+    >
       <v-icon
-      size="25"
-      color="#01579B"
-      class="pt-3 pl-3"
-
-
-      >mdi-magnify</v-icon>
+        size="25"
+        color="#01579B"
+        class="pt-3 pl-3"
+      >
+        mdi-magnify
+      </v-icon>
     </div>
-      </v-row>
-
+  </v-row>
 </template>
 <style scoped>
 .search {
     background-color: #01579B;
-    width: 200px ;
+    width: 250px ;
     margin: 0px;
 }
 .text-field {

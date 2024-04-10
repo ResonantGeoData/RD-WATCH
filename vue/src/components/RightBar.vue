@@ -1,7 +1,6 @@
 <script setup lang="ts">
 import { state } from "../store";
 import EvaluationsSideBar from "./siteObservations/EvaluationsSideBar.vue";
-import MapLegend from "./MapLegend.vue"
 
 
 </script>

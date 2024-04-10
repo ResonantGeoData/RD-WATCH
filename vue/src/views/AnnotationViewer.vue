@@ -5,9 +5,9 @@ import MapLibre from "../components/MapLibre.vue";
 import LayerSelection from "../components/LayerSelection.vue";
 import ProposalList from "../components/annotationViewer/ProposalList.vue"
 import MapLegend from "../components/MapLegend.vue";
-import { ProposalDisplay } from "../components/annotationViewer/ProposalList.vue"
 import { Ref, computed, onMounted, ref, watch } from "vue";
 import { state } from "../store";
+import { SiteDisplay } from "../components/siteList/SiteListCard.vue";
 
 interface Props {
   region?: string;
@@ -39,8 +39,8 @@ onMounted(() => {
 const selectedEval: Ref<string | null> = ref(null);
 const selectedName: Ref<string | null> = ref(null);
 const selectedDateRange: Ref<number[] | null> = ref(null);
-const regionBBox: Ref<ProposalDisplay['bbox'] | null> = ref(null);
-const setSelectedEval = (val: ProposalDisplay | null) => {
+const regionBBox: Ref<SiteDisplay['bbox'] | null> = ref(null);
+const setSelectedEval = (val: SiteDisplay | null) => {
   
   if (val && val.id !== null) {
     if (selectedEval.value === null) { // set region bbox if previous val was null
@@ -100,7 +100,7 @@ const updateSiteModels = () => {
       v-if="selectedModelRun !== null "
       location="left"
       floating
-      width="200"
+      width="250"
       sticky
       permanent
       class="fill-height site-list"

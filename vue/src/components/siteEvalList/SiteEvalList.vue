@@ -3,10 +3,7 @@ import { Ref, ref, watch } from "vue";
 import { ApiService } from "../../client";
 import {
   DownloadSettings,
-  SiteList,
-  SiteModelStatus,
 } from "../../client/services/ApiService";
-import { state } from "../../store";
 import { clickedInfo, hoveredInfo } from "../../interactions/mouseEvents";
 import ImagesDownloadDialog from "../ImagesDownloadDialog.vue";
 import SiteListCard from "../siteList/SiteListCard.vue";
@@ -23,15 +20,13 @@ const emit = defineEmits<{
 
 const baseModifiedList: Ref<SiteDisplay[]> = ref([]);
 const modifiedList: Ref<SiteDisplay[]> = ref([]);
-const anyDownloading = ref(false);
 const imageDownloadDialog = ref(false);
 const imageTimeRange: Ref<{min: number, max: number} | null> = ref(null);
 const imageDownloadingId: Ref<null | string> = ref(null)
 const filter = ref("");
-let downloadCheckInterval: NodeJS.Timeout | null = null;
 
 
-const getSiteProposal = async (modelRun: string) => {
+const getSites = async (modelRun: string) => {
     const results = await ApiService.getSitesList(modelRun);
     const regionName = results.region;
     let newNumbers = 0;
@@ -54,9 +49,6 @@ const getSiteProposal = async (modelRun: string) => {
         let name = `${regionName}_${newNum}`;
         if (newNumbers > 1) {
           name = `${name}-${newNumbers}`;
-        }
-        if (item.downloading) {
-          anyDownloading.value = true;
         }
         modList.push({
           number: item.number,
@@ -83,13 +75,6 @@ const getSiteProposal = async (modelRun: string) => {
         }
       });
       // We need to start checking if there are downloading sites to update every once in a while
-      if (anyDownloading.value) {
-        downloadCheckInterval = setInterval(() => getSiteProposal(modelRun), 15000);
-      } else {
-        if (downloadCheckInterval !== null) {
-          clearInterval(downloadCheckInterval);
-        }
-      }
       if (selected) {
         emit('selected', selected);
       }
@@ -101,7 +86,7 @@ const getSiteProposal = async (modelRun: string) => {
 const getAllSiteProposals = async () => {
     let mainList: SiteDisplay[] = [];
     for (let i = 0; i < props.modelRuns.length; i += 1) {
-        const results = await getSiteProposal(props.modelRuns[i]);
+        const results = await getSites(props.modelRuns[i]);
         mainList = mainList.concat(results);
     }
     baseModifiedList.value = mainList;
@@ -127,11 +112,6 @@ watch(clickedInfo, () => {
     emit("selected", null);
   }
 });
-
-const download = (id: string) => {
-  const url = `/api/evaluations/${id}/download`;
-  window.location.assign(url);
-};
 
 watch(() => hoveredInfo.value.siteId, () => {
   if (hoveredInfo.value.siteId.length) {
@@ -161,7 +141,7 @@ const startDownload = async (data: DownloadSettings) => {
   if (id) {
   await ApiService.getObservationImages(id, data);
     // Now we get the results to see if the service is running
-    getAllSiteProposals(); // this will start the interval if downloading items are detected
+    setTimeout(() => getAllSiteProposals(), 500);
   }
 }
 watch(filter, () => {
@@ -176,23 +156,24 @@ watch(filter, () => {
 
 <template>
   <v-card class="pb-5">
-      <v-card-title><h5>Site Models</h5></v-card-title>
-      <site-list-header v-model="filter" />
-      <div class="proposal-list">
+    <v-card-title><h5>Site Models</h5></v-card-title>
+    <site-list-header v-model="filter" />
+    <div class="proposal-list">
       <site-list-card
         v-for="item in modifiedList"
+        :key="item.id"
         :site="item"
         :selected-eval="selectedEval"
         @selected="emit('selected', item)"
         @image-download="setImageDownloadDialog($event)"
-        />
-      </div>
-      <images-download-dialog
-        v-if="imageDownloadDialog"
-        :date-range="imageTimeRange"
-        @download="startDownload($event)"
-        @cancel="imageDownloadDialog = false"
       />
+    </div>
+    <images-download-dialog
+      v-if="imageDownloadDialog"
+      :date-range="imageTimeRange"
+      @download="startDownload($event)"
+      @cancel="imageDownloadDialog = false"
+    />
   </v-card>
 </template>
 

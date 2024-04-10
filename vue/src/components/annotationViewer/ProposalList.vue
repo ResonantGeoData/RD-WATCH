@@ -4,7 +4,6 @@ import { ApiService } from "../../client";
 import {
   DownloadSettings,
   SiteList,
-  SiteModelStatus,
 } from "../../client/services/ApiService";
 import { state } from "../../store";
 import { clickedInfo, hoveredInfo } from "../../interactions/mouseEvents";
@@ -24,18 +23,10 @@ const emit = defineEmits<{
 const proposalList: Ref<SiteList | null> = ref(null);
 const baseModifiedList: Ref<SiteDisplay[]> = ref([]);
 const modifiedList: Ref<SiteDisplay[]> = ref([]);
-const anyDownloading = ref(false);
 const imageDownloadDialog = ref(false);
 const imageTimeRange: Ref<{min: number, max: number} | null> = ref(null);
 const imageDownloadingId: Ref<null | string> = ref(null)
 const filter = ref("");
-let downloadCheckInterval: NodeJS.Timeout | null = null;
-
-const statusMap: Record<SiteModelStatus, { name: string; color: string }> = {
-  PROPOSAL: { name: "Proposed", color: "orange" },
-  REJECTED: { name: "Rejected", color: "error" },
-  APPROVED: { name: "Approved", color: "success" },
-};
 
 const getSiteProposals = async () => {
   if (props.modelRun !== null) {
@@ -69,9 +60,6 @@ const getSiteProposals = async () => {
         } else if (item.status === "REJECTED") {
           rejected.push(item.id);
         }
-        if (item.downloading) {
-          anyDownloading.value = true;
-        }
         modList.push({
           number: item.number,
           id: item.id,
@@ -103,13 +91,6 @@ const getSiteProposals = async () => {
       modifiedList.value = modList;
       baseModifiedList.value = modList;
       // We need to start checking if there are downloading sites to update every once in a while
-      if (anyDownloading.value) {
-        downloadCheckInterval = setInterval(() => getSiteProposals(), 15000);
-      } else {
-        if (downloadCheckInterval !== null) {
-          clearInterval(downloadCheckInterval);
-        }
-      }
       if (selected) {
         emit('selected', selected);
       }
@@ -138,10 +119,6 @@ watch(clickedInfo, () => {
   }
 });
 
-const download = (id: string) => {
-  const url = `/api/evaluations/${id}/download`;
-  window.location.assign(url);
-};
 
 watch(() => hoveredInfo.value.siteId, () => {
   if (hoveredInfo.value.siteId.length) {
@@ -171,7 +148,7 @@ const startDownload = async (data: DownloadSettings) => {
   if (id) {
   await ApiService.getObservationImages(id, data);
     // Now we get the results to see if the service is running
-    getSiteProposals(); // this will start the interval if downloading items are detected
+    setTimeout(() => getSiteProposals(), 500);
   }
 }
 watch(filter, () => {
@@ -186,23 +163,24 @@ watch(filter, () => {
 
 <template>
   <v-card class="pb-5">
-      <v-card-title><h5>Site Models</h5></v-card-title>
-      <site-list-header v-model="filter" />
-      <div class="proposal-list">
+    <v-card-title><h5>Site Models</h5></v-card-title>
+    <site-list-header v-model="filter" />
+    <div class="proposal-list">
       <site-list-card
         v-for="item in modifiedList"
+        :key="item.id"
         :site="item"
         :selected-eval="selectedEval"
         @selected="emit('selected', item)"
         @image-download="setImageDownloadDialog($event)"
-        />
-      </div>
-      <images-download-dialog
-        v-if="imageDownloadDialog"
-        :date-range="imageTimeRange"
-        @download="startDownload($event)"
-        @cancel="imageDownloadDialog = false"
       />
+    </div>
+    <images-download-dialog
+      v-if="imageDownloadDialog"
+      :date-range="imageTimeRange"
+      @download="startDownload($event)"
+      @cancel="imageDownloadDialog = false"
+    />
   </v-card>
 </template>
 

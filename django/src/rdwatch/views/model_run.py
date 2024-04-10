@@ -437,14 +437,12 @@ def get_region(model_run_id: UUID4):
         )
     )
 
+
 def get_model_run_details(model_run_id: UUID4):
     return (
         ModelRun.objects.select_related('evaluations')
         .filter(pk=model_run_id)
-        .alias(
-            region_id=F('evaluations__region_id'),
-            version=F('evaluations__version')
-        )
+        .alias(region_id=F('evaluations__region_id'), version=F('evaluations__version'))
         .annotate(
             json=JSONObject(
                 region=Subquery(  # prevents including "region" in slow GROUP BY
@@ -452,7 +450,9 @@ def get_model_run_details(model_run_id: UUID4):
                     output_field=JSONField(),
                 ),
                 performer=Subquery(  # prevents including "performer" in slow GROUP BY
-                    lookups.Performer.objects.filter(pk=OuterRef('performer_id')).values(
+                    lookups.Performer.objects.filter(
+                        pk=OuterRef('performer_id')
+                    ).values(
                         json=JSONObject(
                             id='id',
                             team_name='description',

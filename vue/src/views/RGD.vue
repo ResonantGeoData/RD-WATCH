@@ -10,6 +10,7 @@ import MapLegend from "../components/MapLegend.vue";
 import { Ref } from "vue";
 import { ref } from "vue";
 import { SiteDisplay } from "../components/siteList/SiteListCard.vue";
+import { ApiService } from "../client";
 interface Props {
   region?: string;
   selected?: number[] | string;
@@ -71,34 +72,34 @@ onMounted(() => {
   </v-main>
   <span>
     <span>
-    <v-navigation-drawer
-      v-if="state.filters.configuration_id?.length"
-      location="left"
-      floating
-      width="200"
-      sticky
-      permanent
-      class="fill-height site-list"
-      style="overflow-y: hidden;"
-    >
-      <v-row dense>
-        <v-col
-          class="navcolumn"
-        >
-          <SiteEvalList
-            v-if="state.filters.configuration_id"
-            :model-runs="state.filters.configuration_id"
-            :selected-eval="selectedEval"
-            style="flex-grow: 1;"
-            @selected="setSelectedEval($event)"
-          />          
-        </v-col>
-      </v-row>
-    </v-navigation-drawer>
-    <MapLegend
-      class="static-map-legend"
-    />
-  </span>
+      <v-navigation-drawer
+        v-if="state.filters.configuration_id?.length && ApiService.getApiPrefix() !== '/api/scoring'"
+        location="left"
+        floating
+        width="250"
+        sticky
+        permanent
+        class="fill-height site-list"
+        style="overflow-y: hidden;"
+      >
+        <v-row dense>
+          <v-col
+            class="navcolumn"
+          >
+            <SiteEvalList
+              v-if="state.filters.configuration_id"
+              :model-runs="state.filters.configuration_id"
+              :selected-eval="selectedEval"
+              style="flex-grow: 1;"
+              @selected="setSelectedEval($event)"
+            />          
+          </v-col>
+        </v-row>
+      </v-navigation-drawer>
+      <MapLegend
+        class="static-map-legend"
+      />
+    </span>
   </span>
   <RightBar />
 </template>

@@ -54,6 +54,9 @@ if settings.ACCENTURE_VERSION is not None:
 def _fmt_time(time: datetime):
     return f'{time.isoformat()[:19]}Z'
 
+def request_modifier(x):
+    print('ww processed here')
+    print(x)
 
 def worldview_search(
     timestamp: datetime,
@@ -63,6 +66,7 @@ def worldview_search(
     stac_catalog = Client.open(
         settings.SMART_STAC_URL,
         headers={'x-api-key': settings.SMART_STAC_KEY},
+        request_modifier=request_modifier
     )
 
     if timebuffer is not None:

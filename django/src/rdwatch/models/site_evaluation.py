@@ -31,12 +31,6 @@ class SiteEvaluation(models.Model):
         help_text='The hyper parameters used this site evaluation.',
         db_index=True,
     )
-    region = models.ForeignKey(
-        to='Region',
-        on_delete=models.PROTECT,
-        help_text='The region this site belongs to',
-        db_index=True,
-    )
     number = models.IntegerField(help_text='The site number', db_index=True)
     start_date = models.DateTimeField(
         help_text='Start date in geoJSON',
@@ -207,7 +201,7 @@ class SiteEvaluation(models.Model):
 
     @property
     def site_id(self):
-        return f'{self.region}_{str(self.number).zfill(4)}'
+        return f'{self.configuration.region}_{str(self.number).zfill(4)}'
 
     def __str__(self):
         prf = str(self.configuration.performer)

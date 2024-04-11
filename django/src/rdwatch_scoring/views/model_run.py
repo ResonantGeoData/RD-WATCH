@@ -1,31 +1,39 @@
 import logging
 from typing import Literal, TypeAlias
 
+from django.contrib.gis.db.models.fields import GeometryField
+from django.contrib.postgres.aggregates import JSONBAgg
+from django.db.models import (
+    Avg,
+    Case,
+    CharField,
+    Count,
+    DateTimeField,
+    Exists,
+    F,
+    FloatField,
+    Func,
+    IntegerField,
+    JSONField,
+    Max,
+    Min,
+    OuterRef,
+    Q,
+    Subquery,
+    Value,
+    When,
+)
+from django.db.models.functions import Cast, Coalesce, Concat, JSONObject, NullIf, Substr
+from django.http import Http404, HttpRequest
+from django.shortcuts import get_object_or_404
 from ninja import FilterSchema, Query
 from ninja.pagination import RouterPaginated
 from pydantic import UUID4
 
-from django.db.models import (
-    Avg,
-    CharField,
-    Count,
-    DateTimeField,
-    F,
-    FloatField,
-    Func,
-    JSONField,
-    Max,
-    Min,
-    Q,
-    Value,
-)
-from django.db.models.functions import Concat, JSONObject, NullIf
-from django.http import HttpRequest
-from django.shortcuts import get_object_or_404
-
-from rdwatch.db.functions import ExtractEpoch
+from rdwatch.db.functions import BoundingBox, ExtractEpoch
 from rdwatch.views.model_run import ModelRunDetailSchema, ModelRunPagination
-from rdwatch_scoring.models import EvaluationRun, SatelliteFetching
+from rdwatch_scoring.models import EvaluationRun, SatelliteFetching, AnnotationProposalSet, AnnotationProposalSite, \
+    Region, SiteImage
 from rdwatch_scoring.tasks import (
     cancel_generate_images_task,
     generate_site_images_for_evaluation_run,
@@ -139,11 +147,188 @@ def get_queryset():
     )
 
 
+def get_queryset_proposal():
+    proposed_count_subquery = (
+        AnnotationProposalSite.objects.filter(annotation_proposal_set_uuid=OuterRef('pk'))
+        .filter(proposal_status='PROPOSAL')
+        .values('annotation_proposal_set_uuid')
+        .annotate(count=Count('pk'))
+        .values('count')
+    )
+    other_count_subquery = (
+        AnnotationProposalSite.objects.filter(annotation_proposal_set_uuid=OuterRef('pk'))
+        .exclude(proposal_status='PROPOSAL')
+        .values('annotation_proposal_set_uuid')
+        .annotate(count=Count('pk'))
+        .values('count')
+    )
+
+    return (
+        AnnotationProposalSet.objects.values()
+        .annotate(
+            id=F('uuid'),
+            region=F('region_id'),
+            title=Concat(
+                Value('Proposal '),
+                'originator',
+                Value(' '),
+                'region_id',
+                output_field=CharField(),
+            ),
+            eval=Value(None, output_field=CharField()),
+            performer=JSONObject(
+                id=0, team_name=F('originator'), short_code=F('originator')
+            ),
+            parameters=Value({}, output_field=JSONField()),
+            created=F('create_datetime'),
+            expiration_time=Value(None, output_field=DateTimeField()),
+            evaluation=Value(None, output_field=DateTimeField()),
+            evaluation_run=Value(None, output_field=DateTimeField()),
+            proposal=Value(True),
+            adjudicated=JSONObject(
+                proposed=Coalesce(Subquery(proposed_count_subquery), 0),
+                other=Coalesce(Subquery(other_count_subquery), 0),
+            ),
+            score=Value(None, output_field=FloatField()),
+            numsites=Count('annotationproposalsite'),
+            timestamp=ExtractEpoch(Max('annotationproposalsite__end_date')),
+            timerange=JSONObject(
+                min=ExtractEpoch(Min('annotationproposalsite__start_date')),
+                max=ExtractEpoch(Max('annotationproposalsite__end_date')),
+            ),
+            bbox=Func(
+                F('region_id__geometry'),
+                4326,
+                function='ST_AsGeoJSON',
+                output_field=JSONField(),
+            ),
+        )
+    ).order_by(
+        F('uuid')
+    )
+
+
+def list_annotation_proposal_sets(request: HttpRequest,
+                                  filters: ModelRunFilterSchema = Query(...)):
+    page_size: int = 10  # TODO: use settings.NINJA_PAGINATION_PER_PAGE?
+    page = int(request.GET.get('page', 1))
+
+    qs = filters.filter(AnnotationProposalSet.objects.all().order_by(F('uuid')))
+
+    ids = qs[((page - 1) * page_size) : (page * page_size)].values_list(
+        'uuid', flat=True
+    )
+    total_count = qs.count()
+
+    proposed_count_subquery = (
+        AnnotationProposalSite.objects.filter(annotation_proposal_set_uuid=OuterRef('pk'))
+        .filter(proposal_status='PROPOSAL')
+        .values('annotation_proposal_set_uuid')
+        .annotate(count=Count('pk'))
+        .values('count')
+    )
+    other_count_subquery = (
+        AnnotationProposalSite.objects.filter(annotation_proposal_set_uuid=OuterRef('pk'))
+        .exclude(proposal_status='PROPOSAL')
+        .values('annotation_proposal_set_uuid')
+        .annotate(count=Count('pk'))
+        .values('count')
+    )
+
+    qs = (
+        AnnotationProposalSet.objects.filter(uuid__in=ids).values()
+        .annotate(
+            id=F('uuid'),
+            region=F('region_id'),
+            title=Concat(
+                Value('Proposal '),
+                'originator',
+                Value(' '),
+                'region_id',
+                output_field=CharField(),
+            ),
+            eval=Value(None, output_field=CharField()),
+            performer=JSONObject(
+                id=0, team_name=F('originator'), short_code=F('originator')
+            ),
+            parameters=Value({}, output_field=JSONField()),
+            created=F('create_datetime'),
+            expiration_time=Value(None, output_field=DateTimeField()),
+            evaluation=Value(None, output_field=DateTimeField()),
+            evaluation_run=Value(None, output_field=DateTimeField()),
+            proposal=Value(True, output_field=CharField()),
+            adjudicated=JSONObject(
+                proposed=Coalesce(Subquery(proposed_count_subquery), 0),
+                other=Coalesce(Subquery(other_count_subquery), 0),
+            ),
+            score=Value(None, output_field=FloatField()),
+            numsites=Count('annotationproposalsite'),
+            timestamp=ExtractEpoch(Max('annotationproposalsite__end_date')),
+            timerange=JSONObject(
+                min=ExtractEpoch(Min('annotationproposalsite__start_date')),
+                max=ExtractEpoch(Max('annotationproposalsite__end_date')),
+            ),
+            bbox=Func(
+                F('region_id__geometry'),
+                4326,
+                function='ST_AsGeoJSON',
+                output_field=JSONField(),
+            ),
+        )
+    ).order_by(
+        F('uuid')
+    )
+
+    aggregate_kwargs = {
+        'timerange': JSONObject(
+            min=ExtractEpoch(Min('annotationproposalsite__start_date')),
+            max=ExtractEpoch(Max('annotationproposalsite__end_date')),
+        ),
+    }
+
+    if filters.region:
+        aggregate_kwargs['bbox'] = Max(
+            Func(
+                F('region_id__geometry'),
+                4326,
+                function='ST_AsGeoJSON',
+                output_field=JSONField(),
+            )
+        )
+
+    model_runs = {
+        'items': list(qs),
+        'count': total_count,
+        **qs.aggregate(**aggregate_kwargs),
+    }
+
+    fetch_counts = (
+        SatelliteFetching.objects.filter(status=SatelliteFetching.Status.RUNNING)
+        .values('model_run_uuid')
+        .order_by('model_run_uuid')
+        .annotate(total=Count('model_run_uuid'))
+    )
+    # convert it into a dictionary for easy indexing
+    fetching = {}
+    for item in fetch_counts:
+        if item['model_run_uuid']:
+            fetching[item['model_run_uuid']] = item['total']
+
+    for item in model_runs['items']:
+        if item['uuid'] in fetching.keys():
+            item['downloading'] = fetching[item['uuid']]
+
+    return model_runs
+
+
 @router.get('/', response={200: ModelRunPagination.Output})
 def list_model_runs(
     request: HttpRequest,
     filters: ModelRunFilterSchema = Query(...),  # noqa: B008
 ):
+    if request.GET.get('proposal'):
+        return list_annotation_proposal_sets(request, filters)
+
     page_size: int = 10  # TODO: use settings.NINJA_PAGINATION_PER_PAGE?
     page = int(request.GET.get('page', 1))
 
@@ -272,7 +457,12 @@ def list_model_runs(
 
 @router.get('/{id}/', response={200: ModelRunDetailSchema})
 def get_model_run(request: HttpRequest, id: UUID4):
-    data = get_object_or_404(get_queryset(), id=id)
+    proposal = True if request.GET.get('proposal') else False
+    if proposal:
+        data = get_object_or_404(get_queryset_proposal(), id=id)
+    else:
+        data = get_object_or_404(get_queryset(), id=id)
+
     fetch_counts = SatelliteFetching.objects.filter(
         model_run_uuid=id, status=SatelliteFetching.Status.RUNNING
     ).count()
@@ -280,17 +470,19 @@ def get_model_run(request: HttpRequest, id: UUID4):
     return data
 
 
-@router.post('/{model_run_id}/generate-images/', response={202: bool})
+@router.post('/{uuid}/generate-images/', response={202: bool})
 def generate_images(
     request: HttpRequest,
-    model_run_id: UUID4,
+    uuid: UUID4,
     params: GenerateImagesSchema = Query(...),  # noqa: B008
 ):
+    proposal = True if request.GET.get('proposal') else False
     scalVal = params.scale
     if params.scale == 'custom':
         scalVal = params.scaleNum
     generate_site_images_for_evaluation_run(
-        model_run_id,
+        uuid,
+        proposal,
         params.constellation,
         params.force,
         params.dayRange,
@@ -303,12 +495,132 @@ def generate_images(
 
 
 @router.put(
-    '/{model_run_id}/cancel-generate-images/',
+    '/{uuid}/cancel-generate-images/',
     response={202: bool, 409: str, 404: str},
 )
-def cancel_generate_images(request: HttpRequest, model_run_id: UUID4):
-    get_object_or_404(EvaluationRun, uuid=model_run_id)  # existence check
+def cancel_generate_images(request: HttpRequest, uuid: UUID4):
+    proposal = True if request.GET.get('proposal') else False
 
-    cancel_generate_images_task.delay(model_run_id)
+    if proposal:
+        get_object_or_404(AnnotationProposalSet, uuid=uuid)
+    else:
+        get_object_or_404(EvaluationRun, uuid=uuid)
+
+    cancel_generate_images_task.delay(uuid, proposal)
 
     return 202, True
+
+def get_region(annotation_proposal_set_uuid: UUID4):
+    return (
+        AnnotationProposalSet.objects
+        .filter(pk=annotation_proposal_set_uuid)
+        .annotate(
+            json=JSONObject(
+                region=Subquery(  # prevents including "region" in slow GROUP BY
+                    Region.objects.filter(pk=OuterRef('region_id')).values('id')[:1],
+                    output_field=JSONField(),
+                ),
+            ),
+        )
+    )
+
+
+def get_proposals_query(annotation_proposal_set_uuid: UUID4):
+    proposal_sites = (AnnotationProposalSite.objects
+        # .select_related('siteimage', 'satellite_fetching')
+        .filter(annotation_proposal_set_uuid=annotation_proposal_set_uuid)
+        # .annotate(
+        #     siteimage_count=Count('siteimage'),
+        #     S2=Count(Case(When(siteimage__source='S2', then=1))),
+        #     WV=Count(Case(When(siteimage__source='WV', then=1))),
+        #     L8=Count(Case(When(siteimage__source='L8', then=1))),
+        #     PL=Count(Case(When(siteimage__source='PL', then=1))),
+        #     time=ExtractEpoch('timestamp'),
+        #     site_id=F('id'),
+        #     downloading=Exists(
+        #         SatelliteFetching.objects.filter(
+        #             site=OuterRef('pk'),
+        #             status=SatelliteFetching.Status.RUNNING,
+        #         )
+        #     ),
+        # )
+        .aggregate(
+            proposed_sites=JSONBAgg(
+                JSONObject(
+                    id='uuid',
+                    # timestamp='time',
+                    number=Cast(Substr('site_id', 9), IntegerField()),
+                    bbox=BoundingBox(
+                        Func(
+                            F('geometry'),
+                            4326,
+                            function='ST_GeomFromText',
+                            output_field=GeometryField(),
+                        )
+                    ),
+                    #             images='siteimage_count',
+                    #             S2='S2',
+                    #             WV='WV',
+                    #             L8='L8',
+                    start_date=ExtractEpoch('start_date'),
+                    end_date=ExtractEpoch('end_date'),
+                    status='proposal_status',
+                    #             filename='cache_originator_file',
+                    #             downloading='downloading',
+                ),
+                ordering='site_id',
+                default=[],
+            ),
+        )
+    )
+    site_ids = [str(s['id']) for s in proposal_sites['proposed_sites']]
+
+    image_queryset = (
+        SiteImage.objects.filter(site__in=site_ids)
+        .values('site')
+        .annotate(
+            S2=Count(Case(When(source='S2', then=1))),
+            WV=Count(Case(When(source='WV', then=1))),
+            L8=Count(Case(When(source='L8', then=1))),
+            PL=Count(Case(When(source='PL', then=1))),
+            downloading=Exists(
+                SatelliteFetching.objects.filter(
+                    site=OuterRef('site'),
+                    status=SatelliteFetching.Status.RUNNING,
+                )
+            ),
+        )
+    )
+
+    image_info = {i['site']: i for i in image_queryset}
+
+    for s in proposal_sites['proposed_sites']:
+        if s['id'] in image_info.keys():
+            site_image_info = image_info[s['id']]
+        else:
+            site_image_info = {
+                'S2': 0,
+                'WV': 0,
+                'L8': 0,
+                'downloading': False
+            }
+
+        s['images'] = site_image_info['S2'] + site_image_info['WV'] + site_image_info['L8']
+        s['S2'] = site_image_info['S2']
+        s['WV'] = site_image_info['WV']
+        s['L8'] = site_image_info['L8']
+        s['downloading'] = site_image_info['downloading']
+
+    return proposal_sites
+
+
+@router.get('/{annotation_proposal_set_uuid}/proposals')
+def get_proposals(request: HttpRequest, annotation_proposal_set_uuid: UUID4):
+    region = get_region(annotation_proposal_set_uuid).values_list('json', flat=True)
+    if not region.exists():
+        raise Http404()
+
+    query = get_proposals_query(annotation_proposal_set_uuid)
+    model_run = region[0]
+    query['region'] = model_run['region']
+    return 200, query

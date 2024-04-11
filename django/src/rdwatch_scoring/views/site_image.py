@@ -1,18 +1,17 @@
 import logging
 
-from ninja import Router
-from pydantic import UUID4
-
 from django.contrib.gis.db.models import GeometryField
 from django.contrib.postgres.aggregates import JSONBAgg
 from django.core.files.storage import default_storage
-from django.db.models import Count, F, Func, Value
+from django.db.models import Count, F, Func, Value, CharField
 from django.db.models.functions import JSONObject
 from django.http import HttpRequest
+from ninja import Router
+from pydantic import UUID4
 
 from rdwatch.db.functions import BoundingBox, ExtractEpoch
 from rdwatch.views.site_image import SiteImageResponse
-from rdwatch_scoring.models import Observation, Site, SiteImage
+from rdwatch_scoring.models import Observation, Site, SiteImage, AnnotationProposalObservation, AnnotationProposalSite
 
 logger = logging.getLogger(__name__)
 
@@ -22,6 +21,44 @@ router = Router()
 
 @router.get('/{id}/', response=SiteImageResponse)
 def site_images(request: HttpRequest, id: UUID4):
+    proposal = True if request.GET.get('proposal') else False
+
+    if proposal:
+        observations = (
+            AnnotationProposalObservation.objects.values('observation_date', 'geometry')
+            .order_by('observation_date')
+            .filter(annotation_proposal_site_uuid=id)
+        )
+
+        observation_db_model_cols = {
+            'date': 'observation_date',
+            'phase': 'current_phase'
+        }
+        site_db_model = AnnotationProposalSite
+        site_db_model_cols = {
+            'geometry': 'geometry',
+            'status': 'status',
+            'proposal_status': 'proposal_status',
+            'notes': 'comments'
+        }
+    else:
+        observations = (
+            Observation.objects.values('date', 'geometry')
+            .order_by('date')
+            .filter(site_uuid=id)
+        )
+        observation_db_model_cols = {
+            'date': 'date',
+            'phase': 'phase'
+        }
+        site_db_model = Site
+        site_db_model_cols = {
+            'geometry': 'union_geometry',
+            'status': 'predicted_phase',
+            'proposal_status': None,
+            'notes': None
+        }
+
     image_queryset = (
         SiteImage.objects.filter(site=id)
         .order_by('timestamp')
@@ -46,14 +83,12 @@ def site_images(request: HttpRequest, id: UUID4):
     )
     # Get the unique geoJSON shapes for site observations
     geom_queryset = (
-        Observation.objects.values('date', 'geometry')
-        .order_by('date')
-        .filter(site_uuid=id)
+        observations
         .aggregate(
             results=JSONBAgg(
                 JSONObject(
-                    label='phase',
-                    timestamp=ExtractEpoch('date'),
+                    label=Func(F(observation_db_model_cols['phase']), Value(', '), function="array_to_string", output=CharField()) if proposal else observation_db_model_cols['phase'],
+                    timestamp=ExtractEpoch(observation_db_model_cols['date']),
                     geoJSON=Func(
                         F('geometry'),
                         4326,
@@ -74,27 +109,27 @@ def site_images(request: HttpRequest, id: UUID4):
         )
     )
     site_eval_data = (
-        Site.objects.filter(pk=id)
+        site_db_model.objects.filter(pk=id)
         .values()
         .annotate(
             json=JSONObject(
-                label=F('predicted_phase'),
-                status=F('status_annotated'),
+                label=F(site_db_model_cols['status']),
+                status=F(site_db_model_cols['proposal_status']) if site_db_model_cols['proposal_status'] else Value(''),
                 evaluationGeoJSON=Func(
-                    F('union_geometry'),
+                    F(site_db_model_cols['geometry']),
                     4326,
                     function='ST_GeomFromText',
                     output_field=GeometryField(),
                 ),
                 evaluationBBox=BoundingBox(
                     Func(
-                        F('union_geometry'),
+                        F(site_db_model_cols['geometry']),
                         4326,
                         function='ST_GeomFromText',
                         output_field=GeometryField(),
                     )
                 ),
-                notes=Value(''),  # TODO
+                notes=F(site_db_model_cols['notes']) if site_db_model_cols['notes'] else Value(''),  # TODO
             )
         )[0]
     )

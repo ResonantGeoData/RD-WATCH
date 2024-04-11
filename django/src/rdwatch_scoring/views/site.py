@@ -1,9 +1,8 @@
-from ninja import Router
-from pydantic import UUID4
-
 from django.db.models import CharField, ExpressionWrapper, F, Value
 from django.db.models.functions import Concat, Substr
 from django.http import HttpRequest
+from ninja import Router
+from pydantic import UUID4
 
 from rdwatch.db.functions import ExtractEpoch
 from rdwatch.views.site import SiteImageSiteDetailResponse

@@ -5,6 +5,7 @@ from . import (
     performer,
     region,
     site,
+    site_evaluation,
     site_image,
     vector_tile,
 )
@@ -14,6 +15,8 @@ __all__ = [
     'observation',
     'performer',
     'region',
+    'site',
+    'site_evaluation',
     'site_image',
     'vector_tile',
     'site',

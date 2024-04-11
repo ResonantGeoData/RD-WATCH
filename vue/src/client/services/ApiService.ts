@@ -2,6 +2,7 @@
 /* tslint:disable */
 /* eslint-disable */
 import { ref } from 'vue';
+import { useRoute } from "vue-router";
 
 import type { ServerStatus } from "../models/ServerStatus";
 import type { SiteEvaluationList } from "../models/SiteEvaluationList";
@@ -121,6 +122,7 @@ type ApiPrefix = '/api' | '/api/scoring';
 
 export class ApiService {
   private static apiPrefix = ref<ApiPrefix>("/api");
+  private static proposalsQuery = false;
 
   public static getApiPrefix(): ApiPrefix {
     return ApiService.apiPrefix.value;
@@ -132,6 +134,22 @@ export class ApiService {
 
   public static isScoring(): boolean {
     return ApiService.apiPrefix.value === '/api/scoring';
+  }
+
+  public static getProposalsQuery(): boolean {
+    return ApiService.proposalsQuery;
+  }
+
+  public static setProposalsQuery(value: boolean) {
+    ApiService.proposalsQuery = value
+  }
+
+  public static addProposalsQueryParameter(dict) {
+    if (ApiService.proposalsQuery) {
+      dict['proposal'] = 'PROPOSAL'
+    }
+
+    return dict
   }
 
   /**
@@ -173,6 +191,7 @@ export class ApiService {
       path: {
         id: id,
       },
+      query: ApiService.addProposalsQueryParameter({})
     });
   }
 
@@ -208,9 +227,9 @@ export class ApiService {
           path: {
             id: id,
           },
-          query: {
-            ...data,
-          }
+          query: ApiService.addProposalsQueryParameter({
+            ...data
+          })
         });
       }
 
@@ -230,9 +249,9 @@ export class ApiService {
           path: {
             id: id,
           },
-          query: {
-            ...data,
-          }
+          query: ApiService.addProposalsQueryParameter({
+            ...data
+          })
         });
       }
 
@@ -250,6 +269,7 @@ export class ApiService {
           path: {
             id: id,
           },
+          query: ApiService.addProposalsQueryParameter({})
         });
       }
 
@@ -267,6 +287,7 @@ export class ApiService {
           path: {
             id: id,
           },
+          query: ApiService.addProposalsQueryParameter({})
         });
       }
 
@@ -314,6 +335,7 @@ export class ApiService {
       path: {
         id: id,
       },
+      query: ApiService.addProposalsQueryParameter({})
     });
   }
 
@@ -479,6 +501,7 @@ export class ApiService {
       path: {
         id: id,
       },
+      query: ApiService.addProposalsQueryParameter({})
     });
 
   }
@@ -486,7 +509,7 @@ export class ApiService {
   public static patchSiteEvaluation(id: string, data: SiteEvaluationUpdateQuery): CancelablePromise<boolean> {
     return __request(OpenAPI, {
       method: 'PATCH',
-      url: "/api/evaluations/{id}/",
+      url: `${this.getApiPrefix()}/evaluations/{id}/`,
       path: {
         id: id,
       },

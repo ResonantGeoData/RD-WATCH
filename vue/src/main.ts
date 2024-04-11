@@ -12,24 +12,7 @@ import router from './router';
 const vuetify = createVuetify({
   components,
   directives,
-  theme: {
-    defaultTheme: 'RGDTheme',
-    themes: {
-      RGDTheme: {
-        dark: false,
-        colors: {
-          primary: "#166DB7",
-          background: "#37474F",
-          surface: "#FFFFFF",
-          darkBackground: "#37474F",
-    
-
-        }
-        
-      }
-    }
-    
-  }
+ 
 })
 
 createApp(App).use(vuetify).use(router).mount('#app')

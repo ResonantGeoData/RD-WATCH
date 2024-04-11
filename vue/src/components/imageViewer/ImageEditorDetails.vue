@@ -104,6 +104,8 @@ const updateTime = (time: any, date: 'StartDate' | 'EndDate'| 'StartDateTemp' | 
       endDateTemp.value = new Date(time as string).toISOString().split('T')[0];
     }
   }
+  currentEditMode.value = null;
+  editDialog.value = false;
   siteEvaluationUpdated.value = true;
 }
 

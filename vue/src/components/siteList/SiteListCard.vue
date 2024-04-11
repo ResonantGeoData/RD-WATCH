@@ -3,11 +3,11 @@ import {
   ApiService,
   SiteModelStatus,
 } from "../../client/services/ApiService";
-import { state } from "../../store";
+import { getSiteObservationDetails, state, toggleSatelliteImages } from "../../store";
 import { timeRangeFormat } from "../../utils";
-import { Ref, ref, watch } from "vue";
+import { Ref, computed, ref, watch } from "vue";
 import { hoveredInfo } from "../../interactions/mouseEvents";
-
+import SelectedSite from './SelectedSite.vue'
 export interface SiteDisplay {
   number: number;
   id: string;
@@ -88,6 +88,33 @@ const cancelTask = async () => {
   await ApiService.cancelSiteObservationImageTask(localSite.value.id);  
 }
 
+const selectedSite = computed(() => {
+  
+  const found = state.selectedObservations.find((item) => item.id === localSite.value.id)
+    return found;
+});
+
+const selectSite = ref(!!selectedSite.value)
+
+const close = () => {
+const foundIndex = state.selectedObservations.findIndex((item) => item.id === props.site.id);
+  if (foundIndex !== -1) {
+    toggleSatelliteImages(state.selectedObservations[foundIndex], true);
+    state.selectedObservations.splice(foundIndex, 1);
+  }
+}
+
+
+watch(selectSite, async () => {
+  console.log(`SelectSite updated: ${selectSite.value}`);
+  if (selectSite.value) {
+    emit('selected', props.site)
+    getSiteObservationDetails(props.site.id);
+  } else {
+    close();
+  }
+})
+
 </script>
 
 <template>
@@ -102,10 +129,13 @@ const cancelTask = async () => {
     }"
     @mouseenter="state.filters.hoverSiteId = localSite.id"
     @mouseleave="state.filters.hoverSiteId = undefined"
-    @click="emit('selected', site)"
   >
     <v-card-title class="title">
-      <v-row dense>
+      <v-row
+        dense
+        justify="center"
+        align="center"
+      >
         <v-col><span> {{ localSite.name }}</span></v-col>
         <v-spacer />
         <v-col
@@ -129,6 +159,11 @@ const cancelTask = async () => {
             </template>
             <span> {{ statusMap[localSite.status].name }} </span>
           </v-tooltip>
+        </v-col>
+        <v-col>
+          <v-checkbox-btn
+            v-model="selectSite"
+          />
         </v-col>
       </v-row>
     </v-card-title>
@@ -237,7 +272,7 @@ const cancelTask = async () => {
               v-bind="props"
               @click.stop="setImageDownloadDialog()"
             >
-              <v-icon>mdi-image</v-icon>
+              <v-icon>mdi-image-sync</v-icon>
             </v-btn>
           </template>
           <span>Download Satellite Images</span>
@@ -276,6 +311,10 @@ const cancelTask = async () => {
           </v-tooltip>
         </div>
       </v-row>
+        <SelectedSite
+        v-if="selectedSite !== undefined"
+          :site-observation="selectedSite"
+        />
     </v-card-text>
   </v-card>
 </template>

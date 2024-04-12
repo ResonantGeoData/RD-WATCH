@@ -5,7 +5,7 @@ import RightBar from "../components/RightBar.vue"
 import LayerSelection from "../components/LayerSelection.vue";
 import { onMounted } from "vue";
 import { state } from "../store";
-import SiteEvalList from "../components/siteEvalList/SiteEvalList.vue";
+import SiteList from "../components/siteList/SiteList.vue";
 import MapLegend from "../components/MapLegend.vue";
 import { Ref } from "vue";
 import { ref } from "vue";
@@ -86,7 +86,7 @@ onMounted(() => {
           <v-col
             class="navcolumn"
           >
-            <SiteEvalList
+            <SiteList
               v-if="state.filters.configuration_id"
               :model-runs="state.filters.configuration_id"
               :selected-eval="selectedEval"

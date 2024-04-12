@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import ModelRunDetail from "./ModelRunDetail.vue";
+import ModelRunCard from "./ModelRunCard.vue";
 import type { ModelRunList } from "../client/models/ModelRunList";
 import {
   CancelError,
@@ -306,7 +306,7 @@ onMounted(() => loadModelRuns());
       :class="{ modelRuns: !compact, compactModelRuns: compact}"
       @scroll="handleScroll"
     >
-      <ModelRunDetail
+      <ModelRunCard
         v-for="modelRun in state.modelRuns"
         :key="modelRun.key"
         :model-run="modelRun"

@@ -1,14 +1,15 @@
 <script setup lang="ts">
-import { Ref, ref, watch } from "vue";
+import { Ref, onMounted, onUnmounted, ref, watch } from "vue";
 import { ApiService } from "../../client";
 import {
   DownloadSettings,
 } from "../../client/services/ApiService";
 import { clickedInfo, hoveredInfo } from "../../interactions/mouseEvents";
 import ImagesDownloadDialog from "../ImagesDownloadDialog.vue";
-import SiteListCard from "../siteList/SiteListCard.vue";
-import { SiteDisplay } from "../siteList/SiteListCard.vue";
-import SiteListHeader from "../siteList/SiteListHeader.vue";
+import SiteListCard from "./SiteListCard.vue";
+import { SiteDisplay } from "./SiteListCard.vue";
+import SiteListHeader from "./SiteListHeader.vue";
+import { state } from "../../store";
 
 const props = defineProps<{
   modelRuns: string[];
@@ -41,6 +42,7 @@ const getSites = async (modelRun: string) => {
         proposal: results.modelRunDetails.proposal,
       } : undefined
 
+      const selectedIds = state.selectedObservations.map((item) => item.id);
       results.sites.forEach((item) => {
         const newNum = item.number.toString().padStart(4, "0");
         if (newNum === "9999") {
@@ -56,7 +58,7 @@ const getSites = async (modelRun: string) => {
           name,
           filename: item.filename,
           bbox: item.bbox,
-          selected: item.id === props.selectedEval,
+          selected: selectedIds.includes(item.id),
           images: item.images,
           startDate: item.start_date,
           endDate: item.end_date,
@@ -100,6 +102,25 @@ watch(
   }
 );
 getAllSiteProposals();
+watch(state.selectedObservations, () => {
+  const updatedList: SiteDisplay[] = [];
+  const selectedIds = state.selectedObservations.map((item) => item.id);
+
+  modifiedList.value.forEach((item) => {
+    item.selected = selectedIds.includes(item.id)
+    updatedList.push(item);
+  })
+  updatedList.sort((a, b) => {
+        if (a.selected === b.selected) {
+          return 0;
+        }
+        if (a.selected) {
+          return -1;
+        }
+        return 1;
+      });
+  modifiedList.value = updatedList;
+})
 watch(clickedInfo, () => {
   if (clickedInfo.value.siteId.length) {
     const found = modifiedList.value.find(
@@ -113,8 +134,27 @@ watch(clickedInfo, () => {
   }
 });
 
+const controlKeyPressed = ref(false);
+
+// Function to toggle the ref value based on the key event
+const toggleControlKey = (event: KeyboardEvent) => {
+  controlKeyPressed.value = event.ctrlKey;
+};
+
+// Add event listener when the component is mounted
+onMounted(() => {
+  window.addEventListener('keydown', toggleControlKey);
+  window.addEventListener('keyup', toggleControlKey);
+});
+
+// Remove event listener when the component is unmounted
+onUnmounted(() => {
+  window.removeEventListener('keydown', toggleControlKey);
+  window.removeEventListener('keyup', toggleControlKey);
+});
+
 watch(() => hoveredInfo.value.siteId, () => {
-  if (hoveredInfo.value.siteId.length) {
+  if (hoveredInfo.value.siteId.length && controlKeyPressed.value) {
     const id = hoveredInfo.value.siteId[0];
     const el = document.getElementById(`site-id-${id}`);
     if (el) {
@@ -159,6 +199,12 @@ watch(filter, () => {
     <v-card-title><h5>Site Models</h5></v-card-title>
     <site-list-header v-model="filter" />
     <div class="proposal-list">
+      <div
+        v-if="state.selectedObservations && state.selectedObservations.length > 0"
+        class="selected-header"
+      >
+        Selected Sites
+      </div>
       <site-list-card
         v-for="item in modifiedList"
         :key="item.id"
@@ -190,6 +236,10 @@ watch(filter, () => {
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
+}
+.selected-header {
+  height: 20px;
+  background-color: #FFF9C4;
 }
 
 

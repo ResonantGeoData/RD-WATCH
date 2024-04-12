@@ -3,11 +3,11 @@ import {
   ApiService,
   SiteModelStatus,
 } from "../../client/services/ApiService";
-import { getSiteObservationDetails, state, toggleSatelliteImages } from "../../store";
+import { SiteObservation, getSiteObservationDetails, state, toggleSatelliteImages } from "../../store";
 import { timeRangeFormat } from "../../utils";
 import { Ref, computed, ref, watch } from "vue";
 import { hoveredInfo } from "../../interactions/mouseEvents";
-import SelectedSite from './SelectedSite.vue'
+import ImageBrowser from './ImageBrowser.vue';
 export interface SiteDisplay {
   number: number;
   id: string;
@@ -48,6 +48,19 @@ let downloadCheckInterval: NodeJS.Timeout | null = null;
 
 const localSite: Ref<SiteDisplay> = ref({...props.site});
 
+const selectedSite: Ref<undefined | SiteObservation> = ref(undefined)
+
+watch(state.selectedObservations, () => {
+  selectedSite.value  = state.selectedObservations.find((item) => item.id === localSite.value.id);
+  selectSite.value = !!selectedSite.value;
+});
+
+const selectSite = ref(!!selectedSite.value)
+
+const imagesActive = computed(() => state.enabledSiteObservations.findIndex((item) => item.id === props.site.id) !== -1);
+const hasImages = computed(() =>  props.site.WV > 0 || props.site.S2 > 0 || props.site.PL > 0 || props.site.L8 > 0);
+
+
 
 const statusMap: Record<SiteModelStatus, { name: string; color: string, icon: string }> = {
   PROPOSAL: { name: "Proposed", color: "orange", icon: "mdi-dots-horizontal-circle" },
@@ -57,7 +70,6 @@ const statusMap: Record<SiteModelStatus, { name: string; color: string, icon: st
 
 const reloadSiteData = async () => {
   const data = await ApiService.getSite(localSite.value.id);
-  console.log(data);
   localSite.value = {...props.site, ...data};
   if (!localSite.value.downloading && downloadCheckInterval) {
     clearInterval(downloadCheckInterval);
@@ -88,13 +100,6 @@ const cancelTask = async () => {
   await ApiService.cancelSiteObservationImageTask(localSite.value.id);  
 }
 
-const selectedSite = computed(() => {
-  
-  const found = state.selectedObservations.find((item) => item.id === localSite.value.id)
-    return found;
-});
-
-const selectSite = ref(!!selectedSite.value)
 
 const close = () => {
 const foundIndex = state.selectedObservations.findIndex((item) => item.id === props.site.id);
@@ -106,7 +111,6 @@ const foundIndex = state.selectedObservations.findIndex((item) => item.id === pr
 
 
 watch(selectSite, async () => {
-  console.log(`SelectSite updated: ${selectSite.value}`);
   if (selectSite.value) {
     emit('selected', props.site)
     getSiteObservationDetails(props.site.id);
@@ -124,7 +128,7 @@ watch(selectSite, async () => {
     variant="flat"
     class="siteCard"
     :class="{
-      selectedCard: localSite.id === selectedEval,
+      selectedCard: selectedSite !== undefined,
       hoveredCard: hoveredInfo.siteId.includes(localSite.id),
     }"
     @mouseenter="state.filters.hoverSiteId = localSite.id"
@@ -160,9 +164,12 @@ watch(selectSite, async () => {
             <span> {{ statusMap[localSite.status].name }} </span>
           </v-tooltip>
         </v-col>
-        <v-col>
+        <v-col cols="1">
           <v-checkbox-btn
             v-model="selectSite"
+            density="compact"
+            color="#29B6F6"
+            hide-details
           />
         </v-col>
       </v-row>
@@ -178,9 +185,37 @@ watch(selectSite, async () => {
         v-if="!localSite.proposal"
         dense
       >
-        <span>Date range:</span><span class=" ml-1 site-model-dates"> {{ timeRangeFormat({min: site.startDate, max: site.endDate }) }} </span>
+        <span class="site-model-info-label">Date Range:</span><span class=" ml-1 site-model-dates"> {{ timeRangeFormat({min: site.startDate, max: site.endDate }) }} </span>
       </v-row>
+      <v-row
+        v-if="!localSite.proposal && selectedSite"
+        dense
+        justify="center"
+        align="center"
+      >
+        <div class="site-model-info-label">
+          Score:
+        </div>
+        <div class="site-model-data-label">
+          {{ selectedSite.score.min.toFixed(2) }} to {{ selectedSite.score.max.toFixed(2) }}
+        </div>
+        <v-spacer />
+      </v-row>
+      <v-row
+        v-if="!localSite.proposal && selectedSite"
 
+        dense
+        justify="center"
+        align="center"
+      >
+        <div class="site-model-info-label">
+          Average:
+        </div>
+        <div class="site-model-data-label">
+          {{ selectedSite.score.average.toFixed(2) }}
+        </div>
+        <v-spacer />
+      </v-row>
       <v-row
         v-if="localSite.images"
         dense
@@ -238,6 +273,27 @@ watch(selectSite, async () => {
           <span>
             {{ localSite.filename }}
           </span>
+        </v-tooltip>
+        <v-tooltip
+          v-else-if="!localSite.filename && selectedSite"
+          open-delay="300"
+        >
+          <template #activator="{ props }">
+            <v-btn
+              variant="tonal"
+              density="compact"
+              class="pa-0 ma-1 site-icon"
+              size="small"
+              :color="imagesActive ? 'success': ''"
+              v-bind="props"
+              @click.stop="hasImages && toggleSatelliteImages(selectedSite)"
+            >
+              <v-icon size="small">
+                mdi-image
+              </v-icon>
+            </v-btn>
+          </template>
+          <span>Toggle Site Images</span>
         </v-tooltip>
         <v-spacer />
         <v-tooltip open-delay="300">
@@ -311,11 +367,15 @@ watch(selectSite, async () => {
           </v-tooltip>
         </div>
       </v-row>
-        <SelectedSite
+      <ImageBrowser
         v-if="selectedSite !== undefined"
-          :site-observation="selectedSite"
-        />
+        :site-observation="selectedSite"
+      />
     </v-card-text>
+    <div
+      v-if="selectedSite !== undefined"
+      class="selectedBorder"
+    />
   </v-card>
 </template>
 
@@ -331,6 +391,10 @@ watch(selectSite, async () => {
   animation: flicker-animation 1s infinite;
 }
 
+.selectedBorder {
+  background-color: #FFF9C4;
+  height: 5px;
+}
 .siteCard {
   border: 3px solid transparent;
   border-bottom: 1px solid gray;
@@ -381,6 +445,16 @@ watch(selectSite, async () => {
 .site-model-info {
   font-size: 12px;
 }
+.site-model-info-label {
+  color: gray;
+  font-size: 12px;
+}
+.site-model-data-label {
+  color: black;
+  font-size: 12px;
+
+}
+
 .site-dates-label {
   color: gray
 }

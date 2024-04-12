@@ -545,7 +545,7 @@ const clearStorage = async () => {
             :color="
               filteredImages[currentImage].image.image_embedding ? 'blue' : ''
             "
-            :disabled="filteredImages[currentImage].image.image_embedding"
+            :disabled="!!filteredImages[currentImage].image.image_embedding"
             class="mx-2"
             @click="
               processImageEmbeddingButton(filteredImages[currentImage].image)

@@ -195,14 +195,25 @@ def get_site_observation_images(
     evaluation_id: UUID4,
     params: GenerateImagesSchema = Query(...),  # noqa: B008
 ):
+    proposal = True if request.GET.get('proposal') else False
+
+    if proposal:
+        model_run_uuid = AnnotationProposalSite.objects.filter(uuid=evaluation_id).values_list('annotation_proposal_set_uuid', flat=True).first()
+    else:
+        model_run_uuid = Site.objects.filter(uuid=evaluation_id).values_list('evaluation_run_uuid', flat=True).first()
+
     # Make sure site evaluation actually exists
+    if not model_run_uuid:
+        raise Http404()
 
     scalVal = params.scale
     if params.scale == 'custom':
         scalVal = params.scaleNum
 
     generate_site_images.delay(
+        model_run_uuid,
         evaluation_id,
+        proposal,
         params.constellation,
         params.force,
         params.dayRange,

@@ -34,6 +34,8 @@ from .site_image import SiteImage
 
 __all__ = [
     'Region',
+    'AnnotationGroundTruthSite',
+    'AnnotationGroundTruthObservation',
     'AnnotationProposalSet',
     'AnnotationProposalSite',
     'AnnotationProposalSiteLog',

@@ -144,12 +144,12 @@ export class ApiService {
     ApiService.proposalsQuery = value
   }
 
-  public static addProposalsQueryParameter(dict) {
+  public static addProposalsQueryParameter(payload) {
     if (ApiService.proposalsQuery) {
-      dict['proposal'] = 'PROPOSAL'
+      payload['proposal'] = 'PROPOSAL'
     }
 
-    return dict
+    return payload
   }
 
   /**

@@ -1,17 +1,24 @@
 import logging
 
-from django.contrib.gis.db.models import GeometryField
-from django.contrib.postgres.aggregates import JSONBAgg
-from django.core.files.storage import default_storage
-from django.db.models import Count, F, Func, Value, CharField, Case, When
-from django.db.models.functions import JSONObject
-from django.http import HttpRequest
 from ninja import Router
 from pydantic import UUID4
 
+from django.contrib.gis.db.models import GeometryField
+from django.contrib.postgres.aggregates import JSONBAgg
+from django.core.files.storage import default_storage
+from django.db.models import Case, CharField, Count, F, Func, Value, When
+from django.db.models.functions import JSONObject
+from django.http import HttpRequest
+
 from rdwatch.db.functions import BoundingBox, ExtractEpoch
 from rdwatch.views.site_image import SiteImageResponse
-from rdwatch_scoring.models import Observation, Site, SiteImage, AnnotationProposalObservation, AnnotationProposalSite
+from rdwatch_scoring.models import (
+    AnnotationProposalObservation,
+    AnnotationProposalSite,
+    Observation,
+    Site,
+    SiteImage,
+)
 
 logger = logging.getLogger(__name__)
 
@@ -32,14 +39,14 @@ def site_images(request: HttpRequest, id: UUID4):
 
         observation_db_model_cols = {
             'date': 'observation_date',
-            'phase': 'current_phase'
+            'phase': 'current_phase',
         }
         site_db_model = AnnotationProposalSite
         site_db_model_cols = {
             'geometry': 'geometry',
             'status': 'status',
             'proposal_status': 'proposal_status',
-            'notes': 'comments'
+            'notes': 'comments',
         }
     else:
         observations = (
@@ -47,16 +54,13 @@ def site_images(request: HttpRequest, id: UUID4):
             .order_by('date')
             .filter(site_uuid=id)
         )
-        observation_db_model_cols = {
-            'date': 'date',
-            'phase': 'phase'
-        }
+        observation_db_model_cols = {'date': 'date', 'phase': 'phase'}
         site_db_model = Site
         site_db_model_cols = {
             'geometry': 'union_geometry',
             'status': 'predicted_phase',
             'proposal_status': None,
-            'notes': None
+            'notes': None,
         }
 
     image_queryset = (
@@ -75,7 +79,7 @@ def site_images(request: HttpRequest, id: UUID4):
                     observation_id=Case(
                         When(observation__exact='', then=None),
                         When(observation__isnull=False, then='observation'),
-                        default=Value(None)
+                        default=Value(None),
                     ),
                     bbox=BoundingBox('image_bbox'),
                     image_dimensions='image_dimensions',
@@ -86,30 +90,34 @@ def site_images(request: HttpRequest, id: UUID4):
         )
     )
     # Get the unique geoJSON shapes for site observations
-    geom_queryset = (
-        observations
-        .aggregate(
-            results=JSONBAgg(
-                JSONObject(
-                    label=Func(F(observation_db_model_cols['phase']), Value(', '), function="array_to_string", output=CharField()) if proposal else observation_db_model_cols['phase'],
-                    timestamp=ExtractEpoch(observation_db_model_cols['date']),
-                    geoJSON=Func(
+    geom_queryset = observations.aggregate(
+        results=JSONBAgg(
+            JSONObject(
+                label=Func(
+                    F(observation_db_model_cols['phase']),
+                    Value(', '),
+                    function='array_to_string',
+                    output=CharField(),
+                )
+                if proposal
+                else observation_db_model_cols['phase'],
+                timestamp=ExtractEpoch(observation_db_model_cols['date']),
+                geoJSON=Func(
+                    F('geometry'),
+                    4326,
+                    function='ST_GeomFromText',
+                    output_field=GeometryField(),
+                ),
+                bbox=BoundingBox(
+                    Func(
                         F('geometry'),
                         4326,
                         function='ST_GeomFromText',
                         output_field=GeometryField(),
-                    ),
-                    bbox=BoundingBox(
-                        Func(
-                            F('geometry'),
-                            4326,
-                            function='ST_GeomFromText',
-                            output_field=GeometryField(),
-                        )
-                    ),
+                    )
                 ),
-                default=[],
-            )
+            ),
+            default=[],
         )
     )
     site_eval_data = (
@@ -118,7 +126,9 @@ def site_images(request: HttpRequest, id: UUID4):
         .annotate(
             json=JSONObject(
                 label=F(site_db_model_cols['status']),
-                status=F(site_db_model_cols['proposal_status']) if site_db_model_cols['proposal_status'] else Value(''),
+                status=F(site_db_model_cols['proposal_status'])
+                if site_db_model_cols['proposal_status']
+                else Value(''),
                 evaluationGeoJSON=Func(
                     F(site_db_model_cols['geometry']),
                     4326,
@@ -133,7 +143,9 @@ def site_images(request: HttpRequest, id: UUID4):
                         output_field=GeometryField(),
                     )
                 ),
-                notes=F(site_db_model_cols['notes']) if site_db_model_cols['notes'] else Value(''),  # TODO
+                notes=F(site_db_model_cols['notes'])
+                if site_db_model_cols['notes']
+                else Value(''),  # TODO
             )
         )[0]
     )

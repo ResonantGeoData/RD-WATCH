@@ -2,23 +2,30 @@ import logging
 from typing import Literal
 
 from celery.result import AsyncResult
+from ninja import Query, Router, Schema
+from pydantic import UUID4
+
 from django.contrib.gis.db.models.aggregates import Collect
 from django.contrib.gis.db.models.fields import GeometryField
 from django.contrib.gis.db.models.functions import Area, Transform
 from django.contrib.postgres.aggregates import JSONBAgg
 from django.core.files.storage import default_storage
 from django.db import transaction
-from django.db.models import Count, F, Func, Max, Min, Value, CharField, Case, When
+from django.db.models import Case, CharField, Count, F, Func, Max, Min, Value, When
 from django.db.models.functions import Coalesce, JSONObject
 from django.http import Http404, HttpRequest
 from django.shortcuts import get_object_or_404
-from ninja import Query, Router, Schema
-from pydantic import UUID4
 
 from rdwatch.db.functions import BoundingBox, ExtractEpoch
 from rdwatch.views.site_observation import SiteObservationsListSchema
-from rdwatch_scoring.models import Observation, SatelliteFetching, Site, SiteImage, AnnotationProposalObservation, \
-    AnnotationProposalSite
+from rdwatch_scoring.models import (
+    AnnotationProposalObservation,
+    AnnotationProposalSite,
+    Observation,
+    SatelliteFetching,
+    Site,
+    SiteImage,
+)
 from rdwatch_scoring.tasks import generate_site_images
 
 logger = logging.getLogger(__name__)
@@ -43,31 +50,25 @@ def site_observations(request: HttpRequest, evaluation_id: UUID4):
 
     if proposal:
         site_db_model = AnnotationProposalSite
-        site_db_model_cols = {
-            'region__geometry': 'region_id__geometry'
-        }
-        observations = (
-            AnnotationProposalObservation.objects.order_by('observation_date')
-            .filter(annotation_proposal_site_uuid=evaluation_id)
-        )
+        site_db_model_cols = {'region__geometry': 'region_id__geometry'}
+        observations = AnnotationProposalObservation.objects.order_by(
+            'observation_date'
+        ).filter(annotation_proposal_site_uuid=evaluation_id)
         observation_db_model_cols = {
             'date': 'observation_date',
             'phase': 'current_phase',
-            'sensor': 'sensor_name'
+            'sensor': 'sensor_name',
         }
     else:
         site_db_model = Site
-        site_db_model_cols = {
-            'region__geometry': 'region__geometry'
-        }
-        observations = (
-            Observation.objects.order_by('date')
-            .filter(site_uuid=evaluation_id)
+        site_db_model_cols = {'region__geometry': 'region__geometry'}
+        observations = Observation.objects.order_by('date').filter(
+            site_uuid=evaluation_id
         )
         observation_db_model_cols = {
             'date': 'date',
             'phase': 'phase',
-            'sensor': 'sensor'
+            'sensor': 'sensor',
         }
 
     if not site_db_model.objects.filter(pk=evaluation_id).exists():
@@ -78,62 +79,70 @@ def site_observations(request: HttpRequest, evaluation_id: UUID4):
             min=ExtractEpoch(Min('start_date')),
             max=ExtractEpoch(Max('end_date')),
         ),
-        bbox=BoundingBox(Collect(
-            Func(
-                F(site_db_model_cols['region__geometry']),
-                4326,
-                function='ST_GeomFromText',
-                output_field=GeometryField(),
+        bbox=BoundingBox(
+            Collect(
+                Func(
+                    F(site_db_model_cols['region__geometry']),
+                    4326,
+                    function='ST_GeomFromText',
+                    output_field=GeometryField(),
+                )
             )
-        )),
+        ),
     )
-    queryset = (
-        observations
-        .aggregate(
-            count=Count('pk'),
-            bbox=BoundingBox(
-                Collect(
+    queryset = observations.aggregate(
+        count=Count('pk'),
+        bbox=BoundingBox(
+            Collect(
+                Func(
+                    F('geometry'),
+                    4326,
+                    function='ST_GeomFromText',
+                    output_field=GeometryField(),
+                )
+            )
+        ),
+        results=JSONBAgg(
+            JSONObject(
+                id='pk',
+                label=Func(
+                    F(observation_db_model_cols['phase']),
+                    Value(', '),
+                    function='array_to_string',
+                    output=CharField(),
+                )
+                if proposal
+                else observation_db_model_cols['phase'],
+                score='score',
+                # Default to worldview if sensor is NULL.
+                # TODO: what is the expected behavior here?
+                constellation=Coalesce(
+                    observation_db_model_cols['sensor'], Value(None)
+                ),
+                # spectrum="spectrum__slug",
+                timestamp=ExtractEpoch(observation_db_model_cols['date']),
+                bbox=BoundingBox(
                     Func(
                         F('geometry'),
                         4326,
                         function='ST_GeomFromText',
                         output_field=GeometryField(),
                     )
-                )
-            ),
-            results=JSONBAgg(
-                JSONObject(
-                    id='pk',
-                    label=Func(F(observation_db_model_cols['phase']), Value(', '), function="array_to_string", output=CharField()) if proposal else observation_db_model_cols['phase'],
-                    score='score',
-                    # Default to worldview if sensor is NULL.
-                    # TODO: what is the expected behavior here?
-                    constellation=Coalesce(observation_db_model_cols['sensor'], Value(None)),
-                    # spectrum="spectrum__slug",
-                    timestamp=ExtractEpoch(observation_db_model_cols['date']),
-                    bbox=BoundingBox(
+                ),
+                area=Area(
+                    Transform(
                         Func(
                             F('geometry'),
                             4326,
                             function='ST_GeomFromText',
                             output_field=GeometryField(),
-                        )
-                    ),
-                    area=Area(
-                        Transform(
-                            Func(
-                                F('geometry'),
-                                4326,
-                                function='ST_GeomFromText',
-                                output_field=GeometryField(),
-                            ),
-                            srid=6933,
-                        )
-                    ),
+                        ),
+                        srid=6933,
+                    )
                 ),
-                default=[],
             ),
-        )
+            default=[],
+        ),
     )
     image_queryset = (
         SiteImage.objects.filter(site=evaluation_id)
@@ -151,7 +160,7 @@ def site_observations(request: HttpRequest, evaluation_id: UUID4):
                     observation_id=Case(
                         When(observation__exact='', then=None),
                         When(observation__isnull=False, then='observation'),
-                        default=Value(None)
+                        default=Value(None),
                     ),
                     bbox=BoundingBox('image_bbox'),
                     image_dimensions='image_dimensions',
@@ -202,9 +211,17 @@ def get_site_observation_images(
     proposal = True if request.GET.get('proposal') else False
 
     if proposal:
-        model_run_uuid = AnnotationProposalSite.objects.filter(uuid=evaluation_id).values_list('annotation_proposal_set_uuid', flat=True).first()
+        model_run_uuid = (
+            AnnotationProposalSite.objects.filter(uuid=evaluation_id)
+            .values_list('annotation_proposal_set_uuid', flat=True)
+            .first()
+        )
     else:
-        model_run_uuid = Site.objects.filter(uuid=evaluation_id).values_list('evaluation_run_uuid', flat=True).first()
+        model_run_uuid = (
+            Site.objects.filter(uuid=evaluation_id)
+            .values_list('evaluation_run_uuid', flat=True)
+            .first()
+        )
 
     # Make sure site evaluation actually exists
     if not model_run_uuid:

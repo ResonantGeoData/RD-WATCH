@@ -458,7 +458,10 @@ class Migration(migrations.Migration):
                 ('validated', models.BooleanField(blank=True, null=True)),
                 ('score', models.FloatField(blank=True, null=True)),
                 ('geometry', models.CharField(blank=True, max_length=255, null=True)),
-                ('proposal_status', models.CharField(blank=True, max_length=255, null=True)),
+                (
+                    'proposal_status',
+                    models.CharField(blank=True, max_length=255, null=True),
+                ),
                 ('comments', models.CharField(blank=True, max_length=255, null=True)),
                 ('timestamp', models.DateField(blank=True, null=True)),
                 ('serial_id', models.AutoField(primary_key=True)),
@@ -484,7 +487,10 @@ class Migration(migrations.Migration):
                 ('validated', models.BooleanField(blank=True, null=True)),
                 ('score', models.FloatField(blank=True, null=True)),
                 ('geometry', models.CharField(blank=True, max_length=255, null=True)),
-                ('proposal_status', models.CharField(blank=True, max_length=255, null=True)),
+                (
+                    'proposal_status',
+                    models.CharField(blank=True, max_length=255, null=True),
+                ),
                 ('comments', models.CharField(blank=True, max_length=255, null=True)),
             ],
             options={
@@ -501,11 +507,23 @@ class Migration(migrations.Migration):
                 ('site_id', models.CharField(max_length=255)),
                 ('observation_date', models.DateField(blank=True, null=True)),
                 ('source', models.CharField(max_length=255)),
-                ('sensor_name', models.CharField(blank=True, max_length=255, null=True)),
+                (
+                    'sensor_name',
+                    models.CharField(blank=True, max_length=255, null=True),
+                ),
                 ('score', models.FloatField(blank=True, null=True)),
-                ('current_phase', models.CharField(blank=True, max_length=255, null=True)),
-                ('is_occluded', models.CharField(blank=True, max_length=255, null=True)),
-                ('is_site_boundary', models.CharField(blank=True, max_length=255, null=True)),
+                (
+                    'current_phase',
+                    models.CharField(blank=True, max_length=255, null=True),
+                ),
+                (
+                    'is_occluded',
+                    models.CharField(blank=True, max_length=255, null=True),
+                ),
+                (
+                    'is_site_boundary',
+                    models.CharField(blank=True, max_length=255, null=True),
+                ),
                 ('geometry', models.CharField(blank=True, max_length=255, null=True)),
             ],
             options={
@@ -541,11 +559,23 @@ class Migration(migrations.Migration):
                 ('site_id', models.CharField(max_length=255)),
                 ('observation_date', models.DateField(blank=True, null=True)),
                 ('source', models.CharField(max_length=255)),
-                ('sensor_name', models.CharField(blank=True, max_length=255, null=True)),
+                (
+                    'sensor_name',
+                    models.CharField(blank=True, max_length=255, null=True),
+                ),
                 ('score', models.FloatField(blank=True, null=True)),
-                ('current_phase', models.CharField(blank=True, max_length=255, null=True)),
-                ('is_occluded', models.CharField(blank=True, max_length=255, null=True)),
-                ('is_site_boundary', models.CharField(blank=True, max_length=255, null=True)),
+                (
+                    'current_phase',
+                    models.CharField(blank=True, max_length=255, null=True),
+                ),
+                (
+                    'is_occluded',
+                    models.CharField(blank=True, max_length=255, null=True),
+                ),
+                (
+                    'is_site_boundary',
+                    models.CharField(blank=True, max_length=255, null=True),
+                ),
                 ('geometry', models.CharField(blank=True, max_length=255, null=True)),
             ],
             options={

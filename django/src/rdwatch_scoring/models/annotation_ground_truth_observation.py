@@ -5,7 +5,9 @@ from rdwatch_scoring.models import AnnotationGroundTruthSite
 
 class AnnotationGroundTruthObservation(models.Model):
     annotation_ground_truth_site_uuid = models.ForeignKey(
-        AnnotationGroundTruthSite, models.DO_NOTHING, db_column='annotation_ground_truth_site_uuid'
+        AnnotationGroundTruthSite,
+        models.DO_NOTHING,
+        db_column='annotation_ground_truth_site_uuid',
     )
     site_id = models.CharField(max_length=255, blank=True, null=True)
     observation_date = models.DateField(blank=True, null=True)

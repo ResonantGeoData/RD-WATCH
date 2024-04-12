@@ -30,8 +30,14 @@ from rdwatch.utils.images import (
     scale_bbox,
 )
 from rdwatch.utils.raster_tile import get_raster_bbox
-from rdwatch_scoring.models import (Observation, SatelliteFetching, Site, SiteImage,
-                                    AnnotationProposalSite, AnnotationProposalObservation)
+from rdwatch_scoring.models import (
+    AnnotationProposalObservation,
+    AnnotationProposalSite,
+    Observation,
+    SatelliteFetching,
+    Site,
+    SiteImage,
+)
 
 logger = logging.getLogger(__name__)
 
@@ -183,7 +189,9 @@ def get_siteobservations_images(
         if isinstance(timestamp, date):
             timestamp = datetime.combine(timestamp, datetime.min.time())
 
-        constellation = observation.sensor_name if proposal else observation.sensor_name or 'WV'
+        constellation = (
+            observation.sensor_name if proposal else observation.sensor_name or 'WV'
+        )
         # We need to grab the image for this timerange and type
         logger.warning(timestamp)
         if str(constellation) == baseConstellation and timestamp is not None:
@@ -384,7 +392,9 @@ def get_siteobservations_images(
 @shared_task
 def cancel_generate_images_task(model_run_uuid: UUID4, proposal: bool) -> None:
     if proposal:
-        sites = AnnotationProposalSite.objects.filter(annotation_proposal_set_uuid=model_run_uuid)
+        sites = AnnotationProposalSite.objects.filter(
+            annotation_proposal_set_uuid=model_run_uuid
+        )
     else:
         sites = Site.objects.filter(evaluation_run_uuid=model_run_uuid)
 
@@ -426,9 +436,7 @@ def generate_site_images(
         # for the duration of this transaction in order to ensure its
         # status doesn't change out from under us
         fetching_task = (
-            SatelliteFetching.objects.select_for_update()
-            .filter(site=site_uuid)
-            .first()
+            SatelliteFetching.objects.select_for_update().filter(site=site_uuid).first()
         )
         if fetching_task is not None:
             # If the task already exists and is running, return a 409 and do not
@@ -476,7 +484,9 @@ def generate_site_images_for_evaluation_run(
     bboxScale: float = BboxScaleDefault,
 ):
     if proposal:
-        sites = AnnotationProposalSite.objects.filter(annotation_proposal_set_uuid=model_run_uuid)
+        sites = AnnotationProposalSite.objects.filter(
+            annotation_proposal_set_uuid=model_run_uuid
+        )
     else:
         sites = Site.objects.filter(evaluation_run_uuid=model_run_uuid)
 

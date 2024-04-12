@@ -1,6 +1,10 @@
 import logging
 from typing import Literal, TypeAlias
 
+from ninja import FilterSchema, Query
+from ninja.pagination import RouterPaginated
+from pydantic import UUID4
+
 from django.contrib.gis.db.models.fields import GeometryField
 from django.contrib.postgres.aggregates import JSONBAgg
 from django.db.models import (
@@ -23,17 +27,27 @@ from django.db.models import (
     Value,
     When,
 )
-from django.db.models.functions import Cast, Coalesce, Concat, JSONObject, NullIf, Substr
+from django.db.models.functions import (
+    Cast,
+    Coalesce,
+    Concat,
+    JSONObject,
+    NullIf,
+    Substr,
+)
 from django.http import Http404, HttpRequest
 from django.shortcuts import get_object_or_404
-from ninja import FilterSchema, Query
-from ninja.pagination import RouterPaginated
-from pydantic import UUID4
 
 from rdwatch.db.functions import BoundingBox, ExtractEpoch
 from rdwatch.views.model_run import ModelRunDetailSchema, ModelRunPagination
-from rdwatch_scoring.models import EvaluationRun, SatelliteFetching, AnnotationProposalSet, AnnotationProposalSite, \
-    Region, SiteImage
+from rdwatch_scoring.models import (
+    AnnotationProposalSet,
+    AnnotationProposalSite,
+    EvaluationRun,
+    Region,
+    SatelliteFetching,
+    SiteImage,
+)
 from rdwatch_scoring.tasks import (
     cancel_generate_images_task,
     generate_site_images_for_evaluation_run,
@@ -149,14 +163,18 @@ def get_queryset():
 
 def get_queryset_proposal():
     proposed_count_subquery = (
-        AnnotationProposalSite.objects.filter(annotation_proposal_set_uuid=OuterRef('pk'))
+        AnnotationProposalSite.objects.filter(
+            annotation_proposal_set_uuid=OuterRef('pk')
+        )
         .filter(proposal_status='PROPOSAL')
         .values('annotation_proposal_set_uuid')
         .annotate(count=Count('pk'))
         .values('count')
     )
     other_count_subquery = (
-        AnnotationProposalSite.objects.filter(annotation_proposal_set_uuid=OuterRef('pk'))
+        AnnotationProposalSite.objects.filter(
+            annotation_proposal_set_uuid=OuterRef('pk')
+        )
         .exclude(proposal_status='PROPOSAL')
         .values('annotation_proposal_set_uuid')
         .annotate(count=Count('pk'))
@@ -164,8 +182,7 @@ def get_queryset_proposal():
     )
 
     return (
-        AnnotationProposalSet.objects.values()
-        .annotate(
+        AnnotationProposalSet.objects.values().annotate(
             id=F('uuid'),
             region=F('region_id'),
             title=Concat(
@@ -203,14 +220,12 @@ def get_queryset_proposal():
                 output_field=JSONField(),
             ),
         )
-    ).order_by(
-        F('uuid')
-    )
+    ).order_by(F('uuid'))
 
 
-def list_annotation_proposal_sets(request: HttpRequest,
-                                  filters: ModelRunFilterSchema = Query(...)  # noqa: B008
-                                  ):
+def list_annotation_proposal_sets(
+    request: HttpRequest, filters: ModelRunFilterSchema = Query(...)  # noqa: B008
+):
     page_size: int = 10  # TODO: use settings.NINJA_PAGINATION_PER_PAGE?
     page = int(request.GET.get('page', 1))
 
@@ -222,14 +237,18 @@ def list_annotation_proposal_sets(request: HttpRequest,
     total_count = qs.count()
 
     proposed_count_subquery = (
-        AnnotationProposalSite.objects.filter(annotation_proposal_set_uuid=OuterRef('pk'))
+        AnnotationProposalSite.objects.filter(
+            annotation_proposal_set_uuid=OuterRef('pk')
+        )
         .filter(proposal_status='PROPOSAL')
         .values('annotation_proposal_set_uuid')
         .annotate(count=Count('pk'))
         .values('count')
     )
     other_count_subquery = (
-        AnnotationProposalSite.objects.filter(annotation_proposal_set_uuid=OuterRef('pk'))
+        AnnotationProposalSite.objects.filter(
+            annotation_proposal_set_uuid=OuterRef('pk')
+        )
         .exclude(proposal_status='PROPOSAL')
         .values('annotation_proposal_set_uuid')
         .annotate(count=Count('pk'))
@@ -237,7 +256,8 @@ def list_annotation_proposal_sets(request: HttpRequest,
     )
 
     qs = (
-        AnnotationProposalSet.objects.filter(uuid__in=ids).values()
+        AnnotationProposalSet.objects.filter(uuid__in=ids)
+        .values()
         .annotate(
             id=F('uuid'),
             region=F('region_id'),
@@ -276,9 +296,7 @@ def list_annotation_proposal_sets(request: HttpRequest,
                 output_field=JSONField(),
             ),
         )
-    ).order_by(
-        F('uuid')
-    )
+    ).order_by(F('uuid'))
 
     aggregate_kwargs = {
         'timerange': JSONObject(
@@ -511,23 +529,23 @@ def cancel_generate_images(request: HttpRequest, uuid: UUID4):
 
     return 202, True
 
+
 def get_region(annotation_proposal_set_uuid: UUID4):
-    return (
-        AnnotationProposalSet.objects
-        .filter(pk=annotation_proposal_set_uuid)
-        .annotate(
-            json=JSONObject(
-                region=Subquery(  # prevents including "region" in slow GROUP BY
-                    Region.objects.filter(pk=OuterRef('region_id')).values('id')[:1],
-                    output_field=JSONField(),
-                ),
+    return AnnotationProposalSet.objects.filter(
+        pk=annotation_proposal_set_uuid
+    ).annotate(
+        json=JSONObject(
+            region=Subquery(  # prevents including "region" in slow GROUP BY
+                Region.objects.filter(pk=OuterRef('region_id')).values('id')[:1],
+                output_field=JSONField(),
             ),
-        )
+        ),
     )
 
 
 def get_proposals_query(annotation_proposal_set_uuid: UUID4):
-    proposal_sites = (AnnotationProposalSite.objects
+    proposal_sites = (
+        AnnotationProposalSite.objects
         # .select_related('siteimage', 'satellite_fetching')
         .filter(annotation_proposal_set_uuid=annotation_proposal_set_uuid)
         # .annotate(
@@ -599,15 +617,14 @@ def get_proposals_query(annotation_proposal_set_uuid: UUID4):
         if s['id'] in image_info.keys():
             site_image_info = image_info[s['id']]
         else:
-            site_image_info = {
-                'S2': 0,
-                'WV': 0,
-                'L8': 0,
-                'PL': 0,
-                'downloading': False
-            }
+            site_image_info = {'S2': 0, 'WV': 0, 'L8': 0, 'PL': 0, 'downloading': False}
 
-        s['images'] = site_image_info['S2'] + site_image_info['WV'] + site_image_info['L8'] + site_image_info['PL']
+        s['images'] = (
+            site_image_info['S2']
+            + site_image_info['WV']
+            + site_image_info['L8']
+            + site_image_info['PL']
+        )
         s['S2'] = site_image_info['S2']
         s['WV'] = site_image_info['WV']
         s['L8'] = site_image_info['L8']

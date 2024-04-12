@@ -5,10 +5,14 @@ from rdwatch_scoring.models import AnnotationProposalSet, AnnotationProposalSite
 
 class AnnotationProposalObservation(models.Model):
     annotation_proposal_set_uuid = models.ForeignKey(
-        AnnotationProposalSet, models.DO_NOTHING, db_column='annotation_proposal_set_uuid'
+        AnnotationProposalSet,
+        models.DO_NOTHING,
+        db_column='annotation_proposal_set_uuid',
     )
     annotation_proposal_site_uuid = models.ForeignKey(
-        AnnotationProposalSite, models.DO_NOTHING, db_column='annotation_proposal_site_uuid'
+        AnnotationProposalSite,
+        models.DO_NOTHING,
+        db_column='annotation_proposal_site_uuid',
     )
     site_id = models.CharField(max_length=255, blank=True, null=True)
     observation_date = models.DateField(blank=True, null=True)

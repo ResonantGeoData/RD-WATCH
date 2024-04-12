@@ -7,7 +7,9 @@ from rdwatch_scoring.models import AnnotationProposalSet, Region
 
 class AnnotationProposalSiteLog(models.Model):
     annotation_proposal_set_uuid = models.ForeignKey(
-        AnnotationProposalSet, models.DO_NOTHING, db_column='annotation_proposal_set_uuid'
+        AnnotationProposalSet,
+        models.DO_NOTHING,
+        db_column='annotation_proposal_set_uuid',
     )
     site_id = models.CharField(max_length=255, blank=True, null=True)
     region_id = models.ForeignKey(Region, models.DO_NOTHING, db_column='region_id')

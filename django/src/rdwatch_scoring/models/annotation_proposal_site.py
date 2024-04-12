@@ -21,6 +21,7 @@ class AnnotationProposalSite(models.Model):
     uuid = models.CharField(max_length=255, primary_key=True)
     proposal_status = models.CharField(max_length=255, blank=True, null=True)
     comments = models.TextField(blank=True, null=True)
+
     class Meta:
         managed = False
         app_label = 'rdwatch_scoring'

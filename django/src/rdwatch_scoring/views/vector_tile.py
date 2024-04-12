@@ -1,5 +1,4 @@
 from datetime import datetime, timedelta
-from uuid import uuid4
 
 from django.contrib.gis.db.models import GeometryField
 from django.contrib.gis.db.models.functions import Area, Transform
@@ -201,8 +200,6 @@ def vector_tile_proposal(
             )
         )
 
-        print(observations_queryset.query)
-
         (
             observations_sql,
             observations_params,
@@ -354,6 +351,10 @@ def vector_tile_proposal(
                 site_number=Substr(F('site_id'), 9),  # pos is 1 indexed
                 color_code=Value(None, output_field=IntegerField()),
             )
+            .values('site_id', 'region_id_id', 'mgrs', 'version', 'start_date', 'end_date', 'originator', 'status',
+                    'validated', 'score', 'geometry', 'uuid', 'proposal_status', 'comments', 'id', 'mvtgeom',
+                    'configuration_id', 'configuration_name', 'label', 'timestamp', 'timemin', 'timemax',
+                    'performer_id', 'performer_name', 'region', 'groundtruth', 'site_polygon', 'site_number', 'color_code')
         )
         (
             site_sql,
@@ -369,11 +370,10 @@ def vector_tile_proposal(
             .annotate(
                 id=F('uuid'),
                 mvtgeom=mvtgeom,
-                configuration_id=Value(uuid4(), output_field=CharField()),
+                configuration_id=Value(annotation_proposal_set_uuid, output_field=CharField()),
                 configuration_name=ExpressionWrapper(
                     Concat(
                         Value('GT '),
-                        Value(' '),
                         F('region_id')
                     ),
                     output_field=CharField(),
@@ -396,12 +396,23 @@ def vector_tile_proposal(
                 site_polygon=Value(False, output_field=BooleanField()),
                 site_number=Substr(F('site_id'), 9),  # pos is 1 indexed
                 color_code=Value(None, output_field=IntegerField()),
+                proposal_status=Value(None, output_field=CharField()),
+                comments=Value(None, output_field=CharField())
             )
+            .values('site_id', 'region_id_id', 'mgrs', 'version', 'start_date', 'end_date', 'originator', 'status',
+                    'validated', 'score', 'geometry', 'uuid', 'proposal_status', 'comments', 'id', 'mvtgeom',
+                    'configuration_id', 'configuration_name', 'label', 'timestamp', 'timemin', 'timemax',
+                    'performer_id', 'performer_name', 'region', 'groundtruth', 'site_polygon', 'site_number', 'color_code')
         )
         (
             ground_truth_site_sql,
             ground_truth_site_params,
         ) = ground_truth_site_queryset.query.sql_with_params()
+
+        (
+            site_union_sql,
+            site_union_params,
+        ) = site_queryset.union(ground_truth_site_queryset, all=True).query.sql_with_params()
 
         observations_queryset = (
             AnnotationProposalObservation.objects.filter(
@@ -453,6 +464,10 @@ def vector_tile_proposal(
                     default=False,
                 ),
             )
+            .values('site_id', 'observation_date', 'source', 'sensor_name', 'score', 'current_phase', 'is_occluded',
+                    'is_site_boundary', 'geometry', 'uuid', 'id', 'timestamp', 'mvtgeom', 'configuration_id',
+                    'configuration_name', 'site_label', 'site_number', 'label', 'area', 'siteeval_id',
+                    'timemin', 'timemax', 'performer_id', 'performer_name', 'region', 'version', 'groundtruth')
         )
 
         (
@@ -462,7 +477,7 @@ def vector_tile_proposal(
 
         ground_truth_observations_queryset = (
             AnnotationGroundTruthObservation.objects.filter(
-                annotation_ground_truth_site_uuid__in=ground_truth_site_queryset.values('uuid').values_list(flat=True)
+                annotation_ground_truth_site_uuid__in=ground_truth_site_queryset.values_list('uuid', flat=True)
             )
             .alias(geomfromtext=geomfromtext)
             .alias(transformedgeom=transform)
@@ -472,11 +487,10 @@ def vector_tile_proposal(
                 id=F('uuid'),
                 timestamp=F('observation_date'),
                 mvtgeom=mvtgeom,
-                configuration_id=Value(uuid4(), output_field=CharField()),
+                configuration_id=Value(annotation_proposal_set_uuid, output_field=CharField()),
                 configuration_name=ExpressionWrapper(
                     Concat(
                         Value('GT '),
-                        Value(' '),
                         F('annotation_ground_truth_site_uuid__region_id')
                     ),
                     output_field=CharField(),
@@ -502,12 +516,20 @@ def vector_tile_proposal(
                 score=Cast("score", output_field=CharField()),
                 groundtruth=Value(True),
             )
+            .values('site_id', 'observation_date', 'source', 'sensor_name', 'score', 'current_phase', 'is_occluded',
+                    'is_site_boundary', 'geometry', 'uuid', 'id', 'timestamp', 'mvtgeom', 'configuration_id',
+                    'configuration_name', 'site_label', 'site_number', 'label', 'area', 'siteeval_id',
+                    'timemin', 'timemax', 'performer_id', 'performer_name', 'region', 'version', 'groundtruth')
         )
-
         (
             ground_truth_observations_sql,
             ground_truth_observations_params,
         ) = ground_truth_observations_queryset.query.sql_with_params()
+
+        (
+            observations_union_sql,
+            observations_union_params,
+        ) = observations_queryset.union(ground_truth_observations_queryset, all=True).query.sql_with_params()
 
         region_queryset = (
             Region.objects.filter(id=site_queryset.values('region_id')[:1])
@@ -524,19 +546,13 @@ def vector_tile_proposal(
 
         sql = f"""
             WITH
-                sites AS ({site_sql}),
-                gt_sites AS ({ground_truth_site_sql}),
-                observations AS ({observations_sql}),
+                sites AS ({site_union_sql}),
+                observations AS ({observations_union_sql}),
                 regions AS ({region_sql})
             SELECT(
                 (
                     SELECT ST_AsMVT(sites.*, %s, 4096, 'mvtgeom')
                     FROM sites
-                )
-                ||
-                (
-                    SELECT ST_AsMVT(gt_sites.*, %s, 4096, 'mvtgeom')
-                    FROM gt_sites
                 )
                 ||
                 (
@@ -551,13 +567,11 @@ def vector_tile_proposal(
             )
         """  # noqa: E501
         params = (
-            site_params
-            + ground_truth_site_params
-            + observations_params
+            site_union_params
+            + observations_union_params
             + region_params
             + (
                 f'sites-{annotation_proposal_set_uuid}',
-                f'gt-sites-{annotation_proposal_set_uuid}',
                 f'observations-{annotation_proposal_set_uuid}',
                 f'regions-{annotation_proposal_set_uuid}',
             )

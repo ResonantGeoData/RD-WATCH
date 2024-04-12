@@ -15,7 +15,6 @@ router = Router()
 
 @router.patch('/{uuid}/')
 def update_annotation_proposal_site(request: HttpRequest, uuid: UUID4, data: SiteEvaluationRequest):
-    print('here')
     with transaction.atomic():
         proposal_site_update = AnnotationProposalSiteLog.objects.filter(uuid=uuid).order_by('-timestamp').first()
 

@@ -50,7 +50,6 @@ def get_siteobservation_images_task(
     bboxScale: float = BboxScaleDefault,
 ) -> None:
     capture_count = 0
-    print(baseConstellations)
     for constellation in baseConstellations:
         capture_count += get_siteobservations_images(
             self,
@@ -337,7 +336,6 @@ def get_siteobservations_images(
                 count += 1
                 logger.warning(f'COULD NOT FIND ANY IMAGE FOR TIMESTAMP: {timestamp}')
                 continue
-            print('HHHHHHEEEEEERRRRREEEE')
             percent_black = get_percent_black_pixels(bytes)
             cloudcover = capture.cloudcover
             count += 1

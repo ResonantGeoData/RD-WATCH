@@ -16,6 +16,7 @@ class AnnotationGroundTruthSite(models.Model):
     score = models.FloatField(blank=True, null=True)
     geometry = models.TextField(blank=True, null=True)
     uuid = models.CharField(max_length=255, primary_key=True)
+
     class Meta:
         managed = False
         app_label = 'rdwatch_scoring'

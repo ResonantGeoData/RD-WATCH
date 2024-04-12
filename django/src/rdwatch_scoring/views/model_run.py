@@ -38,7 +38,7 @@ from rdwatch_scoring.tasks import (
     cancel_generate_images_task,
     generate_site_images_for_evaluation_run,
 )
-from rdwatch_scoring.views.observation import GenerateImagesSchema
+from rdwatch_scoring.views.site_observation import GenerateImagesSchema
 
 logger = logging.getLogger(__name__)
 
@@ -602,19 +602,21 @@ def get_proposals_query(annotation_proposal_set_uuid: UUID4):
                 'S2': 0,
                 'WV': 0,
                 'L8': 0,
+                'PL': 0,
                 'downloading': False
             }
 
-        s['images'] = site_image_info['S2'] + site_image_info['WV'] + site_image_info['L8']
+        s['images'] = site_image_info['S2'] + site_image_info['WV'] + site_image_info['L8'] + site_image_info['PL']
         s['S2'] = site_image_info['S2']
         s['WV'] = site_image_info['WV']
         s['L8'] = site_image_info['L8']
+        s['PL'] = site_image_info['PL']
         s['downloading'] = site_image_info['downloading']
 
     return proposal_sites
 
 
-@router.get('/{annotation_proposal_set_uuid}/proposals')
+@router.get('/{annotation_proposal_set_uuid}/proposals/')
 def get_proposals(request: HttpRequest, annotation_proposal_set_uuid: UUID4):
     region = get_region(annotation_proposal_set_uuid).values_list('json', flat=True)
     if not region.exists():

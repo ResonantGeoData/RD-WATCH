@@ -3,7 +3,7 @@ import logging
 from django.contrib.gis.db.models import GeometryField
 from django.contrib.postgres.aggregates import JSONBAgg
 from django.core.files.storage import default_storage
-from django.db.models import Count, F, Func, Value, CharField
+from django.db.models import Count, F, Func, Value, CharField, Case, When
 from django.db.models.functions import JSONObject
 from django.http import HttpRequest
 from ninja import Router
@@ -72,7 +72,11 @@ def site_images(request: HttpRequest, id: UUID4):
                     cloudcover='cloudcover',
                     percent_black='percent_black',
                     source='source',
-                    observation_id='observation',
+                    observation_id=Case(
+                        When(observation__exact='', then=None),
+                        When(observation__isnull=False, then='observation'),
+                        default=Value(None)
+                    ),
                     bbox=BoundingBox('image_bbox'),
                     image_dimensions='image_dimensions',
                     aws_location='aws_location',

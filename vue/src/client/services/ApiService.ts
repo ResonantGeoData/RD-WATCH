@@ -501,12 +501,9 @@ export class ApiService {
       path: {
         id: id,
       },
+      query: ApiService.addProposalsQueryParameter({})
     });
-
   }
-
-
-
 
   public static postSiteImageEmbedding(id: number): CancelablePromise<string> {
     return __request(OpenAPI, {

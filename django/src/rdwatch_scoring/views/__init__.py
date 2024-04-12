@@ -1,7 +1,7 @@
 from . import (
     eval,
     model_run,
-    observation,
+    site_observation,
     performer,
     region,
     site,
@@ -12,7 +12,7 @@ from . import (
 
 __all__ = [
     'model_run',
-    'observation',
+    'site_observation',
     'performer',
     'region',
     'site',

@@ -8,7 +8,7 @@ from django.contrib.gis.db.models.functions import Area, Transform
 from django.contrib.postgres.aggregates import JSONBAgg
 from django.core.files.storage import default_storage
 from django.db import transaction
-from django.db.models import Count, F, Func, Max, Min, Value, CharField
+from django.db.models import Count, F, Func, Max, Min, Value, CharField, Case, When
 from django.db.models.functions import Coalesce, JSONObject
 from django.http import Http404, HttpRequest
 from django.shortcuts import get_object_or_404
@@ -148,7 +148,11 @@ def site_observations(request: HttpRequest, evaluation_id: UUID4):
                     cloudcover='cloudcover',
                     percent_black='percent_black',
                     source='source',
-                    observation_id='observation',
+                    observation_id=Case(
+                        When(observation__exact='', then=None),
+                        When(observation__isnull=False, then='observation'),
+                        default=Value(None)
+                    ),
                     bbox=BoundingBox('image_bbox'),
                     image_dimensions='image_dimensions',
                     aws_location='aws_location',

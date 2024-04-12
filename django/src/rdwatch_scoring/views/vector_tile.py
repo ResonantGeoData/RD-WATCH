@@ -268,7 +268,10 @@ def vector_tile_proposal(
 
         ground_truth_observations_queryset = (
             AnnotationGroundTruthObservation.objects.filter(
-                annotation_ground_truth_site_uuid__in=ground_truth_site_queryset.values_list('uuid', flat=True)
+                annotation_ground_truth_site_uuid__in=(
+                    ground_truth_site_queryset
+                    .values_list('uuid', flat=True)
+                )
             )
             .alias(geomfromtext=geomfromtext)
             .alias(transformedgeom=transform)

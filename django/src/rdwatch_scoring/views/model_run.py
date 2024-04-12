@@ -209,7 +209,7 @@ def get_queryset_proposal():
 
 
 def list_annotation_proposal_sets(request: HttpRequest,
-                                  filters: ModelRunFilterSchema = Query(...)):
+                                  filters: ModelRunFilterSchema = Query(...)):  # noqa: B008
     page_size: int = 10  # TODO: use settings.NINJA_PAGINATION_PER_PAGE?
     page = int(request.GET.get('page', 1))
 

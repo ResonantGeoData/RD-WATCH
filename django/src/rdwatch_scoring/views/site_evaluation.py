@@ -28,15 +28,15 @@ def update_annotation_proposal_site(request: HttpRequest, uuid: UUID4, data: Sit
         FIELDS = ('label', 'start_date', 'end_date', 'score', 'status', 'notes', 'geom')
         for field in filter(lambda f: f in data_dict, FIELDS):
             if field == 'geom':
-                setattr(proposal_site_update, 'geometry', GEOSGeometry(json.dumps(data_dict[field])).wkt)
+                proposal_site_update['geometry'] = GEOSGeometry(json.dumps(data_dict[field])).wkt
             elif field == 'label':
-                setattr(proposal_site_update, 'status', data_dict[field])
+                proposal_site_update['status'] = data_dict[field]
             elif field == 'status':
-                setattr(proposal_site_update, 'proposal_status', data_dict[field])
+                proposal_site_update['proposal_status'] = data_dict[field]
             elif field == 'notes':
-                setattr(proposal_site_update, 'comments', data_dict[field])
+                proposal_site_update['comments'] = data_dict[field]
             else:
-                setattr(proposal_site_update, field, data_dict[field])
+                proposal_site_update[field] = data_dict[field]
 
         proposal_site_update.save()
 

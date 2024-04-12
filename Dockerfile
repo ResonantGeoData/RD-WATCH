@@ -84,7 +84,6 @@ FROM builder AS dev
 WORKDIR /app/django
 COPY django/pyproject.toml django/poetry.lock /app/django/
 # Copy git metadata to enable display of version information
-COPY .git/ /app/.git/
 RUN mkdir /app/django/src \
  && mkdir /app/django/src/rdwatch \
  && touch /app/django/src/rdwatch/__init__.py \
@@ -93,6 +92,7 @@ RUN mkdir /app/django/src \
  && touch /app/django/README.md \
  && poetry install --with dev
 RUN git config --global --add safe.directory /app/django
+COPY .git/ /app/.git/
 
 
 # Built static assets for vue-rdwatch

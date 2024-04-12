@@ -10,7 +10,6 @@ from django.contrib.postgres.indexes import GistIndex
 from django.db import models, transaction
 
 from rdwatch.models import ModelRun, lookups
-from rdwatch.models.region import get_or_create_region
 from rdwatch.schemas import RegionModel, SiteModel
 from rdwatch.schemas.region_model import RegionFeature, SiteSummaryFeature
 from rdwatch.schemas.site_model import SiteFeature
@@ -121,7 +120,6 @@ class SiteEvaluation(models.Model):
         if modified:
             configuration.save()
         with transaction.atomic():
-            region = get_or_create_region(site_feature.properties.region_id)[0]
             label = lookups.ObservationLabel.objects.get(
                 slug=site_feature.properties.status
             )
@@ -135,7 +133,6 @@ class SiteEvaluation(models.Model):
 
             site_eval = cls.objects.create(
                 configuration=configuration,
-                region=region,
                 version=site_feature.properties.version,
                 number=site_feature.properties.site_number,
                 start_date=site_feature.properties.start_date,
@@ -173,10 +170,6 @@ class SiteEvaluation(models.Model):
 
         site_evals: list[SiteEvaluation] = []
         with transaction.atomic():
-            region = get_or_create_region(
-                region_feature.properties.region_id, region_feature.parsed_geometry
-            )[0]
-
             for feature in region_model.site_summary_features:
                 assert isinstance(feature.properties, SiteSummaryFeature)
 
@@ -186,7 +179,6 @@ class SiteEvaluation(models.Model):
 
                 site_eval = cls(
                     configuration=configuration,
-                    region=region,
                     number=feature.properties.site_number,
                     geom=geometry,
                     label=label_map[feature.properties.status],

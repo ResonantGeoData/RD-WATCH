@@ -128,7 +128,7 @@ watch(selectSite, async () => {
     variant="flat"
     class="siteCard"
     :class="{
-      selectedCard: selectedSite !== undefined,
+      selectedCard: site.selected,
       hoveredCard: hoveredInfo.siteId.includes(localSite.id),
     }"
     @mouseenter="state.filters.hoverSiteId = localSite.id"
@@ -164,7 +164,10 @@ watch(selectSite, async () => {
             <span> {{ statusMap[localSite.status].name }} </span>
           </v-tooltip>
         </v-col>
-        <v-col cols="1">
+        <v-col
+          v-if="!localSite.proposal"
+          cols="1"
+        >
           <v-checkbox-btn
             v-model="selectSite"
             density="compact"
@@ -368,12 +371,12 @@ watch(selectSite, async () => {
         </div>
       </v-row>
       <ImageBrowser
-        v-if="selectedSite !== undefined"
+        v-if="!localSite.proposal && selectedSite !== undefined"
         :site-observation="selectedSite"
       />
     </v-card-text>
     <div
-      v-if="selectedSite !== undefined"
+      v-if="site.selected"
       class="selectedBorder"
     />
   </v-card>

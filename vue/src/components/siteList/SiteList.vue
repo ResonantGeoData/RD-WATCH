@@ -120,7 +120,7 @@ watch(state.selectedObservations, () => {
         return 1;
       });
   modifiedList.value = updatedList;
-})
+});
 watch(clickedInfo, () => {
   if (clickedInfo.value.siteId.length) {
     const found = modifiedList.value.find(

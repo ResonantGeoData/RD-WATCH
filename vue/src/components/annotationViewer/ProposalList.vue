@@ -119,6 +119,15 @@ watch(clickedInfo, () => {
   }
 });
 
+watch(() => props.selectedEval, () => {
+  const updatedList: SiteDisplay[] = [];
+
+  modifiedList.value.forEach((item) => {
+    item.selected = props.selectedEval === item.id;
+    updatedList.push(item);
+  })
+  modifiedList.value = updatedList;
+})
 
 watch(() => hoveredInfo.value.siteId, () => {
   if (hoveredInfo.value.siteId.length) {
@@ -171,7 +180,7 @@ watch(filter, () => {
         :key="item.id"
         :site="item"
         :selected-eval="selectedEval"
-        @selected="emit('selected', item)"
+        @click="emit('selected', item)"
         @image-download="setImageDownloadDialog($event)"
       />
     </div>

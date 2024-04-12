@@ -7,7 +7,7 @@ from ninja.testing import TestClient
 
 from django.utils import timezone
 
-from rdwatch.models import ModelRun, lookups
+from rdwatch.models import ModelRun, Region, lookups
 from rdwatch.tasks import delete_temp_model_runs_task
 
 
@@ -66,11 +66,11 @@ def test_model_run_rest_create(test_client: TestClient) -> None:
 
 
 @pytest.mark.django_db
-def test_model_run_rest_list(test_client: TestClient) -> None:
+def test_model_run_rest_list(test_client: TestClient, region: Region) -> None:
     # Create test data
     performers = list(lookups.Performer.objects.all())
     model_runs = ModelRun.objects.bulk_create(
-        ModelRun(performer=performer, title=f'test_{i}', parameters={})
+        ModelRun(performer=performer, title=f'test_{i}', region=region, parameters={})
         for i, performer in enumerate(performers)
     )
 
@@ -92,13 +92,14 @@ def test_model_run_rest_list(test_client: TestClient) -> None:
 
 
 @pytest.mark.django_db
-def test_model_run_rest_get(test_client: TestClient) -> None:
+def test_model_run_rest_get(test_client: TestClient, region: Region) -> None:
     # Create test data
     performer = lookups.Performer.objects.first()
     title = 'test'
     model_run = ModelRun.objects.create(
         performer=performer,
         title=title,
+        region=region,
         parameters={},
     )
 

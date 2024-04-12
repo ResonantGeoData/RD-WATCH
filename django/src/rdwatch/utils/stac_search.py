@@ -61,6 +61,7 @@ if settings.ACCENTURE_VERSION is not None:
     COLLECTIONS['L8'].append(f'ta1-ls-acc-{settings.ACCENTURE_VERSION}')
     COLLECTIONS['PL'].append(f'ta1-pd-acc-{settings.ACCENTURE_VERSION}')
 
+
 def stac_search(
     source: Literal['S2', 'L8', 'PL'],
     timestamp: datetime,

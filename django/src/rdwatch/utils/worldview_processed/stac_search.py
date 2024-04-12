@@ -54,6 +54,7 @@ if settings.ACCENTURE_VERSION is not None:
 def _fmt_time(time: datetime):
     return f'{time.isoformat()[:19]}Z'
 
+
 def worldview_search(
     timestamp: datetime,
     bbox: tuple[float, float, float, float],

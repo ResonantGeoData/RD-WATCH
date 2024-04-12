@@ -83,8 +83,6 @@ RUN mkdir /app/django/src \
 FROM builder AS dev
 WORKDIR /app/django
 COPY django/pyproject.toml django/poetry.lock /app/django/
-# Copy git metadata to enable display of version information
-COPY .git/ /app/.git/
 RUN mkdir /app/django/src \
  && mkdir /app/django/src/rdwatch \
  && touch /app/django/src/rdwatch/__init__.py \
@@ -92,6 +90,8 @@ RUN mkdir /app/django/src \
  && touch /app/django/src/rdwatch_scoring/__init__.py \
  && touch /app/django/README.md \
  && poetry install --with dev
+# Copy git metadata to enable display of version information
+COPY .git/ /app/.git/
 RUN git config --global --add safe.directory /app/django
 
 

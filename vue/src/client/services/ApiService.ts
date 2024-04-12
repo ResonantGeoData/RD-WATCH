@@ -144,7 +144,7 @@ export class ApiService {
     ApiService.proposalsQuery = value
   }
 
-  public static addProposalsQueryParameter(payload) {
+  public static addProposalsQueryParameter(payload: {[key:string]: any}) {
     if (ApiService.proposalsQuery) {
       payload['proposal'] = 'PROPOSAL'
     }

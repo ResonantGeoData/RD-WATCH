@@ -3,7 +3,6 @@ from datetime import datetime
 
 from django.contrib.gis.geos import GEOSGeometry
 from django.db import transaction
-from django.db.models.functions import JSONObject  # type: ignore
 from django.http import HttpRequest, Http404
 from ninja import Router
 from pydantic import UUID4

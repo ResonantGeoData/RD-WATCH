@@ -47,7 +47,6 @@ const siteEvaluationUpdated = ref(false)
 const siteStatus: Ref<string | null> = ref(props.status || null);
 const startDateTemp: Ref<string | null> = ref(null);
 const endDateTemp: Ref<string | null> = ref(null);
-const currentDate = ref(props.evalCurrentDate);
 const editingPolygon = ref(false);
 const evaluationGeoJSON: Ref<GeoJSON.Polygon | null> = ref(props.evalGeoJSON); // holds the site geoJSON so it can be edited
 
@@ -61,7 +60,6 @@ watch([() => props.siteEvalId], () => {
   siteEvaluationNotes.value = props.evaluationNotes;
   startDate.value = props.dateRange && props.dateRange[0] ? new Date(props.dateRange[0] * 1000).toISOString().split('T')[0] : null;
   endDate.value = props.dateRange && props.dateRange[1] ? new Date(props.dateRange[1] * 1000).toISOString().split('T')[0] : null;
-  currentDate.value = props.evalCurrentDate;
   siteStatus.value = props.status;
   evaluationGeoJSON.value = props.evalGeoJSON;
   
@@ -103,6 +101,7 @@ const updateTime = (time: any, date: 'StartDate' | 'EndDate'| 'StartDateTemp' | 
     } else if (date === 'EndDateTemp') {
       endDateTemp.value = new Date(time as string).toISOString().split('T')[0];
     }
+    editDialog.value = false;
   }
   currentEditMode.value = null;
   editDialog.value = false;
@@ -112,12 +111,12 @@ const updateTime = (time: any, date: 'StartDate' | 'EndDate'| 'StartDateTemp' | 
 const setEditingMode = (mode: EditModes) => {
   if (['StartDate', 'EndDate'].includes(mode)){
     if (startDate.value === null) {
-      startDateTemp.value = currentDate.value;
+      startDateTemp.value = props.evalCurrentDate;
     } else {
       startDateTemp.value = startDate.value;
     }
     if (endDate.value === null) {
-      endDateTemp.value = currentDate.value;
+      endDateTemp.value = props.evalCurrentDate;
     } else {
       endDateTemp.value = endDate.value;
     }
@@ -416,9 +415,9 @@ const deleteSelectedPoints = () => {
               color="primary"
               class="mb-2 mx-1"
               size="small"
-              @click="updateTime(currentDate, 'StartDate'); editDialog=false"
+              @click="updateTime(evalCurrentDate, 'StartDate'); editDialog=false"
             >
-              Current: {{ currentDate }}
+              Current: {{ evalCurrentDate }}
             </v-btn>
           </v-row>
           <v-date-picker
@@ -451,9 +450,9 @@ const deleteSelectedPoints = () => {
               color="primary"
               class="mb-2 mx-1"
               size="small"
-              @click="updateTime(currentDate, 'EndDate'); editDialog=false"
+              @click="updateTime(evalCurrentDate, 'EndDate'); editDialog=false"
             >
-              Current: {{ currentDate }}
+              Current: {{ evalCurrentDate }}
             </v-btn>
           </v-row>
           <v-date-picker

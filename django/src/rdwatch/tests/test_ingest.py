@@ -1,7 +1,9 @@
+from datetime import datetime, timedelta
 from typing import Any
 
 import pytest
 from ninja.testing import TestClient
+from pydantic import BaseModel
 
 from rdwatch.models import ModelRun, SiteEvaluation, SiteObservation
 
@@ -169,3 +171,98 @@ def test_site_model_ingest_malformed_geometry(
             }
         ]
     }
+
+
+@pytest.fixture
+def sample_region_model(region_id: str) -> dict[str, Any]:
+    # Define a Pydantic model to represent the structure of the sample region model
+    class SampleRegionModel(BaseModel):
+        type: str = 'FeatureCollection'
+        features: list[dict[str, Any]]
+
+    # Define a sample region feature using the information from the RegionFeature class
+    sample_region_feature = {
+        'type': 'Feature',
+        'properties': {
+            'type': 'region',
+            'region_id': f'{region_id}',
+            'version': '1.0',
+            'mgrs': 'ABC123',
+            'model_content': 'annotation',
+            'start_date': datetime.now().strftime('%Y-%m-%d'),
+            'end_date': (datetime.now() + timedelta(days=30)).strftime('%Y-%m-%d'),
+            'originator': 'te',
+            'comments': 'Sample comments',
+            'performer_cache': None,
+        },
+        'geometry': {
+            'type': 'Polygon',
+            'coordinates': [
+                [
+                    [-104.05, 48.99],
+                    [-97.22, 48.98],
+                    [-96.98, 45.94],
+                    [-104.03, 45.94],
+                    [-104.05, 48.99],
+                ]
+            ],
+        },
+    }
+
+    # Define a sample site summary feature using the information
+    # from the SiteSummaryFeature class
+    sample_site_summary_feature = {
+        'type': 'Feature',
+        'properties': {
+            'type': 'site_summary',
+            'site_id': f'{region_id}_0001',
+            'version': '1.0',
+            'mgrs': 'ABC123',
+            'status': 'positive_annotated',
+            'start_date': datetime.now().strftime('%Y-%m-%d'),
+            'end_date': (datetime.now() + timedelta(days=30)).strftime('%Y-%m-%d'),
+            'model_content': 'annotation',
+            'originator': 'te',
+            'comments': None,
+            'score': 0.8,
+            'validated': 'True',
+            'annotation_cache': None,
+        },
+        'geometry': {
+            'type': 'Polygon',
+            'coordinates': [
+                [
+                    [-104.05, 48.99],
+                    [-97.22, 48.98],
+                    [-96.98, 45.94],
+                    [-104.03, 45.94],
+                    [-104.05, 48.99],
+                ]
+            ],
+        },
+    }
+
+    # Combine the sample region feature and sample site summary
+    # feature into the features list
+    sample_region_model = SampleRegionModel(
+        features=[sample_region_feature, sample_site_summary_feature]
+    )
+
+    # Return the sample region model as a dictionary
+    return sample_region_model.dict()
+
+
+@pytest.mark.django_db
+def test_region_model_ingest(
+    sample_region_model: dict[str, Any],
+    test_client: TestClient,
+    model_run: ModelRun,
+) -> None:
+    res = test_client.post(
+        f'/model-runs/{model_run.id}/region-model/',
+        json=sample_region_model,
+    )
+
+    assert res.status_code == 201
+    assert SiteEvaluation.objects.count() == 1
+    assert res.json() == [str(SiteEvaluation.objects.first().id)], res.json()

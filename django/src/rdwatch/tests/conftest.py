@@ -8,7 +8,7 @@ from ninja.testing import TestClient
 from django.core.management import call_command
 
 from rdwatch.api import api
-from rdwatch.models import ModelRun
+from rdwatch.models import ModelRun, Region
 from rdwatch.models.lookups import Performer
 
 if TYPE_CHECKING:
@@ -27,9 +27,22 @@ def test_client() -> TestClient:
 
 
 @pytest.fixture
-def model_run() -> ModelRun:
+def region_id() -> str:
+    return 'XX_R000'
+
+
+@pytest.fixture
+def region(region_id) -> Region:
+    return Region.objects.create(
+        name=region_id,
+    )
+
+
+@pytest.fixture
+def model_run(region: Region) -> ModelRun:
     return ModelRun.objects.create(
         title='Test',
         parameters={},
         performer=Performer.objects.all().first(),
+        region=region,
     )

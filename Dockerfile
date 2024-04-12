@@ -90,7 +90,7 @@ RUN mkdir /app/django/src \
  && touch /app/django/src/rdwatch_scoring/__init__.py \
  && touch /app/django/README.md \
  && poetry install --with dev
- # Copy git metadata to enable display of version information
+# Copy git metadata to enable display of version information
 RUN git config --global --add safe.directory /app/django
 COPY .git/ /app/.git/
 

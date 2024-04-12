@@ -44,17 +44,23 @@ def test_model_run_auto_delete() -> None:
 
 
 @pytest.mark.django_db
-def test_model_run_rest_create(test_client: TestClient) -> None:
+def test_model_run_rest_create(test_client: TestClient, region_id: str) -> None:
     performer = lookups.Performer.objects.first()
     title = 'test'
 
-    assert ModelRun.objects.filter(title=title, performer=performer).count() == 0
+    assert (
+        ModelRun.objects.filter(
+            title=title, performer=performer, region__name=region_id
+        ).count()
+        == 0
+    )
 
     res = test_client.post(
         '/model-runs/',
         json={
             'performer': performer.slug,
             'title': title,
+            'region': region_id,
             'parameters': {},
         },
     )
@@ -62,7 +68,12 @@ def test_model_run_rest_create(test_client: TestClient) -> None:
     assert res.status_code == 200
     assert res.json()['title'] == title
     assert res.json()['performer']['short_code'] == performer.slug
-    assert ModelRun.objects.filter(title=title, performer=performer).count() == 1
+    assert (
+        ModelRun.objects.filter(
+            title=title, performer=performer, region__name=region_id
+        ).count()
+        == 1
+    )
 
 
 @pytest.mark.django_db

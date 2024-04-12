@@ -9,6 +9,7 @@ from pydantic import UUID4, constr  # type: ignore
 
 from django.contrib.postgres.aggregates import JSONBAgg
 from django.core.cache import cache
+from django.db import transaction
 from django.db.models import (
     Avg,
     Case,
@@ -37,6 +38,7 @@ from rdwatch.models import (
     SiteEvaluation,
     lookups,
 )
+from rdwatch.models.region import get_or_create_region
 from rdwatch.schemas import RegionModel, SiteModel
 from rdwatch.schemas.common import TimeRangeSchema
 from rdwatch.tasks import (
@@ -76,6 +78,7 @@ class ModelRunFilterSchema(FilterSchema):
 class ModelRunWriteSchema(Schema):
     performer: str
     title: constr(max_length=1000)
+    region: constr(regex=r'^[A-Z]{2}_[RCST][\dx]{3}$')  # noqa: F722
     parameters: dict
     expiration_time: int | None
     evaluation: int | None = None
@@ -298,15 +301,18 @@ def create_model_run(
     request: HttpRequest,
     model_run_data: ModelRunWriteSchema,
 ):
-    model_run = ModelRun.objects.create(
-        title=model_run_data.title,
-        performer=model_run_data.performer,
-        parameters=model_run_data.parameters,
-        expiration_time=model_run_data.expiration_time,
-        evaluation=model_run_data.evaluation,
-        evaluation_run=model_run_data.evaluation_run,
-        proposal=model_run_data.proposal,
-    )
+    with transaction.atomic():
+        region = get_or_create_region(model_run_data.region)[0]
+        model_run = ModelRun.objects.create(
+            title=model_run_data.title,
+            performer=model_run_data.performer,
+            region=region,
+            parameters=model_run_data.parameters,
+            expiration_time=model_run_data.expiration_time,
+            evaluation=model_run_data.evaluation,
+            evaluation_run=model_run_data.evaluation_run,
+            proposal=model_run_data.proposal,
+        )
     return 200, {
         'id': model_run.pk,
         'title': model_run.title,
@@ -315,6 +321,7 @@ def create_model_run(
             'team_name': model_run.performer.description,
             'short_code': model_run.performer.slug,
         },
+        'region_name': region.name,
         'parameters': model_run.parameters,
         'numsites': 0,
         'created': model_run.created,

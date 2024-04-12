@@ -12,24 +12,27 @@ from rdwatch.tasks import delete_temp_model_runs_task
 
 
 @pytest.mark.django_db(databases=['default'])
-def test_model_run_auto_delete() -> None:
+def test_model_run_auto_delete(region: Region) -> None:
     # Create a model run with expiration time of an hour ago
     with freeze_time(timezone.now() - timedelta(hours=2)):
         ModelRun.objects.create(
             title='test1',
             parameters={},
+            region=region,
             performer=lookups.Performer.objects.all().first(),
             expiration_time=timedelta(hours=1),
         )
     not_expired_model_run = ModelRun.objects.create(
         title='test2',
         parameters={},
+        region=region,
         performer=lookups.Performer.objects.all().first(),
         expiration_time=timedelta(hours=2),
     )
     model_run_with_no_expiration = ModelRun.objects.create(
         title='test3',
         parameters={},
+        region=region,
         performer=lookups.Performer.objects.all().first(),
     )
     assert ModelRun.objects.count() == 3

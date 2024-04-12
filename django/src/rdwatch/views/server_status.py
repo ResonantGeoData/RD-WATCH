@@ -25,11 +25,16 @@ class ServerStatusSchema(Schema):
     uptime: UptimeSchema
     hostname: str
     ip: str
+    rdwatch_version: str
 
 
 @router.get('/', response=ServerStatusSchema)
 def get_status(request: HttpRequest):
+    from rdwatch.api import api
+
     uptime = datetime.datetime.now() - SERVER_INSTANCE_EPOCH
     hostname = socket.gethostname()
     ip = socket.gethostbyname(hostname)
-    return ServerStatusSchema(uptime=uptime, hostname=hostname, ip=ip)
+    return ServerStatusSchema(
+        uptime=uptime, hostname=hostname, ip=ip, rdwatch_version=api.version
+    )

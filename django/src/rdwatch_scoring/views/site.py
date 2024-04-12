@@ -11,7 +11,7 @@ from rdwatch_scoring.models import Site
 router = Router()
 
 
-@router.get('/{id}/details', response=SiteImageSiteDetailResponse)
+@router.get('/{id}/details/', response=SiteImageSiteDetailResponse)
 def siteDetails(request: HttpRequest, id: UUID4):
     return (
         Site.objects.filter(pk=id)

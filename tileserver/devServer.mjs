@@ -7,9 +7,9 @@ const fastify = Fastify({ logger: true });
 await fastify.register(cors);
 
 fastify.get('/api/vector-tiles/tile.pbf', async (request, reply) => {
-  const { modelRunId, z, x, y, randomKey } = request.query;
+  const { modelRunId, z, x, y, randomKey, year } = request.query;
 
-  const vectorTileData = await getRGDVectorTiles(modelRunId, z, x, y, randomKey);
+  const vectorTileData = await getRGDVectorTiles(modelRunId, z, x, y, year, randomKey);
 
   reply.header('Content-Type', 'application/octet-stream');
   reply.code(vectorTileData.length === 0 ? 204 : 200);
@@ -18,9 +18,9 @@ fastify.get('/api/vector-tiles/tile.pbf', async (request, reply) => {
 });
 
 fastify.get('/api/scoring/vector-tiles/tile.pbf', async (request, reply) => {
-  const { modelRunId, z, x, y } = request.query;
+  const { modelRunId, z, x, y, year } = request.query;
 
-  const vectorTileData = await getScoringVectorTiles(modelRunId, z, x, y);
+  const vectorTileData = await getScoringVectorTiles(modelRunId, z, x, y, year);
 
   reply.header('Content-Type', 'application/octet-stream');
   reply.code(vectorTileData.length === 0 ? 204 : 200);

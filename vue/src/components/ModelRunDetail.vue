@@ -239,10 +239,10 @@ const getModeIcon = (mode: ModelRun['mode']) => (mode ? {
         </div>
         <v-spacer />
         <v-tooltip v-if="!scoringApp">
-          <template #activator="{ props:subProps }">
+          <template #activator="{ props }">
             <v-btn
               size="x-small"
-              v-bind="subProps"
+              v-bind="props"
               :disabled="downloadingModelRun"
               class="mx-1"
               @click.stop="determineDownload()"
@@ -272,11 +272,11 @@ const getModeIcon = (mode: ModelRun['mode']) => (mode ? {
           <span>Download JSON</span>
         </v-tooltip>
         <v-tooltip>
-          <template #activator="{ props:subProps }">
+          <template #activator="{ props }">
             <v-btn
               :disabled="downloading > 0"
               size="x-small"
-              v-bind="subProps"
+              v-bind="props"
               class="mx-1"
               @click.stop="downloadImages = true"
             >

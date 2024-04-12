@@ -95,15 +95,14 @@ class SiteEvaluationAdmin(admin.ModelAdmin):
 class SiteImageAdmin(admin.ModelAdmin):
     list_display = (
         'id',
-        'site',
-        'observation',
         'timestamp',
         'image',
+        'image_embedding',
         'cloudcover',
         'percent_black',
         'source',
     )
-    list_filter = ('site', 'observation', 'timestamp')
+    list_filter = ('timestamp',)
 
 
 @admin.register(SiteObservation)

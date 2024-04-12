@@ -131,6 +131,7 @@ const QUERY = `
               AND U0."tau" = 0.2
               AND U0."min_confidence_score" = 0.0
             )
+          LIMIT 1 -- TODO: remove this when T&E updates their scoring code to only include one
         )
         ELSE NULL
       END AS "color_code"
@@ -145,6 +146,118 @@ const QUERY = `
         AND ST_Intersects(
           ST_Transform(
             ST_GeomFromText("site"."union_geometry", 4326),
+            3857
+          ),
+          ST_TileEnvelope($1, $2, $3)
+        )
+      )
+  ),
+  sites_points AS (
+    SELECT
+      "site"."site_id" AS "id",
+      ST_AsMVTGeom(
+        ST_Transform(
+          ST_GeomFromText("site"."point_geometry", 4326),
+          3857
+        ),
+        ST_TileEnvelope($1, $2, $3)
+      ) AS "mvtgeom",
+      "site"."evaluation_run_uuid" AS "configuration_id",
+      CONCAT(
+        'Eval ',
+        CONCAT(
+          "evaluation_run"."evaluation_number",
+          CONCAT(
+            ' ',
+            CONCAT(
+              "evaluation_run"."evaluation_run_number",
+              CONCAT(' ', "evaluation_run"."performer")
+            )
+          )
+        )
+      ) AS "configuration_name",
+      CASE
+        WHEN "site"."status_annotated" IS NOT NULL THEN LOWER(REPLACE("site"."status_annotated", ' ', '_'))
+        ELSE 'unknown'
+      END AS "label",
+      EXTRACT(
+        epoch
+        FROM
+          "site"."start_date"
+      ) :: bigint AS "timestamp",
+      EXTRACT(
+        epoch
+        FROM
+          "site"."start_date"
+      ) :: bigint AS "timemin",
+      EXTRACT(
+        epoch
+        FROM
+          "site"."end_date"
+      ) :: bigint AS "timemax",
+      "site"."originator" AS "performer_id",
+      "site"."originator" AS "performer_name",
+      "site"."region_id" AS "region",
+      CASE
+        WHEN (
+          "site"."originator" = 'te'
+          OR "site"."originator" = 'iMERIT'
+        ) THEN TRUE
+        ELSE FALSE
+      END AS "groundtruth",
+      FALSE AS "site_polygon",
+      SUBSTRING("site"."site_id", 9) AS "site_number",
+      CASE
+        WHEN (
+          "site"."originator" = 'te'
+          OR "site"."originator" = 'iMERIT'
+        ) THEN (
+          SELECT
+            U0."color_code"
+          FROM
+            "evaluation_broad_area_search_detection" U0
+          WHERE
+            (
+              U0."activity_type" = 'overall'
+              AND U0."evaluation_run_uuid" = $4
+              AND U0."rho" = 0.5
+              AND U0."site_truth" = ("site"."site_id")
+              AND U0."tau" = 0.2
+              AND U0."min_confidence_score" = 0.0
+            )
+        )
+        WHEN (
+          NOT ("site"."originator" = 'te')
+          AND NOT ("site"."originator" = 'iMERIT')
+        ) THEN (
+          SELECT
+            U0."color_code"
+          FROM
+            "evaluation_broad_area_search_proposal" U0
+          WHERE
+            (
+              U0."activity_type" = 'overall'
+              AND U0."evaluation_run_uuid" = $4
+              AND U0."rho" = 0.5
+              AND U0."site_proposal" = ("site"."site_id")
+              AND U0."tau" = 0.2
+              AND U0."min_confidence_score" = 0.0
+            )
+          LIMIT 1 -- TODO: remove this when T&E updates their scoring code to only include one
+        )
+        ELSE NULL
+      END AS "color_code"
+    FROM
+      "site"
+      INNER JOIN "evaluation_run" ON (
+        "site"."evaluation_run_uuid" = "evaluation_run"."uuid"
+      )
+    WHERE
+      (
+        "site"."evaluation_run_uuid" = $4
+        AND ST_Intersects(
+          ST_Transform(
+            ST_GeomFromText("site"."point_geometry", 4326),
             3857
           ),
           ST_TileEnvelope($1, $2, $3)
@@ -167,26 +280,18 @@ const QUERY = `
       "observation"."confidence_score",
       "observation"."uuid" AS "id",
       "observation"."date" AS "timestamp",
-      ST_AsMVTGeom(
-        ST_Transform(
-          ST_GeomFromText("observation"."geometry", 4326),
-          3857
-        ),
-        ST_TileEnvelope($1, $2, $3)
-      ) AS "mvtgeom",
+      CASE
+        WHEN EXTRACT(YEAR FROM "observation"."date") < $5 THEN ST_AsMVTGeom(ST_Transform(ST_GeomFromText("prev_obs"."prev_observation_geom", 4326), 3857), ST_TileEnvelope($1, $2, $3))
+        ELSE ST_AsMVTGeom(ST_Transform(ST_GeomFromText("observation"."geometry", 4326), 3857), ST_TileEnvelope($1, $2, $3))
+      END AS mvtgeom,
       "site"."evaluation_run_uuid" AS "configuration_id",
       CONCAT(
         'Eval ',
-        CONCAT(
-          "evaluation_run"."evaluation_number",
-          CONCAT(
-            ' ',
-            CONCAT(
-              "evaluation_run"."evaluation_run_number",
-              CONCAT(' ', "evaluation_run"."performer")
-            )
-          )
-        )
+        "evaluation_run"."evaluation_number",
+        ' ',
+        "evaluation_run"."evaluation_run_number",
+        ' ',
+        "evaluation_run"."performer"
       ) AS "configuration_name",
       "site"."status_annotated" AS "site_label",
       SUBSTRING("site"."site_id", 9) AS "site_number",
@@ -237,15 +342,39 @@ const QUERY = `
       INNER JOIN "evaluation_run" ON (
         "site"."evaluation_run_uuid" = "evaluation_run"."uuid"
       )
+      LEFT JOIN LATERAL (
+        SELECT
+          "uuid" AS "prev_observation_uuid",
+          "geometry" AS "prev_observation_geom"
+        FROM
+          "observation" AS "prev_observation"
+        WHERE
+          "prev_observation"."site_uuid" = "observation"."site_uuid"
+          AND EXTRACT(YEAR FROM "prev_observation"."date") < $5
+        ORDER BY
+          "prev_observation"."date" DESC
+        LIMIT 1
+      ) AS "prev_obs" ON TRUE
+
     WHERE
       (
         "site"."evaluation_run_uuid" = $4
         AND ST_Intersects(
           ST_Transform(
-            ST_GeomFromText("observation"."geometry", 4326),
+            ST_GeomFromText(
+              CASE WHEN EXTRACT(YEAR FROM "observation"."date") < $5
+                THEN "prev_obs"."prev_observation_geom"
+                ELSE "observation"."geometry"
+              END,
+              4326
+            ),
             3857
           ),
           ST_TileEnvelope($1, $2, $3)
+        )
+        AND (
+          EXTRACT(YEAR FROM "observation"."date") = $5
+          OR prev_obs."prev_observation_uuid" IS NOT NULL
         )
       )
   ),
@@ -294,24 +423,29 @@ const QUERY = `
   (
       (
         SELECT
-          ST_AsMVT(sites.*, $5, 4096, 'mvtgeom')
+          ST_AsMVT(sites.*, $6, 4096, 'mvtgeom')
         FROM
           sites
       ) || (
         SELECT
-          ST_AsMVT(observations.*, $6, 4096, 'mvtgeom')
+          ST_AsMVT(sites_points.*, $7, 4096, 'mvtgeom')
+        FROM
+          sites_points
+      ) || (
+        SELECT
+          ST_AsMVT(observations.*, $8, 4096, 'mvtgeom')
         FROM
           observations
       ) || (
         SELECT
-          ST_AsMVT(regions.*, $7, 4096, 'mvtgeom')
+          ST_AsMVT(regions.*, $9, 4096, 'mvtgeom')
         FROM
           regions
       )
     )
 `;
 
-async function getCacheKey(modelRunId, z, x, y) {
+async function getCacheKey(modelRunId, z, x, y, year) {
   // TODO: is this cache key sufficiently unique?
   const result = await dbPool.query(`
     SELECT
@@ -324,11 +458,11 @@ async function getCacheKey(modelRunId, z, x, y) {
 
   const { start_datetime } = result.rows[0];
 
-  return `scoring-vector-tile-${modelRunId}-${z}-${x}-${y}-${start_datetime}`;
+  return `scoring-vector-tile-${modelRunId}-${z}-${x}-${y}-${start_datetime}-${year}`;
 }
 
-export async function getVectorTiles(modelRunId, z, x, y) {
-  const cacheKey = await getCacheKey(modelRunId, z, x, y);
+export async function getVectorTiles(modelRunId, z, x, y, year) {
+  const cacheKey = await getCacheKey(modelRunId, z, x, y, year);
 
   let vectorTileData = await redisClient.get(commandOptions({ returnBuffers: true }), cacheKey);
 
@@ -341,7 +475,7 @@ export async function getVectorTiles(modelRunId, z, x, y) {
   }
 
   if (!vectorTileData) {
-    const params = [z, x, y, modelRunId, `sites-${modelRunId}`, `observations-${modelRunId}`, `regions-${modelRunId}`];
+    const params = [z, x, y, modelRunId, year, `sites-${modelRunId}`, `sites_points-${modelRunId}`, `observations-${modelRunId}`, `regions-${modelRunId}`];
     const result = await dbPool.query(QUERY, params);
     vectorTileData = result.rows[0]['?column?'];
 

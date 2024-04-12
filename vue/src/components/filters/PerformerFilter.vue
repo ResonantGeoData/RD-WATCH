@@ -38,7 +38,8 @@ watch(() => props.modelValue, () => {
 });
 
 
-const updateSelected =  (data: number[]) => {
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+const updateSelected =  (data: readonly any[]) => {
   if (selectedPerformers.value !== null) {
     const newPerformers = data.map((item) => performerIdMap[item]);
     if (newPerformers.length) {

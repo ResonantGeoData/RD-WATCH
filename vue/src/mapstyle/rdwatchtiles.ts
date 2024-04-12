@@ -263,17 +263,15 @@ const buildObservationFill = (
 };
 
 // Nudge is used to refresh vector tiles when modified by proposal view
-export const buildSourceFilter = (modelRunIds: string[], randomKey='') => {
+export const buildSourceFilter = (timestamp: number, modelRunIds: string[], randomKey='') => {
   const results: Record<string, SourceSpecification> = {};
+  const year = new Date(timestamp * 1000).getFullYear();
   modelRunIds.forEach((id) => {
     const source = `vectorTileSource_${id}`;
     const proposal = ApiService.getProposalsQuery()
     results[source] = {
       type: "vector",
       tiles: [`${urlRoot}${ApiService.getApiPrefix()}/model-runs/${id}/vector-tile/{z}/{x}/{y}.pbf${randomKey}/${proposal ? "?proposal=PROPOSAL" : ""}`],
-
-//       /{evaluation_run_uuid}/vector-tile/{z}/{x}/{y}.pbf/
-//       tiles: [`${urlRoot}${ApiService.getApiPrefix()}/vector-tiles/tile.pbf?modelRunId=${id}&z={z}&x={x}&y={y}${randomKey}`],
       minzoom: 0,
       maxzoom: 14,
     };
@@ -341,6 +339,21 @@ export const buildLayerFilter = (
       },
       // Site fill is added for Hover Popup to work on the area inside the polygon
     ]);
+
+    if (ApiService.isScoring()) {
+      results.push({
+        id: `sites-points-outline-${id}`,
+        type: "circle",
+        source: `vectorTileSource_${id}`,
+        "source-layer": `sites_points-${id}`,
+        paint: {
+          "circle-color": annotationColors(filters),
+          "circle-radius": 4,
+        },
+        filter: buildSiteFilter(timestamp, filters),
+      });
+    }
+
     const siteFill: LayerSpecification =   {
       id: `sites-fill-${id}`,
       type: "fill",

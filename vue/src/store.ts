@@ -2,6 +2,7 @@ import { computed, reactive } from "vue";
 
 import { ApiService, ModelRun, Performer, Region } from "./client";
 import { EditPolygonType } from "./interactions/editPolygon";
+import { EvaluationImage } from "./types";
 export interface MapFilters {
   configuration_id?: string[];
   performer_ids?: number[];
@@ -60,6 +61,9 @@ export interface SiteObservationImage {
   observation_id: string | null;
   disabled?: boolean;
   bbox: { xmin: number; ymin: number; xmax: number; ymax: number };
+  id: number;
+  image_embedding? : string;
+  image_dimensions?: [number, number];
 }
 
 export interface ObsDetails {
@@ -167,7 +171,12 @@ export const state = reactive<{
     ground_truths?: string | null,
   }
   editPolygon: EditPolygonType | null,
-
+  imageFilter: {
+    sources: EvaluationImage['source'][];
+    cloudCover: number;
+    noData: number;
+    obsFilter: ('observations' | 'non-observations')[];
+  },
 }>({
   errorText: '',
   timestamp: Math.floor(Date.now() / 1000),
@@ -221,6 +230,12 @@ export const state = reactive<{
   performerMapping: {},
   proposals: {},
   editPolygon: null,
+  imageFilter: {
+    sources: ['WV', 'S2', 'L8', 'PL'],
+    cloudCover: 100,
+    noData: 100,
+    obsFilter: ['observations', 'non-observations']
+  }
 });
 
 export const filteredSatelliteTimeList = computed(() => {

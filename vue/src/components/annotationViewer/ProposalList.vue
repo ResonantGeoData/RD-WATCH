@@ -61,6 +61,7 @@ const getSiteProposals = async () => {
       const regionName: string = proposalList.value.region;
       const accepted: string[] = [];
       const rejected: string[] = [];
+      let selected: ProposalDisplay | null = null;
       proposalList.value.proposed_sites.forEach((item) => {
         const newNum = item.number.toString().padStart(4, "0");
         if (newNum === "9999") {
@@ -96,6 +97,9 @@ const getSiteProposals = async () => {
           timestamp: item.timestamp,
           downloading: item.downloading,
         });
+        if (item.id === props.selectedEval) {
+          selected = modList[modList.length - 1];
+        }
       });
       state.filters.proposals = {
         accepted,
@@ -110,7 +114,9 @@ const getSiteProposals = async () => {
           clearInterval(downloadCheckInterval);
         }
       }
-
+      if (selected) {
+        emit('selected', selected);
+      }
     }
   }
 };
@@ -240,11 +246,11 @@ const startDownload = async (data: DownloadSettings) => {
             </v-chip>
           </v-row>
           <v-row dense>
-            <v-tooltip>
-              <template #activator="{ props: subProps }">
+            <v-tooltip open-delay="300">
+              <template #activator="{ props }">
                 <v-btn
                   size="x-small"
-                  v-bind="subProps"
+                  v-bind="props"
                   @click.stop="download(item.id)"
                 >
                   <v-icon size="small">
@@ -255,12 +261,12 @@ const startDownload = async (data: DownloadSettings) => {
               <span>Download JSON</span>
             </v-tooltip>
             <v-spacer />
-            <v-tooltip>
-              <template #activator="{ props:subProps }">
+            <v-tooltip open-delay="300">
+              <template #activator="{ props }">
                 <v-btn
                   v-if="!item.downloading"
                   size="x-small"
-                  v-bind="subProps"
+                  v-bind="props"
                   class="mx-1"
                   @click.stop="setImageDownloadDialog(item)"
                 >
@@ -269,7 +275,7 @@ const startDownload = async (data: DownloadSettings) => {
                 <v-btn
                   v-else-if="item.downloading"
                   size="x-small"
-                  v-bind="subProps"
+                  v-bind="props"
                   class="mx-1"
                 >
                   <v-icon>mdi-spin mdi-sync</v-icon>
@@ -280,13 +286,13 @@ const startDownload = async (data: DownloadSettings) => {
             <v-spacer />
             <v-tooltip
               v-if="item.filename"
-              open-delay="50"
+              open-delay="0"
               bottom
             >
-              <template #activator="{ props: subProps }">
+              <template #activator="{ props }">
                 <v-icon
                   x-small
-                  v-bind="subProps"
+                  v-bind="props"
                 >
                   mdi-file-outline
                 </v-icon>

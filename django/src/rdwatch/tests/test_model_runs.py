@@ -104,6 +104,25 @@ def test_model_run_rest_list(test_client: TestClient, region: Region) -> None:
             mr.title for mr in model_runs if mr.performer == performer
         ]
 
+    # Test region filter
+    new_region = Region.objects.create(name='YY_R001')
+    new_region_model_runs = ModelRun.objects.bulk_create(
+        [
+            ModelRun(
+                performer=performers[0],
+                title='DifferentRegion',
+                region=new_region,
+                parameters={},
+            )
+            for _ in range(20)
+        ]
+    )
+    res = test_client.get(f'/model-runs/?region={new_region.name}')
+    assert res.status_code == 200
+    assert {item['id'] for item in res.json()['items']} == {
+        str(m.id) for m in new_region_model_runs
+    }
+
 
 @pytest.mark.django_db
 def test_model_run_rest_get(test_client: TestClient, region: Region) -> None:

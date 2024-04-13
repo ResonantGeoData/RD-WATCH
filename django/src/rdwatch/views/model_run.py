@@ -54,7 +54,7 @@ router = RouterPaginated()
 
 class ModelRunFilterSchema(FilterSchema):
     performer: list[str] | None = Field(q='performer_slug')
-    region: str | None
+    region: str | None = Field(q='region__name')
     proposal: str | None = Field(q='proposal', ignore_none=False)
     groundtruth: bool | None
 
@@ -109,7 +109,7 @@ class ModelRunDetailSchema(Schema):
     id: UUID4
     title: str
     eval: str | None = None
-    region: str = Field(..., alias='region_name')
+    region: str = Field(alias='region_name')
     performer: PerformerSchema
     parameters: dict
     numsites: int | None = 0
@@ -282,7 +282,7 @@ class ModelRunPagination(PageNumberPagination):
             }
             if filters.region:
                 aggregate_kwargs['bbox'] = Coalesce(
-                    BoundingBoxGeoJSON('evaluations__region__geom'),
+                    BoundingBoxGeoJSON('region__geom'),
                     BoundingBoxGeoJSON('evaluations__geom'),
                 )
 

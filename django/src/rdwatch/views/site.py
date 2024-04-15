@@ -14,7 +14,7 @@ class SiteImageSiteDetailResponse(Schema):
     regionName: str
     configurationId: str | int  # some values still ints in my case
     siteNumber: str
-    version: str
+    version: str | None
     title: str
     performer: str | None
     timemin: int | None

@@ -17,8 +17,16 @@ def test_site_details_rest(
         **{
             'configurationId': site_evaluation.configuration_id,
             'title': site_evaluation.configuration.title,
-            'timemin': site_evaluation.start_date.timestamp(),
-            'timemax': site_evaluation.end_date.timestamp(),
+            'timemin': (
+                site_evaluation.start_date.timestamp()
+                if site_evaluation.start_date
+                else None
+            ),
+            'timemax': (
+                site_evaluation.end_date.timestamp()
+                if site_evaluation.end_date
+                else None
+            ),
             'regionName': site_evaluation.configuration.region.name,
             'performer': site_evaluation.configuration.performer.slug,
             'siteNumber': site_evaluation.number,

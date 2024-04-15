@@ -91,8 +91,8 @@ RUN mkdir /app/django/src \
  && touch /app/django/README.md \
  && poetry install --with dev
 # Copy git metadata to enable display of version information
-COPY .git/ /app/.git/
 RUN git config --global --add safe.directory /app/django
+COPY .git/ /app/.git/
 
 
 # Built static assets for vue-rdwatch

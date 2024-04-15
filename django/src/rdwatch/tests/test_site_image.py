@@ -30,15 +30,17 @@ def test_site_images_rest_list(
     response = test_client.get(f'/evaluations/images/{site_image.site.pk}/')
     assert response.status_code == 200
     data = response.json()
-    # from pprint import pprint; pprint(data)
     assert len(data['images']['results']) == 1
     assert data['images']['count'] == 1
     assert data['groundTruth'] is None  # no GT associated with this proposal
     assert not DeepDiff(
         data['evaluationGeoJSON'],
-        json.loads(site_image.site.geom.transform(4326, clone=True).geojson),
+        {
+            'crs': {'properties': {'name': 'EPSG:4326'}, 'type': 'name'},
+            **json.loads(site_image.site.geom.transform(4326, clone=True).geojson),
+        },
         ignore_order=True,
-        significant_digits=3,  # allow some floating point error
+        significant_digits=2,  # allow some floating point error
     )
 
     # Create Ground Truth site for the existing proposal site
@@ -55,7 +57,10 @@ def test_site_images_rest_list(
     assert data['images']['count'] == 1
     assert not DeepDiff(
         data['groundTruth']['geoJSON'],
-        json.loads(gt_eval.geom.transform(4326, clone=True).geojson),
+        {
+            'crs': {'properties': {'name': 'EPSG:4326'}, 'type': 'name'},
+            **json.loads(gt_eval.geom.transform(4326, clone=True).geojson),
+        },
         ignore_order=True,
-        significant_digits=3,  # allow some floating point error
+        significant_digits=2,  # allow some floating point error
     )

@@ -143,7 +143,6 @@ def site_images(request: HttpRequest, id: UUID4):
     # lets get the presigned URL for each image
     for image in image_queryset['results']:
         image['image'] = default_storage.url(image['image'])
-        print(image)
     output['images'] = image_queryset
     output['geoJSON'] = geom_queryset['results']
     output['label'] = site_eval_data['json']['label']

@@ -30,7 +30,7 @@ def siteDetails(request: HttpRequest, id: UUID4):
             title=F('configuration__title'),
             timemin=ExtractEpoch('start_date'),
             timemax=ExtractEpoch('end_date'),
-            regionName=F('region__name'),
+            regionName=F('configuration__region__name'),
             performer=F('configuration__performer__slug'),
             siteNumber=F('number'),
         )

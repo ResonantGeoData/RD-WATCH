@@ -15,6 +15,8 @@ from django.core.management import call_command
 from rdwatch.api import api
 from rdwatch.models import ModelRun, Region
 from rdwatch.models.lookups import Performer
+from rdwatch.models.site_evaluation import SiteEvaluation
+from rdwatch.schemas import RegionModel, SiteModel
 from rdwatch.schemas.site_model import CurrentPhase
 
 if TYPE_CHECKING:
@@ -90,6 +92,34 @@ def model_run(region: Region) -> ModelRun:
     )
 
 
+@pytest.fixture(
+    params=[
+        (
+            SiteEvaluation.bulk_create_from_site_model,
+            SiteModel,
+            'site_model_json',
+        ),
+        (
+            SiteEvaluation.bulk_create_from_region_model,
+            RegionModel,
+            'region_model_json',
+        ),
+    ]
+)
+def site_evaluation(
+    site_model_json: dict[str, Any],
+    model_run: ModelRun,
+    request,
+) -> SiteEvaluation:
+    ingest_func, model_cls, fixture_name = request.param
+    siteeval = ingest_func(
+        model_cls(**request.getfixturevalue(fixture_name)), model_run
+    )
+    if isinstance(siteeval, list):
+        siteeval = siteeval[0]
+    return siteeval
+
+
 @pytest.fixture
 def site_model_json(
     site_polygon: Polygon, observation_polygon: MultiPolygon
@@ -121,6 +151,8 @@ def site_model_json(
                     'status': 'system_confirmed',
                     'type': 'site',
                     'version': '0.0.0',
+                    'start_date': '2023-03-15',
+                    'end_date': '2024-04-15',
                 },
                 'type': 'Feature',
             },

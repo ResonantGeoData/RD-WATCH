@@ -60,6 +60,14 @@ django-minio-storage = "^0.5.2"
 werkzeug = "^2.3.7"
 django-debug-toolbar = "^4.2.0"
 
+[tool.poetry.group.test.dependencies]
+pytest = "^8.1.1"
+pytest-django = "^4.8.0"
+freezegun = "^1.4.0"
+
+[tool.poetry.group.test]
+optional = true
+
 [[tool.poetry.source]]
 name = "pytorch"
 url = "https://download.pytorch.org/whl/cpu"

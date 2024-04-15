@@ -874,6 +874,20 @@ files = [
 ]
 
 [[package]]
+name = "freezegun"
+version = "1.4.0"
+description = "Let your Python tests travel through time"
+optional = false
+python-versions = ">=3.7"
+files = [
+    {file = "freezegun-1.4.0-py3-none-any.whl", hash = "sha256:55e0fc3c84ebf0a96a5aa23ff8b53d70246479e9a68863f1fcac5a3e52f19dd6"},
+    {file = "freezegun-1.4.0.tar.gz", hash = "sha256:10939b0ba0ff5adaecf3b06a5c2f73071d9678e507c5eaedb23c761d56ac774b"},
+]
+
+[package.dependencies]
+python-dateutil = ">=2.7"
+
+[[package]]
 name = "fsspec"
 version = "2024.3.1"
 description = "File-system specification"
@@ -1119,6 +1133,17 @@ python-versions = ">=3.5"
 files = [
     {file = "idna-3.6-py3-none-any.whl", hash = "sha256:c05567e9c24a6b9faaa835c4821bad0590fbb9d5779e7caa6e1cc4978e7eb24f"},
     {file = "idna-3.6.tar.gz", hash = "sha256:9ecdbbd083b06798ae1e86adcbfe8ab1479cf864e4ee30fe4e46a003d12491ca"},
+]
+
+[[package]]
+name = "iniconfig"
+version = "2.0.0"
+description = "brain-dead simple config-ini parsing"
+optional = false
+python-versions = ">=3.7"
+files = [
+    {file = "iniconfig-2.0.0-py3-none-any.whl", hash = "sha256:b6a85871a79d2e3b22d2d1b94ac2824226a63c6b741c88f7ae975f18b6778374"},
+    {file = "iniconfig-2.0.0.tar.gz", hash = "sha256:2d91e135bf72d31a410b17c16da610a82cb55f6b0477d1a902134b24a455b8b3"},
 ]
 
 [[package]]
@@ -2076,6 +2101,44 @@ dev = ["black (>=24.0,<25.0)", "codespell (>=2.2.4,<2.3.0)", "coverage (>=7.2,<8
 docs = ["Sphinx (>=6.2,<7.0)", "boto3 (>=1.26,<2.0)", "cartopy (>=0.21,<1.0)", "geojson (>=3.1.0,<3.2.0)", "geopandas (>=0.14.0,<0.15.0)", "geoviews (>=1.9,<2.0)", "hvplot (>=0.9.0,<0.10.0)", "ipykernel (>=6.22,<7.0)", "ipython (>=8.12,<9.0)", "jinja2 (<4.0)", "matplotlib (>=3.8,<4.0)", "myst-parser (>=2.0,<3.0)", "nbsphinx (>=0.9,<1.0)", "pydata-sphinx-theme (>=0.13,<1.0)", "pygeoif (>=1.0,<2.0)", "scipy (>=1.10,<2.0)", "sphinxcontrib-fulltoc (>=1.2,<2.0)"]
 
 [[package]]
+name = "pytest"
+version = "8.1.1"
+description = "pytest: simple powerful testing with Python"
+optional = false
+python-versions = ">=3.8"
+files = [
+    {file = "pytest-8.1.1-py3-none-any.whl", hash = "sha256:2a8386cfc11fa9d2c50ee7b2a57e7d898ef90470a7a34c4b949ff59662bb78b7"},
+    {file = "pytest-8.1.1.tar.gz", hash = "sha256:ac978141a75948948817d360297b7aae0fcb9d6ff6bc9ec6d514b85d5a65c044"},
+]
+
+[package.dependencies]
+colorama = {version = "*", markers = "sys_platform == \"win32\""}
+iniconfig = "*"
+packaging = "*"
+pluggy = ">=1.4,<2.0"
+
+[package.extras]
+testing = ["argcomplete", "attrs (>=19.2)", "hypothesis (>=3.56)", "mock", "pygments (>=2.7.2)", "requests", "setuptools", "xmlschema"]
+
+[[package]]
+name = "pytest-django"
+version = "4.8.0"
+description = "A Django plugin for pytest."
+optional = false
+python-versions = ">=3.8"
+files = [
+    {file = "pytest-django-4.8.0.tar.gz", hash = "sha256:5d054fe011c56f3b10f978f41a8efb2e5adfc7e680ef36fb571ada1f24779d90"},
+    {file = "pytest_django-4.8.0-py3-none-any.whl", hash = "sha256:ca1ddd1e0e4c227cf9e3e40a6afc6d106b3e70868fd2ac5798a22501271cd0c7"},
+]
+
+[package.dependencies]
+pytest = ">=7.0.0"
+
+[package.extras]
+docs = ["sphinx", "sphinx-rtd-theme"]
+testing = ["Django", "django-configurations (>=2.0)"]
+
+[[package]]
 name = "python-dateutil"
 version = "2.9.0.post0"
 description = "Extensions to the standard Python datetime module"
@@ -2771,4 +2834,4 @@ watchdog = ["watchdog (>=2.3)"]
 [metadata]
 lock-version = "2.0"
 python-versions = ">=3.11.8,<4"
-content-hash = "785ba40f5e562f66087be73adca249f9836e529127f6263ed14d70701908225f"
+content-hash = "9a3288abf866b2d5a91997f3690c6c466dacc979bdc799fe56e9bf1474d4e56c"

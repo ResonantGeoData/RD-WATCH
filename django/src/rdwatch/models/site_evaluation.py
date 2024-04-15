@@ -10,6 +10,7 @@ from django.contrib.postgres.indexes import GistIndex
 from django.db import models, transaction
 
 from rdwatch.models import ModelRun, lookups
+from rdwatch.models.region import get_or_create_region
 from rdwatch.schemas import RegionModel, SiteModel
 from rdwatch.schemas.region_model import RegionFeature, SiteSummaryFeature
 from rdwatch.schemas.site_model import SiteFeature
@@ -170,6 +171,13 @@ class SiteEvaluation(models.Model):
 
         site_evals: list[SiteEvaluation] = []
         with transaction.atomic():
+            # Update the region of the configuration.
+            # If the region doens't have a geometry,
+            # the one from the region model is used.
+            ModelRun.objects.filter(pk=configuration.pk).update(
+                region=get_or_create_region(region_feature.properties.region_id)[0]
+            )
+
             for feature in region_model.site_summary_features:
                 assert isinstance(feature.properties, SiteSummaryFeature)
 

@@ -2,18 +2,23 @@ from __future__ import annotations
 
 import json
 from datetime import datetime, timedelta
+from io import BytesIO
+from random import randrange
 from typing import TYPE_CHECKING, Any, get_args
 
+import numpy as np
 import pytest
 from geojson.utils import generate_random as generate_random_geojson
 from ninja.testing import TestClient
+from PIL import Image
 from pydantic import BaseModel
 
 from django.contrib.gis.geos import GEOSGeometry, MultiPolygon, Polygon
+from django.core.files.base import ContentFile
 from django.core.management import call_command
 
 from rdwatch.api import api
-from rdwatch.models import ModelRun, Region
+from rdwatch.models import ModelRun, Region, SiteImage
 from rdwatch.models.lookups import Performer
 from rdwatch.models.site_evaluation import SiteEvaluation
 from rdwatch.schemas import RegionModel, SiteModel
@@ -231,3 +236,37 @@ def region_model_json(
 
     # Return the sample region model as a dictionary
     return sample_region_model.dict()
+
+
+@pytest.fixture(
+    params=['WV', 'S2', 'L8', 'PL'],
+)
+def site_image(site_evaluation: SiteEvaluation, request) -> SiteImage:
+    # Generate a random image
+    imarray = np.random.rand(100, 100, 3) * 255
+    img = Image.fromarray(imarray.astype('uint8')).convert('RGBA')
+    img_bytes = BytesIO()
+    img.save(img_bytes, format='PNG')
+    img_bytes.seek(0)
+
+    # Generate a timestamp for the image. If the site evaluation has
+    # a start and end date, generate a timestamp within that range.
+    # Otherwise, select the current date/time arbitrarily.
+    img_timestamp = datetime.now()
+    if site_evaluation.start_date and site_evaluation.end_date:
+        delta = site_evaluation.end_date - site_evaluation.start_date
+        int_delta = (delta.days * 24 * 60 * 60) + delta.seconds
+        img_timestamp = site_evaluation.start_date + timedelta(
+            seconds=randrange(int_delta)
+        )
+
+    return SiteImage.objects.create(
+        image=ContentFile(img_bytes.read()),
+        timestamp=img_timestamp,
+        site=site_evaluation,
+        observation=site_evaluation.observations.first(),
+        source=request.param,
+        image_bbox=site_evaluation.geom,
+        image_dimensions=img.size,
+        aws_location='s3://bucket/key',
+    )

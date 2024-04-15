@@ -21,10 +21,10 @@ router = Router()
 class SiteImageSchema(Schema):
     timestamp: int
     source: str
-    cloudcover: float
+    cloudcover: float | None
     image: str
     observation_id: UUID4 | None
-    percent_black: float
+    percent_black: float | None
     bbox: BoundingBoxSchema
     image_dimensions: list[int]
     aws_location: str
@@ -143,6 +143,7 @@ def site_images(request: HttpRequest, id: UUID4):
     # lets get the presigned URL for each image
     for image in image_queryset['results']:
         image['image'] = default_storage.url(image['image'])
+        print(image)
     output['images'] = image_queryset
     output['geoJSON'] = geom_queryset['results']
     output['label'] = site_eval_data['json']['label']

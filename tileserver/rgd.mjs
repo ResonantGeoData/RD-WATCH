@@ -18,7 +18,6 @@ function query(z, x, y, modelRunId, year) {
         "rdwatch_siteevaluation"."id",
         "rdwatch_siteevaluation"."timestamp",
         "rdwatch_siteevaluation"."configuration_id",
-        "rdwatch_siteevaluation"."region_id",
         "rdwatch_siteevaluation"."number",
         "rdwatch_siteevaluation"."start_date",
         "rdwatch_siteevaluation"."end_date",
@@ -76,9 +75,6 @@ function query(z, x, y, modelRunId, year) {
         INNER JOIN "rdwatch_modelrun" ON (
           "rdwatch_siteevaluation"."configuration_id" = "rdwatch_modelrun"."id"
         )
-        INNER JOIN "rdwatch_region" ON (
-          "rdwatch_siteevaluation"."region_id" = "rdwatch_region"."id"
-        )
         INNER JOIN "rdwatch_observationlabel" ON (
           "rdwatch_siteevaluation"."label_id" = "rdwatch_observationlabel"."id"
         )
@@ -87,6 +83,9 @@ function query(z, x, y, modelRunId, year) {
         )
         INNER JOIN "rdwatch_performer" ON (
           "rdwatch_modelrun"."performer_id" = "rdwatch_performer"."id"
+        )
+        INNER JOIN "rdwatch_region" ON (
+          "rdwatch_modelrun"."region_id" = "rdwatch_region"."id"
         )
       WHERE
         (
@@ -197,7 +196,7 @@ function query(z, x, y, modelRunId, year) {
           "rdwatch_modelrun"."performer_id" = "rdwatch_performer"."id"
         )
         INNER JOIN "rdwatch_region" ON (
-          "rdwatch_siteevaluation"."region_id" = "rdwatch_region"."id"
+          "rdwatch_modelrun"."region_id" = "rdwatch_region"."id"
         )
         -- Join in the previous observation for the same site if it exists
         LEFT JOIN LATERAL (
@@ -241,12 +240,12 @@ function query(z, x, y, modelRunId, year) {
         ) AS "mvtgeom"
       FROM
         "rdwatch_region"
-        INNER JOIN "rdwatch_siteevaluation" ON (
-          "rdwatch_region"."id" = "rdwatch_siteevaluation"."region_id"
+        INNER JOIN "rdwatch_modelrun" ON (
+          "rdwatch_region"."id" = "rdwatch_modelrun"."region_id"
         )
       WHERE
         (
-          "rdwatch_siteevaluation"."configuration_id" = ${modelRunId}
+          "rdwatch_modelrun"."id" = ${modelRunId}
           AND ST_Intersects(
             "rdwatch_region"."geom",
             ST_TileEnvelope(${z}, ${x}, ${y})
@@ -305,7 +304,6 @@ export async function getVectorTiles(modelRunId, z, x, y, year, randomKey) {
   }
 
   let vectorTileData = await redisClient.get(commandOptions({ returnBuffers: true }), cacheKey);
-  vectorTileData = null;
 
   if (logging) {
     if (vectorTileData) {

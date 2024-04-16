@@ -14,6 +14,8 @@ const filter = ref('');
 watch(filter, () => {
     emit("update:modelValue", filter.value);
 });
+
+
 </script>
 
 <template>

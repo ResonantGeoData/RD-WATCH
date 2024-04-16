@@ -9,6 +9,7 @@ import ImagesDownloadDialog from "../ImagesDownloadDialog.vue";
 import SiteListCard from "./SiteListCard.vue";
 import { SiteDisplay } from "./SiteListCard.vue";
 import SiteListHeader from "./SiteListHeader.vue";
+import SiteListFilter from "./SiteListFilter.vue";
 import { state } from "../../store";
 
 const props = defineProps<{
@@ -195,8 +196,10 @@ watch(filter, () => {
 </script>
 
 <template>
-  <v-card class="pb-5">
-    <v-card-title><h5>Site Models</h5></v-card-title>
+  <v-card>
+    <v-card-title>
+      <h5>Site Models <SiteListFilter /></h5>
+    </v-card-title>
     <site-list-header v-model="filter" />
     <div class="proposal-list">
       <div
@@ -249,7 +252,7 @@ watch(filter, () => {
   z-index: 2;
   background-color: white;
   overflow-y: auto;
-  max-height: calc(100vh - 150px);
+  max-height: calc(100vh - 125px);
 }
 
 </style>

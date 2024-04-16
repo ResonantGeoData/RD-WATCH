@@ -82,7 +82,7 @@ onMounted(() => {
         class="fill-height site-list"
         style="overflow-y: hidden;"
       >
-        <v-row dense>
+        <v-row dense class="pa-0 ma-0">
           <v-col
             class="navcolumn"
           >
@@ -111,4 +111,10 @@ onMounted(() => {
     right: 0px;
     z-index: 2;
 }
+.navcolumn {
+    display: flex;
+    flex-flow: column;
+    height: 100vh;
+}
+
 </style>

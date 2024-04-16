@@ -36,7 +36,7 @@ def update_annotation_proposal_site(
         FIELDS = ('label', 'start_date', 'end_date', 'score', 'status', 'notes', 'geom')
         for field in filter(lambda f: f in data_dict, FIELDS):
             if field == 'geom':
-                proposal_site_update['geometry'] = GEOSGeometry(
+                proposal_site_update.geometry = GEOSGeometry(
                     json.dumps(data_dict[field])
                 ).wkt
             elif field == 'label':

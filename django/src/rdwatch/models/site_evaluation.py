@@ -175,7 +175,10 @@ class SiteEvaluation(models.Model):
             # If the region doens't have a geometry,
             # the one from the region model is used.
             ModelRun.objects.filter(pk=configuration.pk).update(
-                region=get_or_create_region(region_feature.properties.region_id)[0]
+                region=get_or_create_region(
+                    region_feature.properties.region_id,
+                    region_feature.parsed_geometry,
+                )[0]
             )
 
             for feature in region_model.site_summary_features:

@@ -6,77 +6,6 @@ from ninja.testing import TestClient
 from rdwatch.models import ModelRun, SiteEvaluation, SiteObservation
 
 
-@pytest.fixture
-def site_model_json() -> dict[str, Any]:
-    """A valid site model JSON."""
-    return {
-        'features': [
-            {
-                'geometry': {
-                    'type': 'Polygon',
-                    'coordinates': [
-                        [
-                            [55.505, 24.47],
-                            [55.13, 24.97],
-                            [55.596, 24.326],
-                            [55.901, 24.222],
-                            [55.505, 24.47],
-                        ]
-                    ],
-                },
-                'properties': {
-                    'mgrs': '40RBN',
-                    'model_content': 'proposed',
-                    'originator': 'kit',
-                    'region_id': 'US_R000',
-                    'score': 0.85,
-                    'site_id': 'US_R000_0000',
-                    'status': 'system_confirmed',
-                    'type': 'site',
-                    'version': '0.0.0',
-                },
-                'type': 'Feature',
-            },
-            {
-                'geometry': {
-                    'coordinates': [
-                        [
-                            [
-                                [55.413, 24.8625],
-                                [55.5505, 24.863],
-                                [55.4901, 24.864],
-                                [55.3596, 24.863],
-                                [55.413, 24.8625],
-                            ]
-                        ],
-                        [
-                            [
-                                [55.413, 24.8625],
-                                [55.5505, 24.863],
-                                [55.4901, 24.864],
-                                [55.3596, 24.863],
-                                [55.413, 24.8625],
-                            ]
-                        ],
-                    ],
-                    'type': 'MultiPolygon',
-                },
-                'properties': {
-                    'current_phase': 'Site Preparation, Site Preparation',
-                    'is_occluded': 'False, False',
-                    'is_site_boundary': 'True, True',
-                    'score': 0.67,
-                    'observation_date': '2010-01-01',
-                    'sensor_name': 'WorldView',
-                    'type': 'observation',
-                },
-                'type': 'Feature',
-            },
-        ],
-        'type': 'FeatureCollection',
-    }
-
-
 @pytest.mark.django_db(databases=['default'])
 def test_site_model_ingest(
     site_model_json: dict[str, Any],
@@ -169,3 +98,19 @@ def test_site_model_ingest_malformed_geometry(
             }
         ]
     }
+
+
+@pytest.mark.django_db
+def test_region_model_ingest(
+    region_model_json: dict[str, Any],
+    test_client: TestClient,
+    model_run: ModelRun,
+) -> None:
+    res = test_client.post(
+        f'/model-runs/{model_run.id}/region-model/',
+        json=region_model_json,
+    )
+
+    assert res.status_code == 201
+    assert SiteEvaluation.objects.count() == 1
+    assert res.json() == [str(SiteEvaluation.objects.first().id)], res.json()

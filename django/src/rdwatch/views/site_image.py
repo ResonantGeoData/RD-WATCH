@@ -21,10 +21,10 @@ router = Router()
 class SiteImageSchema(Schema):
     timestamp: int
     source: str
-    cloudcover: float
+    cloudcover: float | None
     image: str
     observation_id: UUID4 | None
-    percent_black: float
+    percent_black: float | None
     bbox: BoundingBoxSchema
     image_dimensions: list[int]
     aws_location: str
@@ -63,10 +63,10 @@ class SiteImageResponse(Schema):
 
 @router.get('/{id}/', response=SiteImageResponse)
 def site_images(request: HttpRequest, id: UUID4):
-    if not SiteEvaluation.objects.filter(pk=id).exists():
-        raise Http404()
-    else:
-        site_eval_obj = SiteEvaluation.objects.get(pk=id)
+    site_eval_obj = get_object_or_404(
+        SiteEvaluation.objects.select_related('configuration'), pk=id
+    )
+
     image_queryset = (
         SiteImage.objects.filter(site__id=id)
         .order_by('timestamp')
@@ -122,7 +122,7 @@ def site_images(request: HttpRequest, id: UUID4):
     # get the same Region_#### for ground truth if it exists
     ground_truth = (
         SiteEvaluation.objects.filter(
-            region=site_eval_obj.region,
+            configuration__region=site_eval_obj.configuration.region,
             number=site_eval_obj.number,
             configuration__performer__slug='TE',
             score=1,

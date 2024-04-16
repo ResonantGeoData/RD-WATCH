@@ -9,6 +9,7 @@ from pydantic import UUID4, constr  # type: ignore
 
 from django.contrib.postgres.aggregates import JSONBAgg
 from django.core.cache import cache
+from django.db import transaction
 from django.db.models import (
     Avg,
     Case,
@@ -26,18 +27,18 @@ from django.db.models import (
     When,
 )
 from django.db.models.functions import Coalesce, JSONObject
-from django.http import Http404, HttpRequest, HttpResponse
+from django.http import HttpRequest, HttpResponse, Http404
 from django.shortcuts import get_object_or_404
 
 from rdwatch.db.functions import BoundingBox, BoundingBoxGeoJSON, ExtractEpoch
 from rdwatch.models import (
     AnnotationExport,
     ModelRun,
-    Region,
     SatelliteFetching,
     SiteEvaluation,
     lookups,
 )
+from rdwatch.models.region import get_or_create_region
 from rdwatch.schemas import RegionModel, SiteModel
 from rdwatch.schemas.common import TimeRangeSchema
 from rdwatch.tasks import (
@@ -53,7 +54,7 @@ router = RouterPaginated()
 
 class ModelRunFilterSchema(FilterSchema):
     performer: list[str] | None = Field(q='performer_slug')
-    region: str | None
+    region: str | None = Field(q='region__name')
     proposal: str | None = Field(q='proposal', ignore_none=False)
     groundtruth: bool | None
 
@@ -77,6 +78,7 @@ class ModelRunFilterSchema(FilterSchema):
 class ModelRunWriteSchema(Schema):
     performer: str
     title: constr(max_length=1000)
+    region: constr(regex=r'^[A-Z]{2}_[RCST][\dx]{3}$')  # noqa: F722
     parameters: dict
     expiration_time: int | None
     evaluation: int | None = None
@@ -107,7 +109,7 @@ class ModelRunDetailSchema(Schema):
     id: UUID4
     title: str
     eval: str | None = None
-    region: str | None = None
+    region: str = Field(alias='region_name')
     performer: PerformerSchema
     parameters: dict
     numsites: int | None = 0
@@ -128,7 +130,7 @@ class ModelRunListSchema(Schema):
     id: UUID4
     title: str
     eval: str | None = None
-    region: str | None = None
+    region: str = Field(..., alias='region_name')
     performer: PerformerSchema
     parameters: dict
     numsites: int | None = 0
@@ -174,7 +176,8 @@ def get_queryset():
         # Get minimum score and performer so that we can tell which runs
         # are ground truth
         .annotate(
-            min_score=Min('evaluations__score'), performer_slug=F('performer__slug')
+            min_score=Min('evaluations__score'),
+            performer_slug=F('performer__slug'),
         )
         # Label ground truths as such. A ground truth is defined as a model run
         # with a min_score of 1 and a performer of "TE"
@@ -187,12 +190,12 @@ def get_queryset():
         # Order queryset so that ground truths are first
         .order_by('groundtruth', '-created')
         .alias(
-            region_id=F('evaluations__region_id'),
             evaluation_configuration=F('evaluations__configuration'),
             proposal_val=F('proposal'),
         )
         .values()
         .annotate(
+            region_name=F('region__name'),
             performer=Subquery(  # prevents including "performer" in slow GROUP BY
                 lookups.Performer.objects.filter(pk=OuterRef('performer_id')).values(
                     json=JSONObject(
@@ -202,9 +205,6 @@ def get_queryset():
                     )
                 ),
                 output_field=JSONField(),
-            ),
-            region=Subquery(  # prevents including "region" in slow GROUP BY
-                Region.objects.filter(pk=OuterRef('region_id')).values('name')[:1],
             ),
             downloading=Coalesce(
                 Subquery(
@@ -234,7 +234,7 @@ def get_queryset():
                         ground_truths=Subquery(
                             ModelRun.objects.filter(
                                 performer__slug='TE',
-                                evaluations__region_id=OuterRef('region_id'),
+                                region_id=OuterRef('region_id'),
                                 proposal=None,
                             ).values_list('pk')[:1]
                         ),
@@ -282,7 +282,7 @@ class ModelRunPagination(PageNumberPagination):
             }
             if filters.region:
                 aggregate_kwargs['bbox'] = Coalesce(
-                    BoundingBoxGeoJSON('evaluations__region__geom'),
+                    BoundingBoxGeoJSON('region__geom'),
                     BoundingBoxGeoJSON('evaluations__geom'),
                 )
 
@@ -301,15 +301,18 @@ def create_model_run(
     request: HttpRequest,
     model_run_data: ModelRunWriteSchema,
 ):
-    model_run = ModelRun.objects.create(
-        title=model_run_data.title,
-        performer=model_run_data.performer,
-        parameters=model_run_data.parameters,
-        expiration_time=model_run_data.expiration_time,
-        evaluation=model_run_data.evaluation,
-        evaluation_run=model_run_data.evaluation_run,
-        proposal=model_run_data.proposal,
-    )
+    with transaction.atomic():
+        region = get_or_create_region(model_run_data.region)[0]
+        model_run = ModelRun.objects.create(
+            title=model_run_data.title,
+            performer=model_run_data.performer,
+            region=region,
+            parameters=model_run_data.parameters,
+            expiration_time=model_run_data.expiration_time,
+            evaluation=model_run_data.evaluation,
+            evaluation_run=model_run_data.evaluation_run,
+            proposal=model_run_data.proposal,
+        )
     return 200, {
         'id': model_run.pk,
         'title': model_run.title,
@@ -318,6 +321,7 @@ def create_model_run(
             'team_name': model_run.performer.description,
             'short_code': model_run.performer.slug,
         },
+        'region_name': region.name,
         'parameters': model_run.parameters,
         'numsites': 0,
         'created': model_run.created,
@@ -420,35 +424,14 @@ def cancel_generate_images(request: HttpRequest, model_run_id: UUID4):
     return 202, True
 
 
-def get_region(model_run_id: UUID4):
-    return (
-        ModelRun.objects.select_related('evaluations')
-        .filter(pk=model_run_id)
-        .alias(
-            region_id=F('evaluations__region_id'),
-        )
-        .annotate(
-            json=JSONObject(
-                region=Subquery(  # prevents including "region" in slow GROUP BY
-                    Region.objects.filter(pk=OuterRef('region_id')).values('name')[:1],
-                    output_field=JSONField(),
-                ),
-            ),
-        )
-    )
-
-
 def get_model_run_details(model_run_id: UUID4):
     return (
         ModelRun.objects.select_related('evaluations')
         .filter(pk=model_run_id)
-        .alias(region_id=F('evaluations__region_id'), version=F('evaluations__version'))
+        .alias(version=F('evaluations__version'))
         .annotate(
             json=JSONObject(
-                region=Subquery(  # prevents including "region" in slow GROUP BY
-                    Region.objects.filter(pk=OuterRef('region_id')).values('name')[:1],
-                    output_field=JSONField(),
-                ),
+                region=F('region'),
                 performer=Subquery(  # prevents including "performer" in slow GROUP BY
                     lookups.Performer.objects.filter(
                         pk=OuterRef('performer_id')

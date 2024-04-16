@@ -472,8 +472,7 @@ def get_proposals(request: HttpRequest, model_run_id: UUID4):
     region = get_object_or_404(ModelRun, pk=model_run_id).region
 
     query = get_proposals_query(model_run_id)
-    model_run = region[0]
-    query['region'] = model_run['region']
+    query['region'] = region.name
     return 200, query
 
 

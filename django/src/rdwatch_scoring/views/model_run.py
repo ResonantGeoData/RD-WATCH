@@ -101,7 +101,7 @@ def get_queryset():
                 'evaluation_run_number',
                 output_field=CharField(),
             ),
-            region=F('region'),
+            region_name=F('region'),
             performer_slug=F('performer'),
             performer=JSONObject(
                 id=0, team_name=F('performer'), short_code=F('performer')
@@ -173,6 +173,7 @@ def list_model_runs(
         .values()
         .annotate(
             id=F('uuid'),
+            region_name=F('region'),
             title=Concat(
                 Value('Eval '),
                 'evaluation_number',

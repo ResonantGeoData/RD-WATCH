@@ -40,13 +40,13 @@ def update_annotation_proposal_site(
                     json.dumps(data_dict[field])
                 ).wkt
             elif field == 'label':
-                proposal_site_update['status'] = data_dict[field]
+                proposal_site_update.status = data_dict[field]
             elif field == 'status':
-                proposal_site_update['proposal_status'] = data_dict[field]
+                proposal_site_update.proposal_status = data_dict[field]
             elif field == 'notes':
-                proposal_site_update['comments'] = data_dict[field]
+                proposal_site_update.comments = data_dict[field]
             else:
-                proposal_site_update[field] = data_dict[field]
+                setattr(proposal_site_update, field, data_dict[field])
 
         proposal_site_update.save()
 

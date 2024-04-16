@@ -53,6 +53,7 @@ def _upload_model_run(
     print(f'Creating model run for {region}')
     post_model_data = {
         'performer': 'TE',
+        'region': region,
         'title': 'Ground Truth',
         'parameters': {},
     }

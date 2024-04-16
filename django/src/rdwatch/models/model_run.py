@@ -28,6 +28,14 @@ class ModelRun(models.Model):
         help_text='Time relative to creation that this model run should be deleted.',
     )
 
+    region = models.ForeignKey(
+        to='Region',
+        on_delete=models.PROTECT,
+        help_text='The region this model run belongs to',
+        db_index=True,
+        related_name='model_runs',
+    )
+
     class ProposalStatus(models.TextChoices):
         PROPOSAL = (
             'PROPOSAL'  # proposal is a proposal awaiting Adjudication/Confirmation

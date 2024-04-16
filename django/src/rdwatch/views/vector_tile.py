@@ -115,7 +115,7 @@ def vector_tile(request: HttpRequest, model_run_id: UUID4, z: int, x: int, y: in
                 timemax=ExtractEpoch('end_date'),
                 performer_id=F('configuration__performer_id'),
                 performer_name=F('configuration__performer__slug'),
-                region=F('region__name'),
+                region=F('configuration__region__name'),
                 groundtruth=Case(
                     When(
                         Q(configuration__performer__slug='TE') & Q(score=1),
@@ -162,7 +162,7 @@ def vector_tile(request: HttpRequest, model_run_id: UUID4, z: int, x: int, y: in
                 ),
                 performer_id=F('siteeval__configuration__performer_id'),
                 performer_name=F('siteeval__configuration__performer__slug'),
-                region=F('siteeval__region__name'),
+                region=F('siteeval__configuration__region__name'),
                 version=F('siteeval__version'),
                 groundtruth=Case(
                     When(
@@ -180,7 +180,7 @@ def vector_tile(request: HttpRequest, model_run_id: UUID4, z: int, x: int, y: in
         ) = observations_queryset.query.sql_with_params()
 
         regions_queryset = (
-            Region.objects.filter(evaluations__configuration_id=model_run_id)
+            Region.objects.filter(model_runs__id=model_run_id)
             .filter(intersects)
             .values()
             .annotate(

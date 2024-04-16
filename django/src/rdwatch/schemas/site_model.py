@@ -1,13 +1,21 @@
 # flake8: noqa: F722
 import json
 from datetime import datetime
-from typing import Annotated, Any, Literal
+from typing import Annotated, Any, Literal, TypeAlias
 
 from ninja import Field, Schema
 from pydantic import confloat, constr, root_validator, validator
 
 from django.contrib.gis.gdal import GDALException
 from django.contrib.gis.geos import GEOSGeometry
+
+CurrentPhase: TypeAlias = Literal[
+    'No Activity',
+    'Site Preparation',
+    'Active Construction',
+    'Post Construction',
+    'Unknown',
+]
 
 
 class SiteFeatureCache(Schema):
@@ -94,18 +102,7 @@ class ObservationFeature(Schema):
     observation_date: datetime | None
     source: str | None
     sensor_name: Literal['Landsat 8', 'Sentinel-2', 'WorldView', 'Planet'] | None
-    current_phase: (
-        list[
-            Literal[
-                'No Activity',
-                'Site Preparation',
-                'Active Construction',
-                'Post Construction',
-                'Unknown',
-            ]
-        ]
-        | None
-    )
+    current_phase: list[CurrentPhase] | None
     is_occluded: list[bool] | None
     is_site_boundary: list[bool] | None
 

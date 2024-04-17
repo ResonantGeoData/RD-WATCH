@@ -60,6 +60,9 @@ django-minio-storage = "^0.5.2"
 werkzeug = "^2.3.7"
 django-debug-toolbar = "^4.2.0"
 
+[tool.poetry.group.dev]
+optional = true
+
 [tool.poetry.group.test.dependencies]
 pytest = "^8.1.1"
 pytest-django = "^4.8.0"

@@ -1,162 +1,21 @@
 import json
-import sys
 import tempfile
 from datetime import datetime
 
-from ninja import Field, FilterSchema, Query, Router, Schema
+from ninja import Router
 from pydantic import UUID4
 
-from django.conf import settings
-from django.contrib.gis.db.models.aggregates import Collect
 from django.contrib.gis.db.models.functions import Transform
 from django.contrib.gis.geos import GEOSGeometry
-from django.contrib.postgres.aggregates import JSONBAgg
-from django.core.paginator import Paginator
 from django.db import transaction
-from django.db.models import Count, Q, QuerySet
 from django.db.models.functions import JSONObject  # type: ignore
 from django.http import HttpRequest, HttpResponse
 from django.shortcuts import get_object_or_404
 
-from rdwatch.db.functions import BoundingBox, ExtractEpoch
 from rdwatch.models import SiteEvaluation, SiteEvaluationTracking, lookups
 from rdwatch.schemas import SiteEvaluationRequest
-from rdwatch.schemas.common import BoundingBoxSchema, TimeRangeSchema
-
-from .performer import PerformerSchema
 
 router = Router()
-
-
-class SiteEvaluationSchema(Schema):
-    id: int
-    site: str
-    configuration: dict
-    performer: PerformerSchema
-    score: float
-    timestamp: int | None
-    timerange: TimeRangeSchema | None
-    bbox: BoundingBoxSchema
-
-
-class SiteEvaluationListSchema(Schema):
-    count: int
-    timerange: TimeRangeSchema | None
-    status: str | None
-    bbox: BoundingBoxSchema
-    performers: list[str]
-    results: list[SiteEvaluationSchema]
-    next: str | None
-    previous: str | None
-
-
-class SiteEvaluationFilterSchema(FilterSchema):
-    performer: str | None = Field(q='configuration__performer__slug')
-    score: int | None
-    timestamp_before: str | None
-    timestamp_after: str | None
-
-    @staticmethod
-    def _filter_timestamp(date: str, query: str) -> Q:
-        parsed_date = datetime.strptime(date, '%Y-%m-%d')
-        kwargs = {}
-        kwargs[query] = parsed_date
-        return Q(**kwargs)
-
-    def filter_timestamp_before(self, value: str | None) -> Q:
-        if value is None:
-            return Q()
-        return self._filter_timestamp(value, 'timestamp__lte')
-
-    def filter_timestamp_after(self, value: str | None) -> Q:
-        if value is None:
-            return Q()
-        return self._filter_timestamp(value, 'timestamp__gte')
-
-
-@router.get('/', response=SiteEvaluationListSchema)
-def list_site_evaluations(
-    request: HttpRequest,
-    filters: SiteEvaluationFilterSchema = Query(...),  # noqa: B008
-):
-    queryset: QuerySet[SiteEvaluation] = filters.filter(
-        SiteEvaluation.objects.order_by('-timestamp')
-    )
-
-    # Overview
-    overview = queryset.annotate(
-        timerange=JSONObject(
-            min=ExtractEpoch('start_time'),
-            max=ExtractEpoch('end_date'),
-        ),
-        status='status',
-    ).aggregate(
-        count=Count('pk'),
-        bbox=BoundingBox(Collect('geom')),
-    )
-
-    overview['performers'] = list(
-        SiteEvaluation.objects.values_list(
-            'configuration__performer__slug', flat=True
-        ).distinct()
-    )
-
-    # Pagination
-    assert (
-        settings.NINJA_PAGINATION_PAGE_SIZE
-    ), 'NINJA_PAGINATION_PAGE_SIZE must be set.'
-    limit = (
-        int(request.GET.get('limit', settings.NINJA_PAGINATION_PAGE_SIZE))
-        or sys.maxsize
-    )
-    paginator = Paginator(queryset, limit)
-    page = paginator.page(request.GET.get('page', 1))
-
-    if page.has_next():
-        next_page_query_params = request.GET.copy()
-        next_page_query_params['page'] = str(page.next_page_number())
-        overview['next'] = f'{request.path}?{next_page_query_params.urlencode()}'
-    else:
-        overview['next'] = None
-
-    if page.has_previous():
-        prev_page_query_params = request.GET.copy()
-        prev_page_query_params['page'] = str(page.previous_page_number())
-        overview['previous'] = f'{request.path}?{prev_page_query_params.urlencode()}'
-    else:
-        overview['previous'] = None
-
-    # Results
-    results = page.object_list.annotate(  # type: ignore
-        timemin='start_date',
-        timemax='end_date',
-    ).aggregate(
-        results=JSONBAgg(
-            JSONObject(
-                id='pk',
-                site=JSONObject(
-                    region='region__name',
-                    number='number',
-                ),
-                configuration='configuration__parameters',
-                performer=JSONObject(
-                    id='configuration__performer__id',
-                    team_name='configuration__performer__description',
-                    short_code='configuration__performer__slug',
-                ),
-                score='score',
-                bbox=BoundingBox('geom'),
-                timestamp=ExtractEpoch('timestamp'),
-                timerange=JSONObject(
-                    min=ExtractEpoch('timemin'),
-                    max=ExtractEpoch('timemax'),
-                ),
-            ),
-            default=[],
-        ),
-    )
-
-    return overview | results
 
 
 @router.patch('/{id}/')

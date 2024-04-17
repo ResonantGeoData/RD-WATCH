@@ -31,12 +31,6 @@ class SiteEvaluation(models.Model):
         help_text='The hyper parameters used this site evaluation.',
         db_index=True,
     )
-    region = models.ForeignKey(
-        to='Region',
-        on_delete=models.PROTECT,
-        help_text='The region this site belongs to',
-        db_index=True,
-    )
     number = models.IntegerField(help_text='The site number', db_index=True)
     start_date = models.DateTimeField(
         help_text='Start date in geoJSON',
@@ -127,7 +121,6 @@ class SiteEvaluation(models.Model):
         if modified:
             configuration.save()
         with transaction.atomic():
-            region = get_or_create_region(site_feature.properties.region_id)[0]
             label = lookups.ObservationLabel.objects.get(
                 slug=site_feature.properties.status
             )
@@ -141,7 +134,6 @@ class SiteEvaluation(models.Model):
 
             site_eval = cls.objects.create(
                 configuration=configuration,
-                region=region,
                 version=site_feature.properties.version,
                 number=site_feature.properties.site_number,
                 start_date=site_feature.properties.start_date,
@@ -179,9 +171,15 @@ class SiteEvaluation(models.Model):
 
         site_evals: list[SiteEvaluation] = []
         with transaction.atomic():
-            region = get_or_create_region(
-                region_feature.properties.region_id, region_feature.parsed_geometry
-            )[0]
+            # Update the region of the configuration.
+            # If the region doens't have a geometry,
+            # the one from the region model is used.
+            ModelRun.objects.filter(pk=configuration.pk).update(
+                region=get_or_create_region(
+                    region_feature.properties.region_id,
+                    region_feature.parsed_geometry,
+                )[0]
+            )
 
             for feature in region_model.site_summary_features:
                 assert isinstance(feature.properties, SiteSummaryFeature)
@@ -192,7 +190,6 @@ class SiteEvaluation(models.Model):
 
                 site_eval = cls(
                     configuration=configuration,
-                    region=region,
                     number=feature.properties.site_number,
                     geom=geometry,
                     label=label_map[feature.properties.status],
@@ -207,7 +204,7 @@ class SiteEvaluation(models.Model):
 
     @property
     def site_id(self):
-        return f'{self.region}_{str(self.number).zfill(4)}'
+        return f'{self.configuration.region}_{str(self.number).zfill(4)}'
 
     def __str__(self):
         prf = str(self.configuration.performer)

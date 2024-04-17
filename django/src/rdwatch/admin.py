@@ -46,6 +46,7 @@ class ModelRunAdmin(admin.ModelAdmin):
     list_display = (
         'id',
         'created',
+        'region',
         'title',
         'performer',
         'parameters',
@@ -53,7 +54,7 @@ class ModelRunAdmin(admin.ModelAdmin):
         'evaluation_run',
         'expiration_time',
     )
-    list_filter = ('created', 'performer')
+    list_filter = ('created', 'performer', 'region')
 
 
 @admin.register(Region)
@@ -79,7 +80,6 @@ class SiteEvaluationAdmin(admin.ModelAdmin):
     list_display = (
         'id',
         'configuration',
-        'region',
         'number',
         'timestamp',
         'geom',
@@ -88,7 +88,7 @@ class SiteEvaluationAdmin(admin.ModelAdmin):
         'version',
     )
     list_filter = ('timestamp',)
-    raw_id_fields = ('configuration', 'region', 'label')
+    raw_id_fields = ('configuration', 'label')
 
 
 @admin.register(SiteImage)

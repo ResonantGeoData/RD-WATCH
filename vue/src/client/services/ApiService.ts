@@ -164,20 +164,6 @@ export class ApiService {
   }
 
   /**
-   * @returns SiteEvaluationList
-   * @throws ApiError
-   */
-  public static getSiteEvaluations(
-    query: QueryArguments = {}
-  ): CancelablePromise<SiteEvaluationList> {
-    return __request(OpenAPI, {
-      method: "GET",
-      url: `${this.getApiPrefix()}/evaluations/`,
-      query,
-    });
-  }
-
-  /**
    * @param id
    * @returns SiteObservationList
    * @throws ApiError

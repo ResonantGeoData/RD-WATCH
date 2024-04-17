@@ -31,7 +31,7 @@ class ScoringRouter:
         """
         if model in RGD_DB_MODELS or model._meta.app_label == 'rdwatch':
             return 'default'
-        return None
+        return 'scoringdb'
 
     def allow_relation(
         self, obj1: type[Model], obj2: type[Model], **hints

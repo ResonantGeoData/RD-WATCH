@@ -77,6 +77,7 @@ url = "https://download.pytorch.org/whl/cpu"
 priority = "explicit"
 
 
+# Linting/formatting/typing configuration
 [tool.black]
 skip-string-normalization = true
 

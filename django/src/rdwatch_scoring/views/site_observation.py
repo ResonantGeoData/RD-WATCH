@@ -45,9 +45,11 @@ class GenerateImagesSchema(Schema):
 
 
 @router.get('/{evaluation_id}/', response={200: SiteObservationsListSchema})
-def site_observations(request: HttpRequest, evaluation_id: UUID4):
-    proposal = True if request.GET.get('proposal') else False
-
+def site_observations(
+    request: HttpRequest,
+    evaluation_id: UUID4,
+    proposal: Literal['PROPOSAL', 'APPROVED'] | None,
+):
     if proposal:
         site_db_model = AnnotationProposalSite
         site_db_model_cols = {'region__geometry': 'region_id__geometry'}
@@ -105,14 +107,16 @@ def site_observations(request: HttpRequest, evaluation_id: UUID4):
         results=JSONBAgg(
             JSONObject(
                 id='pk',
-                label=Func(
-                    F(observation_db_model_cols['phase']),
-                    Value(', '),
-                    function='array_to_string',
-                    output=CharField(),
-                )
-                if proposal
-                else observation_db_model_cols['phase'],
+                label=(
+                    Func(
+                        F(observation_db_model_cols['phase']),
+                        Value(', '),
+                        function='array_to_string',
+                        output=CharField(),
+                    )
+                    if proposal
+                    else observation_db_model_cols['phase']
+                ),
                 score='score',
                 # Default to worldview if sensor is NULL.
                 # TODO: what is the expected behavior here?

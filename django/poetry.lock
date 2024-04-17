@@ -842,29 +842,6 @@ django = "*"
 typing-extensions = "*"
 
 [[package]]
-name = "djangorestframework-stubs"
-version = "3.14.5"
-description = "PEP-484 stubs for django-rest-framework"
-optional = false
-python-versions = ">=3.8"
-files = [
-    {file = "djangorestframework-stubs-3.14.5.tar.gz", hash = "sha256:5dd6f638aa5291fb7863e6166128a6ed20bf4986e2fc5cf334e6afc841797a09"},
-    {file = "djangorestframework_stubs-3.14.5-py3-none-any.whl", hash = "sha256:43d788fd50cda49b922cd411e59c5b8cdc3f3de49c02febae12ce42139f0269b"},
-]
-
-[package.dependencies]
-django-stubs = ">=4.2.7"
-requests = ">=2.0.0"
-types-PyYAML = ">=5.4.3"
-types-requests = ">=0.1.12"
-typing-extensions = ">=3.10.0"
-
-[package.extras]
-compatible-mypy = ["django-stubs[compatible-mypy]", "mypy (>=1.7.0,<1.8.0)"]
-coreapi = ["coreapi (>=2.0.0)"]
-markdown = ["types-Markdown (>=0.1.5)"]
-
-[[package]]
 name = "filelock"
 version = "3.13.1"
 description = "A platform independent file lock."
@@ -2752,20 +2729,6 @@ files = [
 ]
 
 [[package]]
-name = "types-requests"
-version = "2.31.0.20240311"
-description = "Typing stubs for requests"
-optional = false
-python-versions = ">=3.8"
-files = [
-    {file = "types-requests-2.31.0.20240311.tar.gz", hash = "sha256:b1c1b66abfb7fa79aae09097a811c4aa97130eb8831c60e47aee4ca344731ca5"},
-    {file = "types_requests-2.31.0.20240311-py3-none-any.whl", hash = "sha256:47872893d65a38e282ee9f277a4ee50d1b28bd592040df7d1fdaffdf3779937d"},
-]
-
-[package.dependencies]
-urllib3 = ">=2"
-
-[[package]]
 name = "typing-extensions"
 version = "4.10.0"
 description = "Backported and Experimental Type Hints for Python 3.8+"
@@ -2877,4 +2840,4 @@ watchdog = ["watchdog (>=2.3)"]
 [metadata]
 lock-version = "2.0"
 python-versions = ">=3.11.8,<4"
-content-hash = "1e28b7fe8eca1564957c3f08d219264f432ae1e6dd94253b9860ca4c2b412803"
+content-hash = "f0926bf233c475284239b942b5da0fe17475e1808909c425114b99d7d5f91677"

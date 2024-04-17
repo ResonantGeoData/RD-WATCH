@@ -76,13 +76,14 @@ name = "pytorch"
 url = "https://download.pytorch.org/whl/cpu"
 priority = "explicit"
 
+
 [tool.black]
 skip-string-normalization = true
 
 [tool.isort]
 profile = "black"
 known_first_party = ["rdwatch"]
-known_django=["django", "rest_framework"]
+known_django=["django"]
 sections=["FUTURE", "STDLIB", "THIRDPARTY", "DJANGO", "FIRSTPARTY", "LOCALFOLDER"]
 
 

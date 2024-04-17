@@ -18,7 +18,7 @@ router = Router()
 def update_annotation_proposal_site(
     request: HttpRequest, uuid: UUID4, data: SiteEvaluationRequest
 ):
-    with transaction.atomic():
+    with transaction.atomic(using='scoringdb'):
         proposal_site_update = (
             AnnotationProposalSiteLog.objects.select_for_update()
             .filter(uuid=uuid)

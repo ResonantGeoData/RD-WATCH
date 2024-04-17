@@ -51,14 +51,15 @@ torch = {version = "^2.2.2+cpu", source = "pytorch"}
 torchvision = {version = "^0.17.2+cpu", source = "pytorch"}
 
 [tool.poetry.group.dev.dependencies]
-django-stubs = "^4.2.0"
-djangorestframework-stubs = "^3.14.0"
-taskipy = "^1.10.4"
-pre-commit = "^3.3.1"
-tox = "^4.5.1"
-django-minio-storage = "^0.5.2"
-werkzeug = "^2.3.7"
-django-debug-toolbar = "^4.2.0"
+django-stubs = "^4.2.7"
+pre-commit = "^3.7.0"
+tox = "^4.14.2"
+django-minio-storage = "^0.5.7"
+werkzeug = "^3.0.2"
+django-debug-toolbar = "^4.3.0"
+
+[tool.poetry.group.dev]
+optional = true
 
 [tool.poetry.group.test.dependencies]
 pytest = "^8.1.1"
@@ -75,16 +76,15 @@ name = "pytorch"
 url = "https://download.pytorch.org/whl/cpu"
 priority = "explicit"
 
-[tool.taskipy.tasks]
-"test" = "tox"
 
+# Linting/formatting/typing configuration
 [tool.black]
 skip-string-normalization = true
 
 [tool.isort]
 profile = "black"
-known_first_party = ["rdwatch"]
-known_django=["django", "rest_framework"]
+known_first_party = ["rdwatch", "rdwatch_scoring"]
+known_django=["django"]
 sections=["FUTURE", "STDLIB", "THIRDPARTY", "DJANGO", "FIRSTPARTY", "LOCALFOLDER"]
 
 

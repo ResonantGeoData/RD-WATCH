@@ -8,7 +8,6 @@ from ninja.schema import validator
 from pydantic import UUID4, constr  # type: ignore
 
 from django.contrib.postgres.aggregates import JSONBAgg
-from django.core.cache import cache
 from django.db import transaction
 from django.db.models import (
     Avg,
@@ -260,38 +259,21 @@ class ModelRunPagination(PageNumberPagination):
         filters: ModelRunFilterSchema,
         **params,
     ) -> dict[str, Any]:
-        # TODO: remove caching after model runs endpoint is
-        # refactored to be more efficient.
-        model_runs = None
-        cache_key = _get_model_runs_cache_key(filters.dict() | pagination.dict())
-        if (
-            'proposal' not in filters.dict().keys()
-        ):  # adjudicated status can't be cached for proposals
-            model_runs = cache.get(cache_key)
+        qs = super().paginate_queryset(queryset, pagination, **params)
 
-        # If we have a cache miss, execute the query and save the results to cache
-        # before returning.
-        if model_runs is None:
-            qs = super().paginate_queryset(queryset, pagination, **params)
-
-            aggregate_kwargs = {
-                'timerange': JSONObject(
-                    min=ExtractEpoch(Min('evaluations__start_date')),
-                    max=ExtractEpoch(Max('evaluations__end_date')),
-                ),
-            }
-            if filters.region:
-                aggregate_kwargs['bbox'] = Coalesce(
-                    BoundingBoxGeoJSON('region__geom'),
-                    BoundingBoxGeoJSON('evaluations__geom'),
-                )
-
-            model_runs = qs | queryset.aggregate(**aggregate_kwargs)
-            cache.set(
-                key=cache_key,
-                value=model_runs,
-                timeout=timedelta(days=30).total_seconds(),
+        aggregate_kwargs = {
+            'timerange': JSONObject(
+                min=ExtractEpoch(Min('evaluations__start_date')),
+                max=ExtractEpoch(Max('evaluations__end_date')),
+            ),
+        }
+        if filters.region:
+            aggregate_kwargs['bbox'] = Coalesce(
+                BoundingBoxGeoJSON('region__geom'),
+                BoundingBoxGeoJSON('evaluations__geom'),
             )
+
+        model_runs = qs | queryset.aggregate(**aggregate_kwargs)
 
         return model_runs
 
@@ -327,21 +309,6 @@ def create_model_run(
         'created': model_run.created,
         'expiration_time': model_run.expiration_time,
     }
-
-
-def _get_model_runs_cache_key(params: dict) -> str:
-    """Generate a cache key for the model runs listing endpoint."""
-    most_recent_evaluation = ModelRun.objects.aggregate(
-        latest_eval=Max('evaluations__timestamp')
-    )['latest_eval']
-
-    return '|'.join(
-        [
-            ModelRun.__name__,
-            str(most_recent_evaluation),
-            *[f'{key}={value}' for key, value in params.items()],
-        ]
-    ).replace(' ', '_')
 
 
 @router.get('/', response={200: list[ModelRunListSchema]})

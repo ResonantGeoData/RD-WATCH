@@ -1,5 +1,4 @@
 import json
-from datetime import datetime
 
 from ninja import Router
 from pydantic import UUID4
@@ -7,6 +6,7 @@ from pydantic import UUID4
 from django.contrib.gis.geos import GEOSGeometry
 from django.db import transaction
 from django.http import Http404, HttpRequest
+from django.utils import timezone
 
 from rdwatch.schemas import SiteEvaluationRequest
 from rdwatch_scoring.models import AnnotationProposalSiteLog
@@ -18,9 +18,10 @@ router = Router()
 def update_annotation_proposal_site(
     request: HttpRequest, uuid: UUID4, data: SiteEvaluationRequest
 ):
-    with transaction.atomic():
+    with transaction.atomic(using='scoringdb'):
         proposal_site_update = (
-            AnnotationProposalSiteLog.objects.filter(uuid=uuid)
+            AnnotationProposalSiteLog.objects.select_for_update()
+            .filter(uuid=uuid)
             .order_by('-timestamp')
             .first()
         )
@@ -29,7 +30,7 @@ def update_annotation_proposal_site(
             raise Http404()
 
         proposal_site_update.serial_id = None
-        proposal_site_update.timestamp = datetime.utcnow()
+        proposal_site_update.timestamp = timezone.now()
 
         data_dict = data.dict(exclude_unset=True)
 

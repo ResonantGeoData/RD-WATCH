@@ -1,4 +1,5 @@
 import logging
+from typing import Literal
 
 from ninja import Router
 from pydantic import UUID4
@@ -27,9 +28,9 @@ router = Router()
 
 
 @router.get('/{id}/', response=SiteImageResponse)
-def site_images(request: HttpRequest, id: UUID4):
-    proposal = True if request.GET.get('proposal') else False
-
+def site_images(
+    request: HttpRequest, id: UUID4, proposal: Literal['PROPOSAL', 'APPROVED'] | None
+):
     if proposal:
         observations = (
             AnnotationProposalObservation.objects.values('observation_date', 'geometry')

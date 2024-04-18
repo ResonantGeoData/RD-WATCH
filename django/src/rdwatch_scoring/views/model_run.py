@@ -35,7 +35,7 @@ from django.db.models.functions import (
     NullIf,
     Substr,
 )
-from django.http import Http404, HttpRequest
+from django.http import HttpRequest
 from django.shortcuts import get_object_or_404
 
 from rdwatch.db.functions import BoundingBox, ExtractEpoch
@@ -224,12 +224,13 @@ def get_queryset_proposal():
 
 
 def list_annotation_proposal_sets(
-    request: HttpRequest, filters: ModelRunFilterSchema = Query(...)  # noqa: B008
+    request: HttpRequest,
+    filters: ModelRunFilterSchema,  # noqa: B008
 ):
     page_size: int = 10  # TODO: use settings.NINJA_PAGINATION_PER_PAGE?
     page = int(request.GET.get('page', 1))
 
-    qs = filters.filter(AnnotationProposalSet.objects.all().order_by(F('uuid')))
+    qs = filters.filter(AnnotationProposalSet.objects.all().order_by('uuid'))
 
     ids = qs[((page - 1) * page_size) : (page * page_size)].values_list(
         'uuid', flat=True
@@ -260,7 +261,7 @@ def list_annotation_proposal_sets(
         .values()
         .annotate(
             id=F('uuid'),
-            region=F('region_id'),
+            region_name=F('region_id'),
             title=Concat(
                 Value('Proposal '),
                 'originator',
@@ -343,13 +344,14 @@ def list_annotation_proposal_sets(
 @router.get('/', response={200: ModelRunPagination.Output})
 def list_model_runs(
     request: HttpRequest,
+    proposal: Literal['PROPOSAL', 'APPROVED'] | None,
+    page: int = 1,
     filters: ModelRunFilterSchema = Query(...),  # noqa: B008
 ):
-    if request.GET.get('proposal'):
+    if proposal:
         return list_annotation_proposal_sets(request, filters)
 
     page_size: int = 10  # TODO: use settings.NINJA_PAGINATION_PER_PAGE?
-    page = int(request.GET.get('page', 1))
 
     qs = filters.filter(
         EvaluationRun.objects.all().order_by(
@@ -476,8 +478,9 @@ def list_model_runs(
 
 
 @router.get('/{id}/', response={200: ModelRunDetailSchema})
-def get_model_run(request: HttpRequest, id: UUID4):
-    proposal = True if request.GET.get('proposal') else False
+def get_model_run(
+    request: HttpRequest, id: UUID4, proposal: Literal['PROPOSAL', 'APPROVED'] | None
+):
     if proposal:
         data = get_object_or_404(get_queryset_proposal(), id=id)
     else:
@@ -494,9 +497,9 @@ def get_model_run(request: HttpRequest, id: UUID4):
 def generate_images(
     request: HttpRequest,
     uuid: UUID4,
+    proposal: Literal['PROPOSAL', 'APPROVED'] | None,
     params: GenerateImagesSchema = Query(...),  # noqa: B008
 ):
-    proposal = True if request.GET.get('proposal') else False
     scalVal = params.scale
     if params.scale == 'custom':
         scalVal = params.scaleNum
@@ -518,9 +521,9 @@ def generate_images(
     '/{uuid}/cancel-generate-images/',
     response={202: bool, 409: str, 404: str},
 )
-def cancel_generate_images(request: HttpRequest, uuid: UUID4):
-    proposal = True if request.GET.get('proposal') else False
-
+def cancel_generate_images(
+    request: HttpRequest, uuid: UUID4, proposal: Literal['PROPOSAL', 'APPROVED'] | None
+):
     if proposal:
         get_object_or_404(AnnotationProposalSet, uuid=uuid)
     else:
@@ -637,11 +640,12 @@ def get_proposals_query(annotation_proposal_set_uuid: UUID4):
 
 @router.get('/{annotation_proposal_set_uuid}/proposals/')
 def get_proposals(request: HttpRequest, annotation_proposal_set_uuid: UUID4):
-    region = get_region(annotation_proposal_set_uuid).values_list('json', flat=True)
-    if not region.exists():
-        raise Http404()
+    region = get_object_or_404(
+        Region,
+        annotationproposalset=annotation_proposal_set_uuid,
+    )
 
     query = get_proposals_query(annotation_proposal_set_uuid)
-    model_run = region[0]
-    query['region'] = model_run['region']
+    query['region'] = region.id
+
     return 200, query

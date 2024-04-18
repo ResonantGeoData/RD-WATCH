@@ -29,9 +29,9 @@ class ScoringRouter:
         """
         Attempts to write scoringdb models go to auth_db.
         """
-        if model in RGD_DB_MODELS or model._meta.app_label == 'rdwatch':
-            return 'default'
-        return None
+        if model not in RGD_DB_MODELS and model._meta.app_label == 'rdwatch_scoring':
+            return 'scoringdb'
+        return 'default'
 
     def allow_relation(
         self, obj1: type[Model], obj2: type[Model], **hints

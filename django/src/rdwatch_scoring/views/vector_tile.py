@@ -114,6 +114,7 @@ def vector_tile_proposal(
             .values()
             .annotate(
                 id=F('uuid'),
+                uuid=F('uuid'),  # used for mouse clicking
                 mvtgeom=mvtgeom,
                 configuration_id=F('annotation_proposal_set_uuid'),
                 configuration_name=ExpressionWrapper(

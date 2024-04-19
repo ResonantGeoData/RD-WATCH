@@ -184,7 +184,7 @@ def get_queryset_proposal():
     return (
         AnnotationProposalSet.objects.values().annotate(
             id=F('uuid'),
-            region=F('region_id'),
+            region_name=F('region_id'),
             title=Concat(
                 Value('Proposal '),
                 'originator',
@@ -344,7 +344,7 @@ def list_annotation_proposal_sets(
 @router.get('/', response={200: ModelRunPagination.Output})
 def list_model_runs(
     request: HttpRequest,
-    proposal: Literal['PROPOSAL', 'APPROVED'] | None,
+    proposal: Literal['PROPOSAL', 'APPROVED', None] = None,
     page: int = 1,
     filters: ModelRunFilterSchema = Query(...),  # noqa: B008
 ):
@@ -479,7 +479,9 @@ def list_model_runs(
 
 @router.get('/{id}/', response={200: ModelRunDetailSchema})
 def get_model_run(
-    request: HttpRequest, id: UUID4, proposal: Literal['PROPOSAL', 'APPROVED'] | None
+    request: HttpRequest,
+    id: UUID4,
+    proposal: Literal['PROPOSAL', 'APPROVED', None] = None,
 ):
     if proposal:
         data = get_object_or_404(get_queryset_proposal(), id=id)

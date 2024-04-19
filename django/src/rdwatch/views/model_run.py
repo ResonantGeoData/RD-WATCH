@@ -16,7 +16,6 @@ from django.db.models import (
     Exists,
     F,
     Func,
-    JSONField,
     Max,
     Min,
     OuterRef,
@@ -52,7 +51,7 @@ router = RouterPaginated()
 
 
 class ModelRunFilterSchema(FilterSchema):
-    performer: list[str] | None = Field(q='performer_slug')
+    performer: list[str] | None
     region: str | None = Field(q='region__name')
     proposal: str | None = Field(q='proposal', ignore_none=False)
     groundtruth: bool | None
@@ -62,14 +61,14 @@ class ModelRunFilterSchema(FilterSchema):
             return Q()
         performer_q = Q()
         for performer_slug in value:
-            performer_q |= Q(performer_slug=performer_slug)
+            performer_q |= Q(performer__slug=performer_slug)
         return performer_q
 
     def filter_groundtruth(self, value: bool | None) -> Q:
         if not value:
             return Q()
         # Filter for ground_truth performer
-        gt_q = Q(performer_slug='TE')
+        gt_q = Q(performer__slug='TE')
         gt_q &= Q(ground_truth=True)
         return gt_q
 
@@ -171,18 +170,17 @@ def get_queryset():
     )
 
     return (
-        ModelRun.objects
+        ModelRun.objects.select_related('performer')
         # Get minimum score and performer so that we can tell which runs
         # are ground truth
         .annotate(
             min_score=Min('evaluations__score'),
-            performer_slug=F('performer__slug'),
         )
         # Label ground truths as such. A ground truth is defined as a model run
         # with a min_score of 1 and a performer of "TE"
         .alias(
             groundtruth=Case(
-                When(min_score=1, performer_slug__iexact='TE', then=True),
+                When(min_score=1, performer__slug__iexact='TE', then=True),
                 default=False,
             )
         )
@@ -192,19 +190,8 @@ def get_queryset():
             evaluation_configuration=F('evaluations__configuration'),
             proposal_val=F('proposal'),
         )
-        .values()
         .annotate(
             region_name=F('region__name'),
-            performer=Subquery(  # prevents including "performer" in slow GROUP BY
-                lookups.Performer.objects.filter(pk=OuterRef('performer_id')).values(
-                    json=JSONObject(
-                        id='id',
-                        team_name='description',
-                        short_code='slug',
-                    )
-                ),
-                output_field=JSONField(),
-            ),
             downloading=Coalesce(
                 Subquery(
                     SatelliteFetching.objects.filter(
@@ -300,8 +287,8 @@ def create_model_run(
         'title': model_run.title,
         'performer': {
             'id': model_run.performer.pk,
-            'team_name': model_run.performer.description,
-            'short_code': model_run.performer.slug,
+            'description': model_run.performer.description,
+            'slug': model_run.performer.slug,
         },
         'region_name': region.name,
         'parameters': model_run.parameters,

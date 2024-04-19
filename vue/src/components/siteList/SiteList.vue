@@ -25,6 +25,7 @@ const modifiedList: Ref<SiteDisplay[]> = ref([]);
 const imageDownloadDialog = ref(false);
 const imageTimeRange: Ref<{min: number, max: number} | null> = ref(null);
 const imageDownloadingId: Ref<null | string> = ref(null)
+const modelRunTitleList: Ref<string[]> = ref([])
 const filter = ref("");
 
 
@@ -73,6 +74,7 @@ const getSites = async (modelRun: string) => {
           details,
           proposal: !!details?.proposal,
         });
+        modelRunTitleList.value.push(details?.title || '');
         if (item.id === props.selectedEval) {
           selected = modList[modList.length - 1];
         }
@@ -198,7 +200,7 @@ watch(filter, () => {
 <template>
   <v-card>
     <v-card-title>
-      <h5>Site Models <SiteListFilter /></h5>
+      <h5>Site Models <SiteListFilter :model-runs="modelRunTitleList" /></h5>
     </v-card-title>
     <site-list-header v-model="filter" />
     <div class="proposal-list">

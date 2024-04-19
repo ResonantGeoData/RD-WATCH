@@ -108,12 +108,14 @@ const goToTimestamp = (dir: number, loop = false) => {
     >
       mdi-chevron-left
     </v-icon>
+    <v-spacer />
     <span
       v-if="currentClosestTimestamp"
       class="timedisplay"
     >
       {{ currentClosestTimestamp.time }} - {{ currentClosestTimestamp.type }}{{ currentClosestTimestamp.siteobs !== null ? '*': '' }}
     </span>
+    <v-spacer />
     <v-icon
       size="25"
       :disabled="!currentClosestTimestamp.next"
@@ -129,7 +131,6 @@ const goToTimestamp = (dir: number, loop = false) => {
 <style scoped>
 .timedisplay {
   font-size: 1em;
-  width: 150px;
   text-align: center;
   margin: auto;
 }

@@ -33,7 +33,7 @@ watch(filter, () => {
       single-line
     />
     <div
-      class="search-icon"
+      class="search-icon mr-4"
       size="small"
     >
       <v-icon

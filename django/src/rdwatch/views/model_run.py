@@ -304,7 +304,10 @@ def list_model_runs(
     request: HttpRequest,
     filters: ModelRunFilterSchema = Query(...),  # noqa: B008
 ):
-    return filters.filter(get_queryset())
+    filtered_ids = list(
+        filters.filter(ModelRun.objects.all()).values_list('id', flat=True)
+    )
+    return get_queryset().filter(id__in=filtered_ids)
 
 
 @router.get('/{id}/', response={200: ModelRunDetailSchema})

@@ -24,7 +24,7 @@ from django.db.models import (
     OuterRef,
     Q,
     Value,
-    When
+    When,
 )
 from django.db.models.functions import Coalesce, Concat, JSONObject, NullIf, Substr
 from django.http import Http404, HttpRequest
@@ -389,6 +389,7 @@ def get_sites_query(model_run_id: UUID4):
         s['PL'] = site_image_info['PL']
         s['downloading'] = site_image_info['downloading']
     return site_list
+
 
 def get_model_run_details(model_run_id: UUID4):
     return (

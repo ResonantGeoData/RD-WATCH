@@ -5,7 +5,7 @@ import {
 } from "../../client/services/ApiService";
 import { SiteObservation, getSiteObservationDetails, state, toggleSatelliteImages } from "../../store";
 import { timeRangeFormat } from "../../utils";
-import { Ref, computed, ref, watch } from "vue";
+import { Ref, computed, ref, watch, onMounted } from "vue";
 import { hoveredInfo } from "../../interactions/mouseEvents";
 import ImageBrowser from './ImageBrowser.vue';
 import ImageToggle from './ImageToggle.vue';
@@ -79,6 +79,13 @@ const reloadSiteData = async () => {
 }
 
 watch(() => props.site, () => {
+  checkDownloading();
+});
+
+onMounted(() => {
+  checkDownloading();
+});
+const checkDownloading = () => {
   if (props.site.downloading){
         downloadCheckInterval = setInterval(() => reloadSiteData(), 5000);
   } else {
@@ -86,8 +93,7 @@ watch(() => props.site, () => {
       clearInterval(downloadCheckInterval);
     }
   }
-});
-
+};
 
 const download = (id: string) => {
   const url = `/api/evaluations/${id}/download`;
@@ -99,7 +105,7 @@ const setImageDownloadDialog = () => {
 };
 
 const cancelTask = async () => {
-  await ApiService.cancelSiteObservationImageTask(localSite.value.id);  
+  await ApiService.cancelSiteObservationImageTask(localSite.value.id);
 }
 
 

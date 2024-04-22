@@ -135,7 +135,7 @@ const getImageData = async () => {
   polygons.sort((a, b) => a.timestamp - b.timestamp);
   siteEvaluationNotes.value = data.notes || "";
   siteEvaluationLabel.value = data.label;
-  siteStatus.value = data.status;
+  siteStatus.value = data.status || null;
   
   if (data.groundTruth) {
     hasGroundTruth.value = true;
@@ -489,7 +489,7 @@ const clearStorage = async () => {
           :date-range="dateRange"
           :ground-truth="groundTruth"
           :has-ground-truth="hasGroundTruth"
-          :evaluation-label="siteEvaluationLabel"
+          :evaluation-label="siteEvaluationLabel || ''"
           :evaluation-notes="siteEvaluationNotes"
           :eval-current-date="currentDate"
           :status="siteStatus"

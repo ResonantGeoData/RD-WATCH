@@ -596,7 +596,7 @@ export class ApiService {
   public static getModelRunDownloadStatus(task_id: string): CancelablePromise<CeleryStates> {
     return __request(OpenAPI, {
       method: 'GET',
-      url: `${this.getApiPrefix()}/model-runs/download_status/`,
+      url: `${this.getApiPrefix()}/model-runs/download_status`,
       query: {task_id},
     })
   }

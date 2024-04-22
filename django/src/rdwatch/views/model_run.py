@@ -27,7 +27,7 @@ from django.db.models import (
     When,
 )
 from django.db.models.functions import Coalesce, JSONObject
-from django.http import HttpRequest, HttpResponse, Http404
+from django.http import Http404, HttpRequest, HttpResponse
 from django.shortcuts import get_object_or_404
 
 from rdwatch.db.functions import BoundingBox, BoundingBoxGeoJSON, ExtractEpoch

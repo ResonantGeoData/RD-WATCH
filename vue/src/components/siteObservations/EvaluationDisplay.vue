@@ -14,13 +14,13 @@ const props = defineProps<{
 
 
 const refresh = async () => {
-  await getSiteObservationDetails(props.siteObservation.id.toString(), props.siteObservation.obsDetails);
+  await getSiteObservationDetails(props.siteObservation.id.toString(), props.siteObservation.siteDetails);
 }
 const close = () => {
-  const foundIndex = state.selectedObservations.findIndex((item) => item.id === props.siteObservation.id);
+  const foundIndex = state.selectedSites.findIndex((item) => item.id === props.siteObservation.id);
   if (foundIndex !== -1) {
     toggleSatelliteImages(props.siteObservation, true);
-    state.selectedObservations.splice(foundIndex, 1);
+    state.selectedSites.splice(foundIndex, 1);
   }
 }
 const imagesActive = computed(() => state.enabledSiteObservations.findIndex((item) => item.id === props.siteObservation.id) !== -1);
@@ -127,9 +127,9 @@ const hasLoadedImages = computed(() => (Object.entries(props.siteObservation.ima
         justify="center"
         align="center"
       >
-        <v-col v-if="siteObservation.obsDetails">
+        <v-col v-if="siteObservation.siteDetails">
           <span class="model-title">
-            {{ `${siteObservation.obsDetails.region}_${siteObservation.obsDetails.siteNumber.toString().padStart(4, '0')}` }}
+            {{ `${siteObservation.siteDetails.region}_${siteObservation.siteDetails.siteNumber.toString().padStart(4, '0')}` }}
           </span>
         </v-col>
         <v-col cols="1">
@@ -151,8 +151,8 @@ const hasLoadedImages = computed(() => (Object.entries(props.siteObservation.ima
         justify="center"
         align="center"
       >
-        <v-col v-if="siteObservation.obsDetails">
-          <span>{{ `${siteObservation.obsDetails.performer} ${siteObservation.obsDetails.title}: V${siteObservation.obsDetails.version}` }}</span>
+        <v-col v-if="siteObservation.siteDetails">
+          <span>{{ `${siteObservation.siteDetails.performer} ${siteObservation.siteDetails.title}: V${siteObservation.siteDetails.version}` }}</span>
         </v-col>
       </v-row>
       <v-expansion-panels
@@ -277,11 +277,11 @@ const hasLoadedImages = computed(() => (Object.entries(props.siteObservation.ima
       </v-row>
       <v-row>
         <image-viewer-button
-          v-if="hasLoadedImages && siteObservation.obsDetails"
+          v-if="hasLoadedImages && siteObservation.siteDetails"
           :site-eval-id="siteObservation.id"
-          :obs-details="siteObservation.obsDetails"
+          :site-details="siteObservation.siteDetails"
           :date-range="siteObservation.timerange ? [siteObservation.timerange?.min, siteObservation.timerange.max]: undefined"
-          :site-evaluation-name="`${siteObservation.obsDetails.region}_${siteObservation.obsDetails.siteNumber.toString().padStart(4, '0')}`"
+          :site-evaluation-name="`${siteObservation.siteDetails.region}_${siteObservation.siteDetails.siteNumber.toString().padStart(4, '0')}`"
         />
       </v-row>
     </v-card-text>

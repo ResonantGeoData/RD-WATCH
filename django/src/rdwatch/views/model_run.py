@@ -431,7 +431,7 @@ def get_model_run_details(model_run_id: UUID4):
         .alias(version=F('evaluations__version'))
         .annotate(
             json=JSONObject(
-                region=F('region'),
+                region=F('region__name'),
                 performer=Subquery(  # prevents including "performer" in slow GROUP BY
                     lookups.Performer.objects.filter(
                         pk=OuterRef('performer_id')

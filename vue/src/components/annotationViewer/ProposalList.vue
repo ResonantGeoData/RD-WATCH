@@ -5,7 +5,7 @@ import {
   DownloadSettings,
   SiteList,
 } from "../../client/services/ApiService";
-import { state } from "../../store";
+import { state, updateCameraBoundsBasedOnModelRunList } from "../../store";
 import { clickedInfo, hoveredInfo } from "../../interactions/mouseEvents";
 import ImagesDownloadDialog from "../ImagesDownloadDialog.vue";
 import SiteListCard from "../siteList/SiteListCard.vue";
@@ -15,9 +15,6 @@ import SiteListHeader from "../siteList/SiteListHeader.vue";
 const props = defineProps<{
   modelRun: string | null;
   selectedEval: string | null;
-}>();
-const emit = defineEmits<{
-  (e: "selected", val: SiteDisplay | null): void;
 }>();
 
 const proposalList: Ref<SiteList | null> = ref(null);
@@ -92,7 +89,7 @@ const getSiteProposals = async () => {
       baseModifiedList.value = modList;
       // We need to start checking if there are downloading sites to update every once in a while
       if (selected) {
-        emit('selected', selected);
+        selectSite(selected);
       }
     }
   }
@@ -112,12 +109,28 @@ watch(clickedInfo, () => {
       (item) => item.id === clickedInfo.value.siteId[0]
     );
     if (found) {
-      emit("selected", found);
+      // We set the siteSelected
+      state.selectedImageSite = {
+        siteId: found.id,
+        siteName: found.name,
+        dateRange: [found.startDate, found.endDate]
+      }
+      state.bbox = found.bbox;
     }
   } else {
-    emit("selected", null);
+    state.selectedImageSite = undefined;
+    updateCameraBoundsBasedOnModelRunList(true, true);
   }
 });
+
+const selectSite = (item: SiteDisplay) => {
+  state.selectedImageSite = {
+        siteId: item.id,
+        siteName: item.name,
+        dateRange: [item.startDate, item.endDate]
+      }
+      state.bbox = item.bbox;
+}
 
 watch(() => props.selectedEval, () => {
   const updatedList: SiteDisplay[] = [];
@@ -179,8 +192,7 @@ watch(filter, () => {
         v-for="item in modifiedList"
         :key="item.id"
         :site="item"
-        :selected-eval="selectedEval"
-        @click="emit('selected', item)"
+        @click="selectSite(item)"
         @image-download="setImageDownloadDialog($event)"
       />
     </div>

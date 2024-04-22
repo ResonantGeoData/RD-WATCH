@@ -3,6 +3,8 @@
 import { Ref, computed, ref, } from "vue";
 import { EnabledSiteObservations, SiteObservationImage, state } from '../../store'
 
+export type SatelliteTypes = 'S2' | 'WV' | 'L8' | 'PL';
+
 export interface SiteFilterType {
     modelRuns?: string[]; // title of the modelrun
     imagesDownloaded?: boolean; // has images to view
@@ -11,15 +13,8 @@ export interface SiteFilterType {
 
 
 defineProps<{
-    modelValue: SiteFilterType,
     modelRuns?: string[];
-
 }>();
-
-const emit = defineEmits<{
-  (e: "update:modelValue", filter: string): void;
-}>();
-
 
 const cloudFilter = computed({
     get() {
@@ -244,7 +239,10 @@ const filterDialog = ref(false);
       <v-card-actions>
         <v-row>
           <v-spacer />
-          <v-btn color="primary" @click="filterDialog = false">
+          <v-btn
+            color="primary"
+            @click="filterDialog = false"
+          >
             Dismiss
           </v-btn>
           <v-spacer />

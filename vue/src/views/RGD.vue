@@ -1,15 +1,12 @@
 <script setup lang="ts">
 import SideBar from "../components/SideBar.vue"
 import MapLibre from "../components/MapLibre.vue";
-import RightBar from "../components/RightBar.vue"
 import LayerSelection from "../components/LayerSelection.vue";
-import { onMounted } from "vue";
-import { state } from "../store";
+import ImageViewer from "../components/imageViewer/ImageViewer.vue";
 import SiteList from "../components/siteList/SiteList.vue";
 import MapLegend from "../components/MapLegend.vue";
-import { Ref } from "vue";
-import { ref } from "vue";
-import { SiteDisplay } from "../components/siteList/SiteListCard.vue";
+import { onMounted } from "vue";
+import { state } from "../store";
 import { ApiService } from "../client";
 interface Props {
   region?: string;
@@ -20,29 +17,6 @@ const props = withDefaults(defineProps<Props>(), {
   selected: undefined,
 });
 
-const selectedEval: Ref<string | null> = ref(null);
-const selectedName: Ref<string | null> = ref(null);
-const selectedDateRange: Ref<number[] | null> = ref(null);
-const regionBBox: Ref<SiteDisplay['bbox'] | null> = ref(null);
-const setSelectedEval = (val: SiteDisplay | null) => {
-  
-  if (val && val.id !== null) {
-    if (selectedEval.value === null) { // set region bbox if previous val was null
-      regionBBox.value = state.bbox;
-    }
-    selectedEval.value = val.id
-    selectedName.value = val.name
-    state.bbox = val.bbox;
-    selectedDateRange.value = [val.startDate, val.endDate]
-  } else {
-    selectedEval.value = null;
-    selectedName.value = null;
-    selectedDateRange.value = null;
-    if (regionBBox.value) {
-      state.bbox = regionBBox.value;
-    }
-  }
-}
 
 onMounted(() => {
   if (props.region) {
@@ -69,6 +43,13 @@ onMounted(() => {
   <v-main style="z-index:1">
     <layer-selection />
     <MapLibre />
+    <ImageViewer
+      v-if="!!state.selectedImageSite"
+      :site-eval-id="state.selectedImageSite.siteId"
+      :site-evaluation-name="state.selectedImageSite.siteName"
+      :date-range="state.selectedImageSite.dateRange"
+      style="top:40vh !important; height:60vh"
+    />
   </v-main>
   <span>
     <span>
@@ -82,16 +63,17 @@ onMounted(() => {
         class="fill-height site-list"
         style="overflow-y: hidden;"
       >
-        <v-row dense class="pa-0 ma-0">
+        <v-row
+          dense
+          class="pa-0 ma-0"
+        >
           <v-col
             class="navcolumn"
           >
             <SiteList
               v-if="state.filters.configuration_id"
               :model-runs="state.filters.configuration_id"
-              :selected-eval="selectedEval"
               style="flex-grow: 1;"
-              @selected="setSelectedEval($event)"
             />          
           </v-col>
         </v-row>
@@ -101,7 +83,6 @@ onMounted(() => {
       />
     </span>
   </span>
-  <RightBar />
 </template>
 
 <style scoped>

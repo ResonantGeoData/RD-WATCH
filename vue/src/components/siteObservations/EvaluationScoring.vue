@@ -17,7 +17,7 @@ const temporalIOU: Ref<null | {site_preparation: string; active_construction: st
 const statusAnnotated: Ref<null | string> = ref(null);
 const color: Ref<null | string> = ref(null);
 const retrieveScoring = async () => {
-    const scoreData = props.siteObservation.obsDetails;
+    const scoreData = props.siteObservation.siteDetails;
     if (!scoreData) {
       return;
     }

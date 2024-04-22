@@ -2,7 +2,9 @@ import { computed, reactive } from "vue";
 
 import { ApiService, ModelRun, Performer, Region } from "./client";
 import { EditPolygonType } from "./interactions/editPolygon";
-import { EvaluationImage } from "./types";
+import { BaseBBox, EvaluationImage } from "./types";
+import { LngLatBounds } from "maplibre-gl";
+
 export interface MapFilters {
   configuration_id?: string[];
   performer_ids?: number[];
@@ -60,13 +62,20 @@ export interface SiteObservationImage {
   percent_black?: number;
   observation_id: string | null;
   disabled?: boolean;
-  bbox: { xmin: number; ymin: number; xmax: number; ymax: number };
+  bbox: BaseBBox;
   id: number;
   image_embedding? : string;
   image_dimensions?: [number, number];
 }
 
-export interface ObsDetails {
+export interface SelectedImageSite {
+    siteId: string,
+    siteName: string,
+    dateRange?: number[] | null
+    siteDetails?: SiteDetails;
+}
+
+export interface SiteDetails {
   region: string;
   configurationId: number;
   siteNumber: number;
@@ -97,7 +106,7 @@ export interface SiteObservationJob {
 
 export interface SiteObservation {
   id: string;
-  obsDetails?: ObsDetails;
+  siteDetails?: SiteDetails;
   timerange: {
     min: number;
     max: number;
@@ -158,7 +167,7 @@ export const state = reactive<{
     patternThickness: number;
     patternOpacity: number;
   };
-  selectedObservations: SiteObservation[];
+  selectedSites: SiteObservation[];
   enabledSiteObservations: EnabledSiteObservations[],
   siteObsSatSettings: siteObsSatSettings,
   loopingInterval: NodeJS.Timeout | null,
@@ -171,12 +180,15 @@ export const state = reactive<{
     ground_truths?: string | null,
   }
   editPolygon: EditPolygonType | null,
+  // Filters between the detail image viewer panel
   imageFilter: {
     sources: EvaluationImage['source'][];
     cloudCover: number;
     noData: number;
     obsFilter: ('observations' | 'non-observations')[];
   },
+  // used to open the detail image viewer panel
+  selectedImageSite?: SelectedImageSite | null
 }>({
   errorText: '',
   timestamp: Math.floor(Date.now() / 1000),
@@ -214,7 +226,7 @@ export const state = reactive<{
     patternThickness: 8,
     patternOpacity: 255,
   },
-  selectedObservations: [],
+  selectedSites: [],
   enabledSiteObservations: [],
   siteObsSatSettings: {
     observationSources: ['S2', 'WV', 'L8', 'PL'],
@@ -248,13 +260,13 @@ export const filteredSatelliteTimeList = computed(() => {
 })
 
 export const selectedObservationList = computed(() => {
-  const selected = state.selectedObservations;
+  const selected = state.selectedSites;
   return selected.map((item) => item.id);
 })
 
 
 
-export const getSiteObservationDetails = async (siteId: string, obsDetails?: ObsDetails, select=true) => {
+export const getSiteObservationDetails = async (siteId: string, siteDetails?: SiteDetails, select=true) => {
   const data = await ApiService.getSiteObservations(siteId);
   const { results } = data;
   const { images } = data;
@@ -299,10 +311,10 @@ export const getSiteObservationDetails = async (siteId: string, obsDetails?: Obs
   })
   avgScore = avgScore / results.length;
   const numId = siteId
-  const foundIndex = state.selectedObservations.findIndex((item) => item.id === numId);
+  const foundIndex = state.selectedSites.findIndex((item) => item.id === numId);
   const obsData =  {
     id: numId,
-    obsDetails,
+    siteDetails,
     timerange: data.timerange,
     imagesLoaded: false,
     imagesActive: false,
@@ -321,9 +333,9 @@ export const getSiteObservationDetails = async (siteId: string, obsDetails?: Obs
     bbox: data.bbox,
   };
   if (foundIndex === -1 && select) {
-    state.selectedObservations.push(obsData)
+    state.selectedSites.push(obsData)
   } else {
-    state.selectedObservations.splice(foundIndex, 1, obsData)
+    state.selectedSites.splice(foundIndex, 1, obsData)
   }
   return obsData;
 }
@@ -383,6 +395,54 @@ const loadAndToggleSatelliteImages = async (siteId: string) => {
   }
 }
 
+
+
+/**
+ * Set the camera bounds/viewport based on the currently selected model run(s).
+ */
+function updateCameraBoundsBasedOnModelRunList(filtered = true, force = false) {
+  const bounds = new LngLatBounds();
+  let list = state.modelRuns;
+  if (filtered) {
+    list = state.modelRuns.filter((modelRun) =>
+      state.openedModelRuns.has(modelRun.key)
+    );
+  }
+  if (
+    !force && 
+    !state.settings.autoZoom &&
+    state.filters.regions &&
+    state.filters.regions?.length > 0
+  ) {
+    return;
+  }
+  list.forEach((modelRun) => {
+    modelRun.bbox?.coordinates
+      .flat()
+      .forEach((c) => bounds.extend(c as [number, number]));
+  });
+  console.log(bounds);
+  if (bounds.isEmpty()) {
+    const bbox = {
+      xmin: -180,
+      ymin: -90,
+      xmax: 180,
+      ymax: 90,
+    };
+    state.bbox = bbox;
+  } else {
+    state.bbox = {
+      xmin: bounds.getWest(),
+      ymin: bounds.getSouth(),
+      xmax: bounds.getEast(),
+      ymax: bounds.getNorth(),
+    };
+  }
+}
+
+
 export {
   loadAndToggleSatelliteImages,
+  updateCameraBoundsBasedOnModelRunList,
 }
+

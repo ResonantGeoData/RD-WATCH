@@ -9,7 +9,7 @@ import { hoveredInfo } from "../../interactions/mouseEvents";
 const expandSettings = ref(false);
 const clearAll = () => {
   state.enabledSiteObservations = [];
-  state.selectedObservations = [];
+  state.selectedSites = [];
 }
 const updateSources = () => {
   const newObservations: EnabledSiteObservations[] = [];
@@ -49,7 +49,7 @@ onUnmounted(() => {
 
 <template>
   <v-card
-    v-if="state.selectedObservations.length"
+    v-if="state.selectedSites.length"
     class="px-5 pb-5 site-eval-card"
   >
     <v-row>
@@ -98,7 +98,7 @@ onUnmounted(() => {
     </div>
     <div style="overflow-y:auto">
       <evaluation-display
-        v-for="item in state.selectedObservations"
+        v-for="item in state.selectedSites"
         :key="`siteObs_${item.id}`"
         :site-observation="item"
         class="siteObs"

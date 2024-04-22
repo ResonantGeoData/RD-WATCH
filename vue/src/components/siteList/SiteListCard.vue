@@ -8,6 +8,8 @@ import { timeRangeFormat } from "../../utils";
 import { Ref, computed, ref, watch } from "vue";
 import { hoveredInfo } from "../../interactions/mouseEvents";
 import ImageBrowser from './ImageBrowser.vue';
+import ImageToggle from './ImageToggle.vue';
+
 export interface SiteDisplay {
   number: number;
   id: string;
@@ -37,7 +39,6 @@ export interface SiteDisplay {
 
 const props = defineProps<{
     site: SiteDisplay;
-    selectedEval: string | null;
 }>();
 const emit = defineEmits<{
   (e: "selected", val: SiteDisplay | null): void;
@@ -50,8 +51,8 @@ const localSite: Ref<SiteDisplay> = ref({...props.site});
 
 const selectedSite: Ref<undefined | SiteObservation> = ref(undefined)
 
-watch(state.selectedObservations, () => {
-  selectedSite.value  = state.selectedObservations.find((item) => item.id === localSite.value.id);
+watch(state.selectedSites, () => {
+  selectedSite.value  = state.selectedSites.find((item) => item.id === localSite.value.id);
   selectSite.value = !!selectedSite.value;
 });
 
@@ -102,10 +103,10 @@ const cancelTask = async () => {
 
 
 const close = () => {
-const foundIndex = state.selectedObservations.findIndex((item) => item.id === props.site.id);
+const foundIndex = state.selectedSites.findIndex((item) => item.id === props.site.id);
   if (foundIndex !== -1) {
-    toggleSatelliteImages(state.selectedObservations[foundIndex], true);
-    state.selectedObservations.splice(foundIndex, 1);
+    toggleSatelliteImages(state.selectedSites[foundIndex], true);
+    state.selectedSites.splice(foundIndex, 1);
   }
 }
 
@@ -277,27 +278,14 @@ watch(selectSite, async () => {
             {{ localSite.filename }}
           </span>
         </v-tooltip>
-        <v-tooltip
+        <image-toggle
           v-else-if="!localSite.filename && selectedSite"
-          open-delay="300"
-        >
-          <template #activator="{ props }">
-            <v-btn
-              variant="tonal"
-              density="compact"
-              class="pa-0 ma-1 site-icon"
-              size="small"
-              :color="imagesActive ? 'success': ''"
-              v-bind="props"
-              @click.stop="hasImages && toggleSatelliteImages(selectedSite)"
-            >
-              <v-icon size="small">
-                mdi-image
-              </v-icon>
-            </v-btn>
-          </template>
-          <span>Toggle Site Images</span>
-        </v-tooltip>
+          :site-id="localSite.id"
+          :site-name="localSite.name"
+          :has-images="hasImages"
+          :images-active="imagesActive"
+          @site-toggled="hasImages && toggleSatelliteImages(selectedSite)"
+        />
         <v-spacer />
         <v-tooltip open-delay="300">
           <template #activator="{ props }">

@@ -7,7 +7,6 @@ import ProposalList from "../components/annotationViewer/ProposalList.vue"
 import MapLegend from "../components/MapLegend.vue";
 import { Ref, computed, onMounted, ref, watch } from "vue";
 import { state } from "../store";
-import { SiteDisplay } from "../components/siteList/SiteListCard.vue";
 
 interface Props {
   region?: string;
@@ -18,7 +17,7 @@ const props = withDefaults(defineProps<Props>(), {
   selected:undefined,
 });
 
-const siteEvalList: Ref<typeof ProposalList | null> = ref(null)
+const siteList: Ref<typeof ProposalList | null> = ref(null)
 
 const selectedModelRun = computed(() => {
     if (state.filters.configuration_id?.length) {
@@ -36,38 +35,15 @@ onMounted(() => {
   }
 });
 
-const selectedEval: Ref<string | null> = ref(null);
-const selectedName: Ref<string | null> = ref(null);
-const selectedDateRange: Ref<number[] | null> = ref(null);
-const regionBBox: Ref<SiteDisplay['bbox'] | null> = ref(null);
-const setSelectedEval = (val: SiteDisplay | null) => {
-  
-  if (val && val.id !== null) {
-    if (selectedEval.value === null) { // set region bbox if previous val was null
-      regionBBox.value = state.bbox;
-    }
-    selectedEval.value = val.id
-    selectedName.value = val.name
-    state.bbox = val.bbox;
-    selectedDateRange.value = [val.startDate, val.endDate]
-  } else {
-    selectedEval.value = null;
-    selectedName.value = null;
-    selectedDateRange.value = null;
-    if (regionBBox.value) {
-      state.bbox = regionBBox.value;
-    }
-  }
-}
 
 watch(selectedModelRun, () => {
-    selectedEval.value = null;
-    selectedName.value = null;
+  state.selectedImageSite = undefined
 })
 
-const updateSiteModels = () => {
-  if (siteEvalList.value !== null) {
-    siteEvalList.value.getSiteProposals();
+const updateSiteList = async () => {
+  if (siteList.value !== null) {
+    // Store the bbox for the sites
+    await siteList.value.getSiteProposals();
   }
 }
 </script>
@@ -84,15 +60,15 @@ const updateSiteModels = () => {
   </v-navigation-drawer>
   <v-main style="z-index:1">
     <layer-selection />
-    <MapLibre :compact="selectedEval !== null" />
+    <MapLibre :compact="!!state.selectedImageSite" />
     <ImageViewer
-      v-if="selectedEval !== null"
-      :site-eval-id="selectedEval"
-      :site-evaluation-name="selectedName"
-      :date-range="selectedDateRange"
+      v-if="!!state.selectedImageSite"
+      :site-eval-id="state.selectedImageSite.siteId"
+      :site-evaluation-name="state.selectedImageSite.siteName"
+      :date-range="state.selectedImageSite.dateRange"
       editable
       style="top:40vh !important; height:60vh"
-      @update-list="updateSiteModels()"
+      @update-list="updateSiteList()"
     />
   </v-main>
   <span>
@@ -112,11 +88,10 @@ const updateSiteModels = () => {
         >
           <proposal-list
             v-if="selectedModelRun !== null"
-            ref="siteEvalList"
+            ref="siteList"
             :model-run="selectedModelRun"
-            :selected-eval="selectedEval"
+            :selected-eval="state.selectedImageSite?.siteId || null"
             style="flex-grow: 1;"
-            @selected="setSelectedEval($event)"
           />          
         </v-col>
       </v-row>

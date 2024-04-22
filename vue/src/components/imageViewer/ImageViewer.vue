@@ -10,7 +10,7 @@ import {
 import { ApiService } from "../../client";
 import { EvaluationImage, EvaluationImageResults } from "../../types";
 import {
-  ObsDetails,
+  SiteDetails,
   SiteObservationImage,
   loadAndToggleSatelliteImages,
   state,
@@ -29,7 +29,7 @@ interface Props {
   editable?: boolean;
   siteEvaluationName?: string | null;
   dateRange?: number[] | null;
-  obsDetails?: ObsDetails;
+  siteDetails?: SiteDetails;
   fullscreen?: boolean;
 }
 
@@ -46,7 +46,7 @@ const props = withDefaults(defineProps<Props>(), {
   editable: false,
   siteEvaluationName: null,
   dateRange: null,
-  obsDetails: undefined,
+  siteDetails: undefined,
 });
 
 const emit = defineEmits<{
@@ -377,9 +377,9 @@ const clearStorage = async () => {
       dense
       class="top-bar"
     >
-      <v-col v-if="obsDetails">
-        <span>{{ obsDetails.performer }} {{ obsDetails.title }} : V{{
-          obsDetails.version
+      <v-col v-if="siteDetails">
+        <span>{{ siteDetails.performer }} {{ siteDetails.title }} : V{{
+          siteDetails.version
         }}</span>
         <div v-if="hasGroundTruth && editable">
           <v-checkbox
@@ -389,11 +389,11 @@ const clearStorage = async () => {
           />
         </div>
       </v-col>
-      <v-col v-if="obsDetails">
+      <v-col v-if="siteDetails">
         <span>{{ siteEvaluationName }}</span>
       </v-col>
 
-      <v-col v-if="obsDetails">
+      <v-col v-if="siteDetails">
         <b
           v-if="groundTruth && hasGroundTruth"
           class="mr-1"

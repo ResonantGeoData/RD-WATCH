@@ -23,7 +23,7 @@ watch(() => route.path, (oldPath, newPath) => {
     selectedPerformer.value = [];
     selectedRegion.value = undefined;
     state.enabledSiteObservations = [];
-    state.selectedObservations = [];
+    state.selectedSites = [];
     state.filters = {
     ...state.filters,
     regions: undefined,

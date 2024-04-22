@@ -10,14 +10,10 @@ import SiteListCard from "./SiteListCard.vue";
 import { SiteDisplay } from "./SiteListCard.vue";
 import SiteListHeader from "./SiteListHeader.vue";
 import SiteListFilter from "./SiteListFilter.vue";
-import { state } from "../../store";
+import { getSiteObservationDetails, state } from "../../store";
 
 const props = defineProps<{
   modelRuns: string[];
-  selectedEval: string | null;
-}>();
-const emit = defineEmits<{
-  (e: "selected", val: SiteDisplay | null): void;
 }>();
 
 const baseModifiedList: Ref<SiteDisplay[]> = ref([]);
@@ -26,11 +22,14 @@ const imageDownloadDialog = ref(false);
 const imageTimeRange: Ref<{min: number, max: number} | null> = ref(null);
 const imageDownloadingId: Ref<null | string> = ref(null)
 const modelRunTitleList: Ref<string[]> = ref([])
+const totalCount: Ref<number> = ref(0);
 const filter = ref("");
 
 
 const getSites = async (modelRun: string) => {
     const results = await ApiService.getSitesList(modelRun);
+    state.selectedSites = [];
+    totalCount.value = 0;
     const regionName = results.region;
     let newNumbers = 0;
     if (results.sites) {
@@ -44,7 +43,7 @@ const getSites = async (modelRun: string) => {
         proposal: results.modelRunDetails.proposal,
       } : undefined
 
-      const selectedIds = state.selectedObservations.map((item) => item.id);
+      const selectedIds = state.selectedSites.map((item) => item.id);
       results.sites.forEach((item) => {
         const newNum = item.number.toString().padStart(4, "0");
         if (newNum === "9999") {
@@ -75,13 +74,11 @@ const getSites = async (modelRun: string) => {
           proposal: !!details?.proposal,
         });
         modelRunTitleList.value.push(details?.title || '');
-        if (item.id === props.selectedEval) {
-          selected = modList[modList.length - 1];
-        }
+        totalCount.value += 1;
       });
       // We need to start checking if there are downloading sites to update every once in a while
       if (selected) {
-        emit('selected', selected);
+        selectSite(selected);
       }
       return modList;
     }
@@ -105,10 +102,26 @@ watch(
   }
 );
 getAllSiteProposals();
-watch(state.selectedObservations, () => {
-  const updatedList: SiteDisplay[] = [];
-  const selectedIds = state.selectedObservations.map((item) => item.id);
+watch(clickedInfo, () => {
+  if (clickedInfo.value.siteId.length) {
+    const found = modifiedList.value.find(
+      (item) => item.id === clickedInfo.value.siteId[0]
+    );
+    if (found) {
+      selectSite(found);
+    }
+  }
+  // No else case, because if not clicked we don't do anything
+});
 
+
+const selectSite = async (item: SiteDisplay) => {
+  await getSiteObservationDetails(item.id, undefined, true);
+  if (state.selectedImageSite) {
+    state.selectedImageSite = undefined;
+  }
+  const updatedList: SiteDisplay[] = [];
+  const selectedIds = state.selectedSites.map((item) => item.id);
   modifiedList.value.forEach((item) => {
     item.selected = selectedIds.includes(item.id)
     updatedList.push(item);
@@ -123,19 +136,8 @@ watch(state.selectedObservations, () => {
         return 1;
       });
   modifiedList.value = updatedList;
-});
-watch(clickedInfo, () => {
-  if (clickedInfo.value.siteId.length) {
-    const found = modifiedList.value.find(
-      (item) => item.id === clickedInfo.value.siteId[0]
-    );
-    if (found) {
-      emit("selected", found);
-    }
-  } else {
-    emit("selected", null);
-  }
-});
+
+}
 
 const controlKeyPressed = ref(false);
 
@@ -200,12 +202,18 @@ watch(filter, () => {
 <template>
   <v-card>
     <v-card-title>
-      <h5>Site Models <SiteListFilter :model-runs="modelRunTitleList" /></h5>
+      <v-row>
+        <h5>Site Models <SiteListFilter :model-runs="modelRunTitleList" /></h5>
+        <v-spacer />
+        <span>
+          <v-icon size="xsmall">mdi-map-marker-outline</v-icon><span>{{ totalCount }}</span>
+        </span>
+      </v-row>
     </v-card-title>
     <site-list-header v-model="filter" />
     <div class="proposal-list">
       <div
-        v-if="state.selectedObservations && state.selectedObservations.length > 0"
+        v-if="state.selectedSites && state.selectedSites.length > 0"
         class="selected-header"
       >
         Selected Sites
@@ -214,8 +222,7 @@ watch(filter, () => {
         v-for="item in modifiedList"
         :key="item.id"
         :site="item"
-        :selected-eval="selectedEval"
-        @selected="emit('selected', item)"
+        @selected="selectSite(item)"
         @image-download="setImageDownloadDialog($event)"
       />
     </div>

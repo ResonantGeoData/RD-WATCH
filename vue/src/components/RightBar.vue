@@ -8,7 +8,7 @@ import EvaluationsSideBar from "./siteObservations/EvaluationsSideBar.vue";
 <template>
   <span>
     <v-navigation-drawer
-      v-if="state.selectedObservations.length "
+      v-if="state.selectedSites.length "
       location="right"
       floating
       width="400"

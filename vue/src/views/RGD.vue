@@ -54,7 +54,7 @@ onMounted(() => {
   <span>
     <span>
       <v-navigation-drawer
-        v-if="state.filters.configuration_id?.length && ApiService.getApiPrefix() !== '/api/scoring'"
+        v-if="state.filters.configuration_id?.length"
         location="left"
         floating
         width="250"

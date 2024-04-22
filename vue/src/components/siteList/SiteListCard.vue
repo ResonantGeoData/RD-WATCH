@@ -44,6 +44,7 @@ const emit = defineEmits<{
   (e: "selected", val: SiteDisplay | null): void;
   (e: "clicked", { uuid } : { uuid: string }): void;
   (e: "image-download", val: SiteDisplay): void;
+  (e: "close"): void;
 }>();
 let downloadCheckInterval: NodeJS.Timeout | null = null;
 
@@ -108,6 +109,7 @@ const foundIndex = state.selectedSites.findIndex((item) => item.id === props.sit
     toggleSatelliteImages(state.selectedSites[foundIndex], true);
     state.selectedSites.splice(foundIndex, 1);
   }
+  emit('close');
 }
 
 

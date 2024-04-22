@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { Ref, onMounted, onUnmounted, ref, watch } from "vue";
+import { Ref, nextTick, onMounted, onUnmounted, ref, watch } from "vue";
 import { ApiService } from "../../client";
 import {
   DownloadSettings,
@@ -77,7 +77,7 @@ const getSites = async (modelRun: string) => {
         totalCount.value += 1;
       });
       // We need to start checking if there are downloading sites to update every once in a while
-      if (selected) {
+      if (selected !== null) {
         selectSite(selected);
       }
       return modList;
@@ -107,7 +107,7 @@ watch(clickedInfo, () => {
     const found = modifiedList.value.find(
       (item) => item.id === clickedInfo.value.siteId[0]
     );
-    if (found) {
+    if (found !== undefined) {
       selectSite(found);
     }
   }
@@ -115,14 +115,17 @@ watch(clickedInfo, () => {
 });
 
 
-const selectSite = async (item: SiteDisplay) => {
-  await getSiteObservationDetails(item.id, undefined, true);
+const selectSite = async (selectedSite: SiteDisplay, deselect= false) => {
+  if (selectedSite && !deselect) {
+  await getSiteObservationDetails(selectedSite.id, undefined, true);
+
+  }
   if (state.selectedImageSite) {
     state.selectedImageSite = undefined;
   }
   const updatedList: SiteDisplay[] = [];
   const selectedIds = state.selectedSites.map((item) => item.id);
-  modifiedList.value.forEach((item) => {
+  baseModifiedList.value.forEach((item) => {
     item.selected = selectedIds.includes(item.id)
     updatedList.push(item);
   })
@@ -136,7 +139,15 @@ const selectSite = async (item: SiteDisplay) => {
         return 1;
       });
   modifiedList.value = updatedList;
-
+  if (!deselect) {
+    nextTick(() => {
+      const id = selectedSite.id;
+      const el = document.getElementById(`site-id-${id}`);
+      if (el) {
+        el.scrollIntoView({block: 'end', behavior: 'smooth'});
+      }
+    });
+  }
 }
 
 const controlKeyPressed = ref(false);
@@ -223,6 +234,7 @@ watch(filter, () => {
         :key="item.id"
         :site="item"
         @selected="selectSite(item)"
+        @close="selectSite(item, true)"
         @image-download="setImageDownloadDialog($event)"
       />
     </div>

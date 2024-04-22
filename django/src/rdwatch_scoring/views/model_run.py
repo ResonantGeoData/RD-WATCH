@@ -9,9 +9,11 @@ from django.contrib.gis.db.models import GeometryField
 from django.contrib.postgres.aggregates import JSONBAgg
 from django.db.models import (
     Avg,
+    Case,
     CharField,
     Count,
     DateTimeField,
+    Exists,
     ExpressionWrapper,
     F,
     FloatField,
@@ -19,8 +21,10 @@ from django.db.models import (
     JSONField,
     Max,
     Min,
+    OuterRef,
     Q,
     Value,
+    When
 )
 from django.db.models.functions import Coalesce, Concat, JSONObject, NullIf, Substr
 from django.http import Http404, HttpRequest
@@ -28,7 +32,7 @@ from django.shortcuts import get_object_or_404
 
 from rdwatch.db.functions import BoundingBox, ExtractEpoch
 from rdwatch.views.model_run import ModelRunDetailSchema, ModelRunPagination
-from rdwatch_scoring.models import EvaluationRun, SatelliteFetching, Site
+from rdwatch_scoring.models import EvaluationRun, SatelliteFetching, Site, SiteImage
 from rdwatch_scoring.tasks import (
     cancel_generate_images_task,
     generate_site_images_for_evaluation_run,
@@ -319,7 +323,7 @@ def cancel_generate_images(request: HttpRequest, model_run_id: UUID4):
 
 
 def get_sites_query(model_run_id: UUID4):
-    return Site.objects.filter(evaluation_run_uuid=model_run_id).aggregate(
+    site_list = Site.objects.filter(evaluation_run_uuid=model_run_id).aggregate(
         sites=JSONBAgg(
             JSONObject(
                 id='pk',
@@ -346,7 +350,45 @@ def get_sites_query(model_run_id: UUID4):
             default=[],
         ),
     )
+    site_ids = [str(s['id']) for s in site_list['sites']]
 
+    image_queryset = (
+        SiteImage.objects.filter(site__in=site_ids)
+        .values('site')
+        .annotate(
+            S2=Count(Case(When(source='S2', then=1))),
+            WV=Count(Case(When(source='WV', then=1))),
+            L8=Count(Case(When(source='L8', then=1))),
+            PL=Count(Case(When(source='PL', then=1))),
+            downloading=Exists(
+                SatelliteFetching.objects.filter(
+                    site=OuterRef('site'),
+                    status=SatelliteFetching.Status.RUNNING,
+                )
+            ),
+        )
+    )
+
+    image_info = {i['site']: i for i in image_queryset}
+
+    for s in site_list['sites']:
+        if s['id'] in image_info.keys():
+            site_image_info = image_info[s['id']]
+        else:
+            site_image_info = {'S2': 0, 'WV': 0, 'L8': 0, 'PL': 0, 'downloading': False}
+
+        s['images'] = (
+            site_image_info['S2']
+            + site_image_info['WV']
+            + site_image_info['L8']
+            + site_image_info['PL']
+        )
+        s['S2'] = site_image_info['S2']
+        s['WV'] = site_image_info['WV']
+        s['L8'] = site_image_info['L8']
+        s['PL'] = site_image_info['PL']
+        s['downloading'] = site_image_info['downloading']
+    return site_list
 
 def get_model_run_details(model_run_id: UUID4):
     return (

@@ -46,3 +46,8 @@ class SatelliteFetching(BaseSatelliteFetching):
         db_index=True,
         related_name='satellite_fetching',
     )
+
+    class Meta:
+        indexes = [
+            models.Index(fields=['status']),
+        ]

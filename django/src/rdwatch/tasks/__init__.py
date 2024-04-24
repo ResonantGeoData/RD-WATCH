@@ -438,14 +438,10 @@ def collect_garbage_task() -> None:
         ):
             ModelRun.objects.filter(pk__in=model_runs).delete()
 
-
-@shared_task
-def delete_export_files() -> None:
-    """Delete all S3 Export Files that are over an hour old."""
-    exports_to_delete = AnnotationExport.objects.filter(
+    # Delete all S3 Export Files that are over an hour old
+    AnnotationExport.objects.filter(
         created__lte=timezone.now() - timedelta(hours=1)
-    )
-    exports_to_delete.delete()
+    ).delete()
 
 
 @app.task(bind=True)

@@ -163,10 +163,6 @@ class BaseConfiguration(Configuration):
             'task': 'rdwatch.tasks.collect_garbage_task',
             'schedule': timedelta(hours=1),
         },
-        'delete-export-files-runs-beat': {
-            'task': 'rdwatch.tasks.delete_export_files',
-            'schedule': timedelta(hours=1),
-        },
     }
 
 

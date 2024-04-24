@@ -443,6 +443,11 @@ def collect_garbage_task() -> None:
         created__lte=timezone.now() - timedelta(hours=1)
     ).delete()
 
+    # Delete all SatelliteFetching tasks that are over an day old
+    SatelliteFetching.objects.filter(
+        timestamp__lte=timezone.now() - timedelta(days=1)
+    ).delete()
+
 
 @app.task(bind=True)
 def download_annotations(self, id: UUID4, mode: Literal['all', 'approved', 'rejected']):

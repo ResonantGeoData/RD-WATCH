@@ -5,12 +5,12 @@ from django.db import migrations, models
 
 class Migration(migrations.Migration):
     dependencies = [
-        ('rdwatch', '0028_remove_siteevaluation_region_alter_modelrun_region'),
+        ('rdwatch_scoring', '0003_siteimage_image_embedding'),
     ]
 
     operations = [
         migrations.AddIndex(
             model_name='satellitefetching',
-            index=models.Index(fields=['status'], name='rdwatch_sat_status_753c74_idx'),
+            index=models.Index(fields=['status'], name='rdwatch_sco_status_81a06c_idx'),
         ),
     ]

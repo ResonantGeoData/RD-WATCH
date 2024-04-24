@@ -393,7 +393,7 @@ def get_siteobservations_images(
 
 
 @shared_task
-def delete_temp_model_runs_task() -> None:
+def collect_garbage_task() -> None:
     """Delete all model runs that are due to be deleted."""
     model_runs_to_delete = (
         ModelRun.objects.filter(expiration_time__isnull=False)

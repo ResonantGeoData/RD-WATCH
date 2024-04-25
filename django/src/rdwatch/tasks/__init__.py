@@ -14,6 +14,8 @@ import numpy as np
 import requests
 from celery import shared_task, signals
 from celery.result import AsyncResult
+from celery.states import READY_STATES
+from django_celery_results.models import TaskResult
 from more_itertools import ichunked
 from PIL import Image
 from pydantic import UUID4
@@ -25,7 +27,7 @@ from django.contrib.gis.geos import Polygon
 from django.core.files import File
 from django.core.files.base import ContentFile
 from django.db import transaction
-from django.db.models import DateTimeField, ExpressionWrapper, F
+from django.db.models import DateTimeField, ExpressionWrapper, F, OuterRef, Subquery
 from django.utils import timezone
 
 from rdwatch.celery import app
@@ -443,9 +445,19 @@ def collect_garbage_task() -> None:
         created__lte=timezone.now() - timedelta(hours=1)
     ).delete()
 
-    # Delete all SatelliteFetching tasks that are over an day old
-    SatelliteFetching.objects.filter(
-        timestamp__lte=timezone.now() - timedelta(days=1)
+    # Delete all SatelliteFetching tasks that are over an day old AND
+    # whose associated Celery task is in a "ready" state (i.e. completed)
+    SatelliteFetching.objects.alias(
+        celery_task_status=Subquery(
+            TaskResult.objects.filter(
+                task_id=OuterRef('celery_id'),
+            ).values(
+                'status'
+            )[:1]
+        )
+    ).filter(
+        timestamp__lte=timezone.now() - timedelta(days=1),
+        celery_task_status__in=READY_STATES,
     ).delete()
 
 

@@ -56,7 +56,7 @@ const startDownload = debounce((data: DownloadSettings) => {
   downloading.value = props.modelRun.numsites;
   setTimeout(() => {
     updateDownloading();
-    loopingInterval = setInterval(updateDownloading, 1000);
+    loopingInterval = setInterval(updateDownloading, 10000);
   }, 2000);
 }, 5000, { leading: true });
 
@@ -70,7 +70,7 @@ onBeforeMount(() => {
     loopingInterval = null;
   }
   if (props.modelRun.downloading > 0 && loopingInterval === null)
-  loopingInterval = setInterval(updateDownloading, 1000);
+  loopingInterval = setInterval(updateDownloading, 10000);
 })
 
 onBeforeUnmount(() => {

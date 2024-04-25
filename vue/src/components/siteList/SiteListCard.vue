@@ -5,7 +5,7 @@ import {
 } from "../../client/services/ApiService";
 import { SiteObservation, getSiteObservationDetails, state, toggleSatelliteImages } from "../../store";
 import { timeRangeFormat } from "../../utils";
-import { Ref, computed, ref, watch, onMounted } from "vue";
+import { Ref, computed, ref, watch } from "vue";
 import { hoveredInfo } from "../../interactions/mouseEvents";
 import ImageBrowser from './ImageBrowser.vue';
 import ImageToggle from './ImageToggle.vue';
@@ -45,8 +45,8 @@ const emit = defineEmits<{
   (e: "clicked", { uuid } : { uuid: string }): void;
   (e: "image-download", val: SiteDisplay): void;
   (e: "close"): void;
+  (e: 'cancel-download'): void;
 }>();
-let downloadCheckInterval: NodeJS.Timeout | null = null;
 
 const localSite: Ref<SiteDisplay> = ref({...props.site});
 
@@ -61,8 +61,7 @@ const selectSite = ref(!!selectedSite.value)
 
 const imagesActive = computed(() => state.enabledSiteObservations.findIndex((item) => item.id === props.site.id) !== -1);
 const hasImages = computed(() =>  props.site.WV > 0 || props.site.S2 > 0 || props.site.PL > 0 || props.site.L8 > 0);
-
-
+const downloading = computed(() => props.site.downloading);
 
 const statusMap: Record<SiteModelStatus, { name: string; color: string, icon: string }> = {
   PROPOSAL: { name: "Proposed", color: "orange", icon: "mdi-dots-horizontal-circle" },
@@ -70,30 +69,6 @@ const statusMap: Record<SiteModelStatus, { name: string; color: string, icon: st
   APPROVED: { name: "Approved", color: "success", icon: "mdi-check-circle" },
 };
 
-const reloadSiteData = async () => {
-  const data = await ApiService.getSite(localSite.value.id);
-  localSite.value = {...props.site, ...data};
-  if (!localSite.value.downloading && downloadCheckInterval) {
-    clearInterval(downloadCheckInterval);
-  }
-}
-
-watch(() => props.site, () => {
-  checkDownloading();
-});
-
-onMounted(() => {
-  checkDownloading();
-});
-const checkDownloading = () => {
-  if (props.site.downloading){
-        downloadCheckInterval = setInterval(() => reloadSiteData(), 5000);
-  } else {
-    if (downloadCheckInterval !== null) {
-      clearInterval(downloadCheckInterval);
-    }
-  }
-};
 
 const download = (id: string) => {
   const url = `/api/evaluations/${id}/download`;
@@ -106,6 +81,7 @@ const setImageDownloadDialog = () => {
 
 const cancelTask = async () => {
   await ApiService.cancelSiteObservationImageTask(localSite.value.id);
+  emit('cancel-download');
 }
 
 
@@ -314,7 +290,7 @@ watch(selectSite, async () => {
           <span>Download JSON</span>
         </v-tooltip>
         <v-tooltip
-          v-if="!localSite.downloading"
+          v-if="!downloading"
           open-delay="300"
         >
           <template #activator="{ props }">
@@ -332,7 +308,7 @@ watch(selectSite, async () => {
           </template>
           <span>Download Satellite Images</span>
         </v-tooltip>
-        <div v-else-if="localSite.downloading">
+        <div v-else-if="downloading">
           <v-tooltip open-delay="300">
             <template #activator="{ props }">
               <v-btn

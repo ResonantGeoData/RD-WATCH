@@ -10,7 +10,7 @@ router = Router()
 logger = logging.getLogger(__name__)
 
 
-@router.get('/running')
+@router.get('/running/')
 def satellite_fetching_running(request: HttpRequest, model_runs: list[UUID4] = Query([])):
     running_sites = SatelliteFetching.objects.filter(status=SatelliteFetching.Status.RUNNING)
     if len(model_runs) > 0:

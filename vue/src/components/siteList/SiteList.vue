@@ -24,7 +24,37 @@ const imageDownloadingId: Ref<null | string> = ref(null)
 const modelRunTitleList: Ref<string[]> = ref([])
 const totalCount: Ref<number> = ref(0);
 const filter = ref("");
+let downloadCheckInterval: NodeJS.Timeout | null = null;
 
+const satelliteFetchingCheck = async () => {
+  const downloadList = await ApiService.getSatelliteFetchingRunning(props.modelRuns);
+  // Check if we are still downloading any items
+  console.log(downloadList);
+  const stillDownloading = modifiedList.value.some((item) => downloadList.includes(item.id));
+  console.log(`stillDownloading: ${stillDownloading}`);
+  if (!stillDownloading && downloadCheckInterval) {
+    clearInterval(downloadCheckInterval);
+    downloadCheckInterval = null;
+    return;
+  }
+  // We want to make sure we update the list to indicate which items are downloading in the modifiedList
+  const newList: SiteDisplay[] = [];
+  modifiedList.value.forEach((item) => {
+    if (item.downloading && !downloadList.includes(item.id)) {
+      item.downloading = false;
+    } else if (!item.downloading && downloadList.includes(item.id)) {
+      item.downloading = true;
+    }
+    newList.push(item)
+  });
+  console.log(newList);
+  modifiedList.value = newList;
+}
+
+
+const checkDownloading = () => {
+  downloadCheckInterval = setInterval(() => satelliteFetchingCheck(), 5000);
+};
 
 const getSites = async (modelRun: string) => {
     const results = await ApiService.getSitesList(modelRun);
@@ -32,6 +62,7 @@ const getSites = async (modelRun: string) => {
     totalCount.value = 0;
     const regionName = results.region;
     let newNumbers = 0;
+    let downloadingAny = false;
     if (results.sites) {
       const modList: SiteDisplay[] = [];
       let selected: SiteDisplay | null = null;
@@ -52,6 +83,9 @@ const getSites = async (modelRun: string) => {
         let name = `${regionName}_${newNum}`;
         if (newNumbers > 1) {
           name = `${name}-${newNumbers}`;
+        }
+        if (item.downloading) {
+          downloadingAny = true;
         }
         modList.push({
           number: item.number,
@@ -80,6 +114,10 @@ const getSites = async (modelRun: string) => {
       if (selected !== null) {
         selectSite(selected);
       }
+      console.log(`downloadingAny: ${downloadingAny}`);
+      if (downloadingAny && downloadCheckInterval === null) {
+        checkDownloading();
+      }
       return modList;
     }
     return [];
@@ -95,6 +133,12 @@ const getAllSiteProposals = async () => {
     modifiedList.value = mainList;
 }
 onMounted(() => getAllSiteProposals());
+onUnmounted(() => {
+  if (downloadCheckInterval) {
+    clearInterval(downloadCheckInterval);
+    downloadCheckInterval = null;
+  }
+})
 
 watch(
   () => props.modelRuns,
@@ -197,8 +241,12 @@ const startDownload = async (data: DownloadSettings) => {
   if (id) {
   await ApiService.getObservationImages(id, data);
     // Now we get the results to see if the service is running
-    setTimeout(() => getAllSiteProposals(), 500);
+    setTimeout(() => getAllSiteProposals(), 1000);
   }
+}
+
+const cancelDownload = () => {
+  setTimeout(() => getAllSiteProposals(), 1000);
 }
 watch(filter, () => {
   if (filter.value) {
@@ -240,11 +288,11 @@ watch(filter, () => {
       >
         <template #default="{item}">
           <site-list-card
-            :key="item.id"
             :site="item"
             @selected="selectSite(item)"
             @close="selectSite(item, true)"
             @image-download="setImageDownloadDialog($event)"
+            @cancel-download="cancelDownload()"
           />
         </template>
       </v-virtual-scroll>

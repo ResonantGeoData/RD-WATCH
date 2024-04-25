@@ -599,4 +599,13 @@ export class ApiService {
       url: `${this.getApiPrefix()}/model-runs/download_status/${task_id}`,
     })
   }
+
+  public static getSatelliteFetchingRunning(modelRunIds?: string[]): CancelablePromise<string[]> {
+    return __request(OpenAPI, {
+      method: 'GET',
+      url: `${this.getApiPrefix()}/satellite_fetching/running/`,
+      query: { model_runs: modelRunIds },
+    })
+  }
+
 }

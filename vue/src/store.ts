@@ -187,6 +187,8 @@ export const state = reactive<{
     noData: number;
     obsFilter: ('observations' | 'non-observations')[];
   },
+  // used to open the detail image viewer panel
+  selectedImageSite?: SelectedImageSite | null;
 }>({
   errorText: '',
   timestamp: Math.floor(Date.now() / 1000),

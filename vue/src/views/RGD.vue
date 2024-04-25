@@ -7,7 +7,6 @@ import SiteList from "../components/siteList/SiteList.vue";
 import MapLegend from "../components/MapLegend.vue";
 import { onMounted } from "vue";
 import { state } from "../store";
-import { ApiService } from "../client";
 interface Props {
   region?: string;
   selected?: number[] | string;

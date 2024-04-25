@@ -32,7 +32,7 @@ const openImageBrowser = () => {
 <template>
   <v-menu
     open-on-hover
-    open-delay="300"
+    open-delay="600"
   >
     <template #activator="{ props }">
       <v-btn

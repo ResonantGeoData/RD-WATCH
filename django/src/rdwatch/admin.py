@@ -2,6 +2,7 @@ from django.contrib import admin
 
 from rdwatch.models import (
     ModelRun,
+    Performer,
     Region,
     SatelliteFetching,
     SiteEvaluation,
@@ -29,7 +30,7 @@ class ObservationLabelAdmin(admin.ModelAdmin):
     search_fields = ('slug',)
 
 
-@admin.register(lookups.Performer)
+@admin.register(Performer)
 class PerformerAdmin(admin.ModelAdmin):
     list_display = ('id', 'slug', 'description')
     search_fields = ('slug',)

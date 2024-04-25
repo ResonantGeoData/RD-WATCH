@@ -34,9 +34,9 @@ from rdwatch.db.functions import BoundingBox, BoundingBoxGeoJSON, ExtractEpoch
 from rdwatch.models import (
     AnnotationExport,
     ModelRun,
+    Performer,
     SatelliteFetching,
     SiteEvaluation,
-    lookups,
 )
 from rdwatch.models.region import get_or_create_region
 from rdwatch.schemas import RegionModel, SiteModel
@@ -86,10 +86,10 @@ class ModelRunWriteSchema(Schema):
     proposal: bool | None = None
 
     @validator('performer')
-    def validate_performer(cls, v: str) -> lookups.Performer:
+    def validate_performer(cls, v: str) -> Performer:
         try:
-            return lookups.Performer.objects.get(slug=v.upper())
-        except lookups.Performer.DoesNotExist:
+            return Performer.objects.get(slug=v.upper())
+        except Performer.DoesNotExist:
             raise ValueError(f"Invalid performer '{v}'")
 
     @validator('expiration_time')
@@ -197,7 +197,7 @@ def get_queryset():
         .annotate(
             region_name=F('region__name'),
             performer=Subquery(  # prevents including "performer" in slow GROUP BY
-                lookups.Performer.objects.filter(pk=OuterRef('performer_id')).values(
+                Performer.objects.filter(pk=OuterRef('performer_id')).values(
                     json=JSONObject(
                         id='id',
                         team_name='description',

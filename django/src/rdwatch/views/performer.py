@@ -5,7 +5,7 @@ from django.db.models import F
 from django.http import HttpRequest
 from django.shortcuts import get_object_or_404
 
-from rdwatch.models.lookups import Performer
+from rdwatch.models import Performer
 
 
 class PerformerSchema(Schema):

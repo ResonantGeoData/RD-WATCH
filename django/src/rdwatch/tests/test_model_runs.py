@@ -7,7 +7,7 @@ from ninja.testing import TestClient
 
 from django.utils import timezone
 
-from rdwatch.models import ModelRun, Region, lookups
+from rdwatch.models import ModelRun, Performer, Region
 from rdwatch.tasks import collect_garbage_task
 
 
@@ -19,21 +19,21 @@ def test_model_run_auto_delete(region: Region) -> None:
             title='test1',
             parameters={},
             region=region,
-            performer=lookups.Performer.objects.all().first(),
+            performer=Performer.objects.all().first(),
             expiration_time=timedelta(hours=1),
         )
     not_expired_model_run = ModelRun.objects.create(
         title='test2',
         parameters={},
         region=region,
-        performer=lookups.Performer.objects.all().first(),
+        performer=Performer.objects.all().first(),
         expiration_time=timedelta(hours=2),
     )
     model_run_with_no_expiration = ModelRun.objects.create(
         title='test3',
         parameters={},
         region=region,
-        performer=lookups.Performer.objects.all().first(),
+        performer=Performer.objects.all().first(),
     )
     assert ModelRun.objects.count() == 3
 
@@ -48,7 +48,7 @@ def test_model_run_auto_delete(region: Region) -> None:
 
 @pytest.mark.django_db
 def test_model_run_rest_create(test_client: TestClient, region_id: str) -> None:
-    performer = lookups.Performer.objects.first()
+    performer = Performer.objects.first()
     title = 'test'
 
     assert (
@@ -82,7 +82,7 @@ def test_model_run_rest_create(test_client: TestClient, region_id: str) -> None:
 @pytest.mark.django_db
 def test_model_run_rest_list(test_client: TestClient, region: Region) -> None:
     # Create test data
-    performers = list(lookups.Performer.objects.all())
+    performers = list(Performer.objects.all())
     model_runs = ModelRun.objects.bulk_create(
         ModelRun(performer=performer, title=f'test_{i}', region=region, parameters={})
         for i, performer in enumerate(performers)
@@ -127,7 +127,7 @@ def test_model_run_rest_list(test_client: TestClient, region: Region) -> None:
 @pytest.mark.django_db
 def test_model_run_rest_get(test_client: TestClient, region: Region) -> None:
     # Create test data
-    performer = lookups.Performer.objects.first()
+    performer = Performer.objects.first()
     title = 'test'
     model_run = ModelRun.objects.create(
         performer=performer,

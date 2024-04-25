@@ -94,6 +94,7 @@ const getAllSiteProposals = async () => {
     baseModifiedList.value = mainList;
     modifiedList.value = mainList;
 }
+onMounted(() => getAllSiteProposals());
 
 watch(
   () => props.modelRuns,
@@ -101,7 +102,6 @@ watch(
     getAllSiteProposals();
   }
 );
-getAllSiteProposals();
 watch(clickedInfo, () => {
   if (clickedInfo.value.siteId.length) {
     const found = modifiedList.value.find(
@@ -229,14 +229,25 @@ watch(filter, () => {
       >
         Selected Sites
       </div>
-      <site-list-card
-        v-for="item in modifiedList"
-        :key="item.id"
-        :site="item"
-        @selected="selectSite(item)"
-        @close="selectSite(item, true)"
-        @image-download="setImageDownloadDialog($event)"
+      <div
+        v-else
+        style="height:20px"
       />
+      <v-virtual-scroll
+        height="calc(100vh - 145px)"
+        :items="modifiedList"
+        item-height="200"
+      >
+        <template #default="{item}">
+          <site-list-card
+            :key="item.id"
+            :site="item"
+            @selected="selectSite(item)"
+            @close="selectSite(item, true)"
+            @image-download="setImageDownloadDialog($event)"
+          />
+        </template>
+      </v-virtual-scroll>
     </div>
     <images-download-dialog
       v-if="imageDownloadDialog"

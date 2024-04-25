@@ -7,6 +7,7 @@ from . import (
     site,
     site_image,
     vector_tile,
+    satellite_fetching,
 )
 
 __all__ = [
@@ -18,4 +19,5 @@ __all__ = [
     'vector_tile',
     'site',
     'eval',
+    'satellite_fetching',
 ]

@@ -534,7 +534,7 @@ def start_download(
     return task_id.id
 
 
-@router.get('/download_status')
+@router.get('/download_status/')
 def check_download(request: HttpRequest, task_id: str):
     task = AsyncResult(task_id)
     print(task)

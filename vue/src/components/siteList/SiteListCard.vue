@@ -421,16 +421,16 @@ watch(selectSite, async () => {
 }
 
 .image-label {
-  font-size: 12px;
+  font-size: 11px;
   color: gray;
 }
 .image-value {
-  font-size: 12px;
+  font-size: 11px;
   color: black;
   font-weight: bolder;
 }
 .image-line {
-  margin-left: 5px;
+  margin-left: 1px;
   border-right: 1px solid gray;
 }
 .site-icon {

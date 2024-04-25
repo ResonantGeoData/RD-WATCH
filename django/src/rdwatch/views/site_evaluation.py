@@ -64,7 +64,7 @@ def get_site_model_feature_JSON(id: UUID4, obsevations=False):
         .annotate(
             json=JSONObject(
                 site=JSONObject(
-                    region='region__name',
+                    region='configuration__region__name',
                     number='number',
                 ),
                 configuration='configuration__parameters',

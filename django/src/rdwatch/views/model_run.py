@@ -534,14 +534,13 @@ def start_download(
     return task_id.id
 
 
-@router.get('/download_status/')
-def check_download(request: HttpRequest, task_id: str):
+@router.get('/download_status/{task_id}')
+def check_download(request: HttpRequest, task_id: UUID4):
     task = AsyncResult(task_id)
-    print(task)
     return task.status
 
 
-@router.get('/{id}/download/')
+@router.get('/{id}/download/{task_id}/')
 def get_downloaded_annotations(request: HttpRequest, id: UUID4, task_id: str):
     annotation_export = AnnotationExport.objects.filter(
         configuration=id, celery_id=task_id

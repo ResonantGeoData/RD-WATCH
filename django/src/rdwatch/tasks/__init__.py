@@ -14,6 +14,8 @@ import numpy as np
 import requests
 from celery import shared_task, signals
 from celery.result import AsyncResult
+from celery.states import READY_STATES
+from django_celery_results.models import TaskResult
 from more_itertools import ichunked
 from PIL import Image
 from pydantic import UUID4
@@ -25,7 +27,7 @@ from django.contrib.gis.geos import Polygon
 from django.core.files import File
 from django.core.files.base import ContentFile
 from django.db import transaction
-from django.db.models import DateTimeField, ExpressionWrapper, F
+from django.db.models import DateTimeField, ExpressionWrapper, F, OuterRef, Subquery
 from django.utils import timezone
 
 from rdwatch.celery import app
@@ -393,7 +395,7 @@ def get_siteobservations_images(
 
 
 @shared_task
-def delete_temp_model_runs_task() -> None:
+def collect_garbage_task() -> None:
     """Delete all model runs that are due to be deleted."""
     model_runs_to_delete = (
         ModelRun.objects.filter(expiration_time__isnull=False)
@@ -438,14 +440,25 @@ def delete_temp_model_runs_task() -> None:
         ):
             ModelRun.objects.filter(pk__in=model_runs).delete()
 
-
-@shared_task
-def delete_export_files() -> None:
-    """Delete all S3 Export Files that are over an hour old."""
-    exports_to_delete = AnnotationExport.objects.filter(
+    # Delete all S3 Export Files that are over an hour old
+    AnnotationExport.objects.filter(
         created__lte=timezone.now() - timedelta(hours=1)
-    )
-    exports_to_delete.delete()
+    ).delete()
+
+    # Delete all SatelliteFetching tasks that are over an day old AND
+    # whose associated Celery task is in a "ready" state (i.e. completed)
+    SatelliteFetching.objects.alias(
+        celery_task_status=Subquery(
+            TaskResult.objects.filter(
+                task_id=OuterRef('celery_id'),
+            ).values(
+                'status'
+            )[:1]
+        )
+    ).filter(
+        timestamp__lte=timezone.now() - timedelta(days=1),
+        celery_task_status__in=READY_STATES,
+    ).delete()
 
 
 @app.task(bind=True)

@@ -8,7 +8,7 @@ from ninja.testing import TestClient
 from django.utils import timezone
 
 from rdwatch.models import ModelRun, Region, lookups
-from rdwatch.tasks import delete_temp_model_runs_task
+from rdwatch.tasks import collect_garbage_task
 
 
 @pytest.mark.django_db(databases=['default'])
@@ -37,7 +37,7 @@ def test_model_run_auto_delete(region: Region) -> None:
     )
     assert ModelRun.objects.count() == 3
 
-    delete_temp_model_runs_task()
+    collect_garbage_task()
 
     assert ModelRun.objects.count() == 2
     assert list(ModelRun.objects.all()) == [

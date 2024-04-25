@@ -159,12 +159,8 @@ class BaseConfiguration(Configuration):
             return []
 
     CELERY_BEAT_SCHEDULE = {
-        'delete-temp-model-runs-beat': {
-            'task': 'rdwatch.tasks.delete_temp_model_runs_task',
-            'schedule': timedelta(hours=1),
-        },
-        'delete-export-files-runs-beat': {
-            'task': 'rdwatch.tasks.delete_export_files',
+        'collect-garbage-beat': {
+            'task': 'rdwatch.tasks.collect_garbage_task',
             'schedule': timedelta(hours=1),
         },
     }

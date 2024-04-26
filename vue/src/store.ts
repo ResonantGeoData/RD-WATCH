@@ -84,14 +84,14 @@ export interface SiteDetails {
   title: string;
 }
 
-export interface EnabledSiteObservations {
+export interface EnabledSiteOverviews {
   id: string;
   images: SiteObservationImage[];
   bbox: ImageBBox;
   timestamp: number;
 }
 
-export interface SiteObservationJob {
+export interface SiteDownloadJob {
   status: 'Running' | 'Complete' | 'Error';
   error?: string;
   timestamp: number;
@@ -104,7 +104,7 @@ export interface SiteObservationJob {
   }
 }
 
-export interface SiteObservation {
+export interface SiteOverview {
   id: string;
   siteDetails?: SiteDetails;
   timerange: {
@@ -124,7 +124,7 @@ export interface SiteObservation {
     average: number,
   }
   imagesActive: boolean;
-  job?: SiteObservationJob;
+  job?: SiteDownloadJob;
   bbox: { xmin: number; ymin: number; xmax: number; ymax: number };
 }
 
@@ -141,7 +141,7 @@ export interface SatelliteData {
   satelliteSources: ('S2' |'WorldView' | 'Planet')[];
 }
 
-export interface siteObsSatSettings {
+export interface siteOverviewSatSettings {
   observationSources: ('S2' | 'WV' | 'L8' | 'PL')[];
   percentBlackFilter: number;
   cloudCoverFilter: number;
@@ -167,9 +167,9 @@ export const state = reactive<{
     patternThickness: number;
     patternOpacity: number;
   };
-  selectedSites: SiteObservation[];
-  enabledSiteObservations: EnabledSiteObservations[],
-  siteObsSatSettings: siteObsSatSettings,
+  selectedSites: SiteOverview[];
+  enabledSiteImages: EnabledSiteOverviews[],
+  siteOverviewSatSettings: siteOverviewSatSettings,
   loopingInterval: NodeJS.Timeout | null,
   loopingId: string | null,
   modelRuns: KeyedModelRun[],
@@ -227,8 +227,8 @@ export const state = reactive<{
     patternOpacity: 255,
   },
   selectedSites: [],
-  enabledSiteObservations: [],
-  siteObsSatSettings: {
+  enabledSiteImages: [],
+  siteOverviewSatSettings: {
     observationSources: ['S2', 'WV', 'L8', 'PL'],
     cloudCoverFilter: 70,
     percentBlackFilter: 70,
@@ -340,55 +340,55 @@ export const getSiteObservationDetails = async (siteId: string, siteDetails?: Si
   return obsData;
 }
 
-export const toggleSatelliteImages = (siteObs: SiteObservation, off= false) => {
-  const found = state.enabledSiteObservations.find((item) => item.id === siteObs.id);
+export const toggleSatelliteImages = (siteOverview: SiteOverview, off= false) => {
+  const found = state.enabledSiteImages.find((item) => item.id === siteOverview.id);
   if (found === undefined && !off) {
-      const baseBBox = siteObs.bbox;
+      const baseBBox = siteOverview.bbox;
       const bbox = [
           [baseBBox.xmin, baseBBox.ymax],
           [baseBBox.xmax, baseBBox.ymax],
           [baseBBox.xmax, baseBBox.ymin],
           [baseBBox.xmin, baseBBox.ymin],
       ] as ImageBBox;
-      if (siteObs.imageCounts.WV.images || siteObs.imageCounts.S2.images) {
-          const tempArr = [...state.enabledSiteObservations];
+      if (siteOverview.imageCounts.WV.images || siteOverview.imageCounts.S2.images) {
+          const tempArr = [...state.enabledSiteImages];
           let imageList: SiteObservationImage[] = [];
-          if (siteObs.imageCounts.WV.images && state.siteObsSatSettings.observationSources.includes('WV')) {
-            imageList = [...siteObs.imageCounts.WV.images]
+          if (siteOverview.imageCounts.WV.images && state.siteOverviewSatSettings.observationSources.includes('WV')) {
+            imageList = [...siteOverview.imageCounts.WV.images]
           }
-          if (siteObs.imageCounts.S2.images && state.siteObsSatSettings.observationSources.includes('S2')) {
-            imageList = [...imageList, ...siteObs.imageCounts.S2.images]
+          if (siteOverview.imageCounts.S2.images && state.siteOverviewSatSettings.observationSources.includes('S2')) {
+            imageList = [...imageList, ...siteOverview.imageCounts.S2.images]
           }
-          if (siteObs.imageCounts.L8.images && state.siteObsSatSettings.observationSources.includes('L8')) {
-            imageList = [...imageList, ...siteObs.imageCounts.L8.images]
+          if (siteOverview.imageCounts.L8.images && state.siteOverviewSatSettings.observationSources.includes('L8')) {
+            imageList = [...imageList, ...siteOverview.imageCounts.L8.images]
           }
-          if (siteObs.imageCounts.PL.images && state.siteObsSatSettings.observationSources.includes('PL')) {
-            imageList = [...imageList, ...siteObs.imageCounts.PL.images]
+          if (siteOverview.imageCounts.PL.images && state.siteOverviewSatSettings.observationSources.includes('PL')) {
+            imageList = [...imageList, ...siteOverview.imageCounts.PL.images]
           }
           tempArr.push({
-              id: siteObs.id,
-              timestamp: siteObs.timerange ? siteObs.timerange.min : 0,
+              id: siteOverview.id,
+              timestamp: siteOverview.timerange ? siteOverview.timerange.min : 0,
               images: imageList,
               bbox,
           });
-          state.enabledSiteObservations = tempArr;
+          state.enabledSiteImages = tempArr;
       }
   } else {
-      const tempArr = [...state.enabledSiteObservations];
-      const index = tempArr.findIndex((item) => item.id === siteObs.id);
+      const tempArr = [...state.enabledSiteImages];
+      const index = tempArr.findIndex((item) => item.id === siteOverview.id);
       if (index !== -1) {
           tempArr.splice(index, 1);
-          state.enabledSiteObservations = tempArr;
+          state.enabledSiteImages = tempArr;
       }
   }
 }
 
 const loadAndToggleSatelliteImages = async (siteId: string) => {
-  const index = state.enabledSiteObservations.findIndex((item) => item.id === siteId);
+  const index = state.enabledSiteImages.findIndex((item) => item.id === siteId);
   if (index !== -1) {
-    const tempArr = [...state.enabledSiteObservations];
+    const tempArr = [...state.enabledSiteImages];
     tempArr.splice(index, 1);
-    state.enabledSiteObservations = tempArr;
+    state.enabledSiteImages = tempArr;
   } else {
   const data = await getSiteObservationDetails(siteId, undefined, false);
   toggleSatelliteImages(data);

@@ -1,7 +1,7 @@
 <script setup lang="ts">
 
 import { Ref, computed, ref, } from "vue";
-import { EnabledSiteObservations, SiteObservationImage, state } from '../../store'
+import { EnabledSiteOverviews, SiteObservationImage, state } from '../../store'
 
 export type SatelliteTypes = 'S2' | 'WV' | 'L8' | 'PL';
 
@@ -18,37 +18,37 @@ defineProps<{
 
 const cloudFilter = computed({
     get() {
-      return state.siteObsSatSettings.cloudCoverFilter;
+      return state.siteOverviewSatSettings.cloudCoverFilter;
     },
     set(val: number) {
-      state.siteObsSatSettings = { ...state.siteObsSatSettings, cloudCoverFilter: val };
+      state.siteOverviewSatSettings = { ...state.siteOverviewSatSettings, cloudCoverFilter: val };
     },
   });
   
   const percentBlackFilter = computed({
     get() {
-      return state.siteObsSatSettings.percentBlackFilter;
+      return state.siteOverviewSatSettings.percentBlackFilter;
     },
     set(val: number) {
-      state.siteObsSatSettings = { ...state.siteObsSatSettings, percentBlackFilter: val };
+      state.siteOverviewSatSettings = { ...state.siteOverviewSatSettings, percentBlackFilter: val };
     },
   });
   
   const imageOpacity = computed({
     get() {
-      return state.siteObsSatSettings.imageOpacity;
+      return state.siteOverviewSatSettings.imageOpacity;
     },
     set(val: number) {
-      state.siteObsSatSettings = { ...state.siteObsSatSettings, imageOpacity: val };
+      state.siteOverviewSatSettings = { ...state.siteOverviewSatSettings, imageOpacity: val };
     },
   });
   
   const updateSources = () => {
-  const newObservations: EnabledSiteObservations[] = [];
-  state.enabledSiteObservations.filter((item) => {
+  const newObservations: EnabledSiteOverviews[] = [];
+  state.enabledSiteImages.filter((item) => {
     const tempImages: SiteObservationImage[] = [];
     item.images.forEach((image) => {
-      if (!state.siteObsSatSettings.observationSources.includes(image.source)) {
+      if (!state.siteOverviewSatSettings.observationSources.includes(image.source)) {
         image.disabled = true;
       } else if (image.disabled) {
         delete image.disabled;
@@ -60,14 +60,14 @@ const cloudFilter = computed({
     }
     newObservations.push(item);
   });
-  state.enabledSiteObservations = newObservations;
+  state.enabledSiteImages = newObservations;
 }
 
 const baseSources: Ref<(SatelliteTypes)[]> = ref(['S2', 'WV', 'L8', 'PL'])
 
 const sources: Ref<(SatelliteTypes)[]> = ref(['S2', 'WV', 'L8', 'PL']);
 const updateSatSources = () => {
-  state.siteObsSatSettings = {...state.siteObsSatSettings, observationSources: sources.value };
+  state.siteOverviewSatSettings = {...state.siteOverviewSatSettings, observationSources: sources.value };
   updateSources();
 };
 const filterDialog = ref(false);

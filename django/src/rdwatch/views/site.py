@@ -4,6 +4,7 @@ from pydantic import UUID4
 from django.db.models import Case, Count, Exists, F, OuterRef, When
 from django.db.models.functions import JSONObject
 from django.http import HttpRequest
+from django.shortcuts import get_object_or_404
 
 from rdwatch.db.functions import BoundingBox, ExtractEpoch
 from rdwatch.models import SatelliteFetching, SiteEvaluation
@@ -22,7 +23,7 @@ class SiteImageSiteDetailResponse(Schema):
     timemax: int | None
 
 
-def get_site(site_id: UUID4):
+def get_site_query(site_id: UUID4):
     return (
         SiteEvaluation.objects.select_related('siteimage', 'satellite_fetching')
         .filter(pk=site_id)
@@ -62,9 +63,9 @@ def get_site(site_id: UUID4):
 
 
 @router.get('/{id}')
-def getSite(request: HttpRequest, id: UUID4):
-    # TODO: Make this properly error if there are issues in getting the information
-    return get_site(id)[0]['site']
+def get_site(request: HttpRequest, id: UUID4):
+    get_object_or_404(SiteEvaluation, pk=id)
+    return get_site_query(id)[0]['site']
 
 
 @router.get('/{id}/details/', response=SiteImageSiteDetailResponse)

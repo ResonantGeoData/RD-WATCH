@@ -1,20 +1,20 @@
 <script setup lang="ts">
 import { computed } from "vue";
 import { state } from "../../store";
-import { SiteObservation } from "../../store";
+import { SiteOverview } from "../../store";
 import { imageFilter } from "../../mapstyle/images";
 const props = defineProps<{
-  siteObservation: SiteObservation;
+  siteOverview: SiteOverview;
 }>();
 
-const imagesActive = computed(() => state.enabledSiteObservations.findIndex((item) => item.id === props.siteObservation.id) !== -1);
+const imagesActive = computed(() => state.enabledSiteImages.findIndex((item) => item.id === props.siteOverview.id) !== -1);
 
 
 
 const currentClosestTimestamp = computed(() => {
-  const observation = state.enabledSiteObservations.find((item) => item.id === props.siteObservation.id);
+  const observation = state.enabledSiteImages.find((item) => item.id === props.siteOverview.id);
   if (observation) {
-    const images = observation.images.filter((item) => imageFilter(item, state.siteObsSatSettings));
+    const images = observation.images.filter((item) => imageFilter(item, state.siteOverviewSatSettings));
     if (images.length) {
       const closest = images.map((item) => item.timestamp).reduce((prev, curr) => {
                   return Math.abs(curr - state.timestamp) < Math.abs(prev - state.timestamp) ? curr : prev
@@ -47,9 +47,9 @@ const currentClosestTimestamp = computed(() => {
 })
 const goToTimestamp = (dir: number, loop = false) => {
   if (currentClosestTimestamp.value && currentClosestTimestamp.value.time) {
-    const observation = state.enabledSiteObservations.find((item) => item.id === props.siteObservation.id);
+    const observation = state.enabledSiteImages.find((item) => item.id === props.siteOverview.id);
     if (observation) {
-      const images = observation.images.filter((item) => imageFilter(item, state.siteObsSatSettings));
+      const images = observation.images.filter((item) => imageFilter(item, state.siteOverviewSatSettings));
       const closest = images.filter((item) => !item.disabled).map((item) => item.timestamp).reduce((prev, curr) => {
                 return Math.abs(curr - state.timestamp) < Math.abs(prev - state.timestamp) ? curr : prev
             });

@@ -3,7 +3,7 @@ import {
   ApiService,
   SiteModelStatus,
 } from "../../client/services/ApiService";
-import { SiteObservation, getSiteObservationDetails, state, toggleSatelliteImages } from "../../store";
+import { SiteOverview, getSiteObservationDetails, state, toggleSatelliteImages } from "../../store";
 import { timeRangeFormat } from "../../utils";
 import { Ref, computed, ref, watch } from "vue";
 import { hoveredInfo } from "../../interactions/mouseEvents";
@@ -50,7 +50,7 @@ const emit = defineEmits<{
 
 const localSite: Ref<SiteDisplay> = ref({...props.site});
 
-const selectedSite: Ref<undefined | SiteObservation> = ref(undefined)
+const selectedSite: Ref<undefined | SiteOverview> = ref(undefined)
 
 watch(state.selectedSites, () => {
   selectedSite.value  = state.selectedSites.find((item) => item.id === localSite.value.id);
@@ -59,7 +59,7 @@ watch(state.selectedSites, () => {
 
 const selectSite = ref(!!selectedSite.value)
 
-const imagesActive = computed(() => state.enabledSiteObservations.findIndex((item) => item.id === props.site.id) !== -1);
+const imagesActive = computed(() => state.enabledSiteImages.findIndex((item) => item.id === props.site.id) !== -1);
 const hasImages = computed(() =>  props.site.WV > 0 || props.site.S2 > 0 || props.site.PL > 0 || props.site.L8 > 0);
 const downloading = computed(() => props.site.downloading);
 
@@ -347,7 +347,7 @@ watch(selectSite, async () => {
       </v-row>
       <ImageBrowser
         v-if="!localSite.proposal && selectedSite !== undefined"
-        :site-observation="selectedSite"
+        :site-overview="selectedSite"
       />
     </v-card-text>
     <div

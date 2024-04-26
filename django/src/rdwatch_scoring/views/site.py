@@ -17,6 +17,7 @@ from django.db.models import (
 )
 from django.db.models.functions import Concat, JSONObject, Substr
 from django.http import HttpRequest
+from django.shortcuts import get_object_or_404
 
 from rdwatch.db.functions import BoundingBox, ExtractEpoch
 from rdwatch.views.site import SiteImageSiteDetailResponse
@@ -25,7 +26,7 @@ from rdwatch_scoring.models import SatelliteFetching, Site, SiteImage
 router = Router()
 
 
-def get_site(site_id: UUID4):
+def get_site_query(site_id: UUID4):
     site_list = Site.objects.filter(pk=site_id).aggregate(
         sites=JSONBAgg(
             JSONObject(
@@ -93,9 +94,9 @@ def get_site(site_id: UUID4):
 
 
 @router.get('/{id}')
-def getSite(request: HttpRequest, id: UUID4):
-    # TODO: Make this properly error if there are issues in getting the information
-    return get_site(id)
+def get_site(request: HttpRequest, id: UUID4):
+    get_object_or_404(Site, pk=id)
+    return get_site_query(id)
 
 
 @router.get('/{id}/details/', response=SiteImageSiteDetailResponse)

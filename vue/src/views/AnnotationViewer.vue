@@ -3,7 +3,7 @@ import SideBar from "../components/annotationViewer/SideBar.vue"
 import ImageViewer from "../components/imageViewer/ImageViewer.vue"
 import MapLibre from "../components/MapLibre.vue";
 import LayerSelection from "../components/LayerSelection.vue";
-import ProposalList from "../components/annotationViewer/ProposalList.vue"
+import AnnotationList from "../components/annotationViewer/AnnotationList.vue"
 import MapLegend from "../components/MapLegend.vue";
 import { Ref, computed, onMounted, ref, watch } from "vue";
 import { state } from "../store";
@@ -17,7 +17,7 @@ const props = withDefaults(defineProps<Props>(), {
   selected:undefined,
 });
 
-const siteList: Ref<typeof ProposalList | null> = ref(null)
+const siteList: Ref<typeof AnnotationList | null> = ref(null)
 
 const selectedModelRun = computed(() => {
     if (state.filters.configuration_id?.length) {
@@ -86,7 +86,7 @@ const updateSiteList = async () => {
         <v-col
           class="navcolumn"
         >
-          <proposal-list
+          <annotation-list
             v-if="selectedModelRun !== null"
             ref="siteList"
             :model-run="selectedModelRun"

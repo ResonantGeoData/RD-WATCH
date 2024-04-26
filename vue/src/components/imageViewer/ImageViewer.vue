@@ -173,7 +173,7 @@ watch(showSitePoly, () => {
 
 const load = async (newValue?: string, oldValue?: string) => {
   currentImage.value = 0;
-  const index = state.enabledSiteObservations.findIndex(
+  const index = state.enabledSiteImages.findIndex(
     (item) => item.id === oldValue
   );
 
@@ -187,9 +187,9 @@ const load = async (newValue?: string, oldValue?: string) => {
       : null;
 
   if (index !== -1) {
-    const tempArr = [...state.enabledSiteObservations];
+    const tempArr = [...state.enabledSiteImages];
     tempArr.splice(index, 1);
-    state.enabledSiteObservations = tempArr;
+    state.enabledSiteImages = tempArr;
   }
   loading.value = true;
   await getImageData();
@@ -220,7 +220,7 @@ const load = async (newValue?: string, oldValue?: string) => {
 watch(
   () => props.siteEvalId,
   () => {
-    state.enabledSiteObservations = []; // toggle off all other satellite images
+    state.enabledSiteImages = []; // toggle off all other satellite images
     load();
   }
 );
@@ -283,7 +283,7 @@ watch(
 
 const mapImagesOn = computed(
   () =>
-    state.enabledSiteObservations.findIndex(
+    state.enabledSiteImages.findIndex(
       (item) => item.id === props.siteEvalId
     ) !== -1
 );
@@ -292,7 +292,7 @@ const mapImagesOn = computed(
 onUnmounted(() => {
   if (
     props.editable &&
-    state.enabledSiteObservations.find((item) => item.id === props.siteEvalId)
+    state.enabledSiteImages.find((item) => item.id === props.siteEvalId)
   ) {
     loadAndToggleSatelliteImages(props.siteEvalId);
   }

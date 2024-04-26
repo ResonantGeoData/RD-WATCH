@@ -503,7 +503,6 @@ def get_proposals(request: HttpRequest, model_run_id: UUID4):
 
     query = get_sites_query(model_run_id)
     model_run = data[0]
-    # TODO: Remove the region in the client side to focus on modelRunDetails
     query['region'] = model_run['region']
     query['modelRunDetails'] = model_run
     return 200, query
@@ -517,7 +516,6 @@ def get_sites(request: HttpRequest, model_run_id: UUID4):
 
     query = get_sites_query(model_run_id)
     model_run = data[0]
-    # TODO: Remove the region in the client side to focus on modelRunDetails
     query['region'] = model_run['region']
     query['modelRunDetails'] = model_run
     return 200, query

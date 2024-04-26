@@ -22,7 +22,7 @@ watch(() => route.path, (oldPath, newPath) => {
   if ((!oldPath.includes('/scoring') && newPath.includes('/scoring')) || (oldPath.includes('/scoring') && !newPath.includes('/scoring'))) {
     selectedPerformer.value = [];
     selectedRegion.value = undefined;
-    state.enabledSiteObservations = [];
+    state.enabledSiteImages = [];
     state.selectedSites = [];
     state.filters = {
     ...state.filters,

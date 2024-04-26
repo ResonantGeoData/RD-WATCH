@@ -114,7 +114,6 @@ const getSites = async (modelRun: string) => {
       if (selected !== null) {
         selectSite(selected);
       }
-      console.log(`downloadingAny: ${downloadingAny}`);
       if (downloadingAny && downloadCheckInterval === null) {
         checkDownloading();
       }

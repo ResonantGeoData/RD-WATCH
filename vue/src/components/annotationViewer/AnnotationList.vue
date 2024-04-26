@@ -17,7 +17,7 @@ const props = defineProps<{
   selectedEval: string | null;
 }>();
 
-const proposalList: Ref<SiteList | null> = ref(null);
+const annotationList: Ref<SiteList | null> = ref(null);
 const baseModifiedList: Ref<SiteDisplay[]> = ref([]);
 const modifiedList: Ref<SiteDisplay[]> = ref([]);
 const imageDownloadDialog = ref(false);
@@ -60,23 +60,23 @@ const checkDownloading = () => {
 const getSiteProposals = async () => {
   if (props.modelRun !== null) {
     const results = await ApiService.getProposals(props.modelRun);
-    proposalList.value = results;
+    annotationList.value = results;
     let newNumbers = 0;
     let downloadingAny = false;
-    if (proposalList.value?.sites) {
+    if (annotationList.value?.sites) {
       const modList: SiteDisplay[] = [];
-      const regionName: string = proposalList.value.region;
+      const regionName: string = annotationList.value.region;
       const accepted: string[] = [];
       const rejected: string[] = [];
       let selected: SiteDisplay | null = null;
-      const details = proposalList.value.modelRunDetails ? {
-        title: proposalList.value.modelRunDetails.title,
-        version: proposalList.value.modelRunDetails.version,
-        performer: proposalList.value.modelRunDetails.performer.short_code,
-        region: proposalList.value.modelRunDetails.region,
-        proposal: proposalList.value.modelRunDetails.proposal,
+      const details = annotationList.value.modelRunDetails ? {
+        title: annotationList.value.modelRunDetails.title,
+        version: annotationList.value.modelRunDetails.version,
+        performer: annotationList.value.modelRunDetails.performer.short_code,
+        region: annotationList.value.modelRunDetails.region,
+        proposal: annotationList.value.modelRunDetails.proposal,
       } : undefined
-      proposalList.value.sites.forEach((item) => {
+      annotationList.value.sites.forEach((item) => {
         if (item.downloading) {
           downloadingAny = true;
         }

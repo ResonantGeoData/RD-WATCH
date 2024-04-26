@@ -271,7 +271,10 @@ watch(selectSite, async () => {
           @site-toggled="hasImages && toggleSatelliteImages(selectedSite)"
         />
         <v-spacer />
-        <v-tooltip open-delay="300">
+        <v-tooltip 
+          v-if="!ApiService.getApiPrefix().includes('scoring')"
+          open-delay="300"
+        >
           <template #activator="{ props }">
             <v-btn
               variant="tonal"

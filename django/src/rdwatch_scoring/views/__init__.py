@@ -4,10 +4,10 @@ from . import (
     observation,
     performer,
     region,
+    satellite_fetching,
     site,
     site_image,
     vector_tile,
-    satellite_fetching,
 )
 
 __all__ = [

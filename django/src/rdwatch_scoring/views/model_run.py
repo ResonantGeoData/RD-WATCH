@@ -50,8 +50,8 @@ class ModelRunFilterSchema(FilterSchema):
         if value is None or not value:
             return Q()
         performer_q = Q()
-        for performer_slug in value:
-            performer_q |= Q(performer=performer_slug)
+        for performer_code in value:
+            performer_q |= Q(performer=performer_code)
         return performer_q
 
     def filter_mode(self, value: list[Mode] | None) -> Q:
@@ -102,7 +102,6 @@ def get_queryset():
                 output_field=CharField(),
             ),
             region_name=F('region'),
-            performer_slug=F('performer'),
             performer=JSONObject(
                 id=0, team_name=F('performer'), short_code=F('performer')
             ),

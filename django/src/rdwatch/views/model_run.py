@@ -61,15 +61,15 @@ class ModelRunFilterSchema(FilterSchema):
         if value is None or not value:
             return Q()
         performer_q = Q()
-        for performer_slug in value:
-            performer_q |= Q(performer__slug=performer_slug)
+        for performer_code in value:
+            performer_q |= Q(performer__short_code=performer_code)
         return performer_q
 
     def filter_groundtruth(self, value: bool | None) -> Q:
         if not value:
             return Q()
         # Filter for ground_truth performer
-        gt_q = Q(performer__slug='TE')
+        gt_q = Q(performer__short_code='TE')
         gt_q &= Q(ground_truth=True)
         return gt_q
 
@@ -87,7 +87,7 @@ class ModelRunWriteSchema(Schema):
     @validator('performer')
     def validate_performer(cls, v: str) -> Performer:
         try:
-            return Performer.objects.get(slug=v.upper())
+            return Performer.objects.get(short_code=v.upper())
         except Performer.DoesNotExist:
             raise ValueError(f"Invalid performer '{v}'")
 
@@ -181,7 +181,7 @@ def get_queryset():
         # with a min_score of 1 and a performer of "TE"
         .alias(
             groundtruth=Case(
-                When(min_score=1, performer__slug__iexact='TE', then=True),
+                When(min_score=1, performer__short_code__iexact='TE', then=True),
                 default=False,
             )
         )
@@ -220,7 +220,7 @@ def get_queryset():
                         other=Coalesce(Subquery(other_count_subquery), 0),
                         ground_truths=Subquery(
                             ModelRun.objects.filter(
-                                performer__slug='TE',
+                                performer__short_code='TE',
                                 region_id=OuterRef('region_id'),
                                 proposal=None,
                             ).values_list('pk')[:1]
@@ -305,8 +305,8 @@ def create_model_run(
         'title': model_run.title,
         'performer': {
             'id': model_run.performer.pk,
-            'description': model_run.performer.description,
-            'slug': model_run.performer.slug,
+            'team_name': model_run.performer.team_name,
+            'short_code': model_run.performer.short_code,
         },
         'region_name': region.name,
         'parameters': model_run.parameters,

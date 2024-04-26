@@ -61,7 +61,7 @@ def test_model_run_rest_create(test_client: TestClient, region_id: str) -> None:
     res = test_client.post(
         '/model-runs/',
         json={
-            'performer': performer.slug,
+            'performer': performer.short_code,
             'title': title,
             'region': region_id,
             'parameters': {},
@@ -70,7 +70,7 @@ def test_model_run_rest_create(test_client: TestClient, region_id: str) -> None:
 
     assert res.status_code == 200
     assert res.json()['title'] == title
-    assert res.json()['performer']['short_code'] == performer.slug
+    assert res.json()['performer']['short_code'] == performer.short_code
     assert (
         ModelRun.objects.filter(
             title=title, performer=performer, region__name=region_id
@@ -94,11 +94,11 @@ def test_model_run_rest_list(test_client: TestClient, region: Region) -> None:
     assert res.json()['count'] == len(model_runs)
     assert {
         (mr['title'], mr['performer']['short_code']) for mr in res.json()['items']
-    } == {(mr.title, mr.performer.slug) for mr in model_runs}
+    } == {(mr.title, mr.performer.short_code) for mr in model_runs}
 
     # Test performer filter
     for performer in performers:
-        res = test_client.get(f'/model-runs/?performer={performer.slug}')
+        res = test_client.get(f'/model-runs/?performer={performer.short_code}')
         assert res.status_code == 200
         assert [mr['title'] for mr in res.json()['items']] == [
             mr.title for mr in model_runs if mr.performer == performer
@@ -140,7 +140,7 @@ def test_model_run_rest_get(test_client: TestClient, region: Region) -> None:
     res = test_client.get(f'/model-runs/{model_run.id}/')
     assert res.json()['id'] == str(model_run.id)
     assert res.json()['performer']['id'] == performer.id
-    assert res.json()['performer']['short_code'] == performer.slug
+    assert res.json()['performer']['short_code'] == performer.short_code
 
     # Get model run that doesn't exist
     res = test_client.get(f'/model-runs/{uuid4()}/')

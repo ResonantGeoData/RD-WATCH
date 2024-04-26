@@ -71,7 +71,7 @@ def get_site_model_feature_JSON(id: UUID4, obsevations=False):
                 version='version',
                 performer=JSONObject(
                     id='configuration__performer__id',
-                    team_name='configuration__performer__description',
+                    team_name='configuration__performer__team_name',
                     short_code='configuration__performer__slug',
                 ),
                 cache_originator_file='cache_originator_file',

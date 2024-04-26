@@ -32,7 +32,7 @@ class ObservationLabelAdmin(admin.ModelAdmin):
 
 @admin.register(Performer)
 class PerformerAdmin(admin.ModelAdmin):
-    list_display = ('id', 'slug', 'description')
+    list_display = ('id', 'team_name', 'short_code')
     search_fields = ('slug',)
 
 

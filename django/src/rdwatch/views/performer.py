@@ -1,4 +1,4 @@
-from ninja import Field, Schema
+from ninja import Schema
 from ninja.pagination import RouterPaginated
 
 from django.http import HttpRequest
@@ -9,8 +9,8 @@ from rdwatch.models import Performer
 
 class PerformerSchema(Schema):
     id: int
-    team_name: str = Field(alias='description')
-    short_code: str = Field(alias='slug')
+    team_name: str
+    short_code: str
 
 
 router = RouterPaginated()

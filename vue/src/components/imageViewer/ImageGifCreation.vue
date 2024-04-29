@@ -134,23 +134,55 @@ function drawForDownload() {
       bottom
     >
       <template #activator="{ props }">
-        <v-icon
+        <v-btn
           v-if="!downloadingGif"
           v-bind="props"
+          variant="tonal"
+          density="compact"
+          class="pa-0 ma-1 sidebar-icon"
           @click="drawForDownload()"
         >
-          mdi-download-box-outline
-        </v-icon>
-        <v-icon v-else>
-          mdi-spin mdi-sync
-        </v-icon>
-        <v-icon @click="GifSettingsDialog = true">
-          mdi-cog
-        </v-icon>
+          <v-icon>
+            mdi-download-box-outline
+          </v-icon>
+        </v-btn>
+        <v-btn
+          v-else
+          v-bind="props"
+          variant="tonal"
+          density="compact"
+          class="pa-0 ma-1 sidebar-icon"
+        >
+          <v-icon>
+            mdi-spin mdi-sync
+          </v-icon>
+          <v-icon @click="GifSettingsDialog = true">
+            mdi-cog
+          </v-icon>
+        </v-btn>
       </template>
       <span>
         Download Images to GIF.
       </span>
+    </v-tooltip>
+    <v-tooltip
+      open-delay="50"
+      bottom
+    >
+      <template #activator="{ props }">
+        <v-btn
+          v-bind="props"
+          variant="tonal"
+          density="compact"
+          class="pa-0 ma-1 sidebar-icon"
+          @click="GifSettingsDialog = true"
+        >
+          <v-icon>
+            mdi-cog
+          </v-icon>
+        </v-btn>
+      </template>
+      <span> GIF Download Settings</span>
     </v-tooltip>
     <v-dialog
       v-model="GifSettingsDialog"
@@ -204,3 +236,10 @@ function drawForDownload() {
     </v-dialog>
   </div>
 </template>
+
+<style scoped>
+.sidebar-icon {
+  min-width: 20px;
+  min-height: 20px;;
+}
+</style>

@@ -373,6 +373,63 @@ const clearStorage = async () => {
     :class="{ review: !dialog && !fullscreen, fullscreen: fullscreen }"
   >
     <v-row
+      dense
+      class="top-bar"
+    >
+      <h2 v-if="siteDetails">
+        {{ siteDetails.performer }} {{ siteDetails.title }} : V{{
+          siteDetails.version
+        }}
+      </h2>
+      <h2 v-else>
+        {{ siteEvaluationName }}
+      </h2>
+      <v-spacer />
+      <v-tooltip>
+        <template #activator="{ props }">
+          <v-btn
+            v-bind="props"
+            variant="tonal"
+            density="compact"
+            class="pa-0 ma-1 sidebar-icon"
+            :color="mapImagesOn ? 'primary' : 'black'"
+            :disabled="combinedImages.length === 0"
+            @click="loadAndToggleSatelliteImages(siteEvalId)"
+          >
+            <v-icon>mdi-image</v-icon>
+          </v-btn>
+        </template>
+        <span> Toggle image rendering within the map</span>
+      </v-tooltip>
+      <v-tooltip v-if="mapImagesOn">
+        <template #activator="{ props }">
+          <v-btn
+            v-bind="props"
+            variant="tonal"
+            density="compact"
+            class="pa-0 ma-1 sidebar-icon"
+            :color="rescaleImage ? 'blue' : ''"
+            :disabled="combinedImages.length === 0"
+            @click="rescaleImage = !rescaleImage"
+          >
+            <v-icon>mdi-resize</v-icon>
+          </v-btn>
+        </template>
+        <span> Rescale Images</span>
+      </v-tooltip>
+      <image-gif-creation
+        v-if="SAMViewer === null && mapImagesOn"
+        :background="background"
+        :filtered-images="filteredImages"
+        :fullscreen="fullscreen"
+        :rescale-image="rescaleImage"
+        :site-evaluation-name="siteEvaluationName"
+        :rescaling-b-box="rescalingBBox"
+        :draw-ground-truth="drawGroundTruth"
+        @rescale-b-box="rescalingBBox = $event"
+      />
+    </v-row>
+    <v-row
       v-if="dialog || fullscreen"
       dense
       class="top-bar"
@@ -568,32 +625,6 @@ const clearStorage = async () => {
         <span> Has or Generate Image embedding </span>
       </v-tooltip>
       <v-spacer />
-      <v-tooltip
-        open-delay="50"
-        bottom
-      >
-        <template #activator="{ props }">
-          <v-icon
-            v-bind="props"
-            :color="rescaleImage ? 'blue' : ''"
-            @click="rescaleImage = !rescaleImage"
-          >
-            mdi-resize
-          </v-icon>
-        </template>
-        <span> Rescale Images </span>
-      </v-tooltip>
-      <image-gif-creation
-        v-if="SAMViewer === null"
-        :background="background"
-        :filtered-images="filteredImages"
-        :fullscreen="fullscreen"
-        :rescale-image="rescaleImage"
-        :site-evaluation-name="siteEvaluationName"
-        :rescaling-b-box="rescalingBBox"
-        :draw-ground-truth="drawGroundTruth"
-        @rescale-b-box="rescalingBBox = $event"
-      />
     </v-row>
     <v-row v-show="SAMViewer === null">
       <v-spacer />
@@ -653,5 +684,9 @@ const clearStorage = async () => {
 .top-bar {
   font-size: 12px;
   font-weight: bold;
+}
+.sidebar-icon {
+  min-width: 20px;
+  min-height: 20px;;
 }
 </style>

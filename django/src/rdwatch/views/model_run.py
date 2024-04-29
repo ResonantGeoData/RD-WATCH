@@ -502,7 +502,7 @@ def get_proposals(request: HttpRequest, model_run_id: UUID4):
         raise Http404()
 
     query = get_sites_query(model_run_id)
-    model_run = data[0]
+    model_run = data.first()
     query['region'] = model_run['region']
     query['modelRunDetails'] = model_run
     return 200, query

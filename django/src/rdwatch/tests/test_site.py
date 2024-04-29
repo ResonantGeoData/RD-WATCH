@@ -28,7 +28,7 @@ def test_site_details_rest(
                 else None
             ),
             'regionName': site_evaluation.configuration.region.name,
-            'performer': site_evaluation.configuration.performer.slug,
+            'performer': site_evaluation.configuration.performer.short_code,
             'siteNumber': site_evaluation.number,
             'version': site_evaluation.version,
         }

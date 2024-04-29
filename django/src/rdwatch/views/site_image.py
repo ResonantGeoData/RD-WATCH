@@ -124,7 +124,7 @@ def site_images(request: HttpRequest, id: UUID4):
         SiteEvaluation.objects.filter(
             configuration__region=site_eval_obj.configuration.region,
             number=site_eval_obj.number,
-            configuration__performer__slug='TE',
+            configuration__performer__short_code='TE',
             score=1,
         )
         .values()

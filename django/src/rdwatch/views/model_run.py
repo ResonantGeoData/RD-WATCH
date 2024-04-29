@@ -418,17 +418,10 @@ def get_model_run_details(model_run_id: UUID4):
         .annotate(
             json=JSONObject(
                 region=F('region__name'),
-                performer=Subquery(  # prevents including "performer" in slow GROUP BY
-                    lookups.Performer.objects.filter(
-                        pk=OuterRef('performer_id')
-                    ).values(
-                        json=JSONObject(
-                            id='id',
-                            team_name='description',
-                            short_code='slug',
-                        )
-                    ),
-                    output_field=JSONField(),
+                performer=JSONObject(
+                    id=F('performer__id'),
+                    team_name=F('performer__team_name'),
+                    short_code=F('performer__short_code'),
                 ),
                 version=F('version'),
                 proposal=F('proposal'),

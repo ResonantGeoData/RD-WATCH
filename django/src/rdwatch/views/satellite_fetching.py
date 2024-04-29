@@ -7,7 +7,7 @@ from django.http import HttpRequest
 
 from rdwatch.models import SatelliteFetching
 
-router = Router()
+router = RouterPaginated()
 logger = logging.getLogger(__name__)
 
 
@@ -19,8 +19,8 @@ def satellite_fetching_running(
         status=SatelliteFetching.Status.RUNNING
     )
     if model_runs is not None and len(model_runs) > 0:
-        running_sites = running_sites.select_related('sites').filter(
+        running_sites = running_sites.filter(
             site__configuration__in=model_runs
         )
-    running_site_ids = list(running_sites.values_list('site_id', flat=True))
+    running_site_ids = running_sites.values_list('site_id', flat=True)
     return running_site_ids

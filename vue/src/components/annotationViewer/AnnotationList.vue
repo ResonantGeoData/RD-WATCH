@@ -29,9 +29,7 @@ let downloadCheckInterval: NodeJS.Timeout | null = null;
 const satelliteFetchingCheck = async () => {
   const downloadList = await ApiService.getSatelliteFetchingRunning(props.modelRun ? [props.modelRun] : []);
   // Check if we are still downloading any items
-  console.log(downloadList);
   const stillDownloading = modifiedList.value.some((item) => downloadList.includes(item.id));
-  console.log(`stillDownloading: ${stillDownloading}`);
   if (!stillDownloading && downloadCheckInterval) {
     clearInterval(downloadCheckInterval);
     downloadCheckInterval = null;
@@ -47,7 +45,6 @@ const satelliteFetchingCheck = async () => {
     }
     newList.push(item)
   });
-  console.log(newList);
   modifiedList.value = newList;
 }
 

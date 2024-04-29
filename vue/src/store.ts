@@ -421,7 +421,6 @@ function updateCameraBoundsBasedOnModelRunList(filtered = true, force = false) {
       .flat()
       .forEach((c) => bounds.extend(c as [number, number]));
   });
-  console.log(bounds);
   if (bounds.isEmpty()) {
     const bbox = {
       xmin: -180,

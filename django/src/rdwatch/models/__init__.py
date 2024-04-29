@@ -1,6 +1,7 @@
 from . import lookups
 from .annotation_exports import AnnotationExport
 from .model_run import ModelRun
+from .performer import Performer
 from .region import Region
 from .satellite_fetching import SatelliteFetching
 from .site_evaluation import SiteEvaluation, SiteEvaluationTracking
@@ -11,6 +12,7 @@ __all__ = [
     'AnnotationExport',
     'lookups',
     'ModelRun',
+    'Performer',
     'Region',
     'SiteEvaluation',
     'SiteObservation',

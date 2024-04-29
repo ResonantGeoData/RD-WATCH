@@ -78,7 +78,7 @@ def siteDetails(request: HttpRequest, id: UUID4):
             timemin=ExtractEpoch('start_date'),
             timemax=ExtractEpoch('end_date'),
             regionName=F('configuration__region__name'),
-            performer=F('configuration__performer__slug'),
+            performer=F('configuration__performer__short_code'),
             siteNumber=F('number'),
         )
         .first()

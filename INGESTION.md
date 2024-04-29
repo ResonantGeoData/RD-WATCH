@@ -12,6 +12,34 @@ You can view and create `model-runs` on the `/api/model-runs` endpoint.
 - GET `/api/model-runs/{id}`: retrieve a single instance
 - POST `/api/model-runs`: create an instance
 
+Prior to creating a model run, you may have to create a performer to associate it with. RD-WATCH comes pre-configured with some performers by default; you can send a request to the `/api/performers/` endpoint to check the available performers:
+
+```bash
+$ curl https://some.rgd.host/api/performers/
+```
+
+To create a new performer, you can make a separate POST request to the API.
+The following JSON is an example of data to be used to create a `performer`:
+
+```jsonc
+// performer.json
+{
+  "team_name": "KIT",
+  "short_code": "Kitware"
+}
+```
+
+To create this performer:
+
+```bash
+$ curl \
+    -H "Content-Type: application/json" \
+    -X POST \
+    -d @performer.json \
+    https://some.rgd.host/api/performers/
+```
+
+Once you've ensured the desired performer exists, you can create a model run.
 The following JSON is an example of data to be used to create a `model-run`:
 
 ```jsonc
@@ -19,6 +47,8 @@ The following JSON is an example of data to be used to create a `model-run`:
 {
   // must be a valid performer short-code
   "performer": "KIT",
+  // must be a valid region string
+  "region": "KW_R001",
   // a human-readable title
   "title": "Ingestion 3.2",
   // number of hours after upload when this model run should be automatically deleted.

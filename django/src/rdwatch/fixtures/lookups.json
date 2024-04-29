@@ -359,64 +359,64 @@
     "model": "rdwatch.performer",
     "pk": 1,
     "fields": {
-      "slug": "TE",
-      "description": "Ground Truth"
+      "short_code": "TE",
+      "team_name": "Ground Truth"
     }
   },
   {
     "model": "rdwatch.performer",
     "pk": 2,
     "fields": {
-      "slug": "ACC",
-      "description": "Accenture"
+      "short_code": "ACC",
+      "team_name": "Accenture"
     }
   },
   {
     "model": "rdwatch.performer",
     "pk": 3,
     "fields": {
-      "slug": "ARA",
-      "description": "ARA"
+      "short_code": "ARA",
+      "team_name": "ARA"
     }
   },
   {
     "model": "rdwatch.performer",
     "pk": 4,
     "fields": {
-      "slug": "AST",
-      "description": "Astra"
+      "short_code": "AST",
+      "team_name": "Astra"
     }
   },
   {
     "model": "rdwatch.performer",
     "pk": 5,
     "fields": {
-      "slug": "BLA",
-      "description": "BlackSky"
+      "short_code": "BLA",
+      "team_name": "BlackSky"
     }
   },
   {
     "model": "rdwatch.performer",
     "pk": 6,
     "fields": {
-      "slug": "IAI",
-      "description": "IAI"
+      "short_code": "IAI",
+      "team_name": "IAI"
     }
   },
   {
     "model": "rdwatch.performer",
     "pk": 7,
     "fields": {
-      "slug": "KIT",
-      "description": "Kitware"
+      "short_code": "KIT",
+      "team_name": "Kitware"
     }
   },
   {
     "model": "rdwatch.performer",
     "pk": 8,
     "fields": {
-      "slug": "STR",
-      "description": "STR"
+      "short_code": "STR",
+      "team_name": "STR"
     }
   },
   {

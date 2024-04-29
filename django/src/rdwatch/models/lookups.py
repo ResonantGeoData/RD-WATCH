@@ -35,9 +35,5 @@ class ObservationLabel(Lookup):
     ...
 
 
-class Performer(Lookup):
-    ...
-
-
 class ProcessingLevel(Lookup):
     ...

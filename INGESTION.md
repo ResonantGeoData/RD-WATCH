@@ -19,7 +19,7 @@ $ curl https://some.rgd.host/api/performers/
 ```
 
 To create a new performer, you can make a separate POST request to the API.
-The following JSON is an example of data to be used to create a `model-run`:
+The following JSON is an example of data to be used to create a `performer`:
 
 ```jsonc
 // performer.json

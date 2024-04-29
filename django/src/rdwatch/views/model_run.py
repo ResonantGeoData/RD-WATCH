@@ -426,8 +426,7 @@ def cancel_generate_images(request: HttpRequest, model_run_id: UUID4):
 
 def get_model_run_details(model_run_id: UUID4):
     return (
-        ModelRun.objects
-        .filter(pk=model_run_id)
+        ModelRun.objects.filter(pk=model_run_id)
         .alias(version=F('evaluations__version'))
         .annotate(
             json=JSONObject(

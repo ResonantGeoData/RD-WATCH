@@ -47,6 +47,8 @@ The following JSON is an example of data to be used to create a `model-run`:
 {
   // must be a valid performer short-code
   "performer": "KIT",
+  // must be a valid region string
+  "region": "KW_R001",
   // a human-readable title
   "title": "Ingestion 3.2",
   // number of hours after upload when this model run should be automatically deleted.

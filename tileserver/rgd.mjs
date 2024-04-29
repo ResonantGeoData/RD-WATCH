@@ -56,11 +56,11 @@ function query(z, x, y, modelRunId, year) {
             "rdwatch_siteevaluation"."end_date"
         ) :: bigint AS "timemax",
         "rdwatch_modelrun"."performer_id" AS "performer_id",
-        "rdwatch_performer"."slug" AS "performer_name",
+        "rdwatch_performer"."short_code" AS "performer_name",
         "rdwatch_region"."name" AS "region",
         CASE
           WHEN (
-            "rdwatch_performer"."slug" = 'TE'
+            "rdwatch_performer"."short_code" = 'TE'
             AND "rdwatch_siteevaluation"."score" = 1.0
           ) THEN TRUE
           ELSE FALSE
@@ -119,11 +119,11 @@ function query(z, x, y, modelRunId, year) {
             "rdwatch_siteevaluation"."end_date"
         ) :: bigint,
         "rdwatch_modelrun"."performer_id",
-        "rdwatch_performer"."slug",
+        "rdwatch_performer"."short_code",
         "rdwatch_region"."name",
         CASE
           WHEN (
-            "rdwatch_performer"."slug" = 'TE'
+            "rdwatch_performer"."short_code" = 'TE'
             AND "rdwatch_siteevaluation"."score" = 1.0
           ) THEN TRUE
           ELSE FALSE
@@ -170,12 +170,12 @@ function query(z, x, y, modelRunId, year) {
             )
         ) :: bigint AS "timemax",
         "rdwatch_modelrun"."performer_id" AS "performer_id",
-        "rdwatch_performer"."slug" AS "performer_name",
+        "rdwatch_performer"."short_code" AS "performer_name",
         "rdwatch_region"."name" AS "region",
         "rdwatch_siteevaluation"."version" AS "version",
         CASE
           WHEN (
-            "rdwatch_performer"."slug" = 'TE'
+            "rdwatch_performer"."short_code" = 'TE'
             AND "rdwatch_siteevaluation"."score" = 1.0
           ) THEN TRUE
           ELSE FALSE

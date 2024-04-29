@@ -17,7 +17,6 @@ from django.db.models import (
     Exists,
     F,
     Func,
-    JSONField,
     Max,
     Min,
     OuterRef,
@@ -34,9 +33,9 @@ from rdwatch.db.functions import BoundingBox, BoundingBoxGeoJSON, ExtractEpoch
 from rdwatch.models import (
     AnnotationExport,
     ModelRun,
+    Performer,
     SatelliteFetching,
     SiteEvaluation,
-    lookups,
 )
 from rdwatch.models.region import get_or_create_region
 from rdwatch.schemas import RegionModel, SiteModel
@@ -53,7 +52,7 @@ router = RouterPaginated()
 
 
 class ModelRunFilterSchema(FilterSchema):
-    performer: list[str] | None = Field(q='performer_slug')
+    performer: list[str] | None
     region: str | None = Field(q='region__name')
     proposal: str | None = Field(q='proposal', ignore_none=False)
     groundtruth: bool | None
@@ -62,15 +61,15 @@ class ModelRunFilterSchema(FilterSchema):
         if value is None or not value:
             return Q()
         performer_q = Q()
-        for performer_slug in value:
-            performer_q |= Q(performer_slug=performer_slug)
+        for performer_code in value:
+            performer_q |= Q(performer__short_code=performer_code)
         return performer_q
 
     def filter_groundtruth(self, value: bool | None) -> Q:
         if not value:
             return Q()
         # Filter for ground_truth performer
-        gt_q = Q(performer_slug='TE')
+        gt_q = Q(performer__short_code='TE')
         gt_q &= Q(ground_truth=True)
         return gt_q
 
@@ -86,10 +85,10 @@ class ModelRunWriteSchema(Schema):
     proposal: bool | None = None
 
     @validator('performer')
-    def validate_performer(cls, v: str) -> lookups.Performer:
+    def validate_performer(cls, v: str) -> Performer:
         try:
-            return lookups.Performer.objects.get(slug=v.upper())
-        except lookups.Performer.DoesNotExist:
+            return Performer.objects.get(short_code=v.upper())
+        except Performer.DoesNotExist:
             raise ValueError(f"Invalid performer '{v}'")
 
     @validator('expiration_time')
@@ -172,18 +171,17 @@ def get_queryset():
     )
 
     return (
-        ModelRun.objects
+        ModelRun.objects.select_related('performer')
         # Get minimum score and performer so that we can tell which runs
         # are ground truth
         .annotate(
             min_score=Min('evaluations__score'),
-            performer_slug=F('performer__slug'),
         )
         # Label ground truths as such. A ground truth is defined as a model run
         # with a min_score of 1 and a performer of "TE"
         .alias(
             groundtruth=Case(
-                When(min_score=1, performer_slug__iexact='TE', then=True),
+                When(min_score=1, performer__short_code__iexact='TE', then=True),
                 default=False,
             )
         )
@@ -193,19 +191,8 @@ def get_queryset():
             evaluation_configuration=F('evaluations__configuration'),
             proposal_val=F('proposal'),
         )
-        .values()
         .annotate(
             region_name=F('region__name'),
-            performer=Subquery(  # prevents including "performer" in slow GROUP BY
-                lookups.Performer.objects.filter(pk=OuterRef('performer_id')).values(
-                    json=JSONObject(
-                        id='id',
-                        team_name='description',
-                        short_code='slug',
-                    )
-                ),
-                output_field=JSONField(),
-            ),
             downloading=Coalesce(
                 Subquery(
                     SatelliteFetching.objects.filter(
@@ -233,7 +220,7 @@ def get_queryset():
                         other=Coalesce(Subquery(other_count_subquery), 0),
                         ground_truths=Subquery(
                             ModelRun.objects.filter(
-                                performer__slug='TE',
+                                performer__short_code='TE',
                                 region_id=OuterRef('region_id'),
                                 proposal=None,
                             ).values_list('pk')[:1]
@@ -318,8 +305,8 @@ def create_model_run(
         'title': model_run.title,
         'performer': {
             'id': model_run.performer.pk,
-            'team_name': model_run.performer.description,
-            'short_code': model_run.performer.slug,
+            'team_name': model_run.performer.team_name,
+            'short_code': model_run.performer.short_code,
         },
         'region_name': region.name,
         'parameters': model_run.parameters,
@@ -426,23 +413,15 @@ def cancel_generate_images(request: HttpRequest, model_run_id: UUID4):
 
 def get_model_run_details(model_run_id: UUID4):
     return (
-        ModelRun.objects.select_related('evaluations')
-        .filter(pk=model_run_id)
+        ModelRun.objects.filter(pk=model_run_id)
         .alias(version=F('evaluations__version'))
         .annotate(
             json=JSONObject(
                 region=F('region__name'),
-                performer=Subquery(  # prevents including "performer" in slow GROUP BY
-                    lookups.Performer.objects.filter(
-                        pk=OuterRef('performer_id')
-                    ).values(
-                        json=JSONObject(
-                            id='id',
-                            team_name='description',
-                            short_code='slug',
-                        )
-                    ),
-                    output_field=JSONField(),
+                performer=JSONObject(
+                    id=F('performer__id'),
+                    team_name=F('performer__team_name'),
+                    short_code=F('performer__short_code'),
                 ),
                 version=F('version'),
                 proposal=F('proposal'),
@@ -502,7 +481,7 @@ def get_proposals(request: HttpRequest, model_run_id: UUID4):
         raise Http404()
 
     query = get_sites_query(model_run_id)
-    model_run = data[0]
+    model_run = data.first()
     query['region'] = model_run['region']
     query['modelRunDetails'] = model_run
     return 200, query

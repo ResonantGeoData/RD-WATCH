@@ -23,7 +23,7 @@ api.add_router('/evaluations/images/', images_router)
 api.add_router('/regions/', region_router)
 api.add_router('/status/', server_status_router)
 api.add_router('/sites/', site.router)
-api.add_router('/satellite_fetching/', satellite_fetching_router)
+api.add_router('/satellite-fetching/', satellite_fetching_router)
 
 
 # useful for getting information back about validation errors

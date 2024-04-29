@@ -18,8 +18,7 @@ from django.core.files.base import ContentFile
 from django.core.management import call_command
 
 from rdwatch.api import api
-from rdwatch.models import ModelRun, Region, SiteImage
-from rdwatch.models.lookups import Performer
+from rdwatch.models import ModelRun, Performer, Region, SiteImage
 from rdwatch.models.site_evaluation import SiteEvaluation
 from rdwatch.schemas import RegionModel, SiteModel
 from rdwatch.schemas.site_model import CurrentPhase

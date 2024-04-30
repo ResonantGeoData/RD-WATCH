@@ -107,6 +107,8 @@ const rescaleImage = ref(false);
 const rescalingBBox = ref(1);
 const editingPolygon = ref(false);
 const SAMViewer: Ref<number | null> = ref(null);
+const sidePanelExpanded = ref(false);
+const sidePanelTab = ref(null);
 
 
 const evaluationGeoJSON: Ref<GeoJSON.Polygon | null> = ref(null); // holds the site geoJSON so it can be edited
@@ -288,14 +290,14 @@ const mapImagesOn = computed(
     ) !== -1
 );
 
-
-onUnmounted(() => {
+const close = () => {
   if (
     props.editable &&
     state.enabledSiteImages.find((item) => item.id === props.siteEvalId)
   ) {
     loadAndToggleSatelliteImages(props.siteEvalId);
   }
+
   if (editingPolygon.value) {
     state.filters.editingPolygonSiteId = null;
     editingPolygon.value = false;
@@ -303,6 +305,12 @@ onUnmounted(() => {
   Object.keys(embeddingCheckInterval).forEach((key) => {
     clearInterval(embeddingCheckInterval.value[key]);
   });
+  state.selectedImageSite = null;
+}
+
+
+onUnmounted(() => {
+  close();
 });
 
 //SAM Integration
@@ -428,6 +436,20 @@ const clearStorage = async () => {
         :draw-ground-truth="drawGroundTruth"
         @rescale-b-box="rescalingBBox = $event"
       />
+      <v-tooltip>
+        <template #activator="{ props }">
+          <v-btn
+            v-bind="props"
+            variant="tonal"
+            density="compact"
+            class="pa-0 ma-1 sidebar-icon"
+            @click="close()"
+          >
+            <v-icon>mdi-close</v-icon>
+          </v-btn>
+        </template>
+        <span> Close Image Viewer</span>
+      </v-tooltip>
     </v-row>
     <v-row
       v-if="dialog || fullscreen"
@@ -626,38 +648,99 @@ const clearStorage = async () => {
       </v-tooltip>
       <v-spacer />
     </v-row>
-    <v-row v-show="SAMViewer === null">
-      <v-spacer />
-      <canvas ref="canvasRef" />
-      <v-spacer />
+    <v-row>
+      <v-col>
+        <v-row v-show="SAMViewer === null">
+          <v-spacer />
+          <canvas ref="canvasRef" />
+          <v-spacer />
+        </v-row>
+        <v-row v-if="SAMViewer !== null">
+          <ImageSAM
+            :id="SAMViewer.toString()"
+            :site-eval-id="siteEvalId"
+            :image="filteredImages[currentImage].image"
+            @cancel="SAMViewer = null"
+          />
+        </v-row>
+        <image-slider-details
+          v-if="SAMViewer === null"
+          :filtered-images="filteredImages"
+          :current-date="currentDate"
+          :current-label="currentLabel"
+          :edit-mode="editMode"
+          :start-date="startDate"
+          :end-date="endDate"
+          :image-index="currentImage"
+          @current-image="currentImage = $event"
+          @edit-dialog="editDialog = true; currentEditMode = $event"
+        />
+        <v-progress-linear
+          v-if="loading"
+          indeterminate
+          color="primary"
+          height="15"
+          class="mt-4"
+        />
+      </v-col>
+      <div>
+        <v-tooltip>
+          <template #activator="{ props }">
+            <v-btn
+              v-bind="props"
+              variant="tonal"
+              density="compact"
+              :color="sidePanelExpanded ? 'primary' : ''"
+              class="pa-0 ma-1 sidebar-icon"
+              @click="sidePanelExpanded = !sidePanelExpanded"
+            >
+              <v-icon>{{ sidePanelExpanded ? 'mdi-chevron-right' :'mdi-chevron-left' }}</v-icon>
+            </v-btn>
+          </template>
+          <span v-if="!sidePanelExpanded"> Open Side Panel for More Information</span>
+          <span v-else-if="sidePanelExpanded"> Collapse Side Panel</span>
+        </v-tooltip>
+      </div>
+      <v-col
+        v-if="sidePanelExpanded"
+        cols="3"
+        class="side-panel"
+      >
+        <v-tabs
+          v-model="sidePanelTab"
+          density="compact"
+          color="primary"
+        >
+          <v-tab
+            value="Details"
+            size="x-small"
+          >
+            Details
+          </v-tab>
+          <v-tab
+            value="Filter"
+            size="x-small"
+          >
+            Image <v-icon>mdi-filter</v-icon>
+          </v-tab>
+          <v-tab
+            value="Polygon"
+            size="x-small"
+          >
+            Polygon <v-icon>mdi-pencil</v-icon>
+          </v-tab>
+        </v-tabs>
+        <div v-if="sidePanelTab === 'Details'">
+          <p>Site Details</p>
+        </div>
+        <div v-if="sidePanelTab === 'Filter'">
+          <p>Image Filter</p>
+        </div>
+        <div v-if="sidePanelTab === 'Polygon'">
+          <p>Polygon Editing</p>
+        </div>
+      </v-col>
     </v-row>
-    <v-row v-if="SAMViewer !== null">
-      <ImageSAM
-        :id="SAMViewer.toString()"
-        :site-eval-id="siteEvalId"
-        :image="filteredImages[currentImage].image"
-        @cancel="SAMViewer = null"
-      />
-    </v-row>
-    <image-slider-details
-      v-if="SAMViewer === null"
-      :filtered-images="filteredImages"
-      :current-date="currentDate"
-      :current-label="currentLabel"
-      :edit-mode="editMode"
-      :start-date="startDate"
-      :end-date="endDate"
-      :image-index="currentImage"
-      @current-image="currentImage = $event"
-      @edit-dialog="editDialog = true; currentEditMode = $event"
-    />
-    <v-progress-linear
-      v-if="loading"
-      indeterminate
-      color="primary"
-      height="15"
-      class="mt-4"
-    />
   </v-card>
 </template>
 
@@ -688,5 +771,8 @@ const clearStorage = async () => {
 .sidebar-icon {
   min-width: 20px;
   min-height: 20px;;
+}
+.sidebar-icon:hover {
+  background-color: #1867c066
 }
 </style>

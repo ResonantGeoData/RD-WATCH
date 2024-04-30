@@ -132,6 +132,23 @@ class BaseConfiguration(Configuration):
         environ_required=True, environ_prefix=_ENVIRON_PREFIX
     )
 
+    SMARTFLOW_URL = values.Value(
+        None,
+        environ_required=False,
+        environ_prefix=_ENVIRON_PREFIX,
+    )
+
+    SMARTFLOW_USERNAME = values.Value(
+        None,
+        environ_required=False,
+        environ_prefix=_ENVIRON_PREFIX,
+    )
+    SMARTFLOW_PASSWORD = values.Value(
+        None,
+        environ_required=False,
+        environ_prefix=_ENVIRON_PREFIX,
+    )
+
     # django-celery-results configuration
     CELERY_RESULT_BACKEND = 'django-db'
     CELERY_CACHE_BACKEND = 'django-cache'

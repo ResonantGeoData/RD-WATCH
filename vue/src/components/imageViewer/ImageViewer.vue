@@ -409,7 +409,7 @@ const clearStorage = async () => {
         </template>
         <span> Toggle image rendering within the map</span>
       </v-tooltip>
-      <v-tooltip v-if="mapImagesOn">
+      <v-tooltip>
         <template #activator="{ props }">
           <v-btn
             v-bind="props"
@@ -417,7 +417,7 @@ const clearStorage = async () => {
             density="compact"
             class="pa-0 ma-1 sidebar-icon"
             :color="rescaleImage ? 'blue' : ''"
-            :disabled="combinedImages.length === 0"
+            :disabled="!mapImagesOn || combinedImages.length === 0"
             @click="rescaleImage = !rescaleImage"
           >
             <v-icon>mdi-resize</v-icon>
@@ -426,7 +426,7 @@ const clearStorage = async () => {
         <span> Rescale Images</span>
       </v-tooltip>
       <image-gif-creation
-        v-if="SAMViewer === null && mapImagesOn"
+        :disabled="!mapImagesOn || combinedImages.length === 0"
         :background="background"
         :filtered-images="filteredImages"
         :fullscreen="fullscreen"

@@ -13,10 +13,12 @@ interface Props {
   rescaleImage: boolean;
   fullscreen: boolean | undefined;
   rescalingBBox: number;
+  disabled: boolean,
   background: HTMLCanvasElement & { ctx?: CanvasRenderingContext2D | null } | undefined;
 
 }
 const props = withDefaults(defineProps<Props>(), {
+  disabled: false,
 });
 
 // eslint-disable-next-line @typescript-eslint/no-unused-vars
@@ -139,6 +141,7 @@ function drawForDownload() {
           v-bind="props"
           variant="tonal"
           density="compact"
+          :disabled="disabled"
           class="pa-0 ma-1 sidebar-icon"
           @click="drawForDownload()"
         >
@@ -173,6 +176,7 @@ function drawForDownload() {
         <v-btn
           v-bind="props"
           variant="tonal"
+          :disabled="disabled"
           density="compact"
           class="pa-0 ma-1 sidebar-icon"
           @click="GifSettingsDialog = true"

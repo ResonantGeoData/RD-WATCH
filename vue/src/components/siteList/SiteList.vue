@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { Ref, nextTick, onMounted, onUnmounted, ref, watch } from "vue";
+import { Ref, VueElement, nextTick, onMounted, onUnmounted, ref, watch } from "vue";
 import { ApiService } from "../../client";
 import {
   DownloadSettings,
@@ -11,6 +11,7 @@ import { SiteDisplay } from "./SiteListCard.vue";
 import SiteListHeader from "./SiteListHeader.vue";
 import SiteListFilter from "./SiteListFilter.vue";
 import { getSiteObservationDetails, state } from "../../store";
+import { Vuetify } from "vue";
 
 const props = defineProps<{
   modelRuns: string[];
@@ -25,6 +26,7 @@ const modelRunTitleList: Ref<string[]> = ref([])
 const totalCount: Ref<number> = ref(0);
 const filter = ref("");
 let downloadCheckInterval: NodeJS.Timeout | null = null;
+const virtualList: Ref<null | VueElement & { $el: HTMLElement } > = ref(null);
 
 const satelliteFetchingCheck = async () => {
   const downloadList = (await ApiService.getSatelliteFetchingRunning(props.modelRuns)).items;
@@ -53,9 +55,11 @@ const checkDownloading = () => {
   downloadCheckInterval = setInterval(() => satelliteFetchingCheck(), 5000);
 };
 
-const getSites = async (modelRun: string) => {
+const getSites = async (modelRun: string, initRun = false) => {
+    if (initRun) {
+      state.selectedSites = [];
+    }
     const results = await ApiService.getSitesList(modelRun);
-    state.selectedSites = [];
     totalCount.value = 0;
     const regionName = results.region;
     let newNumbers = 0;
@@ -119,16 +123,16 @@ const getSites = async (modelRun: string) => {
     return [];
 };
 
-const getAllSiteProposals = async () => {
+const getAllSiteProposals = async (initRun = false) => {
     let mainList: SiteDisplay[] = [];
     for (let i = 0; i < props.modelRuns.length; i += 1) {
-        const results = await getSites(props.modelRuns[i]);
+        const results = await getSites(props.modelRuns[i], initRun);
         mainList = mainList.concat(results);
     }
     baseModifiedList.value = mainList;
     modifiedList.value = mainList;
 }
-onMounted(() => getAllSiteProposals());
+onMounted(() => getAllSiteProposals(true));
 onUnmounted(() => {
   if (downloadCheckInterval) {
     clearInterval(downloadCheckInterval);
@@ -182,10 +186,7 @@ const selectSite = async (selectedSite: SiteDisplay, deselect= false) => {
   if (!deselect) {
     nextTick(() => {
       const id = selectedSite.id;
-      const el = document.getElementById(`site-id-${id}`);
-      if (el) {
-        el.scrollIntoView({block: 'end', behavior: 'smooth'});
-      }
+      scrollVirtualList(id);
     });
   }
 }
@@ -209,13 +210,24 @@ onUnmounted(() => {
   window.removeEventListener('keyup', toggleControlKey);
 });
 
+const scrollVirtualList = (id: string, itemHeight = 170) => {
+  if (virtualList.value) {
+    if (!id) {
+      virtualList.value.$el.scrollTo({top: 0, left: 0, behavior: 'smooth' });
+
+    }
+    const index = modifiedList.value.findIndex((item) => item.id === id)
+    if (index !== -1) {
+      const height = (itemHeight * index) - (itemHeight * 1.25)
+      virtualList.value.$el.scrollTo({top: height, left: 0, behavior: 'smooth' });
+    }
+  }
+}
+
 watch(() => hoveredInfo.value.siteId, () => {
   if (hoveredInfo.value.siteId.length && controlKeyPressed.value) {
     const id = hoveredInfo.value.siteId[0];
-    const el = document.getElementById(`site-id-${id}`);
-    if (el) {
-      el.scrollIntoView({block: 'end', behavior: 'smooth'});
-    }
+    scrollVirtualList(id);
   }
 });
 const setImageDownloadDialog = (item: SiteDisplay) => {
@@ -278,6 +290,7 @@ watch(filter, () => {
         style="height:20px"
       />
       <v-virtual-scroll
+        ref="virtualList"
         height="calc(100vh - 145px)"
         :items="modifiedList"
         item-height="200"

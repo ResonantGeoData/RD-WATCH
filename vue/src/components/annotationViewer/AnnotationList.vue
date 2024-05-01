@@ -269,7 +269,7 @@ watch(filter, () => {
         ref="virtualList"
         height="calc(100vh - 150px)"
         :items="modifiedList"
-        item-height="130"
+        item-height="105"
       >
         <template #default="{item}">
           <site-list-card

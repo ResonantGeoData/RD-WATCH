@@ -209,7 +209,7 @@ onUnmounted(() => {
   window.removeEventListener('keyup', toggleControlKey);
 });
 
-const scrollVirtualList = (id: string, itemHeight = 170) => {
+const scrollVirtualList = (id: string, itemHeight = 161) => {
   if (virtualList.value) {
     if (!id) {
       virtualList.value.$el.scrollTo({top: 0, left: 0, behavior: 'smooth' });
@@ -292,7 +292,7 @@ watch(filter, () => {
         ref="virtualList"
         height="calc(100vh - 145px)"
         :items="modifiedList"
-        item-height="200"
+        item-height="161"
       >
         <template #default="{item}">
           <site-list-card

@@ -95,20 +95,19 @@ const foundIndex = state.selectedSites.findIndex((item) => item.id === props.sit
 }
 
 
-watch(selectSite, async () => {
-  if (selectSite.value) {
+const selectingSite = async (e: boolean) => {
+  if (e) {
     emit('selected', props.site)
-    getSiteObservationDetails(props.site.id);
+    await getSiteObservationDetails(props.site.id);
   } else {
     close();
   }
-})
+};
 
 </script>
 
 <template>
   <v-card
-    :id="`site-id-${localSite.id}`"
     :key="`${localSite.name}_${localSite.id}_${localSite.selected}`"
     variant="flat"
     class="siteCard"
@@ -154,10 +153,11 @@ watch(selectSite, async () => {
           cols="1"
         >
           <v-checkbox-btn
-            v-model="selectSite"
+            :model-value="selectSite || site.selected"
             density="compact"
             color="#29B6F6"
             hide-details
+            @update:model-value="selectingSite($event)"
           />
         </v-col>
       </v-row>

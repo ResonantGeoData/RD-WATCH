@@ -23,7 +23,7 @@ class SiteImageSchema(Schema):
     source: str
     cloudcover: float | None
     image: str
-    observation_id: UUID4 | str | None
+    observation_id: UUID4 | None
     percent_black: float | None
     bbox: BoundingBoxSchema
     image_dimensions: list[int]

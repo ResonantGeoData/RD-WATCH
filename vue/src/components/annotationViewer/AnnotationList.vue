@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { Ref, ref, watch } from "vue";
+import { Ref, VueElement, onMounted, onUnmounted, ref, watch } from "vue";
 import { ApiService } from "../../client";
 import {
   DownloadSettings,
@@ -25,6 +25,7 @@ const imageTimeRange: Ref<{min: number, max: number} | null> = ref(null);
 const imageDownloadingId: Ref<null | string> = ref(null)
 const filter = ref("");
 let downloadCheckInterval: NodeJS.Timeout | null = null;
+const virtualList: Ref<null | VueElement & { $el: HTMLElement } > = ref(null);
 
 const satelliteFetchingCheck = async () => {
   const downloadList = (await ApiService.getSatelliteFetchingRunning(props.modelRun ? [props.modelRun] : [])).items;
@@ -147,12 +148,15 @@ watch(clickedInfo, () => {
     );
     if (found) {
       // We set the siteSelected
-      state.selectedImageSite = {
-        siteId: found.id,
-        siteName: found.name,
-        dateRange: [found.startDate, found.endDate]
+      if (found.L8 || found.PL || found.S2 || found.WV) {
+        state.selectedImageSite = {
+          siteId: found.id,
+          siteName: found.name,
+          dateRange: [found.startDate, found.endDate]
+        }
       }
       state.bbox = found.bbox;
+      scrollVirtualList(found.id);
     }
   } else {
     state.selectedImageSite = undefined;
@@ -161,11 +165,13 @@ watch(clickedInfo, () => {
 });
 
 const selectSite = (item: SiteDisplay) => {
-  state.selectedImageSite = {
-        siteId: item.id,
-        siteName: item.name,
-        dateRange: [item.startDate, item.endDate]
-      }
+  if (item.L8 || item.PL || item.S2 || item.WV) {
+    state.selectedImageSite = {
+          siteId: item.id,
+          siteName: item.name,
+          dateRange: [item.startDate, item.endDate]
+        }
+  }
       state.bbox = item.bbox;
 }
 
@@ -180,14 +186,43 @@ watch(() => props.selectedEval, () => {
 })
 
 watch(() => hoveredInfo.value.siteId, () => {
-  if (hoveredInfo.value.siteId.length) {
+  if (hoveredInfo.value.siteId.length && controlKeyPressed.value) {
     const id = hoveredInfo.value.siteId[0];
-    const el = document.getElementById(`site-id-${id}`);
-    if (el) {
-      el.scrollIntoView({block: 'end', behavior: 'smooth'});
-    }
+    console.log('scroll to id');
+    scrollVirtualList(id)
   }
 });
+
+const controlKeyPressed = ref(false);
+
+// Function to toggle the ref value based on the key event
+const toggleControlKey = (event: KeyboardEvent) => {
+  controlKeyPressed.value = event.ctrlKey;
+};
+
+// Add event listener when the component is mounted
+onMounted(() => {
+  window.addEventListener('keydown', toggleControlKey);
+  window.addEventListener('keyup', toggleControlKey);
+});
+
+// Remove event listener when the component is unmounted
+onUnmounted(() => {
+  window.removeEventListener('keydown', toggleControlKey);
+  window.removeEventListener('keyup', toggleControlKey);
+});
+const scrollVirtualList = (id: string, itemHeight = 105) => {
+  if (virtualList.value) {
+    const index = modifiedList.value.findIndex((item) => item.id === id)
+    console.log(`Found: index: ${index}`);
+    if (index !== -1) {
+      const height = (itemHeight * index) - (itemHeight * 1.25)
+      console.log(height);
+      virtualList.value.$el.scrollTo({top: height, left: 0, behavior: 'smooth' });
+    }
+  }
+}
+
 const setImageDownloadDialog = (item: SiteDisplay) => {
   if (item.startDate && item.endDate) {
     imageTimeRange.value = {
@@ -231,11 +266,14 @@ watch(filter, () => {
     <site-list-header v-model="filter" />
     <div class="proposal-list">
       <v-virtual-scroll
+        ref="virtualList"
+        height="calc(100vh - 150px)"
         :items="modifiedList"
-        item-height="130"
+        item-height="105"
       >
         <template #default="{item}">
           <site-list-card
+            :key="item.id"
             :site="item"
             @click="selectSite(item)"
             @image-download="setImageDownloadDialog($event)"

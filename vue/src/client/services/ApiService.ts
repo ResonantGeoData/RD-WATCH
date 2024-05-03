@@ -183,7 +183,7 @@ export class ApiService {
     ): CancelablePromise<SiteInfo> {
       return __request(OpenAPI, {
         method: "GET",
-        url: `${this.getApiPrefix()}/sites/{id}`,
+        url: `${this.getApiPrefix()}/sites/{id}/`,
         path: {
           id: id,
         },

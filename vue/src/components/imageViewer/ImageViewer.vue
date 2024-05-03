@@ -110,7 +110,7 @@ const rescalingBBox = ref(1);
 const editingPolygon = ref(false);
 const SAMViewer: Ref<number | null> = ref(null);
 const sidePanelExpanded = ref(false || props.editable);
-const sidePanelTab = ref(null);
+const sidePanelTab: Ref<null | string> = ref(null);
 
 
 const evaluationGeoJSON: Ref<GeoJSON.Polygon | null> = ref(null); // holds the site geoJSON so it can be edited
@@ -351,7 +351,8 @@ const generateImageEmbedding = async (
 
 const openSAMView = (id: number) => {
   SAMViewer.value = id;
-
+  sidePanelExpanded.value = true;
+  sidePanelTab.value = 'Polygon';
 };
 
 const setSiteModelStatus = async (status: SiteModelStatus) => {
@@ -503,7 +504,6 @@ const clearStorage = async () => {
             :color="
               filteredImages[currentImage].image.image_embedding ? 'blue' : ''
             "
-            :disabled="!!filteredImages[currentImage].image.image_embedding"
             class="mx-2"
             @click="
               processImageEmbeddingButton(filteredImages[currentImage].image)
@@ -589,7 +589,7 @@ const clearStorage = async () => {
       >
         <v-card
           height="100%"
-          class="adjust-card"
+          class="adjust-card pt-5"
         >
           <v-row class="pb-2">
             <v-spacer />

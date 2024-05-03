@@ -11,7 +11,6 @@ import { SiteDisplay } from "./SiteListCard.vue";
 import SiteListHeader from "./SiteListHeader.vue";
 import SiteListFilter from "./SiteListFilter.vue";
 import { getSiteObservationDetails, state } from "../../store";
-import { Vuetify } from "vue";
 
 const props = defineProps<{
   modelRuns: string[];

@@ -1,6 +1,7 @@
 <script setup lang="ts">
-import ModelRunDetail from "./ModelRunDetail.vue";
+import ModelRunCard from "./ModelRunCard.vue";
 import type { ModelRunList } from "../client/models/ModelRunList";
+import { LngLatBounds } from "maplibre-gl";
 import {
   CancelError,
   CancelablePromise,
@@ -9,9 +10,8 @@ import {
 } from "../client";
 import { computed, onMounted, ref, watch, withDefaults } from "vue";
 import { ApiService } from "../client";
-import { filteredSatelliteTimeList, state } from "../store";
+import { filteredSatelliteTimeList, state, updateCameraBoundsBasedOnModelRunList } from "../store";
 import type { KeyedModelRun } from '../store'
-import { LngLatBounds } from "maplibre-gl";
 import { hoveredInfo } from "../interactions/mouseEvents";
 const limit = 10;
 
@@ -112,50 +112,13 @@ async function loadModelRuns() {
   }
 }
 
-/**
- * Set the camera bounds/viewport based on the currently selected model run(s).
- */
-function updateCameraBounds(filtered = true) {
-  const bounds = new LngLatBounds();
-  let list = state.modelRuns;
-  if (filtered) {
-    list = state.modelRuns.filter((modelRun) =>
-      state.openedModelRuns.has(modelRun.key)
-    );
-  }
-  if (
-    !state.settings.autoZoom &&
-    state.filters.regions &&
-    state.filters.regions?.length > 0
-  ) {
-    return;
-  }
-  list.forEach((modelRun) => {
-    modelRun.bbox?.coordinates
-      .flat()
-      .forEach((c) => bounds.extend(c as [number, number]));
-  });
-  if (bounds.isEmpty()) {
-    const bbox = {
-      xmin: -180,
-      ymin: -90,
-      xmax: 180,
-      ymax: 90,
-    };
-    state.bbox = bbox;
-  } else {
-    state.bbox = {
-      xmin: bounds.getWest(),
-      ymin: bounds.getSouth(),
-      xmax: bounds.getEast(),
-      ymax: bounds.getNorth(),
-    };
-  }
-}
 
 const loadingSatelliteTimestamps = ref(false);
 
 function handleToggle(modelRun: KeyedModelRun) {
+  if (state.selectedImageSite) {
+    state.selectedImageSite = undefined;
+  }
   if (state.openedModelRuns.has(modelRun.key)) {
     state.openedModelRuns.delete(modelRun.key);
   } else {
@@ -167,7 +130,7 @@ function handleToggle(modelRun: KeyedModelRun) {
 
   if (state.openedModelRuns.size > 0) {
     // Only move camera if we're *not* currently filtering by region
-    updateCameraBounds();
+    updateCameraBoundsBasedOnModelRunList();
     const configurationIds: Set<string> = new Set();
     const regions: Set<string> = new Set();
     state.modelRuns
@@ -188,7 +151,7 @@ function handleToggle(modelRun: KeyedModelRun) {
       ...state.filters,
       configuration_id: undefined,
     };
-    updateCameraBounds(false);
+    updateCameraBoundsBasedOnModelRunList(false);
   }
 }
 
@@ -306,7 +269,7 @@ onMounted(() => loadModelRuns());
       :class="{ modelRuns: !compact, compactModelRuns: compact}"
       @scroll="handleScroll"
     >
-      <ModelRunDetail
+      <ModelRunCard
         v-for="modelRun in state.modelRuns"
         :key="modelRun.key"
         :model-run="modelRun"

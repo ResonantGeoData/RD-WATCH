@@ -1,14 +1,14 @@
 <script setup lang="ts">
 import { ref } from "vue";
 import { ApiService } from "../../client";
-import { ObsDetails } from "../../store";
+import { SiteDetails } from "../../store";
 import ImageViewer from './ImageViewer.vue';
 
 defineProps<{
   siteEvalId: string;
   siteEvaluationName?: string;
   dateRange?: number[] | null
-  obsDetails?: ObsDetails;
+  siteDetails?: SiteDetails;
 }>();
 
 const displayImage = ref(false);
@@ -51,7 +51,7 @@ const openNewTab = (id: string) => {
       <ImageViewer
         :site-eval-id="siteEvalId"
         :site-evaluation-name="siteEvaluationName"
-        :obs-details="obsDetails"
+        :site-details="siteDetails"
         :date-range="dateRange"
         dialog
         @close="displayImage = false"

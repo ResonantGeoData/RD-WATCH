@@ -10,7 +10,7 @@ import {
 import { ApiService } from "../../client";
 import { EvaluationImage, EvaluationImageResults } from "../../types";
 import {
-  ObsDetails,
+  SiteDetails,
   SiteObservationImage,
   loadAndToggleSatelliteImages,
   state,
@@ -29,7 +29,7 @@ interface Props {
   editable?: boolean;
   siteEvaluationName?: string | null;
   dateRange?: number[] | null;
-  obsDetails?: ObsDetails;
+  siteDetails?: SiteDetails;
   fullscreen?: boolean;
 }
 
@@ -46,7 +46,7 @@ const props = withDefaults(defineProps<Props>(), {
   editable: false,
   siteEvaluationName: null,
   dateRange: null,
-  obsDetails: undefined,
+  siteDetails: undefined,
 });
 
 const emit = defineEmits<{
@@ -135,7 +135,7 @@ const getImageData = async () => {
   polygons.sort((a, b) => a.timestamp - b.timestamp);
   siteEvaluationNotes.value = data.notes || "";
   siteEvaluationLabel.value = data.label;
-  siteStatus.value = data.status;
+  siteStatus.value = data.status || null;
   
   if (data.groundTruth) {
     hasGroundTruth.value = true;
@@ -173,7 +173,7 @@ watch(showSitePoly, () => {
 
 const load = async (newValue?: string, oldValue?: string) => {
   currentImage.value = 0;
-  const index = state.enabledSiteObservations.findIndex(
+  const index = state.enabledSiteImages.findIndex(
     (item) => item.id === oldValue
   );
 
@@ -187,9 +187,9 @@ const load = async (newValue?: string, oldValue?: string) => {
       : null;
 
   if (index !== -1) {
-    const tempArr = [...state.enabledSiteObservations];
+    const tempArr = [...state.enabledSiteImages];
     tempArr.splice(index, 1);
-    state.enabledSiteObservations = tempArr;
+    state.enabledSiteImages = tempArr;
   }
   loading.value = true;
   await getImageData();
@@ -220,7 +220,7 @@ const load = async (newValue?: string, oldValue?: string) => {
 watch(
   () => props.siteEvalId,
   () => {
-    state.enabledSiteObservations = []; // toggle off all other satellite images
+    state.enabledSiteImages = []; // toggle off all other satellite images
     load();
   }
 );
@@ -283,7 +283,7 @@ watch(
 
 const mapImagesOn = computed(
   () =>
-    state.enabledSiteObservations.findIndex(
+    state.enabledSiteImages.findIndex(
       (item) => item.id === props.siteEvalId
     ) !== -1
 );
@@ -292,7 +292,7 @@ const mapImagesOn = computed(
 onUnmounted(() => {
   if (
     props.editable &&
-    state.enabledSiteObservations.find((item) => item.id === props.siteEvalId)
+    state.enabledSiteImages.find((item) => item.id === props.siteEvalId)
   ) {
     loadAndToggleSatelliteImages(props.siteEvalId);
   }
@@ -377,9 +377,9 @@ const clearStorage = async () => {
       dense
       class="top-bar"
     >
-      <v-col v-if="obsDetails">
-        <span>{{ obsDetails.performer }} {{ obsDetails.title }} : V{{
-          obsDetails.version
+      <v-col v-if="siteDetails">
+        <span>{{ siteDetails.performer }} {{ siteDetails.title }} : V{{
+          siteDetails.version
         }}</span>
         <div v-if="hasGroundTruth && editable">
           <v-checkbox
@@ -389,11 +389,11 @@ const clearStorage = async () => {
           />
         </div>
       </v-col>
-      <v-col v-if="obsDetails">
+      <v-col v-if="siteDetails">
         <span>{{ siteEvaluationName }}</span>
       </v-col>
 
-      <v-col v-if="obsDetails">
+      <v-col v-if="siteDetails">
         <b
           v-if="groundTruth && hasGroundTruth"
           class="mr-1"
@@ -441,7 +441,7 @@ const clearStorage = async () => {
             <template #activator="{ props }">
               <v-icon
                 v-bind="props"
-                :color="mapImagesOn ? 'rgb(37, 99, 235)' : ''"
+                :color="mapImagesOn ? 'primary' : ''"
                 @click="loadAndToggleSatelliteImages(siteEvalId)"
               >
                 mdi-image
@@ -458,7 +458,7 @@ const clearStorage = async () => {
             <template #activator="{ props }">
               <v-icon
                 v-bind="props"
-                :color="drawGroundTruth ? 'rgb(37, 99, 235)' : ''"
+                :color="drawGroundTruth ? 'primary' : ''"
                 @click="drawGroundTruth = !drawGroundTruth"
               >
                 {{
@@ -489,7 +489,7 @@ const clearStorage = async () => {
           :date-range="dateRange"
           :ground-truth="groundTruth"
           :has-ground-truth="hasGroundTruth"
-          :evaluation-label="siteEvaluationLabel"
+          :evaluation-label="siteEvaluationLabel || ''"
           :evaluation-notes="siteEvaluationNotes"
           :eval-current-date="currentDate"
           :status="siteStatus"
@@ -545,7 +545,7 @@ const clearStorage = async () => {
             :color="
               filteredImages[currentImage].image.image_embedding ? 'blue' : ''
             "
-            :disabled="filteredImages[currentImage].image.image_embedding"
+            :disabled="!!filteredImages[currentImage].image.image_embedding"
             class="mx-2"
             @click="
               processImageEmbeddingButton(filteredImages[currentImage].image)

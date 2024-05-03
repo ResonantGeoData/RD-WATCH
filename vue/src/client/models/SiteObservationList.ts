@@ -2,7 +2,7 @@
 /* tslint:disable */
 /* eslint-disable */
 
-import { SiteObservationImage, SiteObservationJob } from "../../store";
+import { SiteObservationImage, SiteDownloadJob } from "../../store";
 
 export type SiteObservationList = {
   count: number;
@@ -35,7 +35,7 @@ export type SiteObservationList = {
       ymax: number;
     };
   }>;
-  job?: SiteObservationJob
+  job?: SiteDownloadJob
   images: {
     count: number;
     results: SiteObservationImage[],

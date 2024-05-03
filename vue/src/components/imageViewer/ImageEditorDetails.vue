@@ -103,6 +103,8 @@ const updateTime = (time: any, date: 'StartDate' | 'EndDate'| 'StartDateTemp' | 
     }
     editDialog.value = false;
   }
+  currentEditMode.value = null;
+  editDialog.value = false;
   siteEvaluationUpdated.value = true;
 }
 

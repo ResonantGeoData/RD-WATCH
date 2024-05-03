@@ -1,8 +1,8 @@
-import { SiteObservation } from "./store"
+import { SiteOverview } from "./store"
 
 
 
-const timeRangeFormat = (range: SiteObservation['timerange']) => {
+const timeRangeFormat = (range: SiteOverview['timerange']) => {
     if (range === null || (range.max === null && range.min === null)) {
       return '--'
     } else {

@@ -5,27 +5,34 @@ from ninja import FilterSchema, Query
 from ninja.pagination import RouterPaginated
 from pydantic import UUID4
 
+from django.contrib.gis.db.models import GeometryField
+from django.contrib.postgres.aggregates import JSONBAgg
 from django.db.models import (
     Avg,
+    Case,
     CharField,
     Count,
     DateTimeField,
+    Exists,
+    ExpressionWrapper,
     F,
     FloatField,
     Func,
     JSONField,
     Max,
     Min,
+    OuterRef,
     Q,
     Value,
+    When,
 )
-from django.db.models.functions import Concat, JSONObject, NullIf
-from django.http import HttpRequest
+from django.db.models.functions import Coalesce, Concat, JSONObject, NullIf, Substr
+from django.http import Http404, HttpRequest
 from django.shortcuts import get_object_or_404
 
-from rdwatch.db.functions import ExtractEpoch
+from rdwatch.db.functions import BoundingBox, ExtractEpoch
 from rdwatch.views.model_run import ModelRunDetailSchema, ModelRunPagination
-from rdwatch_scoring.models import EvaluationRun, SatelliteFetching
+from rdwatch_scoring.models import EvaluationRun, SatelliteFetching, Site, SiteImage
 from rdwatch_scoring.tasks import (
     cancel_generate_images_task,
     generate_site_images_for_evaluation_run,
@@ -312,3 +319,130 @@ def cancel_generate_images(request: HttpRequest, model_run_id: UUID4):
     cancel_generate_images_task.delay(model_run_id)
 
     return 202, True
+
+
+def get_sites_query(model_run_id: UUID4):
+    site_list = Site.objects.filter(evaluation_run_uuid=model_run_id).aggregate(
+        sites=JSONBAgg(
+            JSONObject(
+                id='pk',
+                number=Substr(F('site_id'), 9, 4),  # pos is 1 indexed,
+                bbox=BoundingBox(
+                    Func(
+                        F('union_geometry'),
+                        4326,
+                        function='ST_GeomFromText',
+                        output_field=GeometryField(),
+                    )
+                ),
+                # images='siteimage_count',
+                # S2='S2',
+                # WV='WV',
+                # L8='L8',
+                start_date=ExtractEpoch('start_date'),
+                end_date=ExtractEpoch('end_date'),
+                # status='status',
+                # filename='cache_originator_file',
+                # downloading='downloading',
+            ),
+            ordering='site_id',
+            default=[],
+        ),
+    )
+    site_ids = [str(s['id']) for s in site_list['sites']]
+
+    image_queryset = (
+        SiteImage.objects.filter(site__in=site_ids)
+        .values('site')
+        .annotate(
+            S2=Count(Case(When(source='S2', then=1))),
+            WV=Count(Case(When(source='WV', then=1))),
+            L8=Count(Case(When(source='L8', then=1))),
+            PL=Count(Case(When(source='PL', then=1))),
+            downloading=Exists(
+                SatelliteFetching.objects.filter(
+                    site=OuterRef('site'),
+                    status=SatelliteFetching.Status.RUNNING,
+                )
+            ),
+        )
+    )
+
+    image_info = {i['site']: i for i in image_queryset}
+
+    for s in site_list['sites']:
+        if s['id'] in image_info.keys():
+            site_image_info = image_info[s['id']]
+        else:
+            site_image_info = {'S2': 0, 'WV': 0, 'L8': 0, 'PL': 0, 'downloading': False}
+
+        s['images'] = (
+            site_image_info['S2']
+            + site_image_info['WV']
+            + site_image_info['L8']
+            + site_image_info['PL']
+        )
+        s['S2'] = site_image_info['S2']
+        s['WV'] = site_image_info['WV']
+        s['L8'] = site_image_info['L8']
+        s['PL'] = site_image_info['PL']
+        s['downloading'] = site_image_info['downloading']
+    return site_list
+
+
+def get_model_run_details(model_run_id: UUID4):
+    return (
+        EvaluationRun.objects.select_related('evaluations')
+        .filter(
+            pk=model_run_id,
+        )
+        .annotate(
+            json=JSONObject(
+                region=F('region'),
+                performer=JSONObject(
+                    id=0, team_name=F('performer'), short_code=F('performer')
+                ),
+                version=Coalesce('site__version', Value(None)),
+                proposal=False,
+                title=ExpressionWrapper(
+                    Concat(
+                        Value('Eval '),
+                        F('evaluation_number'),
+                        Value(' '),
+                        F('evaluation_run_number'),
+                        Value(' '),
+                        F('performer'),
+                    ),
+                    output_field=CharField(),
+                ),
+            ),
+        )
+    )
+
+
+@router.get('/{model_run_id}/proposals/')
+def get_proposals(request: HttpRequest, model_run_id: UUID4):
+    data = get_model_run_details(model_run_id).values_list('json', flat=True)
+    if not data.exists():
+        raise Http404()
+
+    query = get_sites_query(model_run_id)
+    model_run = data[0]
+    # TODO: Remove the region in the client side to focus on modelRunDetails
+    query['region'] = model_run['region']
+    query['modelRunDetails'] = model_run
+    return 200, query
+
+
+@router.get('/{model_run_id}/sites/')
+def get_sites(request: HttpRequest, model_run_id: UUID4):
+    data = get_model_run_details(model_run_id).values_list('json', flat=True)
+    if not data.exists():
+        raise Http404()
+
+    query = get_sites_query(model_run_id)
+    model_run = data[0]
+    # TODO: Remove the region in the client side to focus on modelRunDetails
+    query['region'] = model_run['region']
+    query['modelRunDetails'] = model_run
+    return 200, query

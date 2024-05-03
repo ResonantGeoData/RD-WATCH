@@ -138,7 +138,7 @@ const clickObservation = async (e: MapLayerMouseEvent) => {
     e.features.forEach(async (feature) => {
     if (feature.properties) {
         const siteId = feature.properties.siteeval_id;
-        const obsDetails = {
+        const siteDetails = {
           region: feature.properties.region as string,
           configurationId: feature.properties.configuration_id as number,
           siteNumber: feature.properties.site_number as number,
@@ -151,7 +151,7 @@ const clickObservation = async (e: MapLayerMouseEvent) => {
         names.push(`${feature.properties.region as string}_${feature.properties.site_number as number}`)
 
         if (siteId && !selectedObservationList.value.includes(siteId)) {
-          await getSiteObservationDetails(siteId, obsDetails);
+          await getSiteObservationDetails(siteId, siteDetails);
         }
       }
     });
@@ -174,7 +174,7 @@ const clickSite = async (e: MapLayerMouseEvent) => {
         if (siteId === state.filters.editingPolygonSiteId) {
           return;
         }
-        const obsDetails = {
+        const siteDetails = {
           region: feature.properties.region as string,
           configurationId: feature.properties.configuration_id as number,
           siteNumber: feature.properties.site_number as number,
@@ -186,7 +186,7 @@ const clickSite = async (e: MapLayerMouseEvent) => {
         siteIds.push(siteId);
         names.push(`${feature.properties.region as string}_${feature.properties.site_number as number}`)
         if (siteId && !selectedObservationList.value.includes(siteId)) {
-          await getSiteObservationDetails(siteId, obsDetails);
+          await getSiteObservationDetails(siteId, siteDetails);
         }
       }
     })

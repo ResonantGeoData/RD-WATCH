@@ -1,12 +1,12 @@
-import { EnabledSiteObservations, ImageBBox, SiteObservationImage, siteObsSatSettings } from '../store';
+import { EnabledSiteOverviews, ImageBBox, SiteObservationImage, siteOverviewSatSettings } from '../store';
 import type { LayerSpecification, SourceSpecification } from "maplibre-gl";
 import { ImageSource, Map } from "maplibre-gl";
 
 
 
-const getClosestTimestamp = (id: string, timestamp: number, enabledSiteObservations: EnabledSiteObservations[], settings: siteObsSatSettings) => {
-    if (enabledSiteObservations.length > 0) {
-        const observation = enabledSiteObservations.find((item) => item.id === id);
+const getClosestTimestamp = (id: string, timestamp: number, enabledSiteImages: EnabledSiteOverviews[], settings: siteOverviewSatSettings) => {
+    if (enabledSiteImages.length > 0) {
+        const observation = enabledSiteImages.find((item) => item.id === id);
         const images = observation?.images.filter((item) => imageFilter(item, settings));
         if (observation && images?.length) {
             const closest = images.map((item) => item.timestamp).reduce((prev, curr) => {
@@ -25,16 +25,16 @@ const getClosestTimestamp = (id: string, timestamp: number, enabledSiteObservati
 
 export const updateImageMapSources =  (
     timestamp: number,
-    enabledSiteObservations: EnabledSiteObservations[],
-    settings: siteObsSatSettings,
+    enabledSiteImages: EnabledSiteOverviews[],
+    settings: siteOverviewSatSettings,
     map?: Map | null,
 ) => {
-    enabledSiteObservations.forEach((item) => {
+    enabledSiteImages.forEach((item) => {
         const source  = `siteImageSource_${item.id}`;
         if (map ) {
             const mapSource = map.getSource(source) as ImageSource;
             if (mapSource) {
-                const { url, coordinates} = getClosestTimestamp(item.id, timestamp, enabledSiteObservations, settings);
+                const { url, coordinates} = getClosestTimestamp(item.id, timestamp, enabledSiteImages, settings);
                 mapSource.updateImage({
                     url,
                     coordinates,
@@ -45,12 +45,12 @@ export const updateImageMapSources =  (
 }
 export const buildImageSourceFilter = (
     timestamp: number,
-    enabledSiteObservations: EnabledSiteObservations[],
-    settings: siteObsSatSettings,
+    enabledSiteImages: EnabledSiteOverviews[],
+    settings: siteOverviewSatSettings,
     map?: Map | null,
 ) => {
     const results: Record<string, SourceSpecification> = {};
-    enabledSiteObservations.forEach((item) => {
+    enabledSiteImages.forEach((item) => {
         const source  = `siteImageSource_${item.id}`;
         let update = false;
         if (map) {
@@ -66,7 +66,7 @@ export const buildImageSourceFilter = (
             }
         }
         if (!update) {
-            const { url, coordinates} = getClosestTimestamp(item.id, timestamp, enabledSiteObservations, settings);
+            const { url, coordinates} = getClosestTimestamp(item.id, timestamp, enabledSiteImages, settings);
             results[source] =
             {
                 type: 'image',
@@ -80,11 +80,11 @@ export const buildImageSourceFilter = (
 
 export const buildImageLayerFilter = (
     timestamp: number,
-    enabledSiteObservations: EnabledSiteObservations[],
-    settings: siteObsSatSettings,
+    enabledSiteImages: EnabledSiteOverviews[],
+    settings: siteOverviewSatSettings,
 ): LayerSpecification[] => {
     const results: LayerSpecification[] = [];
-    enabledSiteObservations.forEach((item) => {
+    enabledSiteImages.forEach((item) => {
         const layer = `siteImageLayer_${item.id}`;
         const source  = `siteImageSource_${item.id}`;
         results.push({
@@ -103,7 +103,7 @@ export const buildImageLayerFilter = (
 }
 
 
-export const imageFilter = (item:SiteObservationImage, settings: siteObsSatSettings) =>  {
+export const imageFilter = (item:SiteObservationImage, settings: siteOverviewSatSettings) =>  {
     if (!item.disabled) {
       if (item.cloudcover !== undefined && item.cloudcover > settings.cloudCoverFilter) {
         return false;

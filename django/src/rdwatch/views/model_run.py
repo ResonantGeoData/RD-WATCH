@@ -26,7 +26,7 @@ from django.db.models import (
     When,
 )
 from django.db.models.functions import Coalesce, JSONObject
-from django.http import HttpRequest, HttpResponse
+from django.http import Http404, HttpRequest, HttpResponse
 from django.shortcuts import get_object_or_404
 
 from rdwatch.db.functions import BoundingBox, BoundingBoxGeoJSON, ExtractEpoch
@@ -411,7 +411,27 @@ def cancel_generate_images(request: HttpRequest, model_run_id: UUID4):
     return 202, True
 
 
-def get_proposals_query(model_run_id: UUID4):
+def get_model_run_details(model_run_id: UUID4):
+    return (
+        ModelRun.objects.filter(pk=model_run_id)
+        .alias(version=F('evaluations__version'))
+        .annotate(
+            json=JSONObject(
+                region=F('region__name'),
+                performer=JSONObject(
+                    id=F('performer__id'),
+                    team_name=F('performer__team_name'),
+                    short_code=F('performer__short_code'),
+                ),
+                version=F('version'),
+                proposal=F('proposal'),
+                title=F('title'),
+            ),
+        )
+    )
+
+
+def get_sites_query(model_run_id: UUID4):
     return (
         SiteEvaluation.objects.select_related('siteimage', 'satellite_fetching')
         .filter(configuration=model_run_id)
@@ -431,7 +451,7 @@ def get_proposals_query(model_run_id: UUID4):
             ),
         )
         .aggregate(
-            proposed_sites=JSONBAgg(
+            sites=JSONBAgg(
                 JSONObject(
                     id='pk',
                     timestamp='time',
@@ -456,10 +476,27 @@ def get_proposals_query(model_run_id: UUID4):
 
 @router.get('/{model_run_id}/proposals/')
 def get_proposals(request: HttpRequest, model_run_id: UUID4):
-    region = get_object_or_404(ModelRun, pk=model_run_id).region
+    data = get_model_run_details(model_run_id).values_list('json', flat=True)
+    if not data.exists():
+        raise Http404()
 
-    query = get_proposals_query(model_run_id)
-    query['region'] = region.name
+    query = get_sites_query(model_run_id)
+    model_run = data.first()
+    query['region'] = model_run['region']
+    query['modelRunDetails'] = model_run
+    return 200, query
+
+
+@router.get('/{model_run_id}/sites/')
+def get_sites(request: HttpRequest, model_run_id: UUID4):
+    data = get_model_run_details(model_run_id).values_list('json', flat=True)
+    if not data.exists():
+        raise Http404()
+
+    query = get_sites_query(model_run_id)
+    model_run = data[0]
+    query['region'] = model_run['region']
+    query['modelRunDetails'] = model_run
     return 200, query
 
 

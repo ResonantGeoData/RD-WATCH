@@ -2,7 +2,9 @@ import { computed, reactive } from "vue";
 
 import { ApiService, ModelRun, Performer, Region } from "./client";
 import { EditPolygonType } from "./interactions/editPolygon";
-import { EvaluationImage } from "./types";
+import { BaseBBox, EvaluationImage } from "./types";
+import { LngLatBounds } from "maplibre-gl";
+
 export interface MapFilters {
   configuration_id?: string[];
   performer_ids?: number[];
@@ -60,13 +62,20 @@ export interface SiteObservationImage {
   percent_black?: number;
   observation_id: string | null;
   disabled?: boolean;
-  bbox: { xmin: number; ymin: number; xmax: number; ymax: number };
+  bbox: BaseBBox;
   id: number;
   image_embedding? : string;
   image_dimensions?: [number, number];
 }
 
-export interface ObsDetails {
+export interface SelectedImageSite {
+    siteId: string,
+    siteName: string,
+    dateRange?: number[] | null
+    siteDetails?: SiteDetails;
+}
+
+export interface SiteDetails {
   region: string;
   configurationId: number;
   siteNumber: number;
@@ -75,14 +84,14 @@ export interface ObsDetails {
   title: string;
 }
 
-export interface EnabledSiteObservations {
+export interface EnabledSiteOverviews {
   id: string;
   images: SiteObservationImage[];
   bbox: ImageBBox;
   timestamp: number;
 }
 
-export interface SiteObservationJob {
+export interface SiteDownloadJob {
   status: 'Running' | 'Complete' | 'Error';
   error?: string;
   timestamp: number;
@@ -95,9 +104,9 @@ export interface SiteObservationJob {
   }
 }
 
-export interface SiteObservation {
+export interface SiteOverview {
   id: string;
-  obsDetails?: ObsDetails;
+  siteDetails?: SiteDetails;
   timerange: {
     min: number;
     max: number;
@@ -115,7 +124,7 @@ export interface SiteObservation {
     average: number,
   }
   imagesActive: boolean;
-  job?: SiteObservationJob;
+  job?: SiteDownloadJob;
   bbox: { xmin: number; ymin: number; xmax: number; ymax: number };
 }
 
@@ -132,7 +141,7 @@ export interface SatelliteData {
   satelliteSources: ('S2' |'WorldView' | 'Planet')[];
 }
 
-export interface siteObsSatSettings {
+export interface siteOverviewSatSettings {
   observationSources: ('S2' | 'WV' | 'L8' | 'PL')[];
   percentBlackFilter: number;
   cloudCoverFilter: number;
@@ -158,9 +167,9 @@ export const state = reactive<{
     patternThickness: number;
     patternOpacity: number;
   };
-  selectedObservations: SiteObservation[];
-  enabledSiteObservations: EnabledSiteObservations[],
-  siteObsSatSettings: siteObsSatSettings,
+  selectedSites: SiteOverview[];
+  enabledSiteImages: EnabledSiteOverviews[],
+  siteOverviewSatSettings: siteOverviewSatSettings,
   loopingInterval: NodeJS.Timeout | null,
   loopingId: string | null,
   modelRuns: KeyedModelRun[],
@@ -171,12 +180,15 @@ export const state = reactive<{
     ground_truths?: string | null,
   }
   editPolygon: EditPolygonType | null,
+  // Filters between the detail image viewer panel
   imageFilter: {
     sources: EvaluationImage['source'][];
     cloudCover: number;
     noData: number;
     obsFilter: ('observations' | 'non-observations')[];
   },
+  // used to open the detail image viewer panel
+  selectedImageSite?: SelectedImageSite | null;
 }>({
   errorText: '',
   timestamp: Math.floor(Date.now() / 1000),
@@ -214,9 +226,9 @@ export const state = reactive<{
     patternThickness: 8,
     patternOpacity: 255,
   },
-  selectedObservations: [],
-  enabledSiteObservations: [],
-  siteObsSatSettings: {
+  selectedSites: [],
+  enabledSiteImages: [],
+  siteOverviewSatSettings: {
     observationSources: ['S2', 'WV', 'L8', 'PL'],
     cloudCoverFilter: 70,
     percentBlackFilter: 70,
@@ -248,13 +260,13 @@ export const filteredSatelliteTimeList = computed(() => {
 })
 
 export const selectedObservationList = computed(() => {
-  const selected = state.selectedObservations;
+  const selected = state.selectedSites;
   return selected.map((item) => item.id);
 })
 
 
 
-export const getSiteObservationDetails = async (siteId: string, obsDetails?: ObsDetails, select=true) => {
+export const getSiteObservationDetails = async (siteId: string, siteDetails?: SiteDetails, select=true) => {
   const data = await ApiService.getSiteObservations(siteId);
   const { results } = data;
   const { images } = data;
@@ -299,10 +311,10 @@ export const getSiteObservationDetails = async (siteId: string, obsDetails?: Obs
   })
   avgScore = avgScore / results.length;
   const numId = siteId
-  const foundIndex = state.selectedObservations.findIndex((item) => item.id === numId);
+  const foundIndex = state.selectedSites.findIndex((item) => item.id === numId);
   const obsData =  {
     id: numId,
-    obsDetails,
+    siteDetails,
     timerange: data.timerange,
     imagesLoaded: false,
     imagesActive: false,
@@ -321,68 +333,115 @@ export const getSiteObservationDetails = async (siteId: string, obsDetails?: Obs
     bbox: data.bbox,
   };
   if (foundIndex === -1 && select) {
-    state.selectedObservations.push(obsData)
+    state.selectedSites.push(obsData)
   } else {
-    state.selectedObservations.splice(foundIndex, 1, obsData)
+    state.selectedSites.splice(foundIndex, 1, obsData)
   }
   return obsData;
 }
 
-export const toggleSatelliteImages = (siteObs: SiteObservation, off= false) => {
-  const found = state.enabledSiteObservations.find((item) => item.id === siteObs.id);
+export const toggleSatelliteImages = (siteOverview: SiteOverview, off= false) => {
+  const found = state.enabledSiteImages.find((item) => item.id === siteOverview.id);
   if (found === undefined && !off) {
-      const baseBBox = siteObs.bbox;
+      const baseBBox = siteOverview.bbox;
       const bbox = [
           [baseBBox.xmin, baseBBox.ymax],
           [baseBBox.xmax, baseBBox.ymax],
           [baseBBox.xmax, baseBBox.ymin],
           [baseBBox.xmin, baseBBox.ymin],
       ] as ImageBBox;
-      if (siteObs.imageCounts.WV.images || siteObs.imageCounts.S2.images) {
-          const tempArr = [...state.enabledSiteObservations];
+      if (siteOverview.imageCounts.WV.images || siteOverview.imageCounts.S2.images) {
+          const tempArr = [...state.enabledSiteImages];
           let imageList: SiteObservationImage[] = [];
-          if (siteObs.imageCounts.WV.images && state.siteObsSatSettings.observationSources.includes('WV')) {
-            imageList = [...siteObs.imageCounts.WV.images]
+          if (siteOverview.imageCounts.WV.images && state.siteOverviewSatSettings.observationSources.includes('WV')) {
+            imageList = [...siteOverview.imageCounts.WV.images]
           }
-          if (siteObs.imageCounts.S2.images && state.siteObsSatSettings.observationSources.includes('S2')) {
-            imageList = [...imageList, ...siteObs.imageCounts.S2.images]
+          if (siteOverview.imageCounts.S2.images && state.siteOverviewSatSettings.observationSources.includes('S2')) {
+            imageList = [...imageList, ...siteOverview.imageCounts.S2.images]
           }
-          if (siteObs.imageCounts.L8.images && state.siteObsSatSettings.observationSources.includes('L8')) {
-            imageList = [...imageList, ...siteObs.imageCounts.L8.images]
+          if (siteOverview.imageCounts.L8.images && state.siteOverviewSatSettings.observationSources.includes('L8')) {
+            imageList = [...imageList, ...siteOverview.imageCounts.L8.images]
           }
-          if (siteObs.imageCounts.PL.images && state.siteObsSatSettings.observationSources.includes('PL')) {
-            imageList = [...imageList, ...siteObs.imageCounts.PL.images]
+          if (siteOverview.imageCounts.PL.images && state.siteOverviewSatSettings.observationSources.includes('PL')) {
+            imageList = [...imageList, ...siteOverview.imageCounts.PL.images]
           }
           tempArr.push({
-              id: siteObs.id,
-              timestamp: siteObs.timerange ? siteObs.timerange.min : 0,
+              id: siteOverview.id,
+              timestamp: siteOverview.timerange ? siteOverview.timerange.min : 0,
               images: imageList,
               bbox,
           });
-          state.enabledSiteObservations = tempArr;
+          state.enabledSiteImages = tempArr;
       }
   } else {
-      const tempArr = [...state.enabledSiteObservations];
-      const index = tempArr.findIndex((item) => item.id === siteObs.id);
+      const tempArr = [...state.enabledSiteImages];
+      const index = tempArr.findIndex((item) => item.id === siteOverview.id);
       if (index !== -1) {
           tempArr.splice(index, 1);
-          state.enabledSiteObservations = tempArr;
+          state.enabledSiteImages = tempArr;
       }
   }
 }
 
 const loadAndToggleSatelliteImages = async (siteId: string) => {
-  const index = state.enabledSiteObservations.findIndex((item) => item.id === siteId);
+  const index = state.enabledSiteImages.findIndex((item) => item.id === siteId);
   if (index !== -1) {
-    const tempArr = [...state.enabledSiteObservations];
+    const tempArr = [...state.enabledSiteImages];
     tempArr.splice(index, 1);
-    state.enabledSiteObservations = tempArr;
+    state.enabledSiteImages = tempArr;
   } else {
   const data = await getSiteObservationDetails(siteId, undefined, false);
   toggleSatelliteImages(data);
   }
 }
 
+
+
+/**
+ * Set the camera bounds/viewport based on the currently selected model run(s).
+ */
+function updateCameraBoundsBasedOnModelRunList(filtered = true, force = false) {
+  const bounds = new LngLatBounds();
+  let list = state.modelRuns;
+  if (filtered) {
+    list = state.modelRuns.filter((modelRun) =>
+      state.openedModelRuns.has(modelRun.key)
+    );
+  }
+  if (
+    !force && 
+    !state.settings.autoZoom &&
+    state.filters.regions &&
+    state.filters.regions?.length > 0
+  ) {
+    return;
+  }
+  list.forEach((modelRun) => {
+    modelRun.bbox?.coordinates
+      .flat()
+      .forEach((c) => bounds.extend(c as [number, number]));
+  });
+  if (bounds.isEmpty()) {
+    const bbox = {
+      xmin: -180,
+      ymin: -90,
+      xmax: 180,
+      ymax: 90,
+    };
+    state.bbox = bbox;
+  } else {
+    state.bbox = {
+      xmin: bounds.getWest(),
+      ymin: bounds.getSouth(),
+      xmax: bounds.getEast(),
+      ymax: bounds.getNorth(),
+    };
+  }
+}
+
+
 export {
   loadAndToggleSatelliteImages,
+  updateCameraBoundsBasedOnModelRunList,
 }
+

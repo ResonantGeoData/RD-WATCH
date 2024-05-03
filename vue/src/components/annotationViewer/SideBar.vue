@@ -8,7 +8,7 @@ import { computed, onMounted, ref, watch } from "vue";
 import type { Performer, QueryArguments, Region } from "../../client";
 import type { Ref } from "vue";
 import { changeTime } from "../../interactions/timeStepper";
-
+import ErrorPopup from "../ErrorPopup.vue";
 const timemin = ref(Math.floor(new Date(0).valueOf() / 1000));
 
 const queryFilters = computed<QueryArguments>(() => ({
@@ -77,57 +77,67 @@ const imagesOn = computed({
     style="max-height:100vh; min-height:100vh;"
   >
     <div>
+      <v-row
+        dense
+      >
+        <ErrorPopup />
+        <img
+          height="50"
+          class="mx-auto pb-4"
+          src="../../assets/logo.svg"
+          alt="Resonant GeoData"
+          draggable="false"
+        >
+      </v-row>
       <v-row>
         <TimeSlider
           :min="timemin || 0"
           :max="Math.floor(Date.now() / 1000)"
         />
       </v-row>
-      <v-row
-        align="center"
-        justify="center"
-      >
-        <div>
-          {{ new Date(state.timestamp * 1000).toISOString().substring(0, 10) }}
-        </div>
-      </v-row>
       <v-row class="mt-2">
         <v-spacer />
         <v-btn
-          variant="text"
+          variant="tonal"
           density="compact"
-          class="pa-0 ma-0"
-          :color="groundTruthPattern ? 'rgb(37, 99, 235)' : 'black'"
-          icon="mdi-gradient-horizontal"
+          class="pa-0 ma-1 sidebar-icon"
+          :color="groundTruthPattern ? 'primary' : 'black'"
           @click="groundTruthPattern = !groundTruthPattern"
-        />
+        >
+          <v-icon>mdi-gradient-horizontal</v-icon>
+        </v-btn>
         <v-btn
-          variant="text"
+          variant="tonal"
           density="compact"
-          class="pa-0 ma-0"
-          :color="drawMap ? 'rgb(37, 99, 235)' : 'black'"
-          icon="mdi-road"
+          class="pa-0 ma-1 sidebar-icon"
+          :color="drawMap ? 'primary' : 'black'"
           @click="drawMap = !drawMap"
-        />
+        >
+          <v-icon>mdi-road</v-icon>
+        </v-btn>
+
         <v-btn
-          variant="text"
+          variant="tonal"
           density="compact"
-          class="pa-0 ma-0"
+          class="pa-0 ma-1 sidebar-icon"
           :class="{
             'animate-flicker': state.satellite.loadingSatelliteImages,
           }"
-          :color="imagesOn ? 'rgb(37, 99, 235)' : 'black'"
+          :color="imagesOn ? 'primary' : 'black'"
           :disabled="selectedRegion === null || (filteredSatelliteTimeList.length === 0 && state.satellite.satelliteSources.length !== 0)"
-          icon="mdi-image"
           @click="imagesOn = selectedRegion !== null && (filteredSatelliteTimeList.length !== 0 || state.satellite.satelliteSources.length === 0) ? !imagesOn : imagesOn"
-        />
+        >
+          <v-icon>mdi-image</v-icon>
+        </v-btn>
         <v-btn
-          :color="state.mapLegend ? 'rgb(37, 99, 235)' : 'gray'"
-          variant="text"
+          :color="state.mapLegend ? 'primary' : 'gray'"
+          variant="tonal"
           density="compact"
-          icon="mdi-map-legend"
+          class="pa-0 ma-1 sidebar-icon"
           @click="state.mapLegend = !state.mapLegend"
-        />
+        >
+          <v-icon>mdi-map-legend</v-icon>
+        </v-btn>
       </v-row>
       <v-row
         dense
@@ -179,4 +189,10 @@ const imagesOn = computed({
 .animate-flicker {
   animation: flicker-animation 1s infinite;
 }
+
+.sidebar-icon {
+  min-width: 40px;
+  min-height: 40px;;
+}
+
 </style>

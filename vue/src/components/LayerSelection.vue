@@ -153,44 +153,91 @@ const toggleScoring = (data? : undefined | 'simple' | 'detailed') => {
           class="px-2 mx-2"
           v-bind="props"
           size="large"
-          :color="state.filters.drawObservations ? 'rgb(37, 99, 235)' : ''"
+          :color="state.filters.drawObservations ? 'primary' : ''"
           style="min-width: 200px"
           @click="toggleObs()"
         >
           <span>
             Observations
           </span>
-          <v-icon
+          <div
             v-if="state.filters.drawObservations?.includes('model')"
+            class="layer-icon mx-1"
           >
-            mdi-alpha-m-box
-          </v-icon>
-          <v-icon
+            M
+          </div>
+          <div
             v-if="state.filters.drawObservations?.includes('groundtruth')"
+            class="layer-icon mx-1"
           >
-            mdi-alpha-t-box
-          </v-icon>
+            G
+          </div>
         </v-btn>
       </template>
       <v-card outlined>
         <v-list>
           <v-list-item
+            value="All"
+            class="rootItem"
+            @click="toggleObs()"
+          >
+            <v-row
+              dense
+              align="center"
+              class="pa-0 ma-0"
+            >
+              <v-spacer />
+              <v-checkbox
+                :model-value="state.filters.drawObservations?.includes('model') && state.filters.drawObservations?.includes('groundtruth')"
+                density="compact"
+                hide-details
+                class="item-checkbox"
+              />
+            </v-row>
+          </v-list-item>
+          <v-list-item
             value="Model"
             @click="toggleObs('model')"
           >
-            Model
-            <v-icon>
-              mdi-alpha-m-box
-            </v-icon>
+            <div
+              class="layer-icon pl-1"
+            >
+              M
+            </div>
+            <div
+              class="layer-text"
+            >
+              Model
+            </div>
+            <v-checkbox-btn
+              :model-value="state.filters.drawObservations?.includes('model')"
+              density="compact"
+              hide-details
+              readonly
+              class="item-checkbox"
+            />
           </v-list-item>
           <v-list-item
             value="GroundTruth"
             @click="toggleObs('groundtruth')"
           >
-            GroundTruth
-            <v-icon>
-              mdi-alpha-t-box
-            </v-icon>
+            <div
+              class="layer-icon pl-1"
+            >
+              G
+            </div>
+            <div
+              class="layer-text"
+            >
+              GroundTruth
+            </div>
+            <v-checkbox-btn
+              :model-value="state.filters.drawObservations?.includes('groundtruth')"
+              density="compact"
+              hide-details
+              readonly
+              class="item-checkbox"
+            />
           </v-list-item>
         </v-list>
       </v-card>
@@ -203,58 +250,120 @@ const toggleScoring = (data? : undefined | 'simple' | 'detailed') => {
           class="px-2 mx-2"
           v-bind="props"
           size="large"
-          :color="state.filters.drawSiteOutline ? 'rgb(37, 99, 235)' : ''"
+          :color="state.filters.drawSiteOutline ? 'primary' : ''"
           style="min-width:150px"
           @click="toggleSite()"
         >
           <span>
             Sites
           </span>
-          <v-icon
+          <div
             v-if="state.filters.drawSiteOutline?.includes('model')"
+            class="layer-icon mx-1"
           >
-            mdi-alpha-m-box
-          </v-icon>
-          <v-icon
+            M
+          </div>
+          <div
             v-if="state.filters.drawSiteOutline?.includes('groundtruth')"
+            class="layer-icon mx-1"
           >
-            mdi-alpha-t-box
-          </v-icon>
-          <v-icon
+            G
+          </div>
+          <div
             v-if="state.filters.siteTimeLimits"
+            class="layer-icon mx-1"
           >
-            mdi-clock
-          </v-icon>
+            T
+          </div>
         </v-btn>
       </template>
       <v-card outlined>
         <v-list>
           <v-list-item
+            value="All"
+            class="rootItem"
+            @click="toggleSite()"
+          >
+            <v-row
+              dense
+              align="center"
+              class="pa-0 ma-0"
+            >
+              <v-spacer />
+              <v-checkbox
+                :model-value="state.filters.drawSiteOutline?.includes('model') && state.filters.drawSiteOutline?.includes('groundtruth')"
+                density="compact"
+                hide-details
+                class="item-checkbox"
+              />
+            </v-row>
+          </v-list-item>
+          <v-list-item
             value="Model"
             @click="toggleSite('model')"
           >
-            Model
-            <v-icon>
-              mdi-alpha-m-box
-            </v-icon>
+            <div
+              class="layer-icon pl-1"
+            >
+              M
+            </div>
+            <div
+              class="layer-text"
+            >
+              Model
+            </div>
+            <v-checkbox-btn
+              :model-value="state.filters.drawSiteOutline?.includes('model')"
+              density="compact"
+              hide-details
+              readonly
+              class="item-checkbox"
+            />
           </v-list-item>
           <v-list-item
             value="GroundTruth"
             @click="toggleSite('groundtruth')"
           >
-            GroundTruth
-            <v-icon>
-              mdi-alpha-t-box
-            </v-icon>
+            <div
+              class="layer-icon pl-1"
+            >
+              G
+            </div>
+            <div
+              class="layer-text"
+            >
+              GroundTruth
+            </div>
+            <v-checkbox-btn
+              :model-value="state.filters.drawSiteOutline?.includes('groundtruth')"
+              density="compact"
+              hide-details
+              readonly
+              class="item-checkbox"
+            />
           </v-list-item>
           <v-list-item
             value="GroundTruth"
             @click="toggleSiteTimeLimits()"
           >
-            Time Limits
-            <v-icon>
-              mdi-clock
-            </v-icon>
+            <div
+              class="layer-icon pl-1"
+            >
+              T
+            </div>
+
+            <div
+              class="layer-text"
+            >
+              Time Limits
+            </div>
+            <v-checkbox-btn
+              :model-value="state.filters.siteTimeLimits"
+              density="compact"
+              hide-details
+              readonly
+              class="item-checkbox"
+            />
           </v-list-item>
         </v-list>
       </v-card>
@@ -262,7 +371,7 @@ const toggleScoring = (data? : undefined | 'simple' | 'detailed') => {
     <v-btn
       class="px-2 mx-2"
       size="large"
-      :color="state.filters.drawRegionPoly ? 'rgb(37, 99, 235)' : ''"
+      :color="state.filters.drawRegionPoly ? 'primary' : ''"
       @click="toggleRegion()"
     >
       Region
@@ -276,23 +385,25 @@ const toggleScoring = (data? : undefined | 'simple' | 'detailed') => {
           class="px-2 mx-2"
           v-bind="props"
           size="large"
-          :color="state.filters.scoringColoring ? 'rgb(37, 99, 235)' : ''"
+          :color="state.filters.scoringColoring ? 'primary' : ''"
           style="min-width:125px"
           @click="toggleScoring()"
         >
           <span>
             Scoring
           </span>
-          <v-icon
+          <div
             v-if="state.filters.scoringColoring == 'simple'"
+            class="layer-icon mx-1"
           >
-            mdi-alpha-s-box
-          </v-icon>
-          <v-icon
+            S
+          </div>
+          <div
             v-if="state.filters.scoringColoring == 'detailed'"
+            class="layer-icon mx-1"
           >
-            mdi-alpha-d-box
-          </v-icon>
+            D
+          </div>
         </v-btn>
       </template>
       <v-card outlined>
@@ -301,19 +412,46 @@ const toggleScoring = (data? : undefined | 'simple' | 'detailed') => {
             value="Simple"
             @click="toggleScoring('simple')"
           >
-            Simple
-            <v-icon>
-              mdi-alpha-s-box
-            </v-icon>
+            <div
+              class="layer-icon pl-1"
+            >
+              S
+            </div>
+
+            <div
+              class="layer-text"
+            >
+              Simple
+            </div>
+            <v-radio
+              :model-value="state.filters.scoringColoring == 'simple'"
+              density="compact"
+              hide-details
+              readonly
+              class="item-checkbox"
+            />
           </v-list-item>
           <v-list-item
             value="Detailed"
             @click="toggleScoring('detailed')"
           >
-            Detailed
-            <v-icon>
-              mdi-alpha-d-box
-            </v-icon>
+            <div
+              class="layer-icon pl-1"
+            >
+              D
+            </div>
+            <div
+              class="layer-text"
+            >
+              Detailed
+            </div>
+            <v-radio
+              :model-value="state.filters.scoringColoring == 'detailed'"
+              density="compact"
+              hide-details
+              readonly
+              class="item-checkbox"
+            />
           </v-list-item>
         </v-list>
       </v-card>
@@ -324,10 +462,45 @@ const toggleScoring = (data? : undefined | 'simple' | 'detailed') => {
 <style scoped>
 .base {
     position: absolute;
-    left: 400px;
+    left: 650px;
+    top:8px;
     margin-left: 10px;
 }
 .button-label {
     font-size: 8px;
+}
+
+.layer-text {
+  text-transform: uppercase;
+  font-size: 16px;
+  display: inline;
+  margin-left: 5px;
+}
+
+.layer-icon {
+  color: #FFFFFF !important;
+  background-color: #37474F;
+  min-width: 30px !important;
+  width:30px !important;
+  height: 30px !important;
+  min-height: 30px !important;
+  max-width: 30px !important;
+  max-height: 30px !important;
+  border-radius: 5px !important;
+  font-size: 20px !important;
+  text-align: center !important;
+  font-weight: 800 !important;
+  line-height: 30px !important;
+  display: inline;
+}
+
+.rootItem {
+  border-bottom: 1px solid gray;
+  height: 35px;
+}
+
+.item-checkbox {
+  display:inline;
+  float:right;
 }
 </style>

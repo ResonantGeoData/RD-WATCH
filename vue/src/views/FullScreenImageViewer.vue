@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import ImageViewer from "../components/imageViewer/ImageViewer.vue"
 import { Ref, onMounted, ref } from "vue";
-import { ObsDetails } from "../store";
+import { SiteDetails } from "../store";
 import { ApiService } from "../client";
 
 const props = defineProps(
@@ -14,12 +14,12 @@ const props = defineProps(
 );
 
 // Need to get details for the siteEvaluationId
-const obsDetails: Ref<ObsDetails | null> = ref(null)
+const siteDetails: Ref<SiteDetails | null> = ref(null)
 const dateRange: Ref<number[]> = ref([]);
 const siteEvaluationName: Ref<string> = ref('')
 const loadData = async () =>  {
     const details = await ApiService.getSiteDetails(props.siteEvalId)
-    obsDetails.value = {
+    siteDetails.value = {
         region: details.regionName,
         configurationId: details.configurationId,
         siteNumber: parseInt(details.siteNumber),
@@ -36,10 +36,10 @@ onMounted(() => loadData());
 <template>
   <div>
     <ImageViewer
-      v-if="obsDetails"
+      v-if="siteDetails"
       :site-eval-id="siteEvalId"
       :site-evaluation-name="siteEvaluationName"
-      :obs-details="obsDetails"
+      :site-details="siteDetails"
       :date-range="dateRange"
 
       fullscreen

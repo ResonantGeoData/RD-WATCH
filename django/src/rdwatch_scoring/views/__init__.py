@@ -4,6 +4,7 @@ from . import (
     observation,
     performer,
     region,
+    satellite_fetching,
     site,
     site_image,
     vector_tile,
@@ -18,4 +19,5 @@ __all__ = [
     'vector_tile',
     'site',
     'eval',
+    'satellite_fetching',
 ]

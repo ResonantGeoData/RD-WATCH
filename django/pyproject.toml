@@ -57,6 +57,7 @@ pystac-client = "^0.7.6"
 more-itertools = "^10.2.0"
 torch = {version = "^2.2.2+cpu", source = "pytorch"}
 torchvision = {version = "^0.17.2+cpu", source = "pytorch"}
+apache-airflow-client = "^2.9.0"
 
 [tool.poetry.group.dev.dependencies]
 django-stubs = "^4.2.7"

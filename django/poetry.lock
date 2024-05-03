@@ -50,6 +50,21 @@ test = ["anyio[trio]", "coverage[toml] (>=7)", "exceptiongroup (>=1.2.0)", "hypo
 trio = ["trio (>=0.23)"]
 
 [[package]]
+name = "apache-airflow-client"
+version = "2.9.0"
+description = "Apache Airflow API (Stable)"
+optional = false
+python-versions = "~=3.8"
+files = [
+    {file = "apache_airflow_client-2.9.0-py3-none-any.whl", hash = "sha256:bbda9350bc1933d7de8be24250f85ff4de81197bd5570836cd03c7b9b838a769"},
+    {file = "apache_airflow_client-2.9.0.tar.gz", hash = "sha256:5e2a513a31acb420cc3774520c190059428458a6406976515f5ecbb39ad7867d"},
+]
+
+[package.dependencies]
+python-dateutil = "*"
+urllib3 = ">=1.25.3"
+
+[[package]]
 name = "argon2-cffi"
 version = "23.1.0"
 description = "Argon2 for Python"
@@ -2773,4 +2788,4 @@ watchdog = ["watchdog (>=2.3)"]
 [metadata]
 lock-version = "2.0"
 python-versions = ">=3.11.8,<4"
-content-hash = "8f57901644b7e25bb07d3a1c31e3727fcecc8b0b4b4483d80ebacd229f3bd015"
+content-hash = "678b0b3bf1d6e35754e35c32c5ad45a84c74c484ac2e4fc848e1f3078ea3efb6"

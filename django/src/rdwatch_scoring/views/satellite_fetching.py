@@ -22,5 +22,5 @@ def satellite_fetching_running(
     )
     if model_runs is not None and len(model_runs) > 0:
         running_sites = running_sites.filter(model_run_uuid__in=model_runs)
-    running_site_ids = list(running_sites.values_list('site', flat=True))
+    running_site_ids = running_sites.values_list('site', flat=True)
     return running_site_ids

@@ -72,7 +72,7 @@ def get_site_model_feature_JSON(id: UUID4, obsevations=False):
                 performer=JSONObject(
                     id='configuration__performer__id',
                     team_name='configuration__performer__team_name',
-                    short_code='configuration__performer__slug',
+                    short_code='configuration__performer__short_code',
                 ),
                 cache_originator_file='cache_originator_file',
                 cache_timestamp='cache_timestamp',

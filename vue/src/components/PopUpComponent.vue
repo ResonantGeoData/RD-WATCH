@@ -89,7 +89,7 @@ const headers = computed( () => {
 
 
 const items = computed(() => {
-  const items: (PopUpData | PopUpSiteData)[] = [];
+  const items: (PopUpData & PopUpSiteData)[] = [];
   Object.values(props.data).forEach((item) => {
     items.push(item);
   });

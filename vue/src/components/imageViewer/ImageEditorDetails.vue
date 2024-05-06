@@ -207,7 +207,7 @@ const saveSiteEvaluationChanges = async () => {
       </v-chip>
     </div>
   </v-col>
-  <v-col v-if="siteEvaluationNotes && !editMode">
+  <v-col v-if="siteEvaluationNotes || editMode">
     <div class="notesPreview">
       <b>Notes:</b>
       <v-icon

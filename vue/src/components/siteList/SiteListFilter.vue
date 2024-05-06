@@ -127,9 +127,72 @@ const filterDialog = ref(false);
       <v-card-text>
         <v-expansion-panels>
           <v-expansion-panel>
-            <v-expansion-panel-title>Site Filters</v-expansion-panel-title>
+            <v-expansion-panel-title>ToolTip Display</v-expansion-panel-title>
             <v-expansion-panel-text>
-              <p>These filters are used to remove sites that don't meet the requirements</p>
+              <v-row>
+                <v-col>
+                  <v-switch
+                    v-model="state.toolTipDisplay.Type"
+                    :color="state.toolTipDisplay.Type ? 'primary' : ''"
+                    label="Type"
+                  />
+                </v-col>
+                <v-col>
+                  <v-switch
+                    v-model="state.toolTipDisplay.SiteId"
+                    :color="state.toolTipDisplay.SiteId ? 'primary' : ''"
+                    label="SiteId"
+                  />
+                </v-col>
+                <v-col>
+                  <v-switch
+                    v-model="state.toolTipDisplay.ModelRun"
+                    :color="state.toolTipDisplay.ModelRun ? 'primary' : ''"
+                    label="ModelRun"
+                  />
+                </v-col>
+              </v-row>
+              <v-row>
+                <v-col>
+                  <v-switch
+                    v-model="state.toolTipDisplay.Performer"
+                    :color="state.toolTipDisplay.Performer ? 'primary' : ''"
+                    label="Performer"
+                  />
+                </v-col>
+                <v-col>
+                  <v-switch
+                    v-model="state.toolTipDisplay.Status"
+                    :color="state.toolTipDisplay.Status ? 'primary' : ''"
+                    label="Status"
+                  />
+                </v-col>
+                <v-col>
+                  <v-switch
+                    v-model="state.toolTipDisplay.Time"
+                    :color="state.toolTipDisplay.Time ? 'primary' : ''"
+                    label="Time"
+                  />
+                </v-col>
+              </v-row>
+              <v-row>
+                <v-spacer />
+                <v-col>
+                  <v-switch
+                    v-model="state.toolTipDisplay.Score"
+                    :color="state.toolTipDisplay.Type ? 'primary' : ''"
+                    label="Score"
+                  />
+                </v-col>
+                <v-col>
+                  <v-switch
+                    v-model="state.toolTipDisplay.Area"
+                    :color="state.toolTipDisplay.Type ? 'primary' : ''"
+                    label="Area"
+                  />
+                </v-col>
+                <v-spacer />
+              </v-row>
             </v-expansion-panel-text>
           </v-expansion-panel>
 

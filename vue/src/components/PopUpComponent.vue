@@ -1,8 +1,9 @@
 
 
 <script setup lang="ts">
-import { computed, ref } from 'vue';
+import { computed } from 'vue';
 import { PopUpData, PopUpSiteData } from '../interactions/popUpType';
+import { state } from '../store';
 const props = defineProps<{
   data:Record<string, PopUpData>;
   siteData:Record<string, PopUpSiteData>;
@@ -58,16 +59,28 @@ const headerMapping = {
 const headers = computed( () => {
   // inject headers into the system
   const headers: {title: string, key: string; width: string}[] = [];
-  headers.push(headerMapping['Type']);
-  headers.push(headerMapping['SiteId']);
-  headers.push(headerMapping['Performer']);
+  if (state.toolTipDisplay.Type) {
+    headers.push(headerMapping['Type']);
+  }
+  if (state.toolTipDisplay.SiteId) {
+    headers.push(headerMapping['SiteId']);
+  }
+  if (state.toolTipDisplay.Performer) {
+    headers.push(headerMapping['Performer']);
+  }
+  if (state.toolTipDisplay.ModelRun) {
   headers.push(headerMapping['ModelRun']);
+  }
+  if (state.toolTipDisplay.Status) {
   headers.push(headerMapping['Status']);
+  }
+  if (state.toolTipDisplay.Time) {
   headers.push(headerMapping['Time']);
-  if (items.value.findIndex((item) => ( item.scoreColor || item.score !== undefined )) !== -1) {
+  }
+  if (state.toolTipDisplay.Score && items.value.findIndex((item) => ( item.scoreColor || (item as PopUpData).score !== undefined )) !== -1) {
     headers.push(headerMapping['Score']);
   }
-  if (items.value.findIndex((item) => ( item.area)) !== -1) {
+  if (state.toolTipDisplay.Area && items.value.findIndex((item) => ( (item as PopUpData).area)) !== -1) {
     headers.push(headerMapping['Area']);
   }
 
@@ -76,7 +89,7 @@ const headers = computed( () => {
 
 
 const items = computed(() => {
-  const items: (PopUpData & PopUpSiteData)[] = [];
+  const items: (PopUpData | PopUpSiteData)[] = [];
   Object.values(props.data).forEach((item) => {
     items.push(item);
   });
@@ -97,14 +110,16 @@ const items = computed(() => {
       :items="items"
       class="tooltip ma-0 pa-0"
     >
-      <template #item.type="{ item }">
+      <template #[`item.type`]="{ item }">
         {{ item.timestamp === undefined ? 'Site' : 'Obs' }}
       </template>
 
-      <template #item.modelRun="{ item }">
-        <div class="smallDisplay">{{ item.configName }}: V{{ item.version }}</div>
+      <template #[`item.modelRun`]="{ item }">
+        <div class="smallDisplay">
+          {{ item.configName }}: V{{ item.version }}
+        </div>
       </template>
-      <template #item.siteId="{ item }">
+      <template #[`item.siteId`]="{ item }">
         <v-chip
           label
           :color="item.obsColor"
@@ -123,7 +138,7 @@ const items = computed(() => {
         </v-chip>
       </template>
 
-      <template #item.status="{ item }">
+      <template #[`item.status`]="{ item }">
         <v-chip
           label
           :color="item.siteColor"
@@ -141,7 +156,7 @@ const items = computed(() => {
           {{ item.siteLabel }}
         </v-chip>
       </template>
-      <template #item.timestamp="{ item}">
+      <template #[`item.timestamp`]="{ item}">
         <div class="smallDisplay">
           <div v-if="item.timestamp">
             {{ item.timestamp.substring(0,10) }}
@@ -157,7 +172,7 @@ const items = computed(() => {
           </div>
         </div>
       </template>
-      <template #item.score="{item}">
+      <template #[`item.score`]="{item}">
         <div
           v-if="item.score"
         >
@@ -176,7 +191,7 @@ const items = computed(() => {
           {{ item.scoreLabel }}
         </v-chip>
       </template>
-      <template #item.area="{item}">
+      <template #[`item.area`]="{item}">
         <div
           v-if="item.area"
         >

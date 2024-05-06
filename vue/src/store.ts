@@ -189,6 +189,8 @@ export const state = reactive<{
   },
   // used to open the detail image viewer panel
   selectedImageSite?: SelectedImageSite | null;
+  // Tooltip Display
+  toolTipDisplay: Record<string, boolean>;
 }>({
   errorText: '',
   timestamp: Math.floor(Date.now() / 1000),
@@ -247,6 +249,16 @@ export const state = reactive<{
     cloudCover: 100,
     noData: 100,
     obsFilter: ['observations', 'non-observations']
+  },
+  toolTipDisplay: {
+    Type: true,
+    SiteId: true,
+    Performer: true,
+    ModelRun: false,
+    Status: true,
+    Time: true,
+    Score: false,
+    Area: false,
   }
 });
 

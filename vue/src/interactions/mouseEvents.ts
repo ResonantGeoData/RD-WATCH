@@ -35,7 +35,7 @@ const popupLogic = async (mapArg: ShallowRef<null | Map>) => {
   popup = new Popup({
     closeButton: false,
     closeOnClick: false,
-    maxWidth: '700px',
+    maxWidth: '1200px',
   });
   map.value = mapArg.value;
 };
@@ -64,11 +64,11 @@ const drawPopupObservation = async (e: MapLayerMouseEvent, remove=false) => {
             const score = item.properties.score;
             const siteId = item.properties.siteeval_id;
             const configName = item.properties.configuration_name;
-            const performerName = item.properties.performer_id;
+            const performerName = item.properties.performer_name;
             const version = item.properties.version;
             const siteLabel = item.properties.site_label;
             hoveredInfo.value.region.push(
-              `${item.properties.configuration_id}_${region}_${item.properties.performer_id}`
+              `${item.properties.configuration_id}_${region}_${item.properties.performer_name}`
             );
             hoveredInfo.value.siteId.push(siteId);
             if (!htmlMap[id]) {

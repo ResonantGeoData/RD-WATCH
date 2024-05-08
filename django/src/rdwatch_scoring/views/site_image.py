@@ -6,7 +6,7 @@ from pydantic import UUID4
 from django.contrib.gis.db.models import GeometryField
 from django.contrib.postgres.aggregates import JSONBAgg
 from django.core.files.storage import default_storage
-from django.db.models import Count, F, Func, Value
+from django.db.models import Case, Count, F, Func, Value, When
 from django.db.models.functions import JSONObject
 from django.http import HttpRequest
 
@@ -35,7 +35,15 @@ def site_images(request: HttpRequest, id: UUID4):
                     cloudcover='cloudcover',
                     percent_black='percent_black',
                     source='source',
-                    observation_id='observation',
+                    observation_id=Case(
+                        # If this image isn't associated with an observation,
+                        # explicitly set the observation_id to None
+                        When(
+                            observation='',
+                            then=None,
+                        ),
+                        default=F('observation'),
+                    ),
                     bbox=BoundingBox('image_bbox'),
                     image_dimensions='image_dimensions',
                     aws_location='aws_location',

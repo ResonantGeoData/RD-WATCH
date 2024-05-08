@@ -268,21 +268,11 @@ export const buildSourceFilter = (timestamp: number, modelRunIds: string[], rand
   const year = new Date(timestamp * 1000).getFullYear();
   modelRunIds.forEach((id) => {
     const source = `vectorTileSource_${id}`;
-    const proposal = ApiService.getProposalsQuery() ? 'proposal=PROPOSAL' : '';
-    const additionalOptions = [proposal, randomKey, year];
-    let additionalOptionsString = ''
-    additionalOptions.forEach((item, index) => {
-      if (item && index === 0) {
-        additionalOptionsString += '?'
-        additionalOptionsString += item
-      } else if (item) {
-        additionalOptionsString += '&'
-        additionalOptionsString += item
-      }
-    });
+    const additionalOptions = Object.entries({randomKey, year});
+    const additionalOptionsString = additionalOptions.map(([key, value]) => `${key}=${value}`).join('&')
     results[source] = {
       type: "vector",
-      tiles: [`${urlRoot}${ApiService.getApiPrefix()}/model-runs/${id}/vector-tile/{z}/{x}/{y}.pbf/${additionalOptionsString}`],
+      tiles: [`${urlRoot}${ApiService.getApiPrefix()}/model-runs/${id}/vector-tile/{z}/{x}/{y}.pbf?${additionalOptionsString}`],
       minzoom: 0,
       maxzoom: 14,
     };

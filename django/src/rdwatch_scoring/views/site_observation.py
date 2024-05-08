@@ -45,23 +45,9 @@ class GenerateImagesSchema(Schema):
 
 
 @router.get('/{evaluation_id}/', response={200: SiteObservationsListSchema})
-def site_observations(
-    request: HttpRequest,
-    evaluation_id: UUID4,
-    proposal: Literal['PROPOSAL', 'APPROVED'] | None,
-):
-    if proposal:
-        site_db_model = AnnotationProposalSite
-        site_db_model_cols = {'region__geometry': 'region_id__geometry'}
-        observations = AnnotationProposalObservation.objects.order_by(
-            'observation_date'
-        ).filter(annotation_proposal_site_uuid=evaluation_id)
-        observation_db_model_cols = {
-            'date': 'observation_date',
-            'phase': 'current_phase',
-            'sensor': 'sensor_name',
-        }
-    else:
+def site_observations(request: HttpRequest, evaluation_id: UUID4):
+    try:
+        Site.objects.get(pk=evaluation_id)
         site_db_model = Site
         site_db_model_cols = {'region__geometry': 'region__geometry'}
         observations = Observation.objects.order_by('date').filter(
@@ -72,9 +58,20 @@ def site_observations(
             'phase': 'phase',
             'sensor': 'sensor',
         }
-
-    if not site_db_model.objects.filter(pk=evaluation_id).exists():
-        raise Http404()
+        proposal = False
+    except Site.DoesNotExist:
+        get_object_or_404(AnnotationProposalSite, pk=evaluation_id)
+        site_db_model = AnnotationProposalSite
+        site_db_model_cols = {'region__geometry': 'region_id__geometry'}
+        observations = AnnotationProposalObservation.objects.order_by(
+            'observation_date'
+        ).filter(annotation_proposal_site_uuid=evaluation_id)
+        observation_db_model_cols = {
+            'date': 'observation_date',
+            'phase': 'current_phase',
+            'sensor': 'sensor_name',
+        }
+        proposal = True
 
     site_eval_data = site_db_model.objects.filter(pk=evaluation_id).aggregate(
         timerange=JSONObject(
@@ -212,18 +209,18 @@ def get_site_observation_images(
     evaluation_id: UUID4,
     params: GenerateImagesSchema = Query(...),  # noqa: B008
 ):
-    proposal = True if request.GET.get('proposal') else False
-
-    if proposal:
-        model_run_uuid = (
-            AnnotationProposalSite.objects.filter(uuid=evaluation_id)
-            .values_list('annotation_proposal_set_uuid', flat=True)
-            .first()
-        )
-    else:
+    try:
         model_run_uuid = (
             Site.objects.filter(uuid=evaluation_id)
             .values_list('evaluation_run_uuid', flat=True)
+            .first()
+        )
+        if not model_run_uuid:
+            raise Site.DoesNotExist
+    except Site.DoesNotExist:
+        model_run_uuid = (
+            AnnotationProposalSite.objects.filter(pk=evaluation_id)
+            .values_list('annotation_proposal_set_uuid', flat=True)
             .first()
         )
 
@@ -238,7 +235,6 @@ def get_site_observation_images(
     generate_site_images.delay(
         model_run_uuid,
         evaluation_id,
-        proposal,
         params.constellation,
         params.force,
         params.dayRange,

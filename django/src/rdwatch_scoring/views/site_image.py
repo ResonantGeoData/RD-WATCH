@@ -1,5 +1,4 @@
 import logging
-from typing import Literal
 
 from ninja import Router
 from pydantic import UUID4
@@ -10,6 +9,7 @@ from django.core.files.storage import default_storage
 from django.db.models import Case, CharField, Count, F, Func, Value, When
 from django.db.models.functions import JSONObject
 from django.http import HttpRequest
+from django.shortcuts import get_object_or_404
 
 from rdwatch.db.functions import BoundingBox, ExtractEpoch
 from rdwatch.views.site_image import SiteImageResponse
@@ -28,34 +28,9 @@ router = Router()
 
 
 @router.get('/{id}/', response=SiteImageResponse)
-def site_images(
-    request: HttpRequest, id: UUID4, proposal: Literal['PROPOSAL', 'APPROVED'] | None
-):
-    if proposal:
-        observations = (
-            AnnotationProposalObservation.objects.values('observation_date', 'geometry')
-            .order_by('observation_date')
-            .filter(annotation_proposal_site_uuid=id)
-        )
-
-        observation_db_model_cols = {
-            'date': 'observation_date',
-            'phase': 'current_phase',
-        }
-        site_db_model = AnnotationProposalSite
-        site_db_model_cols = {
-            'geometry': 'geometry',
-            'status': 'status',
-            'proposal_status': 'proposal_status',
-            'notes': 'comments',
-        }
-    else:
-        observations = (
-            Observation.objects.values('date', 'geometry')
-            .order_by('date')
-            .filter(site_uuid=id)
-        )
-        observation_db_model_cols = {'date': 'date', 'phase': 'phase'}
+def site_images(request: HttpRequest, id: UUID4):
+    try:
+        Site.objects.get(pk=id)
         site_db_model = Site
         site_db_model_cols = {
             'geometry': 'union_geometry',
@@ -63,6 +38,32 @@ def site_images(
             'proposal_status': None,
             'notes': None,
         }
+        observations = (
+            Observation.objects.values('date', 'geometry')
+            .order_by('date')
+            .filter(site_uuid=id)
+        )
+        observation_db_model_cols = {'date': 'date', 'phase': 'phase'}
+        proposal = False
+    except Site.DoesNotExist:
+        get_object_or_404(AnnotationProposalSite, pk=id)
+        site_db_model = AnnotationProposalSite
+        site_db_model_cols = {
+            'geometry': 'geometry',
+            'status': 'status',
+            'proposal_status': 'proposal_status',
+            'notes': 'comments',
+        }
+        observations = (
+            AnnotationProposalObservation.objects.values('observation_date', 'geometry')
+            .order_by('observation_date')
+            .filter(annotation_proposal_site_uuid=id)
+        )
+        observation_db_model_cols = {
+            'date': 'observation_date',
+            'phase': 'current_phase',
+        }
+        proposal = True
 
     image_queryset = (
         SiteImage.objects.filter(site=id)

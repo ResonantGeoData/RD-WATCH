@@ -32,7 +32,9 @@ from rdwatch.utils.images import (
 from rdwatch.utils.raster_tile import get_raster_bbox
 from rdwatch_scoring.models import (
     AnnotationProposalObservation,
+    AnnotationProposalSet,
     AnnotationProposalSite,
+    EvaluationRun,
     Observation,
     SatelliteFetching,
     Site,
@@ -46,7 +48,6 @@ logger = logging.getLogger(__name__)
 def get_siteobservation_images_task(
     self,
     site_eval_id: UUID4,
-    proposal: bool,
     baseConstellations=['WV'],  # noqa
     force=False,  # forced downloading found_timestamps again
     dayRange=14,
@@ -60,7 +61,6 @@ def get_siteobservation_images_task(
         capture_count += get_siteobservations_images(
             self,
             site_eval_id=site_eval_id,
-            proposal=proposal,
             baseConstellation=constellation,
             force=force,
             dayRange=dayRange,
@@ -80,7 +80,6 @@ def get_siteobservation_images_task(
 def get_siteobservations_images(
     self,
     site_eval_id: UUID4,
-    proposal: bool,
     baseConstellation='WV',
     force=False,  # forced downloading found_timestamps again
     dayRange=14,
@@ -96,32 +95,32 @@ def get_siteobservations_images(
     max_bbox = [float('inf'), float('inf'), float('-inf'), float('-inf')]
 
     # Use the base SiteEvaluation extents as the max size
-    if proposal:
-        site_observations = AnnotationProposalObservation.objects.filter(
-            annotation_proposal_site_uuid=site_eval_id
-        )  # need a full list for min/max times
-        site_obs_count = AnnotationProposalObservation.objects.filter(
-            annotation_proposal_site_uuid=site_eval_id, sensor_name=baseConstellation
-        ).count()
-
-        site_db_model = AnnotationProposalSite
-        baseSiteEval = AnnotationProposalSite.objects.get(pk=site_eval_id)
-        geometry = baseSiteEval.geometry
-    else:
+    try:
+        base_site_eval = Site.objects.get(pk=site_eval_id)
+        site_db_model = Site
+        geometry = base_site_eval.union_geometry
         site_observations = Observation.objects.filter(
             site_uuid=site_eval_id
         )  # need a full list for min/max times
         site_obs_count = Observation.objects.filter(
             site_uuid=site_eval_id, sensor=baseConstellation
         ).count()
-
-        site_db_model = Site
-        baseSiteEval = Site.objects.get(pk=site_eval_id)
-        geometry = baseSiteEval.union_geometry
+        proposal = False
+    except Site.DoesNotExist:
+        base_site_eval = AnnotationProposalSite.objects.get(pk=site_eval_id)
+        site_db_model = AnnotationProposalSite
+        geometry = base_site_eval.geometry
+        site_observations = AnnotationProposalObservation.objects.filter(
+            annotation_proposal_site_uuid=site_eval_id
+        )  # need a full list for min/max times
+        site_obs_count = AnnotationProposalObservation.objects.filter(
+            annotation_proposal_site_uuid=site_eval_id, sensor_name=baseConstellation
+        ).count()
+        proposal = True
 
     # use the Eval Start/End date if not null
-    min_time = baseSiteEval.start_date
-    max_time = baseSiteEval.end_date
+    min_time = base_site_eval.start_date
+    max_time = base_site_eval.end_date
 
     if min_time is None:
         min_time = datetime.strptime(BaseTime, '%Y-%m-%d')
@@ -196,7 +195,7 @@ def get_siteobservations_images(
         logger.warning(timestamp)
         if str(constellation) == baseConstellation and timestamp is not None:
             count += 1
-            baseSiteEval = site_eval_id
+            base_site_eval = site_eval_id
             found = SiteImage.objects.filter(
                 site=site_eval_id,
                 observation=observation,
@@ -294,9 +293,9 @@ def get_siteobservations_images(
         },
     )
     if (
-        baseSiteEval is None
+        base_site_eval is None
     ):  # We need to grab the siteEvaluation directly for a reference
-        baseSiteEval = site_db_model.objects.filter(pk=site_eval_id).first()
+        base_site_eval = site_db_model.objects.filter(pk=site_eval_id).first()
     count = 1
     num_of_captures = len(captures)
     logger.warning(f'Found {num_of_captures} captures')
@@ -347,14 +346,14 @@ def get_siteobservations_images(
             percent_black = get_percent_black_pixels(bytes)
             cloudcover = capture.cloudcover
             count += 1
-            output = f'tile_image_{baseSiteEval.pk}_nonobs_{uuid4()}.png'
+            output = f'tile_image_{base_site_eval.pk}_nonobs_{uuid4()}.png'
             image = File(io.BytesIO(bytes), name=output)
             imageObj = Image.open(io.BytesIO(bytes))
             if image is None:  # No null/None images should be set
                 count += 1
                 continue
             found = SiteImage.objects.filter(
-                site=baseSiteEval.pk,
+                site=base_site_eval.pk,
                 timestamp=capture_timestamp,
                 source=baseConstellation,
             )
@@ -374,7 +373,7 @@ def get_siteobservations_images(
                 existing.save()
             else:
                 SiteImage.objects.create(
-                    site=baseSiteEval.pk,
+                    site=base_site_eval.pk,
                     timestamp=capture_timestamp,
                     aws_location=capture.uri,
                     image=image,
@@ -390,13 +389,15 @@ def get_siteobservations_images(
 
 
 @shared_task
-def cancel_generate_images_task(model_run_uuid: UUID4, proposal: bool) -> None:
-    if proposal:
+def cancel_generate_images_task(model_run_uuid: UUID4) -> None:
+    try:
+        EvaluationRun.objects.get(pk=model_run_uuid)
+        sites = Site.objects.filter(evaluation_run_uuid=model_run_uuid)
+    except EvaluationRun.DoesNotExist:
+        AnnotationProposalSet.objects.get(pk=model_run_uuid)
         sites = AnnotationProposalSite.objects.filter(
             annotation_proposal_set_uuid=model_run_uuid
         )
-    else:
-        sites = Site.objects.filter(evaluation_run_uuid=model_run_uuid)
 
     for site in sites.iterator():
         with transaction.atomic():
@@ -422,7 +423,6 @@ def cancel_generate_images_task(model_run_uuid: UUID4, proposal: bool) -> None:
 def generate_site_images(
     model_run_uuid: UUID4,
     site_uuid: UUID4,
-    proposal: bool,
     constellation=['WV'],  # noqa
     force=False,  # forced downloading found_timestamps again
     dayRange=14,
@@ -458,7 +458,6 @@ def generate_site_images(
             )
         task_id = get_siteobservation_images_task.delay(
             site_uuid,
-            proposal,
             constellation,
             force,
             dayRange,
@@ -474,7 +473,6 @@ def generate_site_images(
 @shared_task
 def generate_site_images_for_evaluation_run(
     model_run_uuid: UUID4,
-    proposal: bool,
     constellation=['WV'],  # noqa
     force=False,  # forced downloading found_timestamps again
     dayRange=14,
@@ -483,18 +481,19 @@ def generate_site_images_for_evaluation_run(
     scale: Literal['default', 'bits'] | list[int] = 'default',
     bboxScale: float = BboxScaleDefault,
 ):
-    if proposal:
+    try:
+        EvaluationRun.objects.get(pk=model_run_uuid)
+        sites = Site.objects.filter(evaluation_run_uuid=model_run_uuid)
+    except EvaluationRun.DoesNotExist:
+        AnnotationProposalSet.objects.get(pk=model_run_uuid)
         sites = AnnotationProposalSite.objects.filter(
             annotation_proposal_set_uuid=model_run_uuid
         )
-    else:
-        sites = Site.objects.filter(evaluation_run_uuid=model_run_uuid)
 
     for site in sites.iterator():
         generate_site_images.delay(
             model_run_uuid,
             site.pk,
-            proposal,
             constellation,
             force,
             dayRange,

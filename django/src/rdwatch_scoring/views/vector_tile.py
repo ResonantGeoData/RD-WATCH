@@ -513,11 +513,10 @@ def vector_tile_proposal(
 def vector_tile(
     request: HttpRequest, evaluation_run_uuid: UUID4, z: int, x: int, y: int
 ):
-    proposal = True if request.GET.get('proposal') else False
-    if proposal:
+    try:
+        evaluation_run = EvaluationRun.objects.get(pk=evaluation_run_uuid)
+    except EvaluationRun.DoesNotExist:
         return vector_tile_proposal(request, evaluation_run_uuid, z, x, y)
-
-    evaluation_run = get_object_or_404(EvaluationRun, pk=evaluation_run_uuid)
 
     latest_timestamp = evaluation_run.start_datetime
 

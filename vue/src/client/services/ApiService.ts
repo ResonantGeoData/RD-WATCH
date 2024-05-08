@@ -2,7 +2,6 @@
 /* tslint:disable */
 /* eslint-disable */
 import { ref } from 'vue';
-import { useRoute } from "vue-router";
 
 import type { ServerStatus } from "../models/ServerStatus";
 import type { SiteEvaluationList } from "../models/SiteEvaluationList";
@@ -122,7 +121,6 @@ type ApiPrefix = '/api' | '/api/scoring';
 
 export class ApiService {
   private static apiPrefix = ref<ApiPrefix>("/api");
-  private static proposalsQuery = false;
 
   public static getApiPrefix(): ApiPrefix {
     return ApiService.apiPrefix.value;
@@ -134,22 +132,6 @@ export class ApiService {
 
   public static isScoring(): boolean {
     return ApiService.apiPrefix.value === '/api/scoring';
-  }
-
-  public static getProposalsQuery(): boolean {
-    return ApiService.proposalsQuery;
-  }
-
-  public static setProposalsQuery(value: boolean) {
-    ApiService.proposalsQuery = value
-  }
-
-  public static addProposalsQueryParameter(payload: {[key:string]: any}) {
-    if (ApiService.proposalsQuery) {
-      payload['proposal'] = 'PROPOSAL'
-    }
-
-    return payload
   }
 
   /**
@@ -177,7 +159,6 @@ export class ApiService {
       path: {
         id: id,
       },
-      query: ApiService.addProposalsQueryParameter({})
     });
   }
 
@@ -213,9 +194,9 @@ export class ApiService {
           path: {
             id: id,
           },
-          query: ApiService.addProposalsQueryParameter({
-            ...data
-          })
+          query: {
+            ...data,
+          }
         });
       }
 
@@ -235,9 +216,9 @@ export class ApiService {
           path: {
             id: id,
           },
-          query: ApiService.addProposalsQueryParameter({
-            ...data
-          })
+          query: {
+            ...data,
+          }
         });
       }
 
@@ -255,7 +236,6 @@ export class ApiService {
           path: {
             id: id,
           },
-          query: ApiService.addProposalsQueryParameter({})
         });
       }
 
@@ -273,7 +253,6 @@ export class ApiService {
           path: {
             id: id,
           },
-          query: ApiService.addProposalsQueryParameter({})
         });
       }
 
@@ -321,7 +300,6 @@ export class ApiService {
       path: {
         id: id,
       },
-      query: ApiService.addProposalsQueryParameter({})
     });
   }
 
@@ -487,9 +465,12 @@ export class ApiService {
       path: {
         id: id,
       },
-      query: ApiService.addProposalsQueryParameter({})
     });
+
   }
+
+
+
 
   public static postSiteImageEmbedding(id: number): CancelablePromise<string> {
     return __request(OpenAPI, {
@@ -521,7 +502,6 @@ export class ApiService {
       path: {
         id: id,
       },
-      query: ApiService.addProposalsQueryParameter({})
     });
 
   }

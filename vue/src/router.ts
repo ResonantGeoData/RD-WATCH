@@ -25,12 +25,9 @@ const router = createRouter({
 router.beforeEach((to, from, next) => {
     // Check if the current route has a prefix '/scoring'
     const isScoringRoute = to.path.startsWith('/scoring');
-    const isProposalsRoute = to.path.includes('proposals');
 
     // Set the ApiService prefix URL accordingly
     ApiService.setApiPrefix(isScoringRoute ? "/api/scoring" : "/api");
-
-    ApiService.setProposalsQuery(isProposalsRoute ? true : false)
 
     next(); // Continue with the navigation
   });

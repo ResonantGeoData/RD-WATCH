@@ -478,15 +478,13 @@ def list_model_runs(
 
 
 @router.get('/{id}/', response={200: ModelRunDetailSchema})
-def get_model_run(
-    request: HttpRequest,
-    id: UUID4,
-    proposal: Literal['PROPOSAL', 'APPROVED', None] = None,
-):
-    if proposal:
-        data = get_object_or_404(get_queryset_proposal(), id=id)
-    else:
-        data = get_object_or_404(get_queryset(), id=id)
+def get_model_run(request: HttpRequest, id: UUID4):
+    try:
+        EvaluationRun.objects.get(pk=id)
+        data = get_queryset()
+    except EvaluationRun.DoesNotExist:
+        get_object_or_404(AnnotationProposalSet.objects.get(pk=id))
+        data = get_queryset_proposal()
 
     fetch_counts = SatelliteFetching.objects.filter(
         model_run_uuid=id, status=SatelliteFetching.Status.RUNNING
@@ -499,7 +497,6 @@ def get_model_run(
 def generate_images(
     request: HttpRequest,
     uuid: UUID4,
-    proposal: Literal['PROPOSAL', 'APPROVED'] | None,
     params: GenerateImagesSchema = Query(...),  # noqa: B008
 ):
     scalVal = params.scale
@@ -507,7 +504,6 @@ def generate_images(
         scalVal = params.scaleNum
     generate_site_images_for_evaluation_run(
         uuid,
-        proposal,
         params.constellation,
         params.force,
         params.dayRange,
@@ -523,15 +519,13 @@ def generate_images(
     '/{uuid}/cancel-generate-images/',
     response={202: bool, 409: str, 404: str},
 )
-def cancel_generate_images(
-    request: HttpRequest, uuid: UUID4, proposal: Literal['PROPOSAL', 'APPROVED'] | None
-):
-    if proposal:
+def cancel_generate_images(request: HttpRequest, uuid: UUID4):
+    try:
+        EvaluationRun.objects.get(uuid=uuid)
+    except EvaluationRun.DoesNotExist:
         get_object_or_404(AnnotationProposalSet, uuid=uuid)
-    else:
-        get_object_or_404(EvaluationRun, uuid=uuid)
 
-    cancel_generate_images_task.delay(uuid, proposal)
+    cancel_generate_images_task.delay(uuid)
 
     return 202, True
 
@@ -642,12 +636,9 @@ def get_proposals_query(annotation_proposal_set_uuid: UUID4):
 
 @router.get('/{annotation_proposal_set_uuid}/proposals/')
 def get_proposals(request: HttpRequest, annotation_proposal_set_uuid: UUID4):
-    region = get_object_or_404(
-        Region,
-        annotationproposalset=annotation_proposal_set_uuid,
+    annotation_proposal_set = get_object_or_404(
+        AnnotationProposalSet, pk=annotation_proposal_set_uuid
     )
-
     query = get_proposals_query(annotation_proposal_set_uuid)
-    query['region'] = region.id
-
+    query['region'] = annotation_proposal_set.region_id.id
     return 200, query

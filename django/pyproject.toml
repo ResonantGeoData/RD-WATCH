@@ -26,6 +26,11 @@ packages = [
 
 [tool.poetry-dynamic-versioning]
 enable = true
+vcs = "git"
+metadata = true
+
+[tool.poetry-dynamic-versioning.substitution]
+files = ["src/rdwatch/__init__.py", "src/rdwatch_scoring/__init__.py"]
 
 [tool.poetry.dependencies]
 python = ">=3.11.8,<4"

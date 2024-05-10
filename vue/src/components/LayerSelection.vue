@@ -24,7 +24,7 @@ const toggleGroundTruth = (id: string) => {
           state.openedModelRuns.delete(id);
         }
         const configuration_id = Array.from(state.openedModelRuns);
-        state.filters = { ...state.filters, configuration_id };
+        state.filters = { ...state.filters, configuration_id};
       }
 
 }
@@ -41,7 +41,6 @@ onMounted(() => {
 
 const checkGroundTruth = async () => {
   if (scoringApp.value) {
-    // Do nothing for the scoring app, ground truth is built into the scores
     return;
   } else if (proposals.value) {
     // We need to get the groundTruth value and toggle that instead.

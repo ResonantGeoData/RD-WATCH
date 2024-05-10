@@ -54,7 +54,6 @@ class ModelRunAdmin(admin.ModelAdmin):
         'evaluation',
         'evaluation_run',
         'expiration_time',
-        'ground_truth',
     )
     list_filter = ('created', 'performer', 'region')
 

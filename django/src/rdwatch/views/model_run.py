@@ -144,6 +144,7 @@ class ModelRunListSchema(Schema):
     evaluation_run: int | None = None
     proposal: str = None
     adjudicated: ModelRunAdjudicated | None = None
+    groundTruthLink: UUID4 | None = None
     mode: Literal['batch', 'incremental'] | None = None
 
 
@@ -186,7 +187,7 @@ def get_queryset():
             )
         )
         # Order queryset so that ground truths are first
-        .order_by('groundtruth', '-created')
+        .order_by('-groundtruth', '-created')
         .alias(
             evaluation_configuration=F('evaluations__configuration'),
             proposal_val=F('proposal'),
@@ -212,6 +213,24 @@ def get_queryset():
                 max=ExtractEpoch(Max('evaluations__end_date')),
             ),
             bbox=BoundingBoxGeoJSON('evaluations__geom'),
+            groundTruthLink=Case(
+                When(
+                    Q(ground_truth=False),
+                    then=Coalesce(
+                        Subquery(
+                            ModelRun.objects.filter(
+                                ground_truth=True,
+                                region_id=OuterRef('region_id'),
+                                proposal=None,
+                            )
+                            .order_by('-created')
+                            .values_list('pk')
+                        ),
+                        None,
+                    ),
+                ),
+                default=None,
+            ),
             adjudicated=Case(
                 When(
                     ~Q(proposal_val=None),  # When proposal has a value
@@ -220,10 +239,12 @@ def get_queryset():
                         other=Coalesce(Subquery(other_count_subquery), 0),
                         ground_truths=Subquery(
                             ModelRun.objects.filter(
-                                performer__short_code='TE',
+                                ground_truth=True,
                                 region_id=OuterRef('region_id'),
                                 proposal=None,
-                            ).values_list('pk')[:1]
+                            )
+                            .order_by('-created')
+                            .values_list('pk')[:1]
                         ),
                     ),
                 ),

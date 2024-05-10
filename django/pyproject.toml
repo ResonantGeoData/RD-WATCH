@@ -1,6 +1,6 @@
 [build-system]
-requires = [ "poetry-core>=1.8.2" ]
-build-backend = "poetry.core.masonry.api"
+requires = ["poetry-core>=1.8.2", "poetry-dynamic-versioning>=1.0.0,<2.0.0"]
+build-backend = "poetry_dynamic_versioning.backend"
 
 
 [tool.poetry]
@@ -23,6 +23,14 @@ packages = [
   { include = "rdwatch", from = "src" },
   { include = "rdwatch_scoring", from = "src"},
 ]
+
+[tool.poetry-dynamic-versioning]
+enable = true
+vcs = "git"
+metadata = true
+
+[tool.poetry-dynamic-versioning.substitution]
+files = ["src/rdwatch/__init__.py", "src/rdwatch_scoring/__init__.py"]
 
 [tool.poetry.dependencies]
 python = ">=3.11.8,<4"

@@ -66,12 +66,16 @@ class ModelRunFilterSchema(FilterSchema):
         return performer_q
 
     def filter_groundtruth(self, value: bool | None) -> Q:
-        if not value:
+        if value is None:
             return Q()
         # Filter for ground_truth performer
-        gt_q = Q(performer__short_code='TE')
-        gt_q &= Q(ground_truth=True)
-        return gt_q
+        if value:
+            gt_q = Q(performer__short_code='TE')
+            gt_q &= Q(ground_truth=value)
+            return gt_q
+        elif value is False:
+            return Q(ground_truth=value)
+        return Q()
 
 
 class ModelRunWriteSchema(Schema):
@@ -187,7 +191,7 @@ def get_queryset():
             )
         )
         # Order queryset so that ground truths are first
-        .order_by('-groundtruth', '-created')
+        .order_by('groundtruth', '-created')
         .alias(
             evaluation_configuration=F('evaluations__configuration'),
             proposal_val=F('proposal'),
@@ -228,6 +232,12 @@ def get_queryset():
                         ),
                         None,
                     ),
+                ),
+                # When not groundTruth we want to link the latest GroundTruth available
+                # this is done for GroundTruth comparison on client-side
+                When(
+                    Q(ground_truth=True),
+                    then=F('pk'),
                 ),
                 default=None,
             ),

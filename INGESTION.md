@@ -24,8 +24,8 @@ The following JSON is an example of data to be used to create a `performer`:
 ```jsonc
 // performer.json
 {
-  "team_name": "KIT",
-  "short_code": "Kitware"
+  "team_name": "Kitware",
+  "short_code": "KIT"
 }
 ```
 

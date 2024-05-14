@@ -8,6 +8,7 @@ from pydantic import confloat, constr, root_validator, validator
 
 from django.contrib.gis.gdal import GDALException
 from django.contrib.gis.geos import GEOSGeometry
+from django.contrib.gis.geos.error import GEOSException
 
 from rdwatch.models import Performer
 
@@ -182,6 +183,8 @@ class Feature(Schema):
             GEOSGeometry(json.dumps(v))
         except GDALException:
             raise ValueError('Failed to parse geometry.')
+        except GEOSException as e:
+            raise ValueError(f'Failed to parse geometry: {e}')
         return v
 
     @root_validator

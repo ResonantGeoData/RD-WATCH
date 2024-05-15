@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { computed, onMounted } from "vue";
+import { computed, onMounted, watch } from "vue";
 import { ApiService } from "../client";
 import { state } from "../store";
 import { useRoute } from 'vue-router';
@@ -47,6 +47,15 @@ const groundTruthState = computed<'NoGroundTruth'|'HasGroundTruth'|'AllGroundTru
     }
   }
   return result;
+});
+
+watch(groundTruthState, () => {
+  if (groundTruthState.value === 'AllGroundTruth' && state.filters.drawSiteOutline?.includes('model')) {
+    state.filters.drawSiteOutline = ['groundtruth'];
+  }
+  if (groundTruthState.value === 'AllGroundTruth' && state.filters.drawObservations?.includes('model')) {
+    state.filters.drawObservations = ['groundtruth'];
+  }
 });
 
 const toggleGroundTruth = (id: string) => {
@@ -243,6 +252,7 @@ const toggleScoring = (data? : undefined | 'simple' | 'detailed') => {
           <v-list-item
             value="Model"
             :class="{'disabled-item': groundTruthState === 'AllGroundTruth'}"
+            :disabled="groundTruthState === 'AllGroundTruth'"
             @click="groundTruthState !== 'AllGroundTruth' && toggleObs('model')"
           >
             <div
@@ -267,6 +277,8 @@ const toggleScoring = (data? : undefined | 'simple' | 'detailed') => {
           </v-list-item>
           <v-list-item
             value="GroundTruth"
+            :class="{'disabled-item': groundTruthState === 'NoGroundTruth'}"
+            :disabled="groundTruthState === 'NoGroundTruth'"
             @click="toggleObs('groundtruth')"
           >
             <div
@@ -282,6 +294,7 @@ const toggleScoring = (data? : undefined | 'simple' | 'detailed') => {
             <v-checkbox-btn
               :model-value="state.filters.drawObservations?.includes('groundtruth')"
               density="compact"
+              :disabled="groundTruthState === 'NoGroundTruth'"
               hide-details
               readonly
               class="item-checkbox"
@@ -349,6 +362,8 @@ const toggleScoring = (data? : undefined | 'simple' | 'detailed') => {
           </v-list-item>
           <v-list-item
             value="Model"
+            :class="{'disabled-item': groundTruthState === 'AllGroundTruth'}"
+            :disabled="groundTruthState === 'AllGroundTruth'"
             @click="toggleSite('model')"
           >
             <div
@@ -365,12 +380,15 @@ const toggleScoring = (data? : undefined | 'simple' | 'detailed') => {
               :model-value="state.filters.drawSiteOutline?.includes('model')"
               density="compact"
               hide-details
+              :disabled="groundTruthState === 'AllGroundTruth'"
               readonly
               class="item-checkbox"
             />
           </v-list-item>
           <v-list-item
             value="GroundTruth"
+            :class="{'disabled-item': groundTruthState === 'NoGroundTruth'}"
+            :disabled="groundTruthState === 'NoGroundTruth'"
             @click="toggleSite('groundtruth')"
           >
             <div
@@ -387,6 +405,7 @@ const toggleScoring = (data? : undefined | 'simple' | 'detailed') => {
               :model-value="state.filters.drawSiteOutline?.includes('groundtruth')"
               density="compact"
               hide-details
+              :disabled="groundTruthState === 'NoGroundTruth'"
               readonly
               class="item-checkbox"
             />
@@ -553,5 +572,11 @@ const toggleScoring = (data? : undefined | 'simple' | 'detailed') => {
 .item-checkbox {
   display:inline;
   float:right;
+}
+
+.disabled-item {
+  background-color: gray;
+  color: lightgray;
+  cursor:not-allowed;
 }
 </style>

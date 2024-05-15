@@ -103,6 +103,8 @@ const getSites = async (modelRun: string, initRun = false) => {
           PL: item.PL,
           status: item.status,
           timestamp: item.timestamp,
+          groundTruth: item.groundtruth,
+          originator: item.originator,
           downloading: item.downloading,
           details,
           proposal: !!details?.proposal,

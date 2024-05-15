@@ -16,6 +16,9 @@ const modelRunEnabled = computed(() => state.openedModelRuns.size > 0);
 // Either has ground truth, is ground truth, or no ground truth
 const groundTruthState = computed<'NoGroundTruth'|'HasGroundTruth'|'AllGroundTruth'>(() => {
   let result: 'NoGroundTruth'|'HasGroundTruth'|'AllGroundTruth'  = 'NoGroundTruth';
+  if (scoringApp.value) {
+    return 'HasGroundTruth';
+  }
   if (proposals.value) {
     if (state.proposals.ground_truths) {
       return 'HasGroundTruth';

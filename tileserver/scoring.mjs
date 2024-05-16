@@ -111,6 +111,12 @@ function query(z, x, y, modelRunId, year) {
                 AND U0."site_truth" = ("site"."site_id")
                 AND U0."tau" = 0.2
                 AND U0."min_confidence_score" = 0.0
+                AND (U0."min_spatial_distance_threshold" IS NULL OR U0."min_spatial_distance_threshold" = 100.0)
+                AND (U0."central_spatial_distance_threshold" IS NULL OR U0."central_spatial_distance_threshold" = 500.0)
+                AND U0."max_spatial_distance_threshold" IS NULL
+                AND (U0."min_temporal_distance_threshold" IS NULL OR U0."min_temporal_distance_threshold" = 730.0)
+                AND U0."central_temporal_distance_threshold" IS NULL
+                AND U0."max_temporal_distance_threshold" IS NULL
               )
           )
           WHEN (
@@ -129,8 +135,13 @@ function query(z, x, y, modelRunId, year) {
                 AND U0."site_proposal" = ("site"."site_id")
                 AND U0."tau" = 0.2
                 AND U0."min_confidence_score" = 0.0
+                AND (U0."min_spatial_distance_threshold" IS NULL OR U0."min_spatial_distance_threshold" = 100.0)
+                AND (U0."central_spatial_distance_threshold" IS NULL OR U0."central_spatial_distance_threshold" = 500.0)
+                AND U0."max_spatial_distance_threshold" IS NULL
+                AND (U0."min_temporal_distance_threshold" IS NULL OR U0."min_temporal_distance_threshold" = 730.0)
+                AND U0."central_temporal_distance_threshold" IS NULL
+                AND U0."max_temporal_distance_threshold" IS NULL
               )
-            LIMIT 1 -- TODO: remove this when T&E updates their scoring code to only include one
           )
           ELSE NULL
         END AS "color_code"
@@ -223,6 +234,12 @@ function query(z, x, y, modelRunId, year) {
                 AND U0."site_truth" = ("site"."site_id")
                 AND U0."tau" = 0.2
                 AND U0."min_confidence_score" = 0.0
+                AND (U0."min_spatial_distance_threshold" IS NULL OR U0."min_spatial_distance_threshold" = 100.0)
+                AND (U0."central_spatial_distance_threshold" IS NULL OR U0."central_spatial_distance_threshold" = 500.0)
+                AND U0."max_spatial_distance_threshold" IS NULL
+                AND (U0."min_temporal_distance_threshold" IS NULL OR U0."min_temporal_distance_threshold" = 730.0)
+                AND U0."central_temporal_distance_threshold" IS NULL
+                AND U0."max_temporal_distance_threshold" IS NULL
               )
           )
           WHEN (
@@ -241,8 +258,13 @@ function query(z, x, y, modelRunId, year) {
                 AND U0."site_proposal" = ("site"."site_id")
                 AND U0."tau" = 0.2
                 AND U0."min_confidence_score" = 0.0
+                AND (U0."min_spatial_distance_threshold" IS NULL OR U0."min_spatial_distance_threshold" = 100.0)
+                AND (U0."central_spatial_distance_threshold" IS NULL OR U0."central_spatial_distance_threshold" = 500.0)
+                AND U0."max_spatial_distance_threshold" IS NULL
+                AND (U0."min_temporal_distance_threshold" IS NULL OR U0."min_temporal_distance_threshold" = 730.0)
+                AND U0."central_temporal_distance_threshold" IS NULL
+                AND U0."max_temporal_distance_threshold" IS NULL
               )
-            LIMIT 1 -- TODO: remove this when T&E updates their scoring code to only include one
           )
           ELSE NULL
         END AS "color_code"

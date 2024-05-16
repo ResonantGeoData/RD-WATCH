@@ -87,12 +87,19 @@ def get_queryset():
             Q(evaluationbroadareasearchmetric__tau=0.2),
             Q(evaluationbroadareasearchmetric__rho=0.5),
             Q(evaluationbroadareasearchmetric__min_confidence_score=0.0),
-            Q(evaluationbroadareasearchmetric__min_spatial_distance_threshold=None) | Q(evaluationbroadareasearchmetric__min_spatial_distance_threshold = 100.0),
-            Q(evaluationbroadareasearchmetric__central_spatial_distance_threshold=None) | Q(evaluationbroadareasearchmetric__central_spatial_distance_threshold = 500.0),
+            Q(evaluationbroadareasearchmetric__min_spatial_distance_threshold=None)
+            | Q(evaluationbroadareasearchmetric__min_spatial_distance_threshold=100.0),
+            Q(evaluationbroadareasearchmetric__central_spatial_distance_threshold=None)
+            | Q(
+                evaluationbroadareasearchmetric__central_spatial_distance_threshold=500.0  # noqa: E501
+            ),
             Q(evaluationbroadareasearchmetric__max_spatial_distance_threshold=None),
-            Q(evaluationbroadareasearchmetric__min_temporal_distance_threshold=None) | Q(evaluationbroadareasearchmetric__min_temporal_distance_threshold = 730.0),
-            Q(evaluationbroadareasearchmetric__central_temporal_distance_threshold=None),
-            Q(evaluationbroadareasearchmetric__max_temporal_distance_threshold=None)
+            Q(evaluationbroadareasearchmetric__min_temporal_distance_threshold=None)
+            | Q(evaluationbroadareasearchmetric__min_temporal_distance_threshold=730.0),
+            Q(
+                evaluationbroadareasearchmetric__central_temporal_distance_threshold=None  # noqa: E501
+            ),
+            Q(evaluationbroadareasearchmetric__max_temporal_distance_threshold=None),
         )
         .values()
         .annotate(
@@ -181,12 +188,19 @@ def list_model_runs(
             Q(evaluationbroadareasearchmetric__tau=0.2),
             Q(evaluationbroadareasearchmetric__rho=0.5),
             Q(evaluationbroadareasearchmetric__min_confidence_score=0.0),
-            Q(evaluationbroadareasearchmetric__min_spatial_distance_threshold=None) | Q(evaluationbroadareasearchmetric__min_spatial_distance_threshold = 100.0),
-            Q(evaluationbroadareasearchmetric__central_spatial_distance_threshold=None) | Q(evaluationbroadareasearchmetric__central_spatial_distance_threshold = 500.0),
+            Q(evaluationbroadareasearchmetric__min_spatial_distance_threshold=None)
+            | Q(evaluationbroadareasearchmetric__min_spatial_distance_threshold=100.0),
+            Q(evaluationbroadareasearchmetric__central_spatial_distance_threshold=None)
+            | Q(
+                evaluationbroadareasearchmetric__central_spatial_distance_threshold=500.0  # noqa: E501
+            ),
             Q(evaluationbroadareasearchmetric__max_spatial_distance_threshold=None),
-            Q(evaluationbroadareasearchmetric__min_temporal_distance_threshold=None) | Q(evaluationbroadareasearchmetric__min_temporal_distance_threshold = 730.0),
-            Q(evaluationbroadareasearchmetric__central_temporal_distance_threshold=None),
-            Q(evaluationbroadareasearchmetric__max_temporal_distance_threshold=None)
+            Q(evaluationbroadareasearchmetric__min_temporal_distance_threshold=None)
+            | Q(evaluationbroadareasearchmetric__min_temporal_distance_threshold=730.0),
+            Q(
+                evaluationbroadareasearchmetric__central_temporal_distance_threshold=None  # noqa: E501
+            ),
+            Q(evaluationbroadareasearchmetric__max_temporal_distance_threshold=None),
         )
         .values()
         .annotate(

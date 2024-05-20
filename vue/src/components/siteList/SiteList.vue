@@ -131,7 +131,13 @@ const getAllSiteProposals = async (initRun = false) => {
         mainList = mainList.concat(results);
     }
     baseModifiedList.value = mainList;
-    modifiedList.value = mainList;
+    const includeGroundTruth = (state.filters.drawObservations?.includes('groundtruth') || state.filters.drawSiteOutline?.includes('groundtruth'))
+    if (!includeGroundTruth) {
+      modifiedList.value = baseModifiedList.value.filter((item) => !item.groundTruth);
+    } else {
+      modifiedList.value = mainList;
+    }
+    modifiedList.value.sort((a, b) => a.name.localeCompare(b.name, undefined, { sensitivity: 'base' }));
 }
 onMounted(() => getAllSiteProposals(true));
 onUnmounted(() => {
@@ -257,12 +263,18 @@ const startDownload = async (data: DownloadSettings) => {
 const cancelDownload = () => {
   setTimeout(() => getAllSiteProposals(), 1000);
 }
-watch(filter, () => {
+watch([filter, () => state.filters.drawObservations, () => state.filters.drawSiteOutline], () => {
+  const includeGroundTruth = (state.filters.drawObservations?.includes('groundtruth') || state.filters.drawSiteOutline?.includes('groundtruth'))
+  let tempList: SiteDisplay[];
   if (filter.value) {
-    modifiedList.value = baseModifiedList.value.filter((item) => item.name.includes(filter.value))
+    tempList = baseModifiedList.value.filter((item) => item.name.includes(filter.value))
   } else {
-    modifiedList.value = baseModifiedList.value;
+    tempList = baseModifiedList.value;
   }
+  if (!includeGroundTruth) {
+    tempList = tempList.filter((item) => !item.groundTruth);
+  }
+  modifiedList.value = tempList;
 });
 
 </script>

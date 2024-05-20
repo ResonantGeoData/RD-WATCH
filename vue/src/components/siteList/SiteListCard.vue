@@ -169,7 +169,10 @@ const selectingSite = async (e: boolean) => {
         v-if="!localSite.proposal && localSite.details"
         dense
       >
-      <span v-if="localSite.groundTruth" class="pr-2"><v-icon color="primary">mdi-check-decagram</v-icon></span>
+        <span
+          v-if="localSite.groundTruth"
+          class="pr-2"
+        ><v-icon color="primary">mdi-check-decagram</v-icon></span>
         <span class="site-model-info"> {{ localSite.details.performer }} {{ localSite.details.title }}: {{ localSite.details.version }} </span>
       </v-row>
 

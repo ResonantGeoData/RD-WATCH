@@ -4,6 +4,7 @@ import ImageViewer from "../components/imageViewer/ImageViewer.vue"
 import MapLibre from "../components/MapLibre.vue";
 import LayerSelection from "../components/LayerSelection.vue";
 import AnnotationList from "../components/annotationViewer/AnnotationList.vue"
+import AddProposal from "../components/annotationViewer/AddProposal.vue"
 import MapLegend from "../components/MapLegend.vue";
 import { Ref, computed, onMounted, ref, watch } from "vue";
 import { state } from "../store";
@@ -87,12 +88,13 @@ const updateSiteList = async () => {
           class="navcolumn"
         >
           <annotation-list
-            v-if="selectedModelRun !== null"
+            v-if="selectedModelRun !== null && !state.filters.addingSitePolygon"
             ref="siteList"
             :model-run="selectedModelRun"
             :selected-eval="state.selectedImageSite?.siteId || null"
             style="flex-grow: 1;"
-          />          
+          />
+          <add-proposal v-if="state.filters.addingSitePolygon" />
         </v-col>
       </v-row>
     </v-navigation-drawer>

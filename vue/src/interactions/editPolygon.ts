@@ -5,6 +5,7 @@ import { Ref, ShallowRef, ref, shallowRef } from "vue";
 export interface EditPolygonType {
   initialize: () => void;
   setPolygonEdit: (polygon: GeoJSON.Polygon) => void;
+  setPolygonNew: () => void;
   getEditingPolygon: () => GeoJSON.Polygon | null;
   cancelPolygonEdit: () => void;
   deleteSelectedPoints: () => void;
@@ -193,6 +194,15 @@ export default function useEditPolygon(mapObj: Map): EditPolygonType {
     }
   };
 
+  const setPolygonNew = () => {
+    if (draw.value) {
+      draw.value.deleteAll();
+      editingPolygon.value = null;
+      selectedPoints.value = [];
+      draw.value.changeMode('draw_polygon');
+    }
+  }
+
   const deleteSelectedPoints = () => {
     if (draw.value) {
       selectedPoints.value = [];
@@ -212,6 +222,7 @@ export default function useEditPolygon(mapObj: Map): EditPolygonType {
   return {
     initialize,
     setPolygonEdit,
+    setPolygonNew,
     getEditingPolygon,
     cancelPolygonEdit,
     deleteSelectedPoints,

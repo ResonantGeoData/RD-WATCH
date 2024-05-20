@@ -11,6 +11,8 @@ const route = useRoute();
 const proposals = computed(() => route.path.includes('proposals'));
 
 
+const modelRunEnabled = computed(() => state.openedModelRuns.size > 0);
+
 const toggleGroundTruth = (id: string) => {
   if (state.filters.drawObservations?.includes('groundtruth') || state.filters.drawSiteOutline?.includes('groundtruth')) {
         if (state.openedModelRuns) {
@@ -136,6 +138,10 @@ const toggleScoring = (data? : undefined | 'simple' | 'detailed') => {
 
   }
   state.filters = { ...state.filters, scoringColoring: val as 'simple' | 'detailed' | undefined };
+}
+
+const addProposal = () => {
+  state.filters.addingSitePolygon = true;
 }
 
 </script>
@@ -376,6 +382,17 @@ const toggleScoring = (data? : undefined | 'simple' | 'detailed') => {
     >
       Region
     </v-btn>
+    <v-btn
+      v-if="modelRunEnabled && proposals"
+      class="px-2 mx-2"
+      size="large"
+      :disabled="state.filters.addingSitePolygon"
+      :color="state.filters.drawRegionPoly ? 'primary' : ''"
+      @click="addProposal()"
+    >
+      <v-icon>mdi-plus</v-icon>Add Proposal
+    </v-btn>
+
     <v-menu
       open-on-hover
     >

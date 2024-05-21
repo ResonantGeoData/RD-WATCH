@@ -10,6 +10,12 @@ class EvaluationBroadAreaSearchMetric(models.Model):
     tau = models.FloatField()
     min_area = models.FloatField()
     min_confidence_score = models.FloatField()
+    min_spatial_distance_threshold = models.FloatField(blank=True, null=True)
+    central_spatial_distance_threshold = models.FloatField(blank=True, null=True)
+    max_spatial_distance_threshold = models.FloatField(blank=True, null=True)
+    min_temporal_distance_threshold = models.FloatField(blank=True, null=True)
+    central_temporal_distance_threshold = models.FloatField(blank=True, null=True)
+    max_temporal_distance_threshold = models.FloatField(blank=True, null=True)
     tp_sites = models.IntegerField(blank=True, null=True)
     tp_exact = models.IntegerField(blank=True, null=True)
     tp_under = models.IntegerField(blank=True, null=True)
@@ -35,6 +41,12 @@ class EvaluationBroadAreaSearchMetric(models.Model):
     spatial_far = models.FloatField(blank=True, null=True)
     temporal_far = models.FloatField(blank=True, null=True)
     images_far = models.FloatField(blank=True, null=True)
+    min_spatial_distance = models.FloatField(blank=True, null=True)
+    central_spatial_distance = models.FloatField(blank=True, null=True)
+    max_spatial_distance = models.FloatField(blank=True, null=True)
+    min_temporal_distance = models.FloatField(blank=True, null=True)
+    central_temporal_distance = models.FloatField(blank=True, null=True)
+    max_temporal_distance = models.FloatField(blank=True, null=True)
 
     class Meta:
         managed = False

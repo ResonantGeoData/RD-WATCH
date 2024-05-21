@@ -94,7 +94,10 @@ const updateSiteList = async () => {
             :selected-eval="state.selectedImageSite?.siteId || null"
             style="flex-grow: 1;"
           />
-          <add-proposal v-if="state.filters.addingSitePolygon" />
+          <add-proposal
+            v-if="state.filters.addingSitePolygon"
+            :region="region"
+          />
         </v-col>
       </v-row>
     </v-navigation-drawer>

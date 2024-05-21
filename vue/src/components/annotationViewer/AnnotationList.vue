@@ -140,7 +140,6 @@ watch(
     getSiteProposals();
   }
 );
-getSiteProposals();
 watch(clickedInfo, () => {
   if (clickedInfo.value.siteId.length) {
     const found = modifiedList.value.find(
@@ -204,6 +203,7 @@ const toggleControlKey = (event: KeyboardEvent) => {
 onMounted(() => {
   window.addEventListener('keydown', toggleControlKey);
   window.addEventListener('keyup', toggleControlKey);
+  getSiteProposals();
 });
 
 // Remove event listener when the component is unmounted

@@ -19,6 +19,7 @@ export default function useEditPolygon(mapObj: Map): EditPolygonType {
   const selectedPoints: Ref<DrawSelectionChangeEvent['points']> = ref([] as DrawSelectionChangeEvent['points']);
 
   const updated = (e: MapboxDraw.DrawUpdateEvent) => {
+    console.log(e);
     if (e.features.length) {
       editingPolygon.value = e.features[0].geometry as GeoJSON.Polygon;
     }
@@ -181,6 +182,7 @@ export default function useEditPolygon(mapObj: Map): EditPolygonType {
       }
     }
     map.value.on("draw.update", updated);
+    map.value.on("draw.create", updated);
     map.value.on("draw.selectionchange", selectionChange);
   };
 

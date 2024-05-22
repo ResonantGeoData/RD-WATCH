@@ -170,6 +170,7 @@ const addProposal = async () => {
     }
   }
 };
+const isSiteIdValid = computed(() => /^[0-9]{4}$/.test(siteId.value));
 </script>
 
 <template>
@@ -235,6 +236,8 @@ const addProposal = async () => {
         <v-text-field
           v-model="siteId"
           label="SiteId"
+          :error-messages="isSiteIdValid ? '' : 'Site ID must be a 4-digit number'"
+          :rules="[v => isSiteIdValid || 'Site ID must be a 4-digit number']"
         />
       </v-row>
       <v-row>

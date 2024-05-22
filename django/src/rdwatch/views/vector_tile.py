@@ -114,11 +114,11 @@ def vector_tile(request: HttpRequest, model_run_id: UUID4, z: int, x: int, y: in
                 timemin=ExtractEpoch('start_date'),
                 timemax=ExtractEpoch('end_date'),
                 performer_id=F('configuration__performer_id'),
-                performer_name=F('configuration__performer__slug'),
+                performer_name=F('configuration__performer__short_code'),
                 region=F('configuration__region__name'),
                 groundtruth=Case(
                     When(
-                        Q(configuration__performer__slug='TE') & Q(score=1),
+                        Q(configuration__performer__short_code='TE') & Q(score=1),
                         True,
                     ),
                     default=False,
@@ -161,12 +161,12 @@ def vector_tile(request: HttpRequest, model_run_id: UUID4, z: int, x: int, y: in
                     ),
                 ),
                 performer_id=F('siteeval__configuration__performer_id'),
-                performer_name=F('siteeval__configuration__performer__slug'),
+                performer_name=F('siteeval__configuration__performer__short_code'),
                 region=F('siteeval__configuration__region__name'),
                 version=F('siteeval__version'),
                 groundtruth=Case(
                     When(
-                        Q(siteeval__configuration__performer__slug='TE')
+                        Q(siteeval__configuration__performer__short_code='TE')
                         & Q(siteeval__score=1),
                         True,
                     ),

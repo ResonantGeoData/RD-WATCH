@@ -6,6 +6,9 @@ from django.db import models
 class BaseSatelliteFetching(models.Model):
     class Meta:
         abstract = True
+        indexes = [
+            models.Index(fields=['status']),
+        ]
 
     class Status(models.TextChoices):
         COMPLETE = 'Complete'

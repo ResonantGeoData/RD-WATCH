@@ -3,9 +3,8 @@ import SideBar from "../components/annotationViewer/SideBar.vue"
 import ImageViewer from "../components/imageViewer/ImageViewer.vue"
 import MapLibre from "../components/MapLibre.vue";
 import LayerSelection from "../components/LayerSelection.vue";
-import ProposalList from "../components/annotationViewer/ProposalList.vue"
+import AnnotationList from "../components/annotationViewer/AnnotationList.vue"
 import MapLegend from "../components/MapLegend.vue";
-import { ProposalDisplay } from "../components/annotationViewer/ProposalList.vue"
 import { Ref, computed, onMounted, ref, watch } from "vue";
 import { state } from "../store";
 
@@ -18,7 +17,7 @@ const props = withDefaults(defineProps<Props>(), {
   selected:undefined,
 });
 
-const siteEvalList: Ref<typeof ProposalList | null> = ref(null)
+const siteList: Ref<typeof AnnotationList | null> = ref(null)
 
 const selectedModelRun = computed(() => {
     if (state.filters.configuration_id?.length) {
@@ -29,45 +28,22 @@ const selectedModelRun = computed(() => {
 
 onMounted(() => {
   if (props.region) {
-    state.filters = {
+    state.filters = { 
       ...state.filters,
       regions: [props.region],
     };
   }
 });
 
-const selectedEval: Ref<string | null> = ref(null);
-const selectedName: Ref<string | null> = ref(null);
-const selectedDateRange: Ref<number[] | null> = ref(null);
-const regionBBox: Ref<ProposalDisplay['bbox'] | null> = ref(null);
-const setSelectedEval = (val: ProposalDisplay | null) => {
-  
-  if (val && val.id !== null) {
-    if (selectedEval.value === null) { // set region bbox if previous val was null
-      regionBBox.value = state.bbox;
-    }
-    selectedEval.value = val.id
-    selectedName.value = val.name
-    state.bbox = val.bbox;
-    selectedDateRange.value = [val.startDate, val.endDate]
-  } else {
-    selectedEval.value = null;
-    selectedName.value = null;
-    selectedDateRange.value = null;
-    if (regionBBox.value) {
-      state.bbox = regionBBox.value;
-    }
-  }
-}
 
 watch(selectedModelRun, () => {
-    selectedEval.value = null;
-    selectedName.value = null;
+  state.selectedImageSite = undefined
 })
 
-const updateSiteModels = () => {
-  if (siteEvalList.value !== null) {
-    siteEvalList.value.getSiteProposals();
+const updateSiteList = async () => {
+  if (siteList.value !== null) {
+    // Store the bbox for the sites
+    await siteList.value.getSiteProposals();
   }
 }
 </script>
@@ -84,46 +60,43 @@ const updateSiteModels = () => {
   </v-navigation-drawer>
   <v-main style="z-index:1">
     <layer-selection />
-    <MapLibre :compact="selectedEval !== null" />
+    <MapLibre :compact="!!state.selectedImageSite" />
     <ImageViewer
-      v-if="selectedEval !== null"
-      :site-eval-id="selectedEval"
-      :site-evaluation-name="selectedName"
-      :date-range="selectedDateRange"
+      v-if="!!state.selectedImageSite"
+      :site-eval-id="state.selectedImageSite.siteId"
+      :site-evaluation-name="state.selectedImageSite.siteName"
+      :date-range="state.selectedImageSite.dateRange"
       editable
       style="top:40vh !important; height:60vh"
-      @update-list="updateSiteModels()"
+      @update-list="updateSiteList()"
     />
   </v-main>
   <span>
     <v-navigation-drawer
       v-if="selectedModelRun !== null "
-      location="right"
+      location="left"
       floating
-      width="200"
+      width="250"
       sticky
       permanent
-      class="fill-height"
+      class="fill-height site-list"
       style="overflow-y: hidden;"
     >
       <v-row dense>
         <v-col
           class="navcolumn"
         >
-          <proposal-list
+          <annotation-list
             v-if="selectedModelRun !== null"
-            ref="siteEvalList"
+            ref="siteList"
             :model-run="selectedModelRun"
-            :selected-eval="selectedEval"
+            :selected-eval="state.selectedImageSite?.siteId || null"
             style="flex-grow: 1;"
-            @selected="setSelectedEval($event)"
           />          
-          <MapLegend class="mx-auto mt-5" />
         </v-col>
       </v-row>
     </v-navigation-drawer>
     <MapLegend
-      v-else
       class="static-map-legend"
     />
   </span>
@@ -132,7 +105,7 @@ const updateSiteModels = () => {
 <style scoped>
 .static-map-legend {
     position: absolute;
-    bottom: 0px;
+    top: 0px;
     right: 0px;
     z-index: 2;
 }

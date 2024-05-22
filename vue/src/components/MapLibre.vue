@@ -63,8 +63,8 @@ onMounted(() => {
           otherPattern: false,
         },
           state.satellite,
-          state.enabledSiteObservations,
-          state.siteObsSatSettings,
+          state.enabledSiteImages,
+          state.siteOverviewSatSettings,
           Array.from(modelRunVectorLayers),
         ),
         bounds: [
@@ -96,7 +96,7 @@ onUnmounted(() => {
 const throttledSetSatelliteTimeStamp = throttle(setSatelliteTimeStamp, 300);
 
 watch([() => state.timestamp, () => state.filters, () => state.satellite, () => state.filters.scoringColoring,
-() => state.satellite.satelliteSources, () => state.enabledSiteObservations, () => state.filters.hoverSiteId,
+() => state.satellite.satelliteSources, () => state.enabledSiteImages, () => state.filters.hoverSiteId,
 () => state.modelRuns, () => state.openedModelRuns, () => state.filters.proposals, () => state.filters.randomKey, () => state.filters.editingPolygonSiteId], (newVals, oldVals) => {
 
   if (state.satellite.satelliteImagesOn) {
@@ -123,10 +123,10 @@ watch([() => state.timestamp, () => state.filters, () => state.satellite, () => 
   openedModelRunIds.forEach((m) => { modelRunVectorLayers.add(m) })
 
   if (map.value) {
-    updateImageMapSources(state.timestamp, state.enabledSiteObservations, state.siteObsSatSettings, map.value )
+    updateImageMapSources(state.timestamp, state.enabledSiteImages, state.siteOverviewSatSettings, map.value )
   }
   map.value?.setStyle(
-    style(state.timestamp, state.filters, state.satellite, state.enabledSiteObservations, state.siteObsSatSettings, Array.from(modelRunVectorLayers), state.filters.randomKey),
+    style(state.timestamp, state.filters, state.satellite, state.enabledSiteImages, state.siteOverviewSatSettings, Array.from(modelRunVectorLayers), state.filters.randomKey),
   );
 
   const siteFilter = buildSiteFilter(state.timestamp, state.filters);

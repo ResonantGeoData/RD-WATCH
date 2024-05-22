@@ -227,7 +227,7 @@ watch(hiddenCanvas, () => {
         <v-spacer />
         <v-icon
           size="small"
-          :color="expandInfo ? 'rgb(37, 99, 235)' : 'black'"
+          :color="expandInfo ? 'primary' : 'black'"
           @click="expandInfo = !expandInfo"
         >
           mdi-information

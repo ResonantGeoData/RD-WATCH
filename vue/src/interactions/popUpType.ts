@@ -1,12 +1,12 @@
 
 export interface PopUpData {
     siteId: string;
-    obsColor: string;
+    obsColor?: string;
     siteColor: string;
-    score: number;
+    score?: number;
     groundTruth: boolean;
-    scoreColor: string;
-    area: string;
+    scoreColor?: string;
+    area?: string;
     timestamp?: string;
     version: string,
     configName: string,
@@ -18,7 +18,7 @@ export interface PopUpSiteData {
   siteId: string,
   groundTruth: boolean,
   performerName: string,
-  timeRange: string;
+  timeRange?: string;
   version: string,
   configName: string;
   siteLabel: string;

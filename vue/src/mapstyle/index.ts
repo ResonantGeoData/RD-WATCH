@@ -15,7 +15,7 @@ import {
   layers as satelliteLayers,
 } from "./satellite-image";
 import type { StyleSpecification } from "maplibre-gl";
-import { EnabledSiteObservations,  MapFilters, SatelliteData, siteObsSatSettings } from "../store";
+import { EnabledSiteOverviews,  MapFilters, SatelliteData, siteOverviewSatSettings } from "../store";
 import { buildImageLayerFilter, buildImageSourceFilter } from "./images";
 
 const tileServerURL =
@@ -24,8 +24,8 @@ export const style = (
   timestamp: number,
   filters: MapFilters,
   satellite: SatelliteData,
-  enabledSiteObservations: EnabledSiteObservations[],
-  settings: siteObsSatSettings,
+  enabledSiteImages: EnabledSiteOverviews[],
+  settings: siteOverviewSatSettings,
   modelRunIds: string[],
   randomKey=''
 ): StyleSpecification => ({
@@ -33,7 +33,7 @@ export const style = (
   sources: {
     ...naturalearthSources,
     ...buildSatelliteSourceFilter(timestamp, satellite),
-    ...buildImageSourceFilter(timestamp, enabledSiteObservations, settings),
+    ...buildImageSourceFilter(timestamp, enabledSiteImages, settings),
     ...buildRdwatchtilesSources(timestamp, modelRunIds, randomKey),
     ...openmaptilesSources(filters),
   },
@@ -48,7 +48,7 @@ export const style = (
     ...naturalearthLayers,
     ...openmaptilesLayers(filters),
     ...satelliteLayers(timestamp, satellite),
-    ...buildImageLayerFilter(timestamp, enabledSiteObservations, settings),
+    ...buildImageLayerFilter(timestamp, enabledSiteImages, settings),
     ...rdwatchtilesLayers(timestamp, filters, modelRunIds),
   ],
 });

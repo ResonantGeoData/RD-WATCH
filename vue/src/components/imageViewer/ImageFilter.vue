@@ -16,7 +16,7 @@ const emit = defineEmits<{
 
 const baseImageSources = ref(['S2', 'WV', 'L8', 'PL'])
 const baseObs = ref(['observations', 'non-observations'])
-const filterSettings = ref(false);
+const filterSettings = ref(true);
 
 
 const filteredImages = computed(() => {
@@ -47,10 +47,9 @@ watch(filteredImages, () => {
 </script>
 
 <template>
-  <div>
+  <div class="pt-2">
     <v-icon
-      :color="filterSettings ? 'blue' : ''"
-      @click="filterSettings = !filterSettings"
+      color="blue"
     >
       mdi-filter
     </v-icon>
@@ -66,7 +65,10 @@ watch(filteredImages, () => {
         {{ item }}
       </v-chip>
     </span>
-    <div v-if="filterSettings">
+    <div
+      v-if="filterSettings"
+      class="pt-2"
+    >
       <v-row dense>
         <v-select
           v-model="state.imageFilter.obsFilter"

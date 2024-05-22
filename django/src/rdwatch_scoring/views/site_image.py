@@ -79,9 +79,13 @@ def site_images(request: HttpRequest, id: UUID4):
                     percent_black='percent_black',
                     source='source',
                     observation_id=Case(
-                        When(observation__exact='', then=None),
-                        When(observation__isnull=False, then='observation'),
-                        default=Value(None),
+                        # If this image isn't associated with an observation,
+                        # explicitly set the observation_id to None
+                        When(
+                            observation='',
+                            then=None,
+                        ),
+                        default=F('observation'),
                     ),
                     bbox=BoundingBox('image_bbox'),
                     image_dimensions='image_dimensions',

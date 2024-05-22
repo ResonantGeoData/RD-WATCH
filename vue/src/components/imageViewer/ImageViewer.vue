@@ -10,7 +10,7 @@ import {
 import { ApiService } from "../../client";
 import { EvaluationImage, EvaluationImageResults } from "../../types";
 import {
-  ObsDetails,
+  SiteDetails,
   SiteObservationImage,
   loadAndToggleSatelliteImages,
   state,
@@ -22,14 +22,16 @@ import ImageGifCreation from "./ImageGifCreation.vue";
 import ImageFilter from "./ImageFilter.vue";
 import ImageEditorDetails from "./ImageEditorDetails.vue";
 import ImageSliderDetails from "./ImageSliderDetails.vue";
+import ImagePolygonEditor from "./ImagePolygonEditor.vue";
 import ImageSAM from "./ImageSAM.vue";
+import { SiteModelStatus } from "../../client/services/ApiService";
 interface Props {
   siteEvalId: string;
   dialog?: boolean;
   editable?: boolean;
   siteEvaluationName?: string | null;
   dateRange?: number[] | null;
-  obsDetails?: ObsDetails;
+  siteDetails?: SiteDetails;
   fullscreen?: boolean;
 }
 
@@ -46,7 +48,7 @@ const props = withDefaults(defineProps<Props>(), {
   editable: false,
   siteEvaluationName: null,
   dateRange: null,
-  obsDetails: undefined,
+  siteDetails: undefined,
 });
 
 const emit = defineEmits<{
@@ -107,6 +109,8 @@ const rescaleImage = ref(false);
 const rescalingBBox = ref(1);
 const editingPolygon = ref(false);
 const SAMViewer: Ref<number | null> = ref(null);
+const sidePanelExpanded = ref(false || props.editable);
+const sidePanelTab: Ref<null | string> = ref(null);
 
 
 const evaluationGeoJSON: Ref<GeoJSON.Polygon | null> = ref(null); // holds the site geoJSON so it can be edited
@@ -135,7 +139,7 @@ const getImageData = async () => {
   polygons.sort((a, b) => a.timestamp - b.timestamp);
   siteEvaluationNotes.value = data.notes || "";
   siteEvaluationLabel.value = data.label;
-  siteStatus.value = data.status;
+  siteStatus.value = data.status || null;
   
   if (data.groundTruth) {
     hasGroundTruth.value = true;
@@ -173,7 +177,7 @@ watch(showSitePoly, () => {
 
 const load = async (newValue?: string, oldValue?: string) => {
   currentImage.value = 0;
-  const index = state.enabledSiteObservations.findIndex(
+  const index = state.enabledSiteImages.findIndex(
     (item) => item.id === oldValue
   );
 
@@ -187,9 +191,9 @@ const load = async (newValue?: string, oldValue?: string) => {
       : null;
 
   if (index !== -1) {
-    const tempArr = [...state.enabledSiteObservations];
+    const tempArr = [...state.enabledSiteImages];
     tempArr.splice(index, 1);
-    state.enabledSiteObservations = tempArr;
+    state.enabledSiteImages = tempArr;
   }
   loading.value = true;
   await getImageData();
@@ -220,7 +224,7 @@ const load = async (newValue?: string, oldValue?: string) => {
 watch(
   () => props.siteEvalId,
   () => {
-    state.enabledSiteObservations = []; // toggle off all other satellite images
+    state.enabledSiteImages = []; // toggle off all other satellite images
     load();
   }
 );
@@ -283,19 +287,19 @@ watch(
 
 const mapImagesOn = computed(
   () =>
-    state.enabledSiteObservations.findIndex(
+    state.enabledSiteImages.findIndex(
       (item) => item.id === props.siteEvalId
     ) !== -1
 );
 
-
-onUnmounted(() => {
+const close = () => {
   if (
     props.editable &&
-    state.enabledSiteObservations.find((item) => item.id === props.siteEvalId)
+    state.enabledSiteImages.find((item) => item.id === props.siteEvalId)
   ) {
     loadAndToggleSatelliteImages(props.siteEvalId);
   }
+
   if (editingPolygon.value) {
     state.filters.editingPolygonSiteId = null;
     editingPolygon.value = false;
@@ -303,6 +307,12 @@ onUnmounted(() => {
   Object.keys(embeddingCheckInterval).forEach((key) => {
     clearInterval(embeddingCheckInterval.value[key]);
   });
+  state.selectedImageSite = null;
+}
+
+
+onUnmounted(() => {
+  close();
 });
 
 //SAM Integration
@@ -341,11 +351,21 @@ const generateImageEmbedding = async (
 
 const openSAMView = (id: number) => {
   SAMViewer.value = id;
-  // const name = `#${ApiService.getApiPrefix()
-  //   .replace("api/", "")
-  //   .replace("/api", "")}/SAM/${id}`;
-  // window.open(name, "_blank");
+  sidePanelExpanded.value = true;
+  sidePanelTab.value = 'Polygon';
 };
+
+const setSiteModelStatus = async (status: SiteModelStatus) => {
+  if (status) {
+    await ApiService.patchSiteEvaluation(props.siteEvalId, {
+      status
+    });
+    siteStatus.value = status;
+    emit('update-list');
+  }
+};
+
+
 
 const processImageEmbeddingButton = (
   image: SiteObservationImage | EvaluationImage
@@ -365,6 +385,7 @@ const clearStorage = async () => {
   state.filters.randomKey = `randomKey=randomKey_${Math.random() * 1000}`;
   await getImageData();
 };
+
 </script>
 
 <template>
@@ -373,143 +394,81 @@ const clearStorage = async () => {
     :class="{ review: !dialog && !fullscreen, fullscreen: fullscreen }"
   >
     <v-row
-      v-if="dialog || fullscreen"
       dense
       class="top-bar"
     >
-      <v-col v-if="obsDetails">
-        <span>{{ obsDetails.performer }} {{ obsDetails.title }} : V{{
-          obsDetails.version
-        }}</span>
-        <div v-if="hasGroundTruth && editable">
-          <v-checkbox
-            v-model="drawGroundTruth"
-            density="compact"
-            label="Draw GT"
-          />
-        </div>
-      </v-col>
-      <v-col v-if="obsDetails">
-        <span>{{ siteEvaluationName }}</span>
-      </v-col>
-
-      <v-col v-if="obsDetails">
-        <b
-          v-if="groundTruth && hasGroundTruth"
-          class="mr-1"
-        >Model Date Range:</b>
-        <span>{{ startDate }}</span> to <span> {{ endDate }}</span>
-        <div v-if="groundTruth && hasGroundTruth">
-          <b class="mr-1">GroundTruth Date Range:</b>
-          <span>
-            {{
-              new Date(groundTruth.timerange.min * 1000)
-                .toISOString()
-                .split("T")[0]
-            }}
-          </span>
-          <span> to </span>
-          <span>
-            {{
-              new Date(groundTruth.timerange.max * 1000)
-                .toISOString()
-                .split("T")[0]
-            }}</span>
-        </div>
-      </v-col>
+      <h2 v-if="siteDetails">
+        {{ siteDetails.performer }} {{ siteDetails.title }} : V{{
+          siteDetails.version
+        }}
+      </h2>
+      <h2 v-else>
+        {{ siteEvaluationName }}
+      </h2>
       <v-spacer />
-      <v-icon
-        v-if="dialog"
-        @click="emit('close')"
-      >
-        mdi-close
-      </v-icon>
+      <v-tooltip>
+        <template #activator="{ props }">
+          <v-btn
+            v-bind="props"
+            variant="tonal"
+            density="compact"
+            class="pa-0 ma-1 sidebar-icon"
+            :color="mapImagesOn ? 'primary' : 'black'"
+            :disabled="combinedImages.length === 0"
+            @click="loadAndToggleSatelliteImages(siteEvalId)"
+          >
+            <v-icon>mdi-image</v-icon>
+          </v-btn>
+        </template>
+        <span> Toggle image rendering within the map</span>
+      </v-tooltip>
+      <v-tooltip>
+        <template #activator="{ props }">
+          <v-btn
+            v-bind="props"
+            variant="tonal"
+            density="compact"
+            class="pa-0 ma-1 sidebar-icon"
+            :color="rescaleImage ? 'blue' : ''"
+            :disabled="!mapImagesOn || combinedImages.length === 0"
+            @click="rescaleImage = !rescaleImage"
+          >
+            <v-icon>mdi-resize</v-icon>
+          </v-btn>
+        </template>
+        <span> Rescale Images</span>
+      </v-tooltip>
+      <image-gif-creation
+        :disabled="!mapImagesOn || combinedImages.length === 0"
+        :background="background"
+        :filtered-images="filteredImages"
+        :fullscreen="fullscreen"
+        :rescale-image="rescaleImage"
+        :site-evaluation-name="siteEvaluationName"
+        :rescaling-b-box="rescalingBBox"
+        :draw-ground-truth="drawGroundTruth"
+        @rescale-b-box="rescalingBBox = $event"
+      />
+      <v-tooltip>
+        <template #activator="{ props }">
+          <v-btn
+            v-bind="props"
+            variant="tonal"
+            density="compact"
+            class="pa-0 ma-1 sidebar-icon"
+            @click="close()"
+          >
+            <v-icon>mdi-close</v-icon>
+          </v-btn>
+        </template>
+        <span> Close Image Viewer</span>
+      </v-tooltip>
     </v-row>
-    <v-card-title
-      v-else
-      class="edit-title"
-    >
-      <v-row dense>
-        <v-col
-          v-if="editable"
-          style="max-width: 20px"
-        >
-          <v-tooltip
-            open-delay="50"
-            bottom
-          >
-            <template #activator="{ props }">
-              <v-icon
-                v-bind="props"
-                :color="mapImagesOn ? 'rgb(37, 99, 235)' : ''"
-                @click="loadAndToggleSatelliteImages(siteEvalId)"
-              >
-                mdi-image
-              </v-icon>
-            </template>
-            <span> Toggle Map Images </span>
-          </v-tooltip>
-          <br>
-          <v-tooltip
-            v-if="hasGroundTruth"
-            open-delay="50"
-            bottom
-          >
-            <template #activator="{ props }">
-              <v-icon
-                v-bind="props"
-                :color="drawGroundTruth ? 'rgb(37, 99, 235)' : ''"
-                @click="drawGroundTruth = !drawGroundTruth"
-              >
-                {{
-                  drawGroundTruth
-                    ? "mdi-checkbox-marked"
-                    : "mdi-checkbox-blank-outline"
-                }}
-              </v-icon>
-            </template>
-            <span> Toggle Map Images </span>
-          </v-tooltip>
-        </v-col>
-        <v-col>
-          <h3 class="mr-3">
-            {{ siteEvaluationName }}:
-          </h3>
-          <h3
-            v-if="hasGroundTruth"
-            class="mr-3"
-          >
-            Ground Truth
-          </h3>
-        </v-col>
-        <image-editor-details
-          v-if="combinedImages.length"
-          :site-eval-id="siteEvalId"
-          :editable="editable"
-          :date-range="dateRange"
-          :ground-truth="groundTruth"
-          :has-ground-truth="hasGroundTruth"
-          :evaluation-label="siteEvaluationLabel"
-          :evaluation-notes="siteEvaluationNotes"
-          :eval-current-date="currentDate"
-          :status="siteStatus"
-          :sam-viewer="SAMViewer"
-          :eval-geo-j-s-o-n="evaluationGeoJSON"
-          :current-timestamp="currentTimestamp"
-          @clear-storage="clearStorage()"
-          @update-list="$emit('update-list')"
-        />
-      </v-row>
-    </v-card-title>
     <v-row
       v-if="SAMViewer === null"
       dense
       class="my-1"
     >
-      <image-filter
-        :combined-images="combinedImages"
-        @image-filter="filteredImages = $event"
-      />
       <v-tooltip
         open-delay="50"
         bottom
@@ -528,7 +487,7 @@ const clearStorage = async () => {
       </v-tooltip>
       <v-tooltip
         v-if="
-          !loading && !ApiService.getApiPrefix().includes('scoring') && filteredImages.length &&
+          editMode && !loading && !ApiService.getApiPrefix().includes('scoring') && filteredImages.length &&
             filteredImages[currentImage] &&
             filteredImages[currentImage].image &&
             filteredImages[currentImage].image.source === 'WV'
@@ -545,7 +504,6 @@ const clearStorage = async () => {
             :color="
               filteredImages[currentImage].image.image_embedding ? 'blue' : ''
             "
-            :disabled="filteredImages[currentImage].image.image_embedding"
             class="mx-2"
             @click="
               processImageEmbeddingButton(filteredImages[currentImage].image)
@@ -568,65 +526,184 @@ const clearStorage = async () => {
         <span> Has or Generate Image embedding </span>
       </v-tooltip>
       <v-spacer />
-      <v-tooltip
-        open-delay="50"
-        bottom
+    </v-row>
+    <v-row>
+      <v-col>
+        <v-row v-show="SAMViewer === null">
+          <v-spacer />
+          <canvas ref="canvasRef" />
+          <v-spacer />
+        </v-row>
+        <v-row v-if="SAMViewer !== null">
+          <ImageSAM
+            :id="SAMViewer.toString()"
+            :site-eval-id="siteEvalId"
+            :image="filteredImages[currentImage].image"
+            @cancel="SAMViewer = null"
+          />
+        </v-row>
+        <image-slider-details
+          v-if="SAMViewer === null"
+          :filtered-images="filteredImages"
+          :current-date="currentDate"
+          :current-label="currentLabel"
+          :edit-mode="editMode"
+          :start-date="startDate"
+          :end-date="endDate"
+          :image-index="currentImage"
+          @current-image="currentImage = $event"
+          @edit-dialog="editDialog = true; currentEditMode = $event"
+        />
+        <v-progress-linear
+          v-if="loading"
+          indeterminate
+          color="primary"
+          height="15"
+          class="mt-4"
+        />
+      </v-col>
+      <div>
+        <v-tooltip>
+          <template #activator="{ props }">
+            <v-btn
+              v-bind="props"
+              variant="tonal"
+              density="compact"
+              :color="sidePanelExpanded ? 'primary' : ''"
+              class="pa-0 ma-1 sidepanel-icon"
+              @click="sidePanelExpanded = !sidePanelExpanded"
+            >
+              <v-icon size="x-large">
+                {{ sidePanelExpanded ? 'mdi-chevron-right' :'mdi-chevron-left' }}
+              </v-icon>
+            </v-btn>
+          </template>
+          <span v-if="!sidePanelExpanded"> Open Side Panel for More Information</span>
+          <span v-else-if="sidePanelExpanded"> Collapse Side Panel</span>
+        </v-tooltip>
+      </div>
+      <v-col
+        v-show="sidePanelExpanded"
+        cols="4"
+        class="side-panel"
       >
-        <template #activator="{ props }">
-          <v-icon
-            v-bind="props"
-            :color="rescaleImage ? 'blue' : ''"
-            @click="rescaleImage = !rescaleImage"
-          >
-            mdi-resize
-          </v-icon>
-        </template>
-        <span> Rescale Images </span>
-      </v-tooltip>
-      <image-gif-creation
-        v-if="SAMViewer === null"
-        :background="background"
-        :filtered-images="filteredImages"
-        :fullscreen="fullscreen"
-        :rescale-image="rescaleImage"
-        :site-evaluation-name="siteEvaluationName"
-        :rescaling-b-box="rescalingBBox"
-        :draw-ground-truth="drawGroundTruth"
-        @rescale-b-box="rescalingBBox = $event"
-      />
+        <v-card
+          height="100%"
+          class="adjust-card pt-5"
+        >
+          <v-row class="pb-2">
+            <v-spacer />
+            <v-col v-if="!editingPolygon && editMode && SAMViewer === null">
+              <v-btn
+                v-if="siteStatus !== 'APPROVED'"
+                size="small"
+                class="mx-1"
+                color="success"
+                @click="setSiteModelStatus('APPROVED')"
+              >
+                Approve
+              </v-btn>
+              <v-btn
+                v-if="siteStatus === 'APPROVED'"
+                size="small"
+                class="mx-1"
+                color="warning"
+                @click="setSiteModelStatus('PROPOSAL')"
+              >
+                Un-Approve
+              </v-btn>
+            </v-col>
+            <v-col v-if="!editingPolygon && editMode && SAMViewer === null">
+              <v-btn
+                v-if="siteStatus !== 'REJECTED'"
+                size="small"
+                class="mx-1"
+                color="error"
+                @click="setSiteModelStatus('REJECTED')"
+              >
+                Reject
+              </v-btn>
+              <v-btn
+                v-if="siteStatus === 'REJECTED'"
+                size="small"
+                class="mx-1"
+                color="warning"
+                @click="setSiteModelStatus('PROPOSAL')"
+              >
+                Un-Reject
+              </v-btn>
+            </v-col>
+            <v-spacer />
+          </v-row>
+          <v-row dense>
+            <v-spacer />
+            <v-tabs
+              v-model="sidePanelTab"
+              density="compact"
+              color="primary"
+            >
+              <v-tab
+                value="Details"
+                size="small"
+                variant="tonal"
+              >
+                Details
+              </v-tab>
+              <v-tab
+                value="Filter"
+                size="small"
+                variant="tonal"
+              >
+                Image <v-icon>mdi-filter</v-icon>
+              </v-tab>
+              <v-tab
+                v-if="editMode"
+                value="Polygon"
+                size="small"
+                variant="tonal"
+              >
+                Polygon <v-icon>mdi-pencil</v-icon>
+              </v-tab>
+            </v-tabs>
+            <v-spacer />
+          </v-row>
+          <div v-if="sidePanelTab === 'Details'">
+            <image-editor-details
+              v-if="combinedImages.length"
+              :site-eval-id="siteEvalId"
+              :editable="editable"
+              :date-range="dateRange"
+              :ground-truth="groundTruth"
+              :has-ground-truth="hasGroundTruth"
+              :evaluation-label="siteEvaluationLabel || ''"
+              :evaluation-notes="siteEvaluationNotes"
+              :eval-current-date="currentDate"
+              :status="siteStatus"
+              :sam-viewer="SAMViewer"
+              :eval-geo-j-s-o-n="evaluationGeoJSON"
+              :current-timestamp="currentTimestamp"
+              @clear-storage="clearStorage()"
+              @update-list="$emit('update-list')"
+            />
+          </div>
+          <div v-show="sidePanelTab === 'Filter'">
+            <image-filter
+              :combined-images="combinedImages"
+              @image-filter="filteredImages = $event"
+            />
+          </div>
+          <div v-if="sidePanelTab === 'Polygon' && editMode">
+            <image-polygon-editor
+              :site-eval-id="siteEvalId"
+              :sam-viewer="SAMViewer"
+              :eval-geo-j-s-o-n="evaluationGeoJSON"
+              @clear-storage="clearStorage()"
+              @update-list="$emit('update-list')"
+            />
+          </div>
+        </v-card>
+      </v-col>
     </v-row>
-    <v-row v-show="SAMViewer === null">
-      <v-spacer />
-      <canvas ref="canvasRef" />
-      <v-spacer />
-    </v-row>
-    <v-row v-if="SAMViewer !== null">
-      <ImageSAM
-        :id="SAMViewer.toString()"
-        :site-eval-id="siteEvalId"
-        :image="filteredImages[currentImage].image"
-        @cancel="SAMViewer = null"
-      />
-    </v-row>
-    <image-slider-details
-      v-if="SAMViewer === null"
-      :filtered-images="filteredImages"
-      :current-date="currentDate"
-      :current-label="currentLabel"
-      :edit-mode="editMode"
-      :start-date="startDate"
-      :end-date="endDate"
-      :image-index="currentImage"
-      @current-image="currentImage = $event"
-      @edit-dialog="editDialog = true; currentEditMode = $event"
-    />
-    <v-progress-linear
-      v-if="loading"
-      indeterminate
-      color="primary"
-      height="15"
-      class="mt-4"
-    />
   </v-card>
 </template>
 
@@ -653,5 +730,20 @@ const clearStorage = async () => {
 .top-bar {
   font-size: 12px;
   font-weight: bold;
+}
+.sidebar-icon {
+  min-width: 20px;
+  min-height: 20px;
+}
+.sidepanel-icon {
+  min-width:40px;
+  min-height: 40px;
+}
+.sidebar-icon:hover {
+  background-color: #1867c066
+}
+.adjust-card {
+  left:-15px;
+  top: -5px;
 }
 </style>

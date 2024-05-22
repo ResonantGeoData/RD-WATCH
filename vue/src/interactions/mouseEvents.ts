@@ -35,7 +35,7 @@ const popupLogic = async (mapArg: ShallowRef<null | Map>) => {
   popup = new Popup({
     closeButton: false,
     closeOnClick: false,
-    maxWidth: '700px',
+    maxWidth: '1200px',
   });
   map.value = mapArg.value;
 };
@@ -64,11 +64,11 @@ const drawPopupObservation = async (e: MapLayerMouseEvent, remove=false) => {
             const score = item.properties.score;
             const siteId = item.properties.siteeval_id;
             const configName = item.properties.configuration_name;
-            const performerName = item.properties.performer_id;
+            const performerName = item.properties.performer_name;
             const version = item.properties.version;
             const siteLabel = item.properties.site_label;
             hoveredInfo.value.region.push(
-              `${item.properties.configuration_id}_${region}_${item.properties.performer_id}`
+              `${item.properties.configuration_id}_${region}_${item.properties.performer_name}`
             );
             hoveredInfo.value.siteId.push(siteId);
             if (!htmlMap[id]) {
@@ -138,7 +138,7 @@ const clickObservation = async (e: MapLayerMouseEvent) => {
     e.features.forEach(async (feature) => {
     if (feature.properties) {
         const siteId = feature.properties.siteeval_id;
-        const obsDetails = {
+        const siteDetails = {
           region: feature.properties.region as string,
           configurationId: feature.properties.configuration_id as number,
           siteNumber: feature.properties.site_number as number,
@@ -151,7 +151,7 @@ const clickObservation = async (e: MapLayerMouseEvent) => {
         names.push(`${feature.properties.region as string}_${feature.properties.site_number as number}`)
 
         if (siteId && !selectedObservationList.value.includes(siteId)) {
-          await getSiteObservationDetails(siteId, obsDetails);
+          await getSiteObservationDetails(siteId, siteDetails);
         }
       }
     });
@@ -174,7 +174,7 @@ const clickSite = async (e: MapLayerMouseEvent) => {
         if (siteId === state.filters.editingPolygonSiteId) {
           return;
         }
-        const obsDetails = {
+        const siteDetails = {
           region: feature.properties.region as string,
           configurationId: feature.properties.configuration_id as number,
           siteNumber: feature.properties.site_number as number,
@@ -186,7 +186,7 @@ const clickSite = async (e: MapLayerMouseEvent) => {
         siteIds.push(siteId);
         names.push(`${feature.properties.region as string}_${feature.properties.site_number as number}`)
         if (siteId && !selectedObservationList.value.includes(siteId)) {
-          await getSiteObservationDetails(siteId, obsDetails);
+          await getSiteObservationDetails(siteId, siteDetails);
         }
       }
     })

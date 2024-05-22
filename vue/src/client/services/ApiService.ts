@@ -51,10 +51,7 @@ export interface ScoringResults {
 
 export type SiteModelStatus = 'PROPOSAL' | 'APPROVED' | 'REJECTED'
 
-export interface Proposals {
-  region: Region;
-
-  proposed_sites: {
+export interface SiteInfo {
     images: number,
     S2: number,
     WV: number,
@@ -69,7 +66,21 @@ export interface Proposals {
     timestamp: number;
     filename?: string | null;
     downloading: boolean;
-  }[];
+}
+export interface SiteList {
+  region: Region;
+  modelRunDetails: {
+    region: string;
+    version: string;
+    title: string;
+    proposal: boolean | null;
+    performer: {
+      id: number;
+      team_name: string;
+      short_code: string;
+    }
+  }
+  sites: SiteInfo[];
 }
 export interface SiteEvaluationUpdateQuery {
   label?: string;
@@ -161,6 +172,24 @@ export class ApiService {
       },
     });
   }
+
+    /**
+   * @param id
+   * @returns SiteObservationList
+   * @throws ApiError
+   */
+    public static getSite(
+      id: string
+    ): CancelablePromise<SiteInfo> {
+      return __request(OpenAPI, {
+        method: "GET",
+        url: `${this.getApiPrefix()}/sites/{id}/`,
+        path: {
+          id: id,
+        },
+      });
+    }
+
 
     /**
    * @param id
@@ -276,7 +305,7 @@ export class ApiService {
    * @returns EvaluationsList
    * @throws ApiError
    */
-    public static getProposals(id: string): CancelablePromise<Proposals> {
+    public static getProposals(id: string): CancelablePromise<SiteList> {
       return __request(OpenAPI, {
         method: "GET",
         url: `${this.getApiPrefix()}/model-runs/{id}/proposals/`,
@@ -286,7 +315,20 @@ export class ApiService {
       });
     }
 
-
+    /**
+    * @returns EvaluationsList
+    * @throws ApiError
+    */
+     public static getSitesList(id: string): CancelablePromise<SiteList> {
+       return __request(OpenAPI, {
+         method: "GET",
+         url: `${this.getApiPrefix()}/model-runs/{id}/sites/`,
+         path: {
+           id: id,
+         },
+       });
+     }
+ 
 
   /**
    * @param id
@@ -554,8 +596,16 @@ export class ApiService {
   public static getModelRunDownloadStatus(task_id: string): CancelablePromise<CeleryStates> {
     return __request(OpenAPI, {
       method: 'GET',
-      url: `${this.getApiPrefix()}/model-runs/download_status/`,
-      query: {task_id},
+      url: `${this.getApiPrefix()}/model-runs/download_status/${task_id}`,
     })
   }
+
+  public static getSatelliteFetchingRunning(modelRunIds?: string[], limit=2000, offset=0): CancelablePromise<{items: string[], count: number}> {
+    return __request(OpenAPI, {
+      method: 'GET',
+      url: `${this.getApiPrefix()}/satellite-fetching/running/`,
+      query: { model_runs: modelRunIds, limit, offset },
+    })
+  }
+
 }

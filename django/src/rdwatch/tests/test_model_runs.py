@@ -7,8 +7,8 @@ from ninja.testing import TestClient
 
 from django.utils import timezone
 
-from rdwatch.models import ModelRun, Region, lookups
-from rdwatch.tasks import delete_temp_model_runs_task
+from rdwatch.models import ModelRun, Performer, Region
+from rdwatch.tasks import collect_garbage_task
 
 
 @pytest.mark.django_db(databases=['default'])
@@ -19,25 +19,25 @@ def test_model_run_auto_delete(region: Region) -> None:
             title='test1',
             parameters={},
             region=region,
-            performer=lookups.Performer.objects.all().first(),
+            performer=Performer.objects.all().first(),
             expiration_time=timedelta(hours=1),
         )
     not_expired_model_run = ModelRun.objects.create(
         title='test2',
         parameters={},
         region=region,
-        performer=lookups.Performer.objects.all().first(),
+        performer=Performer.objects.all().first(),
         expiration_time=timedelta(hours=2),
     )
     model_run_with_no_expiration = ModelRun.objects.create(
         title='test3',
         parameters={},
         region=region,
-        performer=lookups.Performer.objects.all().first(),
+        performer=Performer.objects.all().first(),
     )
     assert ModelRun.objects.count() == 3
 
-    delete_temp_model_runs_task()
+    collect_garbage_task()
 
     assert ModelRun.objects.count() == 2
     assert list(ModelRun.objects.all()) == [
@@ -48,7 +48,7 @@ def test_model_run_auto_delete(region: Region) -> None:
 
 @pytest.mark.django_db
 def test_model_run_rest_create(test_client: TestClient, region_id: str) -> None:
-    performer = lookups.Performer.objects.first()
+    performer = Performer.objects.first()
     title = 'test'
 
     assert (
@@ -61,7 +61,7 @@ def test_model_run_rest_create(test_client: TestClient, region_id: str) -> None:
     res = test_client.post(
         '/model-runs/',
         json={
-            'performer': performer.slug,
+            'performer': performer.short_code,
             'title': title,
             'region': region_id,
             'parameters': {},
@@ -70,7 +70,7 @@ def test_model_run_rest_create(test_client: TestClient, region_id: str) -> None:
 
     assert res.status_code == 200
     assert res.json()['title'] == title
-    assert res.json()['performer']['short_code'] == performer.slug
+    assert res.json()['performer']['short_code'] == performer.short_code
     assert (
         ModelRun.objects.filter(
             title=title, performer=performer, region__name=region_id
@@ -82,7 +82,7 @@ def test_model_run_rest_create(test_client: TestClient, region_id: str) -> None:
 @pytest.mark.django_db
 def test_model_run_rest_list(test_client: TestClient, region: Region) -> None:
     # Create test data
-    performers = list(lookups.Performer.objects.all())
+    performers = list(Performer.objects.all())
     model_runs = ModelRun.objects.bulk_create(
         ModelRun(performer=performer, title=f'test_{i}', region=region, parameters={})
         for i, performer in enumerate(performers)
@@ -94,11 +94,11 @@ def test_model_run_rest_list(test_client: TestClient, region: Region) -> None:
     assert res.json()['count'] == len(model_runs)
     assert {
         (mr['title'], mr['performer']['short_code']) for mr in res.json()['items']
-    } == {(mr.title, mr.performer.slug) for mr in model_runs}
+    } == {(mr.title, mr.performer.short_code) for mr in model_runs}
 
     # Test performer filter
     for performer in performers:
-        res = test_client.get(f'/model-runs/?performer={performer.slug}')
+        res = test_client.get(f'/model-runs/?performer={performer.short_code}')
         assert res.status_code == 200
         assert [mr['title'] for mr in res.json()['items']] == [
             mr.title for mr in model_runs if mr.performer == performer
@@ -127,7 +127,7 @@ def test_model_run_rest_list(test_client: TestClient, region: Region) -> None:
 @pytest.mark.django_db
 def test_model_run_rest_get(test_client: TestClient, region: Region) -> None:
     # Create test data
-    performer = lookups.Performer.objects.first()
+    performer = Performer.objects.first()
     title = 'test'
     model_run = ModelRun.objects.create(
         performer=performer,
@@ -140,7 +140,7 @@ def test_model_run_rest_get(test_client: TestClient, region: Region) -> None:
     res = test_client.get(f'/model-runs/{model_run.id}/')
     assert res.json()['id'] == str(model_run.id)
     assert res.json()['performer']['id'] == performer.id
-    assert res.json()['performer']['short_code'] == performer.slug
+    assert res.json()['performer']['short_code'] == performer.short_code
 
     # Get model run that doesn't exist
     res = test_client.get(f'/model-runs/{uuid4()}/')

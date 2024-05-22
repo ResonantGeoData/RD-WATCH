@@ -3,6 +3,7 @@ from . import (
     model_run,
     performer,
     region,
+    satellite_fetching,
     site,
     site_evaluation,
     site_image,
@@ -21,4 +22,5 @@ __all__ = [
     'vector_tile',
     'site',
     'eval',
+    'satellite_fetching',
 ]

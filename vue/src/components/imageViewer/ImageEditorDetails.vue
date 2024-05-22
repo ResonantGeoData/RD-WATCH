@@ -1,7 +1,6 @@
 <script setup lang="ts">
 import { Ref, computed, ref, watch, withDefaults } from "vue";
 import { ApiService } from "../../client";
-import { SiteModelStatus } from "../../client/services/ApiService";
 import { getColorFromLabel, styles } from '../../mapstyle/annotationStyles';
 import { state } from '../../store'
 import { EvaluationImageResults } from "../../types";
@@ -55,7 +54,6 @@ watch(() => props.editable, () => {
 })
 
 watch([() => props.siteEvalId], () => {
-  cancelEditingPolygon();
   siteEvaluationLabel.value = props.evaluationLabel;
   siteEvaluationNotes.value = props.evaluationNotes;
   startDate.value = props.dateRange && props.dateRange[0] ? new Date(props.dateRange[0] * 1000).toISOString().split('T')[0] : null;
@@ -103,6 +101,8 @@ const updateTime = (time: any, date: 'StartDate' | 'EndDate'| 'StartDateTemp' | 
     }
     editDialog.value = false;
   }
+  currentEditMode.value = null;
+  editDialog.value = false;
   siteEvaluationUpdated.value = true;
 }
 
@@ -137,55 +137,11 @@ const saveSiteEvaluationChanges = async () => {
   emit('update-list');
 }
 
-const setSiteModelStatus = async (status: SiteModelStatus) => {
-  if (status) {
-    await ApiService.patchSiteEvaluation(props.siteEvalId, {
-      status
-    });
-    siteStatus.value = status;
-    emit('update-list');
-  }
-}
-
-const startEditingPolygon = () => {
-  state.filters.editingPolygonSiteId = props.siteEvalId;
-  if (state.editPolygon && evaluationGeoJSON.value) {
-    state.editPolygon.setPolygonEdit(evaluationGeoJSON.value);
-    editingPolygon.value = true;
-  }
-}
-
-const cancelEditingPolygon = () => {
-  state.filters.editingPolygonSiteId = null;
-  if (state.editPolygon && evaluationGeoJSON.value) {
-    state.editPolygon.cancelPolygonEdit();
-    editingPolygon.value = false;
-  }
-}
-
-const saveEditingPolygon = async () => {
-  if (state.editPolygon) {
-    const polyGeoJSON = state.editPolygon.getEditingPolygon();
-    if (polyGeoJSON) {
-      evaluationGeoJSON.value = polyGeoJSON;
-      await ApiService.patchSiteEvaluation(props.siteEvalId, { geom: polyGeoJSON });
-      cancelEditingPolygon();
-      emit('clear-storage');
-    }
-  }
-}
-const selectedPoints = computed(() => state.editPolygon && (state.editPolygon.selectedPoints).length);
-
-const deleteSelectedPoints = () => {
-  if (state.editPolygon && selectedPoints.value) {
-    state.editPolygon.deleteSelectedPoints();
-  }
-}
 </script>
 
 <template>
   <v-col>
-    <div>
+    <div class="label">
       <b class="mr-1">Date Range:</b>
       <span> {{ startDate ? startDate : 'null' }}
         <v-icon
@@ -209,20 +165,19 @@ const deleteSelectedPoints = () => {
 
       </span>
     </div>
-    <div v-if="groundTruth && hasGroundTruth">
-      <b class="mr-1">Date Range:</b>
+    <div
+      v-if="groundTruth && hasGroundTruth"
+      class="label"
+    >
+      <b class="mr-1">GT Date Range:</b>
       <span> {{ new Date(groundTruth.timerange.min * 1000).toISOString().split('T')[0] }}
-        <v-icon
-          class="ma-0"
-          color="white"
-        />
       </span>
-      <span class="mx-1"> to</span>
+      <span class="mx-1">to</span>
       <span> {{ new Date(groundTruth.timerange.max * 1000).toISOString().split('T')[0] }}</span>
     </div>
   </v-col>
   <v-col>
-    <div class="ml-5">
+    <div class="label">
       <b>Label:</b>
       <v-chip
         size="small"
@@ -240,9 +195,9 @@ const deleteSelectedPoints = () => {
     </div>
     <div
       v-if="hasGroundTruth && groundTruth"
-      class="ml-5"
+      class="pt-2 label"
     >
-      <b>Label:</b>
+      <b>GT Label:</b>
       <v-chip
         size="small"
         :color="getColorFromLabel(groundTruth.label)"
@@ -252,7 +207,7 @@ const deleteSelectedPoints = () => {
       </v-chip>
     </div>
   </v-col>
-  <v-col>
+  <v-col v-if="siteEvaluationNotes || editMode">
     <div class="notesPreview">
       <b>Notes:</b>
       <v-icon
@@ -272,48 +227,6 @@ const deleteSelectedPoints = () => {
     </div>
   </v-col>
   <v-spacer />
-  <v-col v-if="!siteEvaluationUpdated && editMode ">
-    <v-btn
-      v-if="!editingPolygon && samViewer === null"
-      size="small"
-      :disabled="editingPolygon"
-      @click="startEditingPolygon()"
-    >
-      Edit Polygon
-    </v-btn>
-    <span
-      v-if="editingPolygon"
-    >
-      <h3 style="display:inline">Polygon:</h3>
-      <v-btn
-        v-if="selectedPoints"
-        size="small"
-        color="error"
-        class="mx-2"
-        @click="deleteSelectedPoints()"
-      >
-        <v-icon>mdi-delete</v-icon>
-        points
-      </v-btn>
-
-      <v-btn
-        size="small"
-        color="error"
-        class="mx-2"
-        @click="cancelEditingPolygon()"
-      >
-        Cancel
-      </v-btn>
-      <v-btn
-        size="small"
-        color="success"
-        class="mx-2"
-        @click="saveEditingPolygon()"
-      >
-        Save
-      </v-btn>
-    </span>
-  </v-col>
   <v-col v-if="!editingPolygon && editMode && samViewer === null">
     <v-btn
       v-if="siteEvaluationUpdated"
@@ -322,42 +235,6 @@ const deleteSelectedPoints = () => {
       @click="saveSiteEvaluationChanges"
     >
       Save Changes
-    </v-btn>
-    <v-btn
-      v-if="siteStatus !== 'APPROVED'"
-      size="small"
-      class="mx-1"
-      color="success"
-      @click="setSiteModelStatus('APPROVED')"
-    >
-      Approve
-    </v-btn>
-    <v-btn
-      v-if="siteStatus === 'APPROVED'"
-      size="small"
-      class="mx-1"
-      color="warning"
-      @click="setSiteModelStatus('PROPOSAL')"
-    >
-      Un-Approve
-    </v-btn>
-    <v-btn
-      v-if="siteStatus !== 'REJECTED'"
-      size="small"
-      class="mx-1"
-      color="error"
-      @click="setSiteModelStatus('REJECTED')"
-    >
-      Reject
-    </v-btn>
-    <v-btn
-      v-if="siteStatus === 'REJECTED'"
-      size="small"
-      class="mx-1"
-      color="warning"
-      @click="setSiteModelStatus('PROPOSAL')"
-    >
-      Un-Reject
     </v-btn>
   </v-col>
   <v-dialog
@@ -501,5 +378,9 @@ const deleteSelectedPoints = () => {
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
+}
+
+.label {
+  font-size: 14px;
 }
 </style>

@@ -135,3 +135,4 @@ COPY --from=vue-dist \
 COPY --chown=rdwatch:rdwatch \
      .git/ \
      /app/.git/
+RUN git config --global --add safe.directory /app

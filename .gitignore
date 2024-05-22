@@ -26,6 +26,5 @@ __pycache__
 dmypy.json
 
 # Django Files
-django/celerybeat-schedule.db
+celerybeat-schedule.*
 django/nohup.out
-

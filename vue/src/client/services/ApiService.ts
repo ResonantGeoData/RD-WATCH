@@ -515,7 +515,7 @@ export class ApiService {
     const bboxstr = `${minY},${minX},${maxY},${maxX}`;
     return __request(OpenAPI, {
       method: "GET",
-      url: "/api/satellite-image/all-timestamps/",
+      url: "/api/satellite-image/all-timestamps",
       query: { constellation, level, spectrum, start_timestamp: startTime, end_timestamp: endTime, bbox: bboxstr,
       }
     });

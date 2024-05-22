@@ -49,7 +49,7 @@ const currentEditMode: Ref<null | EditModes> = ref(null);
 const siteEvaluationList = computed(() =>
   Object.entries(styles)
     .filter(([, { type }]) => type === "sites")
-    .map(([label]) => label)
+    .map(([,item]) => item.label)
 );
 const siteEvaluationLabel = ref("Positive Annotated");
 const siteId = ref("");
@@ -130,8 +130,8 @@ const addProposal = async () => {
   if (state.editPolygon) {
     const polyGeoJSON = state.editPolygon.getEditingPolygon();
     if (polyGeoJSON) {
-      const found = Object.entries(styles).find(([, item]) => (item.label === siteEvaluationLabel.value));
-
+      const found = Object.entries(styles).find(([key , item]) => (item.label === siteEvaluationLabel.value || item.label === key));
+      console.log(found);
       if (found) {
         const label = found[0];
         const siteModel: SiteModelUpload = {

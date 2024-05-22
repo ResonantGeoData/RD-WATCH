@@ -467,7 +467,7 @@ const addProposal = () => {
       class="px-2 mx-2"
       size="large"
       :disabled="state.filters.addingSitePolygon"
-      :color="state.filters.drawRegionPoly ? 'primary' : ''"
+      :color="state.filters.addingSitePolygon ? 'primary' : ''"
       @click="addProposal()"
     >
       <v-icon>mdi-plus</v-icon>Add Proposal

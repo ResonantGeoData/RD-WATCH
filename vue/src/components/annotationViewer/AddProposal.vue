@@ -4,6 +4,7 @@ import { state } from "../../store";
 import { getColorFromLabel, styles } from "../../mapstyle/annotationStyles";
 import { useDate } from "vuetify/lib/framework.mjs";
 import { ApiService, SiteModelUpload } from "../../client/services/ApiService";
+import maplibregl from "maplibre-gl";
 
 interface Props {
   region?: string;
@@ -63,6 +64,8 @@ const deleteSelectedPoints = () => {
 const selectedPoints = computed(
   () => state.editPolygon && state.editPolygon.selectedPoints.length
 );
+
+const polygonExists = computed(() => state.editPolygon && state.editPolygon.getEditingPolygon());
 
 const setEditingMode = (mode: EditModes) => {
   if (["StartDate", "EndDate"].includes(mode)) {
@@ -126,10 +129,8 @@ const addProposal = async () => {
   // build up the SiteModel
   if (state.editPolygon) {
     const polyGeoJSON = state.editPolygon.getEditingPolygon();
-    console.log(polyGeoJSON);
     if (polyGeoJSON) {
       const found = Object.entries(styles).find(([, item]) => (item.label === siteEvaluationLabel.value));
-      console.log(found);
 
       if (found) {
         const label = found[0];
@@ -158,6 +159,12 @@ const addProposal = async () => {
         if (state.modelRuns.length) {
           const modelRunId = state.modelRuns[0].id;
           await ApiService.addSiteModel(modelRunId, siteModel);
+          maplibregl.clearStorage();
+          // We need to update the source to get information
+          // This reloads the source vector-tile to color it properly after data has been changed.
+          state.filters.randomKey = `&randomKey=randomKey_${Math.random() * 1000}`; 
+          state.editPolygon.cancelPolygonEdit();
+          state.filters.addingSitePolygon = undefined;      
         }
       }
     }
@@ -262,6 +269,7 @@ const addProposal = async () => {
     </v-card-text>
     <v-card-actions>
       <v-row dense>
+        <v-spacer />
         <v-btn
           color="error"
           variant="flat"
@@ -273,11 +281,13 @@ const addProposal = async () => {
         <v-btn
           color="success"
           variant="flat"
+          :disabled="!polygonExists"
           class="mx-3"
           @click="addProposal()"
         >
           Save
         </v-btn>
+        <v-spacer />
       </v-row>
     </v-card-actions>
     <v-dialog
@@ -306,10 +316,7 @@ const addProposal = async () => {
             <v-btn
               color="success"
               class="mx-3"
-              @click="
-                editDialog = false;
-                siteEvaluationUpdated = true;
-              "
+              @click="editDialog = false;"
             >
               Save
             </v-btn>

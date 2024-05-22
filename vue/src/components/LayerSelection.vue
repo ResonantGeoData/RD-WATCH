@@ -382,17 +382,6 @@ const addProposal = () => {
     >
       Region
     </v-btn>
-    <v-btn
-      v-if="modelRunEnabled && proposals"
-      class="px-2 mx-2"
-      size="large"
-      :disabled="state.filters.addingSitePolygon"
-      :color="state.filters.drawRegionPoly ? 'primary' : ''"
-      @click="addProposal()"
-    >
-      <v-icon>mdi-plus</v-icon>Add Proposal
-    </v-btn>
-
     <v-menu
       open-on-hover
     >
@@ -473,6 +462,16 @@ const addProposal = () => {
         </v-list>
       </v-card>
     </v-menu>
+    <v-btn
+      v-if="modelRunEnabled && proposals && !scoringApp"
+      class="px-2 mx-2"
+      size="large"
+      :disabled="state.filters.addingSitePolygon"
+      :color="state.filters.drawRegionPoly ? 'primary' : ''"
+      @click="addProposal()"
+    >
+      <v-icon>mdi-plus</v-icon>Add Proposal
+    </v-btn>
   </v-row>
 </template>
 

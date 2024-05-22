@@ -33,15 +33,6 @@ services:
       - ${DOCKER_MINIO_PORT-9000}:9000
       - ${DOCKER_MINIO_CONSOLE_PORT-9001}:9001
 
-  # RabbitMQ
-  rabbitmq:
-    image: rabbitmq:management
-    environment:
-      RABBITMQ_DEFAULT_USER: rdwatch
-      RABBITMQ_DEFAULT_PASS: secretkey
-    ports:
-      - 5672:5672
-
   # Scoring database
   scoredb:
     image: postgis/postgis:latest

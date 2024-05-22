@@ -15,7 +15,7 @@ services:
     environment:
       RDWATCH_POSTGRESQL_URI: "postgresql://rdwatch:secretkey@postgresql:5432/rdwatch"
       RDWATCH_REDIS_URI: "redis://redis:6379"
-      RDWATCH_CELERY_BROKER_URL: amqp://rdwatch:secretkey@rabbitmq:5672/
+      RDWATCH_CELERY_BROKER_URL: "redis://redis:6379"
     healthcheck:
       test: ["CMD", "curl", "-f", "http://localhost:8000/api/status"]
       interval: 30s
@@ -29,7 +29,6 @@ services:
       - 8000:8000
     depends_on:
       - postgresql
-      - rabbitmq
       - redis
       - minio
 
@@ -52,7 +51,7 @@ services:
     environment:
       RDWATCH_POSTGRESQL_URI: "postgresql://rdwatch:secretkey@postgresql:5432/rdwatch"
       RDWATCH_REDIS_URI: "redis://redis:6379"
-      RDWATCH_CELERY_BROKER_URL: amqp://rdwatch:secretkey@rabbitmq:5672/
+      RDWATCH_CELERY_BROKER_URL: "redis://redis:6379"
     volumes:
       - ./django:/app/django
       - celery-SAM-model:/data/SAM
@@ -63,8 +62,6 @@ services:
       minio:
         condition: service_started
       redis:
-        condition: service_started
-      rabbitmq:
         condition: service_started
       django:
         condition: service_healthy
@@ -86,7 +83,7 @@ services:
     environment:
       RDWATCH_POSTGRESQL_URI: "postgresql://rdwatch:secretkey@postgresql:5432/rdwatch"
       RDWATCH_REDIS_URI: "redis://redis:6379"
-      RDWATCH_CELERY_BROKER_URL: amqp://rdwatch:secretkey@rabbitmq:5672/
+      RDWATCH_CELERY_BROKER_URL: "redis://redis:6379"
     volumes:
       - ./django:/app/django
   rdwatch-client:

@@ -486,8 +486,9 @@ const clearStorage = async () => {
         <span> Toggle between Site Polygon and Observation Polygon </span>
       </v-tooltip>
       <v-tooltip
-        v-if="
-          editMode && !loading && !ApiService.getApiPrefix().includes('scoring') && filteredImages.length &&
+        v-if="editMode && !loading && 
+            !ApiService.getApiPrefix().includes('scoring') &&
+            filteredImages.length &&
             filteredImages[currentImage] &&
             filteredImages[currentImage].image &&
             filteredImages[currentImage].image.source === 'WV'

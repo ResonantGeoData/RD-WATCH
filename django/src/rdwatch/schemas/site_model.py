@@ -8,6 +8,9 @@ from pydantic import confloat, constr, root_validator, validator
 
 from django.contrib.gis.gdal import GDALException
 from django.contrib.gis.geos import GEOSGeometry
+from django.contrib.gis.geos.error import GEOSException
+
+from rdwatch.models import Performer
 
 CurrentPhase: TypeAlias = Literal[
     'No Activity',
@@ -48,19 +51,13 @@ class SiteFeature(Schema):
     start_date: datetime | None
     end_date: datetime | None
     model_content: Literal['annotation', 'proposed', 'update']
-    originator: Literal[
-        'te',
-        'pmo',
-        'acc',
-        'ara',
-        'ast',
-        'bla',
-        'iai',
-        'kit',
-        'str',
-        'iMERIT',
-        'imerit',
-    ]
+    originator: str
+
+    @validator('originator')
+    def validate_originator(cls, v: str) -> str:
+        if Performer.objects.filter(short_code=v.upper()).exists():
+            return v
+        raise ValueError(f'Invalid originator "{v}"')
 
     # Optional fields
     score: confloat(ge=0.0, le=1.0) | None
@@ -186,6 +183,8 @@ class Feature(Schema):
             GEOSGeometry(json.dumps(v))
         except GDALException:
             raise ValueError('Failed to parse geometry.')
+        except GEOSException as e:
+            raise ValueError(f'Failed to parse geometry: {e}')
         return v
 
     @root_validator

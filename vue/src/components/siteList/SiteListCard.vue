@@ -98,7 +98,6 @@ const foundIndex = state.selectedSites.findIndex((item) => item.id === props.sit
 const selectingSite = async (e: boolean) => {
   if (e) {
     emit('selected', props.site)
-    await getSiteObservationDetails(props.site.id);
   } else {
     close();
   }

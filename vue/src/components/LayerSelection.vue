@@ -13,17 +13,23 @@ const proposals = computed(() => route.path.includes('proposals'));
 
 const modelRunEnabled = computed(() => state.openedModelRuns.size > 0);
 
+enum GroundTruthState {
+  NoGroundTruth = 0,
+  HasGroundTruth = 1,
+  AllGroundTruth = 2,
+}
+
 // Either has ground truth, is ground truth, or no ground truth
-const groundTruthState = computed<'NoGroundTruth'|'HasGroundTruth'|'AllGroundTruth'>(() => {
-  let result: 'NoGroundTruth'|'HasGroundTruth'|'AllGroundTruth'  = 'NoGroundTruth';
+const groundTruthState = computed<GroundTruthState>(() => {
+  let result: GroundTruthState  = GroundTruthState.NoGroundTruth;
   if (scoringApp.value) {
-    return 'HasGroundTruth';
+    return GroundTruthState.HasGroundTruth;
   }
   if (proposals.value) {
     if (state.proposals.ground_truths) {
-      return 'HasGroundTruth';
+      return GroundTruthState.HasGroundTruth;
     } else {
-      return 'NoGroundTruth';
+      return GroundTruthState.NoGroundTruth;
     }
   }
   let hasGroundTruth = false;

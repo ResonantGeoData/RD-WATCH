@@ -191,6 +191,7 @@ export const state = reactive<{
   selectedImageSite?: SelectedImageSite | null;
   // Tooltip Display
   toolTipDisplay: Record<string, boolean>;
+  toolTipMenuOpen: boolean;
 }>({
   errorText: '',
   timestamp: Math.floor(Date.now() / 1000),
@@ -259,7 +260,8 @@ export const state = reactive<{
     Time: true,
     Score: false,
     Area: false,
-  }
+  },
+  toolTipMenuOpen: false,
 });
 
 export const filteredSatelliteTimeList = computed(() => {

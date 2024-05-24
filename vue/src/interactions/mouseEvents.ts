@@ -30,6 +30,9 @@ const calculateScoreColor = (score: number) => {
   return "black";
 };
 let popup: Popup;
+let hoverPopup = false;
+let attemptClosePopUp = false;
+let timeout: number | null = null;
 const map:ShallowRef<null | Map> = ref(null)
 const popupLogic = async (mapArg: ShallowRef<null | Map>) => {
   popup = new Popup({
@@ -39,6 +42,64 @@ const popupLogic = async (mapArg: ShallowRef<null | Map>) => {
   });
   map.value = mapArg.value;
 };
+
+const setPopupHoverOn = () => {
+  hoverPopup = true;
+}
+const setPopupHoverOff = () => {
+  hoverPopup = false;
+  if (attemptClosePopUp && !state.toolTipMenuOpen) {
+    unmountPopup(popUpProps);
+  }
+}
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+const createPopupComponent = (coordinates: any, popUpProps: Record<string, PopUpData>, popUpSiteProps: Record<string, PopUpSiteData>) => {
+  popup.setLngLat(coordinates).setHTML('<div id="popup-content"></div>').addTo(map.value);
+  nextTick(() => {
+    const div = document.getElementById('popup-content');
+    if (div) {
+      div.addEventListener('mouseenter', setPopupHoverOn)
+      div.addEventListener('mouseleave', setPopupHoverOff);
+    }
+    if (app !== null) {
+      if (timeout !== null) {
+        clearTimeout(timeout);
+      }
+      app.unmount();
+      app = null;
+    }
+    app = createPopup(popUpProps, popUpSiteProps);
+    app.mount('#popup-content');
+  });
+
+}
+
+const unmountPopup = (popUpProps: Record<string, PopUpData>) => {
+  // We check to see if the mouse is still within the bounds of the popup
+  if (hoverPopup) {
+    attemptClosePopUp = true;
+    return;
+  }
+  const div = document.getElementById('popup-content');
+  if (div) {
+    div.removeEventListener('mouseenter', setPopupHoverOn);
+    div.removeEventListener('mouseleave', setPopupHoverOff);
+  }
+  hoveredInfo.value.region = [];
+    hoveredInfo.value.siteId = [];
+    for (const item in popUpProps) {
+      delete popUpProps[item];
+    }
+    for (const item in popUpSiteProps) {
+      delete popUpSiteProps[item];
+    }
+    if (app !== null) {
+      app.unmount();
+      app = null;
+    }
+    map.value.getCanvas().style.cursor = "";
+    popup.remove();
+}
 
 const leavePopupObservation = async (e: MapLayerMouseEvent) => {
  drawPopupObservation(e, true); 
@@ -103,27 +164,12 @@ const drawPopupObservation = async (e: MapLayerMouseEvent, remove=false) => {
         }
       }
     );
-    popup.setLngLat(coordinates).setHTML('<div id="popup-content"></div>').addTo(map.value);
-    nextTick(() => {
-      if (app !== null) {
-        app.unmount();
-        app = null;
-      }
-      app = createPopup(popUpProps, popUpSiteProps);
-      app.mount('#popup-content');
-    });
+    createPopupComponent(coordinates, popUpProps, popUpSiteProps);
   } else if (map.value) {
-    hoveredInfo.value.region = [];
-    hoveredInfo.value.siteId = [];
-    for (const item in popUpProps) {
-      delete popUpProps[item];
+    if (timeout !== null) {
+      clearTimeout(timeout);
     }
-    if (app !== null) {
-      app.unmount();
-      app = null;
-    }
-    map.value.getCanvas().style.cursor = "";
-    popup.remove();
+    timeout = setTimeout(() => unmountPopup(popUpProps), 100);
   }
 };
 const clickObservation = async (e: MapLayerMouseEvent) => {
@@ -256,27 +302,12 @@ const drawSitePopupObservation = async (e: MapLayerMouseEvent, remove=false) => 
         }
       }
     );
-    popup.setLngLat(coordinates).setHTML('<div id="popup-content"></div>').addTo(map.value);
-    nextTick(() => {
-      if (app !== null) {
-        app.unmount();
-        app = null;
-      }
-      app = createPopup(popUpProps, popUpSiteProps);
-      app.mount('#popup-content');
-    });
+    createPopupComponent(coordinates, popUpProps, popUpSiteProps)
   } else if (map.value) {
-    hoveredInfo.value.region = [];
-    hoveredInfo.value.siteId = [];
-    for (const item in popUpSiteProps) {
-      delete popUpSiteProps[item];
+    if (timeout !== null) {
+      clearTimeout(timeout);
     }
-    if (app !== null) {
-      app.unmount();
-      app = null;
-    }
-    map.value.getCanvas().style.cursor = "";
-    popup.remove();
+    timeout = setTimeout(() => unmountPopup(popUpProps), 100);
   }
 };
 

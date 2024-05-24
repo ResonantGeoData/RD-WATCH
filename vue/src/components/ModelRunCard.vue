@@ -129,10 +129,12 @@ const getModeIcon = (mode: ModelRun['mode']) => (mode ? {
 <template>
   <v-card
     outlined
-    class="my-3 modelRunCard"
+    class="modelRunCard my-2 pb-1"
     :class="{selectedCard: props.open}"
+    @click="handleClick(modelRun)"
+
   >
-    <v-card-text>
+    <v-card-text class="py-0 px-1 mx-2">
       <v-row
         dense
         align="center"
@@ -208,6 +210,13 @@ const getModeIcon = (mode: ModelRun['mode']) => (mode ? {
         >
           {{ modelRun.performer.short_code }}
         </div>
+      </v-row>
+      <v-row v-if="open && !compact" dense>
+        <TimeSlider
+          :min="modelRun.timerange?.min || 0"
+          :max="modelRun.timerange?.max || 0"
+          compact
+        />
       </v-row>
       <v-row
         dense
@@ -352,19 +361,12 @@ const getModeIcon = (mode: ModelRun['mode']) => (mode ? {
           size="x-small"
           color="error"
           class="mt-2"
-          @click="cancelDownload()"
+          @click.stop="cancelDownload()"
         >
           Cancel
         </v-btn>
       </v-row>
     </v-card-text>
-    <v-card-actions v-if="open && !compact">
-      <TimeSlider
-        :min="modelRun.timerange?.min || 0"
-        :max="modelRun.timerange?.max || 0"
-        compact
-      />
-    </v-card-actions>
     <images-download-dialog
       v-if="downloadImages"
       :date-range="modelRun.timerange"
@@ -411,11 +413,11 @@ const getModeIcon = (mode: ModelRun['mode']) => (mode ? {
 
 <style scoped>
 .modelRunCard{
-  border: 3px solid transparent;
+  border: 5px solid transparent;
   background-color: white;
 }
 .modelRunCard:hover {
-  border: 3px solid blue;
+  border: 5px solid #188DC8;
 }
 .baseCard {
   background-color: #166DB7;

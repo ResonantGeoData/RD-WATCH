@@ -117,6 +117,7 @@ const selectingSite = async (e: boolean) => {
     }"
     @mouseenter="state.filters.hoverSiteId = localSite.id"
     @mouseleave="state.filters.hoverSiteId = undefined"
+    @click="selectingSite(!site.selected)"
   >
     <v-card-title class="title">
       <v-row
@@ -235,12 +236,6 @@ const selectingSite = async (e: boolean) => {
         </v-col>
       </v-row>
       <v-row
-        v-else
-        align="center"
-      >
-        <span class="no-images">No Images Downloaded</span>
-      </v-row>
-      <v-row
         dense
         class="pt-2"
       >
@@ -306,10 +301,26 @@ const selectingSite = async (e: boolean) => {
               v-bind="props"
               @click.stop="setImageDownloadDialog()"
             >
-              <v-icon>mdi-image-sync</v-icon>
+              <div
+                v-if="!localSite.images"
+              >
+                <v-icon>mdi-image-sync</v-icon>
+                <v-icon
+                  color="red"
+                  size="20"
+                  class="icon-badge"
+                >
+                  mdi-information
+                </v-icon>
+              </div>
+              <v-icon v-else>
+                mdi-image-sync
+              </v-icon>
             </v-btn>
           </template>
-          <span>Download Satellite Images</span>
+          <span>
+            <div v-if="!localSite.images"> No Site Images Downloaded</div>
+            Click to Download Satellite Images</span>
         </v-tooltip>
         <div v-else-if="downloading">
           <v-tooltip open-delay="300">
@@ -350,10 +361,6 @@ const selectingSite = async (e: boolean) => {
         :site-overview="selectedSite"
       />
     </v-card-text>
-    <div
-      v-if="site.selected"
-      class="selectedBorder"
-    />
   </v-card>
 </template>
 
@@ -369,17 +376,15 @@ const selectingSite = async (e: boolean) => {
   animation: flicker-animation 1s infinite;
 }
 
-.selectedBorder {
-  background-color: #FFF9C4;
-  height: 5px;
-}
 .siteCard {
-  border: 3px solid transparent;
+  border: 5px solid transparent;
+  padding-bottom: 4px;
   border-bottom: 1px solid gray;
 }
 .siteCard:hover {
   cursor: pointer;
-  border: 3px solid #188DC8;
+  border: 5px solid #188DC8;
+  padding-bottom: 0px;
 }
 
 .title {
@@ -392,11 +397,14 @@ const selectingSite = async (e: boolean) => {
 
 .hoveredCard {
   background-color: orange;
-  border: 3px solid orange;
+  border: 5px solid orange;
 }
 
 .selectedCard {
   background-color: #e8f1f8;
+  border: 5px solid #FFF9C4;
+  padding-bottom: 0px;
+
 }
 
 .image-label {
@@ -438,5 +446,11 @@ const selectingSite = async (e: boolean) => {
 }
 .site-model-dates {
   font-size: 10px;
+}
+
+.icon-badge {
+  position: absolute;
+  top: -8px;
+  left: 12px;
 }
 </style>

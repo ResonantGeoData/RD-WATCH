@@ -81,6 +81,7 @@ const filterDialog = ref(false);
       <v-icon
         v-bind="props"
         size="small"
+        color="primary"
         @click="filterDialog = true"
       >
         mdi-filter

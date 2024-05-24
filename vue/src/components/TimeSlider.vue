@@ -59,7 +59,7 @@ const maxDate = computed(() => convertUnixToDate(props.max));
                 track-color="#E0E0E0"
                 density="compact"
                 hide-details
-                @click.native.stop
+                @click.stop
               />
             </v-row>
             <v-row v-if="!compact">

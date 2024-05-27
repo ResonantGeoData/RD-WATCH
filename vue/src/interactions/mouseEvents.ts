@@ -32,7 +32,7 @@ const calculateScoreColor = (score: number) => {
 let popup: Popup;
 let hoverPopup = false;
 let attemptClosePopUp = false;
-let timeout: number | null = null;
+let timeout: NodeJS.Timeout | null = null;
 const map:ShallowRef<null | Map> = ref(null)
 const popupLogic = async (mapArg: ShallowRef<null | Map>) => {
   popup = new Popup({
@@ -54,6 +54,9 @@ const setPopupHoverOff = () => {
 }
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 const createPopupComponent = (coordinates: any, popUpProps: Record<string, PopUpData>, popUpSiteProps: Record<string, PopUpSiteData>) => {
+  if (!map.value) {
+    return;
+  }
   popup.setLngLat(coordinates).setHTML('<div id="popup-content"></div>').addTo(map.value);
   nextTick(() => {
     const div = document.getElementById('popup-content');
@@ -97,7 +100,9 @@ const unmountPopup = (popUpProps: Record<string, PopUpData>) => {
       app.unmount();
       app = null;
     }
-    map.value.getCanvas().style.cursor = "";
+    if (map.value) {
+      map.value.getCanvas().style.cursor = "";
+    }
     popup.remove();
 }
 

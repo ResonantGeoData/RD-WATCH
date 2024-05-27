@@ -132,7 +132,6 @@ const getModeIcon = (mode: ModelRun['mode']) => (mode ? {
     class="modelRunCard my-2 pb-1"
     :class="{selectedCard: props.open}"
     @click="handleClick(modelRun)"
-
   >
     <v-card-text class="py-0 px-1 mx-2">
       <v-row
@@ -211,7 +210,10 @@ const getModeIcon = (mode: ModelRun['mode']) => (mode ? {
           {{ modelRun.performer.short_code }}
         </div>
       </v-row>
-      <v-row v-if="open && !compact" dense>
+      <v-row
+        v-if="open && !compact"
+        dense
+      >
         <TimeSlider
           :min="modelRun.timerange?.min || 0"
           :max="modelRun.timerange?.max || 0"

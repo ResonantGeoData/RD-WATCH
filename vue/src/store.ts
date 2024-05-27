@@ -206,8 +206,8 @@ export const state = reactive<{
     ymax: 90,
   },
   filters: {
-    drawObservations: ['model'],
-    drawSiteOutline: undefined,
+    drawObservations: undefined,
+    drawSiteOutline: ['model'],
     groundTruthPattern: false,
     otherPattern: false,
     showText: false,
@@ -260,6 +260,7 @@ export const state = reactive<{
     Time: true,
     Score: false,
     Area: false,
+    ObsLabel:false,
   },
   toolTipMenuOpen: false,
 });

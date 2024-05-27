@@ -133,6 +133,7 @@ const drawPopupObservation = async (e: MapLayerMouseEvent, remove=false) => {
             const performerName = item.properties.performer_name;
             const version = item.properties.version;
             const siteLabel = item.properties.site_label;
+            const obsLabel = item.properties.label;
             hoveredInfo.value.region.push(
               `${item.properties.configuration_id}_${region}_${item.properties.performer_name}`
             );
@@ -158,6 +159,7 @@ const drawPopupObservation = async (e: MapLayerMouseEvent, remove=false) => {
                     configName,
                     performerName,
                     siteLabel,
+                    obsLabel,
                 }
                 popupData.push(data);
                 popUpProps[`${region}_${String(id).padStart(4, '0')}`] = data;

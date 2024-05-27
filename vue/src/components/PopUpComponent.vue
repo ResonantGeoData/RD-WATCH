@@ -61,6 +61,12 @@ const headerMapping = {
     key:'area',
     width:"10px",
     sortable: false,
+  },
+  ObsLabel:{
+    title: 'Observation',
+    key:'obsLabel',
+    width:"10px",
+    sortable: false,
   }
 }
 
@@ -90,6 +96,9 @@ const headers = computed( () => {
   }
   if (state.toolTipDisplay.Area && items.value.findIndex((item) => ( (item as PopUpData).area)) !== -1) {
     headers.push(headerMapping['Area']);
+  }
+  if (state.toolTipDisplay.ObsLabel && items.value.findIndex((item) => ( (item as PopUpData).area)) !== -1) {
+    headers.push(headerMapping['ObsLabel']);
   }
 
   return headers;
@@ -251,7 +260,17 @@ const columns = computed(() => Object.keys(state.toolTipDisplay));
               {{ item.area }}m²
             </div>
           </template>
-
+          <template #[`item.obsLabel`]="{ item }">
+            <v-chip
+              label
+              :color="item.obsColor || 'gray'"
+              size="x-small"
+              density="compact"
+              class="mx-1"
+            >
+              {{ item.obsLabel || 'NA' }}
+            </v-chip>
+          </template>
           <template #bottom />
         </v-data-table>
       </v-card>

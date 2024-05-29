@@ -1,3 +1,5 @@
+from typing import Any
+
 from ninja import Router, Schema
 
 from django.http import HttpRequest
@@ -9,6 +11,7 @@ router = Router()
 
 class RunDagRequestSchema(Schema):
     dag_run_title: str
+    conf: dict[str, Any]
 
 
 @router.get('/dags/')
@@ -26,7 +29,7 @@ def list_dag_runs(request: HttpRequest, dag_id: str):
 def create_dag_run(request, dag_id, data: RunDagRequestSchema):
     return (
         SmartFlowClient()
-        .create_dag_run(dag_id=dag_id, dag_run_title=data.dag_run_title)
+        .create_dag_run(dag_id=dag_id, dag_run_title=data.dag_run_title, conf=data.conf)
         .to_dict()
     )
 

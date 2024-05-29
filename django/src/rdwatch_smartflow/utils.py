@@ -1,4 +1,5 @@
 from functools import cached_property
+from typing import Any
 
 import airflow_client.client
 import requests
@@ -77,13 +78,15 @@ class SmartFlowClient:
     def list_dag_runs(self, dag_id: str, **kwargs) -> DAGRunCollection:
         return self._dag_run_api.get_dag_runs(dag_id=dag_id, **kwargs)
 
-    def create_dag_run(self, dag_id: str, dag_run_title: str) -> DAGRun:
+    def create_dag_run(
+        self, dag_id: str, dag_run_title: str, conf: dict[str, Any]
+    ) -> DAGRun:
         """
         Parameters:
             dag_id: the id of the DAG to run
             dag_run_title: the title to give this new DAG run
         """
-        dag_run = DAGRun(dag_run_id=dag_run_title)
+        dag_run = DAGRun(conf=conf, dag_run_id=dag_run_title)
         return self._dag_run_api.post_dag_run(dag_id=dag_id, dag_run=dag_run)
 
     def get_dag_run(self, dag_id: str, dag_run_id: str) -> DAGRun:

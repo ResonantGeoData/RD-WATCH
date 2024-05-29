@@ -4,5 +4,5 @@
 
 export type RunDagRequestSchema = {
     dag_run_title: string;
+    conf: Record<string, any>;
 };
-

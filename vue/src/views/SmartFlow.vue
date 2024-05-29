@@ -5,71 +5,51 @@
         SmartFlow
       </v-card-title>
       <v-card-text>
-        <v-data-table
-          :headers="headers"
-          :items="dagRuns"
-          :items-per-page="5"
-          class="elevation-1"
-        >
-          <template #item.actions="{ item }">
-            <v-icon
-              color="primary"
-              @click="startRun(item)"
-            >
+        <v-data-table v-model:items-per-page="itemsPerPage" :headers="headers" :items="dagRuns"
+          :items-length="totalItems" :loading="loading" :search="dagSearch" item-name="dag_run_id" class="elevation-1">
+          <template v-slot:top>
+            <v-autocomplete
+              v-model="dag"
+              :items="dagResults"
+              item-text="dag_id"
+              item-value="dag_id"
+              label="Search DAG by ID"
+              hide-details
+              no-filter
+              solo
+              clearable
+              @update:search="fetchDags"
+            ></v-autocomplete>
+          </template>
+          <!-- <template #item.actions="{ item }">
+            <v-icon color="primary" @click="startRun(item)">
               mdi-play
             </v-icon>
-            <v-icon
-              color="error"
-              @click="stopRun(item)"
-            >
+            <v-icon color="error" @click="stopRun(item)">
               mdi-stop
             </v-icon>
-          </template>
+          </template> -->
           <template #[`item.status`]="{ item }">
-            <v-chip
-              :color="statusColor(item.status)"
-              dark
-            >
+            <v-chip :color="statusColor(item.status)" dark>
               {{ item.status }}
-              <v-progress-circular
-                v-if="item.status === 'running'"
-                indeterminate
-                :size="20"
-                class="ml-2"
-              />
+              <v-progress-circular v-if="item.status === 'running'" indeterminate :size="20" class="ml-2" />
             </v-chip>
           </template>
         </v-data-table>
-        <v-btn
-          color="primary"
-          @click="showRegionDialog"
-        >
+        <v-btn color="primary" @click="showRegionDialog">
           Start New DAG Run
         </v-btn>
-        <v-dialog
-          v-model="regionDialog"
-          max-width="500"
-        >
+        <v-dialog v-model="regionDialog" max-width="500">
           <v-card>
             <v-card-title>Select Region</v-card-title>
             <v-card-text>
-              <v-select
-                v-model="selectedRegion"
-                :items="regions"
-                label="Region"
-              />
+              <v-select v-model="selectedRegion" :items="regions" label="Region" />
             </v-card-text>
             <v-card-actions>
-              <v-btn
-                color="primary"
-                @click="startNewRun"
-              >
+              <v-btn color="primary" @click="startNewRun">
                 Start
               </v-btn>
-              <v-btn
-                color="error"
-                @click="regionDialog = false"
-              >
+              <v-btn color="error" @click="regionDialog = false">
                 Cancel
               </v-btn>
             </v-card-actions>
@@ -81,107 +61,64 @@
 </template>
 
 <script setup lang="ts">
-import { onMounted, ref } from 'vue';
+import { onMounted, ref, watch } from 'vue';
+import { debounce } from 'lodash';
+import { SmartflowService } from '../client';
 
 interface DagRun {
   dag_id: string;
-  region: string;
-  last_run: string;
-  next_run: string;
-  status: string;
+  dag_run_id: string;
+  data_interval_end: string;
+  data_interval_start: string;
+  end_date: string;
+  execution_date: string;
+  external_trigger: boolean;
+  last_scheduling_decision: string;
+  logical_date: string;
+  note: string | null;
+  run_type: string;
+  start_date: string;
+  state: string;
 }
 
 const headers = [
   { title: 'DAG ID', key: 'dag_id' },
-  { title: 'Region', key: 'region' },
-  { title: 'Last Run', key: 'last_run' },
-  { title: 'Next Run', key: 'next_run' },
-  { title: 'Status', key: 'status' },
+  { title: 'DAG Run ID', key: 'dag_run_id' },
+  { title: 'Status', key: 'state' },
   { title: 'Actions', key: 'actions' },
 ];
 
-const dagRuns = ref<DagRun[]>([
-  {
-    dag_id: 'example_dag_1',
-    region: 'EX_R001',
-    last_run: '2024-05-15T10:05:00Z',
-    next_run: '2024-05-16T10:05:00Z',
-    status: 'success',
-  },
-  {
-    dag_id: 'example_dag_2',
-    region: 'EX_R002',
-    last_run: '2024-05-15T11:05:00Z',
-    next_run: '2024-05-16T11:05:00Z',
-    status: 'failed',
-  },
-  {
-    dag_id: 'example_dag_3',
-    region: 'EX_R003',
-    last_run: '2024-05-15T12:05:00Z',
-    next_run: '2024-05-16T12:05:00Z',
-    status: 'running',
-  },
-  {
-    dag_id: 'example_dag_4',
-    region: 'EX_R004',
-    last_run: '2024-05-15T13:05:00Z',
-    next_run: '2024-05-16T13:05:00Z',
-    status: 'success',
-  },
-  {
-    dag_id: 'example_dag_5',
-    region: 'EX_R005',
-    last_run: '2024-05-15T14:05:00Z',
-    next_run: '2024-05-16T14:05:00Z',
-    status: 'failed',
-  },
-  {
-    dag_id: 'example_dag_6',
-    region: 'EX_R006',
-    last_run: '2024-05-15T15:05:00Z',
-    next_run: '2024-05-16T15:05:00Z',
-    status: 'running',
-  },
-  {
-    dag_id: 'example_dag_7',
-    region: 'EX_R007',
-    last_run: '2024-05-15T16:05:00Z',
-    next_run: '2024-05-16T16:05:00Z',
-    status: 'success',
-  },
-  {
-    dag_id: 'example_dag_8',
-    region: 'EX_R008',
-    last_run: '2024-05-15T17:05:00Z',
-    next_run: '2024-05-16T17:05:00Z',
-    status: 'failed',
-  },
-  {
-    dag_id: 'example_dag_9',
-    region: 'EX_R009',
-    last_run: '2024-05-15T18:05:00Z',
-    next_run: '2024-05-16T18:05:00Z',
-    status: 'running',
-  },
-  {
-    dag_id: 'example_dag_10',
-    region: 'EX_R010',
-    last_run: '2024-05-15T19:05:00Z',
-    next_run: '2024-05-16T19:05:00Z',
-    status: 'success',
-  },
-]);
+const dag = ref('');
+const dagRuns = ref<DagRun[]>([]);
+const itemsPerPage = ref(10);
+const totalItems = ref(0);
+const loading = ref(false);
 
-const regions = ['EX_R001', 'EX_R002', 'EX_R003', 'EX_R004', 'EX_R005']; // Sample region list
+const dagSearch = ref('');
+const dagResults = ref<string[]>([]);
 
 const regionDialog = ref<boolean>(false);
 const selectedRegion = ref<string>('');
 
-const fetchDagRuns = async () => {
-  // Placeholder function, no actual API call
-  // In the future, replace this with the actual API call
+const fetchDags = debounce(async (searchTerm: string) => {
+  loading.value = true;
+  const query = searchTerm ? { dag_id_pattern: searchTerm } : {};
+  const res = await SmartflowService.rdwatchSmartflowViewsListDags(query);
+  dagResults.value = res.dags.map((dag: any) => dag.dag_id);
+  loading.value = false;
+}, 500);
+
+watch(dagSearch, fetchDags);
+
+const fetchDagRuns = async ({ page = 1, itemsPerPage = 10 }) => {
+  loading.value = true;
+  const { dag_runs, total_entries } = await SmartflowService.rdwatchSmartflowViewsListDagRuns(dag.value, { limit: itemsPerPage, offset: (page - 1) * itemsPerPage });
+  totalItems.value = total_entries;
+  dagRuns.value = dag_runs;
+  loading.value = false;
 };
+
+watch(dag, fetchDagRuns);
 
 const statusColor = (status: string): string => {
   switch (status) {
@@ -216,5 +153,6 @@ const startNewRun = () => {
   }
 };
 
-onMounted(fetchDagRuns);
+onMounted(fetchDags);
+// onMounted(() => fetchDagRuns({ page: page.value, itemsPerPage: itemsPerPage.value }));
 </script>

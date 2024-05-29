@@ -29,7 +29,7 @@ class ServerStatusSchema(Schema):
     hostname: str
     ip: str
     rdwatch_version: str
-    smartflow: dict[str, Any]
+    smartflow: dict[str, Any] | None
 
 
 @router.get('/', response=ServerStatusSchema)
@@ -39,7 +39,11 @@ def get_status(request: HttpRequest):
     uptime = datetime.datetime.now() - SERVER_INSTANCE_EPOCH
     hostname = socket.gethostname()
     ip = socket.gethostbyname(hostname)
-    smartflow_status = SmartFlowClient().get_health().to_dict()
+
+    try:
+        smartflow_status = SmartFlowClient().get_health().to_dict()
+    except Exception:
+        smartflow_status = None
 
     return ServerStatusSchema(
         uptime=uptime,

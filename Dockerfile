@@ -74,6 +74,8 @@ RUN mkdir /app/django/src \
  && touch /app/django/src/rdwatch/__init__.py \
  && mkdir /app/django/src/rdwatch_scoring \
  && touch /app/django/src/rdwatch_scoring/__init__.py \
+ && mkdir /app/django/src/rdwatch_smartflow \
+ && touch /app/django/src/rdwatch_smartflow/__init__.py \
  && touch /app/django/README.md \
  && poetry install --only main
 
@@ -88,6 +90,8 @@ RUN mkdir /app/django/src \
  && touch /app/django/src/rdwatch/__init__.py \
  && mkdir /app/django/src/rdwatch_scoring \
  && touch /app/django/src/rdwatch_scoring/__init__.py \
+ && mkdir /app/django/src/rdwatch_smartflow \
+ && touch /app/django/src/rdwatch_smartflow/__init__.py \
  && touch /app/django/README.md \
  && poetry install --with dev
 # Copy git metadata to enable display of version information

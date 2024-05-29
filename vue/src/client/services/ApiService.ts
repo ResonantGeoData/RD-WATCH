@@ -66,6 +66,8 @@ export interface SiteInfo {
     timestamp: number;
     filename?: string | null;
     downloading: boolean;
+    groundtruth?: boolean;
+    originator?: string;
 }
 export interface SiteList {
   region: Region;

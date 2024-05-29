@@ -121,11 +121,18 @@ function handleToggle(modelRun: KeyedModelRun) {
   }
   if (state.openedModelRuns.has(modelRun.key)) {
     state.openedModelRuns.delete(modelRun.key);
+    if (modelRun.groundTruthLink && state.groundTruthLinks[modelRun.id]) {
+      delete state.groundTruthLinks[modelRun.id];
+    }
   } else {
     if (props.compact) {
       state.openedModelRuns.clear();
     }
     state.openedModelRuns.add(modelRun.key);
+    if (modelRun.groundTruthLink) {
+      state.groundTruthLinks[modelRun.id] = modelRun.groundTruthLink;
+    }
+
   }
 
   if (state.openedModelRuns.size > 0) {

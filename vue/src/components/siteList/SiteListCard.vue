@@ -28,6 +28,8 @@ export interface SiteDisplay {
   status?: SiteModelStatus;
   timestamp: number;
   downloading: boolean;
+  groundTruth?: boolean;
+  originator?: string;
   proposal?: boolean;
   details?: {
     performer: string;
@@ -98,7 +100,6 @@ const foundIndex = state.selectedSites.findIndex((item) => item.id === props.sit
 const selectingSite = async (e: boolean) => {
   if (e) {
     emit('selected', props.site)
-    await getSiteObservationDetails(props.site.id);
   } else {
     close();
   }
@@ -167,8 +168,13 @@ const selectingSite = async (e: boolean) => {
         v-if="!localSite.proposal && localSite.details"
         dense
       >
+        <span
+          v-if="localSite.groundTruth"
+          class="pr-2"
+        ><v-icon color="primary">mdi-check-decagram</v-icon></span>
         <span class="site-model-info"> {{ localSite.details.performer }} {{ localSite.details.title }}: {{ localSite.details.version }} </span>
       </v-row>
+
       <v-row
         v-if="!localSite.proposal"
         dense

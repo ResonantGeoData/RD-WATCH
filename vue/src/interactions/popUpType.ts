@@ -2,7 +2,7 @@
 export interface PopUpData {
     siteId: string;
     obsColor?: string;
-    obsLabbel?: string;
+    obsLabel?: string;
     siteColor: string;
     score?: number;
     groundTruth: boolean;

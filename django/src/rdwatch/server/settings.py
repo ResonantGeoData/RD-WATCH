@@ -48,6 +48,8 @@ class BaseConfiguration(Configuration):
         ]
         if 'RDWATCH_POSTGRESQL_SCORING_URI' in os.environ:
             base_applications.append('rdwatch_scoring')
+        if 'RDWATCH_SMARTFLOW_URL' in os.environ:
+            base_applications.append('rdwatch_smartflow')
         return base_applications
 
     MIDDLEWARE = [

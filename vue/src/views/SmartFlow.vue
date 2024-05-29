@@ -5,9 +5,17 @@
         SmartFlow
       </v-card-title>
       <v-card-text>
-        <v-data-table v-model:items-per-page="itemsPerPage" :headers="headers" :items="dagRuns"
-          :items-length="totalItems" :loading="loading" :search="dagSearch" item-name="dag_run_id" class="elevation-1">
-          <template v-slot:top>
+        <v-data-table
+          v-model:items-per-page="itemsPerPage"
+          :headers="headers"
+          :items="dagRuns"
+          :items-length="totalItems"
+          :loading="loading"
+          :search="dagSearch"
+          item-name="dag_run_id"
+          class="elevation-1"
+        >
+          <template #top>
             <v-autocomplete
               v-model="dag"
               :items="dagResults"
@@ -19,7 +27,7 @@
               solo
               clearable
               @update:search="fetchDags"
-            ></v-autocomplete>
+            />
           </template>
           <!-- <template #item.actions="{ item }">
             <v-icon color="primary" @click="startRun(item)">
@@ -30,26 +38,55 @@
             </v-icon>
           </template> -->
           <template #[`item.status`]="{ item }">
-            <v-chip :color="statusColor(item.status)" dark>
+            <v-chip
+              :color="statusColor(item.status)"
+              dark
+            >
               {{ item.status }}
-              <v-progress-circular v-if="item.status === 'running'" indeterminate :size="20" class="ml-2" />
+              <v-progress-circular
+                v-if="item.status === 'running'"
+                indeterminate
+                :size="20"
+                class="ml-2"
+              />
             </v-chip>
           </template>
         </v-data-table>
-        <v-btn color="primary" @click="showRegionDialog">
+        <v-btn
+          color="primary"
+          @click="showNewDagRunDialog"
+        >
           Start New DAG Run
         </v-btn>
-        <v-dialog v-model="regionDialog" max-width="500">
+        <v-dialog
+          v-model="newDagRunDialog"
+          max-width="500"
+        >
           <v-card>
-            <v-card-title>Select Region</v-card-title>
+            <v-card-title>Enter Region</v-card-title>
             <v-card-text>
-              <v-select v-model="selectedRegion" :items="regions" label="Region" />
+              <v-text-field
+                v-model="newDagRunTitle"
+                label="DAG Run Title"
+              />
+            </v-card-text>
+            <v-card-text>
+              <v-textarea
+                v-model="newDagRunConf"
+                label="conf"
+              />
             </v-card-text>
             <v-card-actions>
-              <v-btn color="primary" @click="startNewRun">
+              <v-btn
+                color="primary"
+                @click="startNewRun"
+              >
                 Start
               </v-btn>
-              <v-btn color="error" @click="regionDialog = false">
+              <v-btn
+                color="error"
+                @click="newDagRunDialog = false"
+              >
                 Cancel
               </v-btn>
             </v-card-actions>
@@ -97,8 +134,9 @@ const loading = ref(false);
 const dagSearch = ref('');
 const dagResults = ref<string[]>([]);
 
-const regionDialog = ref<boolean>(false);
-const selectedRegion = ref<string>('');
+const newDagRunDialog = ref<boolean>(false);
+const newDagRunTitle = ref<string>('');
+const newDagRunConf = ref<string>('');
 
 const fetchDags = debounce(async (searchTerm: string) => {
   loading.value = true;
@@ -118,7 +156,7 @@ const fetchDagRuns = async ({ page = 1, itemsPerPage = 10 }) => {
   loading.value = false;
 };
 
-watch(dag, fetchDagRuns);
+watch(dag, () => fetchDagRuns({ page: 1, itemsPerPage: itemsPerPage.value }));
 
 const statusColor = (status: string): string => {
   switch (status) {
@@ -131,28 +169,15 @@ const statusColor = (status: string): string => {
   }
 };
 
-const startRun = (item: DagRun) => {
-  // Placeholder for starting a run
-  console.log(`Starting run for DAG: ${item.dag_id}`);
+const showNewDagRunDialog = () => {
+  newDagRunDialog.value = true;
 };
 
-const stopRun = (item: DagRun) => {
-  // Placeholder for stopping a run
-  console.log(`Stopping run for DAG: ${item.dag_id}`);
+const startNewRun = async () => {
+  // Placeholder for starting a new run with selected region
+  await SmartflowService.rdwatchSmartflowViewsCreateDagRun(dag.value, { dag_run_title: newDagRunTitle.value, conf: JSON.parse(newDagRunConf.value)});
+  newDagRunDialog.value = false;
 };
 
-const showRegionDialog = () => {
-  regionDialog.value = true;
-};
-
-const startNewRun = () => {
-  if (selectedRegion.value) {
-    // Placeholder for starting a new run with selected region
-    console.log(`Starting new DAG run on region: ${selectedRegion.value}`);
-    regionDialog.value = false;
-  }
-};
-
-onMounted(fetchDags);
-// onMounted(() => fetchDagRuns({ page: page.value, itemsPerPage: itemsPerPage.value }));
+onMounted(() => fetchDags);
 </script>

@@ -3,7 +3,12 @@ from functools import cached_property
 import airflow_client.client
 import requests
 from airflow_client.client.api import dag_api, dag_run_api, monitoring_api
-from airflow_client.client.models import DAGCollection, DAGRun, HealthInfo
+from airflow_client.client.models import (
+    DAGCollection,
+    DAGRun,
+    DAGRunCollection,
+    HealthInfo,
+)
 from bs4 import BeautifulSoup
 
 from django.conf import settings
@@ -69,7 +74,10 @@ class SmartFlowClient:
     def list_dags(self, **kwargs) -> DAGCollection:
         return self._dag_api.get_dags(**kwargs)
 
-    def run_dag(self, dag_id: str, dag_run_title: str) -> DAGRun:
+    def list_dag_runs(self, dag_id: str, **kwargs) -> DAGRunCollection:
+        return self._dag_run_api.get_dag_runs(dag_id=dag_id, **kwargs)
+
+    def create_dag_run(self, dag_id: str, dag_run_title: str) -> DAGRun:
         """
         Parameters:
             dag_id: the id of the DAG to run
@@ -77,3 +85,6 @@ class SmartFlowClient:
         """
         dag_run = DAGRun(dag_run_id=dag_run_title)
         return self._dag_run_api.post_dag_run(dag_id=dag_id, dag_run=dag_run)
+
+    def get_dag_run(self, dag_id: str, dag_run_id: str) -> DAGRun:
+        return self._dag_run_api.get_dag_run(dag_id=dag_id, dag_run_id=dag_run_id)

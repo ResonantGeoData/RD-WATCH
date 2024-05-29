@@ -37,14 +37,14 @@
               mdi-stop
             </v-icon>
           </template> -->
-          <template #[`item.status`]="{ item }">
+          <template #[`item.state`]="{ item }">
             <v-chip
-              :color="statusColor(item.status)"
+              :color="stateColor(item.state)"
               dark
             >
-              {{ item.status }}
+              {{ item.state }}
               <v-progress-circular
-                v-if="item.status === 'running'"
+                v-if="item.state === 'running'"
                 indeterminate
                 :size="20"
                 class="ml-2"
@@ -158,8 +158,8 @@ const fetchDagRuns = async ({ page = 1, itemsPerPage = 10 }) => {
 
 watch(dag, () => fetchDagRuns({ page: 1, itemsPerPage: itemsPerPage.value }));
 
-const statusColor = (status: string): string => {
-  switch (status) {
+const stateColor = (state: string): string => {
+  switch (state) {
     case 'success':
       return 'green';
     case 'failed':

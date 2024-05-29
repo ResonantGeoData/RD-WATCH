@@ -26,6 +26,7 @@ export interface MapFilters {
   }
   randomKey?: string;
   editingPolygonSiteId?: string | null; //currently editing a polygon
+  addingSitePolygon?: boolean;
 }
 
 export interface SatelliteTimeStamp {

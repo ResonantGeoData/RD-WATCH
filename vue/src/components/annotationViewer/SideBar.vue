@@ -1,11 +1,12 @@
 <script setup lang="ts">
-import ModelRunList from "../ModelRunList.vue";
+import ModelRunListVue from "../ModelRunList.vue";
 import TimeSlider from "../TimeSlider.vue";
 import PerformerFilter from "../filters/PerformerFilter.vue";
 import RegionFilter from "../filters/RegionFilter.vue";
+import SettingsPanel from "../SettingsPanel.vue";
 import { filteredSatelliteTimeList, state } from "../../store";
 import { computed, onMounted, ref, watch } from "vue";
-import type { Performer, QueryArguments, Region } from "../../client";
+import { ApiService, ModelRunList, type Performer, type QueryArguments, type Region } from "../../client";
 import type { Ref } from "vue";
 import { changeTime } from "../../interactions/timeStepper";
 import ErrorPopup from "../ErrorPopup.vue";
@@ -16,8 +17,14 @@ const queryFilters = computed<QueryArguments>(() => ({
   region: selectedRegion.value,
 }));
 
+const currentModelRunList: Ref<ModelRunList | null> = ref(null);
+const expandSettings = ref(false);
 const selectedPerformer: Ref<Performer[]> = ref([]);
 const selectedRegion: Ref<Region | undefined> = ref(undefined);
+const satelliteRegionTooLarge = ref(false);
+const loadingSatelliteTimestamps = ref(false);
+const askDownloadSatelliteTimestamps = ref(false);
+
 watch(selectedPerformer, (val) => {
   state.filters = {
     ...state.filters,
@@ -27,9 +34,9 @@ watch(selectedPerformer, (val) => {
 watch (() => state.filters.regions, () => {
   if (state.filters.regions?.length) {
     selectedRegion.value = state.filters.regions[0];
+    satelliteRegionTooLarge.value = false;
   }
 });
-
 
 onMounted(() => {
   window.document.addEventListener('keydown', (event) => {
@@ -68,6 +75,56 @@ const imagesOn = computed({
     state.satellite = { ...state.satellite, satelliteImagesOn: val };
   },
 });
+
+
+async function getSatelliteTimestamps(modelRun: ModelRunList, force=false) {
+  satelliteRegionTooLarge.value = false;
+  loadingSatelliteTimestamps.value = true;
+  state.satellite.satelliteTimeList = [];
+  const bbox = modelRun.bbox?.coordinates[0];
+  if (bbox && !force) {
+    let minX = Infinity;
+    let maxX = -Infinity;
+    let minY = Infinity;
+    let maxY = -Infinity;
+    (bbox as []).forEach((item: [number, number]) => {
+      minX = Math.min(minX, item[1]);
+      minY = Math.min(minY, item[0]);
+      maxX = Math.max(maxX, item[1]);
+      maxY = Math.max(maxY, item[0]);
+    })
+    const xSize = maxX - minX;
+    const ySize = maxY - minY;
+    if (xSize > 1 || ySize > 1) {
+      loadingSatelliteTimestamps.value = false;
+      satelliteRegionTooLarge.value = true;
+      return;
+    }
+  }
+  const results = await ApiService.getAllSatelliteTimestamps(
+      'S2', 'visual','2A', modelRun.timerange?.min, modelRun.timerange?.max, modelRun.bbox?.coordinates[0] as []);
+
+  loadingSatelliteTimestamps.value = false;
+  state.satellite.satelliteTimeList = results;
+  state.satellite.satelliteBounds = modelRun.bbox?.coordinates[0] as [];
+}
+
+const startLoadingSatelliteTimeStamps = async () => {
+  askDownloadSatelliteTimestamps.value = false;
+  if (currentModelRunList.value) {
+    getSatelliteTimestamps(currentModelRunList.value);
+  }
+}
+
+const satelliteLoadingColor = computed(() => {
+  if (satelliteRegionTooLarge.value) {
+    return 'warning'
+  }
+  if (loadingSatelliteTimestamps.value) {
+    return 'primary';
+  }
+  return 'black'
+})
 
 </script>
 
@@ -117,6 +174,7 @@ const imagesOn = computed({
         </v-btn>
 
         <v-btn
+          v-if="selectedRegion !== null && !(filteredSatelliteTimeList.length === 0 && state.satellite.satelliteSources.length !== 0)"
           variant="tonal"
           density="compact"
           class="pa-0 ma-1 sidebar-icon"
@@ -129,6 +187,36 @@ const imagesOn = computed({
         >
           <v-icon>mdi-image</v-icon>
         </v-btn>
+        <v-tooltip v-else>
+          <template #activator="{ props: props }">
+            <v-btn
+              variant="tonal"
+              v-bind="props"
+              :disabled="!selectedRegion"
+              density="compact"
+              :class="{
+                'animate-flicker': loadingSatelliteTimestamps,
+              }"
+              class="pa-0 ma-1 sidebar-icon"
+              :color="satelliteLoadingColor"
+              @click="askDownloadSatelliteTimestamps = true"
+            >
+              <v-icon>mdi-satellite-variant</v-icon>
+            </v-btn>
+          </template>
+          <v-alert
+            v-if="!satelliteRegionTooLarge"
+            type="warning"
+            title="Download Region Satellite Timestamps"
+            text="This is a long running process that could cause instability on the server.  Please only run this if you are sure you need to use the region satellite feature."
+          />
+          <v-alert
+            v-else
+            type="warning"
+            title="Region Too Large to Download Timestamps"
+            text="The Region is too large to download timestamps for."
+          />
+        </v-tooltip>
         <v-btn
           :color="state.mapLegend ? 'primary' : 'gray'"
           variant="tonal"
@@ -137,6 +225,15 @@ const imagesOn = computed({
           @click="state.mapLegend = !state.mapLegend"
         >
           <v-icon>mdi-map-legend</v-icon>
+        </v-btn>
+        <v-btn
+          :color="expandSettings ? 'primary' : 'gray'"
+          variant="tonal"
+          class="pa-0 ma-1 sidebar-icon"
+          density="compact"
+          @click="expandSettings = !expandSettings"
+        >
+          <v-icon>mdi-cog</v-icon>
         </v-btn>
       </v-row>
       <v-row
@@ -153,15 +250,17 @@ const imagesOn = computed({
           cols="6"
         />
       </v-row>
+      <SettingsPanel v-if="expandSettings" />
     </div>
     <v-row
       dense
       class="modelRuns"
     >
-      <ModelRunList
+      <ModelRunListVue
         :filters="queryFilters"
         class="flex-grow-1"
         compact
+        @modelrunlist="currentModelRunList = $event"
         @update:timerange="
           (timerange) => {
             if (timerange !== null) {
@@ -172,6 +271,40 @@ const imagesOn = computed({
         "
       />
     </v-row>
+    <v-dialog
+      v-model="askDownloadSatelliteTimestamps"
+      width="600"
+    >
+      <v-card>
+        <v-card-title>Download Satellite Timestamps</v-card-title>
+        <v-card-text>
+          <v-alert type="warning">
+            Downloading satellite timestamps can cause the server to become unstable.  Only use this feature if you need to view full region satellite images and realize that usage will impact other users on the server.
+          </v-alert>
+        </v-card-text>
+        <v-card-actions>
+          <v-row>
+            <v-spacer />
+            <v-btn
+              color="error"
+              class="mx-2"
+              variant="tonal"
+              @click="askDownloadSatelliteTimestamps = false"
+            >
+              Cancel
+            </v-btn>
+            <v-btn
+              color="warning"
+              class="mx-2"
+              variant="tonal"
+              @click="startLoadingSatelliteTimeStamps()"
+            >
+              Download
+            </v-btn>
+          </v-row>
+        </v-card-actions>
+      </v-card>
+    </v-dialog>
   </v-card>
 </template>
 

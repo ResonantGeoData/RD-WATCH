@@ -200,6 +200,10 @@ const toggleScoring = (data? : undefined | 'simple' | 'detailed') => {
   state.filters = { ...state.filters, scoringColoring: val as 'simple' | 'detailed' | undefined };
 }
 
+const addProposal = () => {
+  state.filters.addingSitePolygon = true;
+}
+
 </script>
 
 <template>
@@ -535,6 +539,16 @@ const toggleScoring = (data? : undefined | 'simple' | 'detailed') => {
         </v-list>
       </v-card>
     </v-menu>
+    <v-btn
+      v-if="modelRunEnabled && proposals && !scoringApp"
+      class="px-2 mx-2"
+      size="large"
+      :disabled="state.filters.addingSitePolygon"
+      :color="state.filters.addingSitePolygon ? 'primary' : ''"
+      @click="addProposal()"
+    >
+      <v-icon>mdi-plus</v-icon>Add Proposal
+    </v-btn>
   </v-row>
 </template>
 

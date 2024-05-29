@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { computed, onMounted } from "vue";
+import { computed, onMounted, watch } from "vue";
 import { ApiService } from "../client";
 import { state } from "../store";
 import { useRoute } from 'vue-router';
@@ -10,6 +10,62 @@ const scoringApp = computed(()=> ApiService.getApiPrefix().includes('scoring'));
 const route = useRoute();
 const proposals = computed(() => route.path.includes('proposals'));
 
+
+const modelRunEnabled = computed(() => state.openedModelRuns.size > 0);
+
+enum GroundTruthState {
+  NoGroundTruth = 0,
+  HasGroundTruth = 1,
+  AllGroundTruth = 2,
+}
+
+// Either has ground truth, is ground truth, or no ground truth
+const groundTruthState = computed<GroundTruthState>(() => {
+  let result: GroundTruthState  = GroundTruthState.NoGroundTruth;
+  if (scoringApp.value) {
+    return GroundTruthState.HasGroundTruth;
+  }
+  if (proposals.value) {
+    if (state.proposals.ground_truths) {
+      return GroundTruthState.HasGroundTruth;
+    } else {
+      return GroundTruthState.NoGroundTruth;
+    }
+  }
+  let hasGroundTruth = false;
+  state.openedModelRuns.forEach((item) => {
+    if (state.groundTruthLinks[item]) {
+      hasGroundTruth = true;
+    }
+  });
+  if (hasGroundTruth) {
+    result = GroundTruthState.HasGroundTruth;
+  }
+  // Check to see if it is ground Truth
+  if (result === GroundTruthState.HasGroundTruth) {
+    const keys = Object.keys(state.groundTruthLinks);
+    const keysLength = keys.length;
+    let selfReferencedKeys = 0;
+    keys.forEach((key) => {
+      if (state.groundTruthLinks[key] === key) {
+        selfReferencedKeys += 1;
+      }
+    });
+    if (selfReferencedKeys === keysLength) { // All groundTruth
+      result = GroundTruthState.AllGroundTruth;
+    }
+  }
+  return result;
+});
+
+watch(groundTruthState, () => {
+  if (groundTruthState.value === GroundTruthState.AllGroundTruth && state.filters.drawSiteOutline?.includes('model')) {
+    state.filters.drawSiteOutline = ['groundtruth'];
+  }
+  if (groundTruthState.value === GroundTruthState.AllGroundTruth && state.filters.drawObservations?.includes('model')) {
+    state.filters.drawObservations = ['groundtruth'];
+  }
+});
 
 const toggleGroundTruth = (id: string) => {
   if (state.filters.drawObservations?.includes('groundtruth') || state.filters.drawSiteOutline?.includes('groundtruth')) {
@@ -40,7 +96,7 @@ onMounted(() => {
 })
 
 const checkGroundTruth = async () => {
-  if (scoringApp.value) {
+  if (scoringApp.value || groundTruthState.value === GroundTruthState.AllGroundTruth) {
     return;
   } else if (proposals.value) {
     // We need to get the groundTruth value and toggle that instead.
@@ -50,17 +106,9 @@ const checkGroundTruth = async () => {
     }
   } else {
     // We need to find the ground-truth model and add it to the visible items
-    const performer = state.filters.performer_ids?.map((item) => state.performerMapping[item].short_code)
-    const request = await ApiService.getModelRuns({
-      limit: 10,
-      performer,
-      region: state.filters.regions? state.filters.regions[0] : '',
-      groundtruth: true
+    Object.values(state.groundTruthLinks).forEach((uid) => {
+      toggleGroundTruth(uid);
     });
-    if (request.items.length) {
-      const id = request.items[0].id;
-      toggleGroundTruth(id)
-    }
   }
 }
 
@@ -68,7 +116,14 @@ const toggleObs = (type?: undefined | 'model' | 'groundtruth') => {
   let val;
   let copy = state.filters.drawObservations;
   if (type === undefined) {
-    val = !state.filters.drawObservations ? ['model', 'groundtruth'] : undefined;
+    const onVal:string[] = [];
+    if (groundTruthState.value !== GroundTruthState.AllGroundTruth) {
+      onVal.push('model');
+    } 
+    if (groundTruthState.value === GroundTruthState.HasGroundTruth || groundTruthState.value === GroundTruthState.AllGroundTruth) {
+      onVal.push('groundtruth');
+    }
+    val = !state.filters.drawObservations ? onVal : undefined;
   } else {
     if (copy) {
         const index = copy.indexOf(type);
@@ -93,7 +148,14 @@ const toggleSite = (type?: undefined | 'model' | 'groundtruth') => {
     let val;
   let copy = state.filters.drawSiteOutline;
   if (type === undefined) {
-    val = !state.filters.drawSiteOutline ? ['model', 'groundtruth'] : undefined;
+    const onVal:string[] = [];
+    if (groundTruthState.value !== GroundTruthState.AllGroundTruth) {
+      onVal.push('model');
+    } 
+    if (groundTruthState.value === GroundTruthState.HasGroundTruth || groundTruthState.value === GroundTruthState.AllGroundTruth) {
+      onVal.push('groundtruth');
+    }
+    val = !state.filters.drawSiteOutline ? onVal : undefined;
 
   } else {
     if (copy) {
@@ -153,6 +215,7 @@ const toggleScoring = (data? : undefined | 'simple' | 'detailed') => {
           class="px-2 mx-2"
           v-bind="props"
           size="large"
+          :disabled="!modelRunEnabled"
           :color="state.filters.drawObservations ? 'primary' : ''"
           style="min-width: 200px"
           @click="toggleObs()"
@@ -197,7 +260,9 @@ const toggleScoring = (data? : undefined | 'simple' | 'detailed') => {
           </v-list-item>
           <v-list-item
             value="Model"
-            @click="toggleObs('model')"
+            :class="{'disabled-item': groundTruthState === GroundTruthState.AllGroundTruth}"
+            :disabled="groundTruthState === GroundTruthState.AllGroundTruth"
+            @click="groundTruthState !== GroundTruthState.AllGroundTruth && toggleObs('model')"
           >
             <div
               class="layer-icon pl-1"
@@ -211,7 +276,9 @@ const toggleScoring = (data? : undefined | 'simple' | 'detailed') => {
             </div>
             <v-checkbox-btn
               :model-value="state.filters.drawObservations?.includes('model')"
+              
               density="compact"
+              :disabled="groundTruthState === GroundTruthState.AllGroundTruth"
               hide-details
               readonly
               class="item-checkbox"
@@ -219,6 +286,8 @@ const toggleScoring = (data? : undefined | 'simple' | 'detailed') => {
           </v-list-item>
           <v-list-item
             value="GroundTruth"
+            :class="{'disabled-item': groundTruthState === GroundTruthState.NoGroundTruth}"
+            :disabled="groundTruthState === GroundTruthState.NoGroundTruth"
             @click="toggleObs('groundtruth')"
           >
             <div
@@ -234,6 +303,7 @@ const toggleScoring = (data? : undefined | 'simple' | 'detailed') => {
             <v-checkbox-btn
               :model-value="state.filters.drawObservations?.includes('groundtruth')"
               density="compact"
+              :disabled="groundTruthState === GroundTruthState.NoGroundTruth"
               hide-details
               readonly
               class="item-checkbox"
@@ -250,6 +320,7 @@ const toggleScoring = (data? : undefined | 'simple' | 'detailed') => {
           class="px-2 mx-2"
           v-bind="props"
           size="large"
+          :disabled="!modelRunEnabled"
           :color="state.filters.drawSiteOutline ? 'primary' : ''"
           style="min-width:150px"
           @click="toggleSite()"
@@ -300,6 +371,8 @@ const toggleScoring = (data? : undefined | 'simple' | 'detailed') => {
           </v-list-item>
           <v-list-item
             value="Model"
+            :class="{'disabled-item': groundTruthState === GroundTruthState.AllGroundTruth}"
+            :disabled="groundTruthState === GroundTruthState.AllGroundTruth"
             @click="toggleSite('model')"
           >
             <div
@@ -316,12 +389,15 @@ const toggleScoring = (data? : undefined | 'simple' | 'detailed') => {
               :model-value="state.filters.drawSiteOutline?.includes('model')"
               density="compact"
               hide-details
+              :disabled="groundTruthState === GroundTruthState.AllGroundTruth"
               readonly
               class="item-checkbox"
             />
           </v-list-item>
           <v-list-item
             value="GroundTruth"
+            :class="{'disabled-item': groundTruthState === GroundTruthState.NoGroundTruth}"
+            :disabled="groundTruthState === GroundTruthState.NoGroundTruth"
             @click="toggleSite('groundtruth')"
           >
             <div
@@ -338,6 +414,7 @@ const toggleScoring = (data? : undefined | 'simple' | 'detailed') => {
               :model-value="state.filters.drawSiteOutline?.includes('groundtruth')"
               density="compact"
               hide-details
+              :disabled="groundTruthState === GroundTruthState.NoGroundTruth"
               readonly
               class="item-checkbox"
             />
@@ -371,6 +448,7 @@ const toggleScoring = (data? : undefined | 'simple' | 'detailed') => {
     <v-btn
       class="px-2 mx-2"
       size="large"
+      :disabled="!modelRunEnabled"
       :color="state.filters.drawRegionPoly ? 'primary' : ''"
       @click="toggleRegion()"
     >
@@ -385,6 +463,7 @@ const toggleScoring = (data? : undefined | 'simple' | 'detailed') => {
           class="px-2 mx-2"
           v-bind="props"
           size="large"
+          :disabled="!modelRunEnabled"
           :color="state.filters.scoringColoring ? 'primary' : ''"
           style="min-width:125px"
           @click="toggleScoring()"
@@ -502,5 +581,11 @@ const toggleScoring = (data? : undefined | 'simple' | 'detailed') => {
 .item-checkbox {
   display:inline;
   float:right;
+}
+
+.disabled-item {
+  background-color: gray;
+  color: lightgray;
+  cursor:not-allowed;
 }
 </style>

@@ -66,12 +66,16 @@ class ModelRunFilterSchema(FilterSchema):
         return performer_q
 
     def filter_groundtruth(self, value: bool | None) -> Q:
-        if not value:
+        if value is None:
             return Q()
         # Filter for ground_truth performer
-        gt_q = Q(performer__short_code='TE')
-        gt_q &= Q(ground_truth=True)
-        return gt_q
+        if value:
+            gt_q = Q(performer__short_code='TE')
+            gt_q &= Q(ground_truth=value)
+            return gt_q
+        elif value is False:
+            return Q(ground_truth=value)
+        return Q()
 
 
 class ModelRunWriteSchema(Schema):
@@ -144,6 +148,7 @@ class ModelRunListSchema(Schema):
     evaluation_run: int | None = None
     proposal: str = None
     adjudicated: ModelRunAdjudicated | None = None
+    groundTruthLink: UUID4 | None = None
     mode: Literal['batch', 'incremental'] | None = None
 
 
@@ -212,6 +217,30 @@ def get_queryset():
                 max=ExtractEpoch(Max('evaluations__end_date')),
             ),
             bbox=BoundingBoxGeoJSON('evaluations__geom'),
+            groundTruthLink=Case(
+                When(
+                    Q(ground_truth=False),
+                    then=Coalesce(
+                        Subquery(
+                            ModelRun.objects.filter(
+                                ground_truth=True,
+                                region_id=OuterRef('region_id'),
+                                proposal=None,
+                            )
+                            .order_by('-created')
+                            .values_list('pk')
+                        ),
+                        None,
+                    ),
+                ),
+                # When not groundTruth we want to link the latest GroundTruth available
+                # this is done for GroundTruth comparison on client-side
+                When(
+                    Q(ground_truth=True),
+                    then=F('pk'),
+                ),
+                default=None,
+            ),
             adjudicated=Case(
                 When(
                     ~Q(proposal_val=None),  # When proposal has a value
@@ -220,10 +249,12 @@ def get_queryset():
                         other=Coalesce(Subquery(other_count_subquery), 0),
                         ground_truths=Subquery(
                             ModelRun.objects.filter(
-                                performer__short_code='TE',
+                                ground_truth=True,
                                 region_id=OuterRef('region_id'),
                                 proposal=None,
-                            ).values_list('pk')[:1]
+                            )
+                            .order_by('-created')
+                            .values_list('pk')[:1]
                         ),
                     ),
                 ),
@@ -466,6 +497,7 @@ def get_sites_query(model_run_id: UUID4):
                     status='status',
                     filename='cache_originator_file',
                     downloading='downloading',
+                    groundtruth=F('configuration__ground_truth'),
                 ),
                 ordering='number',
                 default=[],

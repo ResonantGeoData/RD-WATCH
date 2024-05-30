@@ -262,6 +262,8 @@ class ProductionConfiguration(BaseConfiguration):
     AWS_S3_FILE_OVERWRITE = False
     AWS_QUERYSTRING_EXPIRE = 3600 * 6  # 6 hours
 
+    SECURE_PROXY_SSL_HEADER = ('HTTP_X_FORWARDED_PROTO', 'https')
+
     # GitLab group auth config
     ACCOUNT_ADAPTER = 'rdwatch.allauth.RDWatchAccountAdapter'
     SOCIALACCOUNT_ADAPTER = 'rdwatch.allauth.RDWatchSocialAccountAdapter'

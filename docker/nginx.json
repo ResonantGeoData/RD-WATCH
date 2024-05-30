@@ -2,6 +2,12 @@
   "access_log": "/dev/stdout",
   "listeners": {
     "*:80": {
+      "forwarded": {
+        "protocol": "X-Forwarded-Proto",
+        "source": [
+          "0.0.0.0/0"
+        ]
+      },
       "pass": "routes"
     }
   },

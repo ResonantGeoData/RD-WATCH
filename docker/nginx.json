@@ -24,6 +24,22 @@
       }
     },
     {
+      "match": {
+        "uri": "/accounts/*"
+      },
+      "action": {
+        "pass": "applications/rdwatch"
+      }
+    },
+    {
+      "match": {
+        "uri": "/admin/*"
+      },
+      "action": {
+        "pass": "applications/rdwatch"
+      }
+    },
+    {
       "action": {
         "share": "/app/vue/dist/$uri"
       }

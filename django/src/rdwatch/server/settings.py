@@ -192,6 +192,9 @@ class BaseConfiguration(Configuration):
         },
     }
 
+    ACCOUNT_ADAPTER = 'rdwatch.allauth.RDWatchAccountAdapter'
+    SOCIALACCOUNT_ADAPTER = 'rdwatch.allauth.RDWatchSocialAccountAdapter'
+    SOCIALACCOUNT_STORE_TOKENS = True
     SOCIALACCOUNT_PROVIDERS = {
         'gitlab': {
             'SCOPE': ['read_user', 'openid'],
@@ -204,6 +207,11 @@ class BaseConfiguration(Configuration):
             ],
         },
     }
+    ALLOWED_GITLAB_GROUPS = values.ListValue(
+        environ_prefix=_ENVIRON_PREFIX,
+        environ_name='ALLOWED_GITLAB_GROUPS',
+        environ_required=True,
+    )
     # All login attempts in production should go straight to GitLab
     LOGIN_URL = '/accounts/gitlab/login/'
     ACCOUNT_EMAIL_VERIFICATION = 'none'

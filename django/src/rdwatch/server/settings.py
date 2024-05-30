@@ -192,30 +192,6 @@ class BaseConfiguration(Configuration):
         },
     }
 
-    ACCOUNT_ADAPTER = 'rdwatch.allauth.RDWatchAccountAdapter'
-    SOCIALACCOUNT_ADAPTER = 'rdwatch.allauth.RDWatchSocialAccountAdapter'
-    SOCIALACCOUNT_STORE_TOKENS = True
-    SOCIALACCOUNT_PROVIDERS = {
-        'gitlab': {
-            'SCOPE': ['read_user', 'openid'],
-            'APPS': [
-                {
-                    'client_id': os.environ['RDWATCH_GITLAB_OAUTH_APP_ID'],
-                    'secret': os.environ['RDWATCH_GITLAB_OAUTH_SECRET'],
-                    'settings': {'gitlab_url': os.environ['RDWATCH_GITLAB_OAUTH_URL']},
-                }
-            ],
-        },
-    }
-    ALLOWED_GITLAB_GROUPS = values.ListValue(
-        environ_prefix=_ENVIRON_PREFIX,
-        environ_name='ALLOWED_GITLAB_GROUPS',
-        environ_required=True,
-    )
-    # All login attempts in production should go straight to GitLab
-    LOGIN_URL = '/accounts/gitlab/login/'
-    ACCOUNT_EMAIL_VERIFICATION = 'none'
-
 
 class DevelopmentConfiguration(BaseConfiguration):
     SECRET_KEY = 'secretkey'  # Dummy value for local development configuration
@@ -285,3 +261,30 @@ class ProductionConfiguration(BaseConfiguration):
     AWS_S3_MAX_MEMORY_SIZE = 5 * 1024 * 1024
     AWS_S3_FILE_OVERWRITE = False
     AWS_QUERYSTRING_EXPIRE = 3600 * 6  # 6 hours
+
+    # GitLab group auth config
+    ACCOUNT_ADAPTER = 'rdwatch.allauth.RDWatchAccountAdapter'
+    SOCIALACCOUNT_ADAPTER = 'rdwatch.allauth.RDWatchSocialAccountAdapter'
+    SOCIALACCOUNT_STORE_TOKENS = True
+    SOCIALACCOUNT_PROVIDERS = {
+        'gitlab': {
+            'SCOPE': ['read_user', 'openid'],
+            'APPS': [
+                {
+                    'client_id': os.environ.get('RDWATCH_GITLAB_OAUTH_APP_ID'),
+                    'secret': os.environ.get('RDWATCH_GITLAB_OAUTH_SECRET'),
+                    'settings': {
+                        'gitlab_url': os.environ.get('RDWATCH_GITLAB_OAUTH_URL'),
+                    },
+                }
+            ],
+        },
+    }
+    ALLOWED_GITLAB_GROUPS = values.ListValue(
+        environ_prefix=_ENVIRON_PREFIX,
+        environ_name='ALLOWED_GITLAB_GROUPS',
+        environ_required=True,
+    )
+    # All login attempts in production should go straight to GitLab
+    LOGIN_URL = '/accounts/gitlab/login/'
+    ACCOUNT_EMAIL_VERIFICATION = 'none'

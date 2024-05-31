@@ -8,11 +8,15 @@ const isLoggedIn = ref(false);
 // Check if the user is logged in before rendering any UI. If they're not,
 // redirect them to the login page.
 onBeforeMount(async () => {
-  try {
-    await fetch('/api/status/', { redirect: 'error' });
+  if (import.meta.env.PROD) {
+    try {
+      await fetch('/api/status/', { redirect: 'error' });
+      isLoggedIn.value = true;
+    } catch (e) {
+      window.location.href = `/accounts/gitlab/login/?next=${window.location.pathname}`;
+    }
+  } else {
     isLoggedIn.value = true;
-  } catch (e) {
-    window.location.href = `/accounts/gitlab/login/?next=${window.location.pathname}`;
   }
 });
 

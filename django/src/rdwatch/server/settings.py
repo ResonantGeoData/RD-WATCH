@@ -25,6 +25,8 @@ class BaseConfiguration(Configuration):
     # for convenience serving a site on a subpath.
     STATIC_URL = 'static/'
 
+    # The `/accounts/*` endpoints are the only endpoints that should *not*
+    # require authentication to access
     LOGIN_REQUIRED_IGNORE_PATHS = [r'/accounts/']
 
     SAM_CHECKPOINT_MODEL = values.PathValue(
@@ -262,12 +264,22 @@ class ProductionConfiguration(BaseConfiguration):
     AWS_S3_FILE_OVERWRITE = False
     AWS_QUERYSTRING_EXPIRE = 3600 * 6  # 6 hours
 
+    # Django runs behind an nginx in production. nginx strips the HTTPS protocol
+    # from the request before proxing it to Django, so we need to tell Django to
+    # assume the presence of the X-Forwarded-Proto header indicates HTTPS.
     SECURE_PROXY_SSL_HEADER = ('HTTP_X_FORWARDED_PROTO', 'https')
 
-    # GitLab group auth config
+    # Override the default allauth adapters so we can implement a custom authorization
+    # flow based on the user's GitLab group membership
     ACCOUNT_ADAPTER = 'rdwatch.allauth.RDWatchAccountAdapter'
     SOCIALACCOUNT_ADAPTER = 'rdwatch.allauth.RDWatchSocialAccountAdapter'
+
+    # Configure django-allauth to store access tokens for in the database instead of
+    # discarding them after use. This allows us to retrieve it later in the
+    # RDWatchSocialAccountAdapter to use for checking the user's
+    # GitLab group membership.
     SOCIALACCOUNT_STORE_TOKENS = True
+
     SOCIALACCOUNT_PROVIDERS = {
         'gitlab': {
             'SCOPE': ['read_user', 'openid'],
@@ -282,11 +294,15 @@ class ProductionConfiguration(BaseConfiguration):
             ],
         },
     }
+
+    # The GitLab groups that are allowed to access the site
     ALLOWED_GITLAB_GROUPS = values.ListValue(
         environ_prefix=_ENVIRON_PREFIX,
         environ_name='ALLOWED_GITLAB_GROUPS',
         environ_required=True,
     )
+
     # All login attempts in production should go straight to GitLab
     LOGIN_URL = '/accounts/gitlab/login/'
+
     ACCOUNT_EMAIL_VERIFICATION = 'none'

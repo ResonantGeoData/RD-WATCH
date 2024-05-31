@@ -48,6 +48,15 @@ class BaseConfiguration(Configuration):
         ]
         if 'RDWATCH_POSTGRESQL_SCORING_URI' in os.environ:
             base_applications.append('rdwatch_scoring')
+        if all(
+            os.environ.get(key)
+            for key in [
+                'RDWATCH_SMARTFLOW_URL',
+                'RDWATCH_SMARTFLOW_USERNAME',
+                'RDWATCH_SMARTFLOW_PASSWORD',
+            ]
+        ):
+            base_applications.append('rdwatch_smartflow')
         return base_applications
 
     MIDDLEWARE = [
@@ -130,6 +139,23 @@ class BaseConfiguration(Configuration):
     )
     SMART_STAC_KEY = values.SecretValue(
         environ_required=True, environ_prefix=_ENVIRON_PREFIX
+    )
+
+    SMARTFLOW_URL = values.Value(
+        None,
+        environ_required=False,
+        environ_prefix=_ENVIRON_PREFIX,
+    )
+
+    SMARTFLOW_USERNAME = values.Value(
+        None,
+        environ_required=False,
+        environ_prefix=_ENVIRON_PREFIX,
+    )
+    SMARTFLOW_PASSWORD = values.Value(
+        None,
+        environ_required=False,
+        environ_prefix=_ENVIRON_PREFIX,
     )
 
     # django-celery-results configuration

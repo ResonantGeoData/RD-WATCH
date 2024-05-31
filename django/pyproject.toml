@@ -22,6 +22,7 @@ classifiers = [
 packages = [
   { include = "rdwatch", from = "src" },
   { include = "rdwatch_scoring", from = "src"},
+  { include = "rdwatch_smartflow", from = "src"},
 ]
 
 [tool.poetry-dynamic-versioning]
@@ -30,7 +31,7 @@ vcs = "git"
 metadata = true
 
 [tool.poetry-dynamic-versioning.substitution]
-files = ["src/rdwatch/__init__.py", "src/rdwatch_scoring/__init__.py"]
+files = ["src/rdwatch/__init__.py", "src/rdwatch_scoring/__init__.py", "src/rdwatch_smartflow/__init__.py"]
 
 [tool.poetry.dependencies]
 python = ">=3.11.8,<4"
@@ -57,6 +58,10 @@ pystac-client = "^0.7.6"
 more-itertools = "^10.2.0"
 torch = {version = "^2.2.2+cpu", source = "pytorch"}
 torchvision = {version = "^0.17.2+cpu", source = "pytorch"}
+apache-airflow-client = "^2.9.0"
+beautifulsoup4 = "^4.12.3"
+django-allauth = {extras = ["socialaccount"], version = "^0.63.2"}
+django-login-required-middleware = "^0.9.0"
 
 [tool.poetry.group.dev.dependencies]
 django-stubs = "^4.2.7"
@@ -91,7 +96,7 @@ skip-string-normalization = true
 
 [tool.isort]
 profile = "black"
-known_first_party = ["rdwatch", "rdwatch_scoring"]
+known_first_party = ["rdwatch", "rdwatch_scoring", "rdwatch_smartflow"]
 known_django=["django"]
 sections=["FUTURE", "STDLIB", "THIRDPARTY", "DJANGO", "FIRSTPARTY", "LOCALFOLDER"]
 

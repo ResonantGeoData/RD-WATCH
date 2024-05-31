@@ -140,7 +140,6 @@ watch(
     getSiteProposals();
   }
 );
-getSiteProposals();
 watch(clickedInfo, () => {
   if (clickedInfo.value.siteId.length) {
     const found = modifiedList.value.find(
@@ -203,12 +202,14 @@ const toggleControlKey = (event: KeyboardEvent) => {
 onMounted(() => {
   window.addEventListener('keydown', toggleControlKey);
   window.addEventListener('keyup', toggleControlKey);
+  getSiteProposals();
 });
 
 // Remove event listener when the component is unmounted
 onUnmounted(() => {
   window.removeEventListener('keydown', toggleControlKey);
   window.removeEventListener('keyup', toggleControlKey);
+  state.selectedImageSite = undefined;
 });
 const scrollVirtualList = (id: string, itemHeight = 105) => {
   if (virtualList.value) {

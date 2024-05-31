@@ -41,9 +41,11 @@ const queryFilters = computed<QueryArguments>(() => ({
   region: selectedRegion.value,
   mode: selectedModes.value,
   eval: selectedEval.value,
+  groundtruth: groundtruth.value,
 }));
 
 const selectedModes: Ref<string[]> = ref([]);
+const groundtruth: Ref<boolean> = ref(false);
 const selectedPerformer: Ref<Performer[]> = ref([]);
 const selectedRegion: Ref<Region | undefined> = ref(undefined);
 const selectedEval: Ref<Eval[]> = ref([]);
@@ -283,6 +285,21 @@ const satelliteLoadingColor = computed(() => {
         >
           <v-icon>mdi-map-legend</v-icon>
         </v-btn>
+        <v-tooltip>
+          <template #activator="{ props: props }">
+            <v-btn
+              variant="tonal"
+              v-bind="props"
+              density="compact"
+              class="pa-0 ma-1 sidebar-icon"
+              :color="groundtruth ? 'primary' : 'gray'"
+              @click="groundtruth = !groundtruth"
+            >
+              <v-icon>mdi-check-decagram</v-icon>
+            </v-btn>
+          </template>
+          <span> Toggle Ground Truth in the list</span>
+        </v-tooltip>
         <v-btn
           :color="expandSettings ? 'primary' : 'gray'"
           variant="tonal"

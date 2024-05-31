@@ -11,6 +11,12 @@ class EvaluationBroadAreaSearchProposal(models.Model):
     tau = models.FloatField()
     min_area = models.FloatField()
     min_confidence_score = models.FloatField()
+    min_spatial_distance_threshold = models.FloatField(blank=True, null=True)
+    central_spatial_distance_threshold = models.FloatField(blank=True, null=True)
+    max_spatial_distance_threshold = models.FloatField(blank=True, null=True)
+    min_temporal_distance_threshold = models.FloatField(blank=True, null=True)
+    central_temporal_distance_threshold = models.FloatField(blank=True, null=True)
+    max_temporal_distance_threshold = models.FloatField(blank=True, null=True)
     site_proposal = models.CharField(max_length=255)
     site_proposal_area = models.FloatField()
     site_truth_matched = models.TextField(

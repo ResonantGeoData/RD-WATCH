@@ -37,7 +37,10 @@ const dagResults = ref<string[]>([]);
 
 const newDagRunDialog = ref<boolean>(false);
 const newDagRunTitle = ref<string>('');
-const newDagRunConf = ref<string>('');
+const newDagRunConf = ref<string>(JSON.stringify({
+  "model_run_title": "test_run_2",
+  "region_id": "BR_R002"
+}));
 
 const fetchDags = debounce(async (searchTerm: string) => {
   loading.value = true;

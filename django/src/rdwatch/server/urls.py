@@ -6,6 +6,7 @@ from django.urls import include, path
 urlpatterns = [
     path('api/', include('rdwatch.urls')),
     path('admin/', admin.site.urls),
+    path('accounts/', include('allauth.urls')),
 ]
 
 # Conditionally add the scoring URLs if the scoring app is installed

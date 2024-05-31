@@ -64,6 +64,10 @@ export default ({ mode}) => {
             target: `http://${devHost}:8000`,
             xfwd: true,
           },
+          "/accounts": {
+            target: `http://${devHost}:8000`,
+            xfwd: true,
+          },
         },
         strictPort: true,
       },

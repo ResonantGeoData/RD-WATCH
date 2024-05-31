@@ -1,4 +1,4 @@
-FROM apache/airflow:latest
+FROM apache/airflow:slim-latest-python3.12
 
 RUN airflow db migrate
 

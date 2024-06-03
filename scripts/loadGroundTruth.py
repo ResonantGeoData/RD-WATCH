@@ -24,10 +24,10 @@ def main():
         '--skip_regions', action='store_true', help='expiration time in hours'
     )
     parser.add_argument(
-        '--rgd-auth-cookie',
-        required=False,
+        '--rgd-api-key',
+        required=True,
         type=str,
-        help='RGD Authentication cookie, e.g.: token=<LONG BASE64 STRING>',
+        help='RGD API key',
     )
     parser.add_argument(
         '--expiration_time', default=None, type=int, help='expiration time in hours'
@@ -46,7 +46,7 @@ def _upload_model_run(
     region: str,
     endpoint: str,
     model_runs: dict[str, list[Path]],
-    cookies: dict[str, str],
+    rgd_api_key: str,
     expiration_time: int | None,
 ) -> None:
     # Create model run
@@ -63,8 +63,7 @@ def _upload_model_run(
     res = requests.post(
         f'{rgd_endpoint}/api/model-runs/',
         json=post_model_data,
-        headers={'Content-Type': 'application/json'},
-        cookies=cookies,
+        headers={'Content-Type': 'application/json', 'X-RDWATCH-API-KEY': rgd_api_key},
     )
     res.raise_for_status()
 
@@ -75,8 +74,10 @@ def _upload_model_run(
         res = requests.post(
             f'{rgd_endpoint}/api/model-runs/{model_run_id}/{endpoint}/',
             data=file.read_text(),
-            headers={'Content-Type': 'application/json'},
-            cookies=cookies,
+            headers={
+                'Content-Type': 'application/json',
+                'X-RDWATCH-API-KEY': rgd_api_key,
+            },
         )
         if res.status_code >= 400:
             print(res.status_code, res.text)
@@ -86,16 +87,13 @@ def _upload_model_run(
 def upload_to_rgd(
     base_dir: Path,
     skip_regions: bool,
-    rgd_auth_cookie: str | None,
+    rgd_api_key: str | None,
     expiration_time: str,
     parallelism: int,
 ):
     check_vals = [('site_models', 'site-model')]
-    cookies: dict[str, str] = {}
     if not skip_regions:
         check_vals.append(('region_models', 'region-model'))
-    if rgd_auth_cookie or 'RGD_AUTH_COOKIE' in os.environ:
-        cookies = {'token': os.environ.get('RGD_AUTH_COOKIE', rgd_auth_cookie)}
 
     for dir, endpoint in check_vals:
         model_runs: defaultdict[str, list[Path]] = defaultdict(list)
@@ -118,7 +116,7 @@ def upload_to_rgd(
                     model_runs.keys(),
                     [endpoint] * len(model_runs),
                     [model_runs] * len(model_runs),
-                    [cookies] * len(model_runs),
+                    [rgd_api_key] * len(model_runs),
                     [expiration_time] * len(model_runs),
                     strict=True,
                 ),

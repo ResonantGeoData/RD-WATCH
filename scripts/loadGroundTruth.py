@@ -28,6 +28,7 @@ def main():
         required=True,
         type=str,
         help='RGD API key',
+        default='secretkey',
     )
     parser.add_argument(
         '--expiration_time', default=None, type=int, help='expiration time in hours'

@@ -27,6 +27,7 @@ def main():
         required=True,
         type=str,
         help='RGD API key',
+        default='secretkey',
     )
     parser.add_argument(
         '--title',

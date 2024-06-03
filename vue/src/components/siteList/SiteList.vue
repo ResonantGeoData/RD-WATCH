@@ -74,9 +74,9 @@ const getSites = async (modelRun: string, initRun = false) => {
         proposal: results.modelRunDetails.proposal,
       } : undefined
 
-      const selectedIds = state.selectedSites.map((item) => item.id);
       results.sites.forEach((item) => {
         const newNum = item.number.toString().padStart(4, "0");
+        const selectedSite = state.selectedSites.find((selected) => selected.id === item.id);
         if (newNum === "9999") {
           newNumbers += 1;
         }
@@ -93,7 +93,8 @@ const getSites = async (modelRun: string, initRun = false) => {
           name,
           filename: item.filename,
           bbox: item.bbox,
-          selected: selectedIds.includes(item.id),
+          selectedSite: selectedSite,
+          selected: !!selectedSite,
           images: item.images,
           startDate: item.start_date,
           endDate: item.end_date,
@@ -167,17 +168,19 @@ watch(clickedInfo, () => {
 
 
 const selectSite = async (selectedSite: SiteDisplay, deselect= false) => {
+  const selectedIds = state.selectedSites.map((item) => item.id);
   if (selectedSite && !deselect) {
-  await getSiteObservationDetails(selectedSite.id, undefined, true);
-
+    if (!selectedIds.includes(selectedSite.id)) {
+      await getSiteObservationDetails(selectedSite.id, undefined, true);
+    }
   }
   if (state.selectedImageSite) {
     state.selectedImageSite = undefined;
   }
   const updatedList: SiteDisplay[] = [];
-  const selectedIds = state.selectedSites.map((item) => item.id);
   baseModifiedList.value.forEach((item) => {
-    item.selected = selectedIds.includes(item.id)
+    item.selectedSite = state.selectedSites.find((selected) => selected.id === item.id)
+    item.selected = !!item.selectedSite;
     updatedList.push(item);
   })
   updatedList.sort((a, b) => {

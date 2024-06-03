@@ -382,7 +382,7 @@ const clearStorage = async () => {
   maplibregl.clearStorage();
   // We need to update the source to get information
   // This reloads the source vector-tile to color it properly after data has been changed.
-  state.filters.randomKey = `&randomKey=randomKey_${Math.random() * 1000}`;
+  state.filters.randomKey = `?randomKey=randomKey_${Math.random() * 1000}`;
   await getImageData();
 };
 

@@ -129,7 +129,7 @@ const getModeIcon = (mode: ModelRun['mode']) => (mode ? {
 <template>
   <v-card
     outlined
-    class="modelRunCard my-2 pb-1"
+    class="modelRunCard my-2 pb-4"
     :class="{selectedCard: props.open}"
     @click="handleClick(modelRun)"
   >
@@ -157,7 +157,7 @@ const getModeIcon = (mode: ModelRun['mode']) => (mode ? {
             density="compact"
             color="#29B6F6"
             hide-details
-            @click="handleClick(modelRun)"
+            @update:model-value="handleClick(modelRun)"
           />
         </v-col>
       </v-row>

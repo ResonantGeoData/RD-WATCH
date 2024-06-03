@@ -223,6 +223,9 @@ class DevelopmentConfiguration(BaseConfiguration):
     MINIO_STORAGE_MEDIA_USE_PRESIGNED = True
     MINIO_STORAGE_MEDIA_URL = 'http://127.0.0.1:9000/rdwatch'
 
+    # In dev mode we don't require gitlab authentication so all paths are enabled
+    LOGIN_REQUIRED_IGNORE_PATHS = [r'/accounts/', r'/api/']
+
     # Install django-debug-toolbar in development
     @property
     def INSTALLED_APPS(self) -> list[str]:

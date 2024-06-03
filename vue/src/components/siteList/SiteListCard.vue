@@ -3,9 +3,9 @@ import {
   ApiService,
   SiteModelStatus,
 } from "../../client/services/ApiService";
-import { SiteOverview, getSiteObservationDetails, state, toggleSatelliteImages } from "../../store";
+import { SiteOverview, state, toggleSatelliteImages } from "../../store";
 import { timeRangeFormat } from "../../utils";
-import { Ref, computed, ref, watch } from "vue";
+import { Ref, computed, ref } from "vue";
 import { hoveredInfo } from "../../interactions/mouseEvents";
 import ImageBrowser from './ImageBrowser.vue';
 import ImageToggle from './ImageToggle.vue';
@@ -37,6 +37,7 @@ export interface SiteDisplay {
     region: string;
     title: string;
   };
+  selectedSite?: SiteOverview; 
 }
 
 const props = defineProps<{
@@ -52,14 +53,8 @@ const emit = defineEmits<{
 
 const localSite: Ref<SiteDisplay> = ref({...props.site});
 
-const selectedSite: Ref<undefined | SiteOverview> = ref(undefined)
 
-watch(state.selectedSites, () => {
-  selectedSite.value  = state.selectedSites.find((item) => item.id === localSite.value.id);
-  selectSite.value = !!selectedSite.value;
-});
 
-const selectSite = ref(!!selectedSite.value)
 
 const imagesActive = computed(() => state.enabledSiteImages.findIndex((item) => item.id === props.site.id) !== -1);
 const hasImages = computed(() =>  props.site.WV > 0 || props.site.S2 > 0 || props.site.PL > 0 || props.site.L8 > 0);
@@ -109,8 +104,8 @@ const selectingSite = async (e: boolean) => {
 
 <template>
   <v-card
-    :key="`${localSite.name}_${localSite.id}_${localSite.selected}`"
     variant="flat"
+    :ripple="false"
     class="siteCard"
     :class="{
       selectedCard: site.selected,
@@ -155,7 +150,7 @@ const selectingSite = async (e: boolean) => {
           cols="1"
         >
           <v-checkbox-btn
-            :model-value="selectSite || site.selected"
+            :model-value="site.selected"
             density="compact"
             color="#29B6F6"
             hide-details
@@ -183,7 +178,7 @@ const selectingSite = async (e: boolean) => {
         <span class="site-model-info-label">Date Range:</span><span class=" ml-1 site-model-dates"> {{ timeRangeFormat({min: site.startDate, max: site.endDate }) }} </span>
       </v-row>
       <v-row
-        v-if="!localSite.proposal && selectedSite"
+        v-if="!localSite.proposal && site.selectedSite"
         dense
         justify="center"
         align="center"
@@ -192,12 +187,12 @@ const selectingSite = async (e: boolean) => {
           Score:
         </div>
         <div class="site-model-data-label">
-          {{ selectedSite.score.min.toFixed(2) }} to {{ selectedSite.score.max.toFixed(2) }}
+          {{ site.selectedSite.score.min.toFixed(2) }} to {{ site.selectedSite.score.max.toFixed(2) }}
         </div>
         <v-spacer />
       </v-row>
       <v-row
-        v-if="!localSite.proposal && selectedSite"
+        v-if="!localSite.proposal && site.selectedSite"
 
         dense
         justify="center"
@@ -207,7 +202,7 @@ const selectingSite = async (e: boolean) => {
           Average:
         </div>
         <div class="site-model-data-label">
-          {{ selectedSite.score.average.toFixed(2) }}
+          {{ site.selectedSite.score.average.toFixed(2) }}
         </div>
         <v-spacer />
       </v-row>
@@ -264,12 +259,12 @@ const selectingSite = async (e: boolean) => {
           </span>
         </v-tooltip>
         <image-toggle
-          v-else-if="!localSite.filename && selectedSite"
+          v-else-if="!localSite.filename && site.selectedSite"
           :site-id="localSite.id"
           :site-name="localSite.name"
           :has-images="hasImages"
           :images-active="imagesActive"
-          @site-toggled="hasImages && toggleSatelliteImages(selectedSite)"
+          @site-toggled="hasImages && toggleSatelliteImages(site.selectedSite)"
         />
         <v-spacer />
         <v-tooltip 
@@ -363,8 +358,8 @@ const selectingSite = async (e: boolean) => {
         </div>
       </v-row>
       <ImageBrowser
-        v-if="!localSite.proposal && selectedSite !== undefined"
-        :site-overview="selectedSite"
+        v-if="!localSite.proposal && site.selectedSite !== undefined"
+        :site-overview="site.selectedSite"
       />
     </v-card-text>
   </v-card>

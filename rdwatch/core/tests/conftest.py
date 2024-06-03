@@ -10,9 +10,11 @@ import numpy as np
 import pytest
 from geojson.utils import generate_random as generate_random_geojson
 from ninja.testing import TestClient
+from ninja.testing.client import NinjaResponse
 from PIL import Image
 from pydantic import BaseModel
 
+from django.conf import settings
 from django.contrib.gis.geos import GEOSGeometry, MultiPolygon, Polygon
 from django.core.files.base import ContentFile
 from django.core.management import call_command
@@ -30,6 +32,23 @@ if TYPE_CHECKING:
 _TEST_REGION_BBOX = [-79.762152, 40.496103, -71.856214, 45.01585]
 
 
+class AuthenticatedTestClient(TestClient):
+    # Custom ninja test client that automatically populates the API key
+    # for model run ingest endpoints
+    def request(
+        self,
+        method: str,
+        path: str,
+        data: dict = ...,
+        json: Any = None,
+        **request_params: Any,
+    ) -> NinjaResponse:
+        request_params['headers'] = {
+            'X-RDWATCH-API-KEY': settings.MODEL_RUN_API_KEY,
+        }
+        return super().request(method, path, data, json, **request_params)
+
+
 @pytest.fixture(scope='session')
 def django_db_setup(django_db_setup, django_db_blocker: _DatabaseBlocker) -> None:
     with django_db_blocker.unblock():
@@ -45,7 +64,7 @@ def test_client(session_mocker) -> TestClient:
         'ninja.security.django_auth.authenticate',
         return_value=True,
     )
-    return TestClient(router_or_app=api)
+    return AuthenticatedTestClient(router_or_app=api)
 
 
 @pytest.fixture

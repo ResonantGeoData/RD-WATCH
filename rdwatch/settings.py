@@ -242,6 +242,19 @@ class DevelopmentConfiguration(BaseConfiguration):
         return super().INTERNAL_IPS + ['127.0.0.1']
 
 
+# Based on
+# https://github.com/kitware-resonant/django-composed-configuration/blob/master/composed_configuration/_configuration.py#L65
+class TestingConfiguration(BaseConfiguration):
+    SECRET_KEY = 'testingsecret'
+
+    # Testing will add 'testserver' to ALLOWED_HOSTS
+    ALLOWED_HOSTS: list[str] = []
+
+    MINIO_STORAGE_MEDIA_BUCKET_NAME = 'test-django-storage'
+
+    # Testing will set EMAIL_BACKEND to use the memory backend
+
+
 class ProductionConfiguration(BaseConfiguration):
     SECRET_KEY = values.Value(environ_required=True, environ_prefix=_ENVIRON_PREFIX)
 

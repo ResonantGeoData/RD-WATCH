@@ -20,7 +20,10 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v4
         with:
-          fetch-tags: true
+          # Don't fetch tags if this is a tag event.
+          # actions/checkout fails if this is true and the action
+          # triggers on a tag event.
+          fetch-tags: github.ref_type != 'tag'
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v3
       - name: Login to GHCR

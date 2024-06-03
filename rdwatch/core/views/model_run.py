@@ -5,8 +5,10 @@ from celery.result import AsyncResult
 from ninja import Field, FilterSchema, Query, Schema
 from ninja.pagination import PageNumberPagination, RouterPaginated, paginate
 from ninja.schema import validator
+from ninja.security import HttpBasicAuth, django_auth
 from pydantic import UUID4, constr  # type: ignore
 
+from django.contrib.auth.models import User
 from django.contrib.postgres.aggregates import JSONBAgg
 from django.core.cache import cache
 from django.db import transaction
@@ -49,6 +51,14 @@ from rdwatch.core.views.performer import PerformerSchema
 from rdwatch.core.views.site_observation import GenerateImagesSchema
 
 router = RouterPaginated()
+
+
+class ModelRunAuth(HttpBasicAuth):
+    def authenticate(self, request: HttpRequest, username: str, password: str):
+        user = User.objects.filter(username=username).first()
+        if user is None or not user.check_password(password):
+            return None
+        return user
 
 
 class ModelRunFilterSchema(FilterSchema):
@@ -314,7 +324,12 @@ class ModelRunPagination(PageNumberPagination):
         return model_runs
 
 
-@router.post('/', response={200: ModelRunDetailSchema}, exclude_none=True)
+@router.post(
+    '/',
+    response={200: ModelRunDetailSchema},
+    exclude_none=True,
+    auth=[ModelRunAuth(), django_auth],
+)
 def create_model_run(
     request: HttpRequest,
     model_run_data: ModelRunWriteSchema,
@@ -379,6 +394,7 @@ def get_model_run(request: HttpRequest, id: UUID4):
 @router.post(
     '/{model_run_id}/site-model/',
     response={201: UUID4},
+    auth=[ModelRunAuth(), django_auth],
 )
 def post_site_model(
     request: HttpRequest,
@@ -393,6 +409,7 @@ def post_site_model(
 @router.post(
     '/{model_run_id}/region-model/',
     response={201: list[UUID4]},
+    auth=[ModelRunAuth(), django_auth],
 )
 def post_region_model(
     request: HttpRequest,

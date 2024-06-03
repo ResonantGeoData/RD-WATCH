@@ -27,7 +27,10 @@ class BaseConfiguration(Configuration):
 
     # The `/accounts/*` endpoints are the only endpoints that should *not*
     # require authentication to access
-    LOGIN_REQUIRED_IGNORE_PATHS = [r'/accounts/']
+    LOGIN_REQUIRED_IGNORE_PATHS = [
+        r'/accounts/',  # allow unauthenticated access to the accounts endpoints
+        r'/api/',  # ninja will handle authentication for the REST API
+    ]
 
     SAM_CHECKPOINT_MODEL = values.PathValue(
         '/data/SAM/sam_vit_h_4b8939.pth',

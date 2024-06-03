@@ -267,11 +267,9 @@ export const buildSourceFilter = (timestamp: number, modelRunIds: string[], rand
   const results: Record<string, SourceSpecification> = {};
   modelRunIds.forEach((id) => {
     const source = `vectorTileSource_${id}`;
-    const additionalOptions = Object.entries({randomKey, year});
-    const additionalOptionsString = additionalOptions.map(([key, value]) => `${key}=${value}`).join('&')
     results[source] = {
       type: "vector",
-      tiles: [`${urlRoot}${ApiService.getApiPrefix()}/model-runs/${id}/vector-tile/{z}/{x}/{y}.pbf/?${additionalOptionsString}`],
+      tiles: [`${urlRoot}${ApiService.getApiPrefix()}/model-runs/${id}/vector-tile/{z}/{x}/{y}.pbf/?${randomKey}`],
       minzoom: 0,
       maxzoom: 14,
     };

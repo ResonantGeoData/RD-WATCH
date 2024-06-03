@@ -605,12 +605,27 @@ def vector_tile(
                         Q(originator='te') | Q(originator='iMERIT'),
                         then=Subquery(
                             EvaluationBroadAreaSearchDetection.objects.filter(
-                                evaluation_run_uuid=evaluation_run_uuid,
-                                activity_type='overall',
-                                rho=0.5,
-                                tau=0.2,
-                                min_confidence_score=0.0,
-                                site_truth=OuterRef('base_site_id'),
+                                Q(evaluation_run_uuid=evaluation_run_uuid)
+                                & Q(activity_type='overall')
+                                & Q(rho=0.5)
+                                & Q(tau=0.2)
+                                & Q(min_confidence_score=0.0)
+                                & Q(site_truth=OuterRef('base_site_id'))
+                                & Q(
+                                    Q(min_spatial_distance_threshold__isnull=True)
+                                    | Q(min_spatial_distance_threshold=100.0)
+                                )
+                                & Q(
+                                    Q(central_spatial_distance_threshold__isnull=True)
+                                    | Q(central_spatial_distance_threshold=500.0)
+                                )
+                                & Q(max_spatial_distance_threshold__isnull=True)
+                                & Q(
+                                    Q(min_temporal_distance_threshold__isnull=True)
+                                    | Q(min_temporal_distance_threshold=730.0)
+                                )
+                                & Q(central_temporal_distance_threshold__isnull=True)
+                                & Q(max_temporal_distance_threshold__isnull=True)
                             ).values('color_code')
                         ),
                     ),
@@ -618,12 +633,27 @@ def vector_tile(
                         ~Q(originator='te') & ~Q(originator='iMERIT'),
                         then=Subquery(
                             EvaluationBroadAreaSearchProposal.objects.filter(
-                                evaluation_run_uuid=evaluation_run_uuid,
-                                activity_type='overall',
-                                rho=0.5,
-                                tau=0.2,
-                                min_confidence_score=0.0,
-                                site_proposal=OuterRef('base_site_id'),
+                                Q(evaluation_run_uuid=evaluation_run_uuid)
+                                & Q(activity_type='overall')
+                                & Q(rho=0.5)
+                                & Q(tau=0.2)
+                                & Q(min_confidence_score=0.0)
+                                & Q(site_proposal=OuterRef('base_site_id'))
+                                & Q(
+                                    Q(min_spatial_distance_threshold__isnull=True)
+                                    | Q(min_spatial_distance_threshold=100.0)
+                                )
+                                & Q(
+                                    Q(central_spatial_distance_threshold__isnull=True)
+                                    | Q(central_spatial_distance_threshold=500.0)
+                                )
+                                & Q(max_spatial_distance_threshold__isnull=True)
+                                & Q(
+                                    Q(min_temporal_distance_threshold__isnull=True)
+                                    | Q(min_temporal_distance_threshold=730.0)
+                                )
+                                & Q(central_temporal_distance_threshold__isnull=True)
+                                & Q(max_temporal_distance_threshold__isnull=True)
                             ).values('color_code')
                         ),
                     ),
@@ -635,6 +665,124 @@ def vector_tile(
             site_sql,
             site_params,
         ) = site_queryset.query.sql_with_params()
+
+        sites_points_queryset = (
+            Site.objects.filter(evaluation_run_uuid=evaluation_run_uuid)
+            .alias(
+                geomfromtext=Func(
+                    'point_geometry',
+                    4326,
+                    function='ST_GeomFromText',
+                    output_field=Field(),
+                )
+            )
+            .alias(transformedgeom=transform)
+            .alias(base_site_id=F('site_id'))
+            .filter(intersects)
+            .values()
+            .annotate(
+                id=F('base_site_id'),
+                mvtgeom=mvtgeom,
+                configuration_id=F('evaluation_run_uuid'),
+                configuration_name=ExpressionWrapper(
+                    Concat(
+                        Value('Eval '),
+                        F('evaluation_run_uuid__evaluation_number'),
+                        Value(' '),
+                        F('evaluation_run_uuid__evaluation_run_number'),
+                        Value(' '),
+                        F('evaluation_run_uuid__performer'),
+                    ),
+                    output_field=CharField(),
+                ),
+                label=Case(
+                    When(
+                        Q(status_annotated__isnull=False),
+                        Lower(Replace('status_annotated', Value(' '), Value('_'))),
+                    ),
+                    default=Value('unknown'),
+                ),  # This needs a version to be scoring coloring,
+                # but that needs some coordination with kitware
+                timestamp=ExtractEpoch('start_date'),
+                timemin=ExtractEpoch('start_date'),
+                timemax=ExtractEpoch('end_date'),
+                performer_id=F('originator'),
+                performer_name=F('originator'),
+                region=F('region_id'),
+                groundtruth=Case(
+                    When(
+                        Q(originator='te') | Q(originator='iMERIT'),
+                        True,
+                    ),
+                    default=False,
+                ),
+                site_polygon=Value(False, output_field=BooleanField()),
+                site_number=Substr(F('site_id'), 9),  # pos is 1 indexed
+                color_code=Case(
+                    When(
+                        Q(originator='te') | Q(originator='iMERIT'),
+                        then=Subquery(
+                            EvaluationBroadAreaSearchDetection.objects.filter(
+                                Q(evaluation_run_uuid=evaluation_run_uuid)
+                                & Q(activity_type='overall')
+                                & Q(rho=0.5)
+                                & Q(tau=0.2)
+                                & Q(min_confidence_score=0.0)
+                                & Q(site_truth=OuterRef('base_site_id'))
+                                & Q(
+                                    Q(min_spatial_distance_threshold__isnull=True)
+                                    | Q(min_spatial_distance_threshold=100.0)
+                                )
+                                & Q(
+                                    Q(central_spatial_distance_threshold__isnull=True)
+                                    | Q(central_spatial_distance_threshold=500.0)
+                                )
+                                & Q(max_spatial_distance_threshold__isnull=True)
+                                & Q(
+                                    Q(min_temporal_distance_threshold__isnull=True)
+                                    | Q(min_temporal_distance_threshold=730.0)
+                                )
+                                & Q(central_temporal_distance_threshold__isnull=True)
+                                & Q(max_temporal_distance_threshold__isnull=True)
+                            ).values('color_code')
+                        ),
+                    ),
+                    When(
+                        ~Q(originator='te') & ~Q(originator='iMERIT'),
+                        then=Subquery(
+                            EvaluationBroadAreaSearchProposal.objects.filter(
+                                Q(evaluation_run_uuid=evaluation_run_uuid)
+                                & Q(activity_type='overall')
+                                & Q(rho=0.5)
+                                & Q(tau=0.2)
+                                & Q(min_confidence_score=0.0)
+                                & Q(site_proposal=OuterRef('base_site_id'))
+                                & Q(
+                                    Q(min_spatial_distance_threshold__isnull=True)
+                                    | Q(min_spatial_distance_threshold=100.0)
+                                )
+                                & Q(
+                                    Q(central_spatial_distance_threshold__isnull=True)
+                                    | Q(central_spatial_distance_threshold=500.0)
+                                )
+                                & Q(max_spatial_distance_threshold__isnull=True)
+                                & Q(
+                                    Q(min_temporal_distance_threshold__isnull=True)
+                                    | Q(min_temporal_distance_threshold=730.0)
+                                )
+                                & Q(central_temporal_distance_threshold__isnull=True)
+                                & Q(max_temporal_distance_threshold__isnull=True)
+                            ).values('color_code')
+                        ),
+                    ),
+                    default=Value(None),  # Set an appropriate default value here
+                ),
+            )
+        )
+        (
+            sites_points_sql,
+            sites_points_params,
+        ) = sites_points_queryset.query.sql_with_params()
 
         observations_queryset = (
             Observation.objects.filter(
@@ -716,12 +864,18 @@ def vector_tile(
         sql = f"""
             WITH
                 sites AS ({site_sql}),
+                sites_points AS ({sites_points_sql}),
                 observations AS ({observations_sql}),
                 regions AS ({region_sql})
             SELECT(
                 (
                     SELECT ST_AsMVT(sites.*, %s, 4096, 'mvtgeom')
                     FROM sites
+                )
+                ||
+                (
+                    SELECT ST_AsMVT(sites_points.*, %s, 4096, 'mvtgeom')
+                    FROM sites_points
                 )
                 ||
                 (
@@ -737,10 +891,12 @@ def vector_tile(
         """  # noqa: E501
         params = (
             site_params
+            + sites_points_params
             + observations_params
             + region_params
             + (
                 f'sites-{evaluation_run_uuid}',
+                f'sites_points-{evaluation_run_uuid}',
                 f'observations-{evaluation_run_uuid}',
                 f'regions-{evaluation_run_uuid}',
             )

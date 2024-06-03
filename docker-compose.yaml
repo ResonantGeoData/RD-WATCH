@@ -45,8 +45,30 @@ services:
     ports:
       - 5433:5432
 
+  airflow:
+    build:
+      context: dev/
+      dockerfile: airflow.Dockerfile
+    volumes:
+      - airflow-data:/opt/airflow
+      - type: bind
+        source: ${PWD}/dev/airflow_sample_dag.py
+        target: /opt/airflow/dags/airflow_sample_dag.py
+    environment:
+      AIRFLOW_HOME: "/opt/airflow/"
+    command: ["airflow", "standalone"]
+    ports:
+      - 8002:8080
+    healthcheck:
+      test: ["CMD", "curl", "--fail", "http://localhost:8080/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+      start_period: 30s
+
 volumes:
   postgresql-scoring-data:
   postgresql-data:
   minio-data:
   redis-data:
+  airflow-data:

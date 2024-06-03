@@ -20,6 +20,7 @@ export type ModelRun = {
   created: string;
   expiration_time: string;
   proposal?: null | 'PROPOSAL' | 'APPROVED';
+  groundTruthLink?: string;
   adjudicated?: {
     proposed: number,
     other: number,

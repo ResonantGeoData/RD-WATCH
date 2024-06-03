@@ -20,3 +20,4 @@ export type { Eval } from "./models/Eval";
 
 export type { QueryArguments } from "./services/ApiService";
 export { ApiService } from "./services/ApiService";
+export { SmartflowService } from "./services/SmartflowService";

@@ -66,6 +66,8 @@ export interface SiteInfo {
     timestamp: number;
     filename?: string | null;
     downloading: boolean;
+    groundtruth?: boolean;
+    originator?: string;
 }
 export interface SiteList {
   region: Region;
@@ -126,6 +128,41 @@ export interface SiteDetails {
   title: string;
   timemin: number;
   timemax: number;
+}
+
+export interface SMARTSiteFeatureCache {
+  originator_file?: string;
+  timestamp?: string;
+  commit_hash?: string;
+}
+export interface SMARTSiteFeature {
+  type: 'Feature';
+  properties: {
+  type: 'site';
+  region_id: string;
+  site_id: string;
+  version: string;
+  mgrs: string;
+  status: string;
+  start_date: string | null;
+  end_date: string | null;
+  model_content: 'annotation' | 'proposed' | 'update';
+  originator: string;
+  comments: string;
+  // Optional fields
+  score?: number;
+  validated?: boolean;
+  cache?: SMARTSiteFeatureCache;
+  predicted_phase_transition?: 'Active Construction' | 'Post Construction';
+  predicted_phase_transition_date?: string;
+  misc_info?: Record<string, any>;
+  performer_cache?: Record<string, any>;
+  }
+  geometry: GeoJSON.Geometry;
+}
+export interface SiteModelUpload {
+  type: 'FeatureCollection',
+  features: SMARTSiteFeature[];
 }
 
 type ApiPrefix = '/api' | '/api/scoring';
@@ -480,7 +517,7 @@ export class ApiService {
     const bboxstr = `${minY},${minX},${maxY},${maxX}`;
     return __request(OpenAPI, {
       method: "GET",
-      url: "/api/satellite-image/all-timestamps/",
+      url: "/api/satellite-image/all-timestamps",
       query: { constellation, level, spectrum, start_timestamp: startTime, end_timestamp: endTime, bbox: bboxstr,
       }
     });
@@ -608,4 +645,19 @@ export class ApiService {
     })
   }
 
+  public static addSiteModel(
+    modelRunId: string,
+    siteModel: SiteModelUpload
+  ): CancelablePromise<boolean> {
+    return __request(OpenAPI, {
+      method: "POST",
+      url: `${this.getApiPrefix()}/model-runs/{id}/site-model/`,
+      path: {
+        id: modelRunId,
+      },
+      body: {
+        ...siteModel
+      }
+    });
+  }
 }

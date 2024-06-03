@@ -265,14 +265,13 @@ const buildObservationFill = (
 // Nudge is used to refresh vector tiles when modified by proposal view
 export const buildSourceFilter = (timestamp: number, modelRunIds: string[], randomKey='') => {
   const results: Record<string, SourceSpecification> = {};
-  const year = new Date(timestamp * 1000).getFullYear();
   modelRunIds.forEach((id) => {
     const source = `vectorTileSource_${id}`;
     const additionalOptions = Object.entries({randomKey, year});
     const additionalOptionsString = additionalOptions.map(([key, value]) => `${key}=${value}`).join('&')
     results[source] = {
       type: "vector",
-      tiles: [`${urlRoot}${ApiService.getApiPrefix()}/model-runs/${id}/vector-tile/{z}/{x}/{y}.pbf?${additionalOptionsString}`],
+      tiles: [`${urlRoot}${ApiService.getApiPrefix()}/model-runs/${id}/vector-tile/{z}/{x}/{y}.pbf/?${additionalOptionsString}`],
       minzoom: 0,
       maxzoom: 14,
     };

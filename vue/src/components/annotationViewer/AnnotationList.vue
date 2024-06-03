@@ -140,7 +140,6 @@ watch(
     getSiteProposals();
   }
 );
-getSiteProposals();
 watch(clickedInfo, () => {
   if (clickedInfo.value.siteId.length) {
     const found = modifiedList.value.find(
@@ -188,7 +187,6 @@ watch(() => props.selectedEval, () => {
 watch(() => hoveredInfo.value.siteId, () => {
   if (hoveredInfo.value.siteId.length && controlKeyPressed.value) {
     const id = hoveredInfo.value.siteId[0];
-    console.log('scroll to id');
     scrollVirtualList(id)
   }
 });
@@ -204,20 +202,20 @@ const toggleControlKey = (event: KeyboardEvent) => {
 onMounted(() => {
   window.addEventListener('keydown', toggleControlKey);
   window.addEventListener('keyup', toggleControlKey);
+  getSiteProposals();
 });
 
 // Remove event listener when the component is unmounted
 onUnmounted(() => {
   window.removeEventListener('keydown', toggleControlKey);
   window.removeEventListener('keyup', toggleControlKey);
+  state.selectedImageSite = undefined;
 });
 const scrollVirtualList = (id: string, itemHeight = 105) => {
   if (virtualList.value) {
     const index = modifiedList.value.findIndex((item) => item.id === id)
-    console.log(`Found: index: ${index}`);
     if (index !== -1) {
       const height = (itemHeight * index) - (itemHeight * 1.25)
-      console.log(height);
       virtualList.value.$el.scrollTo({top: height, left: 0, behavior: 'smooth' });
     }
   }

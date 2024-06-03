@@ -26,6 +26,7 @@ export interface MapFilters {
   }
   randomKey?: string;
   editingPolygonSiteId?: string | null; //currently editing a polygon
+  addingSitePolygon?: boolean;
 }
 
 export interface SatelliteTimeStamp {
@@ -191,6 +192,9 @@ export const state = reactive<{
   selectedImageSite?: SelectedImageSite | null;
   // Tooltip Display
   toolTipDisplay: Record<string, boolean>;
+  // GroundTruthLinks - regular model runs list of ground truths that can be opened
+  // KeyValue store of the sourceModelRun UID and the groundTruth UID
+  groundTruthLinks: Record<string, string>,
 }>({
   errorText: '',
   timestamp: Math.floor(Date.now() / 1000),
@@ -259,7 +263,8 @@ export const state = reactive<{
     Time: true,
     Score: false,
     Area: false,
-  }
+  },
+  groundTruthLinks: {},
 });
 
 export const filteredSatelliteTimeList = computed(() => {

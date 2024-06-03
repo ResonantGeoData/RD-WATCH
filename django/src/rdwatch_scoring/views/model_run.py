@@ -659,6 +659,7 @@ def get_proposals_query(annotation_proposal_set_uuid: UUID4):
 
 
 def get_sites_query(model_run_id: UUID4):
+    performer = EvaluationRun.objects.get(pk=model_run_id).performer
     site_list = Site.objects.filter(evaluation_run_uuid=model_run_id).aggregate(
         sites=JSONBAgg(
             JSONObject(
@@ -672,15 +673,17 @@ def get_sites_query(model_run_id: UUID4):
                         output_field=GeometryField(),
                     )
                 ),
-                # images='siteimage_count',
-                # S2='S2',
-                # WV='WV',
-                # L8='L8',
+                groundtruth=Case(
+                    When(
+                        ~Q(originator=performer)
+                        & (Q(originator='te') | Q(originator='iMERIT')),
+                        True,
+                    ),
+                    default=False,
+                ),
                 start_date=ExtractEpoch('start_date'),
                 end_date=ExtractEpoch('end_date'),
-                # status='status',
-                # filename='cache_originator_file',
-                # downloading='downloading',
+                originator=F('originator'),
             ),
             ordering='site_id',
             default=[],

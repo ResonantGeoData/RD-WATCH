@@ -27,13 +27,6 @@ RDWATCH (**R**esonantGeo**D**ata **WATCH**) is a modern web application that off
 
 -  **Exporting Capabilities**: Easily export model outputs and imagery, facilitating collaboration and sharing in formats like GIF and GeoJSON.
 
-## Getting Started
-
-To install the CLI:
-```bash
-pip  install  rdwatch-cli  --find-links  https://resonantgeodata.github.io/RD-WATCH/
-```
-
 
 ## Documentation
 

@@ -179,6 +179,12 @@ const selectSite = async (selectedSite: SiteDisplay, deselect= false) => {
   }
   const updatedList: SiteDisplay[] = [];
   baseModifiedList.value.forEach((item) => {
+    if (selectedSite.id === item.id && deselect) {
+      item.selectedSite = undefined;
+      item.selected = false;
+      updatedList.push(item);
+      return;
+    }
     item.selectedSite = state.selectedSites.find((selected) => selected.id === item.id)
     item.selected = !!item.selectedSite;
     updatedList.push(item);

@@ -177,6 +177,9 @@ class BaseConfiguration(Configuration):
         environ_required=False,
         environ_prefix=_ENVIRON_PREFIX,
     )
+    MODEL_RUN_API_KEY = values.SecretValue(
+        environ_required=True, environ_prefix=_ENVIRON_PREFIX
+    )
 
     # django-celery-results configuration
     CELERY_RESULT_BACKEND = 'django-db'

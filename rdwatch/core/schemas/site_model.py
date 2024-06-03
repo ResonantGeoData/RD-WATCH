@@ -10,7 +10,7 @@ from django.contrib.gis.gdal import GDALException
 from django.contrib.gis.geos import GEOSGeometry
 from django.contrib.gis.geos.error import GEOSException
 
-from rdwatch.models import Performer
+from rdwatch.core.models import Performer
 
 CurrentPhase: TypeAlias = Literal[
     'No Activity',

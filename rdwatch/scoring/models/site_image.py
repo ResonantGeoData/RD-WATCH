@@ -1,7 +1,7 @@
 from django.contrib.postgres.indexes import GistIndex
 from django.db import models
 
-from rdwatch.models.site_image import BaseSiteImage
+from rdwatch.core.models.site_image import BaseSiteImage
 
 
 class SiteImage(BaseSiteImage):

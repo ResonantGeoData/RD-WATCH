@@ -4,7 +4,7 @@ from ninja import Router, Schema
 
 from django.http import HttpRequest
 
-from rdwatch_smartflow.utils import SmartFlowClient
+from rdwatch.smartflow.utils import SmartFlowClient
 
 router = Router()
 

@@ -12,8 +12,8 @@ from django.db.models.functions import JSONObject  # type: ignore
 from django.http import HttpRequest, HttpResponse
 from django.shortcuts import get_object_or_404
 
-from rdwatch.models import SiteEvaluation, SiteEvaluationTracking, lookups
-from rdwatch.schemas import SiteEvaluationRequest
+from rdwatch.core.models import SiteEvaluation, SiteEvaluationTracking, lookups
+from rdwatch.core.schemas import SiteEvaluationRequest
 
 router = Router()
 

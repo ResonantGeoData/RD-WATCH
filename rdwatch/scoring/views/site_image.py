@@ -11,9 +11,9 @@ from django.db.models.functions import JSONObject
 from django.http import HttpRequest
 from django.shortcuts import get_object_or_404
 
-from rdwatch.db.functions import BoundingBox, ExtractEpoch
-from rdwatch.views.site_image import SiteImageResponse
-from rdwatch_scoring.models import (
+from rdwatch.core.db.functions import BoundingBox, ExtractEpoch
+from rdwatch.core.views.site_image import SiteImageResponse
+from rdwatch.scoring.models import (
     AnnotationProposalObservation,
     AnnotationProposalSite,
     Observation,

@@ -21,8 +21,8 @@ from django.db.models import (
 )
 from django.http import Http404, HttpRequest, HttpResponse
 
-from rdwatch.db.functions import ExtractEpoch, GroupExcludeRowRange
-from rdwatch.models import ModelRun, Region, SiteEvaluation, SiteObservation
+from rdwatch.core.db.functions import ExtractEpoch, GroupExcludeRowRange
+from rdwatch.core.models import ModelRun, Region, SiteEvaluation, SiteObservation
 
 from .model_run import router
 

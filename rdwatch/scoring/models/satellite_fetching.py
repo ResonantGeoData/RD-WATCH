@@ -1,6 +1,6 @@
 from django.db import models
 
-from rdwatch.models.satellite_fetching import BaseSatelliteFetching
+from rdwatch.core.models.satellite_fetching import BaseSatelliteFetching
 
 
 class SatelliteFetching(BaseSatelliteFetching):

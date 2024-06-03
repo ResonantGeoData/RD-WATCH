@@ -2,8 +2,8 @@ from ninja.pagination import RouterPaginated
 
 from django.http import HttpRequest
 
-from rdwatch.views.performer import PerformerSchema
-from rdwatch_scoring.models import EvaluationRun
+from rdwatch.core.views.performer import PerformerSchema
+from rdwatch.scoring.models import EvaluationRun
 
 router = RouterPaginated()
 

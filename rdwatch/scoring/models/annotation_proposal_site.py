@@ -1,6 +1,6 @@
 from django.contrib.gis.db import models
 
-from rdwatch_scoring.models import AnnotationProposalSet, Region
+from rdwatch.scoring.models import AnnotationProposalSet, Region
 
 
 class AnnotationProposalSite(models.Model):

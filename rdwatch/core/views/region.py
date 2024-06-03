@@ -3,7 +3,7 @@ from ninja.pagination import PageNumberPagination, paginate
 
 from django.http import HttpRequest
 
-from rdwatch.models import Region
+from rdwatch.core.models import Region
 
 router = Router()
 

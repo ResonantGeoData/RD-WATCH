@@ -27,8 +27,8 @@ from django.db.models.functions import Cast, Concat, Lower, Replace, Substr
 from django.http import HttpRequest, HttpResponse
 from django.shortcuts import get_object_or_404
 
-from rdwatch.db.functions import ExtractEpoch, GroupExcludeRowRange
-from rdwatch_scoring.models import (
+from rdwatch.core.db.functions import ExtractEpoch, GroupExcludeRowRange
+from rdwatch.scoring.models import (
     AnnotationGroundTruthObservation,
     AnnotationGroundTruthSite,
     AnnotationProposalObservation,

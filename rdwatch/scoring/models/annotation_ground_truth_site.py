@@ -1,6 +1,6 @@
 from django.contrib.gis.db import models
 
-from rdwatch_scoring.models import Region
+from rdwatch.scoring.models import Region
 
 
 class AnnotationGroundTruthSite(models.Model):

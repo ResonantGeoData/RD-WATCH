@@ -6,8 +6,8 @@ from django.db.models.functions import JSONObject
 from django.http import HttpRequest
 from django.shortcuts import get_object_or_404
 
-from rdwatch.db.functions import BoundingBox, ExtractEpoch
-from rdwatch.models import SatelliteFetching, SiteEvaluation
+from rdwatch.core.db.functions import BoundingBox, ExtractEpoch
+from rdwatch.core.models import SatelliteFetching, SiteEvaluation
 
 router = Router()
 

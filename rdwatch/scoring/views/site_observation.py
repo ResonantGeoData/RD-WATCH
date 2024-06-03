@@ -16,9 +16,9 @@ from django.db.models.functions import Coalesce, JSONObject
 from django.http import Http404, HttpRequest
 from django.shortcuts import get_object_or_404
 
-from rdwatch.db.functions import BoundingBox, ExtractEpoch
-from rdwatch.views.site_observation import SiteObservationsListSchema
-from rdwatch_scoring.models import (
+from rdwatch.core.db.functions import BoundingBox, ExtractEpoch
+from rdwatch.core.views.site_observation import SiteObservationsListSchema
+from rdwatch.scoring.models import (
     AnnotationProposalObservation,
     AnnotationProposalSite,
     Observation,
@@ -26,7 +26,7 @@ from rdwatch_scoring.models import (
     Site,
     SiteImage,
 )
-from rdwatch_scoring.tasks import generate_site_images
+from rdwatch.scoring.tasks import generate_site_images
 
 logger = logging.getLogger(__name__)
 

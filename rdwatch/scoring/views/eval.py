@@ -4,7 +4,7 @@ from django.db.models import CharField, Value
 from django.db.models.functions import Concat
 from django.http import HttpRequest
 
-from rdwatch_scoring.models import EvaluationRun
+from rdwatch.scoring.models import EvaluationRun
 
 router = RouterPaginated()
 

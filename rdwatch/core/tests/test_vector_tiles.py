@@ -5,8 +5,8 @@ from ninja.testing import TestClient
 
 from django.core.cache import cache
 
-from rdwatch.models import ModelRun
-from rdwatch.views.vector_tile import _get_vector_tile_cache_key
+from rdwatch.core.models import ModelRun
+from rdwatch.core.views.vector_tile import _get_vector_tile_cache_key
 
 
 @pytest.mark.django_db

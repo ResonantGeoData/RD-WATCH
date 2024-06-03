@@ -10,10 +10,10 @@ from django.db.models.functions import JSONObject  # type: ignore
 from django.http import Http404, HttpRequest
 from django.shortcuts import get_object_or_404
 
-from rdwatch.db.functions import BoundingBox, ExtractEpoch
-from rdwatch.models import SiteEvaluation, SiteImage, SiteObservation
-from rdwatch.schemas.common import BoundingBoxSchema, TimeRangeSchema
-from rdwatch.tasks import generate_image_embedding
+from rdwatch.core.db.functions import BoundingBox, ExtractEpoch
+from rdwatch.core.models import SiteEvaluation, SiteImage, SiteObservation
+from rdwatch.core.schemas.common import BoundingBoxSchema, TimeRangeSchema
+from rdwatch.core.tasks import generate_image_embedding
 
 router = Router()
 

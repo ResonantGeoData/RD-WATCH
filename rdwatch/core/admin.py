@@ -1,6 +1,6 @@
 from django.contrib import admin
 
-from rdwatch.models import (
+from rdwatch.core.models import (
     ModelRun,
     Performer,
     Region,

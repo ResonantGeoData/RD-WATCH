@@ -1,7 +1,7 @@
 from django.urls import path
 
 from rdwatch import views
-from rdwatch.api import api
+from rdwatch.core.api import api
 
 urlpatterns = [
     path('', api.urls),

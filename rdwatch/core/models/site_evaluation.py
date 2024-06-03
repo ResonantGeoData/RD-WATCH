@@ -9,11 +9,11 @@ from django.contrib.gis.geos import MultiPolygon
 from django.contrib.postgres.indexes import GistIndex
 from django.db import models, transaction
 
-from rdwatch.models import ModelRun, lookups
-from rdwatch.models.region import get_or_create_region
-from rdwatch.schemas import RegionModel, SiteModel
-from rdwatch.schemas.region_model import RegionFeature, SiteSummaryFeature
-from rdwatch.schemas.site_model import SiteFeature
+from rdwatch.core.models import ModelRun, lookups
+from rdwatch.core.models.region import get_or_create_region
+from rdwatch.core.schemas import RegionModel, SiteModel
+from rdwatch.core.schemas.region_model import RegionFeature, SiteSummaryFeature
+from rdwatch.core.schemas.site_model import SiteFeature
 
 
 class SiteEvaluation(models.Model):
@@ -99,7 +99,7 @@ class SiteEvaluation(models.Model):
     def bulk_create_from_site_model(
         cls, site_model: SiteModel, configuration: ModelRun
     ):
-        from rdwatch.models import SiteObservation
+        from rdwatch.core.models import SiteObservation
 
         site_feature = site_model.site_feature
         assert isinstance(site_feature.properties, SiteFeature)

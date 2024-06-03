@@ -29,24 +29,24 @@ from django.db.models.functions import Coalesce, JSONObject
 from django.http import Http404, HttpRequest, HttpResponse
 from django.shortcuts import get_object_or_404
 
-from rdwatch.db.functions import BoundingBox, BoundingBoxGeoJSON, ExtractEpoch
-from rdwatch.models import (
+from rdwatch.core.db.functions import BoundingBox, BoundingBoxGeoJSON, ExtractEpoch
+from rdwatch.core.models import (
     AnnotationExport,
     ModelRun,
     Performer,
     SatelliteFetching,
     SiteEvaluation,
 )
-from rdwatch.models.region import get_or_create_region
-from rdwatch.schemas import RegionModel, SiteModel
-from rdwatch.schemas.common import TimeRangeSchema
-from rdwatch.tasks import (
+from rdwatch.core.models.region import get_or_create_region
+from rdwatch.core.schemas import RegionModel, SiteModel
+from rdwatch.core.schemas.common import TimeRangeSchema
+from rdwatch.core.tasks import (
     cancel_generate_images_task,
     download_annotations,
     generate_site_images_for_evaluation_run,
 )
-from rdwatch.views.performer import PerformerSchema
-from rdwatch.views.site_observation import GenerateImagesSchema
+from rdwatch.core.views.performer import PerformerSchema
+from rdwatch.core.views.site_observation import GenerateImagesSchema
 
 router = RouterPaginated()
 

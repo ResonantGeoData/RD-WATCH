@@ -1,8 +1,8 @@
 import pytest
 from ninja.testing import TestClient
 
-from rdwatch.models import SiteEvaluation
-from rdwatch.views.site import SiteImageSiteDetailResponse
+from rdwatch.core.models import SiteEvaluation
+from rdwatch.core.views.site import SiteImageSiteDetailResponse
 
 
 @pytest.mark.django_db

@@ -13,8 +13,8 @@ from django.contrib.gis.geos import Polygon
 from django.core.files import File
 from django.db import transaction
 
-from rdwatch.celery import app
-from rdwatch.tasks import (
+from rdwatch.core.celery import app
+from rdwatch.core.tasks import (
     BaseTime,
     BboxScaleDefault,
     ToMeters,
@@ -22,15 +22,15 @@ from rdwatch.tasks import (
     is_inside_range,
     overrideImageSize,
 )
-from rdwatch.utils.images import (
+from rdwatch.core.utils.images import (
     fetch_boundbox_image,
     get_max_bbox,
     get_percent_black_pixels,
     get_range_captures,
     scale_bbox,
 )
-from rdwatch.utils.raster_tile import get_raster_bbox
-from rdwatch_scoring.models import (
+from rdwatch.core.utils.raster_tile import get_raster_bbox
+from rdwatch.scoring.models import (
     AnnotationProposalObservation,
     AnnotationProposalSet,
     AnnotationProposalSite,

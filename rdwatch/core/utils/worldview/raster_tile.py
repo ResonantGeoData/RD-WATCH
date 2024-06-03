@@ -2,7 +2,7 @@ import rasterio  # type: ignore
 from rio_tiler.io.rasterio import Reader
 from rio_tiler.utils import pansharpening_brovey
 
-from rdwatch.utils.worldview.satellite_captures import WorldViewCapture
+from rdwatch.core.utils.worldview.satellite_captures import WorldViewCapture
 
 
 def get_worldview_visual_tile(

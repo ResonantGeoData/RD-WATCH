@@ -2,7 +2,7 @@ from dataclasses import dataclass
 from datetime import datetime, timedelta
 from typing import cast
 
-from rdwatch.utils.worldview_processed.stac_search import worldview_search
+from rdwatch.core.utils.worldview_processed.stac_search import worldview_search
 
 
 @dataclass()

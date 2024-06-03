@@ -6,7 +6,7 @@ from pydantic import UUID4
 
 from django.http import HttpRequest
 
-from rdwatch.models import SatelliteFetching
+from rdwatch.core.models import SatelliteFetching
 
 router = Router()
 logger = logging.getLogger(__name__)

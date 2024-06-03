@@ -6,9 +6,9 @@ from django.contrib.gis.geos import MultiPolygon, Polygon
 from django.contrib.postgres.indexes import GistIndex
 from django.db import models
 
-from rdwatch.models import SiteEvaluation, lookups
-from rdwatch.schemas import SiteModel
-from rdwatch.schemas.site_model import ObservationFeature
+from rdwatch.core.models import SiteEvaluation, lookups
+from rdwatch.core.schemas import SiteModel
+from rdwatch.core.schemas.site_model import ObservationFeature
 
 
 class SiteObservation(models.Model):

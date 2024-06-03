@@ -6,7 +6,7 @@ from ninja import Field, Router, Schema
 
 from django.http import HttpRequest
 
-from rdwatch_smartflow.utils import SmartFlowClient
+from rdwatch.smartflow.utils import SmartFlowClient
 
 router = Router()
 
@@ -34,7 +34,7 @@ class ServerStatusSchema(Schema):
 
 @router.get('/', response=ServerStatusSchema)
 def get_status(request: HttpRequest):
-    from rdwatch.api import api
+    from rdwatch.core.api import api
 
     uptime = datetime.datetime.now() - SERVER_INSTANCE_EPOCH
     hostname = socket.gethostname()

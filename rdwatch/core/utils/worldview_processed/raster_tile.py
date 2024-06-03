@@ -6,7 +6,7 @@ import rasterio  # type: ignore
 from rio_tiler.io.rasterio import Reader
 from rio_tiler.utils import pansharpening_brovey
 
-from rdwatch.utils.worldview_processed.satellite_captures import (
+from rdwatch.core.utils.worldview_processed.satellite_captures import (
     WorldViewProcessedCapture,
 )
 

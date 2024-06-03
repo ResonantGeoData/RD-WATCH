@@ -3,7 +3,7 @@ from dataclasses import dataclass
 from datetime import datetime, timedelta
 from typing import Literal, cast
 
-from rdwatch.utils.worldview.stac_search import worldview_search
+from rdwatch.core.utils.worldview.stac_search import worldview_search
 
 logger = logging.getLogger(__name__)
 

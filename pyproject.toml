@@ -20,9 +20,7 @@ classifiers = [
   "Framework :: Django",
 ]
 packages = [
-  { include = "rdwatch", from = "src" },
-  { include = "rdwatch_scoring", from = "src"},
-  { include = "rdwatch_smartflow", from = "src"},
+  { include = "rdwatch" },
 ]
 
 [tool.poetry-dynamic-versioning]

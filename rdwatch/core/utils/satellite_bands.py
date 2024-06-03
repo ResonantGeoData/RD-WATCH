@@ -4,8 +4,8 @@ from dataclasses import dataclass
 from datetime import datetime, timedelta
 from typing import cast
 
-from rdwatch.models.lookups import CommonBand, ProcessingLevel
-from rdwatch.utils.stac_search import stac_search
+from rdwatch.core.models.lookups import CommonBand, ProcessingLevel
+from rdwatch.core.utils.stac_search import stac_search
 
 logger = logging.getLogger(__name__)
 

@@ -1,6 +1,6 @@
 from django.contrib.gis.db import models
 
-from rdwatch_scoring.models import Observation
+from rdwatch.scoring.models import Observation
 
 
 class ObservationComparison(models.Model):

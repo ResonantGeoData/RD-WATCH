@@ -16,8 +16,8 @@ from django.db.models.functions import JSONObject  # type: ignore
 from django.http import Http404, HttpRequest
 from django.shortcuts import get_object_or_404
 
-from rdwatch.db.functions import BoundingBox, ExtractEpoch
-from rdwatch.models import (
+from rdwatch.core.db.functions import BoundingBox, ExtractEpoch
+from rdwatch.core.models import (
     SatelliteFetching,
     SiteEvaluation,
     SiteImage,
@@ -25,9 +25,9 @@ from rdwatch.models import (
     SiteObservationTracking,
     lookups,
 )
-from rdwatch.schemas import SiteObservationRequest
-from rdwatch.schemas.common import BoundingBoxSchema, TimeRangeSchema
-from rdwatch.tasks import generate_site_images
+from rdwatch.core.schemas import SiteObservationRequest
+from rdwatch.core.schemas.common import BoundingBoxSchema, TimeRangeSchema
+from rdwatch.core.tasks import generate_site_images
 
 logger = logging.getLogger(__name__)
 

@@ -8,8 +8,8 @@ from django.db import transaction
 from django.http import Http404, HttpRequest
 from django.utils import timezone
 
-from rdwatch.schemas import SiteEvaluationRequest
-from rdwatch_scoring.models import AnnotationProposalSiteLog
+from rdwatch.core.schemas import SiteEvaluationRequest
+from rdwatch.scoring.models import AnnotationProposalSiteLog
 
 router = Router()
 

@@ -3,7 +3,7 @@ from ninja.pagination import PageNumberPagination, paginate
 
 from django.http import HttpRequest
 
-from rdwatch_scoring.models import EvaluationRun
+from rdwatch.scoring.models import EvaluationRun
 
 router = Router()
 

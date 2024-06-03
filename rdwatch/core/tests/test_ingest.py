@@ -3,7 +3,7 @@ from typing import Any
 import pytest
 from ninja.testing import TestClient
 
-from rdwatch.models import ModelRun, SiteEvaluation, SiteObservation
+from rdwatch.core.models import ModelRun, SiteEvaluation, SiteObservation
 
 
 @pytest.mark.django_db(databases=['default'])

@@ -17,11 +17,11 @@ from django.contrib.gis.geos import GEOSGeometry, MultiPolygon, Polygon
 from django.core.files.base import ContentFile
 from django.core.management import call_command
 
-from rdwatch.api import api
-from rdwatch.models import ModelRun, Performer, Region, SiteImage
-from rdwatch.models.site_evaluation import SiteEvaluation
-from rdwatch.schemas import RegionModel, SiteModel
-from rdwatch.schemas.site_model import CurrentPhase
+from rdwatch.core.api import api
+from rdwatch.core.models import ModelRun, Performer, Region, SiteImage
+from rdwatch.core.models.site_evaluation import SiteEvaluation
+from rdwatch.core.schemas import RegionModel, SiteModel
+from rdwatch.core.schemas.site_model import CurrentPhase
 
 if TYPE_CHECKING:
     from pytest_django.plugin import _DatabaseBlocker

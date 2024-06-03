@@ -4,10 +4,10 @@ import pytest
 from deepdiff import DeepDiff
 from ninja.testing import TestClient
 
-from rdwatch.models import SiteImage
-from rdwatch.models.model_run import ModelRun
-from rdwatch.models.region import get_or_create_region
-from rdwatch.models.site_evaluation import SiteEvaluation
+from rdwatch.core.models import SiteImage
+from rdwatch.core.models.model_run import ModelRun
+from rdwatch.core.models.region import get_or_create_region
+from rdwatch.core.models.site_evaluation import SiteEvaluation
 
 
 @pytest.mark.django_db

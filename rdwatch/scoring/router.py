@@ -2,7 +2,7 @@ from typing import Literal, TypeAlias
 
 from django.db.models import Model
 
-from rdwatch_scoring.models import SatelliteFetching, SiteImage
+from rdwatch.scoring.models import SatelliteFetching, SiteImage
 
 DbName: TypeAlias = Literal['default', 'scoringdb']
 

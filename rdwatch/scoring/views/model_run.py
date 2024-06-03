@@ -39,9 +39,9 @@ from django.db.models.functions import (
 from django.http import Http404, HttpRequest
 from django.shortcuts import get_object_or_404
 
-from rdwatch.db.functions import BoundingBox, ExtractEpoch
-from rdwatch.views.model_run import ModelRunDetailSchema, ModelRunPagination
-from rdwatch_scoring.models import (
+from rdwatch.core.db.functions import BoundingBox, ExtractEpoch
+from rdwatch.core.views.model_run import ModelRunDetailSchema, ModelRunPagination
+from rdwatch.scoring.models import (
     AnnotationProposalSet,
     AnnotationProposalSite,
     EvaluationRun,
@@ -50,11 +50,11 @@ from rdwatch_scoring.models import (
     Site,
     SiteImage,
 )
-from rdwatch_scoring.tasks import (
+from rdwatch.scoring.tasks import (
     cancel_generate_images_task,
     generate_site_images_for_evaluation_run,
 )
-from rdwatch_scoring.views.site_observation import GenerateImagesSchema
+from rdwatch.scoring.views.site_observation import GenerateImagesSchema
 
 logger = logging.getLogger(__name__)
 

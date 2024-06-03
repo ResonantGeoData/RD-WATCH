@@ -1,6 +1,6 @@
 from django.contrib.gis.db import models
 
-from rdwatch_scoring.models import AnnotationProposalSet, AnnotationProposalSite
+from rdwatch.scoring.models import AnnotationProposalSet, AnnotationProposalSite
 
 
 class AnnotationProposalObservation(models.Model):

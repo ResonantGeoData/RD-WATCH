@@ -7,8 +7,8 @@ from ninja.testing import TestClient
 
 from django.utils import timezone
 
-from rdwatch.models import ModelRun, Performer, Region
-from rdwatch.tasks import collect_garbage_task
+from rdwatch.core.models import ModelRun, Performer, Region
+from rdwatch.core.tasks import collect_garbage_task
 
 
 @pytest.mark.django_db(databases=['default'])

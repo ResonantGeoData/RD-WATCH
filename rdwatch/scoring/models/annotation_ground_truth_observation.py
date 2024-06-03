@@ -1,6 +1,6 @@
 from django.contrib.gis.db import models
 
-from rdwatch_scoring.models import AnnotationGroundTruthSite
+from rdwatch.scoring.models import AnnotationGroundTruthSite
 
 
 class AnnotationGroundTruthObservation(models.Model):

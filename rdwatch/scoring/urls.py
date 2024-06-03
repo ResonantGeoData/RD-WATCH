@@ -1,6 +1,6 @@
 from django.urls import path
 
-from rdwatch_scoring.api import api
+from rdwatch.scoring.api import api
 
 api_urls = api.urls
 

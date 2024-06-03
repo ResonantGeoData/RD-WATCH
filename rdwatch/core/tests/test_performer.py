@@ -3,7 +3,7 @@ from ninja.testing import TestClient
 
 from django.forms.models import model_to_dict
 
-from rdwatch.models import Performer
+from rdwatch.core.models import Performer
 
 
 @pytest.mark.django_db()

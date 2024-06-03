@@ -1,6 +1,6 @@
 from django.contrib.gis.db import models
 
-from rdwatch_scoring.models import EvaluationRun, Region
+from rdwatch.scoring.models import EvaluationRun, Region
 
 
 class Site(models.Model):

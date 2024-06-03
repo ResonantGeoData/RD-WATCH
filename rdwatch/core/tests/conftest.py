@@ -37,7 +37,14 @@ def django_db_setup(django_db_setup, django_db_blocker: _DatabaseBlocker) -> Non
 
 
 @pytest.fixture(scope='session')
-def test_client() -> TestClient:
+def test_client(session_mocker) -> TestClient:
+    # Remove authentication from the API in testing
+    # TODO: figure out how to keep this enabled in testing
+    # Relevant issue: https://github.com/vitalik/django-ninja/issues/312
+    session_mocker.patch(
+        'ninja.security.django_auth.authenticate',
+        return_value=True,
+    )
     return TestClient(router_or_app=api)
 
 

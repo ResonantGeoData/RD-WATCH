@@ -75,7 +75,7 @@ class Migration(migrations.Migration):
         migrations.AddIndex(
             model_name='siteimage',
             index=django.contrib.postgres.indexes.GistIndex(
-                fields=['timestamp'], name='rdwatch_sit_timesta_808546_gist'
+                fields=['timestamp'], name='core_siteim_timesta_411eac_gist'
             ),
         ),
     ]

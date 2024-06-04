@@ -282,25 +282,25 @@ class Migration(migrations.Migration):
         migrations.AddIndex(
             model_name='siteobservation',
             index=django.contrib.postgres.indexes.GistIndex(
-                fields=['timestamp'], name='rdwatch_sit_timesta_b3604d_gist'
+                fields=['timestamp'], name='core_siteob_timesta_8249af_gist'
             ),
         ),
         migrations.AddIndex(
             model_name='siteobservation',
             index=django.contrib.postgres.indexes.GistIndex(
-                fields=['score'], name='rdwatch_sit_score_338731_gist'
+                fields=['score'], name='core_siteob_score_ede795_gist'
             ),
         ),
         migrations.AddIndex(
             model_name='siteevaluation',
             index=django.contrib.postgres.indexes.GistIndex(
-                fields=['timestamp'], name='rdwatch_sit_timesta_4baaad_gist'
+                fields=['timestamp'], name='core_siteev_timesta_efd110_gist'
             ),
         ),
         migrations.AddIndex(
             model_name='siteevaluation',
             index=django.contrib.postgres.indexes.GistIndex(
-                fields=['score'], name='rdwatch_sit_score_3ffc43_gist'
+                fields=['score'], name='core_siteev_score_0f673c_gist'
             ),
         ),
         migrations.AddConstraint(

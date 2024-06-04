@@ -400,13 +400,13 @@ class Migration(migrations.Migration):
         migrations.AddIndex(
             model_name='siteevaluation',
             index=django.contrib.postgres.indexes.GistIndex(
-                fields=['timestamp'], name='rdwatch_sit_timesta_4baaad_gist'
+                fields=['timestamp'], name='core_siteev_timesta_efd110_gist'
             ),
         ),
         migrations.AddIndex(
             model_name='siteevaluation',
             index=django.contrib.postgres.indexes.GistIndex(
-                fields=['score'], name='rdwatch_sit_score_3ffc43_gist'
+                fields=['score'], name='core_siteev_score_0f673c_gist'
             ),
         ),
     ]

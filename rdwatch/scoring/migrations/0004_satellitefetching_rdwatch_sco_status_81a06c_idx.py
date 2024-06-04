@@ -11,6 +11,6 @@ class Migration(migrations.Migration):
     operations = [
         migrations.AddIndex(
             model_name='satellitefetching',
-            index=models.Index(fields=['status'], name='rdwatch_sco_status_81a06c_idx'),
+            index=models.Index(fields=['status'], name='scoring_sat_status_15b7ca_idx'),
         ),
     ]

@@ -52,6 +52,7 @@ class BaseConfiguration(Configuration):
             'allauth.account',
             'allauth.socialaccount',
             'allauth.socialaccount.providers.gitlab',
+            'django_rename_app',  # TODO: remove this when migration is complete
             'rdwatch.core.apps.RDWatchConfig',
         ]
         if 'RDWATCH_POSTGRESQL_SCORING_URI' in os.environ:

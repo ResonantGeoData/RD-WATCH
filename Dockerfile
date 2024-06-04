@@ -67,35 +67,35 @@ COPY vue/package.json vue/package-lock.json /app/vue/
 RUN npm ci
 
 FROM builder AS django-builder
-WORKDIR /app/django
-COPY django/pyproject.toml django/poetry.lock /app/django/
-RUN mkdir /app/django/src \
- && mkdir /app/django/src/rdwatch \
- && touch /app/django/src/rdwatch/__init__.py \
- && mkdir /app/django/src/rdwatch_scoring \
- && touch /app/django/src/rdwatch_scoring/__init__.py \
- && mkdir /app/django/src/rdwatch_smartflow \
- && touch /app/django/src/rdwatch_smartflow/__init__.py \
- && touch /app/django/README.md \
+WORKDIR /app/
+COPY pyproject.toml poetry.lock /app/
+RUN mkdir /app/rdwatch \
+ && mkdir /app/rdwatch/core \
+ && touch /app/rdwatch/core/__init__.py \
+ && mkdir /app/rdwatch/scoring \
+ && touch /app/rdwatch/scoring/__init__.py \
+ && mkdir /app/rdwatch/smartflow \
+ && touch /app/rdwatch/smartflow/__init__.py \
+ && touch /app/README.md \
  && poetry install --only main
 
 
 # Build stage that also installs dev dependencies.
 # For use in a development environment.
 FROM builder AS dev
-WORKDIR /app/django
-COPY django/pyproject.toml django/poetry.lock /app/django/
-RUN mkdir /app/django/src \
- && mkdir /app/django/src/rdwatch \
- && touch /app/django/src/rdwatch/__init__.py \
- && mkdir /app/django/src/rdwatch_scoring \
- && touch /app/django/src/rdwatch_scoring/__init__.py \
- && mkdir /app/django/src/rdwatch_smartflow \
- && touch /app/django/src/rdwatch_smartflow/__init__.py \
- && touch /app/django/README.md \
+WORKDIR /app/
+COPY pyproject.toml poetry.lock /app/
+RUN mkdir /app/rdwatch \
+ && mkdir /app/rdwatch/core \
+ && touch /app/rdwatch/core/__init__.py \
+ && mkdir /app/rdwatch/scoring \
+ && touch /app/rdwatch/scoring/__init__.py \
+ && mkdir /app/rdwatch/smartflow \
+ && touch /app/rdwatch/smartflow/__init__.py \
+ && touch /app/README.md \
  && poetry install --with dev
 # Copy git metadata to enable display of version information
-RUN git config --global --add safe.directory /app/django
+RUN git config --global --add safe.directory /app/
 COPY .git/ /app/.git/
 
 
@@ -113,8 +113,8 @@ RUN chmod -R u=rX,g=rX,o= /app/vue/dist
 #    editable source is in /app/django/src/rdwatch
 #    virtual environment is in /app/django/.venv
 FROM django-builder AS django-dist
-COPY django/src /app/django/src
-COPY django/src/manage.py /app/django/src/manage.py
+COPY rdwatch/ /app/rdwatch/
+COPY manage.py /app/manage.py
 RUN chmod -R u=rX,g=rX,o= .
 
 
@@ -128,8 +128,8 @@ COPY --from=django-builder \
 # Copy django source code
 COPY --from=django-dist \
      --chown=rdwatch:rdwatch \
-     /app/django \
-     /app/django
+     /app/ \
+     /app/
 # Copy vue static assets
 COPY --from=vue-dist \
      --chown=unit:unit \

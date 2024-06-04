@@ -97,6 +97,8 @@ RUN mkdir /app/rdwatch \
 # Copy git metadata to enable display of version information
 RUN git config --global --add safe.directory /app/
 COPY .git/ /app/.git/
+COPY manage.py /app/manage.py
+
 
 
 # Built static assets for vue-rdwatch
@@ -110,8 +112,8 @@ RUN chmod -R u=rX,g=rX,o= /app/vue/dist
 
 
 # Built virtual environment for django-rdwatch
-#    editable source is in /app/django/src/rdwatch
-#    virtual environment is in /app/django/.venv
+#    editable source is in /app/rdwatch/
+#    virtual environment is in /app/rdwatch/.venv
 FROM django-builder AS django-dist
 COPY rdwatch/ /app/rdwatch/
 COPY manage.py /app/manage.py

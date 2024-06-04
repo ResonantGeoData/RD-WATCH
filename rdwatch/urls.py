@@ -10,9 +10,9 @@ urlpatterns = [
 ]
 
 # Conditionally add the scoring URLs if the scoring app is installed
-if 'rdwatch.scoring' in apps.app_configs.keys():
+if 'scoring' in apps.app_configs.keys():
     urlpatterns.append(path('api/scoring/', include('rdwatch.scoring.urls')))
-if 'rdwatch.smartflow' in apps.app_configs.keys():
+if 'smartflow' in apps.app_configs.keys():
     urlpatterns.append(path('api/smartflow/', include('rdwatch.smartflow.urls')))
 
 if settings.DEBUG:

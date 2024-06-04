@@ -7,7 +7,7 @@ import django.contrib.postgres.indexes
 import django.db.models.deletion
 from django.db import migrations, models
 
-import rdwatch.validators
+import rdwatch.core.validators
 
 
 class Migration(migrations.Migration):
@@ -117,7 +117,7 @@ class Migration(migrations.Migration):
                     models.PositiveSmallIntegerField(
                         db_index=True,
                         help_text='The numeric country identifier as specified by ISO 3166',
-                        validators=[rdwatch.validators.validate_iso3166],
+                        validators=[rdwatch.core.validators.validate_iso3166],
                     ),
                 ),
                 (

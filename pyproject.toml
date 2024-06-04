@@ -94,7 +94,7 @@ skip-string-normalization = true
 
 [tool.isort]
 profile = "black"
-known_first_party = ["rdwatch", "rdwatch_scoring", "rdwatch_smartflow"]
+known_first_party = ["rdwatch"]
 known_django=["django"]
 sections=["FUTURE", "STDLIB", "THIRDPARTY", "DJANGO", "FIRSTPARTY", "LOCALFOLDER"]
 

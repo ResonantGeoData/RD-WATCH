@@ -100,7 +100,6 @@ COPY .git/ /app/.git/
 COPY manage.py /app/manage.py
 
 
-
 # Built static assets for vue-rdwatch
 #    static assets are in /app/vue/dist
 FROM vue-builder AS vue-dist
@@ -112,7 +111,7 @@ RUN chmod -R u=rX,g=rX,o= /app/vue/dist
 
 
 # Built virtual environment for django-rdwatch
-#    editable source is in /app/rdwatch/
+#    editable source is in /app/rdwatch
 #    virtual environment is in /app/rdwatch/.venv
 FROM django-builder AS django-dist
 COPY rdwatch/ /app/rdwatch/

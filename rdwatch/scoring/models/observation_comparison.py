@@ -25,5 +25,5 @@ class ObservationComparison(models.Model):
 
     class Meta:
         managed = False
-        app_label = 'rdwatch.scoring'
+        app_label = 'scoring'
         db_table = 'observation_comparison'

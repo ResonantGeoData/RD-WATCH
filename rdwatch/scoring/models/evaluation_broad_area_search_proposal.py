@@ -29,5 +29,5 @@ class EvaluationBroadAreaSearchProposal(models.Model):
 
     class Meta:
         managed = False
-        app_label = 'rdwatch.scoring'
+        app_label = 'scoring'
         db_table = 'evaluation_broad_area_search_proposal'

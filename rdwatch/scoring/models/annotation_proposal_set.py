@@ -12,5 +12,5 @@ class AnnotationProposalSet(models.Model):
 
     class Meta:
         managed = False
-        app_label = 'rdwatch.scoring'
+        app_label = 'scoring'
         db_table = 'annotation_proposal_set'

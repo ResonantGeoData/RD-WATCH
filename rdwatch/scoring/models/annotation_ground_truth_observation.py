@@ -22,5 +22,5 @@ class AnnotationGroundTruthObservation(models.Model):
 
     class Meta:
         managed = False
-        app_label = 'rdwatch.scoring'
+        app_label = 'scoring'
         db_table = 'annotation_ground_truth_observation'

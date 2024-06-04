@@ -44,27 +44,48 @@ SCORING_RENAMED_INDEXES = [
 class Command(MigrateCommand):
     help = 'Overridden migrate command to also handle renaming of apps.'
 
-    def handle(self, *args, **options):
-        for indexes in [CORE_RENAMED_INDEXES, SCORING_RENAMED_INDEXES]:
-            for old_index_name, new_index_name in indexes:
-                with connection.cursor() as cursor:
-                    cursor.execute(
-                        f"""SELECT indexname FROM pg_indexes
-                        WHERE indexname = '{old_index_name}'
-                        """
-                    )
-                    if len(cursor.fetchall()) > 0:
-                        print(f'Renaming index {old_index_name} to {new_index_name}')
-                        cursor.execute(
-                            f"""ALTER INDEX {old_index_name}
-                            RENAME TO {new_index_name}"""
-                        )
+    @property
+    def _should_rename_app(self):
+        with connection.cursor() as cursor:
+            # Check if django_content_type table exists first. If it doesn't, we're
+            # running from an empty DB and can bail out early.
+            cursor.execute(
+                "SELECT EXISTS (SELECT 1 FROM information_schema.tables WHERE table_name = 'django_content_type')"  # noqa: E501
+            )
+            if not cursor.fetchone()[0]:
+                return False
 
-        for old_app, new_app in [
-            ('rdwatch_scoring', 'scoring'),
-            ('rdwatch_smartflow', 'smartflow'),
-            ('rdwatch', 'core'),
-        ]:
-            call_command('rename_app', old_app, new_app)
+            # See if rdwatch, rdwatch_scoring, or rdwatch_smartflow apps exist.
+            # If they do, run renaming operations.
+            cursor.execute(
+                "SELECT * FROM django_content_type WHERE app_label IN ('rdwatch', 'rdwatch_scoring', 'rdwatch_smartflow')"  # noqa: E501
+            )
+            return bool(len(cursor.fetchall()))
+
+    def handle(self, *args, **options):
+        if self._should_rename_app:
+            for indexes in [CORE_RENAMED_INDEXES, SCORING_RENAMED_INDEXES]:
+                for old_index_name, new_index_name in indexes:
+                    with connection.cursor() as cursor:
+                        cursor.execute(
+                            f"""SELECT indexname FROM pg_indexes
+                            WHERE indexname = '{old_index_name}'
+                            """
+                        )
+                        if len(cursor.fetchall()) > 0:
+                            print(
+                                f'Renaming index {old_index_name} to {new_index_name}'
+                            )
+                            cursor.execute(
+                                f"""ALTER INDEX {old_index_name}
+                                RENAME TO {new_index_name}"""
+                            )
+
+            for old_app, new_app in [
+                ('rdwatch_scoring', 'scoring'),
+                ('rdwatch_smartflow', 'smartflow'),
+                ('rdwatch', 'core'),
+            ]:
+                call_command('rename_app', old_app, new_app)
 
         return super().handle(*args, **options)

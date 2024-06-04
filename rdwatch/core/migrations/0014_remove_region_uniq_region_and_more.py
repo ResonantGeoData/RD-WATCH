@@ -12,7 +12,7 @@ if TYPE_CHECKING:
 
 
 def migrate_region_name(apps: StateApps, schema_editor: PostGISSchemaEditor):
-    Region = apps.get_model('rdwatch', 'Region')  # noqa: N806
+    Region = apps.get_model('core', 'Region')  # noqa: N806
 
     for region in Region.objects.iterator():
         country_numeric = str(region.country).zfill(3)
@@ -24,7 +24,7 @@ def migrate_region_name(apps: StateApps, schema_editor: PostGISSchemaEditor):
 
 class Migration(migrations.Migration):
     dependencies = [
-        ('rdwatch', '0013_remove_siteevaluation_unique_siteeval'),
+        ('core', '0013_remove_siteevaluation_unique_siteeval'),
     ]
 
     operations = [

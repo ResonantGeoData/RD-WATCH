@@ -5,7 +5,7 @@ from django.db import migrations, models
 
 class Migration(migrations.Migration):
     dependencies = [
-        ('rdwatch', '0028_remove_siteevaluation_region_alter_modelrun_region'),
+        ('core', '0028_remove_siteevaluation_region_alter_modelrun_region'),
     ]
 
     operations = [

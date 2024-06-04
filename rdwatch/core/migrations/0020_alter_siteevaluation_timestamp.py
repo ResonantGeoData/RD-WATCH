@@ -7,7 +7,7 @@ from django.db import migrations
 
 class Migration(migrations.Migration):
     dependencies = [
-        ('rdwatch', '0019_siteobservationtracking_uuid'),
+        ('core', '0019_siteobservationtracking_uuid'),
     ]
 
     operations = [

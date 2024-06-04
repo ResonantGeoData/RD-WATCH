@@ -14,8 +14,8 @@ if TYPE_CHECKING:
 
 
 def migrate_site_obs_to_uuid(apps: StateApps, schema_editor: PostGISSchemaEditor):
-    SiteObservationTracking = apps.get_model('rdwatch', 'SiteObservationTracking')
-    SiteObservationTrackingOld = apps.get_model('rdwatch', 'SiteObservationTrackingOld')
+    SiteObservationTracking = apps.get_model('core', 'SiteObservationTracking')
+    SiteObservationTrackingOld = apps.get_model('core', 'SiteObservationTrackingOld')
 
     new_obs = []
     for old_obs in SiteObservationTrackingOld.objects.iterator():
@@ -36,7 +36,7 @@ def migrate_site_obs_to_uuid(apps: StateApps, schema_editor: PostGISSchemaEditor
 
 class Migration(migrations.Migration):
     dependencies = [
-        ('rdwatch', '0018_siteobservation_uuid'),
+        ('core', '0018_siteobservation_uuid'),
     ]
 
     operations = [
@@ -70,7 +70,7 @@ class Migration(migrations.Migration):
                     'label',
                     models.ForeignKey(
                         on_delete=django.db.models.deletion.PROTECT,
-                        to='rdwatch.observationlabel',
+                        to='core.observationlabel',
                     ),
                 ),
                 (
@@ -78,14 +78,14 @@ class Migration(migrations.Migration):
                     models.ForeignKey(
                         on_delete=django.db.models.deletion.CASCADE,
                         related_name='base_site_observation',
-                        to='rdwatch.siteobservation',
+                        to='core.siteobservation',
                     ),
                 ),
                 (
                     'siteeval',
                     models.ForeignKey(
                         on_delete=django.db.models.deletion.CASCADE,
-                        to='rdwatch.siteevaluation',
+                        to='core.siteevaluation',
                     ),
                 ),
             ],

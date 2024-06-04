@@ -5,7 +5,7 @@ from django.db import migrations, models
 
 class Migration(migrations.Migration):
     dependencies = [
-        ('rdwatch', '0024_siteevaluationtracking_geom'),
+        ('core', '0024_siteevaluationtracking_geom'),
     ]
 
     operations = [

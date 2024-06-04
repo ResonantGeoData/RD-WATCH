@@ -5,7 +5,7 @@ from django.db import migrations
 
 class Migration(migrations.Migration):
     dependencies = [
-        ('rdwatch', '0021_rename_siteobs_siteimage_observation'),
+        ('core', '0021_rename_siteobs_siteimage_observation'),
     ]
 
     operations = [

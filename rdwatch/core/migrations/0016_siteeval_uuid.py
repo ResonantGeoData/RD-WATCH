@@ -14,13 +14,13 @@ if TYPE_CHECKING:
 
 
 def migrate_site_evals_to_uuid(apps: StateApps, schema_editor: PostGISSchemaEditor):
-    SiteEvaluationOld = apps.get_model('rdwatch', 'SiteEvaluationOld')
-    SiteEvaluation = apps.get_model('rdwatch', 'SiteEvaluation')
-    SiteEvaluationTracking = apps.get_model('rdwatch', 'SiteEvaluationTracking')
-    SiteImage = apps.get_model('rdwatch', 'SiteImage')
-    SatelliteFetching = apps.get_model('rdwatch', 'SatelliteFetching')
-    SiteObservation = apps.get_model('rdwatch', 'SiteObservation')
-    SiteObservationTracking = apps.get_model('rdwatch', 'SiteObservationTracking')
+    SiteEvaluationOld = apps.get_model('core', 'SiteEvaluationOld')
+    SiteEvaluation = apps.get_model('core', 'SiteEvaluation')
+    SiteEvaluationTracking = apps.get_model('core', 'SiteEvaluationTracking')
+    SiteImage = apps.get_model('core', 'SiteImage')
+    SatelliteFetching = apps.get_model('core', 'SatelliteFetching')
+    SiteObservation = apps.get_model('core', 'SiteObservation')
+    SiteObservationTracking = apps.get_model('core', 'SiteObservationTracking')
 
     for old_eval in SiteEvaluationOld.objects.iterator():
         new_eval = SiteEvaluation.objects.create(
@@ -57,7 +57,7 @@ def migrate_site_evals_to_uuid(apps: StateApps, schema_editor: PostGISSchemaEdit
 
 class Migration(migrations.Migration):
     dependencies = [
-        ('rdwatch', '0015_modelrun'),
+        ('core', '0015_modelrun'),
     ]
 
     operations = [
@@ -178,7 +178,7 @@ class Migration(migrations.Migration):
                         db_index=False,
                         help_text='The hyper parameters used this site evaluation.',
                         on_delete=django.db.models.deletion.PROTECT,
-                        to='rdwatch.modelrun',
+                        to='core.modelrun',
                     ),
                 ),
                 (
@@ -187,7 +187,7 @@ class Migration(migrations.Migration):
                         db_index=False,
                         help_text='Site feature classification label',
                         on_delete=django.db.models.deletion.PROTECT,
-                        to='rdwatch.observationlabel',
+                        to='core.observationlabel',
                     ),
                 ),
                 (
@@ -196,7 +196,7 @@ class Migration(migrations.Migration):
                         db_index=False,
                         help_text='The region this site belongs to',
                         on_delete=django.db.models.deletion.PROTECT,
-                        to='rdwatch.region',
+                        to='core.region',
                     ),
                 ),
             ],
@@ -215,7 +215,7 @@ class Migration(migrations.Migration):
                 null=True,
                 on_delete=django.db.models.deletion.CASCADE,
                 related_name='satellite_fetching',
-                to='rdwatch.siteevaluation',
+                to='core.siteevaluation',
             ),
         ),
         migrations.AddField(
@@ -225,7 +225,7 @@ class Migration(migrations.Migration):
                 db_index=False,
                 null=True,
                 on_delete=django.db.models.deletion.CASCADE,
-                to='rdwatch.siteevaluation',
+                to='core.siteevaluation',
             ),
         ),
         migrations.AddField(
@@ -235,7 +235,7 @@ class Migration(migrations.Migration):
                 db_index=False,
                 null=True,
                 on_delete=django.db.models.deletion.CASCADE,
-                to='rdwatch.siteevaluation',
+                to='core.siteevaluation',
             ),
         ),
         migrations.AddField(
@@ -245,7 +245,7 @@ class Migration(migrations.Migration):
                 db_index=False,
                 null=True,
                 on_delete=django.db.models.deletion.CASCADE,
-                to='rdwatch.siteevaluation',
+                to='core.siteevaluation',
             ),
         ),
         migrations.AddField(
@@ -255,7 +255,7 @@ class Migration(migrations.Migration):
                 db_index=False,
                 null=True,
                 on_delete=django.db.models.deletion.CASCADE,
-                to='rdwatch.siteevaluation',
+                to='core.siteevaluation',
             ),
         ),
         # Update existing references to point to instances of new model
@@ -306,7 +306,7 @@ class Migration(migrations.Migration):
                 null=False,
                 on_delete=django.db.models.deletion.CASCADE,
                 related_name='satellite_fetching',
-                to='rdwatch.siteevaluation',
+                to='core.siteevaluation',
             ),
         ),
         migrations.AlterField(
@@ -317,7 +317,7 @@ class Migration(migrations.Migration):
                 null=False,
                 help_text='The hyper parameters used this site evaluation.',
                 on_delete=django.db.models.deletion.PROTECT,
-                to='rdwatch.modelrun',
+                to='core.modelrun',
             ),
         ),
         migrations.AlterField(
@@ -337,7 +337,7 @@ class Migration(migrations.Migration):
                 null=False,
                 help_text='Site feature classification label',
                 on_delete=django.db.models.deletion.PROTECT,
-                to='rdwatch.observationlabel',
+                to='core.observationlabel',
             ),
         ),
         migrations.AlterField(
@@ -353,7 +353,7 @@ class Migration(migrations.Migration):
                 null=False,
                 help_text='The region this site belongs to',
                 on_delete=django.db.models.deletion.PROTECT,
-                to='rdwatch.region',
+                to='core.region',
             ),
         ),
         migrations.AlterField(
@@ -363,7 +363,7 @@ class Migration(migrations.Migration):
                 db_index=True,
                 null=False,
                 on_delete=django.db.models.deletion.CASCADE,
-                to='rdwatch.siteevaluation',
+                to='core.siteevaluation',
             ),
         ),
         migrations.AlterField(
@@ -373,7 +373,7 @@ class Migration(migrations.Migration):
                 db_index=True,
                 null=False,
                 on_delete=django.db.models.deletion.CASCADE,
-                to='rdwatch.siteevaluation',
+                to='core.siteevaluation',
             ),
         ),
         migrations.AlterField(
@@ -383,7 +383,7 @@ class Migration(migrations.Migration):
                 db_index=True,
                 null=False,
                 on_delete=django.db.models.deletion.CASCADE,
-                to='rdwatch.siteevaluation',
+                to='core.siteevaluation',
             ),
         ),
         migrations.AlterField(
@@ -393,7 +393,7 @@ class Migration(migrations.Migration):
                 db_index=True,
                 null=False,
                 on_delete=django.db.models.deletion.CASCADE,
-                to='rdwatch.siteevaluation',
+                to='core.siteevaluation',
             ),
         ),
         # Add indexes back

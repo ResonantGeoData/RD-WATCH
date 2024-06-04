@@ -6,7 +6,7 @@ from django.db import migrations, models
 
 class Migration(migrations.Migration):
     dependencies = [
-        ('rdwatch', '0022_rename_siteeval_satellitefetching_site'),
+        ('core', '0022_rename_siteeval_satellitefetching_site'),
     ]
 
     operations = [

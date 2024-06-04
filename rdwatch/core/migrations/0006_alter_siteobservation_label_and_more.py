@@ -7,7 +7,7 @@ from django.db import migrations, models
 
 class Migration(migrations.Migration):
     dependencies = [
-        ('rdwatch', '0005_alter_siteobservation_geom'),
+        ('core', '0005_alter_siteobservation_geom'),
     ]
 
     operations = [
@@ -16,14 +16,14 @@ class Migration(migrations.Migration):
             name='label',
             field=models.ForeignKey(
                 on_delete=django.db.models.deletion.PROTECT,
-                to='rdwatch.observationlabel',
+                to='core.observationlabel',
             ),
         ),
         migrations.AlterField(
             model_name='siteobservation',
             name='siteeval',
             field=models.ForeignKey(
-                on_delete=django.db.models.deletion.CASCADE, to='rdwatch.siteevaluation'
+                on_delete=django.db.models.deletion.CASCADE, to='core.siteevaluation'
             ),
         ),
         migrations.CreateModel(
@@ -59,7 +59,7 @@ class Migration(migrations.Migration):
                     'siteeval',
                     models.ForeignKey(
                         on_delete=django.db.models.deletion.CASCADE,
-                        to='rdwatch.siteevaluation',
+                        to='core.siteevaluation',
                     ),
                 ),
                 (
@@ -67,7 +67,7 @@ class Migration(migrations.Migration):
                     models.ForeignKey(
                         null=True,
                         on_delete=django.db.models.deletion.CASCADE,
-                        to='rdwatch.siteobservation',
+                        to='core.siteobservation',
                     ),
                 ),
             ],

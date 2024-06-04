@@ -6,7 +6,7 @@ from django.db import migrations
 
 class Migration(migrations.Migration):
     dependencies = [
-        ('rdwatch', '0003_region_geom'),
+        ('core', '0003_region_geom'),
     ]
 
     operations = [

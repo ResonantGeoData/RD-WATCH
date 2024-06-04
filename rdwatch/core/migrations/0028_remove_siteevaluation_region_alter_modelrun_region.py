@@ -6,7 +6,7 @@ from django.db import migrations, models
 
 class Migration(migrations.Migration):
     dependencies = [
-        ('rdwatch', '0027_migrate_regions'),
+        ('core', '0027_migrate_regions'),
     ]
 
     operations = [
@@ -21,7 +21,7 @@ class Migration(migrations.Migration):
                 help_text='The region this model run belongs to',
                 on_delete=django.db.models.deletion.PROTECT,
                 related_name='model_runs',
-                to='rdwatch.region',
+                to='core.region',
             ),
         ),
     ]

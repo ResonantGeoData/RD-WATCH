@@ -5,7 +5,7 @@ from django.db import migrations
 
 class Migration(migrations.Migration):
     dependencies = [
-        ('rdwatch', '0029_satellitefetching_rdwatch_sat_status_753c74_idx'),
+        ('core', '0029_satellitefetching_rdwatch_sat_status_753c74_idx'),
     ]
 
     operations = [

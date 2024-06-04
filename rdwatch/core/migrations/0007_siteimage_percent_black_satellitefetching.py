@@ -6,7 +6,7 @@ from django.db import migrations, models
 
 class Migration(migrations.Migration):
     dependencies = [
-        ('rdwatch', '0006_alter_siteobservation_label_and_more'),
+        ('core', '0006_alter_siteobservation_label_and_more'),
     ]
 
     operations = [
@@ -52,7 +52,7 @@ class Migration(migrations.Migration):
                     models.OneToOneField(
                         on_delete=django.db.models.deletion.CASCADE,
                         related_name='satellite_fetching',
-                        to='rdwatch.siteevaluation',
+                        to='core.siteevaluation',
                     ),
                 ),
             ],

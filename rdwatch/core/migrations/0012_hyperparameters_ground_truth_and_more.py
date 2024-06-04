@@ -7,7 +7,7 @@ from django.db import migrations, models
 
 class Migration(migrations.Migration):
     dependencies = [
-        ('rdwatch', '0011_siteimage_aws_location_siteimage_image_bbox_and_more'),
+        ('core', '0011_siteimage_aws_location_siteimage_image_bbox_and_more'),
     ]
 
     operations = [
@@ -131,7 +131,7 @@ class Migration(migrations.Migration):
                     'label',
                     models.ForeignKey(
                         on_delete=django.db.models.deletion.PROTECT,
-                        to='rdwatch.observationlabel',
+                        to='core.observationlabel',
                     ),
                 ),
                 (
@@ -139,14 +139,14 @@ class Migration(migrations.Migration):
                     models.ForeignKey(
                         on_delete=django.db.models.deletion.CASCADE,
                         related_name='base_site_observation',
-                        to='rdwatch.siteobservation',
+                        to='core.siteobservation',
                     ),
                 ),
                 (
                     'siteeval',
                     models.ForeignKey(
                         on_delete=django.db.models.deletion.CASCADE,
-                        to='rdwatch.siteevaluation',
+                        to='core.siteevaluation',
                     ),
                 ),
             ],
@@ -178,7 +178,7 @@ class Migration(migrations.Migration):
                     'evaluation',
                     models.ForeignKey(
                         on_delete=django.db.models.deletion.CASCADE,
-                        to='rdwatch.siteevaluation',
+                        to='core.siteevaluation',
                     ),
                 ),
                 (
@@ -186,7 +186,7 @@ class Migration(migrations.Migration):
                     models.ForeignKey(
                         help_text='Site feature classification label',
                         on_delete=django.db.models.deletion.PROTECT,
-                        to='rdwatch.observationlabel',
+                        to='core.observationlabel',
                     ),
                 ),
             ],
@@ -229,7 +229,7 @@ class Migration(migrations.Migration):
                     models.ForeignKey(
                         help_text='The hyper parameters used for the xport',
                         on_delete=django.db.models.deletion.PROTECT,
-                        to='rdwatch.hyperparameters',
+                        to='core.hyperparameters',
                     ),
                 ),
             ],

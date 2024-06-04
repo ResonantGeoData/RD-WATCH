@@ -14,8 +14,8 @@ if TYPE_CHECKING:
 
 
 def migrate_site_evals_to_uuid(apps: StateApps, schema_editor: PostGISSchemaEditor):
-    SiteEvaluationTracking = apps.get_model('rdwatch', 'SiteEvaluationTracking')
-    SiteEvaluationTrackingOld = apps.get_model('rdwatch', 'SiteEvaluationTrackingOld')
+    SiteEvaluationTracking = apps.get_model('core', 'SiteEvaluationTracking')
+    SiteEvaluationTrackingOld = apps.get_model('core', 'SiteEvaluationTrackingOld')
 
     new_evals = []
     for old_eval in SiteEvaluationTrackingOld.objects.iterator():
@@ -36,7 +36,7 @@ def migrate_site_evals_to_uuid(apps: StateApps, schema_editor: PostGISSchemaEdit
 
 class Migration(migrations.Migration):
     dependencies = [
-        ('rdwatch', '0016_siteeval_uuid'),
+        ('core', '0016_siteeval_uuid'),
     ]
 
     operations = [
@@ -73,7 +73,7 @@ class Migration(migrations.Migration):
                     models.ForeignKey(
                         null=True,
                         on_delete=django.db.models.deletion.CASCADE,
-                        to='rdwatch.siteevaluation',
+                        to='core.siteevaluation',
                     ),
                 ),
                 (
@@ -81,7 +81,7 @@ class Migration(migrations.Migration):
                     models.ForeignKey(
                         help_text='Site feature classification label',
                         on_delete=django.db.models.deletion.PROTECT,
-                        to='rdwatch.observationlabel',
+                        to='core.observationlabel',
                     ),
                 ),
             ],
@@ -93,7 +93,7 @@ class Migration(migrations.Migration):
             model_name='siteevaluationtracking',
             name='evaluation',
             field=models.ForeignKey(
-                on_delete=django.db.models.deletion.CASCADE, to='rdwatch.siteevaluation'
+                on_delete=django.db.models.deletion.CASCADE, to='core.siteevaluation'
             ),
         ),
         # Delete the old model

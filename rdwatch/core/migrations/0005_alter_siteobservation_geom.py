@@ -12,8 +12,8 @@ if TYPE_CHECKING:
 
 
 def migrate_observation_geom(apps: StateApps, schema_editor: PostGISSchemaEditor):
-    SiteEvaluation = apps.get_model('rdwatch', 'SiteEvaluation')  # noqa: N806
-    SiteObservation = apps.get_model('rdwatch', 'SiteObservation')  # noqa: N806
+    SiteEvaluation = apps.get_model('core', 'SiteEvaluation')  # noqa: N806
+    SiteObservation = apps.get_model('core', 'SiteObservation')  # noqa: N806
 
     # Set of SiteEvaluation ids that we want to delete
     evals_to_delete: set[int] = set()
@@ -35,7 +35,7 @@ def migrate_observation_geom(apps: StateApps, schema_editor: PostGISSchemaEditor
 def reverse_migrate_observation_geom(
     apps: StateApps, schema_editor: PostGISSchemaEditor
 ):
-    SiteObservation = apps.get_model('rdwatch', 'SiteObservation')  # noqa: N806
+    SiteObservation = apps.get_model('core', 'SiteObservation')  # noqa: N806
 
     for observation in SiteObservation.objects.iterator():
         observation.geom_old = MultiPolygon([observation.geom])
@@ -44,7 +44,7 @@ def reverse_migrate_observation_geom(
 
 class Migration(migrations.Migration):
     dependencies = [
-        ('rdwatch', '0004_alter_region_geom'),
+        ('core', '0004_alter_region_geom'),
     ]
 
     operations = [

@@ -13,8 +13,8 @@ if TYPE_CHECKING:
 
 
 def migrate_creation_dates(apps: StateApps, schema_editor: PostGISSchemaEditor):
-    HyperParameters = apps.get_model('rdwatch', 'HyperParameters')  # noqa: N806
-    SiteEvaluation = apps.get_model('rdwatch', 'SiteEvaluation')  # noqa: N806
+    HyperParameters = apps.get_model('core', 'HyperParameters')  # noqa: N806
+    SiteEvaluation = apps.get_model('core', 'SiteEvaluation')  # noqa: N806
 
     # Approximate the "created" time of a model run via the oldest timestamp
     # in its evaluations
@@ -39,7 +39,7 @@ def reverse_migrate_creation_dates(apps: StateApps, schema_editor: PostGISSchema
 
 class Migration(migrations.Migration):
     dependencies = [
-        ('rdwatch', '0008_satellitefetching_celery_id'),
+        ('core', '0008_satellitefetching_celery_id'),
     ]
 
     operations = [

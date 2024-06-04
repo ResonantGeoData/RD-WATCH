@@ -5,7 +5,7 @@ from django.db import migrations, models
 
 class Migration(migrations.Migration):
     dependencies = [
-        ('rdwatch_scoring', '0002_satellitefetching_siteimage_and_more'),
+        ('scoring', '0002_satellitefetching_siteimage_and_more'),
     ]
 
     operations = [

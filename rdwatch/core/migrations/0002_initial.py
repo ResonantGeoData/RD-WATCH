@@ -14,7 +14,7 @@ class Migration(migrations.Migration):
     initial = True
 
     dependencies = [
-        ('rdwatch', '0001_extensions'),
+        ('core', '0001_extensions'),
     ]
 
     operations = [
@@ -175,7 +175,7 @@ class Migration(migrations.Migration):
                     models.ForeignKey(
                         help_text='The hyper parameters used this site evaluation.',
                         on_delete=django.db.models.deletion.PROTECT,
-                        to='rdwatch.hyperparameters',
+                        to='core.hyperparameters',
                     ),
                 ),
                 (
@@ -183,7 +183,7 @@ class Migration(migrations.Migration):
                     models.ForeignKey(
                         help_text='Site feature classification label',
                         on_delete=django.db.models.deletion.PROTECT,
-                        to='rdwatch.observationlabel',
+                        to='core.observationlabel',
                     ),
                 ),
                 (
@@ -191,7 +191,7 @@ class Migration(migrations.Migration):
                     models.ForeignKey(
                         help_text='The region this site belongs to',
                         on_delete=django.db.models.deletion.PROTECT,
-                        to='rdwatch.region',
+                        to='core.region',
                     ),
                 ),
             ],
@@ -228,7 +228,7 @@ class Migration(migrations.Migration):
                         help_text="The source image's satellite constellation",
                         null=True,
                         on_delete=django.db.models.deletion.PROTECT,
-                        to='rdwatch.constellation',
+                        to='core.constellation',
                     ),
                 ),
                 (
@@ -236,7 +236,7 @@ class Migration(migrations.Migration):
                     models.ForeignKey(
                         help_text='Site observation classification label',
                         on_delete=django.db.models.deletion.PROTECT,
-                        to='rdwatch.observationlabel',
+                        to='core.observationlabel',
                     ),
                 ),
                 (
@@ -244,7 +244,7 @@ class Migration(migrations.Migration):
                     models.ForeignKey(
                         help_text='The site evaluation associated with this observation.',
                         on_delete=django.db.models.deletion.CASCADE,
-                        to='rdwatch.siteevaluation',
+                        to='core.siteevaluation',
                     ),
                 ),
                 (
@@ -253,7 +253,7 @@ class Migration(migrations.Migration):
                         help_text="The source image's satellite spectrum",
                         null=True,
                         on_delete=django.db.models.deletion.PROTECT,
-                        to='rdwatch.commonband',
+                        to='core.commonband',
                     ),
                 ),
             ],
@@ -267,7 +267,7 @@ class Migration(migrations.Migration):
             field=models.ForeignKey(
                 help_text='Region classification code',
                 on_delete=django.db.models.deletion.PROTECT,
-                to='rdwatch.regionclassification',
+                to='core.regionclassification',
             ),
         ),
         migrations.AddField(
@@ -276,7 +276,7 @@ class Migration(migrations.Migration):
             field=models.ForeignKey(
                 help_text='The team that produced this evaluation',
                 on_delete=django.db.models.deletion.PROTECT,
-                to='rdwatch.performer',
+                to='core.performer',
             ),
         ),
         migrations.AddIndex(

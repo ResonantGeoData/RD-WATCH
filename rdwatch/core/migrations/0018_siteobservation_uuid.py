@@ -16,10 +16,10 @@ if TYPE_CHECKING:
 def migrate_site_observations_to_uuid(
     apps: StateApps, schema_editor: PostGISSchemaEditor
 ):
-    SiteObservation = apps.get_model('rdwatch', 'SiteObservation')
-    SiteObservationOld = apps.get_model('rdwatch', 'SiteObservationOld')
-    SiteObservationTracking = apps.get_model('rdwatch', 'SiteObservationTracking')
-    SiteImage = apps.get_model('rdwatch', 'SiteImage')
+    SiteObservation = apps.get_model('core', 'SiteObservation')
+    SiteObservationOld = apps.get_model('core', 'SiteObservationOld')
+    SiteObservationTracking = apps.get_model('core', 'SiteObservationTracking')
+    SiteImage = apps.get_model('core', 'SiteImage')
 
     for old_obs in SiteObservationOld.objects.iterator():
         new_obs = SiteObservation.objects.create(
@@ -41,7 +41,7 @@ def migrate_site_observations_to_uuid(
 
 class Migration(migrations.Migration):
     dependencies = [
-        ('rdwatch', '0017_siteevaltracking_uuid'),
+        ('core', '0017_siteevaltracking_uuid'),
     ]
 
     operations = [
@@ -90,21 +90,21 @@ class Migration(migrations.Migration):
                         help_text="The source image's satellite constellation",
                         null=True,
                         on_delete=django.db.models.deletion.PROTECT,
-                        to='rdwatch.constellation',
+                        to='core.constellation',
                     ),
                 ),
                 (
                     'label',
                     models.ForeignKey(
                         on_delete=django.db.models.deletion.PROTECT,
-                        to='rdwatch.observationlabel',
+                        to='core.observationlabel',
                     ),
                 ),
                 (
                     'siteeval',
                     models.ForeignKey(
                         on_delete=django.db.models.deletion.CASCADE,
-                        to='rdwatch.siteevaluation',
+                        to='core.siteevaluation',
                     ),
                 ),
                 (
@@ -113,7 +113,7 @@ class Migration(migrations.Migration):
                         help_text="The source image's satellite spectrum",
                         null=True,
                         on_delete=django.db.models.deletion.PROTECT,
-                        to='rdwatch.commonband',
+                        to='core.commonband',
                     ),
                 ),
             ],
@@ -129,7 +129,7 @@ class Migration(migrations.Migration):
                 null=True,
                 on_delete=django.db.models.deletion.CASCADE,
                 related_name='base_site_observation',
-                to='rdwatch.siteobservation',
+                to='core.siteobservation',
             ),
         ),
         migrations.AddField(
@@ -138,7 +138,7 @@ class Migration(migrations.Migration):
             field=models.ForeignKey(
                 null=True,
                 on_delete=django.db.models.deletion.CASCADE,
-                to='rdwatch.siteobservation',
+                to='core.siteobservation',
             ),
         ),
         # Migrate data from old model to new one
@@ -159,7 +159,7 @@ class Migration(migrations.Migration):
             field=models.ForeignKey(
                 on_delete=django.db.models.deletion.CASCADE,
                 related_name='base_site_observation',
-                to='rdwatch.siteobservation',
+                to='core.siteobservation',
             ),
         ),
         migrations.DeleteModel(name='SiteObservationOld'),

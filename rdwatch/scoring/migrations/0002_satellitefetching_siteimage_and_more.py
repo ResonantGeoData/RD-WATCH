@@ -8,7 +8,7 @@ from django.db import migrations, models
 
 class Migration(migrations.Migration):
     dependencies = [
-        ('rdwatch_scoring', '0001_initial'),
+        ('scoring', '0001_initial'),
     ]
 
     operations = [

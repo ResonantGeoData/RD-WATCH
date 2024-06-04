@@ -15,10 +15,10 @@ if TYPE_CHECKING:
 
 
 def migrate_to_model_run(apps: StateApps, schema_editor: PostGISSchemaEditor):
-    HyperParameters = apps.get_model('rdwatch', 'HyperParameters')
-    ModelRun = apps.get_model('rdwatch', 'ModelRun')
-    SiteEvaluation = apps.get_model('rdwatch', 'SiteEvaluation')
-    AnnotationExport = apps.get_model('rdwatch', 'AnnotationExport')
+    HyperParameters = apps.get_model('core', 'HyperParameters')
+    ModelRun = apps.get_model('core', 'ModelRun')
+    SiteEvaluation = apps.get_model('core', 'SiteEvaluation')
+    AnnotationExport = apps.get_model('core', 'AnnotationExport')
 
     for hyper_parameters in HyperParameters.objects.iterator():
         model_run = ModelRun.objects.create(
@@ -43,7 +43,7 @@ def migrate_to_model_run(apps: StateApps, schema_editor: PostGISSchemaEditor):
 
 class Migration(migrations.Migration):
     dependencies = [
-        ('rdwatch', '0014_remove_region_uniq_region_and_more'),
+        ('core', '0014_remove_region_uniq_region_and_more'),
     ]
 
     operations = [
@@ -101,7 +101,7 @@ class Migration(migrations.Migration):
                     models.ForeignKey(
                         help_text='The team that produced this evaluation',
                         on_delete=models.deletion.PROTECT,
-                        to='rdwatch.performer',
+                        to='core.performer',
                     ),
                 ),
             ],
@@ -162,7 +162,7 @@ class Migration(migrations.Migration):
             name='configuration',
             field=models.ForeignKey(
                 null=False,
-                to='rdwatch.modelrun',
+                to='core.modelrun',
                 on_delete=models.PROTECT,
                 help_text='The hyper parameters used this site evaluation.',
             ),
@@ -172,7 +172,7 @@ class Migration(migrations.Migration):
             name='configuration',
             field=models.ForeignKey(
                 null=False,
-                to='rdwatch.modelrun',
+                to='core.modelrun',
                 on_delete=models.PROTECT,
                 help_text='The hyper parameters used for the xport',
             ),

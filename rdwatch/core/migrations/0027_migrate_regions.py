@@ -11,8 +11,8 @@ if TYPE_CHECKING:
 
 
 def migrate_regions(apps: StateApps, schema_editor: PostGISSchemaEditor):
-    ModelRun = apps.get_model('rdwatch', 'ModelRun')
-    SiteEvaluation = apps.get_model('rdwatch', 'SiteEvaluation')  # noqa: N806
+    ModelRun = apps.get_model('core', 'ModelRun')
+    SiteEvaluation = apps.get_model('core', 'SiteEvaluation')  # noqa: N806
 
     # Clean up any empty model runs, as they will not have an associated region
     ModelRun.objects.alias(site_count=models.Count('evaluations')).filter(
@@ -30,7 +30,7 @@ def migrate_regions(apps: StateApps, schema_editor: PostGISSchemaEditor):
 
 class Migration(migrations.Migration):
     dependencies = [
-        ('rdwatch', '0026_remove_siteevaluation_region_modelrun_region'),
+        ('core', '0026_remove_siteevaluation_region_modelrun_region'),
     ]
 
     operations = [

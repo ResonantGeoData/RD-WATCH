@@ -6,7 +6,7 @@ from django.db import migrations, models
 
 class Migration(migrations.Migration):
     dependencies = [
-        ('rdwatch', '0025_siteimage_image_embedding'),
+        ('core', '0025_siteimage_image_embedding'),
     ]
 
     operations = [
@@ -19,7 +19,7 @@ class Migration(migrations.Migration):
                 help_text='The region this model run belongs to',
                 null=True,
                 on_delete=django.db.models.deletion.PROTECT,
-                to='rdwatch.region',
+                to='core.region',
                 related_name='model_runs',
             ),
         ),

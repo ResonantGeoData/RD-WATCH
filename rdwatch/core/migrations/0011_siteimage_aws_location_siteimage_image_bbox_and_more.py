@@ -7,7 +7,7 @@ from django.db import migrations, models
 
 class Migration(migrations.Migration):
     dependencies = [
-        ('rdwatch', '0010_hyperparameters_evaluation_and_more'),
+        ('core', '0010_hyperparameters_evaluation_and_more'),
     ]
 
     operations = [

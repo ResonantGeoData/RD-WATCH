@@ -6,7 +6,7 @@ from django.db import migrations
 
 class Migration(migrations.Migration):
     dependencies = [
-        ('rdwatch', '0023_siteevaluation_modified_timestamp'),
+        ('core', '0023_siteevaluation_modified_timestamp'),
     ]
 
     operations = [

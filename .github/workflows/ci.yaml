@@ -8,7 +8,7 @@ on:
 env:
   # using a dummy secret key
   DJANGO_CONFIGURATION: DevelopmentConfiguration
-  DJANGO_SETTINGS_MODULE: rdwatch.server.settings
+  DJANGO_SETTINGS_MODULE: rdwatch.settings
   RDWATCH_SECRET_KEY: ff07f533a59fed1349a4fc49941d02ff22514f6dbf6086a44ea0c0a8952e8644
   RDWATCH_POSTGRESQL_URI: postgresql://rdwatch:ff07f533a59fed1349a4fc49941d02ff22514f6dbf6086a44ea0c0a8952e8644@localhost:5432/rdwatch
   RDWATCH_CELERY_BROKER_URL: redis://localhost:6379/
@@ -117,7 +117,6 @@ jobs:
         run: pip install --upgrade poetry tox
       - name: Run tests
         run: tox -e ${{ matrix.tox-env }}
-        working-directory: django
   test-vue:
     name: Test [vue]
     runs-on: ubuntu-22.04

@@ -1,0 +1,438 @@
+[
+  {
+    "model": "core.commonband",
+    "pk": 1,
+    "fields": {
+      "slug": "coastal",
+      "description": "coastal aerosol (deep blues and violets)",
+      "spectrum": [0.4, 0.45]
+    }
+  },
+  {
+    "model": "core.commonband",
+    "pk": 2,
+    "fields": {
+      "slug": "blue",
+      "description": "blue",
+      "spectrum": [0.45, 0.5]
+    }
+  },
+  {
+    "model": "core.commonband",
+    "pk": 3,
+    "fields": {
+      "slug": "green",
+      "description": "green",
+      "spectrum": [0.5, 0.6]
+    }
+  },
+  {
+    "model": "core.commonband",
+    "pk": 4,
+    "fields": {
+      "slug": "red",
+      "description": "red",
+      "spectrum": [0.6, 0.7]
+    }
+  },
+  {
+    "model": "core.commonband",
+    "pk": 5,
+    "fields": {
+      "slug": "yellow",
+      "description": "yellow",
+      "spectrum": [0.58, 0.62]
+    }
+  },
+  {
+    "model": "core.commonband",
+    "pk": 6,
+    "fields": {
+      "slug": "pan",
+      "description": "panchromatic",
+      "spectrum": [0.5, 0.7]
+    }
+  },
+  {
+    "model": "core.commonband",
+    "pk": 7,
+    "fields": {
+      "slug": "rededge",
+      "description": "vegetation red edge",
+      "spectrum": [0.7, 0.79]
+    }
+  },
+  {
+    "model": "core.commonband",
+    "pk": 8,
+    "fields": {
+      "slug": "rededge070",
+      "description": "vegetation red edge (lower narrow band)",
+      "spectrum": [0.7, 0.71]
+    }
+  },
+  {
+    "model": "core.commonband",
+    "pk": 9,
+    "fields": {
+      "slug": "rededge074",
+      "description": "vegetation red edge (middle narrow band)",
+      "spectrum": [0.73, 0.75]
+    }
+  },
+  {
+    "model": "core.commonband",
+    "pk": 10,
+    "fields": {
+      "slug": "rededge078",
+      "description": "vegetation red edge (upper narrow band)",
+      "spectrum": [0.77, 0.79]
+    }
+  },
+  {
+    "model": "core.commonband",
+    "pk": 11,
+    "fields": {
+      "slug": "nir",
+      "description": "near infared",
+      "spectrum": [0.75, 1.0]
+    }
+  },
+  {
+    "model": "core.commonband",
+    "pk": 12,
+    "fields": {
+      "slug": "nir08",
+      "description": "near infared (lower narrow band)",
+      "spectrum": [0.75, 0.9]
+    }
+  },
+  {
+    "model": "core.commonband",
+    "pk": 13,
+    "fields": {
+      "slug": "nir09",
+      "description": "near infrared (upper narrow band)",
+      "spectrum": [0.85, 1.05]
+    }
+  },
+  {
+    "model": "core.commonband",
+    "pk": 14,
+    "fields": {
+      "slug": "cirrus",
+      "description": "short-wave thermal infrared (cirrus clouds)",
+      "spectrum": [1.35, 1.4]
+    }
+  },
+  {
+    "model": "core.commonband",
+    "pk": 15,
+    "fields": {
+      "slug": "swir16",
+      "description": "short-wave thermal infrared (lower narrow band)",
+      "spectrum": [1.55, 1.75]
+    }
+  },
+  {
+    "model": "core.commonband",
+    "pk": 16,
+    "fields": {
+      "slug": "swir22",
+      "description": "short-wave thermal infrared (upper narrow band)",
+      "spectrum": [2.1, 2.3]
+    }
+  },
+  {
+    "model": "core.commonband",
+    "pk": 17,
+    "fields": {
+      "slug": "lwir",
+      "description": "long-wave thermal infrared",
+      "spectrum": [10.5, 12.5]
+    }
+  },
+  {
+    "model": "core.commonband",
+    "pk": 18,
+    "fields": {
+      "slug": "lwir11",
+      "description": "long-wave thermal infrared (narrow band)",
+      "spectrum": [10.5, 11.5]
+    }
+  },
+  {
+    "model": "core.commonband",
+    "pk": 19,
+    "fields": {
+      "slug": "lwir12",
+      "description": "long-wave thermal infrared (narrow band)",
+      "spectrum": [11.5, 12.5]
+    }
+  },
+  {
+    "model": "core.commonband",
+    "pk": 20,
+    "fields": {
+      "slug": "visual",
+      "description": "rgb image",
+      "spectrum": [0.45, 0.7]
+    }
+  },
+  {
+    "model": "core.constellation",
+    "pk": 1,
+    "fields": {
+      "slug": "L8",
+      "description": "Landsat 8"
+    }
+  },
+  {
+    "model": "core.constellation",
+    "pk": 2,
+    "fields": {
+      "slug": "S2",
+      "description": "Sentinel-2"
+    }
+  },
+  {
+    "model": "core.constellation",
+    "pk": 3,
+    "fields": {
+      "slug": "WV",
+      "description": "WorldView"
+    }
+  },
+  {
+    "model": "core.constellation",
+    "pk": 4,
+    "fields": {
+      "slug": "PL",
+      "description": "Planet"
+    }
+  },
+  {
+    "model": "core.observationlabel",
+    "pk": 1,
+    "fields": {
+      "slug": "active_construction",
+      "description": "active construction"
+    }
+  },
+  {
+    "model": "core.observationlabel",
+    "pk": 2,
+    "fields": {
+      "slug": "post_construction",
+      "description": "post construction"
+    }
+  },
+  {
+    "model": "core.observationlabel",
+    "pk": 3,
+    "fields": {
+      "slug": "site_preparation",
+      "description": "site preparation"
+    }
+  },
+  {
+    "model": "core.observationlabel",
+    "pk": 4,
+    "fields": {
+      "slug": "unknown",
+      "description": "unknown"
+    }
+  },
+  {
+    "model": "core.observationlabel",
+    "pk": 5,
+    "fields": {
+      "slug": "no_activity",
+      "description": "no activity"
+    }
+  },
+  {
+    "model": "core.observationlabel",
+    "pk": 6,
+    "fields": {
+      "slug": "positive_annotated",
+      "description": "positive annotated"
+    }
+  },
+  {
+    "model": "core.observationlabel",
+    "pk": 7,
+    "fields": {
+      "slug": "positive_partial",
+      "description": "positive partial"
+    }
+  },
+  {
+    "model": "core.observationlabel",
+    "pk": 8,
+    "fields": {
+      "slug": "positive_annotated_static",
+      "description": "positive annotated static"
+    }
+  },
+  {
+    "model": "core.observationlabel",
+    "pk": 9,
+    "fields": {
+      "slug": "positive_partial_static",
+      "description": "positive partial static"
+    }
+  },
+  {
+    "model": "core.observationlabel",
+    "pk": 10,
+    "fields": {
+      "slug": "positive_pending",
+      "description": "positive pending"
+    }
+  },
+  {
+    "model": "core.observationlabel",
+    "pk": 11,
+    "fields": {
+      "slug": "positive_excluded",
+      "description": "positive excluded"
+    }
+  },
+  {
+    "model": "core.observationlabel",
+    "pk": 12,
+    "fields": {
+      "slug": "negative",
+      "description": "negative"
+    }
+  },
+  {
+    "model": "core.observationlabel",
+    "pk": 13,
+    "fields": {
+      "slug": "ignore",
+      "description": "ignore"
+    }
+  },
+  {
+    "model": "core.observationlabel",
+    "pk": 14,
+    "fields": {
+      "slug": "transient_positive",
+      "description": "transient positive"
+    }
+  },
+  {
+    "model": "core.observationlabel",
+    "pk": 15,
+    "fields": {
+      "slug": "transient_negative",
+      "description": "transient negative"
+    }
+  },
+  {
+    "model": "core.observationlabel",
+    "pk": 16,
+    "fields": {
+      "slug": "system_proposed",
+      "description": "system proposed"
+    }
+  },
+  {
+    "model": "core.observationlabel",
+    "pk": 17,
+    "fields": {
+      "slug": "system_confirmed",
+      "description": "system confirmed"
+    }
+  },
+  {
+    "model": "core.observationlabel",
+    "pk": 18,
+    "fields": {
+      "slug": "system_rejected",
+      "description": "system rejected"
+    }
+  },
+  {
+    "model": "core.performer",
+    "pk": 1,
+    "fields": {
+      "short_code": "TE",
+      "team_name": "Ground Truth"
+    }
+  },
+  {
+    "model": "core.performer",
+    "pk": 2,
+    "fields": {
+      "short_code": "ACC",
+      "team_name": "Accenture"
+    }
+  },
+  {
+    "model": "core.performer",
+    "pk": 3,
+    "fields": {
+      "short_code": "ARA",
+      "team_name": "ARA"
+    }
+  },
+  {
+    "model": "core.performer",
+    "pk": 4,
+    "fields": {
+      "short_code": "AST",
+      "team_name": "Astra"
+    }
+  },
+  {
+    "model": "core.performer",
+    "pk": 5,
+    "fields": {
+      "short_code": "BLA",
+      "team_name": "BlackSky"
+    }
+  },
+  {
+    "model": "core.performer",
+    "pk": 6,
+    "fields": {
+      "short_code": "IAI",
+      "team_name": "IAI"
+    }
+  },
+  {
+    "model": "core.performer",
+    "pk": 7,
+    "fields": {
+      "short_code": "KIT",
+      "team_name": "Kitware"
+    }
+  },
+  {
+    "model": "core.performer",
+    "pk": 8,
+    "fields": {
+      "short_code": "STR",
+      "team_name": "STR"
+    }
+  },
+  {
+    "model": "core.processinglevel",
+    "pk": 1,
+    "fields": {
+      "slug": "1C",
+      "description": "top of atmosphere radiance"
+    }
+  },
+  {
+    "model": "core.processinglevel",
+    "pk": 2,
+    "fields": {
+      "slug": "2A",
+      "description": "surface reflectance"
+    }
+  }
+]

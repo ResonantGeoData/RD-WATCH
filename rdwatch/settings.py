@@ -14,11 +14,11 @@ values.Value.late_binding = True
 
 
 class BaseConfiguration(Configuration):
-    ROOT_URLCONF = 'rdwatch.server.urls'
+    ROOT_URLCONF = 'rdwatch.urls'
     USE_I18N = False
     USE_TZ = False
     USE_X_FORWARDED_HOST = True
-    WSGI_APPLICATION = 'rdwatch.server.application'
+    WSGI_APPLICATION = 'rdwatch.wsgi.application'
     ALLOWED_HOSTS = ['*']
     DEBUG = values.BooleanValue(False, environ_prefix='RDWATCH_DJANGO')
     # Django's docs suggest that STATIC_URL should be a relative path,

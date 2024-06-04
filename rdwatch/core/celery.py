@@ -3,7 +3,7 @@ import os
 import configurations.importer
 from celery import Celery
 
-os.environ['DJANGO_SETTINGS_MODULE'] = 'rdwatch.server.settings'
+os.environ['DJANGO_SETTINGS_MODULE'] = 'rdwatch.settings'
 if not os.environ.get('DJANGO_CONFIGURATION'):
     raise ValueError('The environment variable "DJANGO_CONFIGURATION" must be set.')
 configurations.importer.install()

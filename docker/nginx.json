@@ -58,7 +58,7 @@
       "group": "rdwatch",
       "path": "/app/django/",
       "home": "/poetry/venvs/rdwatch/",
-      "module": "rdwatch.server",
+      "module": "rdwatch.wsgi",
       "threads": 25,
       "limits": {
         "timeout": 120,

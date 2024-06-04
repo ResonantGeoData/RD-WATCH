@@ -47,15 +47,15 @@ class BaseConfiguration(Configuration):
             'django.contrib.gis',
             'django.contrib.postgres',
             'django_extensions',
-            'rdwatch',
             'django_celery_results',
             'allauth',
             'allauth.account',
             'allauth.socialaccount',
             'allauth.socialaccount.providers.gitlab',
+            'rdwatch.core.apps.RDWatchConfig',
         ]
         if 'RDWATCH_POSTGRESQL_SCORING_URI' in os.environ:
-            base_applications.append('rdwatch.scoring')
+            base_applications.append('rdwatch.scoring.apps.ScoringConfig')
         if all(
             os.environ.get(key)
             for key in [
@@ -64,7 +64,7 @@ class BaseConfiguration(Configuration):
                 'RDWATCH_SMARTFLOW_PASSWORD',
             ]
         ):
-            base_applications.append('rdwatch.smartflow')
+            base_applications.append('rdwatch.smartflow.apps.SmartflowConfig')
         return base_applications
 
     MIDDLEWARE = [

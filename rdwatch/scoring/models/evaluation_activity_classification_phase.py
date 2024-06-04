@@ -18,5 +18,5 @@ class EvaluationActivityClassificationPhase(models.Model):
 
     class Meta:
         managed = False
-        app_label = 'rdwatch_scoring'
+        app_label = 'rdwatch.scoring'
         db_table = 'evaluation_activity_classification_phase'

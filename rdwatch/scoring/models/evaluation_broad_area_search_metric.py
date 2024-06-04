@@ -50,5 +50,5 @@ class EvaluationBroadAreaSearchMetric(models.Model):
 
     class Meta:
         managed = False
-        app_label = 'rdwatch_scoring'
+        app_label = 'rdwatch.scoring'
         db_table = 'evaluation_broad_area_search_metric'

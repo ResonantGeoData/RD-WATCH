@@ -15,13 +15,13 @@ class ScoringRouter:
     auth and contenttypes applications.
     """
 
-    route_app_labels = {'rdwatch', 'rdwatch_scoring'}
+    route_app_labels = {'rdwatch.core', 'rdwatch.scoring'}
 
     def db_for_read(self, model: type[Model], **hints) -> DbName:
         """
         Attempts to read scoring and contenttypes models go to scoringdb.
         """
-        if model not in RGD_DB_MODELS and model._meta.app_label == 'rdwatch_scoring':
+        if model not in RGD_DB_MODELS and model._meta.app_label == 'rdwatch.scoring':
             return 'scoringdb'
         return 'default'
 
@@ -29,7 +29,7 @@ class ScoringRouter:
         """
         Attempts to write scoringdb models go to auth_db.
         """
-        if model not in RGD_DB_MODELS and model._meta.app_label == 'rdwatch_scoring':
+        if model not in RGD_DB_MODELS and model._meta.app_label == 'rdwatch.scoring':
             return 'scoringdb'
         return 'default'
 
@@ -41,7 +41,7 @@ class ScoringRouter:
         involved.
         """
         labels = {obj1._meta.app_label, obj2._meta.app_label}
-        if 'rdwatch' in labels or 'rdwatch_scoring' in labels:
+        if 'rdwatch' in labels or 'rdwatch.scoring' in labels:
             return obj1._meta.app_label == obj2._meta.app_label
         return None
 

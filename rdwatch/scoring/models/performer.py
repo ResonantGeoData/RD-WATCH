@@ -8,5 +8,5 @@ class Performer(models.Model):
 
     class Meta:
         managed = False
-        app_label = 'rdwatch_scoring'
+        app_label = 'rdwatch.scoring'
         db_table = 'performer_code_mapping'

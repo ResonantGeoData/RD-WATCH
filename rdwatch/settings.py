@@ -55,7 +55,7 @@ class BaseConfiguration(Configuration):
             'allauth.socialaccount.providers.gitlab',
         ]
         if 'RDWATCH_POSTGRESQL_SCORING_URI' in os.environ:
-            base_applications.append('rdwatch_scoring')
+            base_applications.append('rdwatch.scoring')
         if all(
             os.environ.get(key)
             for key in [
@@ -183,7 +183,7 @@ class BaseConfiguration(Configuration):
     @property
     def DATABASE_ROUTERS(self):
         if 'RDWATCH_POSTGRESQL_SCORING_URI' in os.environ:
-            return ['rdwatch_scoring.router.ScoringRouter']
+            return ['rdwatch.scoring.router.ScoringRouter']
         else:
             return []
 

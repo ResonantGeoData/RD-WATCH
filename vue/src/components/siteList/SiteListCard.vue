@@ -396,16 +396,16 @@ const selectingSite = async (e: boolean) => {
   background-color: lightcoral;
 }
 
-.hoveredCard {
-  background-color: orange;
-  border: 5px solid orange;
-}
-
 .selectedCard {
   background-color: #e8f1f8;
   border: 5px solid #FFF9C4;
   padding-bottom: 0px;
 
+}
+
+.hoveredCard {
+  background-color: orange;
+  border: 5px solid orange;
 }
 
 .image-label {

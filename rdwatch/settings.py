@@ -190,7 +190,7 @@ class BaseConfiguration(Configuration):
 
     CELERY_BEAT_SCHEDULE = {
         'collect-garbage-beat': {
-            'task': 'rdwatch.tasks.collect_garbage_task',
+            'task': 'rdwatch.core.tasks.collect_garbage_task',
             'schedule': timedelta(hours=1),
         },
     }

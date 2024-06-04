@@ -1,6 +1,6 @@
 [
   {
-    "model": "rdwatch.commonband",
+    "model": "core.commonband",
     "pk": 1,
     "fields": {
       "slug": "coastal",
@@ -9,7 +9,7 @@
     }
   },
   {
-    "model": "rdwatch.commonband",
+    "model": "core.commonband",
     "pk": 2,
     "fields": {
       "slug": "blue",
@@ -18,7 +18,7 @@
     }
   },
   {
-    "model": "rdwatch.commonband",
+    "model": "core.commonband",
     "pk": 3,
     "fields": {
       "slug": "green",
@@ -27,7 +27,7 @@
     }
   },
   {
-    "model": "rdwatch.commonband",
+    "model": "core.commonband",
     "pk": 4,
     "fields": {
       "slug": "red",
@@ -36,7 +36,7 @@
     }
   },
   {
-    "model": "rdwatch.commonband",
+    "model": "core.commonband",
     "pk": 5,
     "fields": {
       "slug": "yellow",
@@ -45,7 +45,7 @@
     }
   },
   {
-    "model": "rdwatch.commonband",
+    "model": "core.commonband",
     "pk": 6,
     "fields": {
       "slug": "pan",
@@ -54,7 +54,7 @@
     }
   },
   {
-    "model": "rdwatch.commonband",
+    "model": "core.commonband",
     "pk": 7,
     "fields": {
       "slug": "rededge",
@@ -63,7 +63,7 @@
     }
   },
   {
-    "model": "rdwatch.commonband",
+    "model": "core.commonband",
     "pk": 8,
     "fields": {
       "slug": "rededge070",
@@ -72,7 +72,7 @@
     }
   },
   {
-    "model": "rdwatch.commonband",
+    "model": "core.commonband",
     "pk": 9,
     "fields": {
       "slug": "rededge074",
@@ -81,7 +81,7 @@
     }
   },
   {
-    "model": "rdwatch.commonband",
+    "model": "core.commonband",
     "pk": 10,
     "fields": {
       "slug": "rededge078",
@@ -90,7 +90,7 @@
     }
   },
   {
-    "model": "rdwatch.commonband",
+    "model": "core.commonband",
     "pk": 11,
     "fields": {
       "slug": "nir",
@@ -99,7 +99,7 @@
     }
   },
   {
-    "model": "rdwatch.commonband",
+    "model": "core.commonband",
     "pk": 12,
     "fields": {
       "slug": "nir08",
@@ -108,7 +108,7 @@
     }
   },
   {
-    "model": "rdwatch.commonband",
+    "model": "core.commonband",
     "pk": 13,
     "fields": {
       "slug": "nir09",
@@ -117,7 +117,7 @@
     }
   },
   {
-    "model": "rdwatch.commonband",
+    "model": "core.commonband",
     "pk": 14,
     "fields": {
       "slug": "cirrus",
@@ -126,7 +126,7 @@
     }
   },
   {
-    "model": "rdwatch.commonband",
+    "model": "core.commonband",
     "pk": 15,
     "fields": {
       "slug": "swir16",
@@ -135,7 +135,7 @@
     }
   },
   {
-    "model": "rdwatch.commonband",
+    "model": "core.commonband",
     "pk": 16,
     "fields": {
       "slug": "swir22",
@@ -144,7 +144,7 @@
     }
   },
   {
-    "model": "rdwatch.commonband",
+    "model": "core.commonband",
     "pk": 17,
     "fields": {
       "slug": "lwir",
@@ -153,7 +153,7 @@
     }
   },
   {
-    "model": "rdwatch.commonband",
+    "model": "core.commonband",
     "pk": 18,
     "fields": {
       "slug": "lwir11",
@@ -162,7 +162,7 @@
     }
   },
   {
-    "model": "rdwatch.commonband",
+    "model": "core.commonband",
     "pk": 19,
     "fields": {
       "slug": "lwir12",
@@ -171,7 +171,7 @@
     }
   },
   {
-    "model": "rdwatch.commonband",
+    "model": "core.commonband",
     "pk": 20,
     "fields": {
       "slug": "visual",
@@ -180,7 +180,7 @@
     }
   },
   {
-    "model": "rdwatch.constellation",
+    "model": "core.constellation",
     "pk": 1,
     "fields": {
       "slug": "L8",
@@ -188,7 +188,7 @@
     }
   },
   {
-    "model": "rdwatch.constellation",
+    "model": "core.constellation",
     "pk": 2,
     "fields": {
       "slug": "S2",
@@ -196,7 +196,7 @@
     }
   },
   {
-    "model": "rdwatch.constellation",
+    "model": "core.constellation",
     "pk": 3,
     "fields": {
       "slug": "WV",
@@ -204,7 +204,7 @@
     }
   },
   {
-    "model": "rdwatch.constellation",
+    "model": "core.constellation",
     "pk": 4,
     "fields": {
       "slug": "PL",
@@ -212,7 +212,7 @@
     }
   },
   {
-    "model": "rdwatch.observationlabel",
+    "model": "core.observationlabel",
     "pk": 1,
     "fields": {
       "slug": "active_construction",
@@ -220,7 +220,7 @@
     }
   },
   {
-    "model": "rdwatch.observationlabel",
+    "model": "core.observationlabel",
     "pk": 2,
     "fields": {
       "slug": "post_construction",
@@ -228,7 +228,7 @@
     }
   },
   {
-    "model": "rdwatch.observationlabel",
+    "model": "core.observationlabel",
     "pk": 3,
     "fields": {
       "slug": "site_preparation",
@@ -236,7 +236,7 @@
     }
   },
   {
-    "model": "rdwatch.observationlabel",
+    "model": "core.observationlabel",
     "pk": 4,
     "fields": {
       "slug": "unknown",
@@ -244,7 +244,7 @@
     }
   },
   {
-    "model": "rdwatch.observationlabel",
+    "model": "core.observationlabel",
     "pk": 5,
     "fields": {
       "slug": "no_activity",
@@ -252,7 +252,7 @@
     }
   },
   {
-    "model": "rdwatch.observationlabel",
+    "model": "core.observationlabel",
     "pk": 6,
     "fields": {
       "slug": "positive_annotated",
@@ -260,7 +260,7 @@
     }
   },
   {
-    "model": "rdwatch.observationlabel",
+    "model": "core.observationlabel",
     "pk": 7,
     "fields": {
       "slug": "positive_partial",
@@ -268,7 +268,7 @@
     }
   },
   {
-    "model": "rdwatch.observationlabel",
+    "model": "core.observationlabel",
     "pk": 8,
     "fields": {
       "slug": "positive_annotated_static",
@@ -276,7 +276,7 @@
     }
   },
   {
-    "model": "rdwatch.observationlabel",
+    "model": "core.observationlabel",
     "pk": 9,
     "fields": {
       "slug": "positive_partial_static",
@@ -284,7 +284,7 @@
     }
   },
   {
-    "model": "rdwatch.observationlabel",
+    "model": "core.observationlabel",
     "pk": 10,
     "fields": {
       "slug": "positive_pending",
@@ -292,7 +292,7 @@
     }
   },
   {
-    "model": "rdwatch.observationlabel",
+    "model": "core.observationlabel",
     "pk": 11,
     "fields": {
       "slug": "positive_excluded",
@@ -300,7 +300,7 @@
     }
   },
   {
-    "model": "rdwatch.observationlabel",
+    "model": "core.observationlabel",
     "pk": 12,
     "fields": {
       "slug": "negative",
@@ -308,7 +308,7 @@
     }
   },
   {
-    "model": "rdwatch.observationlabel",
+    "model": "core.observationlabel",
     "pk": 13,
     "fields": {
       "slug": "ignore",
@@ -316,7 +316,7 @@
     }
   },
   {
-    "model": "rdwatch.observationlabel",
+    "model": "core.observationlabel",
     "pk": 14,
     "fields": {
       "slug": "transient_positive",
@@ -324,7 +324,7 @@
     }
   },
   {
-    "model": "rdwatch.observationlabel",
+    "model": "core.observationlabel",
     "pk": 15,
     "fields": {
       "slug": "transient_negative",
@@ -332,7 +332,7 @@
     }
   },
   {
-    "model": "rdwatch.observationlabel",
+    "model": "core.observationlabel",
     "pk": 16,
     "fields": {
       "slug": "system_proposed",
@@ -340,7 +340,7 @@
     }
   },
   {
-    "model": "rdwatch.observationlabel",
+    "model": "core.observationlabel",
     "pk": 17,
     "fields": {
       "slug": "system_confirmed",
@@ -348,7 +348,7 @@
     }
   },
   {
-    "model": "rdwatch.observationlabel",
+    "model": "core.observationlabel",
     "pk": 18,
     "fields": {
       "slug": "system_rejected",
@@ -356,7 +356,7 @@
     }
   },
   {
-    "model": "rdwatch.performer",
+    "model": "core.performer",
     "pk": 1,
     "fields": {
       "short_code": "TE",
@@ -364,7 +364,7 @@
     }
   },
   {
-    "model": "rdwatch.performer",
+    "model": "core.performer",
     "pk": 2,
     "fields": {
       "short_code": "ACC",
@@ -372,7 +372,7 @@
     }
   },
   {
-    "model": "rdwatch.performer",
+    "model": "core.performer",
     "pk": 3,
     "fields": {
       "short_code": "ARA",
@@ -380,7 +380,7 @@
     }
   },
   {
-    "model": "rdwatch.performer",
+    "model": "core.performer",
     "pk": 4,
     "fields": {
       "short_code": "AST",
@@ -388,7 +388,7 @@
     }
   },
   {
-    "model": "rdwatch.performer",
+    "model": "core.performer",
     "pk": 5,
     "fields": {
       "short_code": "BLA",
@@ -396,7 +396,7 @@
     }
   },
   {
-    "model": "rdwatch.performer",
+    "model": "core.performer",
     "pk": 6,
     "fields": {
       "short_code": "IAI",
@@ -404,7 +404,7 @@
     }
   },
   {
-    "model": "rdwatch.performer",
+    "model": "core.performer",
     "pk": 7,
     "fields": {
       "short_code": "KIT",
@@ -412,7 +412,7 @@
     }
   },
   {
-    "model": "rdwatch.performer",
+    "model": "core.performer",
     "pk": 8,
     "fields": {
       "short_code": "STR",
@@ -420,7 +420,7 @@
     }
   },
   {
-    "model": "rdwatch.processinglevel",
+    "model": "core.processinglevel",
     "pk": 1,
     "fields": {
       "slug": "1C",
@@ -428,7 +428,7 @@
     }
   },
   {
-    "model": "rdwatch.processinglevel",
+    "model": "core.processinglevel",
     "pk": 2,
     "fields": {
       "slug": "2A",

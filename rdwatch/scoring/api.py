@@ -1,7 +1,7 @@
 from ninja import NinjaAPI
 from ninja.errors import ValidationError
 
-from rdwatch_scoring import views
+from . import views
 
 api = NinjaAPI(urls_namespace='scoring')
 

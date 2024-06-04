@@ -117,7 +117,6 @@ jobs:
         run: pip install --upgrade poetry tox
       - name: Run tests
         run: tox -e ${{ matrix.tox-env }}
-        working-directory: django
   test-vue:
     name: Test [vue]
     runs-on: ubuntu-22.04

@@ -64,7 +64,7 @@ class BaseConfiguration(Configuration):
                 'RDWATCH_SMARTFLOW_PASSWORD',
             ]
         ):
-            base_applications.append('rdwatch_smartflow')
+            base_applications.append('rdwatch.smartflow')
         return base_applications
 
     MIDDLEWARE = [

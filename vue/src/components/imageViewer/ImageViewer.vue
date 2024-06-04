@@ -382,7 +382,7 @@ const clearStorage = async () => {
   maplibregl.clearStorage();
   // We need to update the source to get information
   // This reloads the source vector-tile to color it properly after data has been changed.
-  state.filters.randomKey = `?randomKey=randomKey_${Math.random() * 1000}`;
+  state.filters.randomKey = `randomKey=randomKey_${Math.random() * 1000}`;
   await getImageData();
 };
 
@@ -486,8 +486,9 @@ const clearStorage = async () => {
         <span> Toggle between Site Polygon and Observation Polygon </span>
       </v-tooltip>
       <v-tooltip
-        v-if="
-          editMode && !loading && filteredImages.length &&
+        v-if="editMode && !loading && 
+            !ApiService.getApiPrefix().includes('scoring') &&
+            filteredImages.length &&
             filteredImages[currentImage] &&
             filteredImages[currentImage].image &&
             filteredImages[currentImage].image.source === 'WV'

@@ -1,4 +1,4 @@
-files: ^(django|cli|scripts)/
+files: ^(rdwatch|scripts)/
 repos:
   - repo: https://github.com/pre-commit/pre-commit-hooks
     rev: v4.5.0
@@ -21,13 +21,13 @@ repos:
     rev: 23.12.1
     hooks:
       - id: black
-        args: [--config, django/pyproject.toml]
+        args: [--config, pyproject.toml]
 
   - repo: https://github.com/PyCQA/isort
     rev: 5.13.2
     hooks:
       - id: isort
-        args: [--settings-file, django/pyproject.toml]
+        args: [--settings-file, pyproject.toml]
 
   - repo: https://github.com/asottile/pyupgrade
     rev: v3.15.1
@@ -61,4 +61,4 @@ repos:
           - flake8-quotes
         args:
           - --config
-          - django/.flake8
+          - .flake8

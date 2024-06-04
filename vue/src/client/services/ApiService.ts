@@ -588,7 +588,7 @@ export class ApiService {
   public static patchSiteEvaluation(id: string, data: SiteEvaluationUpdateQuery): CancelablePromise<boolean> {
     return __request(OpenAPI, {
       method: 'PATCH',
-      url: "/api/evaluations/{id}/",
+      url: `${this.getApiPrefix()}/evaluations/{id}/`,
       path: {
         id: id,
       },

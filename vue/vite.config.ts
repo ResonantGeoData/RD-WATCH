@@ -53,11 +53,11 @@ export default ({ mode}) => {
         port: devPort,
         proxy: {
           "/api/vector-tiles": {
-            target: `http://${vectorServer}:8001`,
+            target: `http://${devHost}:8000`,
             xfwd: true,
           },
           "/api/scoring/vector-tiles/": {
-            target: `http://${vectorServer}:8001`,
+            target: `http://${devHost}:8000`,
             xfwd: true,
           },
           "/api": {

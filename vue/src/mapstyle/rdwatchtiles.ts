@@ -269,7 +269,7 @@ export const buildSourceFilter = (timestamp: number, modelRunIds: string[], rand
     const source = `vectorTileSource_${id}`;
     results[source] = {
       type: "vector",
-      tiles: [`${urlRoot}${ApiService.getApiPrefix()}/model-runs/${id}/vector-tile/{z}/{x}/{y}.pbf/${randomKey}`],
+      tiles: [`${urlRoot}${ApiService.getApiPrefix()}/model-runs/${id}/vector-tile/{z}/{x}/{y}.pbf/?${randomKey}`],
       minzoom: 0,
       maxzoom: 14,
     };

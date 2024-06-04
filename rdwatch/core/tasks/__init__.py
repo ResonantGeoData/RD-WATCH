@@ -30,7 +30,7 @@ from django.db import transaction
 from django.db.models import DateTimeField, ExpressionWrapper, F, OuterRef, Subquery
 from django.utils import timezone
 
-from rdwatch.core.celery import app
+from rdwatch.celery import app
 from rdwatch.core.models import (
     AnnotationExport,
     ModelRun,

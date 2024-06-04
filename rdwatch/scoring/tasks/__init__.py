@@ -13,7 +13,7 @@ from django.contrib.gis.geos import Polygon
 from django.core.files import File
 from django.db import transaction
 
-from rdwatch.core.celery import app
+from rdwatch.celery import app
 from rdwatch.core.tasks import (
     BaseTime,
     BboxScaleDefault,

@@ -487,11 +487,11 @@ const clearStorage = async () => {
       </v-tooltip>
       <v-tooltip
         v-if="editMode && !loading && 
-            !ApiService.getApiPrefix().includes('scoring') &&
-            filteredImages.length &&
-            filteredImages[currentImage] &&
-            filteredImages[currentImage].image &&
-            filteredImages[currentImage].image.source === 'WV'
+          !ApiService.getApiPrefix().includes('scoring') &&
+          filteredImages.length &&
+          filteredImages[currentImage] &&
+          filteredImages[currentImage].image &&
+          filteredImages[currentImage].image.source === 'WV'
         "
         open-delay="50"
         bottom

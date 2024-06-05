@@ -651,7 +651,7 @@ export class ApiService {
   ): CancelablePromise<boolean> {
     return __request(OpenAPI, {
       method: "POST",
-      url: `${this.getApiPrefix()}/model-runs/{id}/site-model/`,
+      url: `${this.getApiPrefix()}/model-runs/{id}/editor/site-model/`,
       path: {
         id: modelRunId,
       },

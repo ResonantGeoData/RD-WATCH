@@ -1,5 +1,6 @@
 from ninja import NinjaAPI
 from ninja.errors import ValidationError
+from ninja.security import django_auth
 
 from rdwatch import __version__ as rdwatch_version
 
@@ -13,7 +14,7 @@ from .views.site_evaluation import router as site_evaluation_router
 from .views.site_image import router as images_router
 from .views.site_observation import router as site_observation_router
 
-api = NinjaAPI(title='RD-WATCH', version=rdwatch_version)
+api = NinjaAPI(title='RD-WATCH', version=rdwatch_version, auth=django_auth, csrf=True)
 
 api.add_router('/evaluations/', site_evaluation_router)
 api.add_router('/observations/', site_observation_router)

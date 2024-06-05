@@ -1,9 +1,10 @@
 from ninja import NinjaAPI
 from ninja.errors import ValidationError
+from ninja.security import django_auth
 
 from . import views
 
-api = NinjaAPI(urls_namespace='scoring')
+api = NinjaAPI(urls_namespace='scoring', auth=django_auth, csrf=True)
 
 api.add_router('/evaluations/', views.site_evaluation.router)
 api.add_router('/evaluations/images/', views.site_image.router)

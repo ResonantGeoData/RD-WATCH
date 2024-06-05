@@ -27,7 +27,10 @@ class BaseConfiguration(Configuration):
 
     # The `/accounts/*` endpoints are the only endpoints that should *not*
     # require authentication to access
-    LOGIN_REQUIRED_IGNORE_PATHS = [r'/accounts/']
+    LOGIN_REQUIRED_IGNORE_PATHS = [
+        r'/accounts/',  # allow unauthenticated access to the accounts endpoints
+        r'/api/',  # ninja will handle authentication for the REST API
+    ]
 
     SAM_CHECKPOINT_MODEL = values.PathValue(
         '/data/SAM/sam_vit_h_4b8939.pth',
@@ -174,6 +177,9 @@ class BaseConfiguration(Configuration):
         environ_required=False,
         environ_prefix=_ENVIRON_PREFIX,
     )
+    MODEL_RUN_API_KEY = values.SecretValue(
+        environ_required=True, environ_prefix=_ENVIRON_PREFIX
+    )
 
     # django-celery-results configuration
     CELERY_RESULT_BACKEND = 'django-db'
@@ -237,6 +243,19 @@ class DevelopmentConfiguration(BaseConfiguration):
     @property
     def INTERNAL_IPS(self) -> list[str]:
         return super().INTERNAL_IPS + ['127.0.0.1']
+
+
+# Based on
+# https://github.com/kitware-resonant/django-composed-configuration/blob/master/composed_configuration/_configuration.py#L65
+class TestingConfiguration(BaseConfiguration):
+    SECRET_KEY = 'testingsecret'
+
+    # Testing will add 'testserver' to ALLOWED_HOSTS
+    ALLOWED_HOSTS: list[str] = []
+
+    MINIO_STORAGE_MEDIA_BUCKET_NAME = 'test-django-storage'
+
+    # Testing will set EMAIL_BACKEND to use the memory backend
 
 
 class ProductionConfiguration(BaseConfiguration):

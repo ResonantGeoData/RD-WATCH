@@ -7,6 +7,7 @@ import type { ApiResult } from "./ApiResult";
 import { CancelablePromise } from "./CancelablePromise";
 import type { OnCancel } from "./CancelablePromise";
 import type { OpenAPIConfig } from "./OpenAPI";
+import Cookies from "js-cookie";
 
 const isDefined = <T>(
   value: T | null | undefined
@@ -148,10 +149,11 @@ const getHeaders = async (
   const username = await resolve(options, config.USERNAME);
   const password = await resolve(options, config.PASSWORD);
   const additionalHeaders = await resolve(options, config.HEADERS);
-
+  const crsfHeader = {'X-CSRFToken': Cookies.get('csrftoken')};
   const headers = Object.entries({
     Accept: "application/json",
     ...additionalHeaders,
+    ...crsfHeader,
     ...options.headers,
   })
     .filter(([_, value]) => isDefined(value))

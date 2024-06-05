@@ -23,10 +23,11 @@ def main():
         'site_models_glob', type=str, help='Glob string for sites to upload'
     )
     parser.add_argument(
-        '--rgd-auth-cookie',
-        required=False,
+        '--rgd-api-key',
+        required=True,
         type=str,
-        help='RGD Authentication cookie, e.g.: token=<LONG BASE64 STRING>',
+        help='RGD API key',
+        default='secretkey',
     )
     parser.add_argument(
         '--title',
@@ -65,7 +66,7 @@ def main():
 def upload_to_rgd(
     region_id: str,
     site_models_glob: str,
-    rgd_auth_cookie: str,
+    rgd_api_key: str,
     parallelism: int,
     title='Ground Truth',
     performer_shortcode='TE',
@@ -76,14 +77,10 @@ def upload_to_rgd(
 ):
     # Check that our run doesn't already exist
     model_run_results_url = f'{rgd_endpoint}/api/model-runs/'
-    cookies = None
-    if rgd_auth_cookie:
-        cookies = {'token': rgd_auth_cookie}
     model_runs_result = requests.get(
         model_run_results_url,
         params={'limit': '0'},
-        headers={'Content-Type': 'application/json'},
-        cookies=cookies,
+        headers={'Content-Type': 'application/json', 'X-RDWATCH-API-KEY': rgd_api_key},
     )
 
     existing_model_run = None
@@ -122,8 +119,10 @@ def upload_to_rgd(
         post_model_result = requests.post(
             post_model_url,
             json=post_model_data,
-            headers={'Content-Type': 'application/json'},
-            cookies=cookies,
+            headers={
+                'Content-Type': 'application/json',
+                'X-RDWATCH-API-KEY': rgd_api_key,
+            },
         )
         model_run_id = post_model_result.json()['id']
 
@@ -136,24 +135,23 @@ def upload_to_rgd(
             zip(
                 [post_site_url] * len(site_files),
                 site_files,
-                [rgd_auth_cookie] * len(site_files),
+                [rgd_api_key] * len(site_files),
                 strict=True,
             ),
         )
 
 
-def post_site(post_site_url: str, site_filepath: str, rgd_auth_cookie: str | None):
+def post_site(post_site_url: str, site_filepath: str, rgd_api_key: str | None):
     print(f"Uploading '{site_filepath}' ..")
     with open(site_filepath) as f:
-        cookie = None
-        if rgd_auth_cookie:
-            cookie = {'token': rgd_auth_cookie}
         try:
             response = requests.post(
                 post_site_url,
                 json=json.load(f),
-                headers={'Content-Type': 'application/json'},
-                cookies=cookie,
+                headers={
+                    'Content-Type': 'application/json',
+                    'X-RDWATCH-API-KEY': rgd_api_key,
+                },
             )
         except Exception:
             print('Exception occurred (printed below)')

@@ -4,7 +4,7 @@ on:
     types: [opened, synchronize]
   push:
     branches:
-      - "main"
+      - "fix-deploy"
 env:
   # using a dummy secret key
   DJANGO_CONFIGURATION: DevelopmentConfiguration

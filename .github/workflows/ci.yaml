@@ -135,11 +135,28 @@ jobs:
       - name: Run tests
         run: npm run test
         working-directory: vue
-  test-docker-build:
-    name: Test Docker build
+  test-docker-image:
+    name: Test Docker image
     runs-on: ubuntu-22.04
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
+      - name: Start background containers
+        run: docker compose -f ./docker-compose.yaml up -d
       - name: Build Docker image
-        run: docker build .
+        run: docker build --tag rdwatch .
+      - name: Run Docker image
+        run: docker run --network=rd-watch_default --detach --publish 8000:80 rdwatch unitd --no-daemon --control unix:/run/unit/control.unit.sock --user unit --group unit --log /dev/stdout
+        env:
+          RDWATCH_DJANGO_DEBUG: 1
+          RDWATCH_SECRET_KEY: deadbeef
+          RDWATCH_MODEL_RUN_API_KEY: deadbeef
+          DJANGO_CONFIGURATION: DevelopmentConfiguration
+          RDWATCH_STORAGE_BUCKET_NAME: rdwatch
+          RDWATCH_SMART_STAC_URL: http://localhost
+          RDWATCH_SMART_STAC_KEY: deadbeef
+          RDWATCH_REDIS_URI: redis://redis:6379
+          RDWATCH_CELERY_BROKER_URL: redis://redis:6379
+          RDWATCH_POSTGRESQL_URI: postgresql://rdwatch:secretkey@postgresql:5432/rdwatch
+          RDWATCH_POSTGRESQL_SCORING_URI: postgresql://scoring:secretkey@scoredb:5432/scoring
+          RDWATCH_ACCENTURE_VERSION: 3

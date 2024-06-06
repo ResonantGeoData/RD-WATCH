@@ -9,10 +9,23 @@ const isLoggedIn = ref(false);
 // redirect them to the login page.
 onBeforeMount(async () => {
   try {
-    await fetch('/api/status/', { redirect: 'error' });
+    const data = await fetch('/api/status/', { redirect: 'error' });
+    const json = await data.json();
+    if (import.meta.env.DEV && json && json['detail'] === 'Unauthorized') {
+      window.location.href = '/admin';
+      return;
+    }
+    if (import.meta.env.PROD && json && json['detail'] === 'Unauthorized') {
+      window.location.href = `/accounts/gitlab/login/?next=${window.location.pathname}`;
+      return;
+    }
     isLoggedIn.value = true;
   } catch (e) {
-    window.location.href = `/accounts/gitlab/login/?next=${window.location.pathname}`;
+    if (import.meta.env.PROD) {
+      window.location.href = `/accounts/gitlab/login/?next=${window.location.pathname}`;
+    } else {
+      window.location.href = '/admin'
+    }
   }
 });
 

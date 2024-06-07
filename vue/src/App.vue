@@ -15,6 +15,10 @@ onBeforeMount(async () => {
       window.location.href = '/admin';
       return;
     }
+    if (import.meta.env.PROD && json && json['detail'] === 'Unauthorized') {
+      window.location.href = `/accounts/gitlab/login/?next=${window.location.pathname}`;
+      return;
+    }
     isLoggedIn.value = true;
   } catch (e) {
     if (import.meta.env.PROD) {

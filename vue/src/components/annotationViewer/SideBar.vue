@@ -10,6 +10,7 @@ import { ApiService, ModelRunList, type Performer, type QueryArguments, type Reg
 import type { Ref } from "vue";
 import { changeTime } from "../../interactions/timeStepper";
 import ErrorPopup from "../ErrorPopup.vue";
+import ModeSelector from "../ModeSelector.vue";
 const timemin = ref(Math.floor(new Date(0).valueOf() / 1000));
 
 const queryFilters = computed<QueryArguments>(() => ({
@@ -146,6 +147,7 @@ const satelliteLoadingColor = computed(() => {
           draggable="false"
         >
       </v-row>
+      <mode-selector />
       <v-row>
         <TimeSlider
           :min="timemin || 0"

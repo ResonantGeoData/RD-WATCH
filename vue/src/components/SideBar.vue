@@ -14,6 +14,7 @@ import { ModelRunList } from "../client/models/ModelRunList";
 import type { Ref } from "vue";
 import { changeTime } from "../interactions/timeStepper";
 import { useRoute } from "vue-router";
+import ModeSelector from './ModeSelector.vue';
 
 const timemin = ref(Math.floor(new Date(0).valueOf() / 1000));
 
@@ -33,7 +34,6 @@ watch(() => route.path, (oldPath, newPath) => {
   }
 });
 
-const scoringApp = computed(()=> route.path.includes('scoring') && !route.path.includes('proposal'));
 
 
 const queryFilters = computed<QueryArguments>(() => ({
@@ -180,28 +180,7 @@ const satelliteLoadingColor = computed(() => {
           draggable="false"
         >
       </v-row>
-      <v-row dense>
-        <v-spacer />
-        <v-btn
-          to="/"
-          :color="!scoringApp? 'primary': ''"
-          :theme="!scoringApp? 'dark': ''"
-          size="x-small"
-          class="mx-2"
-        >
-          RD-WATCH
-        </v-btn>
-        <v-btn
-          to="/scoring"
-          :color="scoringApp? 'primary': ''"
-          :theme="scoringApp? 'dark': ''"
-          size="x-small"
-          class="mx-2"
-        >
-          Scoring
-        </v-btn>
-      </v-row>
-
+      <mode-selector />
       <v-row>
         <TimeSlider
           :min="timemin"
@@ -343,14 +322,14 @@ const satelliteLoadingColor = computed(() => {
           hide-details
         />
       </v-row>
-      <SettingsPanel v-if="expandSettings" />
     </div>
     <v-row
-      v-if="!expandSettings"
       dense
       class="modelRuns"
     >
+    <SettingsPanel v-if="expandSettings" />
       <ModelRunListVue
+        v-if="!expandSettings"
         :filters="queryFilters"
         class="flex-grow-1"
         @update:timerange="

@@ -4,6 +4,7 @@ from typing import Any, Literal
 from celery.result import AsyncResult
 from ninja import Field, FilterSchema, Query, Schema
 from ninja.pagination import PageNumberPagination, RouterPaginated, paginate
+from ninja.responses import Response
 from ninja.schema import validator
 from ninja.security import APIKeyHeader
 from pydantic import UUID4, constr  # type: ignore
@@ -37,6 +38,7 @@ from rdwatch.core.models import (
     AnnotationExport,
     ModelRun,
     Performer,
+    Region,
     SatelliteFetching,
     SiteEvaluation,
 )
@@ -451,14 +453,22 @@ def post_region_model(
 )
 def post_region_model_editor(
     request: HttpRequest,
-    model_run_id: UUID4,
     region_model: RegionModel,
+    public=True,
 ):
-    model_run = get_object_or_404(ModelRun, pk=model_run_id)
-    site_evaluations = SiteEvaluation.bulk_create_from_region_model(
-        region_model, model_run
+    if not request.user.is_authenticated:
+        return Response({'detail': 'Authentication required'}, status=401)
+
+    owner = request.user
+    # Extract the owner from the request user
+    region, created = Region.create_region_model_from_geoJSON(
+        region_model, public, owner
     )
-    return 201, [eval.id for eval in site_evaluations]
+
+    return Response(
+        {'detail': 'Region model created successfully', 'region_id': str(region.id)},
+        status=201,
+    )
 
 
 @router.post('/{model_run_id}/generate-images/', response={202: bool})

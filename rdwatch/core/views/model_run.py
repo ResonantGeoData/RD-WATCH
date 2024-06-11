@@ -393,6 +393,20 @@ def get_model_run(request: HttpRequest, id: UUID4):
     return get_object_or_404(get_queryset(), id=id)
 
 
+@router.get(
+    '/api-key-version',
+    response={200: list[ModelRunListSchema]},
+    auth=[ModelRunAuth()],
+)
+@paginate(ModelRunPagination)
+@csrf_exempt
+def list_model_runs_api_key(
+    request: HttpRequest,
+    filters: ModelRunFilterSchema = Query(...),  # noqa: B008
+):
+    return filters.filter(get_queryset())
+
+
 @router.post(
     '/{model_run_id}/site-model/',
     response={201: UUID4},

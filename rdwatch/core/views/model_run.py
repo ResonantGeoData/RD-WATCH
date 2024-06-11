@@ -448,22 +448,21 @@ def post_region_model(
 
 # Utilized in the client editor for adding new region-models
 @router.post(
-    '/{model_run_id}/editor/region-model/',
+    '/editor/region-model/',
     response={201: list[UUID4]},
 )
 def post_region_model_editor(
     request: HttpRequest,
     region_model: RegionModel,
-    public=True,
 ):
     if not request.user.is_authenticated:
-        return Response({'detail': 'Authentication required'}, status=401)
+        return Response(
+            {'detail': f'Authentication required: {request.user}'}, status=401
+        )
 
     owner = request.user
     # Extract the owner from the request user
-    region, created = Region.create_region_model_from_geoJSON(
-        region_model, public, owner
-    )
+    region, created = Region.create_region_model_from_geoJSON(region_model, True, owner)
 
     return Response(
         {'detail': 'Region model created successfully', 'region_id': str(region.id)},
@@ -490,8 +489,6 @@ def generate_images(
         scalVal,
         params.bboxScale,
     )
-    return 202, True
-
     return 202, True
 
 

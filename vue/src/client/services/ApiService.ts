@@ -160,9 +160,26 @@ export interface SMARTSiteFeature {
   }
   geometry: GeoJSON.Geometry;
 }
+
+export interface SMARTRegionFeature {
+  type: 'Feature';
+  properties: {
+  type: 'region';
+  region_id: string;
+  start_date: null;
+  end_date: null;
+  }
+  geometry: GeoJSON.Geometry;
+}
 export interface SiteModelUpload {
   type: 'FeatureCollection',
   features: SMARTSiteFeature[];
+}
+
+export interface RegionUpload {
+    type: 'FeatureCollection',
+  features: SMARTRegionFeature[];
+
 }
 
 type ApiPrefix = '/api' | '/api/scoring';
@@ -660,4 +677,17 @@ export class ApiService {
       }
     });
   }
+
+  public static addRegionModel(
+    regionModel: RegionUpload
+  ): CancelablePromise<boolean> {
+    return __request(OpenAPI, {
+      method: "POST",
+      url: `${this.getApiPrefix()}/model-runs/editor/region-model/`,
+      body: {
+        ...regionModel
+      }
+    });
+  }
+
 }

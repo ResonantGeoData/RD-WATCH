@@ -28,7 +28,7 @@ return formattedDate;
 }
 
 const date = computed(() => convertUnixToDate(state.timestamp));
-const minDate = computed(() => convertUnixToDate(props.min));
+const minDate = computed(() => convertUnixToDate(props.min || 0));
 const maxDate = computed(() => convertUnixToDate(props.max));
 </script>
 

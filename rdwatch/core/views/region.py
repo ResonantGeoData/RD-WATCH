@@ -1,9 +1,11 @@
 from ninja import Router
 from ninja.pagination import PageNumberPagination, paginate
+from ninja.responses import Response
 
 from django.http import HttpRequest
 
 from rdwatch.core.models import Region
+from rdwatch.core.schemas import RegionModel
 
 router = Router()
 
@@ -26,3 +28,18 @@ def list_region_details(request: HttpRequest):
         }
         for region in regions
     ]
+
+
+@router.post('/')
+def post_region_model_editor(
+    request: HttpRequest,
+    region_model: RegionModel,
+):
+    owner = request.user
+    # Extract the owner from the request user
+    region, created = Region.create_region_model_from_geoJSON(region_model, True, owner)
+
+    return Response(
+        {'detail': 'Region model created successfully', 'region_id': str(region.name)},
+        status=201,
+    )

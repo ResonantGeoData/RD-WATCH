@@ -42,7 +42,7 @@ class Region(models.Model):
 
     @classmethod
     def create_region_model_from_geoJSON(
-        region_model: RegionModel, public=False, owner=None
+        cls, region_model: RegionModel, public=False, owner=None
     ):
         region_feature = region_model.region_feature
         assert isinstance(region_feature.properties, RegionFeature)

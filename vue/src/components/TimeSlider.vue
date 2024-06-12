@@ -3,7 +3,7 @@ import { computed } from "vue";
 import { state } from "../store";
 
 interface Props {
-  min: number;
+  min: number | null;
   max: number;
   compact?: boolean;
 }
@@ -49,7 +49,7 @@ const maxDate = computed(() => convertUnixToDate(props.max));
             <v-row>
               <v-slider
                 v-model.number="state.timestamp"
-                :min="min"
+                :min="min || 0"
                 :max="max"
                 :disabled="min == max"
                 class="date-slider w-100 mb-0 pb-0"

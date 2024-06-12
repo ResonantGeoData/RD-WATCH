@@ -460,7 +460,6 @@ const addRegion = () => {
           v-bind="props"
           class="px-2 mx-2"
           size="large"
-          :disabled="!modelRunEnabled"
           :color="state.filters.drawRegionPoly ? 'primary' : ''"
           @click="toggleRegion()"
         >
@@ -491,8 +490,6 @@ const addRegion = () => {
           </v-list-item>
           <v-list-item
             value="Region"
-            :class="{'disabled-item': !modelRunEnabled}"
-            :disabled="!modelRunEnabled"
             @click="addRegion()"
           >
             <div

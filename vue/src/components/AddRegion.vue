@@ -49,6 +49,8 @@ const addRegion = async () => {
                 region_id: regionId.value,
                 start_date: null,
                 end_date: null,
+                mgrs: "52SDG",
+                originator: 'custom',
               },
               geometry: polyGeoJSON,
             },

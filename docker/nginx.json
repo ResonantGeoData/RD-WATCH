@@ -56,7 +56,6 @@
       "type": "python 3.11",
       "user": "rdwatch",
       "group": "rdwatch",
-      "path": "/app/rdwatch/",
       "home": "/poetry/venvs/rdwatch/",
       "module": "rdwatch.wsgi",
       "threads": 25,

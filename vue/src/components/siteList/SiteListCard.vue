@@ -3,9 +3,9 @@ import {
   ApiService,
   SiteModelStatus,
 } from "../../client/services/ApiService";
-import { SiteOverview, getSiteObservationDetails, state, toggleSatelliteImages } from "../../store";
+import { SiteOverview, state, toggleSatelliteImages } from "../../store";
 import { timeRangeFormat } from "../../utils";
-import { Ref, computed, ref, watch } from "vue";
+import { Ref, computed, ref } from "vue";
 import { hoveredInfo } from "../../interactions/mouseEvents";
 import ImageBrowser from './ImageBrowser.vue';
 import ImageToggle from './ImageToggle.vue';
@@ -37,6 +37,7 @@ export interface SiteDisplay {
     region: string;
     title: string;
   };
+  selectedSite?: SiteOverview; 
 }
 
 const props = defineProps<{
@@ -52,14 +53,8 @@ const emit = defineEmits<{
 
 const localSite: Ref<SiteDisplay> = ref({...props.site});
 
-const selectedSite: Ref<undefined | SiteOverview> = ref(undefined)
 
-watch(state.selectedSites, () => {
-  selectedSite.value  = state.selectedSites.find((item) => item.id === localSite.value.id);
-  selectSite.value = !!selectedSite.value;
-});
 
-const selectSite = ref(!!selectedSite.value)
 
 const imagesActive = computed(() => state.enabledSiteImages.findIndex((item) => item.id === props.site.id) !== -1);
 const hasImages = computed(() =>  props.site.WV > 0 || props.site.S2 > 0 || props.site.PL > 0 || props.site.L8 > 0);
@@ -109,8 +104,8 @@ const selectingSite = async (e: boolean) => {
 
 <template>
   <v-card
-    :key="`${localSite.name}_${localSite.id}_${localSite.selected}`"
     variant="flat"
+    :ripple="false"
     class="siteCard"
     :class="{
       selectedCard: site.selected,
@@ -118,6 +113,7 @@ const selectingSite = async (e: boolean) => {
     }"
     @mouseenter="state.filters.hoverSiteId = localSite.id"
     @mouseleave="state.filters.hoverSiteId = undefined"
+    @click="selectingSite(!site.selected)"
   >
     <v-card-title class="title">
       <v-row
@@ -154,7 +150,7 @@ const selectingSite = async (e: boolean) => {
           cols="1"
         >
           <v-checkbox-btn
-            :model-value="selectSite || site.selected"
+            :model-value="site.selected"
             density="compact"
             color="#29B6F6"
             hide-details
@@ -182,7 +178,7 @@ const selectingSite = async (e: boolean) => {
         <span class="site-model-info-label">Date Range:</span><span class=" ml-1 site-model-dates"> {{ timeRangeFormat({min: site.startDate, max: site.endDate }) }} </span>
       </v-row>
       <v-row
-        v-if="!localSite.proposal && selectedSite"
+        v-if="!localSite.proposal && site.selectedSite"
         dense
         justify="center"
         align="center"
@@ -191,12 +187,12 @@ const selectingSite = async (e: boolean) => {
           Score:
         </div>
         <div class="site-model-data-label">
-          {{ selectedSite.score.min.toFixed(2) }} to {{ selectedSite.score.max.toFixed(2) }}
+          {{ site.selectedSite.score.min.toFixed(2) }} to {{ site.selectedSite.score.max.toFixed(2) }}
         </div>
         <v-spacer />
       </v-row>
       <v-row
-        v-if="!localSite.proposal && selectedSite"
+        v-if="!localSite.proposal && site.selectedSite"
 
         dense
         justify="center"
@@ -206,7 +202,7 @@ const selectingSite = async (e: boolean) => {
           Average:
         </div>
         <div class="site-model-data-label">
-          {{ selectedSite.score.average.toFixed(2) }}
+          {{ site.selectedSite.score.average.toFixed(2) }}
         </div>
         <v-spacer />
       </v-row>
@@ -241,12 +237,6 @@ const selectingSite = async (e: boolean) => {
         </v-col>
       </v-row>
       <v-row
-        v-else
-        align="center"
-      >
-        <span class="no-images">No Images Downloaded</span>
-      </v-row>
-      <v-row
         dense
         class="pt-2"
       >
@@ -269,12 +259,12 @@ const selectingSite = async (e: boolean) => {
           </span>
         </v-tooltip>
         <image-toggle
-          v-else-if="!localSite.filename && selectedSite"
+          v-else-if="!localSite.filename && site.selectedSite"
           :site-id="localSite.id"
           :site-name="localSite.name"
           :has-images="hasImages"
           :images-active="imagesActive"
-          @site-toggled="hasImages && toggleSatelliteImages(selectedSite)"
+          @site-toggled="hasImages && toggleSatelliteImages(site.selectedSite)"
         />
         <v-spacer />
         <v-tooltip 
@@ -312,10 +302,26 @@ const selectingSite = async (e: boolean) => {
               v-bind="props"
               @click.stop="setImageDownloadDialog()"
             >
-              <v-icon>mdi-image-sync</v-icon>
+              <div
+                v-if="!localSite.images"
+              >
+                <v-icon>mdi-image-sync</v-icon>
+                <v-icon
+                  color="red"
+                  size="20"
+                  class="icon-badge"
+                >
+                  mdi-information
+                </v-icon>
+              </div>
+              <v-icon v-else>
+                mdi-image-sync
+              </v-icon>
             </v-btn>
           </template>
-          <span>Download Satellite Images</span>
+          <span>
+            <div v-if="!localSite.images"> No Site Images Downloaded</div>
+            Click to Download Satellite Images</span>
         </v-tooltip>
         <div v-else-if="downloading">
           <v-tooltip open-delay="300">
@@ -352,14 +358,10 @@ const selectingSite = async (e: boolean) => {
         </div>
       </v-row>
       <ImageBrowser
-        v-if="!localSite.proposal && selectedSite !== undefined"
-        :site-overview="selectedSite"
+        v-if="!localSite.proposal && site.selectedSite !== undefined"
+        :site-overview="site.selectedSite"
       />
     </v-card-text>
-    <div
-      v-if="site.selected"
-      class="selectedBorder"
-    />
   </v-card>
 </template>
 
@@ -375,17 +377,15 @@ const selectingSite = async (e: boolean) => {
   animation: flicker-animation 1s infinite;
 }
 
-.selectedBorder {
-  background-color: #FFF9C4;
-  height: 5px;
-}
 .siteCard {
-  border: 3px solid transparent;
+  border: 5px solid transparent;
+  padding-bottom: 4px;
   border-bottom: 1px solid gray;
 }
 .siteCard:hover {
   cursor: pointer;
-  border: 3px solid #188DC8;
+  border: 5px solid #188DC8;
+  padding-bottom: 0px;
 }
 
 .title {
@@ -396,13 +396,16 @@ const selectingSite = async (e: boolean) => {
   background-color: lightcoral;
 }
 
-.hoveredCard {
-  background-color: orange;
-  border: 3px solid orange;
-}
-
 .selectedCard {
   background-color: #e8f1f8;
+  border: 5px solid #FFF9C4;
+  padding-bottom: 0px;
+
+}
+
+.hoveredCard {
+  background-color: orange;
+  border: 5px solid orange;
 }
 
 .image-label {
@@ -444,5 +447,11 @@ const selectingSite = async (e: boolean) => {
 }
 .site-model-dates {
   font-size: 10px;
+}
+
+.icon-badge {
+  position: absolute;
+  top: -8px;
+  left: 12px;
 }
 </style>

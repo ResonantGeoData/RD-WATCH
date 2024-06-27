@@ -192,6 +192,7 @@ export const state = reactive<{
   selectedImageSite?: SelectedImageSite | null;
   // Tooltip Display
   toolTipDisplay: Record<string, boolean>;
+  toolTipMenuOpen: boolean;
   // GroundTruthLinks - regular model runs list of ground truths that can be opened
   // KeyValue store of the sourceModelRun UID and the groundTruth UID
   groundTruthLinks: Record<string, string>,
@@ -209,8 +210,8 @@ export const state = reactive<{
     ymax: 90,
   },
   filters: {
-    drawObservations: ['model'],
-    drawSiteOutline: undefined,
+    drawObservations: undefined,
+    drawSiteOutline: ['model'],
     groundTruthPattern: false,
     otherPattern: false,
     showText: false,
@@ -263,7 +264,9 @@ export const state = reactive<{
     Time: true,
     Score: false,
     Area: false,
+    ObsLabel:false,
   },
+  toolTipMenuOpen: false,
   groundTruthLinks: {},
 });
 

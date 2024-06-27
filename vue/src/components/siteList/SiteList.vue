@@ -74,9 +74,9 @@ const getSites = async (modelRun: string, initRun = false) => {
         proposal: results.modelRunDetails.proposal,
       } : undefined
 
-      const selectedIds = state.selectedSites.map((item) => item.id);
       results.sites.forEach((item) => {
         const newNum = item.number.toString().padStart(4, "0");
+        const selectedSite = state.selectedSites.find((selected) => selected.id === item.id);
         if (newNum === "9999") {
           newNumbers += 1;
         }
@@ -93,7 +93,8 @@ const getSites = async (modelRun: string, initRun = false) => {
           name,
           filename: item.filename,
           bbox: item.bbox,
-          selected: selectedIds.includes(item.id),
+          selectedSite: selectedSite,
+          selected: !!selectedSite,
           images: item.images,
           startDate: item.start_date,
           endDate: item.end_date,
@@ -167,17 +168,25 @@ watch(clickedInfo, () => {
 
 
 const selectSite = async (selectedSite: SiteDisplay, deselect= false) => {
+  const selectedIds = state.selectedSites.map((item) => item.id);
   if (selectedSite && !deselect) {
-  await getSiteObservationDetails(selectedSite.id, undefined, true);
-
+    if (!selectedIds.includes(selectedSite.id)) {
+      await getSiteObservationDetails(selectedSite.id, undefined, true);
+    }
   }
   if (state.selectedImageSite) {
     state.selectedImageSite = undefined;
   }
   const updatedList: SiteDisplay[] = [];
-  const selectedIds = state.selectedSites.map((item) => item.id);
   baseModifiedList.value.forEach((item) => {
-    item.selected = selectedIds.includes(item.id)
+    if (selectedSite.id === item.id && deselect) {
+      item.selectedSite = undefined;
+      item.selected = false;
+      updatedList.push(item);
+      return;
+    }
+    item.selectedSite = state.selectedSites.find((selected) => selected.id === item.id)
+    item.selected = !!item.selectedSite;
     updatedList.push(item);
   })
   updatedList.sort((a, b) => {
@@ -277,17 +286,34 @@ watch([filter, () => state.filters.drawObservations, () => state.filters.drawSit
   modifiedList.value = tempList;
 });
 
+const deselectAll = () => {
+  const updatedList: SiteDisplay[] = [];
+  state.selectedSites = [];
+  baseModifiedList.value.forEach((item) => {
+    item.selected = false
+    updatedList.push(item);
+  })
+  updatedList.sort((a, b) => {
+        if (a.selected === b.selected) {
+          return 0;
+        }
+        if (a.selected) {
+          return -1;
+        }
+        return 1;
+      });
+  modifiedList.value = updatedList;
+}
+
 </script>
 
 <template>
-  <v-card>
+  <v-card class="ma-0 pa-0">
     <v-card-title>
       <v-row>
-        <h5>Site Models <SiteListFilter :model-runs="modelRunTitleList" /></h5>
+        <h5>Site Models</h5><span class="site-count">({{ totalCount }})</span>
         <v-spacer />
-        <span>
-          <v-icon size="xsmall">mdi-map-marker-outline</v-icon><span>{{ totalCount }}</span>
-        </span>
+        <SiteListFilter :model-runs="modelRunTitleList" />
       </v-row>
     </v-card-title>
     <site-list-header v-model="filter" />
@@ -296,7 +322,24 @@ watch([filter, () => state.filters.drawObservations, () => state.filters.drawSit
         v-if="state.selectedSites && state.selectedSites.length > 0"
         class="selected-header"
       >
-        Selected Sites
+        <span>Selected Sites</span>
+        <span class="selected-count">({{ state.selectedSites.length }})</span>
+        <span class="pl-10">
+          <v-tooltip
+            open-delay="0"
+            bottom
+          >
+            <template #activator="{ props }">
+
+              <v-icon
+                color="primary"
+                size="20"
+                v-bind="props"
+                @click="deselectAll();"
+              >mdi-close-box-outline</v-icon>
+            </template>
+            <span>Deselect All</span>
+          </v-tooltip></span>
       </div>
       <div
         v-else
@@ -310,7 +353,7 @@ watch([filter, () => state.filters.drawObservations, () => state.filters.drawSit
       >
         <template #default="{item}">
           <site-list-card
-            :key="item.id"
+            :key="`${item.id}_${item.selected}`"
             :site="item"
             @selected="selectSite(item)"
             @close="selectSite(item, true)"
@@ -346,8 +389,13 @@ watch([filter, () => state.filters.drawObservations, () => state.filters.drawSit
 .selected-header {
   height: 20px;
   background-color: #FFF9C4;
+  display: flex;
+  justify-content: space-around;
 }
-
+.selected-header span:last-child{
+  margin-left: auto;
+  margin-right:20px;
+}
 
 .proposal-list {
   position: sticky;
@@ -356,6 +404,18 @@ watch([filter, () => state.filters.drawObservations, () => state.filters.drawSit
   background-color: white;
   overflow-y: auto;
   max-height: calc(100vh - 125px);
+}
+
+.site-count {
+  color: gray;
+  font-size: 0.8em;
+}
+
+.selected-count {
+  color: gray;
+  font-size: 1em;
+  padding-left: 5px;
+  margin-bottom: 5px;
 }
 
 </style>

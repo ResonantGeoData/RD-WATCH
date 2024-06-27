@@ -42,7 +42,7 @@ const openImageBrowser = () => {
         size="small"
         :color="imagesActive ? 'success': ''"
         v-bind="props"
-        @click="hasImages && emit('site-toggled')"
+        @click.stop="hasImages && emit('site-toggled')"
       >
         <v-icon size="small">
           mdi-image

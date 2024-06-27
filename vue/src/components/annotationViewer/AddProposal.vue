@@ -131,7 +131,6 @@ const addProposal = async () => {
     const polyGeoJSON = state.editPolygon.getEditingPolygon();
     if (polyGeoJSON) {
       const found = Object.entries(styles).find(([key , item]) => (item.label === siteEvaluationLabel.value || item.label === key));
-      console.log(found);
       if (found) {
         const label = found[0];
         const siteModel: SiteModelUpload = {
@@ -162,7 +161,7 @@ const addProposal = async () => {
           maplibregl.clearStorage();
           // We need to update the source to get information
           // This reloads the source vector-tile to color it properly after data has been changed.
-          state.filters.randomKey = `&randomKey=randomKey_${Math.random() * 1000}`; 
+          state.filters.randomKey = `?randomKey=randomKey_${Math.random() * 1000}`; 
           state.editPolygon.cancelPolygonEdit();
           state.filters.addingSitePolygon = undefined;      
         }

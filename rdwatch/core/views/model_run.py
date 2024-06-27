@@ -424,6 +424,21 @@ def post_site_model(
     return 201, site_evaluation.id
 
 
+# Utilized in the client editor for adding new site-models
+@router.post(
+    '/{model_run_id}/editor/site-model/',
+    response={201: UUID4},
+)
+def post_site_model_editor(
+    request: HttpRequest,
+    model_run_id: UUID4,
+    site_model: SiteModel,
+):
+    model_run = get_object_or_404(ModelRun, pk=model_run_id)
+    site_evaluation = SiteEvaluation.bulk_create_from_site_model(site_model, model_run)
+    return 201, site_evaluation.id
+
+
 @router.post(
     '/{model_run_id}/region-model/',
     response={201: list[UUID4]},
@@ -432,6 +447,23 @@ def post_site_model(
 # this is safe because we're using a nonstandard header w/ API Key for auth
 @csrf_exempt
 def post_region_model(
+    request: HttpRequest,
+    model_run_id: UUID4,
+    region_model: RegionModel,
+):
+    model_run = get_object_or_404(ModelRun, pk=model_run_id)
+    site_evaluations = SiteEvaluation.bulk_create_from_region_model(
+        region_model, model_run
+    )
+    return 201, [eval.id for eval in site_evaluations]
+
+
+# Utilized in the client editor for adding new region-models
+@router.post(
+    '/{model_run_id}/editor/region-model/',
+    response={201: list[UUID4]},
+)
+def post_region_model_editor(
     request: HttpRequest,
     model_run_id: UUID4,
     region_model: RegionModel,

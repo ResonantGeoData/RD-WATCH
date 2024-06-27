@@ -71,61 +71,63 @@ const goToTimestamp = (dir: number, loop = false) => {
 </script>
 
 <template>
-  <v-row
-    dense
-    justify="center"
-    align="center"
-    class="details"
-  >
-    <v-col
-      v-if="currentClosestTimestamp"
+  <div @click.stop>
+    <v-row
+      dense
+      justify="center"
+      align="center"
+      class="details"
     >
-      {{ currentClosestTimestamp.filteredTotal }} of {{ currentClosestTimestamp.total }}
-    </v-col>
-    <v-col
-      v-if="currentClosestTimestamp"
-    >
-      <b>Cloud:</b> {{ currentClosestTimestamp.cloudCover }}%
-    </v-col>
-    <v-col
-      v-if="currentClosestTimestamp && currentClosestTimestamp.percentBlack !== undefined && currentClosestTimestamp.percentBlack !== null"
-    >
-      <b>>NoData:</b> {{ currentClosestTimestamp.percentBlack.toFixed(0) }}%
-    </v-col>
-  </v-row>
+      <v-col
+        v-if="currentClosestTimestamp"
+      >
+        {{ currentClosestTimestamp.filteredTotal }} of {{ currentClosestTimestamp.total }}
+      </v-col>
+      <v-col
+        v-if="currentClosestTimestamp"
+      >
+        <b>Cloud:</b> {{ currentClosestTimestamp.cloudCover }}%
+      </v-col>
+      <v-col
+        v-if="currentClosestTimestamp && currentClosestTimestamp.percentBlack !== undefined && currentClosestTimestamp.percentBlack !== null"
+      >
+        <b>>NoData:</b> {{ currentClosestTimestamp.percentBlack.toFixed(0) }}%
+      </v-col>
+    </v-row>
 
-  <v-row
-    v-if="imagesActive && currentClosestTimestamp"
-    dense
-    justify="center"
-    align="center"
-  >
-    <v-icon
-      size="25"
-      :disabled="!currentClosestTimestamp.prev"
-      :color="currentClosestTimestamp.prev ? 'primary' : 'gray'"
-      @click.stop="goToTimestamp(-1)"
+    <v-row
+      v-if="imagesActive && currentClosestTimestamp"
+      dense
+      justify="center"
+      align="center"
     >
-      mdi-chevron-left
-    </v-icon>
-    <v-spacer />
-    <span
-      v-if="currentClosestTimestamp"
-      class="timedisplay"
-    >
-      {{ currentClosestTimestamp.time }} - {{ currentClosestTimestamp.type }}{{ currentClosestTimestamp.siteobs !== null ? '*': '' }}
-    </span>
-    <v-spacer />
-    <v-icon
-      size="25"
-      :disabled="!currentClosestTimestamp.next"
-      :color="currentClosestTimestamp.next ? 'primary' : 'gray'"
-      @click.stop="goToTimestamp(1)"
-    >
-      mdi-chevron-right
-    </v-icon>
-    <v-spacer />
-  </v-row>
+      <v-icon
+        size="25"
+        :disabled="!currentClosestTimestamp.prev"
+        :color="currentClosestTimestamp.prev ? 'primary' : 'gray'"
+        @click.stop="goToTimestamp(-1)"
+      >
+        mdi-chevron-left
+      </v-icon>
+      <v-spacer />
+      <span
+        v-if="currentClosestTimestamp"
+        class="timedisplay"
+      >
+        {{ currentClosestTimestamp.time }} - {{ currentClosestTimestamp.type }}{{ currentClosestTimestamp.siteobs !== null ? '*': '' }}
+      </span>
+      <v-spacer />
+      <v-icon
+        size="25"
+        :disabled="!currentClosestTimestamp.next"
+        :color="currentClosestTimestamp.next ? 'primary' : 'gray'"
+        @click.stop="goToTimestamp(1)"
+      >
+        mdi-chevron-right
+      </v-icon>
+      <v-spacer />
+    </v-row>
+  </div>
 </template>
 
 <style scoped>

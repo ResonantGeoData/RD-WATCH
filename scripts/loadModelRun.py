@@ -76,7 +76,7 @@ def upload_to_rgd(
     expiration_time: int | None = None,
 ):
     # Check that our run doesn't already exist
-    model_run_results_url = f'{rgd_endpoint}/api/model-runs/'
+    model_run_results_url = f'{rgd_endpoint}/api/model-runs/api-key-version'
     model_runs_result = requests.get(
         model_run_results_url,
         params={'limit': '0'},

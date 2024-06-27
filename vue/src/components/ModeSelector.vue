@@ -39,6 +39,3 @@ const proposalView = computed(() => route.path.includes('proposals'));
     <v-spacer />
   </v-row>
 </template>
-
-<style scoped>
-</style>

@@ -547,7 +547,7 @@ const addProposal = () => {
       :color="state.filters.addingSitePolygon ? 'primary' : ''"
       @click="addProposal()"
     >
-      <v-icon>mdi-plus</v-icon>Add Proposal {{ scoringApp }}
+      <v-icon>mdi-plus</v-icon>Add Proposal
     </v-btn>
   </v-row>
 </template>

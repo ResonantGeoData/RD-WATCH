@@ -6,7 +6,7 @@ import { useRoute } from 'vue-router';
 
 
 
-const scoringApp = computed(()=> ApiService.getApiPrefix().includes('scoring') && !proposals.value);
+const scoringApp = computed(()=> ApiService.getApiPrefix().includes('scoring'));
 const route = useRoute();
 const proposals = computed(() => route.path.includes('proposals'));
 

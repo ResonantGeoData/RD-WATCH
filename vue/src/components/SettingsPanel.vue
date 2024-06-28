@@ -1,9 +1,13 @@
 <script setup lang="ts">
-import { computed, nextTick, onMounted, ref, watch } from "vue";
-import type { Ref } from "vue";
+import { Ref, computed, nextTick, onMounted, ref, watch } from "vue";
 import { state } from "../store";
 import { addPattern } from "../interactions/fillPatterns";
+import { useRoute, useRouter } from "vue-router";
 
+const route = useRoute();
+const router = useRouter();
+const scoringApp = computed(()=> route.path.includes('scoring'));
+const databaseSource: Ref<'RD-WATCH' | 'Scoring'> = ref(scoringApp.value ? 'Scoring' : 'RD-WATCH');
 const autoZoom = computed({
   get() {
     return state.settings.autoZoom || false;
@@ -203,6 +207,20 @@ const expandInfo = ref(false);
 watch(hiddenCanvas, () => {
   drawCanvasPattern();
 });
+
+watch(databaseSource, () => {
+  if (databaseSource.value === 'Scoring') {
+    localStorage.setItem('databaseSource', 'Scoring');
+    if (!scoringApp.value) {
+      router.push('scoring');
+    }
+  } else {
+    localStorage.removeItem('databaseSource');
+    if (scoringApp.value) {
+      router.push('/');
+    }
+  }
+})
 </script>
 
 <template>
@@ -249,6 +267,17 @@ watch(hiddenCanvas, () => {
             Hash:
           </div>
           <span> {{ info.hash }}</span>
+        </v-col>
+      </v-row>
+      <v-row dense>
+        <v-col>
+          <span>Data Source:</span>
+        </v-col>
+        <v-col>
+          <v-select
+            v-model="databaseSource"
+            :items="['RD-WATCH','Scoring']"
+          />
         </v-col>
       </v-row>
       <v-row dense>
@@ -438,6 +467,6 @@ watch(hiddenCanvas, () => {
 }
 .settings-card {
   overflow-y: auto;
-  max-height: calc(100vh - 250px);
+  max-height: calc(100vh - 350px);
 }
 </style>

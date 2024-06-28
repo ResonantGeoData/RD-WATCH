@@ -1,13 +1,16 @@
 <script setup lang="ts">
+import { useRouter } from 'vue-router';
 import { state } from './store';
 
 import { onBeforeMount, onErrorCaptured, ref } from "vue";
 
 const isLoggedIn = ref(false);
+const router = useRouter();
 
 // Check if the user is logged in before rendering any UI. If they're not,
 // redirect them to the login page.
 onBeforeMount(async () => {
+  
   try {
     const data = await fetch('/api/status/', { redirect: 'error' });
     const json = await data.json();
@@ -26,6 +29,9 @@ onBeforeMount(async () => {
     } else {
       window.location.href = '/admin'
     }
+  }
+  if (localStorage.getItem('databaseSource') === 'Scoring') {
+    router.push('scoring');
   }
 });
 

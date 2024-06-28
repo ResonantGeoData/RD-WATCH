@@ -6,7 +6,7 @@ import { useRoute } from 'vue-router';
 
 
 
-const scoringApp = computed(()=> ApiService.getApiPrefix().includes('scoring') && !proposals.value);
+const scoringApp = computed(()=> ApiService.getApiPrefix().includes('scoring'));
 const route = useRoute();
 const proposals = computed(() => route.path.includes('proposals'));
 
@@ -593,7 +593,7 @@ const addRegion = () => {
       :color="state.filters.addingSitePolygon ? 'primary' : ''"
       @click="addProposal()"
     >
-      <v-icon>mdi-plus</v-icon>Add Proposal
+      <v-icon>mdi-plus</v-icon>Add Proposal {{ scoringApp }}
     </v-btn>
   </v-row>
 </template>

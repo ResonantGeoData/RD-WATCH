@@ -393,6 +393,20 @@ def get_model_run(request: HttpRequest, id: UUID4):
     return get_object_or_404(get_queryset(), id=id)
 
 
+@router.get(
+    '/api-key-version',
+    response={200: list[ModelRunListSchema]},
+    auth=[ModelRunAuth()],
+)
+@paginate(ModelRunPagination)
+@csrf_exempt
+def list_model_runs_api_key(
+    request: HttpRequest,
+    filters: ModelRunFilterSchema = Query(...),  # noqa: B008
+):
+    return filters.filter(get_queryset())
+
+
 @router.post(
     '/{model_run_id}/site-model/',
     response={201: UUID4},
@@ -445,6 +459,20 @@ def post_region_model(
 
 
 # Utilized in the client editor for adding new region-models
+@router.post(
+    '/{model_run_id}/editor/region-model/',
+    response={201: list[UUID4]},
+)
+def post_region_model_editor(
+    request: HttpRequest,
+    model_run_id: UUID4,
+    region_model: RegionModel,
+):
+    model_run = get_object_or_404(ModelRun, pk=model_run_id)
+    site_evaluations = SiteEvaluation.bulk_create_from_region_model(
+        region_model, model_run
+    )
+    return 201, [eval.id for eval in site_evaluations]
 
 
 @router.post('/{model_run_id}/generate-images/', response={202: bool})

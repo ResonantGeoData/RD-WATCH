@@ -10,7 +10,7 @@ import type { ModelRunList } from "../models/ModelRunList";
 import type { ModelRun } from "../models/ModelRun";
 import type { PerformerList } from "../models/PerformerList";
 import type { Performer } from "../models/Performer";
-import type { RegionList } from "../models/RegionList";
+import type { RegionDetailList, RegionList } from "../models/RegionList";
 import type { Region } from "../models/Region";
 import type { EvalList } from "../models/EvalList";
 import type { Eval } from "../models/Eval";
@@ -160,9 +160,28 @@ export interface SMARTSiteFeature {
   }
   geometry: GeoJSON.Geometry;
 }
+
+export interface SMARTRegionFeature {
+  type: 'Feature';
+  properties: {
+  type: 'region';
+  region_id: string;
+  start_date: null;
+  end_date: null;
+  mgrs: string;
+  originator: string;
+  }
+  geometry: GeoJSON.Geometry;
+}
 export interface SiteModelUpload {
   type: 'FeatureCollection',
   features: SMARTSiteFeature[];
+}
+
+export interface RegionUpload {
+    type: 'FeatureCollection',
+  features: SMARTRegionFeature[];
+
 }
 
 type ApiPrefix = '/api' | '/api/scoring';
@@ -409,13 +428,25 @@ export class ApiService {
   }
 
   /**
-   * @returns PerformerList
+   * @returns RegionList
    * @throws ApiError
    */
   public static getRegions(): CancelablePromise<RegionList> {
     return __request(OpenAPI, {
       method: "GET",
       url: `${this.getApiPrefix()}/regions/`,
+    });
+  }
+
+  
+  /**
+   * @returns RegionList
+   * @throws ApiError
+   */
+  public static getRegionDetails(): CancelablePromise<RegionDetailList> {
+    return __request(OpenAPI, {
+      method: "GET",
+      url: `${this.getApiPrefix()}/regions/details`,
     });
   }
 
@@ -660,4 +691,17 @@ export class ApiService {
       }
     });
   }
+
+  public static addRegionModel(
+    regionModel: RegionUpload
+  ): CancelablePromise<boolean> {
+    return __request(OpenAPI, {
+      method: "POST",
+      url: `${this.getApiPrefix()}/regions/`,
+      body: {
+        ...regionModel
+      }
+    });
+  }
+
 }

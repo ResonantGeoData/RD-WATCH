@@ -295,7 +295,7 @@ onMounted(() => loadModelRuns());
 
 <style scoped>
 .modelRuns {
-  height: calc(100vh - 250px);
+  height: calc(100vh - 350px);
 }
 .compactModelRuns {
   height: calc(100vh - 150px);

@@ -496,8 +496,6 @@ def generate_images(
     )
     return 202, True
 
-    return 202, True
-
 
 @router.put(
     '/{model_run_id}/cancel-generate-images/',

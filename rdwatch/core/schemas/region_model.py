@@ -12,25 +12,13 @@ from django.contrib.gis.geos import GEOSGeometry, Polygon
 
 class RegionFeature(Schema):
     type: Literal['region']
-    region_id: constr(regex=r'^[A-Z]{2}_[RCST]\d{3}$')
+    region_id: str  # a Region isn't limited to their format for RDWATCH
     version: str | None
     mgrs: str
     model_content: Literal['empty', 'annotation', 'proposed'] | None
     start_date: datetime | None
     end_date: datetime | None
-    originator: Literal[
-        'te',
-        'pmo',
-        'acc',
-        'ara',
-        'ast',
-        'bla',
-        'iai',
-        'kit',
-        'str',
-        'iMERIT',
-        'imerit',
-    ]
+    originator: str
 
     # Optional fields
     comments: str | None

@@ -7,6 +7,7 @@ import SiteList from "../components/siteList/SiteList.vue";
 import MapLegend from "../components/MapLegend.vue";
 import { onMounted } from "vue";
 import { state } from "../store";
+import AddRegion from "../components/AddRegion.vue";
 interface Props {
   region?: string;
   selected?: number[] | string;
@@ -70,9 +71,12 @@ onMounted(() => {
             class="navcolumn"
           >
             <SiteList
-              v-if="state.filters.configuration_id"
+              v-if="state.filters.configuration_id && !state.filters.addingSitePolygon && !state.filters.addingRegionPolygon"
               :model-runs="state.filters.configuration_id"
               style="flex-grow: 1;"
+            />
+            <add-region
+              v-if="state.filters.addingRegionPolygon"
             />          
           </v-col>
         </v-row>

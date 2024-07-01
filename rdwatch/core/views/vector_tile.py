@@ -81,13 +81,28 @@ def vector_tile(request: HttpRequest, model_run_id: UUID4, z: int, x: int, y: in
     # Generate the vector tiles and cache them if there's no hit
     if tile is None:
         envelope = Func(z, x, y, function='ST_TileEnvelope')
-        intersects = Q(
+        intersects_geom = Q(
             Func(
                 'geom',
                 envelope,
                 function='ST_Intersects',
                 output_field=BooleanField(),
             )
+        )
+        intersects_point = Q(
+            Func(
+                'point',
+                envelope,
+                function='ST_Intersects',
+                output_field=BooleanField(),
+            )
+        )
+        intersects = intersects_point | intersects_geom
+        mvtgeom_point = Func(
+            'point',
+            envelope,
+            function='ST_AsMVTGeom',
+            output_field=Field(),
         )
         mvtgeom = Func(
             'geom',
@@ -98,7 +113,7 @@ def vector_tile(request: HttpRequest, model_run_id: UUID4, z: int, x: int, y: in
 
         evaluations_queryset = (
             SiteEvaluation.objects.filter(configuration_id=model_run_id)
-            .filter(intersects)
+            .filter(intersects_geom)
             .values()
             .alias(observation_count=Count('observations'))
             .annotate(
@@ -138,6 +153,47 @@ def vector_tile(request: HttpRequest, model_run_id: UUID4, z: int, x: int, y: in
             evaluations_params,
         ) = evaluations_queryset.query.sql_with_params()
 
+        evaluations_point_queryset = (
+            SiteEvaluation.objects.filter(configuration_id=model_run_id)
+            .filter(intersects_point)
+            .values()
+            .alias(observation_count=Count('observations'))
+            .annotate(
+                id=F('pk'),
+                uuid=F(
+                    'pk'
+                ),  # maintain consistency with scoring DB for clicking on items
+                mvtgeom=mvtgeom_point,
+                configuration_id=F('configuration_id'),
+                configuration_name=F('configuration__title'),
+                label=F('label__slug'),
+                timestamp=ExtractEpoch('timestamp'),
+                timemin=ExtractEpoch('start_date'),
+                timemax=ExtractEpoch('end_date'),
+                performer_id=F('configuration__performer_id'),
+                performer_name=F('configuration__performer__short_code'),
+                region=F('configuration__region__name'),
+                groundtruth=Case(
+                    When(
+                        Q(configuration__performer__short_code='TE') & Q(score=1),
+                        True,
+                    ),
+                    default=False,
+                ),
+                site_number=F('number'),
+                site_polygon=Case(
+                    When(
+                        observation_count=0,
+                        then=True,
+                    ),
+                    default=False,
+                ),
+            )
+        )
+        (
+            evaluations_point_sql,
+            evaluations_point_params,
+        ) = evaluations_point_queryset.query.sql_with_params()
         observations_queryset = (
             SiteObservation.objects.filter(siteeval__configuration_id=model_run_id)
             .filter(intersects)
@@ -181,7 +237,7 @@ def vector_tile(request: HttpRequest, model_run_id: UUID4, z: int, x: int, y: in
 
         regions_queryset = (
             Region.objects.filter(model_runs__id=model_run_id)
-            .filter(intersects)
+            .filter(intersects_geom)
             .values()
             .annotate(
                 name=F('name'),
@@ -197,7 +253,8 @@ def vector_tile(request: HttpRequest, model_run_id: UUID4, z: int, x: int, y: in
             WITH
                 evaluations AS ({evaluations_sql}),
                 observations AS ({observations_sql}),
-                regions AS ({regions_sql})
+                regions AS ({regions_sql}),
+                evaluation_points AS ({evaluations_point_sql})
             SELECT (
                 (
                     SELECT ST_AsMVT(evaluations.*, %s, 4096, 'mvtgeom')
@@ -213,16 +270,23 @@ def vector_tile(request: HttpRequest, model_run_id: UUID4, z: int, x: int, y: in
                     SELECT ST_AsMVT(regions.*, %s, 4096, 'mvtgeom')
                     FROM regions
                 )
+                ||
+                (
+                    SELECT ST_AsMVT(evaluation_points.*, %s, 4096, 'mvtgeom')
+                    FROM evaluation_points
+                )
             )
         """  # noqa: E501
         params = (
             evaluations_params
             + observations_params
             + regions_params
+            + evaluations_point_params
             + (
                 f'sites-{model_run_id}',
                 f'observations-{model_run_id}',
                 f'regions-{model_run_id}',
+                f'sites_points-{model_run_id}',
             )
         )
 

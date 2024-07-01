@@ -1,8 +1,8 @@
 from typing import Self
 from uuid import uuid4
 
-from django.contrib.gis.db.models import PolygonField
-from django.contrib.gis.geos import MultiPolygon, Polygon
+from django.contrib.gis.db.models import PointField, PolygonField
+from django.contrib.gis.geos import MultiPolygon, Point, Polygon
 from django.contrib.postgres.indexes import GistIndex
 from django.db import models
 
@@ -31,6 +31,13 @@ class SiteObservation(models.Model):
         help_text='Footprint of site observation',
         srid=3857,
         spatial_index=True,
+        null=True,
+    )
+    point = PointField(
+        help_text='Point of site observation',
+        srid=3857,
+        spatial_index=True,
+        null=True,
     )
     constellation = models.ForeignKey(
         to='Constellation',
@@ -96,25 +103,46 @@ class SiteObservation(models.Model):
 
             constellation = constellation_map.get(feature.properties.sensor_name, None)
 
-            assert isinstance(feature.parsed_geometry, Polygon | MultiPolygon)
+            assert isinstance(feature.parsed_geometry, Polygon | MultiPolygon | Point)
 
-            geometry = (
-                feature.parsed_geometry
-                if isinstance(feature.parsed_geometry, MultiPolygon)
-                else MultiPolygon([feature.parsed_geometry])
-            )
-            for i, polygon in enumerate(geometry):
+            point = False
+            if isinstance(feature.parsed_geometry, Point):
+                point = True
+            if point is False:
+                geometry = (
+                    feature.parsed_geometry
+                    if isinstance(feature.parsed_geometry, MultiPolygon)
+                    else MultiPolygon([feature.parsed_geometry])
+                )
+                for i, polygon in enumerate(geometry):
+                    if feature.properties.current_phase:
+                        phase = feature.properties.current_phase[i]
+                    else:
+                        phase = 'Unknown'
+
+                    site_observations.append(
+                        cls(
+                            siteeval=site_eval,
+                            label=label_map[phase],
+                            score=feature.properties.score,
+                            geom=polygon,
+                            constellation=constellation,
+                            spectrum=None,
+                            timestamp=feature.properties.observation_date,
+                        )
+                    )
+            if point:
+                point = feature.parsed_geometry
                 if feature.properties.current_phase:
-                    phase = feature.properties.current_phase[i]
+                    phase = feature.properties.current_phase[0]
                 else:
                     phase = 'Unknown'
-
                 site_observations.append(
                     cls(
                         siteeval=site_eval,
                         label=label_map[phase],
                         score=feature.properties.score,
-                        geom=polygon,
+                        point=feature.parsed_geometry,
                         constellation=constellation,
                         spectrum=None,
                         timestamp=feature.properties.observation_date,

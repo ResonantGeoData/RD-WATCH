@@ -216,6 +216,26 @@ const buildObservationThick = (
   ];
 };
 
+const buildObservationRadius = (
+  filters: MapFilters,
+  siteObs: 'site' | 'observation'
+): DataDrivenPropertyValueSpecification<number> => {
+  // If this observation is a grouth truth, make the width 4. Otherwise, make it 2.
+  const idVal = siteObs === 'site' ? 'id' : 'siteeval_id'
+  return [
+    "case",
+    [
+      "==",
+      ["get", idVal],
+      filters.hoverSiteId ? filters.hoverSiteId : "",
+    ],
+    12,
+    ["get", "groundtruth"],
+    10,
+    8,
+  ];
+};
+
 const buildObservationFillOpacity = (filters: MapFilters, fillProposals?: 'sites' | 'observations'): DataDrivenPropertyValueSpecification<number> | number =>  {
   if (filters.proposals && (filters.proposals.accepted?.length || filters.proposals.rejected?.length)) {
     const result = [];
@@ -338,19 +358,17 @@ export const buildLayerFilter = (
       // Site fill is added for Hover Popup to work on the area inside the polygon
     ]);
 
-    if (ApiService.isScoring()) {
-      results.push({
-        id: `sites-points-outline-${id}`,
-        type: "circle",
-        source: `vectorTileSource_${id}`,
-        "source-layer": `sites_points-${id}`,
-        paint: {
-          "circle-color": annotationColors(filters),
-          "circle-radius": buildObservationThick(filters, 'site'),
-        },
-        filter: buildSiteFilter(timestamp, filters),
-      });
-    }
+    results.push({
+      id: `sites-points-outline-${id}`,
+      type: "circle",
+      source: `vectorTileSource_${id}`,
+      "source-layer": `sites_points-${id}`,
+      paint: {
+        "circle-color": annotationColors(filters),
+        "circle-radius": buildObservationRadius(filters, 'site'),
+      },
+      filter: buildSiteFilter(timestamp, filters),
+    });
 
     const siteFill: LayerSpecification =   {
       id: `sites-fill-${id}`,

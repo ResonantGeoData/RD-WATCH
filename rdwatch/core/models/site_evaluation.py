@@ -4,8 +4,8 @@ from uuid import uuid4
 
 from django_extensions.db.models import CreationDateTimeField
 
-from django.contrib.gis.db.models import PolygonField
-from django.contrib.gis.geos import MultiPolygon
+from django.contrib.gis.db.models import PointField, PolygonField
+from django.contrib.gis.geos import MultiPolygon, Point
 from django.contrib.postgres.indexes import GistIndex
 from django.db import models, transaction
 
@@ -27,7 +27,7 @@ class SiteEvaluation(models.Model):
     )
     configuration = models.ForeignKey(
         to='ModelRun',
-        on_delete=models.PROTECT,
+        on_delete=models.CASCADE,
         help_text='The hyper parameters used this site evaluation.',
         db_index=True,
     )
@@ -44,6 +44,13 @@ class SiteEvaluation(models.Model):
         help_text="Polygon from this site's Site Feature",
         srid=3857,
         spatial_index=True,
+        null=True,
+    )
+    point = PointField(
+        help_text="Point from this site's Site Feature",
+        srid=3857,
+        spatial_index=True,
+        null=True,
     )
     label = models.ForeignKey(
         to='ObservationLabel',
@@ -132,23 +139,43 @@ class SiteEvaluation(models.Model):
                 cache_timestamp = site_feature.properties.cache.timestamp
                 cache_commit_hash = site_feature.properties.cache.commit_hash
 
-            site_eval = cls.objects.create(
-                configuration=configuration,
-                version=site_feature.properties.version,
-                number=site_feature.properties.site_number,
-                start_date=site_feature.properties.start_date,
-                end_date=site_feature.properties.end_date,
-                geom=site_feature.parsed_geometry,
-                label=label,
-                score=site_feature.properties.score,
-                status=status,
-                validated=site_feature.properties.validated,
-                cache_originator_file=cache_originator_file,
-                cache_timestamp=cache_timestamp,
-                cache_commit_hash=cache_commit_hash,
-                modified_timestamp=datetime.now(),
-            )
-
+            point = False
+            if isinstance(site_feature.parsed_geometry, Point):
+                point = True
+            if not point:
+                site_eval = cls.objects.create(
+                    configuration=configuration,
+                    version=site_feature.properties.version,
+                    number=site_feature.properties.site_number,
+                    start_date=site_feature.properties.start_date,
+                    end_date=site_feature.properties.end_date,
+                    geom=site_feature.parsed_geometry,
+                    label=label,
+                    score=site_feature.properties.score,
+                    status=status,
+                    validated=site_feature.properties.validated,
+                    cache_originator_file=cache_originator_file,
+                    cache_timestamp=cache_timestamp,
+                    cache_commit_hash=cache_commit_hash,
+                    modified_timestamp=datetime.now(),
+                )
+            else:
+                site_eval = cls.objects.create(
+                    configuration=configuration,
+                    version=site_feature.properties.version,
+                    number=site_feature.properties.site_number,
+                    start_date=site_feature.properties.start_date,
+                    end_date=site_feature.properties.end_date,
+                    point=site_feature.parsed_geometry,
+                    label=label,
+                    score=site_feature.properties.score,
+                    status=status,
+                    validated=site_feature.properties.validated,
+                    cache_originator_file=cache_originator_file,
+                    cache_timestamp=cache_timestamp,
+                    cache_commit_hash=cache_commit_hash,
+                    modified_timestamp=datetime.now(),
+                )
             SiteObservation.bulk_create_from_site_evaluation(site_eval, site_model)
 
         return site_eval

@@ -346,7 +346,7 @@ export const buildLayerFilter = (
         "source-layer": `sites_points-${id}`,
         paint: {
           "circle-color": annotationColors(filters),
-          "circle-radius": 4,
+          "circle-radius": buildObservationThick(filters, 'site'),
         },
         filter: buildSiteFilter(timestamp, filters),
       });

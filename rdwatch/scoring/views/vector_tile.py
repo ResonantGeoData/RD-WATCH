@@ -563,7 +563,7 @@ def vector_tile(
             .filter(intersects)
             .values()
             .annotate(
-                id=F('base_site_id'),
+                id=F('uuid'),
                 mvtgeom=mvtgeom,
                 configuration_id=F('evaluation_run_uuid'),
                 configuration_name=ExpressionWrapper(
@@ -681,7 +681,7 @@ def vector_tile(
             .filter(intersects)
             .values()
             .annotate(
-                id=F('base_site_id'),
+                id=F('uuid'),
                 mvtgeom=mvtgeom,
                 configuration_id=F('evaluation_run_uuid'),
                 configuration_name=ExpressionWrapper(

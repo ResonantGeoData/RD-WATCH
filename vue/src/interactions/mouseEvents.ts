@@ -120,7 +120,7 @@ const drawPopupObservation = async (e: MapLayerMouseEvent, remove=false) => {
     e.features.forEach(
       (
         item: GeoJSON.GeoJsonProperties & {
-          layer?: { paint?: { "fill-color"?: Color } };
+          layer?: { paint?: { "fill-color"?: Color, "circle-color"?: Color } };
         }
       ) => {
         if (item.properties && item.properties.id) {
@@ -140,7 +140,7 @@ const drawPopupObservation = async (e: MapLayerMouseEvent, remove=false) => {
             hoveredInfo.value.siteId.push(siteId);
             if (!htmlMap[id]) {
               if (item.layer?.paint) {
-                const fillColor = item.layer?.paint["fill-color"] as Color;
+                const fillColor = item.layer?.paint["fill-color"] as Color || item.layer?.paint["circle-color"] as Color;
                 if (fillColor) {
                   ids.push(id);
                   htmlMap[id] = true;
@@ -260,7 +260,6 @@ const drawSitePopupObservation = async (e: MapLayerMouseEvent, remove=false) => 
     hoveredInfo.value.region = [];
     hoveredInfo.value.siteId = [];
     const popupData: PopUpSiteData[] = [];
-    console.log(e.features);
     e.features.forEach(
       (
         item: GeoJSON.GeoJsonProperties & {
@@ -345,14 +344,19 @@ const setPopupEvents = (map: ShallowRef<null | Map>) => {
       const data = loadedFunctions[i];
       map.value.off("mouseenter", `observations-fill-${data.id}`, data.mouseenter);
       map.value.off("mouseleave", `observations-fill-${data.id}`, data.mouseleave);
+      map.value.off("mouseenter", `sites-points-outline-${data.id}`, data.mouseenter);
+      map.value.off("mouseleave", `sites-points-outline-${data.id}`, data.mouseleave);
       map.value.off("mouseenter", `sites-fill-${data.id}`, data.mouseenterSite);
       map.value.off("mouseleave", `sites-fill-${data.id}`, data.mouseenterSite);
       map.value.off("mouseenter", `sites-points-outline-${data.id}`, data.mouseenterSite);
+      map.value.off("mouseleave", `sites-points-outline-${data.id}`, data.mouseenterSite);
+      map.value.off("mouseenter", `observations-points-outline-${data.id}`, data.mouseenterSite);
       map.value.off("mouseleave", `sites-points-outline-${data.id}`, data.mouseenterSite);
 
       map.value.off("click", `observations-fill-${data.id}`, data.clickObservation);
       map.value.off("click", `sites-fill-${data.id}`, data.clickSite);
       map.value.off("click", `sites-points-outline-${data.id}`, data.clickSite);
+      map.value.off("click", `observations-points-outline-${data.id}`, data.clickObservation);
     }
     map.value.off("click", clickOutside);
     loadedFunctions = []
@@ -360,11 +364,14 @@ const setPopupEvents = (map: ShallowRef<null | Map>) => {
       const id = m.split('|')[0];
       map.value.on("mouseenter", `observations-fill-${id}`, drawPopupObservation);
       map.value.on("mouseleave", `observations-fill-${id}`, leavePopupObservation);
+      map.value.on("mouseenter", `observations-points-outline-${id}`, drawPopupObservation);
+      map.value.on("mouseleave", `observations-points-outline-${id}`, leavePopupObservation);
       map.value.on("mouseenter", `sites-fill-${id}`, drawSitePopupObservation);
       map.value.on("mouseleave", `sites-fill-${id}`, removeSitePopupObservation);
       map.value.on("mouseenter", `sites-points-outline-${id}`, drawSitePopupObservation);
       map.value.on("mouseleave", `sites-points-outline-${id}`, removeSitePopupObservation);
       map.value.on("click", `observations-fill-${id}`, clickObservation);
+      map.value.on("click", `observations-points-outline-${id}`, clickObservation);
       map.value.on("click", `sites-fill-${id}`, clickSite);
       map.value.on("click", `sites-points-outline-${id}`, clickSite);
       map.value.on("click", clickOutside);

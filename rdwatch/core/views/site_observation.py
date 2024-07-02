@@ -6,12 +6,14 @@ from celery.result import AsyncResult
 from ninja import Query, Router, Schema
 from pydantic import UUID4
 
+from django.contrib.gis.db.models import FloatField, PointField, PolygonField
 from django.contrib.gis.db.models.aggregates import Collect
 from django.contrib.gis.db.models.functions import Area, Transform
+from django.contrib.gis.geos import Polygon
 from django.contrib.postgres.aggregates import JSONBAgg
 from django.core.files.storage import default_storage
 from django.db import transaction
-from django.db.models import Count, Max, Min
+from django.db.models import Case, Count, Value, When
 from django.db.models.functions import JSONObject  # type: ignore
 from django.http import Http404, HttpRequest
 from django.shortcuts import get_object_or_404
@@ -86,23 +88,60 @@ class SiteObservationsListSchema(Schema):
     job: JobStatusSchema | None
 
 
+def point_to_bbox(point_field, variance=0.01):
+    assert isinstance(point_field, PointField)
+    # Transform the PointField to a Geometry object
+    transformed_point = Transform(point_field, srid=4326)
+    # Generate bounding box around the transformed point
+    return Polygon.from_bbox(
+        (
+            transformed_point.x - variance,
+            transformed_point.y - variance,
+            transformed_point.x + variance,
+            transformed_point.y + variance,
+        )
+    )
+
+
 @router.get('/{evaluation_id}/', response={200: SiteObservationsListSchema})
 def site_observations(request: HttpRequest, evaluation_id: UUID4):
     if not SiteEvaluation.objects.filter(pk=evaluation_id).exists():
         raise Http404()
-    site_eval_data = SiteEvaluation.objects.filter(pk=evaluation_id).aggregate(
-        timerange=JSONObject(
-            min=ExtractEpoch(Min('start_date')),
-            max=ExtractEpoch(Max('end_date')),
-        ),
-        bbox=BoundingBox(Collect('geom')),
+    site_eval_data = (
+        SiteEvaluation.objects.filter(pk=evaluation_id)
+        .annotate(
+            timerange=JSONObject(
+                min=ExtractEpoch('start_date'),
+                max=ExtractEpoch('end_date'),
+            ),
+            bbox=Case(
+                When(geom__isnull=False, then=BoundingBox('geom')),
+                When(point__isnull=False, then=BoundingBox('point')),
+                default=None,
+            ),
+        )
+        .first()
     )
     queryset = (
         SiteObservation.objects.order_by('timestamp')
         .filter(siteeval__id=evaluation_id)
         .aggregate(
             count=Count('pk'),
-            bbox=BoundingBox(Collect('geom')),
+            bbox=BoundingBox(
+                Collect(
+                    Case(
+                        When(
+                            geom__isnull=False,
+                            then='geom',
+                        ),
+                        When(
+                            point__isnull=False,
+                            then='point',
+                        ),
+                        output_field=PolygonField(),
+                    )
+                )
+            ),
             results=JSONBAgg(
                 JSONObject(
                     id='pk',
@@ -111,8 +150,17 @@ def site_observations(request: HttpRequest, evaluation_id: UUID4):
                     constellation='constellation__slug',
                     spectrum='spectrum__slug',
                     timestamp=ExtractEpoch('timestamp'),
-                    bbox=BoundingBox('geom'),
-                    area=Area(Transform('geom', srid=6933)),
+                    bbox=Case(
+                        When(geom__isnull=False, then=BoundingBox('geom')),
+                        When(point__isnull=False, then=BoundingBox('point')),
+                    ),
+                    area=Case(
+                        When(
+                            geom__isnull=False, then=Area(Transform('geom', srid=6933))
+                        ),
+                        default=Value(0.0, output_field=FloatField()),
+                        output_field=FloatField(),  # Specify the output field type here
+                    ),
                 ),
                 default=[],
             ),
@@ -145,14 +193,14 @@ def site_observations(request: HttpRequest, evaluation_id: UUID4):
     for image in image_queryset['results']:
         image['image'] = default_storage.url(image['image'])
     queryset['images'] = image_queryset
-    queryset['timerange'] = site_eval_data['timerange']
+    queryset['timerange'] = site_eval_data.timerange
     replace_bbox = False
     for key in queryset['bbox'].keys():
         if queryset['bbox'][key] is None:  # Some Evals have no site Observations,
             # need to replace the bounding box in this case
             replace_bbox = True
     if replace_bbox:
-        queryset['bbox'] = site_eval_data['bbox']
+        queryset['bbox'] = site_eval_data.bbox
     if SatelliteFetching.objects.filter(site=evaluation_id).exists():
         retrieved = SatelliteFetching.objects.filter(site=evaluation_id).first()
         celery_data = {}

@@ -216,7 +216,7 @@ const buildObservationThick = (
   ];
 };
 
-const buildObservationRadius = (
+const buildCircleRadius = (
   filters: MapFilters,
   siteObs: 'site' | 'observation'
 ): DataDrivenPropertyValueSpecification<number> => {
@@ -365,11 +365,22 @@ export const buildLayerFilter = (
       "source-layer": `sites_points-${id}`,
       paint: {
         "circle-color": annotationColors(filters),
-        "circle-radius": buildObservationRadius(filters, 'site'),
+        "circle-radius": buildCircleRadius(filters, 'site'),
       },
       filter: buildSiteFilter(timestamp, filters),
     });
 
+    results.push({
+      id: `observations-points-outline-${id}`,
+      type: "circle",
+      source: `vectorTileSource_${id}`,
+      "source-layer": `observations_points-${id}`,
+      paint: {
+        "circle-color": annotationColors(filters),
+        "circle-radius": buildCircleRadius(filters, 'observation'),
+      },
+      filter: buildObservationFilter(timestamp, filters),
+    });
     const siteFill: LayerSpecification =   {
       id: `sites-fill-${id}`,
       type: "fill",

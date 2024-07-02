@@ -203,6 +203,9 @@ const toggleScoring = (data? : undefined | 'simple' | 'detailed') => {
 const addProposal = () => {
   state.filters.addingSitePolygon = true;
 }
+const addRegion = () => {
+  state.filters.addingRegionPolygon = true;
+}
 
 </script>
 
@@ -449,15 +452,58 @@ const addProposal = () => {
         </v-list>
       </v-card>
     </v-menu>
-    <v-btn
-      class="px-2 mx-2"
-      size="large"
-      :disabled="!modelRunEnabled"
-      :color="state.filters.drawRegionPoly ? 'primary' : ''"
-      @click="toggleRegion()"
+    <v-menu
+      open-on-hover
     >
-      Region
-    </v-btn>
+      <template #activator="{ props }">
+        <v-btn
+          v-bind="props"
+          class="px-2 mx-2"
+          size="large"
+          :color="state.filters.drawRegionPoly ? 'primary' : ''"
+          @click="toggleRegion()"
+        >
+          Region
+        </v-btn>
+      </template>
+      <v-card outlined>
+        <v-list>
+          <v-list-item
+            value="Region"
+            :class="{'disabled-item': !modelRunEnabled}"
+            :disabled="!modelRunEnabled"
+            @click="toggleRegion()"
+          >
+            <div
+              class="layer-text"
+            >
+              Region
+            </div>
+            <v-checkbox-btn
+              :model-value="state.filters.drawRegionPoly "
+              density="compact"
+              hide-details
+              :disabled="!modelRunEnabled"
+              readonly
+              class="item-checkbox"
+            />
+          </v-list-item>
+          <v-list-item
+            value="Region"
+            @click="addRegion()"
+          >
+            <div
+              class="layer-text"
+            >
+              Add Region
+            </div>
+            <v-icon>
+              mdi-plus
+            </v-icon>
+          </v-list-item>
+        </v-list>
+      </v-card>
+    </v-menu>
     <v-menu
       open-on-hover
     >

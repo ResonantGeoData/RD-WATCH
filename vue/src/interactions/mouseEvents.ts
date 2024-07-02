@@ -260,6 +260,7 @@ const drawSitePopupObservation = async (e: MapLayerMouseEvent, remove=false) => 
     hoveredInfo.value.region = [];
     hoveredInfo.value.siteId = [];
     const popupData: PopUpSiteData[] = [];
+    console.log(e.features);
     e.features.forEach(
       (
         item: GeoJSON.GeoJsonProperties & {
@@ -346,8 +347,12 @@ const setPopupEvents = (map: ShallowRef<null | Map>) => {
       map.value.off("mouseleave", `observations-fill-${data.id}`, data.mouseleave);
       map.value.off("mouseenter", `sites-fill-${data.id}`, data.mouseenterSite);
       map.value.off("mouseleave", `sites-fill-${data.id}`, data.mouseenterSite);
+      map.value.off("mouseenter", `sites-points-outline-${data.id}`, data.mouseenterSite);
+      map.value.off("mouseleave", `sites-points-outline-${data.id}`, data.mouseenterSite);
+
       map.value.off("click", `observations-fill-${data.id}`, data.clickObservation);
       map.value.off("click", `sites-fill-${data.id}`, data.clickSite);
+      map.value.off("click", `sites-points-outline-${data.id}`, data.clickSite);
     }
     map.value.off("click", clickOutside);
     loadedFunctions = []
@@ -357,8 +362,11 @@ const setPopupEvents = (map: ShallowRef<null | Map>) => {
       map.value.on("mouseleave", `observations-fill-${id}`, leavePopupObservation);
       map.value.on("mouseenter", `sites-fill-${id}`, drawSitePopupObservation);
       map.value.on("mouseleave", `sites-fill-${id}`, removeSitePopupObservation);
+      map.value.on("mouseenter", `sites-points-outline-${id}`, drawSitePopupObservation);
+      map.value.on("mouseleave", `sites-points-outline-${id}`, removeSitePopupObservation);
       map.value.on("click", `observations-fill-${id}`, clickObservation);
       map.value.on("click", `sites-fill-${id}`, clickSite);
+      map.value.on("click", `sites-points-outline-${id}`, clickSite);
       map.value.on("click", clickOutside);
       loadedFunctions.push({
         id,

@@ -54,6 +54,7 @@ onMounted(() => {
   if (mapContainer.value !== null) {
     // Add opened model runs to list of vector tile layers
     state.modelRuns.filter((m) => state.openedModelRuns.has(m.key)).map((m) => m.id).forEach((m) => { modelRunVectorLayers.add(m) })
+    const regionIds = state.filters.regions ? state.filters.regions.map((region) => state.regionMap[region]) : [];
 
     map.value = markRaw(
       new Map({
@@ -66,6 +67,7 @@ onMounted(() => {
           state.enabledSiteImages,
           state.siteOverviewSatSettings,
           Array.from(modelRunVectorLayers),
+          regionIds,
         ),
         bounds: [
           [state.bbox.xmin, state.bbox.ymin],
@@ -122,11 +124,13 @@ watch([() => state.timestamp, () => state.filters, () => state.satellite, () => 
   // Add opened model runs to list of vector tile layers
   openedModelRunIds.forEach((m) => { modelRunVectorLayers.add(m) })
 
+  const regionIds = state.filters.regions ? state.filters.regions.map((region) => state.regionMap[region]) : [];
+
   if (map.value) {
     updateImageMapSources(state.timestamp, state.enabledSiteImages, state.siteOverviewSatSettings, map.value )
   }
   map.value?.setStyle(
-    style(state.timestamp, state.filters, state.satellite, state.enabledSiteImages, state.siteOverviewSatSettings, Array.from(modelRunVectorLayers), state.filters.randomKey),
+    style(state.timestamp, state.filters, state.satellite, state.enabledSiteImages, state.siteOverviewSatSettings, Array.from(modelRunVectorLayers), regionIds, state.filters.randomKey),
   );
 
   const siteFilter = buildSiteFilter(state.timestamp, state.filters);

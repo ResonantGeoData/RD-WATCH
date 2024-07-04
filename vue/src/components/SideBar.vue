@@ -327,7 +327,7 @@ const satelliteLoadingColor = computed(() => {
       dense
       class="modelRuns"
     >
-    <SettingsPanel v-if="expandSettings" />
+      <SettingsPanel v-if="expandSettings" />
       <ModelRunListVue
         v-if="!expandSettings"
         :filters="queryFilters"

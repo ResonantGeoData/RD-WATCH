@@ -197,6 +197,8 @@ export const state = reactive<{
   // GroundTruthLinks - regular model runs list of ground truths that can be opened
   // KeyValue store of the sourceModelRun UID and the groundTruth UID
   groundTruthLinks: Record<string, string>,
+  // Region map is used to index names and owners with ids
+  regionMap: Record<string, number>;
 }>({
   errorText: '',
   timestamp: Math.floor(Date.now() / 1000),
@@ -269,6 +271,7 @@ export const state = reactive<{
   },
   toolTipMenuOpen: false,
   groundTruthLinks: {},
+  regionMap: {},
 });
 
 export const filteredSatelliteTimeList = computed(() => {

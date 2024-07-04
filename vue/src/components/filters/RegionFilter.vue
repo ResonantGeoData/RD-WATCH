@@ -5,6 +5,7 @@ import type { Ref } from "vue";
 import type { Region } from "../../client";
 import { useRouter, } from 'vue-router';
 import { RegionDetail } from "../../client/models/Region";
+import { state } from "../../store";
 
 const router = useRouter();
 
@@ -22,6 +23,10 @@ const selectedRegion: Ref<string | undefined> = ref(props.modelValue);
 const loadRegions =  async () => {
   const regionList = await ApiService.getRegionDetails();
   const regionResults = regionList.items;
+
+  const tempRegionMap: Record<string, number> = {};
+  regionResults.forEach((item) => tempRegionMap[item.value] = item.id);
+  state.regionMap = tempRegionMap;
   regionResults.sort((a, b) => {
     // First sort by whether the owner is not 'None'
     if (a.owner !== 'None' && b.owner === 'None') {
@@ -77,7 +82,7 @@ watch(selectedRegion, (val) => {
     :placeholder="`Region (${regions.length})`"
     :items="regions"
     item-title="name"
-    item-value="name"
+    item-value="value"
     single-line
     class="dropdown"
   >

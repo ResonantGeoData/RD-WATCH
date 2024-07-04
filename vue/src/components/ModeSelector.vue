@@ -32,7 +32,10 @@ const proposalView = computed(() => route.path.includes('proposals'));
       Annotator
     </v-btn>
   </v-row>
-  <v-row v-if="scoringApp" dense>
+  <v-row
+    v-if="scoringApp"
+    dense
+  >
     <v-spacer />
     <span>Data Source:</span>
     <span><b>Scoring</b></span>

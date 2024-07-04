@@ -12,3 +12,21 @@ router = Router()
 @paginate(PageNumberPagination, page_size=1000)
 def list_regions(request: HttpRequest):
     return EvaluationRun.objects.order_by().values_list('region', flat=True).distinct()
+
+
+@router.get('/details', response=list[dict])
+@paginate(PageNumberPagination, page_size=1000)
+def list_region_details(request: HttpRequest):
+    regions = (
+        EvaluationRun.objects.order_by().values_list('region', flat=True).distinct()
+    )
+    return [
+        {
+            'name': region,
+            'owner': 'None',
+            'value': region,
+            'public': True,
+            'id': -1,
+        }
+        for region in regions
+    ]

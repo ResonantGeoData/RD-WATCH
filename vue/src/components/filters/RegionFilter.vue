@@ -5,7 +5,7 @@ import type { Ref } from "vue";
 import type { Region } from "../../client";
 import { useRouter, } from 'vue-router';
 import { RegionDetail } from "../../client/models/Region";
-import { state } from "../../store";
+import { RegionMapType, state } from "../../store";
 
 const router = useRouter();
 
@@ -24,8 +24,8 @@ const loadRegions =  async () => {
   const regionList = await ApiService.getRegionDetails();
   const regionResults = regionList.items;
 
-  const tempRegionMap: Record<string, number> = {};
-  regionResults.forEach((item) => tempRegionMap[item.value] = item.id);
+  const tempRegionMap: RegionMapType = {};
+  regionResults.forEach((item) => tempRegionMap[item.value] = { id:item.id, deleteBlock: item.deleteBlock, hasGeom: item.hasGeom });
   state.regionMap = tempRegionMap;
   regionResults.sort((a, b) => {
     // First sort by whether the owner is not 'None'

@@ -61,13 +61,16 @@ onMounted(async () => {
         class="fill-height site-list"
         style="overflow-y: hidden"
       >
-        <v-row dense class="pa-0 ma-0">
+        <v-row
+          dense
+          class="pa-0 ma-0"
+        >
           <v-col class="navcolumn">
             <SiteList
               v-if="
                 state.filters.configuration_id &&
-                !state.filters.addingSitePolygon &&
-                !state.filters.addingRegionPolygon
+                  !state.filters.addingSitePolygon &&
+                  !state.filters.addingRegionPolygon
               "
               :model-runs="state.filters.configuration_id"
               style="flex-grow: 1"

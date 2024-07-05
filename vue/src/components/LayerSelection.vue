@@ -529,8 +529,8 @@ watch(() => state.filters.regions?.length, () => {
               <v-list-item
                 value="deleteRegion"
                 v-bind="props"
-                :class="{'disabled-item': !getRegionInfo || !getRegionInfo.hasGeom || getRegionInfo.deleteBlock }"
-                :disabled="!getRegionInfo || !getRegionInfo.hasGeom || getRegionInfo.deleteBlock "
+                :class="{'disabled-item': !getRegionInfo || !getRegionInfo.hasGeom || !!getRegionInfo.deleteBlock }"
+                :disabled="!getRegionInfo || !getRegionInfo.hasGeom || !!getRegionInfo.deleteBlock "
                 @click="deleteRegion()"
               >
                 <div

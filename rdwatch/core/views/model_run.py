@@ -37,6 +37,7 @@ from rdwatch.core.models import (
     AnnotationExport,
     ModelRun,
     Performer,
+    Region,
     SatelliteFetching,
     SiteEvaluation,
 )
@@ -292,16 +293,15 @@ class ModelRunPagination(PageNumberPagination):
         # refactored to be more efficient.
         model_runs = None
         cache_key = _get_model_runs_cache_key(filters.dict() | pagination.dict())
-        if (
-            'proposal' not in filters.dict().keys()
-        ):  # adjudicated status can't be cached for proposals
-            model_runs = cache.get(cache_key)
+        # if (
+        #     'proposal' not in filters.dict().keys()
+        # ):  # adjudicated status can't be cached for proposals
+        #     model_runs = cache.get(cache_key)
 
         # If we have a cache miss, execute the query and save the results to cache
         # before returning.
         if model_runs is None:
             qs = super().paginate_queryset(queryset, pagination, **params)
-
             aggregate_kwargs = {
                 'timerange': JSONObject(
                     min=ExtractEpoch(Min('evaluations__start_date')),
@@ -315,6 +315,18 @@ class ModelRunPagination(PageNumberPagination):
                 )
 
             model_runs = qs | queryset.aggregate(**aggregate_kwargs)
+            if filters.region:
+                if qs['count'] == 0:  # No model runs we set bbox to Region bbox
+                    region_filter = filters.dict()['region']
+                    regions = [
+                        obj
+                        for obj in Region.objects.all()
+                        if obj.value == region_filter
+                    ]
+                    if len(regions) > 0:
+                        bbox = regions[0].geojson
+                        model_runs['bbox'] = bbox
+
             cache.set(
                 key=cache_key,
                 value=model_runs,

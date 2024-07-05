@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import SideBar from "../components/SideBar.vue"
+import SideBar from "../components/SideBar.vue";
 import MapLibre from "../components/MapLibre.vue";
 import LayerSelection from "../components/LayerSelection.vue";
 import ImageViewer from "../components/imageViewer/ImageViewer.vue";
@@ -8,6 +8,7 @@ import MapLegend from "../components/MapLegend.vue";
 import { onMounted } from "vue";
 import { state } from "../store";
 import AddRegion from "../components/AddRegion.vue";
+import { ApiService } from "../client";
 interface Props {
   region?: string;
   selected?: number[] | string;
@@ -17,17 +18,21 @@ const props = withDefaults(defineProps<Props>(), {
   selected: undefined,
 });
 
-
-onMounted(() => {
+onMounted(async () => {
   if (props.region) {
+    const regionList = await ApiService.getRegionDetails();
+    const regionResults = regionList.items;
+
+    const tempRegionMap: Record<string, number> = {};
+    regionResults.forEach((item) => (tempRegionMap[item.value] = item.id));
+    state.regionMap = tempRegionMap;
+
     state.filters = {
       ...state.filters,
       regions: [props.region],
     };
   }
 });
-
-
 </script>
 
 <template>
@@ -35,12 +40,12 @@ onMounted(() => {
     location="left"
     width="400"
     sticky
-    style="max-height:100vh;"
+    style="max-height: 100vh"
     permanent
   >
     <SideBar />
   </v-navigation-drawer>
-  <v-main style="z-index:1">
+  <v-main style="z-index: 1">
     <layer-selection />
     <MapLibre />
     <ImageViewer
@@ -48,7 +53,7 @@ onMounted(() => {
       :site-eval-id="state.selectedImageSite.siteId"
       :site-evaluation-name="state.selectedImageSite.siteName"
       :date-range="state.selectedImageSite.dateRange"
-      style="top:40vh !important; height:60vh"
+      style="top: 40vh !important; height: 60vh"
     />
   </v-main>
   <span>
@@ -61,44 +66,38 @@ onMounted(() => {
         sticky
         permanent
         class="fill-height site-list"
-        style="overflow-y: hidden;"
+        style="overflow-y: hidden"
       >
-        <v-row
-          dense
-          class="pa-0 ma-0"
-        >
-          <v-col
-            class="navcolumn"
-          >
+        <v-row dense class="pa-0 ma-0">
+          <v-col class="navcolumn">
             <SiteList
-              v-if="state.filters.configuration_id && !state.filters.addingSitePolygon && !state.filters.addingRegionPolygon"
+              v-if="
+                state.filters.configuration_id &&
+                !state.filters.addingSitePolygon &&
+                !state.filters.addingRegionPolygon
+              "
               :model-runs="state.filters.configuration_id"
-              style="flex-grow: 1;"
+              style="flex-grow: 1"
             />
-            <add-region
-              v-if="state.filters.addingRegionPolygon"
-            />          
+            <add-region v-if="state.filters.addingRegionPolygon" />
           </v-col>
         </v-row>
       </v-navigation-drawer>
-      <MapLegend
-        class="static-map-legend"
-      />
+      <MapLegend class="static-map-legend" />
     </span>
   </span>
 </template>
 
 <style scoped>
 .static-map-legend {
-    position: absolute;
-    top: 0px;
-    right: 0px;
-    z-index: 2;
+  position: absolute;
+  top: 0px;
+  right: 0px;
+  z-index: 2;
 }
 .navcolumn {
-    display: flex;
-    flex-flow: column;
-    height: 100vh;
+  display: flex;
+  flex-flow: column;
+  height: 100vh;
 }
-
 </style>

@@ -27,6 +27,7 @@ def list_region_details(request: HttpRequest):
             'value': region,
             'public': True,
             'id': -1,
+            'hasGeom': True,
         }
         for region in regions
     ]

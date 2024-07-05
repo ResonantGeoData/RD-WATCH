@@ -54,7 +54,7 @@ onMounted(() => {
   if (mapContainer.value !== null) {
     // Add opened model runs to list of vector tile layers
     state.modelRuns.filter((m) => state.openedModelRuns.has(m.key)).map((m) => m.id).forEach((m) => { modelRunVectorLayers.add(m) })
-    const regionIds = state.filters.regions ? state.filters.regions.map((region) => state.regionMap[region]) : [];
+    const regionIds = state.filters.regions ? state.filters.regions.map((region) => state.regionMap[region].id) : [];
 
     map.value = markRaw(
       new Map({
@@ -124,7 +124,7 @@ watch([() => state.timestamp, () => state.filters, () => state.satellite, () => 
   // Add opened model runs to list of vector tile layers
   openedModelRunIds.forEach((m) => { modelRunVectorLayers.add(m) })
 
-  const regionIds = state.filters.regions ? state.filters.regions.map((region) => state.regionMap[region]) : [];
+  const regionIds = state.filters.regions ? state.filters.regions.map((region) => state.regionMap[region].id) : [];
 
   if (map.value) {
     updateImageMapSources(state.timestamp, state.enabledSiteImages, state.siteOverviewSatSettings, map.value )

@@ -1,3 +1,6 @@
+import json
+import tempfile
+
 from ninja import Router
 from ninja.pagination import PageNumberPagination, paginate
 from ninja.responses import Response
@@ -36,7 +39,9 @@ def list_regions(request: HttpRequest):
 @router.get('/details', response=list[dict])
 @paginate(PageNumberPagination, page_size=1000)
 def list_region_details(request: HttpRequest):
-    regions = Region.objects.values_list('name', 'owner__username', 'public', 'pk')
+    regions = Region.objects.values_list(
+        'name', 'owner__username', 'public', 'pk', 'geom'
+    )
     return [
         {
             'name': region[0],
@@ -45,6 +50,7 @@ def list_region_details(request: HttpRequest):
             'public': region[2],
             'id': region[3],
             'deleteBlock': get_delete_block(region[3], request.user),
+            'hasGeom': True if region[4] else False,
         }
         for region in regions
     ]
@@ -145,3 +151,24 @@ def vector_tile(request: HttpRequest, region_id: int, z: int, x: int, y: int):
         content_type='application/octet-stream',
         status=200 if tile else 204,
     )
+
+
+@router.get('/{id}/download/')
+def download_annotations(request: HttpRequest, id: int):
+    region = Region.objects.get(pk=id)
+    output = region.to_feature_collection()
+    if output is not None:
+        with tempfile.NamedTemporaryFile(delete=False) as temp_file:
+            json_data = json.dumps(output).encode('utf-8')
+            temp_file.write(json_data)
+
+        # Return the temporary file for download
+        with open(temp_file.name, 'rb') as f:
+            response = HttpResponse(f.read(), content_type='application/octet-stream')
+            response[
+                'Content-Disposition'
+            ] = f'attachment; filename={region.value}.geojson'
+
+            return response
+    # TODO: Some Better Error response
+    return 500, 'Unable to export data'

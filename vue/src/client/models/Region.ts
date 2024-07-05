@@ -7,4 +7,5 @@ export interface RegionDetail {
     public: boolean;
     id: number;
     deleteBlock?: false | string;
+    hasGeom?: boolean;
 }

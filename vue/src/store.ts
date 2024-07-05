@@ -56,6 +56,7 @@ export type ImageBBox = [
   ]
 ];
 
+export type RegionMapType = Record<string, {id: number, deleteBlock?: string | false, hasGeom?: boolean }>;
 export interface SiteObservationImage {
   image: string; // URL string toImage
   timestamp: number;
@@ -198,7 +199,7 @@ export const state = reactive<{
   // KeyValue store of the sourceModelRun UID and the groundTruth UID
   groundTruthLinks: Record<string, string>,
   // Region map is used to index names and owners with ids
-  regionMap: Record<string, number>;
+  regionMap: RegionMapType;
 }>({
   errorText: '',
   timestamp: Math.floor(Date.now() / 1000),
@@ -463,9 +464,18 @@ function updateCameraBoundsBasedOnModelRunList(filtered = true, force = false) {
   }
 }
 
+const updateRegionMap = async () => {
+  const regionList = await ApiService.getRegionDetails();
+  const regionResults = regionList.items;
+  const tempRegionMap: RegionMapType = {};
+  regionResults.forEach((item) => tempRegionMap[item.value] = { id:item.id, deleteBlock: item.deleteBlock, hasGeom: item.hasGeom });
+  state.regionMap = tempRegionMap;
+}
+
 
 export {
   loadAndToggleSatelliteImages,
   updateCameraBoundsBasedOnModelRunList,
+  updateRegionMap,
 }
 

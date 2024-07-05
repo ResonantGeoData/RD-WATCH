@@ -6,9 +6,8 @@ import ImageViewer from "../components/imageViewer/ImageViewer.vue";
 import SiteList from "../components/siteList/SiteList.vue";
 import MapLegend from "../components/MapLegend.vue";
 import { onMounted } from "vue";
-import { state } from "../store";
+import { state, updateRegionMap } from "../store";
 import AddRegion from "../components/AddRegion.vue";
-import { ApiService } from "../client";
 interface Props {
   region?: string;
   selected?: number[] | string;
@@ -19,14 +18,8 @@ const props = withDefaults(defineProps<Props>(), {
 });
 
 onMounted(async () => {
+  await updateRegionMap();
   if (props.region) {
-    const regionList = await ApiService.getRegionDetails();
-    const regionResults = regionList.items;
-
-    const tempRegionMap: Record<string, number> = {};
-    regionResults.forEach((item) => (tempRegionMap[item.value] = item.id));
-    state.regionMap = tempRegionMap;
-
     state.filters = {
       ...state.filters,
       regions: [props.region],

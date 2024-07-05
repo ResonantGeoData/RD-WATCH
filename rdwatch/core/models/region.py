@@ -48,6 +48,29 @@ class Region(models.Model):
     def __str__(self) -> str:
         return self.name
 
+    def to_feature(self):
+        return {
+            'type': 'Feature',
+            'properties': {
+                'type': 'region',
+                'region_id': self.name,
+                'version': '2.0.3',
+                'mgrs': None,  # or other logic to populate this field
+                'start_date': None,  # or other logic to populate this field
+                'end_date': None,  # or other logic to populate this field
+                'originator': 'kit',  # or other logic to populate this field
+                'model_content': 'annotation',  # or other logic to populate this field
+                'comments': None,  # or other logic to populate this field
+            },
+            'geometry': {
+                'type': 'Polygon',
+                'coordinates': self.geom.coords if self.geom else None,
+            },
+        }
+
+    def to_feature_collection(self):
+        return {'type': 'FeatureCollection', 'features': [self.to_feature()]}
+
     class Meta:
         constraints = [
             models.UniqueConstraint(

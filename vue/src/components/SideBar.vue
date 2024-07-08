@@ -65,6 +65,7 @@ watch(selectedRegion, () => {
   // Reset satellite time list when on other regions
   satelliteRegionTooLarge.value = false;
   state.satellite = { ...state.satellite, satelliteImagesOn: false, satelliteTimeList: []};
+  state.filters = { ...state.filters, regions: selectedRegion.value ? [selectedRegion.value] : undefined };
 });
 
 const expandSettings = ref(false);
@@ -327,7 +328,7 @@ const satelliteLoadingColor = computed(() => {
       dense
       class="modelRuns"
     >
-    <SettingsPanel v-if="expandSettings" />
+      <SettingsPanel v-if="expandSettings" />
       <ModelRunListVue
         v-if="!expandSettings"
         :filters="queryFilters"

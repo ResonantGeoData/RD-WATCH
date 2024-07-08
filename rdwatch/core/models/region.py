@@ -1,3 +1,5 @@
+import json
+
 from django.contrib.auth.models import User
 from django.contrib.gis.db.models import PolygonField
 from django.contrib.gis.geos import Polygon
@@ -20,8 +22,54 @@ class Region(models.Model):
     owner = models.ForeignKey(User, on_delete=models.CASCADE, null=True, blank=True)
     public = models.BooleanField(default=True)
 
+    @property
+    def value(self):
+        if self.owner:
+            return f'{self.name}_{self.owner.username}'
+        return self.name
+
+    @property
+    def bounding_box(self):
+        if self.geom:
+            return self.geom.extent  # Returns (xmin, ymin, xmax, ymax)
+        return None
+
+    @property
+    def geojson(self):
+        if self.geom:
+            geom_transformed = self.geom.transform(
+                4326, clone=True
+            )  # Ensure it's in WGS 84
+            return json.loads(
+                geom_transformed.geojson
+            )  # Convert GeoJSON string to dictionary
+        return None
+
     def __str__(self) -> str:
         return self.name
+
+    def to_feature(self):
+        return {
+            'type': 'Feature',
+            'properties': {
+                'type': 'region',
+                'region_id': self.name,
+                'version': '2.0.3',
+                'mgrs': None,  # or other logic to populate this field
+                'start_date': None,  # or other logic to populate this field
+                'end_date': None,  # or other logic to populate this field
+                'originator': 'kit',  # or other logic to populate this field
+                'model_content': 'annotation',  # or other logic to populate this field
+                'comments': None,  # or other logic to populate this field
+            },
+            'geometry': {
+                'type': 'Polygon',
+                'coordinates': self.geom.coords if self.geom else None,
+            },
+        }
+
+    def to_feature_collection(self):
+        return {'type': 'FeatureCollection', 'features': [self.to_feature()]}
 
     class Meta:
         constraints = [

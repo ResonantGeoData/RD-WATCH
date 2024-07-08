@@ -1,10 +1,9 @@
 <script setup lang="ts">
-import { onMounted, ref, watch } from "vue";
-import { ApiService } from "../../client";
+import { ref, watch } from "vue";
 import type { Ref } from "vue";
 import type { Region } from "../../client";
 import { useRouter, } from 'vue-router';
-import { RegionDetail } from "../../client/models/Region";
+import { state } from "../../store";
 
 const router = useRouter();
 
@@ -17,36 +16,26 @@ const emit = defineEmits<{
   (e: "update:modelValue", region?: Region): void;
 }>();
 
-const regions: Ref<RegionDetail[]> = ref([]);
 const selectedRegion: Ref<string | undefined> = ref(props.modelValue);
-const loadRegions =  async () => {
-  const regionList = await ApiService.getRegionDetails();
-  const regionResults = regionList.items;
-  regionResults.sort((a, b) => {
-    // First sort by whether the owner is not 'None'
-    if (a.owner !== 'None' && b.owner === 'None') {
-      return -1;
-    }
-    if (a.owner === 'None' && b.owner !== 'None') {
-      return 1;
-    }
-    // If both have owners or both do not, sort by name
-    return a.name.localeCompare(b.name);
-  });  
-  regions.value = regionResults;
-};
-onMounted(() => loadRegions());
-
-watch(() => ApiService.getRegionDetails(), loadRegions);
 
 watch(() => props.modelValue, () => {
   if (props.modelValue) {
+    const found = state.regionList.find((item) => item.value === props.modelValue)
+    if (!found) {
+      selectedRegion.value = undefined;
+      emit("update:modelValue", selectedRegion.value);
+    } else {
     selectedRegion.value = props.modelValue;
+    }
   }
 });
-watch(() => props.modelValue, () => {
-  selectedRegion.value = props.modelValue;
-});
+
+watch(() => state.filters.regions, () => {
+  if (!state.filters.regions?.length)  {
+    selectedRegion.value = undefined;
+    emit("update:modelValue", selectedRegion.value);
+  }
+})
 
 watch(selectedRegion, (val) => {
   let prepend = '/'
@@ -73,11 +62,11 @@ watch(selectedRegion, (val) => {
     variant="outlined"
     clearable
     persistent-clear
-    :label="`Region (${regions.length})`"
-    :placeholder="`Region (${regions.length})`"
-    :items="regions"
+    :label="`Region (${state.regionList.length})`"
+    :placeholder="`Region (${state.regionList.length})`"
+    :items="state.regionList"
     item-title="name"
-    item-value="name"
+    item-value="value"
     single-line
     class="dropdown"
   >

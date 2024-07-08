@@ -704,4 +704,13 @@ export class ApiService {
     });
   }
 
+  public static deleteRegionModel(
+    regionId: number
+  ): CancelablePromise<{error?: string, success?: string}> {
+    return __request(OpenAPI, {
+      method: "DELETE",
+      url: `${this.getApiPrefix()}/regions/${regionId}`,
+    });
+  }
+
 }

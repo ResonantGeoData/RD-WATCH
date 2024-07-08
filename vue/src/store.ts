@@ -4,6 +4,7 @@ import { ApiService, ModelRun, Performer, Region } from "./client";
 import { EditPolygonType } from "./interactions/editPolygon";
 import { BaseBBox, EvaluationImage } from "./types";
 import { LngLatBounds } from "maplibre-gl";
+import { RegionDetail } from "./client/models/Region";
 
 export interface MapFilters {
   configuration_id?: string[];
@@ -200,6 +201,7 @@ export const state = reactive<{
   groundTruthLinks: Record<string, string>,
   // Region map is used to index names and owners with ids
   regionMap: RegionMapType;
+  regionList: RegionDetail[];
 }>({
   errorText: '',
   timestamp: Math.floor(Date.now() / 1000),
@@ -273,6 +275,7 @@ export const state = reactive<{
   toolTipMenuOpen: false,
   groundTruthLinks: {},
   regionMap: {},
+  regionList: [],
 });
 
 export const filteredSatelliteTimeList = computed(() => {
@@ -464,6 +467,28 @@ function updateCameraBoundsBasedOnModelRunList(filtered = true, force = false) {
   }
 }
 
+
+const updateRegionList = async () => {
+  const regionList = await ApiService.getRegionDetails();
+  const regionResults = regionList.items;
+
+  const tempRegionMap: RegionMapType = {};
+  regionResults.forEach((item) => tempRegionMap[item.value] = { id:item.id, deleteBlock: item.deleteBlock, hasGeom: item.hasGeom });
+  state.regionMap = tempRegionMap;
+  regionResults.sort((a, b) => {
+    // First sort by whether the owner is not 'None'
+    if (a.owner !== 'None' && b.owner === 'None') {
+      return -1;
+    }
+    if (a.owner === 'None' && b.owner !== 'None') {
+      return 1;
+    }
+    // If both have owners or both do not, sort by name
+    return a.name.localeCompare(b.name);
+  });  
+  state.regionList = regionResults;
+}
+
 const updateRegionMap = async () => {
   const regionList = await ApiService.getRegionDetails();
   const regionResults = regionList.items;
@@ -476,6 +501,7 @@ const updateRegionMap = async () => {
 export {
   loadAndToggleSatelliteImages,
   updateCameraBoundsBasedOnModelRunList,
+  updateRegionList,
   updateRegionMap,
 }
 

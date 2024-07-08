@@ -6,7 +6,7 @@ import ImageViewer from "../components/imageViewer/ImageViewer.vue";
 import SiteList from "../components/siteList/SiteList.vue";
 import MapLegend from "../components/MapLegend.vue";
 import { onMounted } from "vue";
-import { state, updateRegionMap } from "../store";
+import { state, updateRegionList, updateRegionMap } from "../store";
 import AddRegion from "../components/AddRegion.vue";
 interface Props {
   region?: string;
@@ -18,6 +18,7 @@ const props = withDefaults(defineProps<Props>(), {
 });
 
 onMounted(async () => {
+  await updateRegionList();
   await updateRegionMap();
   if (props.region) {
     state.filters = {
@@ -52,7 +53,7 @@ onMounted(async () => {
   <span>
     <span>
       <v-navigation-drawer
-        v-if="state.filters.configuration_id?.length"
+        v-if="state.filters.configuration_id?.length || state.filters.addingRegionPolygon"
         location="left"
         floating
         width="250"

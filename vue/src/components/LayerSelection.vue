@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { Ref, computed, onMounted, ref, watch } from "vue";
 import { ApiService } from "../client";
-import { state } from "../store";
+import { state, updateRegionList, updateRegionMap } from "../store";
 import { useRoute } from 'vue-router';
 
 
@@ -215,6 +215,8 @@ const deleteRegion = async () => {
       if (result.success) {
         state.filters = { ...state.filters, regions: undefined };
       }
+      await updateRegionList();
+      await updateRegionMap();
     }
   }
 }
@@ -234,7 +236,6 @@ const getRegionInfo: Ref<false | {id: number, deleteBlock?: false | string; hasG
 watch(() => state.filters.regions?.length, () => {
   if (state.filters.regions && state.filters.regions.length) {
     const regionData = state.regionMap[state.filters.regions[0]]
-    console.log(regionData);
     if (regionData) {
       getRegionInfo.value = regionData;
       return;
@@ -533,14 +534,17 @@ watch(() => state.filters.regions?.length, () => {
                 :disabled="!getRegionInfo || !getRegionInfo.hasGeom || !!getRegionInfo.deleteBlock "
                 @click="deleteRegion()"
               >
-                <div
-                  class="layer-text"
-                >
-                  Delete Region
-                </div>
-                <v-icon color="error">
-                  mdi-delete
-                </v-icon>
+                <v-row dense>
+                  <div
+                    class="layer-text"
+                  >
+                    Delete
+                  </div>
+                  <v-spacer />
+                  <v-icon color="error">
+                    mdi-delete
+                  </v-icon>
+                </v-row>
               </v-list-item>
             </template>
             <v-alert v-if="getRegionInfo && getRegionInfo.deleteBlock">
@@ -560,14 +564,17 @@ watch(() => state.filters.regions?.length, () => {
                 :disabled="!getRegionInfo || !getRegionInfo.hasGeom"
                 @click="downloadRegionModel()"
               >
-                <div
-                  class="layer-text"
-                >
-                  Download Region
-                </div>
-                <v-icon>
-                  mdi-download
-                </v-icon>
+                <v-row dense>
+                  <div
+                    class="layer-text"
+                  >
+                    Download
+                  </div>
+                  <v-spacer />
+                  <v-icon>
+                    mdi-download
+                  </v-icon>
+                </v-row>
               </v-list-item>
             </template>
     
@@ -577,17 +584,21 @@ watch(() => state.filters.regions?.length, () => {
             <span>Download the region geometry</span>
           </v-tooltip>
           <v-list-item
+            v-if="!scoringApp"
             value="addRegion"
             @click="addRegion()"
           >
-            <div
-              class="layer-text"
-            >
-              Add Region
-            </div>
-            <v-icon>
-              mdi-plus
-            </v-icon>
+            <v-row dense>
+              <div
+                class="layer-text"
+              >
+                Add Region
+              </div>
+              <v-spacer />
+              <v-icon>
+                mdi-plus
+              </v-icon>
+            </v-row>
           </v-list-item>
         </v-list>
       </v-card>

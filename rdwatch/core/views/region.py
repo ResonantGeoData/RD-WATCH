@@ -68,7 +68,7 @@ def post_region_model_editor(
     )
 
     return Response(
-        {'detail': 'Region model created successfully', 'region_id': str(region.name)},
+        {'detail': 'Region model created successfully', 'region_id': region.name},
         status=201,
     )
 

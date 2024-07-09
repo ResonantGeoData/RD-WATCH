@@ -1,13 +1,25 @@
 import json
 import tempfile
 
-from ninja import Router
+from ninja import Router, Schema
 from ninja.pagination import PageNumberPagination, paginate
-from ninja.responses import Response
 
 from django.db import connection
-from django.db.models import BooleanField, F, Field, Func, Q
-from django.http import HttpRequest, HttpResponse, JsonResponse
+from django.db.models import (
+    BooleanField,
+    Case,
+    CharField,
+    Exists,
+    F,
+    Field,
+    Func,
+    OuterRef,
+    Q,
+    Value,
+    When,
+)
+from django.db.models.functions import Concat
+from django.http import HttpRequest, HttpResponse
 from django.shortcuts import get_object_or_404
 
 from rdwatch.core.models import ModelRun, Region
@@ -36,27 +48,67 @@ def list_regions(request: HttpRequest):
     return Region.objects.values_list('name', flat=True)
 
 
-@router.get('/details/', response=list[dict])
+class RegionDetailSchema(Schema):
+    name: str
+    ownerUsername: str
+    value: str
+    public: bool
+    id: int
+    deleteBlock: str  # empty when a region can be deleted
+    hasGeom: bool
+
+
+@router.get('/details/', response=list[RegionDetailSchema])
 @paginate(PageNumberPagination, page_size=1000)
 def list_region_details(request: HttpRequest):
-    regions = Region.objects.values_list(
-        'name', 'owner__username', 'public', 'pk', 'geom'
-    )
-    return [
-        {
-            'name': region[0],
-            'owner': region[1] if region[1] is not None else 'None',
-            'value': region[0] if region[1] is None else f'{region[0]}_{region[1]}',
-            'public': region[2],
-            'id': region[3],
-            'deleteBlock': get_delete_block(region[3], request.user),
-            'hasGeom': True if region[4] else False,
-        }
-        for region in regions
-    ]
+    user = request.user
+    model_run_exists = ModelRun.objects.filter(region=OuterRef('pk')).values('pk')
+    regions = Region.objects.annotate(
+        ownerUsername=Case(
+            When(Q(owner__isnull=False), then=F('owner__username')),
+            When(Q(owner__isnull=True), then=Value('None')),
+            default=Value('None'),
+            output_field=CharField(),
+        ),
+        value=Case(
+            When(owner__username__isnull=True, then=F('name')),
+            default=Concat(F('name'), Value('_'), F('owner__username')),
+            output_field=CharField(),
+        ),
+        hasGeom=Case(
+            When(geom__isnull=False, then=Value(True)),
+            default=Value(False),
+            output_field=BooleanField(),
+        ),
+        deleteBlock=Case(
+            When(
+                Q(owner__isnull=True) & Q(public=True),
+                then=Value('Region is a System Region that is Public'),
+            ),
+            When(
+                Q(owner__isnull=False) & ~Q(owner=user),
+                then=Value('You do not have permission to delete this region.'),
+            ),
+            When(
+                Exists(model_run_exists),
+                then=Value(
+                    'This region is currently being used in model\
+                    runs and cannot be deleted.'
+                ),
+            ),
+            default=Value(''),
+            output_field=CharField(),
+        ),
+    ).values('name', 'ownerUsername', 'value', 'public', 'id', 'hasGeom', 'deleteBlock')
+    return regions
 
 
-@router.post('/')
+class RegionPostSchema(Schema):
+    detail: str
+    region_id: str
+
+
+@router.post('/', response={201: RegionPostSchema})
 def post_region_model_editor(
     request: HttpRequest,
     region_model: RegionModel,
@@ -67,34 +119,44 @@ def post_region_model_editor(
         region_model, True, owner
     )
 
-    return Response(
-        {'detail': 'Region model created successfully', 'region_id': region.name},
-        status=201,
-    )
+    return 201, {
+        'detail': 'Region model created successfully',
+        'region_id': region.value,
+    }
 
 
-@router.delete('/{region_id}/')
+class RegionDeleteErrorSchema(Schema):
+    error: str
+
+
+class RegionDeleteSuccessSchema(Schema):
+    success: str
+
+
+@router.delete(
+    '/{region_id}/',
+    response={
+        403: RegionDeleteErrorSchema,
+        400: RegionDeleteErrorSchema,
+        200: RegionDeleteSuccessSchema,
+    },
+)
 def delete_region(request: HttpRequest, region_id: int):
     owner = request.user
     selected_region = get_object_or_404(Region, pk=region_id)
     if selected_region.owner != owner:  # 403 response, only owner can delete a region
-        return JsonResponse(
-            {'error': 'You do not have permission to delete this region.'}, status=403
-        )
+        return 403, {'error': 'You do not have permission to delete this region.'}
 
     # check and see if any model runs utilize this region
     region_model_runs = ModelRun.objects.filter(region=region_id).count()
     if region_model_runs > 0:  # we seend back an error that the model run is invalid
-        return JsonResponse(
-            {
-                'error': 'This region is currently being\
+        return 400, {
+            'error': 'This region is currently being\
                 used in model runs and cannot be deleted.'
-            },
-            status=400,
-        )
+        }
     # return a successful response for deletion of the region
     selected_region.delete()
-    return JsonResponse({'success': 'Region deleted successfully.'}, status=200)
+    return 200, {'success': 'Region deleted successfully.'}
 
 
 @router.get('/{region_id}/vector-tile/{z}/{x}/{y}.pbf/')

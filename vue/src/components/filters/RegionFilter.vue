@@ -72,9 +72,9 @@ watch(selectedRegion, (val) => {
   >
     <template #item="{ props, item }">
       <v-list-item
-        v-if="item.raw.owner !== 'None'"
+        v-if="item.raw.ownerUsername !== 'None'"
         v-bind="props"
-        :subtitle="item.raw.owner"
+        :subtitle="item.raw.ownerUsername"
       />
       <v-list-item
         v-else

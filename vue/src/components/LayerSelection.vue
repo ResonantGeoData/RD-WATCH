@@ -232,7 +232,7 @@ const downloadRegionModel = () => {
 };
 
 
-const getRegionInfo: Ref<false | {id: number, deleteBlock?: false | string; hasGeom?: boolean}> = ref(false);
+const getRegionInfo: Ref<false | {id: number, deleteBlock?: string; hasGeom?: boolean}> = ref(false);
 watch(() => state.filters.regions?.length, () => {
   if (state.filters.regions && state.filters.regions.length) {
     const regionData = state.regionMap[state.filters.regions[0]]

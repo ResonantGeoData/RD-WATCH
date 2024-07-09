@@ -446,7 +446,7 @@ export class ApiService {
   public static getRegionDetails(): CancelablePromise<RegionDetailList> {
     return __request(OpenAPI, {
       method: "GET",
-      url: `${this.getApiPrefix()}/regions/details`,
+      url: `${this.getApiPrefix()}/regions/details/`,
     });
   }
 
@@ -709,7 +709,7 @@ export class ApiService {
   ): CancelablePromise<{error?: string, success?: string}> {
     return __request(OpenAPI, {
       method: "DELETE",
-      url: `${this.getApiPrefix()}/regions/${regionId}`,
+      url: `${this.getApiPrefix()}/regions/${regionId}/`,
     });
   }
 

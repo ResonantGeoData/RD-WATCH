@@ -314,11 +314,14 @@ class ModelRunPagination(PageNumberPagination):
             if filters.region:
                 if qs['count'] == 0:  # No model runs we set bbox to Region bbox
                     region_filter = filters.dict()['region']
-                    regions = Region.objects.filter(value=region_filter)
-                    if regions.exists():
+                    regions = [
+                        obj
+                        for obj in Region.objects.all()
+                        if obj.value == region_filter
+                    ]
+                    if len(regions) > 0:
                         bbox = regions[0].geojson
                         model_runs['bbox'] = bbox
-
             cache.set(
                 key=cache_key,
                 value=model_runs,

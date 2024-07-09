@@ -36,7 +36,7 @@ def list_regions(request: HttpRequest):
     return Region.objects.values_list('name', flat=True)
 
 
-@router.get('/details', response=list[dict])
+@router.get('/details/', response=list[dict])
 @paginate(PageNumberPagination, page_size=1000)
 def list_region_details(request: HttpRequest):
     regions = Region.objects.values_list(

@@ -293,10 +293,6 @@ class ModelRunPagination(PageNumberPagination):
         # refactored to be more efficient.
         model_runs = None
         cache_key = _get_model_runs_cache_key(filters.dict() | pagination.dict())
-        # if (
-        #     'proposal' not in filters.dict().keys()
-        # ):  # adjudicated status can't be cached for proposals
-        #     model_runs = cache.get(cache_key)
 
         # If we have a cache miss, execute the query and save the results to cache
         # before returning.

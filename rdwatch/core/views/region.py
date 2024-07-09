@@ -73,7 +73,7 @@ def post_region_model_editor(
     )
 
 
-@router.delete('/{region_id}')
+@router.delete('/{region_id}/')
 def delete_region(request: HttpRequest, region_id: int):
     owner = request.user
     selected_region = get_object_or_404(Region, pk=region_id)

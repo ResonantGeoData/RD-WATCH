@@ -697,8 +697,8 @@ def vector_tile(
                 ),
                 label=Case(
                     When(
-                        Q(status_annotated__isnull=False),
-                        Lower(Replace('status_annotated', Value(' '), Value('_'))),
+                        Q(point_status__isnull=False),
+                        Lower(Replace('point_status', Value(' '), Value('_'))),
                     ),
                     default=Value('unknown'),
                 ),  # This needs a version to be scoring coloring,

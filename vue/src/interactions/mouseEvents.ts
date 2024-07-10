@@ -260,7 +260,6 @@ const drawSitePopupObservation = async (e: MapLayerMouseEvent, remove=false) => 
     hoveredInfo.value.region = [];
     hoveredInfo.value.siteId = [];
     const popupData: PopUpSiteData[] = [];
-    console.log(e.features);
     e.features.forEach(
       (
         item: GeoJSON.GeoJsonProperties & {

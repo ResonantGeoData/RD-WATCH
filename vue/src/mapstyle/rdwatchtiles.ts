@@ -263,7 +263,7 @@ const buildObservationFill = (
 };
 
 // Nudge is used to refresh vector tiles when modified by proposal view
-export const buildSourceFilter = (timestamp: number, modelRunIds: string[], randomKey='') => {
+export const buildSourceFilter = (timestamp: number, modelRunIds: string[], regionIds: number[], randomKey='') => {
   const results: Record<string, SourceSpecification> = {};
   modelRunIds.forEach((id) => {
     const source = `vectorTileSource_${id}`;
@@ -274,13 +274,25 @@ export const buildSourceFilter = (timestamp: number, modelRunIds: string[], rand
       maxzoom: 14,
     };
   });
+  if (!ApiService.getApiPrefix().includes('scoring')) {
+    regionIds.forEach((id) => {
+    const source = `vectorTileRegionSource_${id}`;
+    results[source] = {
+      type: "vector",
+      tiles: [`${urlRoot}${ApiService.getApiPrefix()}/regions/${id}/vector-tile/{z}/{x}/{y}.pbf/`],
+      minzoom: 0,
+      maxzoom: 14,
+    };
+    });
+  }
   return results;
 };
 
 export const buildLayerFilter = (
   timestamp: number,
   filters: MapFilters,
-  modelRunIds: string[]
+  modelRunIds: string[],
+  regionIds: number[],
 ): LayerSpecification[] => {
   let results: LayerSpecification[] = [];
   modelRunIds.forEach((id) => {
@@ -410,6 +422,19 @@ export const buildLayerFilter = (
       }]);
 
     }
+  });
+  regionIds.forEach((id) => {
+    results.push( {
+      id: `baseregions-outline-${id}`,
+      type: "line",
+      source: `vectorTileRegionSource_${id}`,
+      "source-layer": `regions-${id}`,
+      paint: {
+        "line-color": annotationColors(filters),
+        "line-width": 2,
+      },
+      filter: buildRegionFilter(filters),
+    })
   });
   return results;
 };

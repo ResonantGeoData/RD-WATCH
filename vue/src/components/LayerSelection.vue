@@ -1,7 +1,7 @@
 <script setup lang="ts">
-import { computed, onMounted, watch } from "vue";
+import { Ref, computed, onMounted, ref, watch } from "vue";
 import { ApiService } from "../client";
-import { state } from "../store";
+import { state, updateRegionList, updateRegionMap } from "../store";
 import { useRoute } from 'vue-router';
 
 
@@ -203,6 +203,46 @@ const toggleScoring = (data? : undefined | 'simple' | 'detailed') => {
 const addProposal = () => {
   state.filters.addingSitePolygon = true;
 }
+const addRegion = () => {
+  state.filters.addingRegionPolygon = true;
+}
+
+const deleteRegion = async () => {
+  if (state.filters.regions?.length) {
+    const regionDetails = state.regionMap[state.filters.regions[0]];
+    if (regionDetails !== undefined) {
+      const result = await ApiService.deleteRegionModel(regionDetails.id)
+      if (result.success) {
+        state.filters = { ...state.filters, regions: undefined };
+      }
+      await updateRegionList();
+      await updateRegionMap();
+    }
+  }
+}
+
+const downloadRegionModel = () => {
+  if (state.filters.regions?.length) {
+    const regionDetails = state.regionMap[state.filters.regions[0]];
+    if (regionDetails !== undefined) {
+    const url = `/api/regions/${regionDetails.id}/download`;
+    window.location.assign(url);
+    }
+  }
+};
+
+
+const getRegionInfo: Ref<false | {id: number, deleteBlock?: string; hasGeom?: boolean}> = ref(false);
+watch(() => state.filters.regions?.length, () => {
+  if (state.filters.regions && state.filters.regions.length) {
+    const regionData = state.regionMap[state.filters.regions[0]]
+    if (regionData) {
+      getRegionInfo.value = regionData;
+      return;
+    }
+  }
+  getRegionInfo.value = false;
+});
 
 </script>
 
@@ -449,15 +489,120 @@ const addProposal = () => {
         </v-list>
       </v-card>
     </v-menu>
-    <v-btn
-      class="px-2 mx-2"
-      size="large"
-      :disabled="!modelRunEnabled"
-      :color="state.filters.drawRegionPoly ? 'primary' : ''"
-      @click="toggleRegion()"
+    <v-menu
+      open-on-hover
     >
-      Region
-    </v-btn>
+      <template #activator="{ props }">
+        <v-btn
+          v-bind="props"
+          class="px-2 mx-2"
+          size="large"
+          :color="state.filters.drawRegionPoly ? 'primary' : ''"
+          @click="getRegionInfo && getRegionInfo.hasGeom && toggleRegion()"
+        >
+          Region
+        </v-btn>
+      </template>
+      <v-card outlined>
+        <v-list>
+          <v-list-item
+            value="Region"
+            :class="{'disabled-item': !getRegionInfo || !getRegionInfo.hasGeom }"
+            :disabled="!getRegionInfo || !getRegionInfo.hasGeom"
+            @click="toggleRegion()"
+          >
+            <div
+              class="layer-text"
+            >
+              Region
+            </div>
+            <v-checkbox-btn
+              :model-value="state.filters.drawRegionPoly "
+              density="compact"
+              :disabled="!getRegionInfo || !getRegionInfo.hasGeom"
+              hide-details
+              readonly
+              class="item-checkbox"
+            />
+          </v-list-item>
+          <v-tooltip v-if="!scoringApp">
+            <template #activator="{ props }">
+              <v-list-item
+                value="deleteRegion"
+                v-bind="props"
+                :class="{'disabled-item': !getRegionInfo || !getRegionInfo.hasGeom || !!getRegionInfo.deleteBlock }"
+                :disabled="!getRegionInfo || !getRegionInfo.hasGeom || !!getRegionInfo.deleteBlock "
+                @click="deleteRegion()"
+              >
+                <v-row dense>
+                  <div
+                    class="layer-text"
+                  >
+                    Delete
+                  </div>
+                  <v-spacer />
+                  <v-icon color="error">
+                    mdi-delete
+                  </v-icon>
+                </v-row>
+              </v-list-item>
+            </template>
+            <v-alert v-if="getRegionInfo && getRegionInfo.deleteBlock">
+              {{ getRegionInfo.deleteBlock }}
+            </v-alert>
+            <v-alert v-if="getRegionInfo && !getRegionInfo.hasGeom">
+              Cannot Delete the region because there is no geometry
+            </v-alert>
+            <span>Delete the region</span>
+          </v-tooltip>
+          <v-tooltip v-if="!scoringApp">
+            <template #activator="{ props }">
+              <v-list-item
+                value="downloadRegion"
+                v-bind="props"
+                :class="{'disabled-item': !getRegionInfo || !getRegionInfo.hasGeom }"
+                :disabled="!getRegionInfo || !getRegionInfo.hasGeom"
+                @click="downloadRegionModel()"
+              >
+                <v-row dense>
+                  <div
+                    class="layer-text"
+                  >
+                    Download
+                  </div>
+                  <v-spacer />
+                  <v-icon>
+                    mdi-download
+                  </v-icon>
+                </v-row>
+              </v-list-item>
+            </template>
+    
+            <v-alert v-if="getRegionInfo && !getRegionInfo.hasGeom">
+              Cannot Download the region because there is no geometry
+            </v-alert>
+            <span>Download the region geometry</span>
+          </v-tooltip>
+          <v-list-item
+            v-if="!scoringApp"
+            value="addRegion"
+            @click="addRegion()"
+          >
+            <v-row dense>
+              <div
+                class="layer-text"
+              >
+                Add Region
+              </div>
+              <v-spacer />
+              <v-icon>
+                mdi-plus
+              </v-icon>
+            </v-row>
+          </v-list-item>
+        </v-list>
+      </v-card>
+    </v-menu>
     <v-menu
       open-on-hover
     >

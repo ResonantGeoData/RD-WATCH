@@ -188,6 +188,7 @@ function query(z, x, y, modelRunId, year) {
         ) AS "configuration_name",
         CASE
           WHEN "site"."status_annotated" IS NOT NULL THEN LOWER(REPLACE("site"."status_annotated", ' ', '_'))
+          WHEN "site"."point_status" IS NOT NULL THEN LOWER(REPLACE("site"."point_status", ' ', '_'))
           ELSE 'unknown'
         END AS "label",
         EXTRACT(

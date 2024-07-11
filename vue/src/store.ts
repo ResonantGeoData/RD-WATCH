@@ -57,7 +57,7 @@ export type ImageBBox = [
   ]
 ];
 
-export type RegionMapType = Record<string, {id: number, deleteBlock?: string | false, hasGeom?: boolean }>;
+export type RegionMapType = Record<string, {id: number, deleteBlock?: string, hasGeom?: boolean }>;
 export interface SiteObservationImage {
   image: string; // URL string toImage
   timestamp: number;
@@ -477,10 +477,10 @@ const updateRegionList = async () => {
   state.regionMap = tempRegionMap;
   regionResults.sort((a, b) => {
     // First sort by whether the owner is not 'None'
-    if (a.owner !== 'None' && b.owner === 'None') {
+    if (a.ownerUsername !== 'None' && b.ownerUsername === 'None') {
       return -1;
     }
-    if (a.owner === 'None' && b.owner !== 'None') {
+    if (a.ownerUsername === 'None' && b.ownerUsername !== 'None') {
       return 1;
     }
     // If both have owners or both do not, sort by name

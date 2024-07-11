@@ -733,7 +733,7 @@ def vector_tile(
                                 & Q(rho=0.5)
                                 & Q(tau=0.2)
                                 & Q(min_confidence_score=0.0)
-                                & Q(site_truth=OuterRef('base_site_id'))
+                                & Q(site_truth=Substr(OuterRef('base_site_id'), 1, 12))
                                 & Q(
                                     Q(min_spatial_distance_threshold__isnull=True)
                                     | Q(min_spatial_distance_threshold=100.0)
@@ -761,7 +761,7 @@ def vector_tile(
                                 & Q(rho=0.5)
                                 & Q(tau=0.2)
                                 & Q(min_confidence_score=0.0)
-                                & Q(site_proposal=OuterRef('base_site_id'))
+                                & Q(site_truth=Substr(OuterRef('base_site_id'), 1, 12))
                                 & Q(
                                     Q(min_spatial_distance_threshold__isnull=True)
                                     | Q(min_spatial_distance_threshold=100.0)

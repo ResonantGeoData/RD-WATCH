@@ -14,7 +14,7 @@ def list_regions(request: HttpRequest):
     return EvaluationRun.objects.order_by().values_list('region', flat=True).distinct()
 
 
-@router.get('/details', response=list[dict])
+@router.get('/details/', response=list[dict])
 @paginate(PageNumberPagination, page_size=1000)
 def list_region_details(request: HttpRequest):
     regions = (

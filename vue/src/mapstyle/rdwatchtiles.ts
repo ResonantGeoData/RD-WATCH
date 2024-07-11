@@ -424,17 +424,19 @@ export const buildLayerFilter = (
     }
   });
   regionIds.forEach((id) => {
-    results.push( {
-      id: `baseregions-outline-${id}`,
-      type: "line",
-      source: `vectorTileRegionSource_${id}`,
-      "source-layer": `regions-${id}`,
-      paint: {
-        "line-color": annotationColors(filters),
-        "line-width": 2,
-      },
-      filter: buildRegionFilter(filters),
-    })
+    if (!ApiService.getApiPrefix().includes('scoring')) {
+      results.push( {
+        id: `baseregions-outline-${id}`,
+        type: "line",
+        source: `vectorTileRegionSource_${id}`,
+        "source-layer": `regions-${id}`,
+        paint: {
+          "line-color": annotationColors(filters),
+          "line-width": 2,
+        },
+        filter: buildRegionFilter(filters),
+      });
+    }
   });
   return results;
 };

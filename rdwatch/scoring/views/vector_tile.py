@@ -700,6 +700,11 @@ def vector_tile(
                         Q(point_status__isnull=False),
                         Lower(Replace('point_status', Value(' '), Value('_'))),
                     ),
+                    When(
+                        Q(point_status__isnull=True)
+                        & Q(status_annotated__isnull=False),
+                        then=Lower(Replace('status_annotated', Value(' '), Value('_'))),
+                    ),
                     default=Value('unknown'),
                 ),  # This needs a version to be scoring coloring,
                 # but that needs some coordination with kitware

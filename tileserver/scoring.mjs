@@ -41,7 +41,7 @@ function query(z, x, y, modelRunId, year) {
         "site"."first_obs_date",
         "site"."last_obs_date",
         "site"."confidence_score",
-        "site"."site_id" AS "id",
+        "site"."site_id" AS "uuid",
         ST_AsMVTGeom(
           ST_Transform(
             ST_GeomFromText("site"."union_geometry", 4326),
@@ -164,7 +164,7 @@ function query(z, x, y, modelRunId, year) {
     ),
     sites_points AS (
       SELECT
-        "site"."site_id" AS "id",
+        "site"."uuid" AS "id",
         ST_AsMVTGeom(
           ST_Transform(
             ST_GeomFromText("site"."point_geometry", 4326),
@@ -188,6 +188,7 @@ function query(z, x, y, modelRunId, year) {
         ) AS "configuration_name",
         CASE
           WHEN "site"."status_annotated" IS NOT NULL THEN LOWER(REPLACE("site"."status_annotated", ' ', '_'))
+          WHEN "site"."point_status" IS NOT NULL THEN LOWER(REPLACE("site"."point_status", ' ', '_'))
           ELSE 'unknown'
         END AS "label",
         EXTRACT(

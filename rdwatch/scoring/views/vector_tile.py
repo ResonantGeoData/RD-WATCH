@@ -563,7 +563,7 @@ def vector_tile(
             .filter(intersects)
             .values()
             .annotate(
-                id=F('base_site_id'),
+                id=F('uuid'),
                 mvtgeom=mvtgeom,
                 configuration_id=F('evaluation_run_uuid'),
                 configuration_name=ExpressionWrapper(
@@ -681,7 +681,7 @@ def vector_tile(
             .filter(intersects)
             .values()
             .annotate(
-                id=F('base_site_id'),
+                id=F('uuid'),
                 mvtgeom=mvtgeom,
                 configuration_id=F('evaluation_run_uuid'),
                 configuration_name=ExpressionWrapper(
@@ -697,8 +697,13 @@ def vector_tile(
                 ),
                 label=Case(
                     When(
-                        Q(status_annotated__isnull=False),
-                        Lower(Replace('status_annotated', Value(' '), Value('_'))),
+                        Q(point_status__isnull=False),
+                        Lower(Replace('point_status', Value(' '), Value('_'))),
+                    ),
+                    When(
+                        Q(point_status__isnull=True)
+                        & Q(status_annotated__isnull=False),
+                        then=Lower(Replace('status_annotated', Value(' '), Value('_'))),
                     ),
                     default=Value('unknown'),
                 ),  # This needs a version to be scoring coloring,
@@ -728,7 +733,7 @@ def vector_tile(
                                 & Q(rho=0.5)
                                 & Q(tau=0.2)
                                 & Q(min_confidence_score=0.0)
-                                & Q(site_truth=OuterRef('base_site_id'))
+                                & Q(site_truth=Substr(OuterRef('base_site_id'), 1, 12))
                                 & Q(
                                     Q(min_spatial_distance_threshold__isnull=True)
                                     | Q(min_spatial_distance_threshold=100.0)

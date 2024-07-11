@@ -27,6 +27,7 @@ export const style = (
   enabledSiteImages: EnabledSiteOverviews[],
   settings: siteOverviewSatSettings,
   modelRunIds: string[],
+  regionIds: number[],
   randomKey=''
 ): StyleSpecification => ({
   version: 8,
@@ -34,7 +35,7 @@ export const style = (
     ...naturalearthSources,
     ...buildSatelliteSourceFilter(timestamp, satellite),
     ...buildImageSourceFilter(timestamp, enabledSiteImages, settings),
-    ...buildRdwatchtilesSources(timestamp, modelRunIds, randomKey),
+    ...buildRdwatchtilesSources(timestamp, modelRunIds, regionIds, randomKey),
     ...openmaptilesSources(filters),
   },
   sprite: `${tileServerURL}/sprites/osm-liberty`,
@@ -49,6 +50,6 @@ export const style = (
     ...openmaptilesLayers(filters),
     ...satelliteLayers(timestamp, satellite),
     ...buildImageLayerFilter(timestamp, enabledSiteImages, settings),
-    ...rdwatchtilesLayers(timestamp, filters, modelRunIds),
+    ...rdwatchtilesLayers(timestamp, filters, modelRunIds, regionIds),
   ],
 });

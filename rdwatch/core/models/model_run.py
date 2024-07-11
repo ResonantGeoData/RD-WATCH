@@ -2,6 +2,7 @@ from uuid import uuid4
 
 from django_extensions.db.models import CreationDateTimeField
 
+from django.contrib.auth.models import User
 from django.db import models
 
 
@@ -50,6 +51,8 @@ class ModelRun(models.Model):
         choices=ProposalStatus.choices,
     )
     ground_truth = models.BooleanField(default=False)
+    owner = models.ForeignKey(User, on_delete=models.CASCADE, null=True, blank=True)
+    public = models.BooleanField(default=True)
 
     def __str__(self) -> str:
         return str(self.pk)

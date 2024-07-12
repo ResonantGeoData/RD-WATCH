@@ -38,6 +38,11 @@ const styles: AnnotationStyle = {
     type: "sites",
     label: 'Positive Annotated',
   },
+  positive: {
+    color: "#7f0000",
+    type: "sites",
+    label: 'Positive Annotated',
+  },
   positive_partial: {
     color: "#00008b",
     type: "sites",

@@ -350,8 +350,6 @@ const setPopupEvents = (map: ShallowRef<null | Map>) => {
       map.value.off("mouseleave", `sites-fill-${data.id}`, data.mouseenterSite);
       map.value.off("mouseenter", `sites-points-outline-${data.id}`, data.mouseenterSite);
       map.value.off("mouseleave", `sites-points-outline-${data.id}`, data.mouseenterSite);
-      map.value.off("mouseenter", `observations-points-outline-${data.id}`, data.mouseenterSite);
-      map.value.off("mouseleave", `sites-points-outline-${data.id}`, data.mouseenterSite);
 
       map.value.off("click", `observations-fill-${data.id}`, data.clickObservation);
       map.value.off("click", `sites-fill-${data.id}`, data.clickSite);

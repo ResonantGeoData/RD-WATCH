@@ -370,17 +370,19 @@ export const buildLayerFilter = (
       // Site fill is added for Hover Popup to work on the area inside the polygon
     ]);
 
-    results.push({
-      id: `sites-points-outline-${id}`,
-      type: "circle",
-      source: `vectorTileSource_${id}`,
-      "source-layer": `sites_points-${id}`,
-      paint: {
-        "circle-color": annotationColors(filters),
-        "circle-radius": buildCircleRadius(filters, 'site'),
-      },
-      filter: buildSiteFilter(timestamp, filters),
-    });
+    if (ApiService.isScoring()) {
+      results.push({
+        id: `sites-points-outline-${id}`,
+        type: "circle",
+        source: `vectorTileSource_${id}`,
+        "source-layer": `sites_points-${id}`,
+        paint: {
+          "circle-color": annotationColors(filters),
+          "circle-radius": buildObservationThick(filters, 'site'),
+        },
+        filter: buildSiteFilter(timestamp, filters),
+      });
+    }
 
     results.push({
       id: `observations-points-outline-${id}`,

@@ -139,43 +139,29 @@ class SiteEvaluation(models.Model):
                 cache_timestamp = site_feature.properties.cache.timestamp
                 cache_commit_hash = site_feature.properties.cache.commit_hash
 
-            point = False
+            point = None
+            label = None
             if isinstance(site_feature.parsed_geometry, Point):
-                point = True
-            if not point:
-                site_eval = cls.objects.create(
-                    configuration=configuration,
-                    version=site_feature.properties.version,
-                    number=site_feature.properties.site_number,
-                    start_date=site_feature.properties.start_date,
-                    end_date=site_feature.properties.end_date,
-                    geom=site_feature.parsed_geometry,
-                    label=label,
-                    score=site_feature.properties.score,
-                    status=status,
-                    validated=site_feature.properties.validated,
-                    cache_originator_file=cache_originator_file,
-                    cache_timestamp=cache_timestamp,
-                    cache_commit_hash=cache_commit_hash,
-                    modified_timestamp=datetime.now(),
-                )
+                point = site_feature.parsed_geometry
             else:
-                site_eval = cls.objects.create(
-                    configuration=configuration,
-                    version=site_feature.properties.version,
-                    number=site_feature.properties.site_number,
-                    start_date=site_feature.properties.start_date,
-                    end_date=site_feature.properties.end_date,
-                    point=site_feature.parsed_geometry,
-                    label=label,
-                    score=site_feature.properties.score,
-                    status=status,
-                    validated=site_feature.properties.validated,
-                    cache_originator_file=cache_originator_file,
-                    cache_timestamp=cache_timestamp,
-                    cache_commit_hash=cache_commit_hash,
-                    modified_timestamp=datetime.now(),
-                )
+                label = site_feature.parse_geometry
+            site_eval = cls.objects.create(
+                configuration=configuration,
+                version=site_feature.properties.version,
+                number=site_feature.properties.site_number,
+                start_date=site_feature.properties.start_date,
+                end_date=site_feature.properties.end_date,
+                geom=site_feature.parsed_geometry,
+                label=label,
+                point=point,
+                score=site_feature.properties.score,
+                status=status,
+                validated=site_feature.properties.validated,
+                cache_originator_file=cache_originator_file,
+                cache_timestamp=cache_timestamp,
+                cache_commit_hash=cache_commit_hash,
+                modified_timestamp=datetime.now(),
+            )
             SiteObservation.bulk_create_from_site_evaluation(site_eval, site_model)
 
         return site_eval

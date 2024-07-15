@@ -6,10 +6,9 @@ from celery.result import AsyncResult
 from ninja import Query, Router, Schema
 from pydantic import UUID4
 
-from django.contrib.gis.db.models import FloatField, PointField, PolygonField
+from django.contrib.gis.db.models import FloatField, PolygonField
 from django.contrib.gis.db.models.aggregates import Collect
 from django.contrib.gis.db.models.functions import Area, Transform
-from django.contrib.gis.geos import Polygon
 from django.contrib.postgres.aggregates import JSONBAgg
 from django.core.files.storage import default_storage
 from django.db import transaction
@@ -86,21 +85,6 @@ class SiteObservationsListSchema(Schema):
     results: list[SiteObservationSchema]
     images: SiteEvaluationImageListSchema
     job: JobStatusSchema | None
-
-
-def point_to_bbox(point_field, variance=0.01):
-    assert isinstance(point_field, PointField)
-    # Transform the PointField to a Geometry object
-    transformed_point = Transform(point_field, srid=4326)
-    # Generate bounding box around the transformed point
-    return Polygon.from_bbox(
-        (
-            transformed_point.x - variance,
-            transformed_point.y - variance,
-            transformed_point.x + variance,
-            transformed_point.y + variance,
-        )
-    )
 
 
 @router.get('/{evaluation_id}/', response={200: SiteObservationsListSchema})

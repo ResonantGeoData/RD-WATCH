@@ -140,18 +140,18 @@ class SiteEvaluation(models.Model):
                 cache_commit_hash = site_feature.properties.cache.commit_hash
 
             point = None
-            label = None
+            geom = None
             if isinstance(site_feature.parsed_geometry, Point):
                 point = site_feature.parsed_geometry
             else:
-                label = site_feature.parse_geometry
+                geom = site_feature.parsed_geometry
             site_eval = cls.objects.create(
                 configuration=configuration,
                 version=site_feature.properties.version,
                 number=site_feature.properties.site_number,
                 start_date=site_feature.properties.start_date,
                 end_date=site_feature.properties.end_date,
-                geom=site_feature.parsed_geometry,
+                geom=geom,
                 label=label,
                 point=point,
                 score=site_feature.properties.score,

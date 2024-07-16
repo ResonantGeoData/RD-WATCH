@@ -6,6 +6,10 @@
 
 RDWATCH (ResonantGeoData WATCH) is a modern web application that offers easy access to a wide range of remote sensing imagery, as well as AI-generated outputs, to aid in the detection of global scale changes. RDWATCH enhances the AI workflow by providing monitoring, annotating, and visualizing capabilities within a geospatial context. The web interface of RDWATCH prioritizes user experience and performance for different user groups, including analysts, annotators, and algorithm developers. It enables analysts to thoroughly examine model outputs, allows annotators to work within a geospatial context, and assists developers in comparing results with ground truth to identify potential model failures.
 
+<img height="100" width="100" style="margin-right: 50px;" src="images/General/Kitware-Logo-Stacked.png">
+
+RDWATCH is maintained and supported by [Kitware](https://www.kitware.com).
+
 
 ## RDWATCH Features
 

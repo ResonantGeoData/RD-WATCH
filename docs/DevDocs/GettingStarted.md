@@ -1,8 +1,8 @@
-# Development
+# Getting Started
 
 This document gives an overview of the code contained in this monorepo and the recommended development setup.
 
-## Develop with Docker (recommended quickstart)
+## Develop with Docker (recommended)
 This is the simplest configuration for developers to start with.
 
 1. Make a copy of `template.env` and call it `.env`.
@@ -23,7 +23,7 @@ This is the simplest configuration for developers to start with.
    The server will be started at http://localhost:3000 as to not conflict with the docker compose development service
    When finished, use `Ctrl+C`
 
-## Develop Natively (advanced)
+## Develop Natively
 This configuration still uses Docker to run attached services in the background,
 but allows developers to run Python code on their native system.
 

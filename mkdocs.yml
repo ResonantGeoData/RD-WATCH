@@ -36,6 +36,9 @@ extra:
 
 nav:
   - Home: index.md
+  - User Guide:
+    - Vocabulary: ./UserGuide/Vocabulary.md
   - Developer Documentation:
     - Getting Started: ./DevDocs/GettingStarted.md
     - Ingesting Data: ./DevDocs/IngestingData.md
+    - Architecture: ./DevDocs/Architecture.md

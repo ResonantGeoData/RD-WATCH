@@ -1,8 +1,64 @@
-# Getting data in
+### Ingesting Data
 
-There is currently append-only support for ingesting data into the system.
+## RDWATCH_MODEL_RUN_API_KEY
+Check the `./dev/.env.docker-compose` environment file or the `.env` file in the root of the repository for the RDWATCH_MODEL_RUN_API_KEY.
+This key is a special key used for services outside of the standard Django login to be able to push data into the system.
+The key will be used in the scripts and in the headers for pushing data into the system.
 
-## Create a `model-run`
+
+## Loading Ground Truth Data
+Within the ./scripts directory is a python script named `loadGroundTruth.py`.  This file can be used in conjunction with the ground truth annotaitons located in the annotation Repo:
+[Annotation Repo](https://smartgitlab.com/TE/annotations)
+Running a command like `python loadGroundTruth.py ~/AnnotationRepoLocation --rgd-api-key {RDWATCH_MODEL_RUN_API_KEY}` will load all of the annotations for the ground truth while skipping the regions.
+
+
+## Loading Single Model Runs
+Within the ./scripts directory is a python script named `loadModelRuns.py`.  This can be used to load a folder filled with geojson data into the system by using a command like:
+
+```
+python loadModelRuns.py 'KR_0001' "./site_models/KR_R001_*.geojson" --title Test_Eval_12 --performer_shortcode 'KIT' --eval_num 12 --eval_run_num 0 --rgd-api-key {RDWATCH_MODEL_RUN_API_KEY}
+```
+Within this python file at the top is the rgd_endpoint variable which needs to be set to the server URL and port for where RGD is hosted.  By default this assumes running locally with `http://localhost:8000`
+Be sure that the system is up and running before running the commands.
+The above command will load the data in the site_models/KR_R001 files and give it the title 'Test_Eval_12'.  The eval_num and eval_run_num aren't required unless the scoring database is going to be connected to the system.  Within the script there is
+
+## Scoring
+
+The [Metrics and Test Framework](https://smartgitlab.com/TE/metrics-and-test-framework#creating-a-metrics-database) can be used in addition with RGD to display scores from results.
+In development mode a scoring Database is automatically initialized at URI: `postgresql+psycopg2://scoring:secretkey@localhost:5433/scoring`
+
+To score data:
+- Clone the [Metrics and Test Framework](https://smartgitlab.com/TE/metrics-and-test-framework) repo.
+- In the Metrics and Test Framework repo:
+  - Copy the `alembic_example.ini` to `alembic.ini` and set the `sqlalchemy.url = postgresql+psycopg2://scoring:secretkey@localhost:5433/scoring`
+  - Run `pip install -e .` to install the metrics-and-test-framework package
+  - Run `alembic upgrade head` to initialize the scoring database schema
+  - Execute the scoring code from inside the metrics and test framework:
+```
+  python -m iarpa_smart_metrics.run_evaluation \
+               --roi KR_R001 \
+               --gt_dir ../annotations/site_models/ \
+               --rm_dir ../KR_R001/region_models/ \
+               --sm_dir ../KR_R001/site_models/ \
+               --output_dir ../KR_R001/output \
+               --eval_num 12 \
+               --eval_run_num 0 \
+               --performer kit \
+               --no-viz \
+               --no-viz-detection-table \
+               --no-viz-comparison-table \
+               --no-viz-associate-metrics \
+               --no-viz-activity-metrics \
+               --sequestered_id KR_R001 \
+               --db_conn_str postgresql+psycopg2://scoring:secretkey@localhost:5433/scoring
+```
+- the rm_dir and sm_dir shgould be your test annotaitons.
+- gt annotations can be retrieved from the [Annotation Repo](https://smartgitlab.com/TE/annotations)
+- be sure to set the val_num and eval_run_num and remember them when ingesting data into RGD.  The region, eval_num, eval_run_num and performer are used to connect data loaded in RGD to the scoring data.
+
+## Manually Loading 
+
+### Create a `model-run`
 
 A `model-run` is a grouping of site evaluations. This grouping can contain outputs of a machine learning model, ground truth outputs, etc. In order to ingest data, it must be associated with a `model-run`.
 
@@ -34,6 +90,7 @@ To create this performer:
 ```bash
 $ curl \
     -H "Content-Type: application/json" \
+    -H "X-RDWATCH-API-KEY: {RDWATCH_MODEL_RUN_API_KEY}" \
     -X POST \
     -d @performer.json \
     https://some.rgd.host/api/performers/
@@ -66,6 +123,7 @@ To create this `model-run`:
 ```bash
 $ curl \
     -H "Content-Type: application/json" \
+    -H "X-RDWATCH-API-KEY: {RDWATCH_MODEL_RUN_API_KEY}" \
     -X POST \
     -d @model-run.json \
     https://some.rgd.host/api/model-runs/
@@ -105,6 +163,7 @@ Following the above example, lets POST a [Site Model Specification](https://smar
 ```bash
 $ curl \
     -H "Content-Type: application/json" \
+    -H "X-RDWATCH-API-KEY: {RDWATCH_MODEL_RUN_API_KEY}" \
     -X POST \
     -d @site.json \
     https://some.rgd.host/api/model-runs/12/site-model/

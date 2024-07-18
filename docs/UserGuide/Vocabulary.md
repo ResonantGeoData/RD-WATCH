@@ -38,12 +38,12 @@ There is an option to download individual images around the region of a Site Pol
 ### Satellite Sources
 
 - Simple Sources
-    - *S2: Sentinel 2*
-    - *L8: LandSat 8*
-    - *PL: PlanetLabs*
-    - These simple sources are lower resolution and may have a higher frequency of images across a given time range.  This is why in the download settings there is a *Day Limit* that can be used to limit it so only one image is downloaded every X days.
+    - **S2: Sentinel 2**
+    - **L8: LandSat 8**
+    - **PL: PlanetLabs**
+    - These simple sources are lower resolution and may have a higher frequency of images across a given time range.  This is why in the download settings there is a **Day Limit** that can be used to limit it so only one image is downloaded every X days.
 - PanSharpened
-    - *WV: WorldView*
+    - **WV**: WorldView
     - Pansharpening is a post process that occurs if there are multiple images that can be referenced.  This combines the images and creates a higher resolution image.
     - The day limits aren't applied to WorldView images because they aren't as frequent as the other sources and having the higher resolution is beneficial.
 

@@ -11,7 +11,7 @@ theme:
   highlightjs: true
   logo: images/General/logo.svg
   palette:
-    primary: black
+    primary: grey
   features:
     - navigation.tabs
     - navigation.tabs.sticky
@@ -42,3 +42,4 @@ nav:
     - Getting Started: ./DevDocs/GettingStarted.md
     - Ingesting Data: ./DevDocs/IngestingData.md
     - Architecture: ./DevDocs/Architecture.md
+    - Satellite Images: ./DevDocs/SatelliteImages.md

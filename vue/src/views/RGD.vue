@@ -5,9 +5,10 @@ import LayerSelection from "../components/LayerSelection.vue";
 import ImageViewer from "../components/imageViewer/ImageViewer.vue";
 import SiteList from "../components/siteList/SiteList.vue";
 import MapLegend from "../components/MapLegend.vue";
-import { onMounted } from "vue";
+import { onMounted, watch } from "vue";
 import { state, updateRegionList, updateRegionMap } from "../store";
 import AddRegion from "../components/AddRegion.vue";
+import { ApiService } from "../client";
 interface Props {
   region?: string;
   selected?: number[] | string;
@@ -18,6 +19,17 @@ const props = withDefaults(defineProps<Props>(), {
 });
 
 onMounted(async () => {
+  await updateRegionList();
+  await updateRegionMap();
+  if (props.region) {
+    state.filters = {
+      ...state.filters,
+      regions: [props.region],
+    };
+  }
+});
+
+watch(()=> ApiService.getApiPrefix(), async () => {
   await updateRegionList();
   await updateRegionMap();
   if (props.region) {

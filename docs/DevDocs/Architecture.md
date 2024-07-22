@@ -24,6 +24,9 @@ For reading from the database Django Models are created but the `managed` proper
 
 The standard `rdwatch/core/views` endpoints for visualizing model-runs, sites, siteobservations are all mirrored in the Scoring application so they can access information directly from the scoring database.
 
+### Tasks
+
+Each app **core** and **scoring** has it's own tasks used in celery.  These are tasks that will download GeoJSON for an entire model run as well as downloading satellite images.  All information regarding satellite images are stored in the core rdwatch database because this project doesn't have access to modify the **scoring** database.
 
 ## Stack Links
 

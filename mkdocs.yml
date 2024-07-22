@@ -28,6 +28,9 @@ markdown_extensions:
   - pymdownx.highlight:
       linenums: true
   - pymdownx.superfences
+  - pymdownx.emoji:
+      emoji_index: !!python/name:material.extensions.emoji.twemoji
+      emoji_generator: !!python/name:material.extensions.emoji.to_svg
 
 extra:
   social:
@@ -38,6 +41,10 @@ nav:
   - Home: index.md
   - User Guide:
     - Vocabulary: ./UserGuide/Vocabulary.md
+    - Using RDWATCH:
+      - Home: ./UserGuide/UsingRDWatch.md
+      - Left Side Panel: ./UserGuide/LeftSidePanel.md
+      - Layer Manager: ./UserGuide/LayerManager.md
   - Developer Documentation:
     - Getting Started: ./DevDocs/GettingStarted.md
     - Ingesting Data: ./DevDocs/IngestingData.md

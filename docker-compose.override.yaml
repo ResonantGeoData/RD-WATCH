@@ -1,5 +1,6 @@
 services:
   django:
+    platform: linux/amd64
     build:
       dockerfile: Dockerfile
       target: dev
@@ -33,6 +34,7 @@ services:
       - minio
 
   celery_worker:
+    platform: linux/amd64
     build:
       dockerfile: Dockerfile
       target: dev

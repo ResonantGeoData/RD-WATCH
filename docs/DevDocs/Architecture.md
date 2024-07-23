@@ -14,7 +14,7 @@ The basic RDWATCH systems is based on utilizing docker containers to create a fu
 ### Core
 
 This is the base application for RDWATCH.  All endpoints that don't contain `api/v1/scoring/*` will utilize the base Core Application.
-This is also the mode location for all satellite image storage and donwloading progress.
+This is also the mode location for all satellite image storage and downloading progress.
 
 ### Scoring
 

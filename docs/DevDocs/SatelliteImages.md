@@ -72,7 +72,7 @@ It follows the following process:
 1. When the satellite image is turned on the client will request the image closest to the current time in the slider.
 1. This then uses the image list to grab the URI for this image directly and use it for serving tiles.  The URI is sent to the back-end along with the x/y/z tile.  The riotiler then uses range requests to S3 to get the requested tile from S3 and provide it to the client. This can be seen `raster_tile.py` file for both the default `utils` and the `worldview_processed` folders.
 
-This process can be a bit slow when swithing between satellite images.  Once an image is loaded it is cached so subsquent loads become faster but the caching isn't that large for the system.
+This process can be a bit slow when switching between satellite images.  Once an image is loaded it is cached so subsequent loads become faster but the caching isn't that large for the system.
 
 ## Site Satellite Image Chipping
 

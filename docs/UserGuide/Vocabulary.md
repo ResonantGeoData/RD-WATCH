@@ -12,7 +12,7 @@ This mode is made for reviewing the results of algorithms and comparing them wit
 
 ## Annotator Mode
 
-This mode allows for modification of Sites and Site Observations.  This includes modifying the *Status*, *Time/Time Rnage* or the *Polygon*.  These sites/site Observations can be approved or rejected and the geoJSON can be exported.
+This mode allows for modification of Sites and Site Observations.  This includes modifying the *Status*, *Time/Time Range* or the *Polygon*.  These sites/site Observations can be approved or rejected and the geoJSON can be exported.
 
 ## Data Hierarchy
 
@@ -21,7 +21,7 @@ This mode allows for modification of Sites and Site Observations.  This includes
 - *GroundTruth*: A Model Run in a Region that contains Groundtruth Sites and Site Observations for comparison with non GroundTruth Model Runs
 - *Model Run*: a collection of Sites that contain Site Observations.  ModelRuns are identified with a *title* and have a *Region* as well as a *Performer*.  Model Runs are filtered by their Region, Performer or if they are *GroundTruth*
 - *Site*: A Point or Polygon that extends over a Range of time.  The Site also has it's own State annotation that indicates information about the Site (positive, negative, ignore, syse,_conmfirmed).  It has a start date and an end date.  These dates can be `null` if the Start Date and End Date are unknown.  These dates are used in RDWATCH to filter and display the Sites.  A Site is a parent to zero or more Site Observations.
-- *Site Observation*:  A Point or Polygon that is associated witha  specific point in time.  It has a date as well as a state (Site Preparation, Active Construction, Post Contruction).  A Site Observation is always associated with a Site.
+- *Site Observation*:  A Point or Polygon that is associated with a specific point in time.  It has a date as well as a state (Site Preparation, Active Construction, Post Construction).  A Site Observation is always associated with a Site.
 
 ## Satellite Images
 

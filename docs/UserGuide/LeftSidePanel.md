@@ -16,10 +16,10 @@ The Timeline Slider start/end date are set auomatically based on the list of mod
 
 There is a row of icons that are used to adjust settings in the system.
 
-- **==:material-road:== Base Map Visibiliy**: Turns on/off the base map (roads, boundaries, land vs water).  This is useful to create a screenshot without giving spatial clues as to the location of the polygons being visualized.
+- **==:material-road:== Base Map Visibility**: Turns on/off the base map (roads, boundaries, land vs water).  This is useful to create a screenshot without giving spatial clues as to the location of the polygons being visualized.
 - **==:material-satellite-variant:== Satellite Images**: This button will download and cache the satellite timestamps initially and then allow toggling on/off region base satellite images.  The first time this is clicked there is a warning because the system will query the STAC API to find all satellite images for the region during the time period currently displayed in the **Time Slider**.  After this is complete a display of the number of Satellite Images will be displayed next to the Number of Model Runs below the ModelRun filter.  If there are images found the icon will change to **==:material-image:==** indicating that the satellite image can be turned on.  Once a satellite image is turned on the location where the number of satellite images were displayed will change to the closest timestamp of satellite image that matches the current global time set in the **Time Slider**
 - **==:material-format-text:== Format Text**: This turns on text status labels for the Site and Site Observations in the Map.  It is disabled by default because the density of labels can make it difficult to see the polygons.
-- **==:material-map-legend:== Map Legend**: Toggles on/off the map legend.  The map legend changes based on the type of visibile annotations
+- **==:material-map-legend:== Map Legend**: Toggles on/off the map legend.  The map legend changes based on the type of visible annotations
 - **==:material-check-decagram:== Ground Truth**: By default the ModelRun list only contains user runs.  This will show all of the GroundTruth Model runs.  GroundTruth model runs are indicated as GroundTruth when they are ingested into RDWATCH.  GroundTruth Model Runs, Sites and Site Observations are all indicated by the following icon: ==:material-check-decagram:==
 - **:material-settings:== Settings**: Opens the Settings panel to adjust settings for the system.  See the **Settings** section to get more information
 

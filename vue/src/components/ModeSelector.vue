@@ -16,7 +16,7 @@ const proposalView = computed(() => route.path.includes('proposals'));
   >
     <span>Mode:</span>
     <v-btn
-      to="/"
+      :to="scoringApp ? '/scoring/' : '/'"
       :color="!proposalView? 'primary': ''"
       :theme="!proposalView? 'dark': ''"
       class="mx-2"
@@ -24,7 +24,7 @@ const proposalView = computed(() => route.path.includes('proposals'));
       Analyst
     </v-btn>
     <v-btn
-      to="/proposals"
+      :to="scoringApp ? '/scoring/proposals' : '/proposals'"
       :color="proposalView ? 'primary': ''"
       :theme="proposalView ? 'dark': ''"
       class="mx-2"

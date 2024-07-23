@@ -8,7 +8,7 @@ Both the **Site** and **Site Observation** buttons will contain and option to to
 
 ## Site Observations / Sites
 
-### Site Observations 
+### Site Observations
 This is the lowest level of polygons in the RDWATCH system.  A Site Observation is a Polygon associated with a specific instance in time.  Clicking on the button will toggle on a selected Model Run's Site Observations and associated Ground Truth Observations if they are found.  Hovering over the Site Observation will allow for toggling on/off either the model run site observations or the ground truth obsersvations individually.
 
 ### Sites

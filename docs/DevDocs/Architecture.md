@@ -57,4 +57,3 @@ Services the application requires.
 - [Redis 7](https://redis.io/docs/): caching (and maybe in the future as a job queue)
 - [MinIO/S3](https://min.io/): storage for satellite images for faster browsing
 - [Celery](https://min.io/): long running tasks for image chipping, downloading and compressing geoJSONs.
-

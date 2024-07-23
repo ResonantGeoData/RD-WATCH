@@ -37,7 +37,7 @@ Within **./rdwatch/core/utils/satellite_bands.py** file is the main function `ge
 
 - **constellation**: source of image (S2, L8, PL)
 - **spectrum**: Information about the spectrum the band captures (μm)
-- **level**: processing level 
+- **level**: processing level
 - **timestamp**: date of the satellite image
 - **bbox**: bounding box associated with the image
 - **uri**: Typically contains the S3 URL for the COG that contains the image
@@ -82,7 +82,7 @@ Within **(core/scoring)/tasks/__init__.py** there are two functions called `gene
 
 ## Image Chipping Parameters
 
-- *site_id: UUID4* - The UUID for the Site to download 
+- *site_id: UUID4* - The UUID for the Site to download
 - *constellation:=['WV']* - Watch satellite image sources to download.  Can be WV, S2, L8, PL or any combination
 - *force=False* - Forces re-downloading images.  Useful if you change the filters (overrideDates, dayRange, noData) or if you believe the STAC Query has updated since last time you downloading images.
 - *dayRange=14* - S2, L8, PL imagery can have dense temporal images.  I.E there may be 5-6 pictures in a week and the changes between them aren't significant.  This parameter will prevent images from downloading if an image already exists in the *dayRange*.

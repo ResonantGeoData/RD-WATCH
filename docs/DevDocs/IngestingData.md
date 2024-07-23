@@ -56,7 +56,7 @@ To score data:
 - gt annotations can be retrieved from the [Annotation Repo](https://smartgitlab.com/TE/annotations)
 - be sure to set the val_num and eval_run_num and remember them when ingesting data into RGD.  The region, eval_num, eval_run_num and performer are used to connect data loaded in RGD to the scoring data.
 
-## Manually Loading 
+## Manually Loading
 
 ### Create a `model-run`
 

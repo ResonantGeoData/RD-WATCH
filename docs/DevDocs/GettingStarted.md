@@ -11,7 +11,6 @@ This is the simplest configuration for developers to start with.
    like PostGIS, Redis, RabbitMQ, etc.
 4. Run `docker compose run --rm django poetry run django-admin migrate` to apply database migrations.
 5. Run `docker compose run --rm django poetry run django-admin loaddata lookups` to initialize your database with required data.
-6. Optionally, populate your database with test data by running `docker compose run --rm django poetry run django-admin loaddata testdata`
 7. Optionally, create an account for the Django admin (http://localhost:8000/admin) by running `docker compose run --rm django poetry --directory django run django-admin createsuperuser`
 8. If running the docker compose by default a client development server should be started at http://localhost:8080/
 9. On first login you will be redirected to the `Adminstrator` page.  This is for logging in.  Afterwards you should be able to redirect back to either http://localhost:8080/ or http://localhost:3000/.  The deployed version will automatically redirect.

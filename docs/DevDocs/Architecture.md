@@ -34,8 +34,7 @@ Each app **core** and **scoring** has it's own tasks used in celery.  These are 
 
 A single Django application (`rdwatch`) for the backend. Source code is in the ["rdatch"](https://github.com/ResonantGeoData/RD-WATCH/tree/main/rdwatch) folder.
 
-- [Django 4](https://docs.djangoproject.com/en/4.1/contents/) with [GeoDjango](https://docs.djangoproject.com/en/4.0/ref/contrib/gis/)
-- [Django REST Framework](https://www.django-rest-framework.org/)
+- [Django](https://docs.djangoproject.com/) with [GeoDjango](https://docs.djangoproject.com/en/5.0/ref/contrib/gis/)
 - [Django Ninja](https://django-ninja.dev/)
 - [Poetry](https://python-poetry.org/docs/) for dependency management
 

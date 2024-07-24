@@ -80,7 +80,7 @@ The key software used to build the application.
 A single Django application (`rdwatch`) for the backend. Source code is in the ["django"](https://github.com/ResonantGeoData/RD-WATCH/tree/phase-ii/django) folder.
 
 - [Django 4](https://docs.djangoproject.com/en/4.1/contents/) with [GeoDjango](https://docs.djangoproject.com/en/4.0/ref/contrib/gis/)
-- [Django REST Framework](https://www.django-rest-framework.org/)
+- [Django Ninja](https://django-ninja.dev/)
 - [Poetry](https://python-poetry.org/docs/) for dependency management
 
 ### Vue

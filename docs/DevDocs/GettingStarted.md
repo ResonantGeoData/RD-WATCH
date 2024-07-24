@@ -37,7 +37,6 @@ but allows developers to run Python code on their native system.
 6. Install Poetry
 7. Run `poetry --directory django install`
 8. Run the following command to configure your environment: `source ./dev/export-env.sh dev/.env.docker-compose-native ./dev/export-env.sh .env`
-9. Optionally, populate your database with test data by running `poetry --directory django run django-admin loaddata testdata`
 10. Optionally, create an account for the Django admin (http://localhost:8000/admin) by running `poetry --directory django run django-admin createsuperuser`
 
 ### Run Application

@@ -51,8 +51,8 @@ The Vue-based SPA frontend. Source code is in the ["vue"](https://github.com/Res
 
 Services the application requires.
 
-- [NGINX Unit](https://unit.nginx.org/): serves both the backend and the bundled static assets
-- [PostgreSQL 14](https://www.postgresql.org/docs/14/index.html) and [PostGIS 3.2](http://www.postgis.net/documentation/): data warehouse for the RDWATCH database
-- [Redis 7](https://redis.io/docs/): caching (and maybe in the future as a job queue)
+- [NGINX Unit](https://unit.nginx.org/): serves both the Django application backend and the bundled static assets from the Vue frontend
+- [PostgreSQL](https://www.postgresql.org/docs/) and [PostGIS](http://www.postgis.net/documentation/): the RDWATCH database
+- [Redis](https://redis.io/docs/): caching and a job queue for celery
 - [MinIO/S3](https://min.io/): storage for satellite images for faster browsing
-- [Celery](https://min.io/): long running tasks for image chipping, downloading and compressing geoJSONs.
+- [Celery](https://docs.celeryq.dev/en/stable/getting-started/introduction.html): long running tasks for image chipping, downloading and compressing geoJSONs.

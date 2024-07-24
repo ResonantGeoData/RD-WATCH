@@ -46,10 +46,7 @@ Within **./rdwatch/core/utils/satellite_bands.py** file is the main function `ge
 
 ### WorldView Differences
 
-Within the **./rdwatch/core/utils** folder there are two folders labeled **worldview**.
-
-The base **worldview** folder is an older folder that was used for just rendering the source WorldView Images.
-The **worldview_processed** folder contains tools to create a pansharpened version of the image buy downloading extra data.
+Within the **./rdwatch/core/utils** folder there is a **worldview_processed** folder. It contains tools to create a pansharpened version of worldview images by downloading extra data.
 
 Instead of having a `Band` class for worldview there is a `WoirldViewCapture` class in the base and a `WorldViewProcessedCapture`.
 The older base **worldview** folder will probably be removed as deprecated

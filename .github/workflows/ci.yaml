@@ -70,7 +70,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        tox-env: [test, check-migrations]
+        tox-env: [test, check-migrations, builddocs]
     services:
       postgres:
         image: postgis/postgis:latest

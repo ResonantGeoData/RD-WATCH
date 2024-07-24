@@ -192,8 +192,7 @@ class Feature(Schema):
         if 'properties' not in values or 'geometry' not in values:
             return values
         if isinstance(values['properties'], SiteFeature) and (
-            values['geometry'].get('type') != 'Polygon'
-            and values['geometry'].get('type') != 'Point'
+            values['geometry'].get('type') not in ['Polygon', 'Point']
         ):
             raise ValueError('Site geometry must be of type "Polygon" or "Point"')
         return values

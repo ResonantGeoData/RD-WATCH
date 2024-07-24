@@ -44,7 +44,7 @@ Directly below the filters is small area that includes two pieces of information
 
 ## Model Run Card
 
-Each model Run card in the list can be selected by either clicking on the card or the checkbox for the card.  Once clicked on the camera will zoom to the region for the model run and indicate it is selected by filling in the checkbox and highlight the model run card.
+Each model run card in the list can be selected by either clicking on the card or the checkbox for the card.  Once clicked on, the camera will zoom to the region for the model run and indicate it is selected by filling in the checkbox and highlight the model run card.
 
 ### Model Run Card Information
 

@@ -8,6 +8,7 @@ from django.contrib.gis.db.models import PointField, PolygonField
 from django.contrib.gis.geos import MultiPolygon, Point
 from django.contrib.postgres.indexes import GistIndex
 from django.db import models, transaction
+from django.db.models import CheckConstraint, Q
 
 from rdwatch.core.models import ModelRun, lookups
 from rdwatch.core.models.region import get_or_create_region
@@ -227,6 +228,14 @@ class SiteEvaluation(models.Model):
     class Meta:
         default_related_name = 'evaluations'
         indexes = [GistIndex(fields=['timestamp']), GistIndex(fields=['score'])]
+
+        constraints = [
+            CheckConstraint(
+                check=Q(geom__isnull=False) | Q(point__isnull=False),
+                name='site_geom_or_point_not_null',
+                violation_error_message='geom and point cannot both be null',
+            ),
+        ]
 
 
 class SiteEvaluationTracking(models.Model):

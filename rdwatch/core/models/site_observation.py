@@ -5,6 +5,7 @@ from django.contrib.gis.db.models import PointField, PolygonField
 from django.contrib.gis.geos import MultiPolygon, Point, Polygon
 from django.contrib.postgres.indexes import GistIndex
 from django.db import models
+from django.db.models import CheckConstraint, Q
 
 from rdwatch.core.models import SiteEvaluation, lookups
 from rdwatch.core.schemas import SiteModel
@@ -105,7 +106,6 @@ class SiteObservation(models.Model):
 
             assert isinstance(feature.parsed_geometry, Polygon | MultiPolygon | Point)
 
-            is_polygon = False
             if isinstance(feature.parsed_geometry, Polygon | MultiPolygon):
                 geometry = (
                     feature.parsed_geometry
@@ -130,7 +130,6 @@ class SiteObservation(models.Model):
                         )
                     )
             else:
-                point = feature.parsed_geometry
                 if feature.properties.current_phase:
                     phase = feature.properties.current_phase[0]
                 else:
@@ -152,6 +151,14 @@ class SiteObservation(models.Model):
     class Meta:
         default_related_name = 'observations'
         indexes = [GistIndex(fields=['timestamp']), GistIndex(fields=['score'])]
+
+        constraints = [
+            CheckConstraint(
+                check=Q(geom__isnull=False) | Q(point__isnull=False),
+                name='siteobs_geom_or_point_not_null',
+                violation_error_message='geom and point cannot both be null',
+            ),
+        ]
 
 
 class SiteObservationTracking(models.Model):

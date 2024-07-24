@@ -48,7 +48,7 @@ Within **./rdwatch/core/utils/satellite_bands.py** file is the main function `ge
 
 Within the **./rdwatch/core/utils** folder there is a **worldview_processed** folder. It contains tools to create a pansharpened version of worldview images by downloading extra data.
 
-Instead of having a `Band` class for worldview there is a `WoirldViewCapture` class in the base and a `WorldViewProcessedCapture`.
+Instead of having a `Band` class for worldview there is a `WorldViewCapture` class in the base and a `WorldViewProcessedCapture`.
 The older base **worldview** folder will probably be removed as deprecated
 
 `WorldViewProcessedCapture` is similar to the `Band` class but contains an optional `panuri` property to indicate an additional S3 location of the extra image to create a pansharpened image.

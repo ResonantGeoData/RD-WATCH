@@ -105,10 +105,8 @@ class SiteObservation(models.Model):
 
             assert isinstance(feature.parsed_geometry, Polygon | MultiPolygon | Point)
 
-            point = False
-            if isinstance(feature.parsed_geometry, Point):
-                point = True
-            if point is False:
+            is_polygon = False
+            if isinstance(feature.parsed_geometry, Polygon | MultiPolygon):
                 geometry = (
                     feature.parsed_geometry
                     if isinstance(feature.parsed_geometry, MultiPolygon)
@@ -131,7 +129,7 @@ class SiteObservation(models.Model):
                             timestamp=feature.properties.observation_date,
                         )
                     )
-            if point:
+            else:
                 point = feature.parsed_geometry
                 if feature.properties.current_phase:
                     phase = feature.properties.current_phase[0]

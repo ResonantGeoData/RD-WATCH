@@ -17,7 +17,7 @@ There is an environment variable `RDWATCH_ACCENTURE_VERSION` that is used to det
 
 ## Code Layout
 
-The [**pystac**](https://pystac.readthedocs.io/en/stable/) library is utilized to make queries to the STAC server.
+The [**pystac_client**](https://github.com/stac-utils/pystac-client) library is utilized to make queries to the STAC server.
 
 Within the **./rdwatch/core/utils** directory contains helper tools for Querying the STAC server and processing the resulting images.
 

@@ -1,6 +1,6 @@
 # Using RDWATCH
 
-RDWATCH has the two main modes: **Analyst** and **Annotator** as well as either being connected to the **RDWATCH** or **Scoring** database.  While there are these different modes most of the interface is shared with minor changes between the modes and the source database.  This page will give a high level overview of the main UI elements that are shared.
+RDWATCH has the two main modes: **Analyst** and **Annotator**, as well as either being connected to the **RDWATCH** or **Scoring** database.  While there are these different modes, most of the interface is shared with minor changes between the modes and the source database.  This page will give a high level overview of the main UI elements that are shared.
 
 ## [Model Run List (Left Side Panel)](LeftSidePanel.md)
 

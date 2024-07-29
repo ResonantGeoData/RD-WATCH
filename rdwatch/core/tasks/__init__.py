@@ -156,14 +156,14 @@ def get_siteobservations_images(
     )
     # check if data is a point instead of geometry
     if (
-        baseSiteEval.geom and tempbox[2] == tempbox[0] and tempbox[3] == tempbox[1]
+        tempbox[2] == tempbox[0] and tempbox[3] == tempbox[1]
     ):  # create bbox based on pointArea
         size_diff = (pointArea * 0.5) / ToMeters
         tempbox = [
-            tempbox[1] - size_diff,
             tempbox[0] - size_diff,
-            tempbox[3] + size_diff,
+            tempbox[1] - size_diff,
             tempbox[2] + size_diff,
+            tempbox[3] + size_diff,
         ]
 
     bbox = [tempbox[1], tempbox[0], tempbox[3], tempbox[2]]
@@ -186,6 +186,7 @@ def get_siteobservations_images(
     bbox = scale_bbox(bbox, bboxScale)
     # get the updated BBOX if it's bigger
     max_bbox = get_max_bbox(bbox, max_bbox)
+    logger.warning(f'UPGRADED BBOX: {bbox}')
 
     # First we gather all images that match observations
     count = 0

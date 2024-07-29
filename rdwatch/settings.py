@@ -1,5 +1,6 @@
 import os
 from datetime import timedelta
+from pathlib import Path
 
 from configurations import Configuration, values
 
@@ -30,6 +31,16 @@ class BaseConfiguration(Configuration):
     # for convenience serving a site on a subpath.
     STATIC_URL = 'static/'
 
+    BASE_DIR = Path(__file__).resolve(strict=True).parent.parent
+
+    @property
+    def STATIC_ROOT(self) -> str:
+        path = Path(self.BASE_DIR) / 'staticfiles'
+        if path.exists() and not path.is_dir():
+            raise ValueError(f'Path {repr(path)} is not a directory.')
+        path.mkdir(exist_ok=True)
+        return str(path)
+
     # The `/accounts/*` endpoints are the only endpoints that should *not*
     # require authentication to access
     LOGIN_REQUIRED_IGNORE_PATHS = [
@@ -51,6 +62,9 @@ class BaseConfiguration(Configuration):
             'django.contrib.contenttypes',
             'django.contrib.sessions',
             'django.contrib.messages',
+            # Must go before django.contrib.staticfiles
+            # https://whitenoise.readthedocs.io/en/stable/django.html#using-whitenoise-in-development
+            'whitenoise.runserver_nostatic',
             'django.contrib.staticfiles',
             'django.contrib.gis',
             'django.contrib.postgres',
@@ -78,6 +92,10 @@ class BaseConfiguration(Configuration):
 
     MIDDLEWARE = [
         'django.middleware.security.SecurityMiddleware',
+        # Must be placed "above all other middleware apart
+        # from Django’s SecurityMiddleware"
+        # https://whitenoise.readthedocs.io/en/stable/index.html#quickstart-for-django-apps
+        'whitenoise.middleware.WhiteNoiseMiddleware',
         'django.contrib.sessions.middleware.SessionMiddleware',
         'django.middleware.common.CommonMiddleware',
         'django.middleware.csrf.CsrfViewMiddleware',

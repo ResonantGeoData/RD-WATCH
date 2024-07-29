@@ -214,6 +214,7 @@ class GenerateImagesSchema(Schema):
     scale: Literal['default', 'bits', 'custom'] = 'default'
     scaleNum: None | list[int] = None
     bboxScale: None | float = 1.2
+    pointArea: None | float = 200
 
 
 @router.post('/{evaluation_id}/generate-images/', response={202: bool, 409: str})
@@ -234,6 +235,7 @@ def get_site_observation_images(
         params.overrideDates,
         scalVal,
         params.bboxScale,
+        params.pointArea,
     )
     return 202, True
 

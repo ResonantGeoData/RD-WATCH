@@ -36,6 +36,8 @@ const bboxScale: Ref<number> = ref(1.2);
 const validForm = ref(true);
 const dateAdpter = useDate();
 
+const minPointArea = ref(200);
+
 const download = debounce(
   () => {
     emit('download', {
@@ -47,6 +49,7 @@ const download = debounce(
       scale: scale.value,
       scaleNum: scale.value === 'custom' ? scaleNums.value : undefined,
       bboxScale: bboxScale.value,
+      pointArea: minPointArea.value,
     });
   },
   5000,
@@ -220,6 +223,34 @@ const display = ref(true);
                 </template>
                 <span>
                   When utilizing the DayRange limit this will attmept to filter out images that have more that X% NODATA
+                </span>
+              </v-tooltip>
+            </v-row>
+            <v-row
+              dense
+              align="center"
+              class="pb-5"
+            >
+              <v-text-field
+                v-model.number="minPointArea"
+                :rules="[ v => v >= 100 || 'Must be >= 100', v => v <= 2000 || 'Must be <= 2000']"
+                type="number"
+                step="0.1"
+                label="Point Area (m)"
+              />
+              <v-tooltip
+                open-delay="50"
+                bottom
+              >
+                <template #activator="{ props }">
+                  <v-icon
+                    v-bind="props"
+                  >
+                    mdi-information
+                  </v-icon>
+                </template>
+                <span>
+                  If downloading images for points, the area around the point to download for the satellite image.
                 </span>
               </v-tooltip>
             </v-row>

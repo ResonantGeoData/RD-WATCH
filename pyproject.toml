@@ -61,6 +61,7 @@ beautifulsoup4 = "^4.12.3"
 django-allauth = {extras = ["socialaccount"], version = "^0.63.2"}
 django-login-required-middleware = "^0.9.0"
 django-rename-app = "^0.1.7"
+whitenoise = "^6.7.0"
 
 [tool.poetry.group.dev.dependencies]
 django-stubs = "^4.2.7"

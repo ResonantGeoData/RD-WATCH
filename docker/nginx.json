@@ -46,6 +46,11 @@
       }
     },
     {
+      "match": {
+        "uri": "/staticfiles/*"
+      }
+    },
+    {
       "action": {
         "share": "/app/vue/dist/$uri"
       }

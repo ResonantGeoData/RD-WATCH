@@ -2989,7 +2989,21 @@ MarkupSafe = ">=2.1.1"
 [package.extras]
 watchdog = ["watchdog (>=2.3)"]
 
+[[package]]
+name = "whitenoise"
+version = "6.7.0"
+description = "Radically simplified static file serving for WSGI applications"
+optional = false
+python-versions = ">=3.8"
+files = [
+    {file = "whitenoise-6.7.0-py3-none-any.whl", hash = "sha256:a1ae85e01fdc9815d12fa33f17765bc132ed2c54fa76daf9e39e879dd93566f6"},
+    {file = "whitenoise-6.7.0.tar.gz", hash = "sha256:58c7a6cd811e275a6c91af22e96e87da0b1109e9a53bb7464116ef4c963bf636"},
+]
+
+[package.extras]
+brotli = ["brotli"]
+
 [metadata]
 lock-version = "2.0"
 python-versions = ">=3.11.8,<4"
-content-hash = "41888e7df93630e315cdaae55eab07efc0a36481d28ddbb20888505b108a47bb"
+content-hash = "8da54a1214862a824b035871c0d5e5e61a3fac9651e510fc9f36de41c782c382"

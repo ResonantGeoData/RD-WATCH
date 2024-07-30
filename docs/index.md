@@ -1,15 +1,17 @@
+# RD-WATCH Documentation
+
+<p>
+  <img height="250" width="250" style="margin-right: 50px;" src="images/General/logo.svg">
+</p>
+
+RDWATCH (ResonantGeoData WATCH) is a modern web application that offers easy access to a wide range of remote sensing imagery, as well as AI-generated outputs, to aid in the detection of global scale changes. RDWATCH enhances the AI workflow by providing monitoring, annotating, and visualizing capabilities within a geospatial context. The web interface of RDWATCH prioritizes user experience and performance for different user groups, including analysts, annotators, and algorithm developers. It enables analysts to thoroughly examine model outputs, allows annotators to work within a geospatial context, and assists developers in comparing results with ground truth to identify potential model failures.
+
+<img height="100" width="100" style="margin-right: 50px;" src="images/General/Kitware-Logo-Stacked.png">
+
+RDWATCH is maintained and supported by [Kitware](https://www.kitware.com).
 
 
-
-# RDWATCH
-<img width="1907" alt="Screenshot 2024-03-15 at 12 15 26 PM" src="https://github.com/ResonantGeoData/RD-WATCH/assets/146527/48ecc69e-d5dd-4ff3-beca-00f1cc7a37cb">
-
-## Introduction
-
-RDWATCH (**R**esonantGeo**D**ata **WATCH**) is a modern web application that offers easy access to a wide range of remote sensing imagery, as well as AI-generated outputs, to aid in the detection of global scale changes. RDWATCH enhances the AI workflow by providing monitoring, annotating, and visualizing capabilities within a geospatial context. The web interface of RDWATCH prioritizes user experience and performance for different user groups, including analysts, annotators, and algorithm developers. It enables analysts to thoroughly examine model outputs, allows annotators to work within a geospatial context, and assists developers in comparing results with ground truth to identify potential model failures.
-
-
-# RDWATCH Features
+## RDWATCH Features
 
 ## For Developers
 
@@ -30,9 +32,9 @@ RDWATCH (**R**esonantGeo**D**ata **WATCH**) is a modern web application that off
 
 ## Documentation
 
-* [Getting Started](https://ResonantGeoData.github.io/RD-WATCH/DevDocs/GettingStarted/)
+* [Development](https://github.com/ResonantGeoData/RD-WATCH/blob/main/DEVELOPMENT.md)
 
-* [Data Ingestion](https://ResonantGeoData.github.io/RD-WATCH/DevDocs/IngestingData/)
+* [Data Ingestion](https://github.com/ResonantGeoData/RD-WATCH/blob/main/INGESTION.md)
 
 
 ## Related Work

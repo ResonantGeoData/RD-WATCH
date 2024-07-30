@@ -32,7 +32,7 @@ metadata = true
 files = ["rdwatch/__init__.py"]
 
 [tool.poetry.dependencies]
-python = ">=3.11.8,<4"
+python = ">=3.11.9,<4"
 django = ">=5.0.3,<5.1"
 psycopg2 = "~2.9.9"
 redis = { version = "~5.0.3", extras = [ "hiredis" ] }
@@ -60,7 +60,6 @@ apache-airflow-client = "^2.9.0"
 beautifulsoup4 = "^4.12.3"
 django-allauth = {extras = ["socialaccount"], version = "^0.63.2"}
 django-login-required-middleware = "^0.9.0"
-django-rename-app = "^0.1.7"
 
 [tool.poetry.group.dev.dependencies]
 django-stubs = "^4.2.7"

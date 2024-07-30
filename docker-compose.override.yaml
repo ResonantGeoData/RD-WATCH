@@ -68,6 +68,7 @@ services:
       django:
         condition: service_healthy
   celery_beat:
+    platform: linux/amd64
     build:
       dockerfile: Dockerfile
       target: dev

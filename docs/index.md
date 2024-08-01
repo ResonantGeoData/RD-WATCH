@@ -4,7 +4,7 @@
   <img height="250" width="250" style="margin-right: 50px;" src="images/General/logo.svg">
 </p>
 
-RDWATCH (ResonantGeoData WATCH) is a modern web application that offers easy access to a wide range of remote sensing imagery, as well as AI-generated outputs, to aid in the detection of global scale changes. RDWATCH enhances the AI workflow by providing monitoring, annotating, and visualizing capabilities within a geospatial context. The web interface of RDWATCH prioritizes user experience and performance for different user groups, including analysts, annotators, and algorithm developers. It enables analysts to thoroughly examine model outputs, allows annotators to work within a geospatial context, and assists developers in comparing results with ground truth to identify potential model failures.
+RDWATCH (ResonantGeoData WATCH) is a modern web application that offers easy access to a wide range of remote sensing imagery, as well as AI-generated outputs, to aid in the detection of global scale changes. RDWATCH enhances the AI workflow by providing monitoring, annotation, and visualization capabilities within a geospatial context. The web interface of RDWATCH prioritizes a higly ergononmic user experience and application performance for different user groups, including analysts, annotators, and algorithm developers. It enables analysts to thoroughly examine model outputs, allows annotators to work within a geospatial context, and assists developers in comparing results with ground truth to identify potential model failures.
 
 <img height="100" width="100" style="margin-right: 50px;" src="images/General/Kitware-Logo-Stacked.png">
 
@@ -15,15 +15,15 @@ RDWATCH is maintained and supported by [Kitware](https://www.kitware.com).
 
 ## For Developers
 
--  **Scalable and Modular Architecture**: Built on top of widely used Django web framework and open source geospatial technologies in a architecture that is flexible and extensible.
+-  **Scalable and Modular Architecture**: Built on top of the widely used Django web framework and open source geospatial technologies in an architecture that is flexible and extensible.
 
--  **Efficient Data Management**: RDWATCH provides domain specific data models that provide fast search across data types.
+-  **Efficient Data Management**: Domain-specific data models enable fast search across data types.
 
--  **Advanced Technology Stack**: Leverage dynamic vector tiles, open standards like STAC, and open-source software (MapLibre, Vue.js) on AWS for scalability.
+-  **Advanced Technology Stack**: Supports dynamic vector tiles, open standards like STAC, and open-source software (MapLibre, Vue.js) on AWS for scalability.
 
 ## For Annotators and Analysts
 
--  **Enhanced Workflow**: Interfaces for efficient monitoring, annotating, and visualizing geospatial data within a geospatial context.
+-  **Enhanced Workflow**: Provides interfaces for efficient monitoring, annotation, and visualization of geospatial data.
 
 -  **Interactive Visualizations**: Dynamic observation of data changes over time, directly in the web interface, enhancing the annotation process.
 
@@ -32,9 +32,9 @@ RDWATCH is maintained and supported by [Kitware](https://www.kitware.com).
 
 ## Documentation
 
-* [Development](https://github.com/ResonantGeoData/RD-WATCH/blob/main/DEVELOPMENT.md)
+* [Development](DevDocs/GettingStarted.md)
 
-* [Data Ingestion](https://github.com/ResonantGeoData/RD-WATCH/blob/main/INGESTION.md)
+* [Data Ingestion](DevDocs/IngestingData.md)
 
 
 ## Related Work

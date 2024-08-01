@@ -27,7 +27,7 @@ python loadModelRuns.py 'KR_0001' "./site_models/KR_R001_*.geojson" --title Test
 
 By default, this command uploads to the RGD server hosted at `http://localhost:8000`, but that can be changed by passing an optional `--rgd-endpoint` argument to the command.
 Be sure that the system is up and running before running the commands.
-The above command will load the data that match the provided glob exprssion and give it the title 'Test_Eval_12'. The `eval_num` and `eval_run_num` aren't required unless the scoring database is going to be connected to the system.
+The above command will load the data that matches the provided glob expression and give it the title 'Test_Eval_12'. The `eval_num` and `eval_run_num` aren't required unless the scoring database is going to be connected to the system.
 
 ## Scoring
 

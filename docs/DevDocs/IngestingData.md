@@ -1,26 +1,33 @@
 ### Ingesting Data
 
 ## RDWATCH_MODEL_RUN_API_KEY
-Check the `./dev/.env.docker-compose` environment file or the `.env` file in the root of the repository for the RDWATCH_MODEL_RUN_API_KEY.
-This key is a special key used for services outside of the standard Django login to be able to push data into the system.
-The key will be used in the scripts and in the headers for pushing data into the system.
+Check the `./dev/.env.docker-compose` environment file or the `.env` file in the root of the repository for the presence of the `RDWATCH_MODEL_RUN_API_KEY` variable.
+This is a special key used for services outside of the standard Django login to be able to push data into the system.
+The key will be used in the scripts and in the headers for pushing data into the system. Copy the value from that file when running the below script against a local instance. When running against a production deployment, you'll need to acquire an API key for that instance and use that instead.
 
 
 ## Loading Ground Truth Data
-Within the ./scripts directory is a python script named `loadGroundTruth.py`.  This file can be used in conjunction with the ground truth annotaitons located in the annotation Repo:
+Within the `scripts` directory is a python script named `loadGroundTruth.py`.  This file can be used in conjunction with the ground truth annotations located in the annotation Repo:
 [Annotation Repo](https://smartgitlab.com/TE/annotations)
-Running a command like `python loadGroundTruth.py ~/AnnotationRepoLocation --rgd-api-key {RDWATCH_MODEL_RUN_API_KEY}` will load all of the annotations for the ground truth while skipping the regions.
+Running a command like:
+
+```bash
+python loadGroundTruth.py ~/AnnotationRepoLocation --rgd-api-key {RDWATCH_MODEL_RUN_API_KEY}
+```
+
+will load all of the annotations for the ground truth along with the regions.  using `--skip_regions` will skip loading the region geometry
 
 
 ## Loading Single Model Runs
-Within the ./scripts directory is a python script named `loadModelRuns.py`.  This can be used to load a folder filled with geojson data into the system by using a command like:
+Within the `scripts` directory is a python script named `loadModelRuns.py`. This can be used to load a folder filled with geojson data into the system by using a command like:
 
-```
+```bash
 python loadModelRuns.py 'KR_0001' "./site_models/KR_R001_*.geojson" --title Test_Eval_12 --performer_shortcode 'KIT' --eval_num 12 --eval_run_num 0 --rgd-api-key {RDWATCH_MODEL_RUN_API_KEY}
 ```
-Within this python file at the top is the rgd_endpoint variable which needs to be set to the server URL and port for where RGD is hosted.  By default this assumes running locally with `http://localhost:8000`
+
+By default, this command uploads to the RGD server hosted at `http://localhost:8000`, but that can be changed by passing an optional `--rgd-endpoint` argument to the command.
 Be sure that the system is up and running before running the commands.
-The above command will load the data in the site_models/KR_R001 files and give it the title 'Test_Eval_12'.  The eval_num and eval_run_num aren't required unless the scoring database is going to be connected to the system.  Within the script there is
+The above command will load the data that matches the provided glob expression and give it the title 'Test_Eval_12'. The `eval_num` and `eval_run_num` aren't required unless the scoring database is going to be connected to the system.
 
 ## Scoring
 
@@ -52,9 +59,9 @@ To score data:
                --sequestered_id KR_R001 \
                --db_conn_str postgresql+psycopg2://scoring:secretkey@localhost:5433/scoring
 ```
-- the rm_dir and sm_dir shgould be your test annotaitons.
-- gt annotations can be retrieved from the [Annotation Repo](https://smartgitlab.com/TE/annotations)
-- be sure to set the val_num and eval_run_num and remember them when ingesting data into RGD.  The region, eval_num, eval_run_num and performer are used to connect data loaded in RGD to the scoring data.
+- the `rm_dir` and `sm_dir` should be your test annotations.
+- ground truth annotations can be retrieved from the [Annotation Repo](https://smartgitlab.com/TE/annotations)
+- be sure to set the `val_num` and `eval_run_num` and remember them when ingesting data into RGD. The `region`, `eval_num`, `eval_run_num` and `performer` are used to connect data loaded in RGD to the scoring data.
 
 ## Manually Loading
 

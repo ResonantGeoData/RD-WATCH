@@ -15,7 +15,7 @@ Running a command like:
 python loadGroundTruth.py ~/AnnotationRepoLocation --rgd-api-key {RDWATCH_MODEL_RUN_API_KEY}
 ```
 
-will load all of the annotations for the ground truth while skipping the regions.
+will load all of the annotations for the ground truth along with the regions.  using `--skip_regions` will skip loading the region geometry
 
 
 ## Loading Single Model Runs

@@ -25,7 +25,7 @@ export interface EvaluationImage {
 export interface EvaluationGeoJSON {
     timestamp: number;
     label: string;
-    geoJSON: GeoJSON.Polygon;
+    geoJSON: GeoJSON.Polygon | GeoJSON.Point;
     bbox: BaseBBox;
 }
 

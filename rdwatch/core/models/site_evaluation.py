@@ -231,7 +231,8 @@ class SiteEvaluation(models.Model):
 
         constraints = [
             CheckConstraint(
-                check=Q(geom__isnull=False, point__isnull=True) | Q(point__isnull=False, geom__isnull=True),
+                check=Q(geom__isnull=False, point__isnull=True)
+                | Q(point__isnull=False, geom__isnull=True),
                 name='site_geom_or_point_not_null',
                 violation_error_message='Exactly one of [geom, point] must be non-null',
             ),

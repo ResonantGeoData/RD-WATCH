@@ -30,9 +30,9 @@ RDWATCH (**R**esonantGeo**D**ata **WATCH**) is a modern web application that off
 
 ## Documentation
 
-* [Development](https://github.com/ResonantGeoData/RD-WATCH/blob/main/DEVELOPMENT.md)
+* [Getting Started](https://ResonantGeoData.github.io/RD-WATCH/DevDocs/GettingStarted/)
 
-* [Data Ingestion](https://github.com/ResonantGeoData/RD-WATCH/blob/main/INGESTION.md)
+* [Data Ingestion](https://ResonantGeoData.github.io/RD-WATCH/DevDocs/IngestingData/)
 
 
 ## Related Work

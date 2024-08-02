@@ -554,7 +554,7 @@ def cancel_generate_images_task(model_run_id: UUID4) -> None:
 
 @shared_task
 def generate_site_images(
-    evaluation_id: UUID4,
+    site_id: UUID4,
     constellation=['WV'],  # noqa
     force=False,  # forced downloading found_timestamps again
     dayRange=14,
@@ -564,7 +564,7 @@ def generate_site_images(
     bboxScale: float = BboxScaleDefault,
     pointArea: float = pointAreaDefault,
 ):
-    siteeval = SiteEvaluation.objects.get(pk=evaluation_id)
+    siteeval = SiteEvaluation.objects.get(pk=site_id)
     with transaction.atomic():
         # Use select_for_update here to lock the SatelliteFetching row
         # for the duration of this transaction in order to ensure its
@@ -588,7 +588,7 @@ def generate_site_images(
                 status=SatelliteFetching.Status.RUNNING,
             )
         task_id = get_siteobservation_images_task.delay(
-            evaluation_id,
+            site_id,
             constellation,
             force,
             dayRange,

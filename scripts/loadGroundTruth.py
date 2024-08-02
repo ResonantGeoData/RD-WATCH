@@ -1,3 +1,4 @@
+#!/usr/bin/env python
 from __future__ import annotations
 
 import argparse
@@ -8,8 +9,6 @@ from multiprocessing import Pool
 from pathlib import Path
 
 import requests
-
-rgd_endpoint = 'http://localhost:8000'
 
 
 def main():
@@ -39,6 +38,12 @@ def main():
         type=int,
         help='max number of uploads to perform at once',
     )
+    parser.add_argument(
+        '--rgd-endpoint',
+        default='http://localhost:8000',
+        type=str,
+        help='RGD server base URL',
+    )
 
     upload_to_rgd(**vars(parser.parse_args()))
 
@@ -49,6 +54,7 @@ def _upload_model_run(
     model_runs: dict[str, list[Path]],
     rgd_api_key: str,
     expiration_time: int | None,
+    rgd_endpoint: str,
 ) -> None:
     # Create model run
     print(f'Creating model run for {region}')
@@ -100,7 +106,7 @@ def upload_to_rgd(
         model_runs: defaultdict[str, list[Path]] = defaultdict(list)
 
         geojson_dir_path = Path(base_dir) / dir
-        geojson_files = sorted(list(geojson_dir_path.iterdir()))
+        geojson_files = sorted(geojson_dir_path.iterdir())
 
         for file in geojson_files:
             if file.is_dir() or not file.suffix == '.geojson':

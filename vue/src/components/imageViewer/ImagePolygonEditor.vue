@@ -82,7 +82,7 @@ const deleteSelectedPoints = () => {
     <v-col>
       <v-btn
         size="small"
-        :disabled="editingPolygon"
+        :disabled="editingPolygon || (evaluationGeoJSON && evaluationGeoJSON.type !== 'Polygon')"
         @click="startEditingPolygon()"
       >
         Edit Polygon

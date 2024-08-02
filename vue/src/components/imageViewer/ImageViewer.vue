@@ -113,7 +113,7 @@ const sidePanelExpanded = ref(false || props.editable);
 const sidePanelTab: Ref<null | string> = ref(null);
 
 
-const evaluationGeoJSON: Ref<GeoJSON.Polygon | null> = ref(null); // holds the site geoJSON so it can be edited
+const evaluationGeoJSON: Ref<GeoJSON.Polygon | GeoJSON.Point | null> = ref(null); // holds the site geoJSON so it can be edited
 
 const showSitePoly = ref(props.editable); // Swap between showing the site polygon and the site observation polygon
 

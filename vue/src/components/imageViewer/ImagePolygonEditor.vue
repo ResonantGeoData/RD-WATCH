@@ -5,7 +5,7 @@ import { state } from '../../store'
 
 interface Props {
     siteEvalId: string;
-    evalGeoJSON: GeoJSON.Polygon | null;
+    evalGeoJSON: GeoJSON.Polygon | null | GeoJSON.Point;
     samViewer: null | number;
 }
 const props = withDefaults(defineProps<Props>(), {
@@ -19,7 +19,7 @@ const emit = defineEmits<{
 
 
 const editingPolygon = ref(false);
-const evaluationGeoJSON: Ref<GeoJSON.Polygon | null> = ref(props.evalGeoJSON); // holds the site geoJSON so it can be edited
+const evaluationGeoJSON: Ref<GeoJSON.Polygon | GeoJSON.Point |  null> = ref(props.evalGeoJSON); // holds the site geoJSON so it can be edited
 
 
 watch([() => props.siteEvalId], () => {
@@ -42,7 +42,7 @@ watch(() => state.filters.editingPolygonSiteId, () => {
 
 const startEditingPolygon = () => {
   state.filters.editingPolygonSiteId = props.siteEvalId;
-  if (state.editPolygon && evaluationGeoJSON.value) {
+  if (state.editPolygon && evaluationGeoJSON.value && evaluationGeoJSON.value.type === 'Polygon') {
     state.editPolygon.setPolygonEdit(evaluationGeoJSON.value);
     editingPolygon.value = true;
   }

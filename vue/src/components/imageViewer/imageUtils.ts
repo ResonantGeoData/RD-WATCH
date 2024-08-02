@@ -382,10 +382,10 @@ const processImagePoly = (
         const imageWidth = image.image_dimensions[0];
         const imageHeight = image.image_dimensions[1];
         const imageNormalizePoly: {x: number, y: number}[][] = normalizePolygon(image.bbox, imageWidth, imageHeight, closestPoly.geoJSON);
-        let groundTruthPoly;
+        let groundTruthPoly: PixelPoly | undefined;
         if (hasGroundTruth && groundTruth) {
           const gtNormalizePoly: {x: number, y: number}[][] = normalizePolygon(image.bbox, imageWidth, imageHeight, groundTruth.geoJSON);
-          groundTruthPoly = { coords: gtNormalizePoly, label: groundTruth.label};
+          groundTruthPoly = { coords: gtNormalizePoly, label: groundTruth.label, type: groundTruth.geoJSON.type};
         }
         const poly: PixelPoly = {coords: imageNormalizePoly, label: closestPoly.label, scaled: false, type: closestPoly.geoJSON.type};
         const rescaled = rescalePoly(image, closestPoly.bbox, closestPoly.geoJSON);
@@ -398,7 +398,7 @@ const processImagePoly = (
             poly['scaled']['groundTruth'] = rescaleGT.scaledPoly;
           }
         }
-        return { image: image, baseBBox: closestPoly.bbox, poly, groundTruthPoly };
+        return { image: image, baseBBox: closestPoly.bbox, poly, groundTruthPoly, type: poly.type };
 }
 
 

@@ -100,10 +100,6 @@ const selectingSite = async (e: boolean) => {
   }
 };
 
-const isSitePoint = (site: SiteDisplay) => {
-  return Object.values(site.bbox).every(value => value === null)
-}
-
 </script>
 
 <template>

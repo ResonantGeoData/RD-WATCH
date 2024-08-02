@@ -17,7 +17,7 @@ interface Props {
     evaluationNotes: string;
     evalCurrentDate: string;
     status: string | null;
-    evalGeoJSON: GeoJSON.Polygon | null;
+    evalGeoJSON: GeoJSON.Polygon | GeoJSON.Point | null;
     currentTimestamp: string;
     samViewer: null | number;
 }
@@ -47,7 +47,7 @@ const siteStatus: Ref<string | null> = ref(props.status || null);
 const startDateTemp: Ref<string | null> = ref(null);
 const endDateTemp: Ref<string | null> = ref(null);
 const editingPolygon = ref(false);
-const evaluationGeoJSON: Ref<GeoJSON.Polygon | null> = ref(props.evalGeoJSON); // holds the site geoJSON so it can be edited
+const evaluationGeoJSON: Ref<GeoJSON.Polygon | GeoJSON.Point | null> = ref(props.evalGeoJSON); // holds the site geoJSON so it can be edited
 
 watch(() => props.editable, () => {
   editMode.value = props.editable;

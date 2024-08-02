@@ -71,6 +71,10 @@ export default ({ mode}) => {
             target: `http://${devHost}:8000`,
             xfwd: true,
           },
+          "/static/admin": {
+            target: `http://${devHost}:8000`,
+            xfwd: true,
+          },
         },
         strictPort: true,
       },

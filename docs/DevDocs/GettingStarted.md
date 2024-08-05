@@ -1,8 +1,8 @@
-# Development
+# Getting Started
 
 This document gives an overview of the code contained in this monorepo and the recommended development setup.
 
-## Develop with Docker (recommended quickstart)
+## Develop with Docker (recommended)
 This is the simplest configuration for developers to start with.
 
 1. Make a copy of `template.env` and call it `.env`.
@@ -11,9 +11,10 @@ This is the simplest configuration for developers to start with.
    like PostGIS, Redis, RabbitMQ, etc.
 4. Run `docker compose run --rm django poetry run django-admin migrate` to apply database migrations.
 5. Run `docker compose run --rm django poetry run django-admin loaddata lookups` to initialize your database with required data.
-6. Create an account for the Django admin (http://localhost:8000/admin) by running `docker compose run --rm django poetry --directory django run django-admin createsuperuser`
-7. If running the docker compose by default a client development server should be started at http://localhost:8080/
-8. If doing local Client Development, start the client development server:
+7. Optionally, create an account for the Django admin (http://localhost:8000/admin) by running `docker compose run --rm django poetry --directory django run django-admin createsuperuser`
+8. If running the docker compose by default a client development server should be started at http://localhost:8080/
+9. On first login you will be redirected to the `Adminstrator` page.  This is for logging in.  Afterwards you should be able to redirect back to either http://localhost:8080/ or http://localhost:3000/.  The deployed version will automatically redirect.
+9. If doing local Client Development, start the client development server:
    ```sh
    cd vue
    npm install
@@ -22,7 +23,7 @@ This is the simplest configuration for developers to start with.
    The server will be started at http://localhost:3000 as to not conflict with the docker compose development service
    When finished, use `Ctrl+C`
 
-## Develop Natively (advanced)
+## Develop Natively
 This configuration still uses Docker to run attached services in the background,
 but allows developers to run Python code on their native system.
 
@@ -36,7 +37,7 @@ but allows developers to run Python code on their native system.
 6. Install Poetry
 7. Run `poetry --directory django install`
 8. Run the following command to configure your environment: `source ./dev/export-env.sh dev/.env.docker-compose-native ./dev/export-env.sh .env`
-9. Create an account for the Django admin (http://localhost:8000/admin) by running `poetry --directory django run django-admin createsuperuser`
+10. Optionally, create an account for the Django admin (http://localhost:8000/admin) by running `poetry --directory django run django-admin createsuperuser`
 
 ### Run Application
 1. Ensure `docker compose -f ./docker-compose.yaml up -d` is still active
@@ -79,7 +80,7 @@ The key software used to build the application.
 A single Django application (`rdwatch`) for the backend. Source code is in the ["django"](https://github.com/ResonantGeoData/RD-WATCH/tree/phase-ii/django) folder.
 
 - [Django 4](https://docs.djangoproject.com/en/4.1/contents/) with [GeoDjango](https://docs.djangoproject.com/en/4.0/ref/contrib/gis/)
-- [Django REST Framework](https://www.django-rest-framework.org/)
+- [Django Ninja](https://django-ninja.dev/)
 - [Poetry](https://python-poetry.org/docs/) for dependency management
 
 ### Vue

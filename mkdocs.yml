@@ -1,0 +1,52 @@
+
+site_name: RD-WATCH
+site_url: https://github.io/ResonantGeoData/RD-WATCH
+site_description: Documentation for RD-WATCH
+site_author: Kitware
+
+repo_url: https://github.com/ResonantGeoData/RD-WATCH
+
+theme:
+  name: material
+  highlightjs: true
+  logo: images/General/logo.svg
+  palette:
+    primary: grey
+  features:
+    - navigation.tabs
+    - navigation.tabs.sticky
+    - navigation.expand
+
+extra_css: [extra.css]
+
+markdown_extensions:
+  - admonition
+  - attr_list
+  - md_in_html
+  - pymdownx.keys
+  - pymdownx.mark
+  - pymdownx.highlight:
+      linenums: true
+  - pymdownx.superfences
+  - pymdownx.emoji:
+      emoji_index: !!python/name:material.extensions.emoji.twemoji
+      emoji_generator: !!python/name:material.extensions.emoji.to_svg
+
+extra:
+  social:
+    - icon: fontawesome/brands/github
+      link: https://github.com/ResonantGeoData/RD-WATCH
+
+nav:
+  - Home: index.md
+  - User Guide:
+    - Vocabulary: ./UserGuide/Vocabulary.md
+    - Using RDWATCH:
+      - Home: ./UserGuide/UsingRDWatch.md
+      - Left Side Panel: ./UserGuide/LeftSidePanel.md
+      - Layer Manager: ./UserGuide/LayerManager.md
+  - Developer Documentation:
+    - Getting Started: ./DevDocs/GettingStarted.md
+    - Ingesting Data: ./DevDocs/IngestingData.md
+    - Architecture: ./DevDocs/Architecture.md
+    - Satellite Images: ./DevDocs/SatelliteImages.md

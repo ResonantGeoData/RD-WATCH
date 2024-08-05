@@ -1,3 +1,5 @@
+#!/usr/bin/env python
+
 from __future__ import annotations
 
 import argparse
@@ -10,9 +12,6 @@ from multiprocessing import Pool
 from pathlib import Path
 
 import requests
-
-# TODO: Parameterize
-rgd_endpoint = 'http://localhost:8000'
 
 
 def main():
@@ -60,6 +59,12 @@ def main():
         type=int,
         help='max number of uploads to perform at once',
     )
+    parser.add_argument(
+        '--rgd-endpoint',
+        default='http://localhost:8000',
+        type=str,
+        help='RGD server base URL',
+    )
     upload_to_rgd(**vars(parser.parse_args()))
 
 
@@ -70,10 +75,11 @@ def upload_to_rgd(
     parallelism: int,
     title='Ground Truth',
     performer_shortcode='TE',
-    proposal: str | None = None,
+    proposal: bool = False,
     eval_num: int | None = None,
     eval_run_num: int | None = None,
     expiration_time: int | None = None,
+    rgd_endpoint: str = 'http://localhost:8000',
 ):
     # Check that our run doesn't already exist
     model_run_results_url = f'{rgd_endpoint}/api/model-runs/api-key-version'

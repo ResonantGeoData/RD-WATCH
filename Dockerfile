@@ -1,5 +1,5 @@
 # Base runtime environment for rdwatch
-FROM python:3.11.8 AS base
+FROM python:3.11.9 AS base
 COPY docker/nginx.json /usr/local/etc/unit/config.json
 COPY docker/docker-entrypoint.sh /docker-entrypoint.sh
 COPY docker/keyrings/nginx.gpg /usr/share/keyrings/nginx.gpg

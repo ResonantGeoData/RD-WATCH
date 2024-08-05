@@ -11,10 +11,9 @@ This is the simplest configuration for developers to start with.
    like PostGIS, Redis, RabbitMQ, etc.
 4. Run `docker compose run --rm django poetry run django-admin migrate` to apply database migrations.
 5. Run `docker compose run --rm django poetry run django-admin loaddata lookups` to initialize your database with required data.
-6. Optionally, populate your database with test data by running `docker compose run --rm django poetry run django-admin loaddata testdata`
-7. Optionally, create an account for the Django admin (http://localhost:8000/admin) by running `docker compose run --rm django poetry --directory django run django-admin createsuperuser`
-8. If running the docker compose by default a client development server should be started at http://localhost:8080/
-9. If doing local Client Development, start the client development server:
+6. Create an account for the Django admin (http://localhost:8000/admin) by running `docker compose run --rm django poetry --directory django run django-admin createsuperuser`
+7. If running the docker compose by default a client development server should be started at http://localhost:8080/
+8. If doing local Client Development, start the client development server:
    ```sh
    cd vue
    npm install
@@ -37,8 +36,7 @@ but allows developers to run Python code on their native system.
 6. Install Poetry
 7. Run `poetry --directory django install`
 8. Run the following command to configure your environment: `source ./dev/export-env.sh dev/.env.docker-compose-native ./dev/export-env.sh .env`
-9. Optionally, populate your database with test data by running `poetry --directory django run django-admin loaddata testdata`
-10. Optionally, create an account for the Django admin (http://localhost:8000/admin) by running `poetry --directory django run django-admin createsuperuser`
+9. Create an account for the Django admin (http://localhost:8000/admin) by running `poetry --directory django run django-admin createsuperuser`
 
 ### Run Application
 1. Ensure `docker compose -f ./docker-compose.yaml up -d` is still active

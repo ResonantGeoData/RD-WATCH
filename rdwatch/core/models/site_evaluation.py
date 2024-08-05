@@ -4,10 +4,11 @@ from uuid import uuid4
 
 from django_extensions.db.models import CreationDateTimeField
 
-from django.contrib.gis.db.models import PolygonField
-from django.contrib.gis.geos import MultiPolygon
+from django.contrib.gis.db.models import PointField, PolygonField
+from django.contrib.gis.geos import MultiPolygon, Point
 from django.contrib.postgres.indexes import GistIndex
 from django.db import models, transaction
+from django.db.models import CheckConstraint, Q
 
 from rdwatch.core.models import ModelRun, lookups
 from rdwatch.core.models.region import get_or_create_region
@@ -27,7 +28,7 @@ class SiteEvaluation(models.Model):
     )
     configuration = models.ForeignKey(
         to='ModelRun',
-        on_delete=models.PROTECT,
+        on_delete=models.CASCADE,
         help_text='The hyper parameters used this site evaluation.',
         db_index=True,
     )
@@ -44,6 +45,13 @@ class SiteEvaluation(models.Model):
         help_text="Polygon from this site's Site Feature",
         srid=3857,
         spatial_index=True,
+        null=True,
+    )
+    point = PointField(
+        help_text="Point from this site's Site Feature",
+        srid=3857,
+        spatial_index=True,
+        null=True,
     )
     label = models.ForeignKey(
         to='ObservationLabel',
@@ -132,14 +140,21 @@ class SiteEvaluation(models.Model):
                 cache_timestamp = site_feature.properties.cache.timestamp
                 cache_commit_hash = site_feature.properties.cache.commit_hash
 
+            point = None
+            geom = None
+            if isinstance(site_feature.parsed_geometry, Point):
+                point = site_feature.parsed_geometry
+            else:
+                geom = site_feature.parsed_geometry
             site_eval = cls.objects.create(
                 configuration=configuration,
                 version=site_feature.properties.version,
                 number=site_feature.properties.site_number,
                 start_date=site_feature.properties.start_date,
                 end_date=site_feature.properties.end_date,
-                geom=site_feature.parsed_geometry,
+                geom=geom,
                 label=label,
+                point=point,
                 score=site_feature.properties.score,
                 status=status,
                 validated=site_feature.properties.validated,
@@ -148,7 +163,6 @@ class SiteEvaluation(models.Model):
                 cache_commit_hash=cache_commit_hash,
                 modified_timestamp=datetime.now(),
             )
-
             SiteObservation.bulk_create_from_site_evaluation(site_eval, site_model)
 
         return site_eval
@@ -214,6 +228,15 @@ class SiteEvaluation(models.Model):
     class Meta:
         default_related_name = 'evaluations'
         indexes = [GistIndex(fields=['timestamp']), GistIndex(fields=['score'])]
+
+        constraints = [
+            CheckConstraint(
+                check=Q(geom__isnull=False, point__isnull=True)
+                | Q(point__isnull=False, geom__isnull=True),
+                name='site_geom_or_point_not_null',
+                violation_error_message='Exactly one of [geom, point] must be non-null',
+            ),
+        ]
 
 
 class SiteEvaluationTracking(models.Model):

@@ -191,11 +191,10 @@ class Feature(Schema):
     def ensure_correct_geometry_type(cls, values: dict[str, Any]):
         if 'properties' not in values or 'geometry' not in values:
             return values
-        if (
-            isinstance(values['properties'], SiteFeature)
-            and values['geometry'].get('type') != 'Polygon'
+        if isinstance(values['properties'], SiteFeature) and (
+            values['geometry'].get('type') not in ['Polygon', 'Point']
         ):
-            raise ValueError('Site geometry must be of type "Polygon"')
+            raise ValueError('Site geometry must be of type "Polygon" or "Point"')
         return values
 
 

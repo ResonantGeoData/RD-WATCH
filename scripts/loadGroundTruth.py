@@ -24,7 +24,6 @@ def main():
     )
     parser.add_argument(
         '--rgd-api-key',
-        required=True,
         type=str,
         help='RGD API key',
         default='secretkey',

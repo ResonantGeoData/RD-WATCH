@@ -96,6 +96,7 @@ def upload_to_rgd(
     rgd_api_key: str | None,
     expiration_time: str,
     parallelism: int,
+    rgd_endpoint: str,
 ):
     check_vals = [('site_models', 'site-model')]
     if not skip_regions:
@@ -124,6 +125,7 @@ def upload_to_rgd(
                     [model_runs] * len(model_runs),
                     [rgd_api_key] * len(model_runs),
                     [expiration_time] * len(model_runs),
+                    [rgd_endpoint] * len(model_runs),
                     strict=True,
                 ),
             )

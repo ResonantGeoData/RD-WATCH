@@ -14,6 +14,7 @@ from django.shortcuts import get_object_or_404
 
 from rdwatch.core.models import SiteEvaluation, SiteEvaluationTracking, lookups
 from rdwatch.core.schemas import SiteEvaluationRequest
+from rdwatch.core.tasks.animation_export import create_animated_gif
 
 router = Router()
 
@@ -153,4 +154,16 @@ def download_annotations(request: HttpRequest, id: UUID4):
 
             return response
     # TODO: Some Better Error response
+    return 500, 'Unable to export data'
+
+
+@router.post('/{id}/animation')
+def generate_animated_gif(request: HttpRequest, id: UUID4):
+    # Fetch the SiteEvaluation instance
+    datapath = create_animated_gif(site_evaluation_id=id)
+    if datapath:
+        with open(datapath, 'rb') as f:
+            response = HttpResponse(f.read(), content_type='application/octet-stream')
+            response['Content-Disposition'] = f'attachment; filename={id}.gif'
+            return response
     return 500, 'Unable to export data'

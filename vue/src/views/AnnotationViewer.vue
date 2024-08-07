@@ -8,7 +8,7 @@ import AddProposal from "../components/annotationViewer/AddProposal.vue"
 import AddRegion from "../components/AddRegion.vue"
 import MapLegend from "../components/MapLegend.vue";
 import { Ref, computed, onMounted, ref, watch } from "vue";
-import { state } from "../store";
+import { state, updateRegionList, updateRegionMap } from "../store";
 
 interface Props {
   region?: string;
@@ -28,9 +28,11 @@ const selectedModelRun = computed(() => {
     return null;
 });
 
-onMounted(() => {
+onMounted(async () => {
+  await updateRegionList();
+  await updateRegionMap();
   if (props.region) {
-    state.filters = { 
+    state.filters = {
       ...state.filters,
       regions: [props.region],
     };

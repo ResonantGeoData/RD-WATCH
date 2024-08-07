@@ -9,6 +9,8 @@ from ninja.security import APIKeyHeader
 from pydantic import UUID4, constr  # type: ignore
 
 from django.conf import settings
+from django.contrib.gis.db.models import GeometryField
+from django.contrib.gis.db.models.functions import Transform
 from django.contrib.postgres.aggregates import JSONBAgg
 from django.core.cache import cache
 from django.db import transaction
@@ -27,7 +29,7 @@ from django.db.models import (
     Subquery,
     When,
 )
-from django.db.models.functions import Coalesce, JSONObject
+from django.db.models.functions import Cast, Coalesce, JSONObject
 from django.http import Http404, HttpRequest, HttpResponse
 from django.shortcuts import get_object_or_404
 from django.views.decorators.csrf import csrf_exempt
@@ -549,6 +551,12 @@ def get_sites_query(model_run_id: UUID4):
             PL=Count(Case(When(siteimage__source='PL', then=1))),
             time=ExtractEpoch('timestamp'),
             site_id=F('id'),
+            transformed_geom=Transform('geom', 4326),
+            transformed_point=Transform('point', 4326),
+            geom_or_point=Coalesce(
+                Cast('transformed_geom', GeometryField()),
+                Cast('transformed_point', GeometryField()),
+            ),
             downloading=Exists(
                 SatelliteFetching.objects.filter(
                     site=OuterRef('pk'),
@@ -562,7 +570,7 @@ def get_sites_query(model_run_id: UUID4):
                     id='pk',
                     timestamp='time',
                     number='number',
-                    bbox=BoundingBox('geom'),
+                    bbox=BoundingBox('geom_or_point'),
                     images='siteimage_count',
                     S2='S2',
                     WV='WV',

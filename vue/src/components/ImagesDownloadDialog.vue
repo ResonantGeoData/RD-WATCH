@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { Ref, defineProps, ref, withDefaults } from "vue";
+import { Ref, computed, defineProps, ref, withDefaults } from "vue";
 import { debounce } from 'lodash';
 import { Constellation, DownloadSettings } from "../client/services/ApiService";
 import { useDate } from "vuetify/lib/framework.mjs";
@@ -21,6 +21,8 @@ const emit = defineEmits<{
 
 const constellationChoices = ref(['S2', 'WV', 'L8', 'PL'])
 const selectedConstellation: Ref<Constellation[]> = ref(['WV']);
+const imageSourceChoices = computed<string[] | null>(() => selectedConstellation.value.includes('WV') ? ['cog', 'nitf'] : null);
+const selectedImageSource = ref<'cog' | 'nitf' | undefined>(undefined);
 const dayRange = ref(14);
 const noData = ref(50)
 const overrideDates: Ref<[string, string]> = ref([
@@ -40,6 +42,7 @@ const download = debounce(
   () => {
     emit('download', {
       constellation: selectedConstellation.value,
+      worldviewSource: selectedImageSource.value,
       dayRange: dayRange.value,
       noData: noData.value,
       overrideDates: customDateRange.value ? overrideDates.value : undefined,
@@ -86,6 +89,13 @@ const display = ref(true);
               multiple
               :items="constellationChoices"
               label="Source"
+              class="mr-2"
+            />
+            <v-select
+              v-if="imageSourceChoices"
+              v-model="selectedImageSource"
+              :items="imageSourceChoices"
+              label="Imagery Type"
               class="mr-2"
             />
             <v-icon

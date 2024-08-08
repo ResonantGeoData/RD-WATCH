@@ -88,7 +88,7 @@ const updateSiteList = async () => {
   </v-main>
   <span>
     <v-navigation-drawer
-      v-if="selectedModelRun !== null "
+      v-if="state.filters.configuration_id?.length || state.filters.addingRegionPolygon"
       location="left"
       floating
       width="250"

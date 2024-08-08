@@ -11,4 +11,5 @@ export type ServerStatus = {
   };
   hostname: string;
   ip: string;
+  rdwatch_version: string;
 };

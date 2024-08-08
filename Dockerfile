@@ -78,6 +78,7 @@ RUN mkdir /app/rdwatch \
  && touch /app/rdwatch/smartflow/__init__.py \
  && touch /app/README.md \
  && poetry install --only main
+RUN poetry self add poetry-dynamic-versioning@^1.4.0
 
 
 # Build stage that also installs dev dependencies.
@@ -94,10 +95,13 @@ RUN mkdir /app/rdwatch \
  && touch /app/rdwatch/smartflow/__init__.py \
  && touch /app/README.md \
  && poetry install --with dev
+RUN poetry self add poetry-dynamic-versioning@^1.4.0
 # Copy git metadata to enable display of version information
 RUN git config --global --add safe.directory /app/
 COPY .git/ /app/.git/
 COPY manage.py /app/manage.py
+# Generate versioning info
+RUN poetry dynamic-versioning
 
 
 # Built static assets for vue-rdwatch
@@ -117,7 +121,12 @@ FROM django-builder AS django-dist
 COPY rdwatch/ /app/rdwatch/
 COPY manage.py /app/manage.py
 RUN chmod -R u=rX,g=rX,o= .
-
+# Copy git metadata to enable display of version information
+COPY .git/ \
+     /app/.git/
+RUN git config --global --add safe.directory /app
+# Generate versioning info
+RUN poetry dynamic-versioning
 
 # Final image
 FROM base
@@ -136,8 +145,3 @@ COPY --from=vue-dist \
      --chown=unit:unit \
      /app/vue/dist \
      /app/vue/dist
-# Copy git metadata to enable display of version information
-COPY --chown=rdwatch:rdwatch \
-     .git/ \
-     /app/.git/
-RUN git config --global --add safe.directory /app

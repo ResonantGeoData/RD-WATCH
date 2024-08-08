@@ -2,11 +2,12 @@ from celery.result import AsyncResult
 from ninja import Router, Schema
 from pydantic import UUID4
 
+from django.contrib.gis.db.models import GeometryField
 from django.contrib.gis.db.models.functions import Transform
 from django.contrib.postgres.aggregates import JSONBAgg
 from django.core.files.storage import default_storage
 from django.db.models import Count, F
-from django.db.models.functions import JSONObject  # type: ignore
+from django.db.models.functions import Cast, Coalesce, JSONObject  # type: ignore
 from django.http import Http404, HttpRequest
 from django.shortcuts import get_object_or_404
 
@@ -94,13 +95,23 @@ def site_images(request: HttpRequest, id: UUID4):
         SiteObservation.objects.values('timestamp', 'geom')
         .order_by('timestamp')
         .filter(siteeval__id=id)
+        .annotate(
+            transformed_geom=Transform('geom', 4326),
+            transformed_point=Transform('point', 4326),
+            geom_or_point=Coalesce(
+                Cast('transformed_geom', GeometryField()),
+                Cast('transformed_point', GeometryField()),
+            ),
+            label_slug=F('label__slug'),
+            timestamp_epoch=ExtractEpoch('timestamp'),
+        )
         .aggregate(
             results=JSONBAgg(
                 JSONObject(
-                    label=F('label__slug'),
-                    timestamp=ExtractEpoch('timestamp'),
-                    geoJSON=Transform('geom', srid=4326),
-                    bbox=BoundingBox(Transform('geom', srid=4326)),
+                    label='label_slug',
+                    timestamp='timestamp_epoch',
+                    geoJSON='geom_or_point',
+                    bbox=BoundingBox('geom_or_point'),
                 ),
                 default=[],
             )
@@ -110,12 +121,25 @@ def site_images(request: HttpRequest, id: UUID4):
         SiteEvaluation.objects.filter(pk=id)
         .values()
         .annotate(
+            transformed_geom=Transform('geom', 4326),
+            transformed_point=Transform('point', 4326),
+            geom_or_point=Coalesce(
+                Cast('transformed_geom', GeometryField()),
+                Cast('transformed_point', GeometryField()),
+            ),
+            label_slug=F('label__slug'),
+            status=F('status'),
+            evaluationGeoJSON=F('geom_or_point'),
+            evaluationBBox=BoundingBox('geom_or_point'),
+            notes=F('notes'),
+        )
+        .annotate(
             json=JSONObject(
-                label=F('label__slug'),
-                status=F('status'),
-                evaluationGeoJSON=Transform('geom', srid=4326),
-                evaluationBBox=BoundingBox(Transform('geom', srid=4326)),
-                notes=F('notes'),
+                label='label_slug',
+                status='status',
+                evaluationGeoJSON='evaluationGeoJSON',
+                evaluationBBox='evaluationBBox',
+                notes='notes',
             )
         )[0]
     )

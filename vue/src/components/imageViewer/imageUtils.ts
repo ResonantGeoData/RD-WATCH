@@ -4,6 +4,7 @@ import { BaseBBox, EvaluationGeoJSON, EvaluationImage, EvaluationImageResults } 
 
 export interface PixelPoly {
     coords: {x:number; y:number}[][];
+    type: 'Polygon' | 'Point';
     label: string;
     scaled?: {
       crop: {x: number, y:number, width: number, height: number}
@@ -51,6 +52,7 @@ const drawData = (
     rescale = false,
     fullscreen = false,
     canvasScale = 1,
+    radiusMultiplier = 1,
     ) => {
       const context = canvas.getContext('2d');
       const imageObj = new Image();
@@ -99,7 +101,6 @@ const drawData = (
           if (background) {
             context.drawImage(background, computedX, computedY, imageWidth, imageHeight, destOffsetX, destOffsetY, destWidth, destHeight);
           }
-
           const standardPoly = (overrideHeight === -1 && !rescale) || !(poly.scaled || (overrideHeight !== -1 && overrideHeight !== imageDim[1]));
           let widthRatio = rescale && poly.scaled ? imageDim[0] / poly.scaled.crop.width  : overrideWidth / imageDim[0];
           let heightRatio = rescale && poly.scaled  ? imageDim[1] / poly.scaled.crop.height : overrideHeight / imageDim[1];
@@ -139,24 +140,33 @@ const drawData = (
               context.stroke();
             });
           }
-
-          coords.forEach((ring) => {
-            const xPos = (standardPoly ? ring[0].x : ring[0].x * widthRatio) + offsetX;
-            const yPos = (standardPoly ? computedImageHeight - ring[0].y : computedOverrideHeight - (ring[0].y * heightRatio)) + offsetY;
-            context.moveTo(xPos, yPos);
-            context.beginPath();
-            ring.forEach(({x, y}) => {
-              const yPosEnd =  (standardPoly ? computedImageHeight - y : computedOverrideHeight - (y * heightRatio)) + offsetY;
-              const xPos = (standardPoly ? x : x * widthRatio) + offsetX;
-              if (context){
-                  context.lineTo(xPos, yPosEnd);
-              }
+          if (poly.type === 'Polygon') {
+            coords.forEach((ring) => {
+              const xPos = (standardPoly ? ring[0].x : ring[0].x * widthRatio) + offsetX;
+              const yPos = (standardPoly ? computedImageHeight - ring[0].y : computedOverrideHeight - (ring[0].y * heightRatio)) + offsetY;
+              context.moveTo(xPos, yPos);
+              context.beginPath();
+              ring.forEach(({x, y}) => {
+                const yPosEnd =  (standardPoly ? computedImageHeight - y : computedOverrideHeight - (y * heightRatio)) + offsetY;
+                const xPos = (standardPoly ? x : x * widthRatio) + offsetX;
+                if (context){
+                    context.lineTo(xPos, yPosEnd);
+                }
+              });
+              const lineDivisor = Math.max(canvas.width, canvas.height);
+              context.lineWidth = lineDivisor/ 100.0;
+              context.strokeStyle = getColorFromLabel(poly.label);
+              context.stroke();
             });
+          } else { // Drawing a Point
+            const xPos = (standardPoly ? coords[0][0].x : coords[0][0].x * widthRatio) + offsetX;
+            const yPos = (standardPoly ? computedImageHeight - coords[0][0].y : computedOverrideHeight - (coords[0][0].y * heightRatio)) + offsetY;
             const lineDivisor = Math.max(canvas.width, canvas.height);
+            context.arc(xPos, yPos, (lineDivisor/ 100.0) * 2 * radiusMultiplier, 0, 2 * Math.PI, false);
             context.lineWidth = lineDivisor/ 100.0;
             context.strokeStyle = getColorFromLabel(poly.label);
             context.stroke();
-          });
+          }
           // Now scale the canvas to the proper size
           if (overrideHeight === -1  && overrideWidth === -1) {
             let ratio = imageDim[1] / imageDim[0];
@@ -268,41 +278,62 @@ const denormalizePolygon = (bbox: BaseBBox, imageWidth: number, imageHeight: num
 };
 
 
-const normalizePolygon = (bbox: BaseBBox, imageWidth: number, imageHeight: number, polygon: GeoJSON.Polygon | GeoJSON.MultiPolygon ) => {
+const normalizePolygon = (bbox: BaseBBox, imageWidth: number, imageHeight: number, polygon: GeoJSON.Polygon | GeoJSON.MultiPolygon  | GeoJSON.Point) => {
   const bboxWidth = bbox.xmax - bbox.xmin;
   const bboxHeight = bbox.ymax - bbox.ymin;
 
   const imageNormalizePoly: {x: number, y: number}[][] = []
-  polygon.coordinates.forEach((ring) => {
-    imageNormalizePoly.push([]);
-    if (polygon.type === 'Polygon') {
-      ring.forEach((baseCoord) => {
-        const coord = baseCoord as GeoJSON.Position;
-        const normalize_x = (coord[0] - bbox.xmin) / bboxWidth;
-        const normalize_y = (coord[1] - bbox.ymin) / bboxHeight;
-        const image_x = normalize_x * imageWidth;
-        const image_y = normalize_y * imageHeight;
-        imageNormalizePoly[imageNormalizePoly.length -1].push({x: image_x, y: image_y});
-      });
-    }else if (polygon.type === 'MultiPolygon') {
-      ring.forEach((baseCoord) => {
-        const coordList = baseCoord as GeoJSON.Position[];
-        coordList.forEach((coord) => {
-        const normalize_x = (coord[0] - bbox.xmin) / bboxWidth;
-        const normalize_y = (coord[1] - bbox.ymin) / bboxHeight;
-        const image_x = normalize_x * imageWidth;
-        const image_y = normalize_y * imageHeight;
-        imageNormalizePoly[imageNormalizePoly.length -1].push({x: image_x, y: image_y});
+  if (['Polygon', 'MultiPolygon'].includes(polygon.type)) {
+    polygon.coordinates.forEach((ring) => {
+      imageNormalizePoly.push([]);
+      if (polygon.type === 'Polygon') {
+      (ring as GeoJSON.Position[]).forEach((baseCoord) => {
+          const coord = baseCoord as GeoJSON.Position;
+          const normalize_x = (coord[0] - bbox.xmin) / bboxWidth;
+          const normalize_y = (coord[1] - bbox.ymin) / bboxHeight;
+          const image_x = normalize_x * imageWidth;
+          const image_y = normalize_y * imageHeight;
+          imageNormalizePoly[imageNormalizePoly.length -1].push({x: image_x, y: image_y});
         });
-      });
+      }else if (polygon.type === 'MultiPolygon') {
+        (ring as GeoJSON.Position[][]).forEach((baseCoord) => {
+          const coordList = baseCoord as GeoJSON.Position[];
+          coordList.forEach((coord) => {
+          const normalize_x = (coord[0] - bbox.xmin) / bboxWidth;
+          const normalize_y = (coord[1] - bbox.ymin) / bboxHeight;
+          const image_x = normalize_x * imageWidth;
+          const image_y = normalize_y * imageHeight;
+          imageNormalizePoly[imageNormalizePoly.length -1].push({x: image_x, y: image_y});
+          });
+        });
+      } 
+    });
+  } else if (polygon.type === 'Point') {
+        imageNormalizePoly.push([]);
+        const coordList = polygon.coordinates;
+        const normalize_x = (coordList[0] - bbox.xmin) / bboxWidth;
+        const normalize_y = (coordList[1] - bbox.ymin) / bboxHeight;
+        const image_x = normalize_x * imageWidth;
+        const image_y = normalize_y * imageHeight;
+        imageNormalizePoly[imageNormalizePoly.length -1].push({x: image_x, y: image_y});
     }
-  });
   return imageNormalizePoly;
 }
 
-const rescalePoly = (image:EvaluationImage, baseBBox: BaseBBox, polygon: GeoJSON.Polygon) => {
-  const rescaled = rescale(baseBBox);
 
+const oneMeterWGS84 = 0.000008983; // This is 1m distance in WGS84
+const areaAroundPoint = 200
+const rescalePoly = (image:EvaluationImage, baseBBox: BaseBBox, polygon: GeoJSON.Polygon | GeoJSON.Point) => {
+  let rescaled = rescale(baseBBox);
+  if (polygon.type === 'Point') {  // for points the bbox area grabbed is 200m around the point.
+    const pointBBox = {
+      xmin: baseBBox.xmin - (oneMeterWGS84 * 0.5 * areaAroundPoint),
+      xmax: baseBBox.xmax + (oneMeterWGS84 * 0.5 * areaAroundPoint),
+      ymin: baseBBox.ymin - (oneMeterWGS84 * 0.5 * areaAroundPoint) ,
+      ymax: baseBBox.ymax + (oneMeterWGS84 * 0.5 * areaAroundPoint),
+    };
+    rescaled = rescale(pointBBox);
+  }
   const baseWidth = rescaled.xmax - rescaled.xmin;
   const baseHeight = rescaled.ymax - rescaled.ymin;
   const imageBBoxWidth = image.bbox.xmax - image.bbox.xmin;
@@ -351,12 +382,12 @@ const processImagePoly = (
         const imageWidth = image.image_dimensions[0];
         const imageHeight = image.image_dimensions[1];
         const imageNormalizePoly: {x: number, y: number}[][] = normalizePolygon(image.bbox, imageWidth, imageHeight, closestPoly.geoJSON);
-        let groundTruthPoly;
+        let groundTruthPoly: PixelPoly | undefined;
         if (hasGroundTruth && groundTruth) {
           const gtNormalizePoly: {x: number, y: number}[][] = normalizePolygon(image.bbox, imageWidth, imageHeight, groundTruth.geoJSON);
-          groundTruthPoly = { coords: gtNormalizePoly, label: groundTruth.label};
+          groundTruthPoly = { coords: gtNormalizePoly, label: groundTruth.label, type: groundTruth.geoJSON.type};
         }
-        const poly: PixelPoly = {coords: imageNormalizePoly, label: closestPoly.label, scaled: false};
+        const poly: PixelPoly = {coords: imageNormalizePoly, label: closestPoly.label, scaled: false, type: closestPoly.geoJSON.type};
         const rescaled = rescalePoly(image, closestPoly.bbox, closestPoly.geoJSON);
         if (rescaled) {
           poly['scaled'] =  rescaled;
@@ -367,7 +398,7 @@ const processImagePoly = (
             poly['scaled']['groundTruth'] = rescaleGT.scaledPoly;
           }
         }
-        return { image: image, baseBBox: closestPoly.bbox, poly, groundTruthPoly };
+        return { image: image, baseBBox: closestPoly.bbox, poly, groundTruthPoly, type: poly.type };
 }
 
 

@@ -420,6 +420,14 @@
     }
   },
   {
+    "model": "core.performer",
+    "pk": 9,
+    "fields": {
+      "short_code": "IMERIT",
+      "team_name": "iMERIT"
+    }
+  },
+  {
     "model": "core.processinglevel",
     "pk": 1,
     "fields": {

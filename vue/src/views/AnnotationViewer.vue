@@ -9,6 +9,7 @@ import AddRegion from "../components/AddRegion.vue"
 import MapLegend from "../components/MapLegend.vue";
 import { Ref, computed, onMounted, ref, watch } from "vue";
 import { state, updateRegionList, updateRegionMap } from "../store";
+import { ApiService } from "../client";
 
 interface Props {
   region?: string;
@@ -42,7 +43,19 @@ onMounted(async () => {
 
 watch(selectedModelRun, () => {
   state.selectedImageSite = undefined
-})
+});
+
+watch(()=> ApiService.getApiPrefix(), async () => {
+  await updateRegionList();
+  await updateRegionMap();
+  if (props.region) {
+    state.filters = {
+      ...state.filters,
+      regions: [props.region],
+    };
+  }
+});
+
 
 const updateSiteList = async () => {
   if (siteList.value !== null) {
@@ -77,7 +90,7 @@ const updateSiteList = async () => {
   </v-main>
   <span>
     <v-navigation-drawer
-      v-if="selectedModelRun !== null "
+      v-if="state.filters.configuration_id?.length || state.filters.addingRegionPolygon"
       location="left"
       floating
       width="250"

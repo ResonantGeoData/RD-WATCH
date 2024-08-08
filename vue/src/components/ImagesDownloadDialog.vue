@@ -19,8 +19,8 @@ const emit = defineEmits<{
     (e: "cancel"): void;
 }>();
 
-const baseList = ref(['S2', 'WV', 'L8', 'PL'])
-const selectedSource: Ref<Constellation[]> = ref(['WV']);
+const constellationChoices = ref(['S2', 'WV', 'L8', 'PL'])
+const selectedConstellation: Ref<Constellation[]> = ref(['WV']);
 const dayRange = ref(14);
 const noData = ref(50)
 const overrideDates: Ref<[string, string]> = ref([
@@ -39,7 +39,7 @@ const dateAdpter = useDate();
 const download = debounce(
   () => {
     emit('download', {
-      constellation: selectedSource.value,
+      constellation: selectedConstellation.value,
       dayRange: dayRange.value,
       noData: noData.value,
       overrideDates: customDateRange.value ? overrideDates.value : undefined,
@@ -82,9 +82,9 @@ const display = ref(true);
             align="center"
           >
             <v-select
-              v-model="selectedSource"
+              v-model="selectedConstellation"
               multiple
-              :items="baseList"
+              :items="constellationChoices"
               label="Source"
               class="mr-2"
             />

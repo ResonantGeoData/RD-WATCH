@@ -41,7 +41,6 @@ def get_captures(
             if 'properties' in feature:
                 if 'eo:cloud_cover' in feature['properties']:
                     cloudcover = feature['properties']['eo:cloud_cover']
-            # from pprint import pprint; pprint(feature)
             capture = WorldViewNITFCapture(
                 timestamp=datetime.fromisoformat(
                     feature['properties']['datetime'].rstrip('Z')

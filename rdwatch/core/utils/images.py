@@ -1,5 +1,7 @@
 import io
 import logging
+from collections.abc import Generator
+from contextlib import contextmanager
 from datetime import datetime, timedelta
 from typing import Literal
 from urllib.error import URLError
@@ -8,6 +10,10 @@ from PIL import Image
 
 from rdwatch.core.utils.raster_tile import get_raster_bbox
 from rdwatch.core.utils.satellite_bands import get_bands
+from rdwatch.core.utils.worldview_nitf.raster_tile import get_worldview_nitf_bbox
+from rdwatch.core.utils.worldview_nitf.satellite_captures import (
+    get_captures as get_worldview_nitf_captures,
+)
 from rdwatch.core.utils.worldview_processed.raster_tile import (
     get_worldview_processed_visual_bbox,
 )
@@ -16,6 +22,19 @@ from rdwatch.core.utils.worldview_processed.satellite_captures import (
 )
 
 logger = logging.getLogger(__name__)
+
+
+@contextmanager
+def ignore_pillow_filesize_limits() -> Generator[None, None, None]:
+    """
+    Large image files can cause Pillow to raise a DecompressionBombError.
+    This context manager temporarily disables the Pillow limit on the maximum image
+    size, use it when the image is trusted but may be too large.
+    """
+    original_max_image_pixels = Image.MAX_IMAGE_PIXELS
+    Image.MAX_IMAGE_PIXELS = None
+    yield
+    Image.MAX_IMAGE_PIXELS = original_max_image_pixels
 
 
 def scale_bbox(bbox: tuple[float, float, float, float], scale_factor: float):
@@ -45,7 +64,9 @@ def get_max_bbox(
 
 
 def get_percent_black_pixels(bytes: bytes):
-    img = Image.open(io.BytesIO(bytes))
+    with ignore_pillow_filesize_limits():
+        img = Image.open(io.BytesIO(bytes))
+
     # determine the size of the image
     width, height = img.size
 
@@ -69,10 +90,12 @@ def get_range_captures(
     timestamp: datetime,
     constellation: str,
     timebuffer: timedelta,
-    worldView=False,
+    worldView: Literal['cog', 'nitf'] | None,
 ):
-    if worldView:
+    if worldView == 'cog':
         captures = get_worldview_captures(timestamp, bbox, timebuffer)
+    elif worldView == 'nitf':
+        captures = get_worldview_nitf_captures(timestamp, bbox, timebuffer)
     else:
         captures = list(get_bands(constellation, timestamp, bbox, timebuffer))
 
@@ -90,13 +113,17 @@ def fetch_boundbox_image(
     bbox: tuple[float, float, float, float],
     timestamp: datetime,
     constellation: str,
-    worldView=False,
+    worldView: Literal['cog', 'nitf'] | None = None,
     scale: Literal['default', 'bits'] | list[int] = 'default',
 ):
     timebuffer = timedelta(days=1)
     try:
         captures = get_range_captures(
-            bbox, timestamp, constellation, timebuffer, worldView
+            bbox,
+            timestamp,
+            constellation,
+            timebuffer,
+            worldView,
         )
     except URLError as e:
         logger.warning('Failed to get range capture because of URLError')
@@ -106,8 +133,10 @@ def fetch_boundbox_image(
     if len(captures) == 0:
         return None
     closest_capture = min(captures, key=lambda band: abs(band.timestamp - timestamp))
-    if worldView:
+    if worldView == 'cog':
         bytes = get_worldview_processed_visual_bbox(closest_capture, bbox, 'PNG', scale)
+    elif worldView == 'nitf':
+        bytes = get_worldview_nitf_bbox(closest_capture, bbox, 'PNG', scale)
     else:
         bytes = get_raster_bbox(closest_capture.uri, bbox, 'PNG', scale)
     return {

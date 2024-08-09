@@ -112,6 +112,37 @@ async function loadModelRuns() {
   }
 }
 
+// Used to update downloading status after an image download has been started.
+const checkDownloading = async () => {
+  if (request !== undefined) {
+    console.log('Cancelling request');
+    request.cancel();
+  }
+  const { mode, performer } = props.filters; // unwrap performer and mode arrays
+  request = ApiService.getModelRuns({
+    limit,
+    ...props.filters,
+    mode,
+    performer,
+    proposal: props.compact ? 'PROPOSAL' : undefined, // if compact we are doing proposal adjudication
+  });
+    const modelRunList = await request;
+    request = undefined;
+    // sort list to show ground truth near the top
+    const modelRunResults = modelRunList.items;
+
+    for (let i = 0; i< state.modelRuns.length; i += 1) {
+      const currentModelRun = state.modelRuns[i];
+      const found = modelRunResults.find((item) => item.id === currentModelRun.id);
+      if (found) {
+        if (found.downloading) {
+          state.modelRuns[i].downloading = found.downloading;
+        }
+      }
+    }
+};
+
+watch(() => state.downloadingCheck, () => checkDownloading());
 
 const loadingSatelliteTimestamps = ref(false);
 

@@ -16,12 +16,17 @@ const props = defineProps<{
   modelRuns: string[];
 }>();
 
+const emit = defineEmits<{
+  (e: "image-download", modelRunId: string): void;
+}>();
+
 const baseModifiedList: Ref<SiteDisplay[]> = ref([]);
 const modifiedList: Ref<SiteDisplay[]> = ref([]);
 const imageDownloadDialog = ref(false);
 const imageTimeRange: Ref<{min: number, max: number} | null> = ref(null);
 const imageDownloadingId: Ref<null | string> = ref(null)
-const modelRunTitleList: Ref<string[]> = ref([])
+const imageDownloadingModelRunId: Ref<null | string | undefined> = ref(null)
+  const modelRunTitleList: Ref<string[]> = ref([])
 const totalCount: Ref<number> = ref(0);
 const filter = ref("");
 let downloadCheckInterval: NodeJS.Timeout | null = null;
@@ -65,7 +70,6 @@ const getSites = async (modelRun: string, initRun = false) => {
     let downloadingAny = false;
     if (results.sites) {
       const modList: SiteDisplay[] = [];
-      let selected: SiteDisplay | null = null;
       const details = results.modelRunDetails ? {
         title: results.modelRunDetails.title,
         version: results.modelRunDetails.version,
@@ -90,6 +94,7 @@ const getSites = async (modelRun: string, initRun = false) => {
         modList.push({
           number: item.number,
           id: item.id,
+          modelRunId: modelRun,
           name,
           filename: item.filename,
           bbox: item.bbox,
@@ -114,9 +119,6 @@ const getSites = async (modelRun: string, initRun = false) => {
         totalCount.value += 1;
       });
       // We need to start checking if there are downloading sites to update every once in a while
-      if (selected !== null) {
-        selectSite(selected);
-      }
       if (downloadingAny && downloadCheckInterval === null) {
         checkDownloading();
       }
@@ -138,7 +140,12 @@ const getAllSiteProposals = async (initRun = false) => {
     } else {
       modifiedList.value = mainList;
     }
-    modifiedList.value.sort((a, b) => a.name.localeCompare(b.name, undefined, { sensitivity: 'base' }));
+    modifiedList.value.sort((a, b) => {
+      if (a.selected === b.selected) {
+        return a.name.localeCompare(b.name);
+      }
+      return a.selected ? -1 : 1;
+    });
 }
 onMounted(() => getAllSiteProposals(true));
 onUnmounted(() => {
@@ -190,14 +197,11 @@ const selectSite = async (selectedSite: SiteDisplay, deselect= false) => {
     updatedList.push(item);
   })
   updatedList.sort((a, b) => {
-        if (a.selected === b.selected) {
-          return 0;
-        }
-        if (a.selected) {
-          return -1;
-        }
-        return 1;
-      });
+    if (a.selected === b.selected) {
+      return a.name.localeCompare(b.name);
+    }
+    return a.selected ? -1 : 1;
+  });
   modifiedList.value = updatedList;
   if (!deselect) {
     nextTick(() => {
@@ -257,6 +261,7 @@ const setImageDownloadDialog = (item: SiteDisplay) => {
   }
   imageDownloadDialog.value = true;
   imageDownloadingId.value = item.id;
+  imageDownloadingModelRunId.value = item.modelRunId;
 };
 
 const startDownload = async (data: DownloadSettings) => {
@@ -264,6 +269,11 @@ const startDownload = async (data: DownloadSettings) => {
   imageDownloadDialog.value = false;
   if (id) {
   await ApiService.getObservationImages(id, data);
+  // Notify the ModelRunList that downloading is happening
+  if (imageDownloadingModelRunId.value) {
+    emit('image-download', imageDownloadingModelRunId.value);
+  }
+  state.downloadingCheck += 1;
     // Now we get the results to see if the service is running
     setTimeout(() => getAllSiteProposals(), 1000);
   }

@@ -14,6 +14,7 @@ export interface SiteDisplay {
   number: number;
   id: string;
   uuid?: string;
+  modelRunId?: string;
   name: string;
   bbox: { xmin: number; ymin: number; xmax: number; ymax: number };
   startDate: number;

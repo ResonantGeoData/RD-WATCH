@@ -203,6 +203,8 @@ export const state = reactive<{
   // Region map is used to index names and owners with ids
   regionMap: RegionMapType;
   regionList: RegionDetail[];
+  // Downloading Check - used to indicate to the modelRunList to check for downloading images
+  downloadingCheck: number;
 }>({
   appVersion: '',
   errorText: '',
@@ -278,6 +280,7 @@ export const state = reactive<{
   groundTruthLinks: {},
   regionMap: {},
   regionList: [],
+  downloadingCheck: 0,
 });
 
 export const filteredSatelliteTimeList = computed(() => {

@@ -1,10 +1,10 @@
 import logging
 from datetime import datetime
-from typing import Literal
+from typing import Any, Literal
 
 from celery.result import AsyncResult
 from ninja import Query, Router, Schema
-from pydantic import UUID4
+from pydantic import UUID4, root_validator
 
 from django.contrib.gis.db.models import FloatField, PolygonField
 from django.contrib.gis.db.models.aggregates import Collect
@@ -207,6 +207,7 @@ def site_observations(request: HttpRequest, evaluation_id: UUID4):
 
 class GenerateImagesSchema(Schema):
     constellation: list[Literal['WV', 'S2', 'L8', 'PL']] = ['WV']
+    worldviewSource: Literal['cog', 'nitf'] | None = None
     dayRange: int = 14
     noData: int = 50
     overrideDates: None | list[str] = None
@@ -214,6 +215,18 @@ class GenerateImagesSchema(Schema):
     scale: Literal['default', 'bits', 'custom'] = 'default'
     scaleNum: None | list[int] = None
     bboxScale: None | float = 1.2
+
+    @root_validator
+    def validate_worldview_source(cls, values: dict[str, Any]):
+        print(values)
+        if 'WV' in values['constellation'] and values['worldviewSource'] is None:
+            raise ValueError('worldviewSource is required for WV constellation')
+        elif (
+            'WV' not in values['constellation']
+            and values['worldviewSource'] is not None
+        ):
+            raise ValueError('worldviewSource is only for WV constellation')
+        return values
 
 
 @router.post('/{evaluation_id}/generate-images/', response={202: bool, 409: str})
@@ -234,6 +247,7 @@ def get_site_observation_images(
         params.overrideDates,
         scalVal,
         params.bboxScale,
+        params.worldviewSource,
     )
     return 202, True
 

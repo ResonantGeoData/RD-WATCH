@@ -22,7 +22,7 @@ const emit = defineEmits<{
 const constellationChoices = ref(['S2', 'WV', 'L8', 'PL'])
 const selectedConstellation: Ref<Constellation[]> = ref(['WV']);
 const worldviewSourceChoices = computed<string[] | null>(() => selectedConstellation.value.includes('WV') ? ['cog', 'nitf'] : null);
-const selectedWorldviewSource = ref<'cog' | 'nitf' | undefined>(undefined);
+const selectedWorldviewSource = ref<'cog' | 'nitf'>('cog');
 const dayRange = ref(14);
 const noData = ref(50)
 const overrideDates: Ref<[string, string]> = ref([

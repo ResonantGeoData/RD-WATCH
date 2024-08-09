@@ -4,7 +4,7 @@ from typing import Any, Literal
 
 from celery.result import AsyncResult
 from ninja import Query, Router, Schema
-from pydantic import UUID4, ValidationError, validator
+from pydantic import UUID4, root_validator
 
 from django.contrib.gis.db.models import FloatField, PolygonField
 from django.contrib.gis.db.models.aggregates import Collect
@@ -216,13 +216,17 @@ class GenerateImagesSchema(Schema):
     scaleNum: None | list[int] = None
     bboxScale: None | float = 1.2
 
-    @validator('worldviewSource')
-    def validate_worldview_source(cls, v: str | None, values: dict[str, Any]):
-        if 'WV' in values['constellation'] and v is None:
-            raise ValidationError('worldviewSource is required for WV constellation')
-        elif 'WV' not in values['constellation'] and v is not None:
-            raise ValidationError('worldviewSource is only for WV constellation')
-        return v
+    @root_validator
+    def validate_worldview_source(cls, values: dict[str, Any]):
+        print(values)
+        if 'WV' in values['constellation'] and values['worldviewSource'] is None:
+            raise ValueError('worldviewSource is required for WV constellation')
+        elif (
+            'WV' not in values['constellation']
+            and values['worldviewSource'] is not None
+        ):
+            raise ValueError('worldviewSource is only for WV constellation')
+        return values
 
 
 @router.post('/{evaluation_id}/generate-images/', response={202: bool, 409: str})

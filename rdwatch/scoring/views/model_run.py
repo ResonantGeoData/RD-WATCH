@@ -36,7 +36,7 @@ from django.db.models.functions import (
     NullIf,
     Substr,
 )
-from django.http import Http404, HttpRequest
+from django.http import Http404, HttpRequest, HttpResponseNotFound
 from django.shortcuts import get_object_or_404
 
 from rdwatch.core.db.functions import BoundingBox, ExtractEpoch
@@ -506,10 +506,14 @@ def list_model_runs(
 
 @router.get('/{id}/', response={200: ModelRunDetailSchema})
 def get_model_run(request: HttpRequest, id: UUID4):
-    try:
-        data = get_object_or_404(get_queryset(), id=id)
-    except EvaluationRun.DoesNotExist:
+    if EvaluationRun.objects.filter(pk=id).exists():
+        data = get_queryset()
+    elif AnnotationProposalSet.objects.filter(pk=id).exists():
         data = get_object_or_404(get_queryset_proposal(), id=id)
+    else:
+        return HttpResponseNotFound(
+            f'Neither an EvaluationRun or AnnotationProposalSet exists for uuid: {id}'
+        )
 
     fetch_counts = SatelliteFetching.objects.filter(
         model_run_uuid=id, status=SatelliteFetching.Status.RUNNING

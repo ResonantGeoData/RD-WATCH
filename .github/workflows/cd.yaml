@@ -35,7 +35,7 @@ jobs:
           username: ${{ github.repository_owner }}
           password: ${{ secrets.GITHUB_TOKEN }}
       - name: Generate image tags
-        uses: actions/github-script@v6
+        uses: actions/github-script@v7
         id: image-tags
         with:
           result-encoding: string

@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import TimeSlider from "./TimeSlider.vue";
 import { ApiService, ModelRun } from "../client";
-import { Ref, computed, onBeforeMount, onBeforeUnmount, ref, withDefaults } from "vue";
+import { Ref, computed, onBeforeMount, onBeforeUnmount, ref, watch, withDefaults } from "vue";
 import { timeRangeFormat } from "../utils";
 import ImagesDownloadDialog from "./ImagesDownloadDialog.vue";
 import { DownloadSettings } from "../client/services/ApiService";
@@ -50,13 +50,23 @@ const updateDownloading = async () => {
 
 }
 
+watch(() => props.modelRun.downloading, () => {
+  downloading.value = props.modelRun.downloading;
+  if (downloading.value) {
+    setTimeout(() => {
+    updateDownloading();
+    loopingInterval = setInterval(updateDownloading, 5000);
+    }, 2000);
+  }
+});
+
 const startDownload = debounce((data: DownloadSettings) => {
   downloadImages.value = false;
   ApiService.getModelRunImages(props.modelRun.id.toString(), data)
   downloading.value = props.modelRun.numsites;
   setTimeout(() => {
     updateDownloading();
-    loopingInterval = setInterval(updateDownloading, 10000);
+    loopingInterval = setInterval(updateDownloading, 5000);
   }, 2000);
 }, 5000, { leading: true });
 
@@ -70,7 +80,7 @@ onBeforeMount(() => {
     loopingInterval = null;
   }
   if (props.modelRun.downloading > 0 && loopingInterval === null)
-  loopingInterval = setInterval(updateDownloading, 10000);
+  loopingInterval = setInterval(updateDownloading, 5000);
 })
 
 onBeforeUnmount(() => {

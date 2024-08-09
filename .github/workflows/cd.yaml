@@ -35,7 +35,7 @@ jobs:
           username: ${{ github.repository_owner }}
           password: ${{ secrets.GITHUB_TOKEN }}
       - name: Generate image tags
-        uses: actions/github-script@v6
+        uses: actions/github-script@v7
         id: image-tags
         with:
           result-encoding: string
@@ -59,7 +59,7 @@ jobs:
     name: Deploy docs
     runs-on: ubuntu-latest
     steps:
-    - uses: actions/checkout@v2
+    - uses: actions/checkout@v4
       with:
         # "ref" specifies the branch to check out.
         # "github.event.release.target_commitish" is a global variable and specifies the branch the release targeted

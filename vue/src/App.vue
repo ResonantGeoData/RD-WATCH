@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { useRouter } from 'vue-router';
 import { state } from './store';
+import type { ServerStatus } from './client';
 
 import { onBeforeMount, onErrorCaptured, ref } from "vue";
 
@@ -23,6 +24,7 @@ onBeforeMount(async () => {
       return;
     }
     isLoggedIn.value = true;
+    state.appVersion = (json as ServerStatus).rdwatch_version;
   } catch (e) {
     if (import.meta.env.PROD) {
       window.location.href = `/accounts/gitlab/login/?next=${window.location.pathname}`;

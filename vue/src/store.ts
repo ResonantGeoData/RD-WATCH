@@ -157,6 +157,7 @@ export interface KeyedModelRun extends ModelRun {
 }
 
 export const state = reactive<{
+  appVersion: string;
   errorText: string;
   timestamp: number;
   timeMin: number;
@@ -205,6 +206,7 @@ export const state = reactive<{
   // Downloading Check - used to indicate to the modelRunList to check for downloading images
   downloadingCheck: number;
 }>({
+  appVersion: '',
   errorText: '',
   timestamp: Math.floor(Date.now() / 1000),
   timeMin: new Date(0).valueOf(),

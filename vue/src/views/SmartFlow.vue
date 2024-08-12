@@ -46,7 +46,7 @@ const fetchDags = debounce(async (searchTerm: string) => {
   loading.value = true;
   const query = searchTerm ? { dag_id_pattern: searchTerm } : {};
   const res = await SmartflowService.rdwatchSmartflowViewsListDags(query);
-  // TODO:  Currently Dags are experimental, Type definiations once more solidified implementation
+  // TODO:  Currently Dags are experimental, Type definitions once more solidified implementation
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   dagResults.value = res.dags.map((dag: any) => dag.dag_id);
   loading.value = false;

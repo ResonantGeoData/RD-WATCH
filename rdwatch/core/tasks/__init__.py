@@ -45,9 +45,11 @@ from rdwatch.core.utils.images import (
     get_max_bbox,
     get_percent_black_pixels,
     get_range_captures,
+    ignore_pillow_filesize_limits,
     scale_bbox,
 )
 from rdwatch.core.utils.raster_tile import get_raster_bbox
+from rdwatch.core.utils.worldview_nitf.raster_tile import get_worldview_nitf_bbox
 from rdwatch.core.utils.worldview_processed.raster_tile import (
     get_worldview_processed_visual_bbox,
 )
@@ -91,6 +93,7 @@ def get_siteobservation_images_task(
     scale: Literal['default', 'bits'] | list[int] = 'default',
     bboxScale: float = BboxScaleDefault,
     pointArea: float = pointAreaDefault,
+    worldview_source: Literal['cog', 'nitf'] | None = 'cog',
 ) -> None:
     capture_count = 0
     for constellation in baseConstellations:
@@ -105,6 +108,7 @@ def get_siteobservation_images_task(
             scale=scale,
             bboxScale=bboxScale,
             pointArea=pointArea,
+            worldview_source=worldview_source,
         )
     fetching_task = SatelliteFetching.objects.get(site_id=site_eval_id)
     fetching_task.status = SatelliteFetching.Status.COMPLETE
@@ -125,6 +129,7 @@ def get_siteobservations_images(
     scale: Literal['default', 'bits'] | list[int] = 'default',
     bboxScale: float = BboxScaleDefault,
     pointArea: float = pointAreaDefault,
+    worldview_source: Literal['cog', 'nitf'] | None = 'cog',
 ) -> None:
     constellationObj = Constellation.objects.filter(slug=baseConstellation).first()
     # Ensure we are using ints for the DayRange and no_data_limit
@@ -232,7 +237,11 @@ def get_siteobservations_images(
                 found_timestamps[observation.timestamp] = True
                 continue
             results = fetch_boundbox_image(
-                bbox, timestamp, constellation.slug, baseConstellation == 'WV', scale
+                bbox,
+                timestamp,
+                constellation.slug,
+                worldview_source,
+                scale,
             )
             if results is None:
                 logger.warning(f'COULD NOT FIND ANY IMAGE FOR TIMESTAMP: {timestamp}')
@@ -251,7 +260,8 @@ def get_siteobservations_images(
             # logger.warning(f'Retrieved Image with timestamp: {timestamp}')
             output = f'tile_image_{observation.id}.png'
             image = File(io.BytesIO(bytes), name=output)
-            imageObj = Image.open(io.BytesIO(bytes))
+            with ignore_pillow_filesize_limits():
+                imageObj = Image.open(io.BytesIO(bytes))
             if image is None:  # No null/None images should be set
                 continue
             downloaded_count += 1
@@ -293,7 +303,6 @@ def get_siteobservations_images(
         timestamp = (min_time - timedelta(days=30)) + timebuffer
 
     # Now we get a list of all the timestamps and captures that fall in this range.
-    worldView = baseConstellation == 'WV'
     if matchConstellation == '':
         matchConstellation = Constellation.objects.filter(
             slug=baseConstellation
@@ -303,7 +312,11 @@ def get_siteobservations_images(
         )
 
     captures = get_range_captures(
-        max_bbox, timestamp, matchConstellation.slug, timebuffer, worldView
+        max_bbox,
+        timestamp,
+        matchConstellation.slug,
+        timebuffer,
+        worldview_source,
     )
     self.update_state(
         state='PROGRESS',
@@ -356,10 +369,12 @@ def get_siteobservations_images(
         if capture_timestamp not in found_timestamps.keys():
             # we need to add a new image into the structure
             bytes = None
-            if worldView:
+            if worldview_source == 'cog':
                 bytes = get_worldview_processed_visual_bbox(
                     capture, max_bbox, 'PNG', scale
                 )
+            elif worldview_source == 'nitf':
+                bytes = get_worldview_nitf_bbox(capture, max_bbox, 'PNG', scale)
             else:
                 bytes = get_raster_bbox(capture.uri, max_bbox, 'PNG', scale)
             if bytes is None:
@@ -371,7 +386,8 @@ def get_siteobservations_images(
             count += 1
             output = f'tile_image_{baseSiteEval.pk}_nonobs_{uuid4()}.png'
             image = File(io.BytesIO(bytes), name=output)
-            imageObj = Image.open(io.BytesIO(bytes))
+            with ignore_pillow_filesize_limits():
+                imageObj = Image.open(io.BytesIO(bytes))
             if image is None:  # No null/None images should be set
                 count += 1
                 continue
@@ -563,6 +579,7 @@ def generate_site_images(
     scale: Literal['default', 'bits'] | list[int] = 'default',
     bboxScale: float = BboxScaleDefault,
     pointArea: float = pointAreaDefault,
+    worldview_source: Literal['cog', 'nitf'] | None = 'cog',
 ):
     siteeval = SiteEvaluation.objects.get(pk=site_id)
     with transaction.atomic():
@@ -596,6 +613,7 @@ def generate_site_images(
             overrideDates,
             scale,
             bboxScale,
+            worldview_source,
         )
         fetching_task.celery_id = task_id.id
         fetching_task.save()

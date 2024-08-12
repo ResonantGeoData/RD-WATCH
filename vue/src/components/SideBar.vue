@@ -173,13 +173,15 @@ const satelliteLoadingColor = computed(() => {
         dense
       >
         <ErrorPopup />
-        <img
-          height="50"
-          class="mx-auto pb-4"
-          src="../assets/logo.svg"
-          alt="Resonant GeoData"
-          draggable="false"
-        >
+        <div class="d-flex flex-column align-center mx-auto pb-4">
+          <img
+            height="38"
+            src="../assets/logo.svg"
+            alt="Resonant GeoData"
+            draggable="false"
+          >
+          <span class="text-caption">{{ state.appVersion }}</span>
+        </div>
       </v-row>
       <mode-selector />
       <v-row>

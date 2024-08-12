@@ -108,6 +108,7 @@ export interface SiteObservationUpdateQuery {
 export type Constellation  = 'S2' | 'WV' | 'L8' | 'PL';
 export interface DownloadSettings {
   constellation: Constellation[];
+  worldviewSource?: 'cog' | 'nitf',
   dayRange?: number;
   noData?: number;
   overrideDates?: [string, string];
@@ -385,7 +386,7 @@ export class ApiService {
          },
        });
      }
- 
+
 
   /**
    * @param id
@@ -439,7 +440,7 @@ export class ApiService {
     });
   }
 
-  
+
   /**
    * @returns RegionList
    * @throws ApiError

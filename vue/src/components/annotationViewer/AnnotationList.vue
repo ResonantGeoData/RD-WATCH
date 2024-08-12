@@ -239,6 +239,7 @@ const startDownload = async (data: DownloadSettings) => {
   imageDownloadDialog.value = false;
   if (id) {
   await ApiService.getObservationImages(id, data);
+  state.downloadingCheck += 1;
     // Now we get the results to see if the service is running
     setTimeout(() => getSiteProposals(), 1000);
   }

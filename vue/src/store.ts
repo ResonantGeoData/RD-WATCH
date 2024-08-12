@@ -157,6 +157,7 @@ export interface KeyedModelRun extends ModelRun {
 }
 
 export const state = reactive<{
+  appVersion: string;
   errorText: string;
   timestamp: number;
   timeMin: number;
@@ -202,7 +203,10 @@ export const state = reactive<{
   // Region map is used to index names and owners with ids
   regionMap: RegionMapType;
   regionList: RegionDetail[];
+  // Downloading Check - used to indicate to the modelRunList to check for downloading images
+  downloadingCheck: number;
 }>({
+  appVersion: '',
   errorText: '',
   timestamp: Math.floor(Date.now() / 1000),
   timeMin: new Date(0).valueOf(),
@@ -276,6 +280,7 @@ export const state = reactive<{
   groundTruthLinks: {},
   regionMap: {},
   regionList: [],
+  downloadingCheck: 0,
 });
 
 export const filteredSatelliteTimeList = computed(() => {

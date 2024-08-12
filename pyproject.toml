@@ -27,6 +27,7 @@ packages = [
 enable = true
 vcs = "git"
 metadata = true
+style = "semver"
 
 [tool.poetry-dynamic-versioning.substitution]
 files = ["rdwatch/__init__.py"]

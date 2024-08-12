@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { Ref, defineProps, ref, withDefaults } from "vue";
+import { Ref, computed, defineProps, ref, withDefaults } from "vue";
 import { debounce } from 'lodash';
 import { Constellation, DownloadSettings } from "../client/services/ApiService";
 import { useDate } from "vuetify/lib/framework.mjs";
@@ -19,8 +19,10 @@ const emit = defineEmits<{
     (e: "cancel"): void;
 }>();
 
-const baseList = ref(['S2', 'WV', 'L8', 'PL'])
-const selectedSource: Ref<Constellation[]> = ref(['WV']);
+const constellationChoices = ref(['S2', 'WV', 'L8', 'PL'])
+const selectedConstellation: Ref<Constellation[]> = ref(['WV']);
+const worldviewSourceChoices = computed<string[] | null>(() => selectedConstellation.value.includes('WV') ? ['cog', 'nitf'] : null);
+const selectedWorldviewSource = ref<'cog' | 'nitf'>('cog');
 const dayRange = ref(14);
 const noData = ref(50)
 const overrideDates: Ref<[string, string]> = ref([
@@ -39,7 +41,8 @@ const dateAdpter = useDate();
 const download = debounce(
   () => {
     emit('download', {
-      constellation: selectedSource.value,
+      constellation: selectedConstellation.value,
+      worldviewSource: selectedWorldviewSource.value,
       dayRange: dayRange.value,
       noData: noData.value,
       overrideDates: customDateRange.value ? overrideDates.value : undefined,
@@ -82,10 +85,17 @@ const display = ref(true);
             align="center"
           >
             <v-select
-              v-model="selectedSource"
+              v-model="selectedConstellation"
               multiple
-              :items="baseList"
+              :items="constellationChoices"
               label="Source"
+              class="mr-2"
+            />
+            <v-select
+              v-if="worldviewSourceChoices"
+              v-model="selectedWorldviewSource"
+              :items="worldviewSourceChoices"
+              label="Imagery Type"
               class="mr-2"
             />
             <v-icon

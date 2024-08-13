@@ -63,7 +63,7 @@ class SiteObservation(models.Model):
     def __str__(self):
         sit = str(self.siteeval)
         lbl = str(self.label).upper()
-        tim = self.timestamp.isoformat()
+        tim = self.timestamp.isoformat() if self.timestamp else 'unknown'
         return f'{sit}[{lbl}@{tim}]'
 
     @property

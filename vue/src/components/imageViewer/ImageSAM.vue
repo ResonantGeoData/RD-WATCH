@@ -66,8 +66,8 @@ onMounted(async () => {
 
 const updatePolygon = (polygon: GeoJSON.Polygon) => {
   // We need to set it to edit mode if it isn't in edit mode already.
-  state.filters.editingPolygonSiteId = props.siteEvalId;
-  if (state.editPolygon && polygon) {
+  state.filters.editingGeoJSONSiteId = props.siteEvalId;
+  if (state.editGeoJSON && polygon) {
     const [imageWidth, imageHeight] = divSize.value;
     const geoPoly = denormalizePolygon(
       props.image.bbox,
@@ -76,14 +76,14 @@ const updatePolygon = (polygon: GeoJSON.Polygon) => {
       polygon
     );
     if (geoPoly) {
-      state.editPolygon.setPolygonEdit(geoPoly);
+      state.editGeoJSON.setGeoJSONEdit(geoPoly);
     }
   }
 };
 
 const cancel = () => {
-  state.editPolygon?.cancelPolygonEdit();
-  state.filters.editingPolygonSiteId = null;
+  state.editGeoJSON?.cancelGeoJSONEdit();
+  state.filters.editingGeoJSONSiteId = null;
   emit("cancel");
 };
 

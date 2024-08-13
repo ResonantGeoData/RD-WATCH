@@ -1,7 +1,7 @@
 import { computed, reactive } from "vue";
 
 import { ApiService, ModelRun, Performer, Region } from "./client";
-import { EditPolygonType } from "./interactions/editPolygon";
+import { EditGeoJSONType } from "./interactions/editGeoJSON";
 import { BaseBBox, EvaluationImage } from "./types";
 import { LngLatBounds } from "maplibre-gl";
 import { RegionDetail } from "./client/models/Region";
@@ -26,7 +26,7 @@ export interface MapFilters {
     rejected?: string[],
   }
   randomKey?: string;
-  editingPolygonSiteId?: string | null; //currently editing a polygon
+  editingGeoJSONSiteId?: string | null; //currently editing a polygon
   addingSitePolygon?: boolean;
   addingRegionPolygon?: boolean;
 }
@@ -184,7 +184,7 @@ export const state = reactive<{
   proposals: {
     ground_truths?: string | null,
   }
-  editPolygon: EditPolygonType | null,
+  editGeoJSON: EditGeoJSONType | null,
   // Filters between the detail image viewer panel
   imageFilter: {
     sources: EvaluationImage['source'][];
@@ -258,7 +258,7 @@ export const state = reactive<{
   gifSettings: { fps: 1, quality: 1},
   performerMapping: {},
   proposals: {},
-  editPolygon: null,
+  editGeoJSON: null,
   imageFilter: {
     sources: ['WV', 'S2', 'L8', 'PL'],
     cloudCover: 100,

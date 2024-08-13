@@ -46,7 +46,7 @@ const siteEvaluationUpdated = ref(false)
 const siteStatus: Ref<string | null> = ref(props.status || null);
 const startDateTemp: Ref<string | null> = ref(null);
 const endDateTemp: Ref<string | null> = ref(null);
-const editingPolygon = ref(false);
+const editingGeoJSON = ref(false);
 const evaluationGeoJSON: Ref<GeoJSON.Polygon | GeoJSON.Point | null> = ref(props.evalGeoJSON); // holds the site geoJSON so it can be edited
 
 watch(() => props.editable, () => {
@@ -67,11 +67,11 @@ watch(() => props.evalGeoJSON, () => {
   evaluationGeoJSON.value = props.evalGeoJSON;
 })
 
-watch(() => state.filters.editingPolygonSiteId, () => {
-  if (state.filters.editingPolygonSiteId !== null) {
-    editingPolygon.value = true;
+watch(() => state.filters.editingGeoJSONSiteId, () => {
+  if (state.filters.editingGeoJSONSiteId !== null) {
+    editingGeoJSON.value = true;
   } else {
-    editingPolygon.value = false;
+    editingGeoJSON.value = false;
   }
 });
 
@@ -227,7 +227,7 @@ const saveSiteEvaluationChanges = async () => {
     </div>
   </v-col>
   <v-spacer />
-  <v-col v-if="!editingPolygon && editMode && samViewer === null">
+  <v-col v-if="!editingGeoJSON && editMode && samViewer === null">
     <v-btn
       v-if="siteEvaluationUpdated"
       size="small"

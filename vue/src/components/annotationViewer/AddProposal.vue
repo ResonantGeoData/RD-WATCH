@@ -14,8 +14,8 @@ const props = withDefaults(defineProps<Props>(), {
 });
 
 onMounted(() => {
-  if (state.editPolygon) {
-    state.editPolygon.setPolygonNew();
+  if (state.editGeoJSON) {
+    state.editGeoJSON.setGeoJSONNew('Polygon');
   }
   siteId.value = `9999`;
   performer.value = state.modelRuns.length
@@ -57,15 +57,15 @@ const comments = ref("");
 const performer = ref("");
 const version = ref("0.0.0");
 const deleteSelectedPoints = () => {
-  if (state.editPolygon && selectedPoints.value) {
-    state.editPolygon.deleteSelectedPoints();
+  if (state.editGeoJSON && selectedPoints.value) {
+    state.editGeoJSON.deleteSelectedPoints();
   }
 };
 const selectedPoints = computed(
-  () => state.editPolygon && state.editPolygon.selectedPoints.length
+  () => state.editGeoJSON && state.editGeoJSON.selectedPoints.length
 );
 
-const polygonExists = computed(() => state.editPolygon && state.editPolygon.getEditingPolygon());
+const polygonExists = computed(() => state.editGeoJSON && state.editGeoJSON.getEditingGeoJSON());
 
 const setEditingMode = (mode: EditModes) => {
   if (["StartDate", "EndDate"].includes(mode)) {
@@ -121,14 +121,14 @@ const updateTime = (
 };
 
 const cancel = () => {
-  state.editPolygon?.cancelPolygonEdit();
+  state.editGeoJSON?.cancelGeoJSONEdit();
   state.filters.addingSitePolygon = undefined;
 };
 
 const addProposal = async () => {
   // build up the SiteModel
-  if (state.editPolygon) {
-    const polyGeoJSON = state.editPolygon.getEditingPolygon();
+  if (state.editGeoJSON) {
+    const polyGeoJSON = state.editGeoJSON.getEditingGeoJSON();
     if (polyGeoJSON) {
       const found = Object.entries(styles).find(([key , item]) => (item.label === siteEvaluationLabel.value || item.label === key));
       if (found) {
@@ -162,7 +162,7 @@ const addProposal = async () => {
           // We need to update the source to get information
           // This reloads the source vector-tile to color it properly after data has been changed.
           state.filters.randomKey = `?randomKey=randomKey_${Math.random() * 1000}`; 
-          state.editPolygon.cancelPolygonEdit();
+          state.editGeoJSON.cancelGeoJSONEdit();
           state.filters.addingSitePolygon = undefined;      
         }
       }

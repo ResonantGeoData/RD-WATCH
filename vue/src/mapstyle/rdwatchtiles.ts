@@ -114,13 +114,13 @@ export const buildSiteFilter = (
       ]
     );
   }
-  if (filters.editingPolygonSiteId) {
+  if (filters.editingGeoJSONSiteId) {
     filter.push(
       [
         'all',
         [
           "case",
-          ["==", ["get", "id"], filters.editingPolygonSiteId], false,
+          ["==", ["get", "id"], filters.editingGeoJSONSiteId], false,
           true
         ],
       ]

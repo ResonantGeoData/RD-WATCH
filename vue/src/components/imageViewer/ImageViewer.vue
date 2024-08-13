@@ -107,7 +107,7 @@ const groundTruth: Ref<EvaluationImageResults["groundTruth"] | null> =
 const drawGroundTruth = ref(false);
 const rescaleImage = ref(false);
 const rescalingBBox = ref(1);
-const editingPolygon = ref(false);
+const editingGeoJSON = ref(false);
 const SAMViewer: Ref<number | null> = ref(null);
 const sidePanelExpanded = ref(false || props.editable);
 const sidePanelTab: Ref<null | string> = ref(null);
@@ -136,6 +136,7 @@ const getImageData = async () => {
   const images = data.images.results.sort((a, b) => a.timestamp - b.timestamp);
   const polygons = data.geoJSON;
   evaluationGeoJSON.value = data.evaluationGeoJSON;
+  console.log(evaluationGeoJSON.value);
   polygons.sort((a, b) => a.timestamp - b.timestamp);
   siteEvaluationNotes.value = data.notes || "";
   siteEvaluationLabel.value = data.label;
@@ -300,9 +301,9 @@ const close = () => {
     loadAndToggleSatelliteImages(props.siteEvalId);
   }
 
-  if (editingPolygon.value) {
-    state.filters.editingPolygonSiteId = null;
-    editingPolygon.value = false;
+  if (editingGeoJSON.value) {
+    state.filters.editingGeoJSONSiteId = null;
+    editingGeoJSON.value = false;
   }
   Object.keys(embeddingCheckInterval).forEach((key) => {
     clearInterval(embeddingCheckInterval.value[key]);
@@ -352,7 +353,7 @@ const generateImageEmbedding = async (
 const openSAMView = (id: number) => {
   SAMViewer.value = id;
   sidePanelExpanded.value = true;
-  sidePanelTab.value = 'Polygon';
+  sidePanelTab.value = 'Editing';
 };
 
 const setSiteModelStatus = async (status: SiteModelStatus) => {
@@ -594,7 +595,7 @@ const clearStorage = async () => {
         >
           <v-row class="pb-2">
             <v-spacer />
-            <v-col v-if="!editingPolygon && editMode && SAMViewer === null">
+            <v-col v-if="!editingGeoJSON && editMode && SAMViewer === null">
               <v-btn
                 v-if="siteStatus !== 'APPROVED'"
                 size="small"
@@ -614,7 +615,7 @@ const clearStorage = async () => {
                 Un-Approve
               </v-btn>
             </v-col>
-            <v-col v-if="!editingPolygon && editMode && SAMViewer === null">
+            <v-col v-if="!editingGeoJSON && editMode && SAMViewer === null">
               <v-btn
                 v-if="siteStatus !== 'REJECTED'"
                 size="small"
@@ -659,11 +660,11 @@ const clearStorage = async () => {
               </v-tab>
               <v-tab
                 v-if="editMode"
-                value="Polygon"
+                value="Editing"
                 size="small"
                 variant="tonal"
               >
-                Polygon <v-icon>mdi-pencil</v-icon>
+                GeoJSON <v-icon>mdi-pencil</v-icon>
               </v-tab>
             </v-tabs>
             <v-spacer />
@@ -693,7 +694,7 @@ const clearStorage = async () => {
               @image-filter="filteredImages = $event"
             />
           </div>
-          <div v-if="sidePanelTab === 'Polygon' && editMode">
+          <div v-if="sidePanelTab === 'Editing' && editMode">
             <image-polygon-editor
               :site-eval-id="siteEvalId"
               :sam-viewer="SAMViewer"

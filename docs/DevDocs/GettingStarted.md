@@ -97,7 +97,7 @@ The Vue-based SPA frontend. Source code is in the ["vue"](https://github.com/Res
 Services the application requires.
 
 - [NGINX Unit](https://unit.nginx.org/): serves both the backend and the bundled static assets
-- [PostgreSQL](https://www.postgresql.org/docs/14/index.html) and [PostGIS 3.2](http://www.postgis.net/documentation/): data warehouse
+- [PostgreSQL](https://www.postgresql.org/docs/14/index.html) and [PostGIS](http://www.postgis.net/documentation/): data warehouse
 - [MinIO/S3](https://min.io/): storage for satellite images for faster browsing
 - [Redis](https://redis.io/docs/): caching and job queue
 

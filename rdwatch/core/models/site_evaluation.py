@@ -282,3 +282,10 @@ class SiteEvaluationTracking(models.Model):
         spatial_index=True,
         null=True,
     )
+
+    point = PointField(
+        help_text="Point from this site's Site Feature",
+        srid=3857,
+        spatial_index=True,
+        null=True,
+    )

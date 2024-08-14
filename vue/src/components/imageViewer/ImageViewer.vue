@@ -488,6 +488,7 @@ const clearStorage = async () => {
       </v-tooltip>
       <v-tooltip
         v-if="editMode && !loading && 
+          evaluationGeoJSON?.type !== 'Point' &&
           !ApiService.getApiPrefix().includes('scoring') &&
           filteredImages.length &&
           filteredImages[currentImage] &&

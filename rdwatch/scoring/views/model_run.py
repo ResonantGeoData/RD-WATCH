@@ -688,7 +688,7 @@ def get_sites_query(model_run_id: UUID4):
                     default=ExtractEpoch('start_date'),
                 ),
                 end_date=Case(
-                    When(Q(union_geometry__isnull=True),ExtractEpoch('point_date')),
+                    When(Q(union_geometry__isnull=True), ExtractEpoch('point_date')),
                     default=ExtractEpoch('end_date'),
                 ),
                 originator=F('originator'),

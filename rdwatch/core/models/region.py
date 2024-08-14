@@ -83,8 +83,7 @@ class Region(models.Model):
                 name='unique_region_with_owner',
                 fields=['name', 'owner'],
                 condition=Q(owner__isnull=False),
-                violation_error_message='Region already exists with \
-                    this name and owner.',
+                violation_error_message='Region already exists with this name and owner.',
             ),
         ]
 

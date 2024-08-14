@@ -1,5 +1,5 @@
 services:
-  # PostgreSQL 14
+  # PostgreSQL
   postgresql:
     image: postgis/postgis:latest
     environment:

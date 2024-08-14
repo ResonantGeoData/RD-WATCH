@@ -97,9 +97,10 @@ class ModelRunFilterSchema(FilterSchema):
         return eval_q
 
 
-def get_queryset():
+def get_queryset(id):
     return (
         EvaluationRun.objects.filter(
+            Q(uuid=id),
             Q(evaluationbroadareasearchmetric__activity_type='overall'),
             Q(evaluationbroadareasearchmetric__tau=0.2),
             Q(evaluationbroadareasearchmetric__rho=0.5),
@@ -175,7 +176,7 @@ def get_queryset():
     )
 
 
-def get_queryset_proposal():
+def get_queryset_proposal(id):
     proposed_count_subquery = (
         AnnotationProposalSite.objects.filter(
             annotation_proposal_set_uuid=OuterRef('pk')
@@ -196,7 +197,9 @@ def get_queryset_proposal():
     )
 
     return (
-        AnnotationProposalSet.objects.values().annotate(
+        AnnotationProposalSet.objects.filter(annotation_proposal_set_uuid=id)
+        .values()
+        .annotate(
             id=F('uuid'),
             region_name=F('region_id'),
             title=Concat(
@@ -507,9 +510,9 @@ def list_model_runs(
 @router.get('/{id}/', response={200: ModelRunDetailSchema})
 def get_model_run(request: HttpRequest, id: UUID4):
     if EvaluationRun.objects.filter(pk=id).exists():
-        data = get_queryset()
+        data = get_queryset(id=id).first()
     elif AnnotationProposalSet.objects.filter(pk=id).exists():
-        data = get_object_or_404(get_queryset_proposal(), id=id)
+        data = get_object_or_404(get_queryset_proposal(), id=id).first()
     else:
         return HttpResponseNotFound(
             f'Neither an EvaluationRun or AnnotationProposalSet exists for uuid: {id}'

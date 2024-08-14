@@ -526,7 +526,7 @@ def vector_tile(
         evaluation_run_uuid, z, x, y, latest_timestamp
     )
 
-    tile = None
+    tile = cache.get(cache_key)
 
     # Generate the vector tiles and cache them if there's no hit
     if tile is None:

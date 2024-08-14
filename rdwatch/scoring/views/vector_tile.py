@@ -23,7 +23,7 @@ from django.db.models import (
     When,
     Window,
 )
-from django.db.models.functions import Cast, Concat, Lower, Replace, Substr
+from django.db.models.functions import Cast, Coalesce, Concat, Lower, Replace, Substr
 from django.http import HttpRequest, HttpResponse
 from django.shortcuts import get_object_or_404
 
@@ -526,7 +526,7 @@ def vector_tile(
         evaluation_run_uuid, z, x, y, latest_timestamp
     )
 
-    tile = cache.get(cache_key)
+    tile = None
 
     # Generate the vector tiles and cache them if there's no hit
     if tile is None:
@@ -585,9 +585,13 @@ def vector_tile(
                     default=Value('unknown'),
                 ),  # This needs a version to be scoring coloring,
                 # but that needs some coordination with kitware
-                timestamp=ExtractEpoch('start_date'),
-                timemin=ExtractEpoch('start_date'),
-                timemax=ExtractEpoch('end_date'),
+                timestamp=Coalesce(
+                    ExtractEpoch('start_date'), ExtractEpoch('point_date')
+                ),
+                timemin=Coalesce(
+                    ExtractEpoch('start_date'), ExtractEpoch('point_date')
+                ),
+                timemax=Coalesce(ExtractEpoch('end_date'), ExtractEpoch('point_date')),
                 performer_id=F('originator'),
                 performer_name=F('originator'),
                 region=F('region_id'),

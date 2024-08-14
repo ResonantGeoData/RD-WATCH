@@ -708,9 +708,9 @@ def vector_tile(
                     default=Value('unknown'),
                 ),  # This needs a version to be scoring coloring,
                 # but that needs some coordination with kitware
-                timestamp=ExtractEpoch('start_date'),
-                timemin=ExtractEpoch('start_date'),
-                timemax=ExtractEpoch('end_date'),
+                timestamp=ExtractEpoch('point_date'),
+                timemin=ExtractEpoch('point_date'),
+                timemax=ExtractEpoch('point_date'),
                 performer_id=F('originator'),
                 performer_name=F('originator'),
                 region=F('region_id'),

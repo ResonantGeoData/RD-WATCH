@@ -71,7 +71,12 @@ def _upload_model_run(
         json=post_model_data,
         headers={'Content-Type': 'application/json', 'X-RDWATCH-API-KEY': rgd_api_key},
     )
-    res.raise_for_status()
+    try:
+        res.raise_for_status()
+    except requests.HTTPError:
+        print(f'Failed to create model run for {region}, response body was:')
+        print(res.text)
+        raise
 
     model_run_id = res.json()['id']
 

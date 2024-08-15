@@ -216,7 +216,8 @@ const load = async (newValue?: string, oldValue?: string) => {
       drawGroundTruth.value,
       rescaleImage.value,
       props.fullscreen,
-      rescalingBBox.value
+      rescalingBBox.value,
+      state.gifSettings.pointSize,
     );
   }
   loading.value = false;
@@ -271,7 +272,8 @@ watch(
           drawGroundTruth.value,
           rescaleImage.value,
           props.fullscreen,
-          rescalingBBox.value
+          rescalingBBox.value,
+          state.gifSettings.pointSize,
         );
       }
       if (

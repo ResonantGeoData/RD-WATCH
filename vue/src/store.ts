@@ -179,7 +179,7 @@ export const state = reactive<{
   loopingId: string | null,
   modelRuns: KeyedModelRun[],
   openedModelRuns: Set<KeyedModelRun["key"]>
-  gifSettings: { fps: number, quality: number},
+  gifSettings: { fps: number, quality: number, pointSize: number},
   performerMapping: Record<number, Performer>,
   proposals: {
     ground_truths?: string | null,
@@ -255,7 +255,7 @@ export const state = reactive<{
   loopingId: null,
   modelRuns: [],
   openedModelRuns: new Set<KeyedModelRun["key"]>(),
-  gifSettings: { fps: 1, quality: 1},
+  gifSettings: { fps: 1, quality: 1, pointSize: 1},
   performerMapping: {},
   proposals: {},
   editGeoJSON: null,

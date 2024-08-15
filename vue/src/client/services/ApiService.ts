@@ -222,6 +222,14 @@ export interface DownloadedAnimation {
   state?: DownloadAnimationState;
 }
 
+export interface ModelRunUpload {
+  title: string;
+  region: string | null | undefined;
+  performer: string | null | undefined;
+  zipfileKey: string;
+  private: boolean;
+}
+
 type ApiPrefix = '/api' | '/api/scoring';
 
 export class ApiService {
@@ -629,6 +637,21 @@ export class ApiService {
       },
     });
 
+  }
+
+  public static postModelRunUpload(data: ModelRunUpload): CancelablePromise<string> {
+    return __request(OpenAPI, {
+      method: "POST",
+      url: `${this.getApiPrefix()}/model-runs/start_upload_processing`,
+      body: { ...data },
+    });
+  }
+
+  public static getModelRunUploadTaskStatus(taskId: string): CancelablePromise<string> {
+    return __request(OpenAPI, {
+      method: "GET",
+      url: `${this.getApiPrefix()}/model-runs/upload_status/${taskId}`,
+    });
   }
 
   public static getSiteImageEmbeddingStatus(id: number, uuid: string): CancelablePromise<{state: string, status: string}> {

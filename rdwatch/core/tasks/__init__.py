@@ -6,8 +6,8 @@ import tempfile
 import zipfile
 from collections.abc import Iterable
 from datetime import datetime, timedelta
-from typing import Literal
-from uuid import uuid4
+from typing import Literal, TypeVar
+from uuid import UUID, uuid4
 
 import cv2
 import numpy as np
@@ -18,7 +18,7 @@ from celery.states import READY_STATES
 from django_celery_results.models import TaskResult
 from more_itertools import ichunked
 from PIL import Image
-from pydantic import UUID4
+from pydantic import UUID4, BaseModel, ValidationError
 from pyproj import Transformer
 from segment_anything import SamPredictor, sam_model_registry
 
@@ -36,12 +36,17 @@ from rdwatch.core.models import (
     AnimationSiteExport,
     AnnotationExport,
     ModelRun,
+    ModelRunUpload,
+    Performer,
     SatelliteFetching,
     SiteEvaluation,
     SiteImage,
     SiteObservation,
 )
 from rdwatch.core.models.lookups import Constellation
+from rdwatch.core.models.region import get_or_create_region
+from rdwatch.core.schemas.region_model import RegionModel
+from rdwatch.core.schemas.site_model import SiteModel
 from rdwatch.core.utils.images import (
     fetch_boundbox_image,
     get_max_bbox,
@@ -762,3 +767,99 @@ def download_sam_model_if_not_exists(**kwargs):
             return f'Error downloading file: {e}'
     else:
         return f'File already exists at {file_path}'
+
+
+ModelT = TypeVar('ModelT', bound=BaseModel)
+
+
+def parse_model_json(ModelClass: type[ModelT], data: str | bytes) -> ModelT | None:
+    try:
+        return ModelClass.parse_raw(data)
+    except ValidationError:
+        return None
+
+
+def process_model_run_upload(model_run_upload: ModelRunUpload):
+    # parse out the site and region models from the uploaded zipfile
+    site_models: list[SiteModel] = []
+    region_models: list[RegionModel] = []
+
+    with model_run_upload.zipfile.open('rb') as fp, zipfile.ZipFile(fp, 'r') as zipfp:
+        for filename in zipfp.namelist():
+            if not filename.endswith('.geojson'):
+                continue
+
+            contents = zipfp.read(filename)
+
+            model = parse_model_json(RegionModel, contents)
+            if model:
+                region_models.append(model)
+                continue
+
+            model = parse_model_json(SiteModel, contents)
+            if model:
+                site_models.append(model)
+                continue
+
+            logger.info('[process_model_run_upload] Cannot handle file: %s', filename)
+
+    if len(site_models) == 0 or len(region_models) == 0:
+        raise ValueError('Did not receive any site or region models')
+
+    all_region_ids: set[str] = set()
+    all_originators: set[str] = set()
+    for model in site_models:
+        all_region_ids.add(model.site_feature.properties.region_id)
+        all_originators.add(model.site_feature.properties.originator)
+    for model in region_models:
+        all_region_ids.add(model.region_feature.properties.region_id)
+        all_originators.add(model.region_feature.properties.originator)
+
+    if model_run_upload.region == '':
+        if len(all_region_ids) == 0:
+            raise ValueError('No regions in the zip file')
+        if len(all_region_ids) > 1:
+            raise ValueError('Too many regions provided in the zip file')
+
+    if model_run_upload.performer == '':
+        if len(all_originators) == 0:
+            raise ValueError('No performers in the zip file')
+        if len(all_originators) > 1:
+            raise ValueError('Too many performers provided in the zip file')
+
+    region_id = model_run_upload.region or next(iter(all_region_ids))
+    performer_shortcode = model_run_upload.performer or next(iter(all_originators))
+
+    with transaction.atomic():
+        # create a new ModelRun
+        region, _ = get_or_create_region(region_id)
+        performer, _ = Performer.objects.get_or_create(
+            short_code=performer_shortcode.upper(),
+            team_name=performer_shortcode,
+        )
+        model_run = ModelRun.objects.create(
+            title=model_run_upload.title,
+            performer=performer,
+            region=region,
+            # TODO toggle for {'ground_truth': True/False}?
+            # TODO is this where the private toggle can be used?
+            parameters={},
+            # TODO handle expiration_time, evaluation, evaluation_run, proposal?
+            # TODO pass in the user?
+            public=not model_run_upload.private,
+        )
+
+        for site_model in site_models:
+            SiteEvaluation.bulk_create_from_site_model(site_model, model_run)
+        for region_model in region_models:
+            SiteEvaluation.bulk_create_from_region_model(region_model, model_run)
+
+
+@shared_task
+def process_model_run_upload_task(upload_id: UUID):
+    model_run_upload = ModelRunUpload.objects.get(pk=upload_id)
+
+    try:
+        process_model_run_upload(model_run_upload)
+    finally:
+        model_run_upload.delete()

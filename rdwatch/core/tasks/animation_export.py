@@ -1,6 +1,8 @@
 import os
 import uuid
 
+import cv2
+import numpy as np
 from celery import shared_task
 from PIL import Image, ImageDraw, ImageFont
 from pyproj import Transformer
@@ -163,6 +165,8 @@ def draw_text_in_box(
 @shared_task
 def create_animated_gif(
     site_evaluation_id,
+    output_format='mp4',
+    fps=1,
     sources=['WV', 'S2', 'L8', 'PL'],  # noqa
 ):
     # Fetch the SiteEvaluation instance
@@ -190,6 +194,7 @@ def create_animated_gif(
 
     # Process each SiteObservation image
     frames = []
+    np_array = []
     polygon = None
     point = None
     for img, width, height, image_record in images_data:
@@ -295,7 +300,6 @@ def create_animated_gif(
 
         label_point = (center[0] - (label_width / 2.0), max_height - label_height)
         label_size = (label_width, label_height)
-        print(label_mapped)
         if label_mapped:
             draw_text_in_box(
                 draw,
@@ -306,16 +310,38 @@ def create_animated_gif(
             )
 
         frames.append(img)
+        np_array.append(np.array(img))  # Convert PIL image to NumPy array
 
     # Save frames as an animated GIF
     if frames:
-        output_file_path = os.path.join('./', 'animated_gifs', f'{uuid.uuid4()}.gif')
-        os.makedirs(os.path.dirname(output_file_path), exist_ok=True)
-        frames[0].save(
-            output_file_path,
-            save_all=True,
-            append_images=frames[1:],
-            duration=750,
-            loop=0,
-        )
+        output_dir = os.path.join('./', 'animations')
+        os.makedirs(output_dir, exist_ok=True)
+        if output_format == 'gif':
+            output_file_path = os.path.join(output_dir, f'{uuid.uuid4()}.gif')
+            frames[0].save(
+                output_file_path,
+                save_all=True,
+                append_images=frames[1:],
+                duration=1 / fps,
+                loop=0,
+                optimize=True,
+                quality=100,
+            )
+        else:  # 'mp4'
+            output_file_path = os.path.join(output_dir, f'{uuid.uuid4()}.mp4')
+
+            # Initialize video writer
+            fourcc = cv2.VideoWriter_fourcc(*'mp4v')
+            video_writer = cv2.VideoWriter(
+                output_file_path, fourcc, 1, (max_width, max_height)
+            )
+
+            # Write each frame to the video
+            for frame in np_array:
+                frame_bgr = cv2.cvtColor(
+                    frame, cv2.COLOR_RGB2BGR
+                )  # Convert RGB to BGR for OpenCV
+                video_writer.write(frame_bgr)
+
+            video_writer.release()  # Close the video writer
         return output_file_path

@@ -7,6 +7,85 @@ from pyproj import Transformer
 
 from rdwatch.core.models import SiteEvaluation, SiteImage
 
+label_mapping = {
+    'active_construction': {
+        'color': (192, 0, 0),
+        'label': 'Active Construction',
+    },
+    'post_construction': {
+        'color': (91, 155, 213),
+        'label': 'Post Construction',
+    },
+    'site_preparation': {
+        'color': (255, 217, 102),
+        'label': 'Site Preparation',
+    },
+    'unknown': {
+        'color': (112, 48, 160),
+        'label': 'Unknown',
+    },
+    'no_activity': {
+        'color': (166, 166, 166),
+        'label': 'No Activity',
+    },
+    'positive_annotated': {
+        'color': (127, 0, 0),
+        'label': 'Positive Annotated',
+    },
+    'positive': {
+        'color': (127, 0, 0),
+        'label': 'Positive Annotated',
+    },
+    'positive_partial': {
+        'color': (0, 0, 139),
+        'label': 'Positive Partial',
+    },
+    'positive_annotated_static': {
+        'color': (255, 140, 0),
+        'label': 'Positive Annotated Static',
+    },
+    'positive_partial_static': {
+        'color': (255, 255, 0),
+        'label': 'Positive Partial Static',
+    },
+    'positive_pending': {
+        'color': (30, 144, 255),
+        'label': 'Positive Pending',
+    },
+    'positive_excluded': {
+        'color': (0, 255, 255),
+        'label': 'Positive Excluded',
+    },
+    'negative': {
+        'color': (255, 0, 255),
+        'label': 'Negative',
+    },
+    'ignore': {
+        'color': (0, 255, 0),
+        'label': 'Ignore',
+    },
+    'transient_positive': {
+        'color': (255, 105, 180),
+        'label': 'Transient Positive',
+    },
+    'transient_negative': {
+        'color': (255, 228, 196),
+        'label': 'Transient Negative',
+    },
+    'system_proposed': {
+        'color': (31, 119, 180),
+        'label': 'System Proposed',
+    },
+    'system_confirmed': {
+        'color': (31, 119, 180),
+        'label': 'System Confirmed',
+    },
+    'system_rejected': {
+        'color': (31, 119, 180),
+        'label': 'System Rejected',
+    },
+}
+
 
 def to_pixel_coords(lon, lat, bbox, xScale, yScale):
     x = (lon - bbox[0]) * xScale
@@ -15,19 +94,29 @@ def to_pixel_coords(lon, lat, bbox, xScale, yScale):
 
 
 def draw_text_in_box(
-    draw, text, position, box_size, font_path=None, initial_font_size=30
+    draw,
+    text,
+    position,
+    box_size,
+    box_color=(80, 80, 80),
+    text_color=(255, 255, 255),
+    font_path=None,
+    initial_font_size=30,
 ):
     """
-    Draws text within a given box with adjustable font size.
+    Draws text within a given box with adjustable font size and a background square.
+    If the text is larger than the box, the box size is adjusted to fit the text.
 
     :param draw: ImageDraw object to draw on the image.
     :param text: Text to draw.
-    :param position: Position (x, y) to start drawing text.
-    :param box_size: Tuple (width, height) specifying the box size.
+    :param position: Position (x, y) to start drawing the box and text.
+    :param box_size: Tuple (width, height) specifying the initial box size.
+    :param box_color: Background color of the box (R, G, B).
+    :param text_color: Color of the text (R, G, B).
     :param font_path: Path to a .ttf font file, or None to use default font.
     :param initial_font_size: Starting font size.
     """
-    width, height = box_size
+    max_width, max_height = box_size
 
     # Load font
     if font_path:
@@ -41,7 +130,9 @@ def draw_text_in_box(
     text_height = text_bbox[3] - text_bbox[1]
 
     # Adjust font size to fit the box
-    while (text_width > width or text_height > height) and initial_font_size > 10:
+    while (
+        text_width > max_width or text_height > max_height
+    ) and initial_font_size > 10:
         initial_font_size -= 2
         font = (
             ImageFont.truetype(font_path, initial_font_size)
@@ -52,30 +143,21 @@ def draw_text_in_box(
         text_width = text_bbox[2] - text_bbox[0]
         text_height = text_bbox[3] - text_bbox[1]
 
+    # Adjust the box size if the text is larger
+    box_width = max(text_width, max_width)
+    box_height = max(text_height, max_height)
+
+    # Draw background box
+    draw.rectangle(
+        [position, (position[0] + box_width, position[1] + box_height)], fill=box_color
+    )
+
+    # Calculate text position to center it in the box
+    text_x = position[0] + (box_width - text_width) / 2
+    text_y = position[1] + (box_height - text_height) / 2
+
     # Draw text
-    draw.text(position, text, font=font, fill=(255, 255, 255))  # White text
-
-
-def wrap_text(text, font, max_width):
-    """
-    Wraps text to fit within a given width.
-    :param text: Text to wrap.
-    :param font: Font object.
-    :param max_width: Maximum width for the text.
-    :return: List of lines with wrapped text.
-    """
-    lines = []
-    words = text.split(' ')
-    line = ''
-    for word in words:
-        test_line = line + word + ' '
-        if font.getbbox(test_line)[2] <= max_width:
-            line = test_line
-        else:
-            lines.append(line)
-            line = word + ' '
-    lines.append(line)
-    return lines
+    draw.text((text_x, text_y), text, font=font, fill=text_color)
 
 
 @shared_task
@@ -129,7 +211,8 @@ def create_animated_gif(
         observation = image_record.observation
         if observation:
             polygon = observation.geom
-            observation.label
+            label = observation.label
+            label_mapped = label_mapping.get(label.slug, {})
         elif not polygon:
             polygon = site_evaluation.geom
             site_evaluation.label
@@ -150,7 +233,8 @@ def create_animated_gif(
                     )
                     for lon, lat in transformed_coords
                 ]
-                draw.polygon(pixel_coords, outline='white')
+                color = label_mapped.get('color', 'white')
+                draw.polygon(pixel_coords, outline=color)
         if not polygon:
             point = observation.point
         if not point:
@@ -174,7 +258,7 @@ def create_animated_gif(
         center = (max_width / 2.0, max_height / 2.0)
         # Draw date as 1/3 of the center of the image at the top
         date_width = max_width / 3.0
-        date_height = max(max_height / 10.0, 20)
+        date_height = max(max_height / 15.0, 10)
         date_box_point = (center[0] - (date_width / 2.0), 0)
         date_box_size = (date_width, date_height)
         draw_text_in_box(
@@ -183,6 +267,44 @@ def create_animated_gif(
             date_box_point,
             date_box_size,
         )
+        # Draw Source
+        source_point = (0, 0)
+        source_size = (max_width / 10.0, date_height)
+        draw_text_in_box(
+            draw,
+            image_record.source,
+            source_point,
+            source_size,
+        )
+        # Draw Observation
+        obs_width = max_width / 10.0
+        obs_point = (max_width - obs_width, 0)
+        obs_size = (max_width / 10.0, date_height)
+        obs_text = '+obs'
+        if image_record.observation is None:
+            obs_text = '-obs'
+        draw_text_in_box(
+            draw,
+            obs_text,
+            obs_point,
+            obs_size,
+        )
+        # Draw Label
+        label_width = max_width / 3.0
+        label_height = max(max_height / 15.0, 10)
+
+        label_point = (center[0] - (label_width / 2.0), max_height - label_height)
+        label_size = (label_width, label_height)
+        print(label_mapped)
+        if label_mapped:
+            draw_text_in_box(
+                draw,
+                label_mapped['label'],
+                label_point,
+                label_size,
+                label_mapped['color'],
+            )
+
         frames.append(img)
 
     # Save frames as an animated GIF

@@ -1,5 +1,7 @@
+import logging
 import os
 import uuid
+from typing import Literal
 
 import cv2
 import numpy as np
@@ -8,6 +10,8 @@ from PIL import Image, ImageDraw, ImageFont
 from pyproj import Transformer
 
 from rdwatch.core.models import SiteEvaluation, SiteImage
+
+logger = logging.getLogger(__name__)
 
 label_mapping = {
     'active_construction': {
@@ -89,9 +93,9 @@ label_mapping = {
 }
 
 
-def to_pixel_coords(lon, lat, bbox, xScale, yScale):
-    x = (lon - bbox[0]) * xScale
-    y = (lat - bbox[1]) * yScale
+def to_pixel_coords(lon, lat, bbox, xScale, yScale, xOffset=0, yOffset=0):
+    x = (lon - bbox[0]) * xScale + xOffset
+    y = (lat - bbox[1]) * yScale + yOffset
     return x, y
 
 
@@ -121,53 +125,75 @@ def draw_text_in_box(
     max_width, max_height = box_size
 
     # Load font
-    if font_path:
-        font = ImageFont.truetype(font_path, initial_font_size)
-    else:
-        font = ImageFont.load_default()
-
-    # Measure text size
-    text_bbox = draw.textbbox((0, 0), text, font=font)  # (left, top, right, bottom)
-    text_width = text_bbox[2] - text_bbox[0]
-    text_height = text_bbox[3] - text_bbox[1]
-
-    # Adjust font size to fit the box
-    while (
-        text_width > max_width or text_height > max_height
-    ) and initial_font_size > 10:
-        initial_font_size -= 2
-        font = (
-            ImageFont.truetype(font_path, initial_font_size)
+    def get_font(size):
+        return (
+            ImageFont.truetype(font_path, size)
             if font_path
-            else ImageFont.load_default()
+            else ImageFont.load_default(size)
         )
+
+    # Binary search for the optimal font size
+    low, high = 10, initial_font_size
+    best_font_size = low
+    best_text_bbox = None
+
+    while low <= high:
+        mid = (low + high) // 2
+        font = get_font(mid)
         text_bbox = draw.textbbox((0, 0), text, font=font)
         text_width = text_bbox[2] - text_bbox[0]
         text_height = text_bbox[3] - text_bbox[1]
+
+        if text_width <= max_width and text_height <= max_height:
+            best_font_size = mid
+            best_text_bbox = text_bbox
+            low = mid + 1
+        else:
+            high = mid - 1
+
+    # Use the best font size found
+    font = get_font(best_font_size)
+    text_width = best_text_bbox[2] - best_text_bbox[0]
+    text_height = best_text_bbox[3] - best_text_bbox[1]
 
     # Adjust the box size if the text is larger
     box_width = max(text_width, max_width)
     box_height = max(text_height, max_height)
 
     # Draw background box
-    draw.rectangle(
-        [position, (position[0] + box_width, position[1] + box_height)], fill=box_color
-    )
-
-    # Calculate text position to center it in the box
     text_x = position[0] + (box_width - text_width) / 2
     text_y = position[1] + (box_height - text_height) / 2
 
+    draw.rectangle(
+        [position, (text_x + box_width, text_y + box_height)], fill=box_color
+    )
     # Draw text
     draw.text((text_x, text_y), text, font=font, fill=text_color)
 
 
 @shared_task
-def create_animated_gif(
+def create_animation(
     site_evaluation_id,
-    output_format='mp4',
+    output_format: Literal['mp4', 'gif'] = 'mp4',
     fps=1,
-    sources=['WV', 'S2', 'L8', 'PL'],  # noqa
+    point_radius=5,
+    sources: list[Literal['WV', 'S2', 'L8', 'PL']] = [  # noqa: B006
+        'WV',
+        'S2',
+        'L8',
+        'PL',
+    ],
+    labels: list[
+        Literal['geom', 'date', 'source', 'obs', 'obs_label']
+    ] = [  # noqa: B006
+        'geom',
+        'date',
+        'source',
+        'obs',
+        'obs_label',
+    ],
+    rescale=False,
+    rescale_border=1,
 ):
     # Fetch the SiteEvaluation instance
     try:
@@ -181,25 +207,111 @@ def create_animated_gif(
     # Create a transformer from EPSG:3857 to EPSG:4326
     transformer = Transformer.from_crs('epsg:3857', 'epsg:4326', always_xy=True)
 
+    site_label = site_evaluation.label.slug
+    site_label_mapped = label_mapping.get(site_label, False)
     images = SiteImage.objects.filter(
         site=site_evaluation_id, source__in=sources
     ).order_by('timestamp')
+
+    max_image_record = None
     for image_record in images:
         if image_record.image:
             img = Image.open(image_record.image)
             width, height = image_record.image_dimensions
-            max_width = max(max_width, width)
-            max_height = max(max_height, height)
             images_data.append((img, width, height, image_record))
 
-    # Process each SiteObservation image
+            # Check if the current image has the maximum width and height
+            if width >= max_width and height >= max_height:
+                max_width = width
+                max_height = height
+                max_image_record = image_record
+    max_image_bbox = max_image_record.image_bbox.extent
+
+    # using the max_image_bbox we apply the rescale_border
+    if rescale:
+        max_image_bbox_width = max_image_bbox[2] - max_image_bbox[0]
+        max_image_bbox_height = max_image_bbox[3] - max_image_bbox[1]
+
+        rescaled_image_bbox_width = max_image_bbox_width * rescale_border
+        rescaled_image_bbox_height = max_image_bbox_height * rescale_border
+
+        # Determine pixels per unit for the rescaled image
+        x_pixel_per_unit = max_width / max_image_bbox_width
+        y_pixel_per_unit = max_height / max_image_bbox_height
+
+        # Update the rescaled max dimensions
+        rescaled_max_width = int(rescaled_image_bbox_width * x_pixel_per_unit)
+        rescaled_max_height = int(rescaled_image_bbox_height * y_pixel_per_unit)
+        width_scale = rescaled_max_width / max_image_bbox_width
+        height_scale = rescaled_max_height / max_image_bbox_height
+
+        x_offset = (rescaled_max_width - max_width * width_scale) / 2
+        y_offset = (rescaled_max_height - max_height * height_scale) / 2
+
+        logger.warning(
+            f'maxWidth: {rescaled_max_width} maxHeight:{rescaled_max_height}\
+                vs {max_width, max_height}'
+        )
+        logger.warning(
+            f'bboxMaxWidth: {rescaled_image_bbox_width} \
+                bboxMaxHeight: {rescaled_image_bbox_height} \
+                    vs {max_image_bbox_width},{max_image_bbox_height}'
+        )
+    else:
+        x_offset = 0
+        y_offset = 0
     frames = []
     np_array = []
     polygon = None
     point = None
     for img, width, height, image_record in images_data:
-        # Resize image to max dimensions
-        img = img.resize((max_width, max_height))
+        if rescale:
+            bbox = image_record.image_bbox.extent  # minx, miny, maxx, maxy
+            width_scale = rescaled_max_width / max_image_bbox_width
+            height_scale = rescaled_max_height / max_image_bbox_height
+
+            # Determine the cropping box based on the rescaled geospatial size
+            crop_bbox = (
+                max(bbox[0], max_image_bbox[0]),
+                max(bbox[1], max_image_bbox[1]),
+                min(bbox[2], max_image_bbox[0] + rescaled_image_bbox_width),
+                min(bbox[3], max_image_bbox[1] + rescaled_image_bbox_height),
+            )
+
+            logger.warning(crop_bbox)
+
+            # Convert the crop box to pixel coordinates
+            crop_left = int((crop_bbox[0] - bbox[0]) * width / (bbox[2] - bbox[0]))
+            crop_top = int((crop_bbox[1] - bbox[1]) * height / (bbox[3] - bbox[1]))
+            crop_right = int((crop_bbox[2] - bbox[0]) * width / (bbox[2] - bbox[0]))
+            crop_bottom = int((crop_bbox[3] - bbox[1]) * height / (bbox[3] - bbox[1]))
+
+            logger.warning(
+                f'CropPixel: {(crop_left, crop_top, crop_right, crop_bottom)}'
+            )
+
+            # Crop the image if necessary
+            cropped_img = img.crop((crop_left, crop_top, crop_right, crop_bottom))
+
+            # Resize the cropped image
+            resize_x = (crop_bbox[2] - crop_bbox[0]) * x_pixel_per_unit
+            resize_y = (crop_bbox[3] - crop_bbox[1]) * y_pixel_per_unit
+            resized_img = cropped_img.resize((int(resize_x), int(resize_y)))
+
+            # Create a blank image with the rescaled max dimensions
+            new_img = Image.new(
+                'RGBA', (rescaled_max_width, rescaled_max_height), (255, 255, 255, 0)
+            )
+
+            # Calculate the offset to center the resized image
+            x_offset = (rescaled_max_width - resized_img.width) // 2
+            y_offset = (rescaled_max_height - resized_img.height) // 2
+
+            # Paste the resized image onto the new blank image
+            new_img.paste(resized_img, (x_offset, y_offset))
+            img = new_img
+        else:
+            img = img.resize((max_width, max_height))
         draw = ImageDraw.Draw(img)
 
         # Extract image dimensions and bounding box
@@ -220,8 +332,9 @@ def create_animated_gif(
             label_mapped = label_mapping.get(label.slug, {})
         elif not polygon:
             polygon = site_evaluation.geom
+            label_mapped = label_mapping.get(site_evaluation.label.slug, {})
             site_evaluation.label
-        if polygon:
+        if polygon and 'geom' in labels:
             if polygon.geom_type == 'Polygon':
                 base_coords = polygon.coords[0]
                 transformed_coords = [
@@ -235,78 +348,101 @@ def create_animated_gif(
                         bbox,
                         xScale,
                         yScale,
+                        x_offset,
+                        y_offset,
                     )
                     for lon, lat in transformed_coords
                 ]
                 color = label_mapped.get('color', 'white')
                 draw.polygon(pixel_coords, outline=color)
-        if not polygon:
+        if not polygon and observation:
             point = observation.point
         if not point:
             point = site_evaluation.point
-        if point:
+        if point and 'geom' in labels:
             transformed_point = transformer.transform(point.x, point.y)
             pixel_point = to_pixel_coords(
                 transformed_point[0], transformed_point[1], bbox, xScale, yScale
             )
+            color = label_mapped.get('color', 'white')
             draw.ellipse(
                 (
-                    pixel_point[0] - 5,
-                    pixel_point[1] - 5,
-                    pixel_point[0] + 5,
-                    pixel_point[1] + 5,
+                    pixel_point[0] - point_radius,
+                    pixel_point[1] - point_radius,
+                    pixel_point[0] + point_radius,
+                    pixel_point[1] + point_radius,
                 ),
-                fill='blue',
+                outline=color,
             )
 
         # Drawing labels of timestamp and other imformation
-        center = (max_width / 2.0, max_height / 2.0)
+        ui_max_width = max_width
+        ui_max_height = max_height
+        if rescale:
+            ui_max_width = rescaled_max_width
+            ui_max_height = rescaled_max_height
+        center = (ui_max_width / 2.0, ui_max_height / 2.0)
         # Draw date as 1/3 of the center of the image at the top
-        date_width = max_width / 3.0
-        date_height = max(max_height / 15.0, 10)
+        date_width = ui_max_width / 3.0
+        date_height = max(ui_max_height / 15.0, 10)
         date_box_point = (center[0] - (date_width / 2.0), 0)
         date_box_size = (date_width, date_height)
-        draw_text_in_box(
-            draw,
-            image_record.timestamp.strftime('%Y-%m-%d'),
-            date_box_point,
-            date_box_size,
-        )
+        if 'date' in labels:
+            draw_text_in_box(
+                draw,
+                image_record.timestamp.strftime('%Y-%m-%d'),
+                date_box_point,
+                date_box_size,
+            )
         # Draw Source
         source_point = (0, 0)
-        source_size = (max_width / 10.0, date_height)
-        draw_text_in_box(
-            draw,
-            image_record.source,
-            source_point,
-            source_size,
-        )
+        source_size = (ui_max_width / 10.0, date_height)
+        if 'source' in labels:
+            draw_text_in_box(
+                draw,
+                image_record.source,
+                source_point,
+                source_size,
+            )
         # Draw Observation
-        obs_width = max_width / 10.0
-        obs_point = (max_width - obs_width, 0)
-        obs_size = (max_width / 10.0, date_height)
+        obs_width = ui_max_width / 10.0
+        obs_point = (ui_max_width - obs_width, 0)
+        obs_size = (ui_max_width / 10.0, date_height)
         obs_text = '+obs'
         if image_record.observation is None:
             obs_text = '-obs'
-        draw_text_in_box(
-            draw,
-            obs_text,
-            obs_point,
-            obs_size,
-        )
+        if 'obs' in labels:
+            draw_text_in_box(
+                draw,
+                obs_text,
+                obs_point,
+                obs_size,
+            )
         # Draw Label
-        label_width = max_width / 3.0
-        label_height = max(max_height / 15.0, 10)
+        label_width = ui_max_width / 3.0
+        label_height = max(ui_max_height / 15.0, 10)
 
-        label_point = (center[0] - (label_width / 2.0), max_height - label_height)
+        label_point = (center[0] - (label_width / 2.0), ui_max_height - label_height)
         label_size = (label_width, label_height)
-        if label_mapped:
+        if 'obs_label' in labels and label_mapped:
             draw_text_in_box(
                 draw,
                 label_mapped['label'],
                 label_point,
                 label_size,
                 label_mapped['color'],
+            )
+        if 'site_label' in labels and site_label_mapped:
+            site_label_point = (
+                center[0] - (label_width / 2.0),
+                ui_max_height - (label_height * 2),
+            )
+            draw_text_in_box(
+                draw,
+                site_label_mapped['label'],
+                site_label_point,
+                label_size,
+                site_label_mapped['color'],
             )
 
         frames.append(img)
@@ -322,9 +458,9 @@ def create_animated_gif(
                 output_file_path,
                 save_all=True,
                 append_images=frames[1:],
-                duration=1 / fps,
+                duration=1000.0 / fps,
                 loop=0,
-                optimize=True,
+                optimize=False,
                 quality=100,
             )
         else:  # 'mp4'
@@ -332,8 +468,13 @@ def create_animated_gif(
 
             # Initialize video writer
             fourcc = cv2.VideoWriter_fourcc(*'mp4v')
+            video_width = max_width
+            video_height = max_height
+            if rescale:
+                video_width = rescaled_max_width
+                video_height = rescaled_max_height
             video_writer = cv2.VideoWriter(
-                output_file_path, fourcc, 1, (max_width, max_height)
+                output_file_path, fourcc, fps, (video_width, video_height)
             )
 
             # Write each frame to the video

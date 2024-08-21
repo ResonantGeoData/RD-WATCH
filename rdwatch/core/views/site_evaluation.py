@@ -1,8 +1,9 @@
 import json
 import tempfile
 from datetime import datetime
+from typing import Literal
 
-from ninja import Router
+from ninja import Router, Schema
 from pydantic import UUID4
 
 from django.contrib.gis.db.models.functions import Transform
@@ -14,7 +15,7 @@ from django.shortcuts import get_object_or_404
 
 from rdwatch.core.models import SiteEvaluation, SiteEvaluationTracking, lookups
 from rdwatch.core.schemas import SiteEvaluationRequest
-from rdwatch.core.tasks.animation_export import create_animated_gif
+from rdwatch.core.tasks.animation_export import create_animation
 
 router = Router()
 
@@ -157,13 +158,45 @@ def download_annotations(request: HttpRequest, id: UUID4):
     return 500, 'Unable to export data'
 
 
+class GenerateAnimationSchema(Schema):
+    output_format: Literal['mp4', 'gif'] = 'mp4'
+    fps: float = 1
+    point_radius: int = 5
+    sources: list[Literal['WV', 'S2', 'L8', 'PL']] = ['WV', 'S2', 'L8', 'PL']
+    labels: list[Literal['geom', 'date', 'source', 'obs', 'obs_label']] = [
+        'geom',
+        'date',
+        'source',
+        'obs',
+        'obs_label',
+    ]
+    rescale: bool = False
+    rescale_border: float = 1.0
+
+
 @router.post('/{id}/animation')
-def generate_animated_gif(request: HttpRequest, id: UUID4):
+def generate_animation(
+    request: HttpRequest,
+    id: UUID4,
+    params: GenerateAnimationSchema,  # noqa: B008
+):
     # Fetch the SiteEvaluation instance
-    datapath = create_animated_gif(site_evaluation_id=id)
+    datapath = create_animation(
+        site_evaluation_id=id,
+        output_format=params.output_format,
+        fps=params.fps,
+        point_radius=params.point_radius,
+        sources=params.sources,
+        labels=params.labels,
+        rescale=params.rescale,
+        rescale_border=params.rescale_border,
+    )
     if datapath:
         with open(datapath, 'rb') as f:
             response = HttpResponse(f.read(), content_type='application/octet-stream')
-            response['Content-Disposition'] = f'attachment; filename={id}.gif'
+            output_format = params.output_format
+            response[
+                'Content-Disposition'
+            ] = f'attachment; filename={id}.{output_format}'
             return response
     return 500, 'Unable to export data'

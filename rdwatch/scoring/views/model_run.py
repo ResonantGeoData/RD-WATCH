@@ -150,10 +150,19 @@ def get_queryset():
                     'site__confidence_score', Value('NaN'), output_field=FloatField()
                 )
             ),
-            timestamp=ExtractEpoch(Max('site__end_date')),
+            timestamp=Coalesce(
+                ExtractEpoch(Max('site__end_date')),
+                ExtractEpoch(Max('site__point_date')),
+            ),
             timerange=JSONObject(
-                min=ExtractEpoch(Min('site__start_date')),
-                max=ExtractEpoch(Max('site__end_date')),
+                min=Coalesce(
+                    ExtractEpoch(Min('site__start_date')),
+                    ExtractEpoch(Min('site__point_date')),
+                ),
+                max=Coalesce(
+                    ExtractEpoch(Max('site__end_date')),
+                    ExtractEpoch(Max('site__point_date')),
+                ),
             ),
             # bbox=Value({}, output_field=JSONField()),
             bbox=Func(
@@ -443,10 +452,19 @@ def list_model_runs(
                 )
             ),
             numsites=F('evaluationbroadareasearchmetric__proposed_sites'),
-            timestamp=ExtractEpoch(Max('site__end_date')),
+            timestamp=Coalesce(
+                ExtractEpoch(Max('site__end_date')),
+                ExtractEpoch(Max('site__point_date')),
+            ),
             timerange=JSONObject(
-                min=ExtractEpoch(Min('site__start_date')),
-                max=ExtractEpoch(Max('site__end_date')),
+                min=Coalesce(
+                    ExtractEpoch(Min('site__start_date')),
+                    ExtractEpoch(Min('site__point_date')),
+                ),
+                max=Coalesce(
+                    ExtractEpoch(Max('site__end_date')),
+                    ExtractEpoch(Max('site__point_date')),
+                ),
             ),
             bbox=Func(
                 F('site__region__geometry'),
@@ -465,8 +483,14 @@ def list_model_runs(
 
     aggregate_kwargs = {
         'timerange': JSONObject(
-            min=ExtractEpoch(Min('site__start_date')),
-            max=ExtractEpoch(Max('site__end_date')),
+            min=Coalesce(
+                ExtractEpoch(Min('site__start_date')),
+                ExtractEpoch(Min('site__point_date')),
+            ),
+            max=Coalesce(
+                ExtractEpoch(Max('site__end_date')),
+                ExtractEpoch(Max('site__point_date')),
+            ),
         ),
     }
     if filters.region:
@@ -683,8 +707,10 @@ def get_sites_query(model_run_id: UUID4):
                     ),
                     default=False,
                 ),
-                start_date=ExtractEpoch('start_date'),
-                end_date=ExtractEpoch('end_date'),
+                start_date=Coalesce(
+                    ExtractEpoch('start_date'), ExtractEpoch('point_date')
+                ),
+                end_date=Coalesce(ExtractEpoch('end_date'), ExtractEpoch('point_date')),
                 originator=F('originator'),
             ),
             ordering='site_id',

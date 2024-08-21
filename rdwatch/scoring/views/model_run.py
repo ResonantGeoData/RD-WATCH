@@ -512,7 +512,7 @@ def get_model_run(request: HttpRequest, id: UUID4):
     if EvaluationRun.objects.filter(pk=id).exists():
         data = get_queryset(id=id).first()
     elif AnnotationProposalSet.objects.filter(pk=id).exists():
-        data = get_object_or_404(get_queryset_proposal(), id=id).first()
+        data = get_object_or_404(get_queryset_proposal(), id=id)
     else:
         return HttpResponseNotFound(
             f'Neither an EvaluationRun or AnnotationProposalSet exists for uuid: {id}'

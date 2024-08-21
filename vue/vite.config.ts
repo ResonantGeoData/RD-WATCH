@@ -23,7 +23,6 @@ export default ({ mode}) => {
   process.env.VITE_GIT_COMMIT_HASH = commitHash;
   process.env.VITE_GIT_LAST_COMMIT_MESSAGE = lastCommitMessage;
   const devHost = process.env.VITE_DEV_PROXY_TARGET || 'localhost';
-  const vectorServer = process.env.VITE_DEV_VECTOR_PROXY_TARGET || 'localhost';
   // Change host to django when running vite inside docker
   const devPort = process.env.VITE_DEV_PROXY_TARGET ? 8080 : 3000;
   return defineConfig({

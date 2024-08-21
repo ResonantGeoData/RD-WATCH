@@ -74,7 +74,7 @@ class SatelliteFetchingAdmin(admin.ModelAdmin):
         'celery_id',
         'error',
     )
-    list_filter = ('site', 'timestamp')
+    raw_id_fields = ('site',)
 
 
 @admin.register(SiteEvaluation)

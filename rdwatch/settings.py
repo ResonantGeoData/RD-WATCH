@@ -13,6 +13,11 @@ _ENVIRON_PREFIX = 'RDWATCH'
 values.Value.late_binding = True
 
 
+class _AlwaysContains:
+    def __contains__(self, item) -> bool:
+        return True
+
+
 class BaseConfiguration(Configuration):
     ROOT_URLCONF = 'rdwatch.urls'
     USE_I18N = False
@@ -241,6 +246,9 @@ class DevelopmentConfiguration(BaseConfiguration):
     # This is needed for django-debug-toolbar
     @property
     def INTERNAL_IPS(self) -> list[str]:
+        # https://github.com/kitware-resonant/django-composed-configuration/blob/4e034fb250b09fec0fec06feb693b879dbb63149/composed_configuration/_configuration.py#L59
+        if os.environ.get('RDWATCH_DOCKER_MODE') == 'true':
+            return _AlwaysContains()
         return super().INTERNAL_IPS + ['127.0.0.1']
 
 

@@ -97,7 +97,7 @@ class ModelRunFilterSchema(FilterSchema):
         return eval_q
 
 
-def get_queryset(id):
+def get_queryset(id: UUID4):
     return (
         EvaluationRun.objects.filter(
             Q(uuid=id),
@@ -176,7 +176,7 @@ def get_queryset(id):
     )
 
 
-def get_queryset_proposal(id):
+def get_queryset_proposal(id: UUID4):
     proposed_count_subquery = (
         AnnotationProposalSite.objects.filter(
             annotation_proposal_set_uuid=OuterRef('pk')

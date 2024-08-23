@@ -134,7 +134,7 @@ const getAllSiteProposals = async (initRun = false) => {
         mainList = mainList.concat(results);
     }
     baseModifiedList.value = mainList;
-    const includeGroundTruth = (state.filters.drawObservations?.includes('groundtruth') || state.filters.drawSiteOutline?.includes('groundtruth'))
+    const includeGroundTruth = (state.filters.drawObservations?.includes('groundtruth') || state.filters.drawSiteOutline?.includes('groundtruth') || state.filters.scoringColoring)
     if (!includeGroundTruth) {
       modifiedList.value = baseModifiedList.value.filter((item) => !item.groundTruth);
     } else {

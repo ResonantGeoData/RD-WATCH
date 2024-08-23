@@ -142,7 +142,6 @@ const getAllSiteProposals = async (initRun = false) => {
     } else {
       if (state.filters.scoringColoring) { // Remove items based on color codes
         modifiedList.value = baseModifiedList.value.filter((item) => {
-          console.log(item.color_code);
           if (item.color_code !== undefined) {
             const colorKey = scoringColors[item.color_code as scoringColorsKeys];
             if (state.filters.scoringColoring && colorKey && colorKey[state.filters.scoringColoring]) {
@@ -311,22 +310,19 @@ watch([filter, () => state.filters.drawObservations, () => state.filters.drawSit
   } else {
       if (state.filters.scoringColoring) { // Remove items based on color codes
         tempList = tempList.filter((item) => {
-          console.log(item.color_code);
           if (item.color_code !== undefined) {
             const colorKey = scoringColors[item.color_code as scoringColorsKeys];
-            console.log(colorKey);
             if (state.filters.scoringColoring && colorKey && colorKey[state.filters.scoringColoring]) {
               return true;
             }
             return false;
           }
           return false;
-        })
-      } else {
+        });
       }
-    }
+  }
   modifiedList.value = tempList;
-});
+},{deep: true});
 
 const deselectAll = () => {
   const updatedList: SiteDisplay[] = [];

@@ -29,8 +29,8 @@ class SiteFeatureCache(Schema):
 
 class SiteFeature(Schema):
     type: Literal['site']
-    region_id: constr(regex=r'^[A-Z]{2}_[RCST][\dx]{3}$')
-    site_id: constr(regex=r'^[A-Z]{2}_([RST]\d{3}|C[0-7]\d{2}|[RC][Xx]{3})_\d{4,8}$')
+    region_id: constr(min_length=1, max_length=255)
+    site_id: constr(regex=r'^.{1,255}_\d{4,8}$')
     version: constr(regex=r'^\d+\.\d+\.\d+$')
     mgrs: constr(regex=r'^\d{2}[A-Z]{3}$')
     status: Literal[
@@ -91,7 +91,8 @@ class SiteFeature(Schema):
 
     @property
     def site_number(self) -> int:
-        return int(self.site_id[8:])
+        splits = self.site_id.split('_')
+        return int(splits[-1])
 
 
 class ObservationFeature(Schema):

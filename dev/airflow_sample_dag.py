@@ -9,7 +9,7 @@ with DAG(
     description="Test DAG",
     params={
         "region_id": Param(
-            default="BR_R002", type="string", pattern=r"^[A-Z]{2}_[RCST]\d{3}$"
+            default="BR_R002", type="string", pattern=r"^.{1,255}$"
         ),
         "model_run_title": Param(default="test_run", type="string"),
     },

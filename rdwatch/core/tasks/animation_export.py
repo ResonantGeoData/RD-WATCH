@@ -93,10 +93,98 @@ label_mapping = {
 }
 
 
+def rescale_bbox(bbox, scale):
+    """
+    Rescales a bounding box by a given scaling factor.
+
+    Parameters:
+    bbox (list): A list containing [minx, miny, maxx, maxy].
+    scale (float): The scaling factor to apply to the bounding box.
+
+    Returns:
+    list: A list containing the rescaled [minx, miny, maxx, maxy].
+    """
+    minx, miny, maxx, maxy = bbox
+
+    center_x = (minx + maxx) / 2
+    center_y = (miny + maxy) / 2
+
+    width = (maxx - minx) * scale / 2
+    height = (maxy - miny) * scale / 2
+
+    return [center_x - width, center_y - height, center_x + width, center_y + height]
+
+
+def paste_image_with_bbox(
+    source_image,
+    bbox,
+    pixel_per_unit_x,
+    pixel_per_unit_y,
+    output_width,
+    output_height,
+    output_bbox,
+    output_pixel_per_unit_x,
+    output_pixel_per_unit_y,
+):
+    """
+    Pastes a source image into an output image based on matching bounding box coordinates,
+    with different pixel-per-unit scales for the X and Y axes.
+
+    Parameters:
+    source_image_path (Image): source image.
+    bbox (list): Bounding box of the source image in the format [minx, miny, maxx, maxy].
+    pixel_per_unit_x (float): Pixels per unit for the X-axis of the source image.
+    pixel_per_unit_y (float): Pixels per unit for the Y-axis of the source image.
+    output_width (int): Width of the output image.
+    output_height (int): Height of the output image.
+    output_bbox (list): Bounding box of the output image in the format [minx, miny, maxx, maxy].
+    output_pixel_per_unit_x (float): Pixels per unit for the X-axis of the output image.
+    output_pixel_per_unit_y (float): Pixels per unit for the Y-axis of the output image.
+
+    Returns:
+    Image: The output image with the source image pasted in.
+    """
+
+    # Calculate the dimensions of the source image in pixels
+    source_width_px = int((bbox[2] - bbox[0]) * pixel_per_unit_x)
+    source_height_px = int((bbox[3] - bbox[1]) * pixel_per_unit_y)
+
+    rescale_x_factor = output_pixel_per_unit_y / pixel_per_unit_y
+    rescale_y_factor = output_pixel_per_unit_x / pixel_per_unit_x
+    rescale_x = int(rescale_x_factor * source_width_px)
+    rescale_y = int(rescale_y_factor * source_height_px)
+    # logger.warning(f'\tRescaling Source: {source_width_px} {source_height_px}')
+    # logger.warning(f'\tRescale Size: {rescale_x} {rescale_y}')
+    # logger.warning(f'\tRescaling Factor: {rescale_x_factor} {rescale_y_factor}')
+    rescaled_source_image = source_image.resize((rescale_x, rescale_y))
+
+    # determine what section of the new image to grab based on the output_bbox_size
+    # this requires finding the difference between the source and output
+    crop = (
+        (output_bbox[0] - bbox[0]) * output_pixel_per_unit_x,
+        (output_bbox[1] - bbox[1]) * output_pixel_per_unit_y,
+        (output_bbox[2] - bbox[0]) * output_pixel_per_unit_x,
+        (output_bbox[3] - bbox[1]) * output_pixel_per_unit_y,
+    )
+    # logger.warning(f'\tCrop: {crop}')
+    cropped_img = rescaled_source_image.crop(
+        (crop[0], crop[1], crop[2], crop[3])
+    )  # left, top, right, bottom
+    # image needs to be recentered
+    gray_value = 128
+    gray_color = (gray_value, gray_value, gray_value, 0)
+    output_image = Image.new('RGBA', (output_width, output_height), gray_color)
+
+    # Paste the source image into the output image
+    output_image.paste(cropped_img)
+
+    return output_image
+
+
 def to_pixel_coords(lon, lat, bbox, xScale, yScale, xOffset=0, yOffset=0):
-    x = (lon - bbox[0]) * xScale + xOffset
-    y = (lat - bbox[1]) * yScale + yOffset
-    return x, y
+    y = (lon - bbox[0]) * yScale + yOffset
+    x = (bbox[3] - lat) * xScale + xOffset
+    return y, x
 
 
 def draw_text_in_box(
@@ -153,6 +241,7 @@ def draw_text_in_box(
 
     # Use the best font size found
     font = get_font(best_font_size)
+    best_text_bbox = draw.textbbox((0, 0), text, font=font)
     text_width = best_text_bbox[2] - best_text_bbox[0]
     text_height = best_text_bbox[3] - best_text_bbox[1]
 
@@ -202,10 +291,11 @@ def create_animation(
         return
 
     # Determine the largest dimensions
-    max_width, max_height = 0, 0
+    max_width_px, max_height_px = 0, 0
     images_data = []
     # Create a transformer from EPSG:3857 to EPSG:4326
     transformer = Transformer.from_crs('epsg:3857', 'epsg:4326', always_xy=True)
+    transformer_other = Transformer.from_crs('epsg:4326', 'epsg:3857', always_xy=True)
 
     site_label = site_evaluation.label.slug
     site_label_mapped = label_mapping.get(site_label, False)
@@ -221,42 +311,50 @@ def create_animation(
             images_data.append((img, width, height, image_record))
 
             # Check if the current image has the maximum width and height
-            if width >= max_width and height >= max_height:
-                max_width = width
-                max_height = height
+            if width >= max_width_px and height >= max_height_px:
+                max_width_px = width
+                max_height_px = height
                 max_image_record = image_record
-    max_image_bbox = max_image_record.image_bbox.extent
+
+    if max_width_px < 500 or max_height_px < 500:
+        new_height = (max_height_px / max_width_px) * 500
+        max_width_px = int(500)
+        max_height_px = int(new_height)
 
     # using the max_image_bbox we apply the rescale_border
     if rescale:
-        max_image_bbox_width = max_image_bbox[2] - max_image_bbox[0]
-        max_image_bbox_height = max_image_bbox[3] - max_image_bbox[1]
+        # Need the geometry base site evaluation bbox plus 20% around it for rescaling
+        max_image_bbox = site_evaluation.geom.extent
+        max_image_bbox = rescale_bbox(max_image_bbox, 1.2)
 
-        rescaled_image_bbox_width = max_image_bbox_width * rescale_border
-        rescaled_image_bbox_height = max_image_bbox_height * rescale_border
+        # Rescale the large box larger based on the rescale border
+        output_bbox_size = rescale_bbox(max_image_bbox, rescale_border)
+        rescaled_image_bbox_width = output_bbox_size[2] - output_bbox_size[0]
+        rescaled_image_bbox_height = output_bbox_size[3] - output_bbox_size[1]
 
         # Determine pixels per unit for the rescaled image
-        x_pixel_per_unit = max_width / max_image_bbox_width
-        y_pixel_per_unit = max_height / max_image_bbox_height
+        # This is used to determine the size of the output image
+        max_image_record_bbox = max_image_record.image_bbox.extent
+        max_image_record_bbox = transformer_other.transform_bounds(
+            max_image_record_bbox[0],
+            max_image_record_bbox[1],
+            max_image_record_bbox[2],
+            max_image_record_bbox[3],
+        )
 
+        x_pixel_per_unit = max_width_px / (
+            max_image_record_bbox[2] - max_image_record_bbox[0]
+        )
+        y_pixel_per_unit = max_height_px / (
+            max_image_record_bbox[3] - max_image_record_bbox[1]
+        )
+        logger.warning('PixelPerUnit : {x_pixel_perunit}, {y_pixel_per_unit}')
+        logger.warning(
+            f'Rescaled: {rescaled_image_bbox_width} {rescaled_image_bbox_height}'
+        )
         # Update the rescaled max dimensions
         rescaled_max_width = int(rescaled_image_bbox_width * x_pixel_per_unit)
         rescaled_max_height = int(rescaled_image_bbox_height * y_pixel_per_unit)
-        width_scale = rescaled_max_width / max_image_bbox_width
-        height_scale = rescaled_max_height / max_image_bbox_height
-
-        x_offset = (rescaled_max_width - max_width * width_scale) / 2
-        y_offset = (rescaled_max_height - max_height * height_scale) / 2
-
-        logger.warning(
-            f'maxWidth: {rescaled_max_width} maxHeight:{rescaled_max_height}\
-                vs {max_width, max_height}'
-        )
-        logger.warning(
-            f'bboxMaxWidth: {rescaled_image_bbox_width} \
-                bboxMaxHeight: {rescaled_image_bbox_height} \
-                    vs {max_image_bbox_width},{max_image_bbox_height}'
-        )
     else:
         x_offset = 0
         y_offset = 0
@@ -267,51 +365,32 @@ def create_animation(
     for img, width, height, image_record in images_data:
         if rescale:
             bbox = image_record.image_bbox.extent  # minx, miny, maxx, maxy
-            width_scale = rescaled_max_width / max_image_bbox_width
-            height_scale = rescaled_max_height / max_image_bbox_height
-
-            # Determine the cropping box based on the rescaled geospatial size
-            crop_bbox = (
-                max(bbox[0], max_image_bbox[0]),
-                max(bbox[1], max_image_bbox[1]),
-                min(bbox[2], max_image_bbox[0] + rescaled_image_bbox_width),
-                min(bbox[3], max_image_bbox[1] + rescaled_image_bbox_height),
+            # place into the same pixel coordinate system
+            bbox = transformer_other.transform_bounds(
+                bbox[0], bbox[1], bbox[2], bbox[3]
             )
+            local_bbox_width = bbox[2] - bbox[0]
+            local_bbox_height = bbox[3] - bbox[1]
+            # get the local pixel per unit
+            local_x_pixel_scale = width / local_bbox_width
+            local_y_pixel_scale = height / local_bbox_height
 
-            logger.warning(crop_bbox)
-
-            # Convert the crop box to pixel coordinates
-            crop_left = int((crop_bbox[0] - bbox[0]) * width / (bbox[2] - bbox[0]))
-            crop_top = int((crop_bbox[1] - bbox[1]) * height / (bbox[3] - bbox[1]))
-            crop_right = int((crop_bbox[2] - bbox[0]) * width / (bbox[2] - bbox[0]))
-            crop_bottom = int((crop_bbox[3] - bbox[1]) * height / (bbox[3] - bbox[1]))
-
-            logger.warning(
-                f'CropPixel: {(crop_left, crop_top, crop_right, crop_bottom)}'
+            logger.warning(f'Processing image: ~~~~~~{image_record.source}~~~~~~~')
+            img = paste_image_with_bbox(
+                img,
+                bbox,
+                local_x_pixel_scale,
+                local_y_pixel_scale,
+                rescaled_max_width,
+                rescaled_max_height,
+                output_bbox_size,
+                x_pixel_per_unit,
+                y_pixel_per_unit,
             )
-
-            # Crop the image if necessary
-            cropped_img = img.crop((crop_left, crop_top, crop_right, crop_bottom))
-
-            # Resize the cropped image
-            resize_x = (crop_bbox[2] - crop_bbox[0]) * x_pixel_per_unit
-            resize_y = (crop_bbox[3] - crop_bbox[1]) * y_pixel_per_unit
-            resized_img = cropped_img.resize((int(resize_x), int(resize_y)))
-
-            # Create a blank image with the rescaled max dimensions
-            new_img = Image.new(
-                'RGBA', (rescaled_max_width, rescaled_max_height), (255, 255, 255, 0)
-            )
-
-            # Calculate the offset to center the resized image
-            x_offset = (rescaled_max_width - resized_img.width) // 2
-            y_offset = (rescaled_max_height - resized_img.height) // 2
-
-            # Paste the resized image onto the new blank image
-            new_img.paste(resized_img, (x_offset, y_offset))
-            img = new_img
+            x_offset = 0
+            y_offset = 0
         else:
-            img = img.resize((max_width, max_height))
+            img = img.resize((max_width_px, max_height_px))
         draw = ImageDraw.Draw(img)
 
         # Extract image dimensions and bounding box
@@ -319,10 +398,25 @@ def create_animation(
             continue
 
         bbox = image_record.image_bbox.extent  # minx, miny, maxx, maxy
-        widthScale = max_width / width
-        heightScale = max_height / height
+        widthScale = max_width_px / width
+        heightScale = max_height_px / height
         xScale = (width / (bbox[2] - bbox[0])) * widthScale
         yScale = (height / (bbox[3] - bbox[1])) * heightScale
+
+        if rescale:
+            # We draw the max_image_record bbox polygon on the center of the screen
+            bbox = max_image_record.image_bbox.extent
+            xScale = max_width_px / (bbox[2] - bbox[0])
+            yScale = max_height_px / (bbox[3] - bbox[1])
+            # We need the bbox offset size based on the transform bounds difference
+            bbox_transform = transformer_other.transform_bounds(
+                bbox[0], bbox[1], bbox[2], bbox[3]
+            )
+            logger.warning(f'BBOX: {bbox_transform}')
+            logger.warning(f'output_bbox_size: {output_bbox_size}')
+            x_offset = (bbox_transform[0] - output_bbox_size[0]) * x_pixel_per_unit
+            y_offset = (bbox_transform[1] - output_bbox_size[1]) * y_pixel_per_unit
+            logger.warning(f'Offset: {x_offset} {y_offset}')
 
         # Draw geometry or point on the image
         observation = image_record.observation
@@ -375,9 +469,9 @@ def create_animation(
                 outline=color,
             )
 
-        # Drawing labels of timestamp and other imformation
-        ui_max_width = max_width
-        ui_max_height = max_height
+        # Drawing labels of timestamp
+        ui_max_width = max_width_px
+        ui_max_height = max_height_px
         if rescale:
             ui_max_width = rescaled_max_width
             ui_max_height = rescaled_max_height
@@ -468,8 +562,8 @@ def create_animation(
 
             # Initialize video writer
             fourcc = cv2.VideoWriter_fourcc(*'mp4v')
-            video_width = max_width
-            video_height = max_height
+            video_width = max_width_px
+            video_height = max_height_px
             if rescale:
                 video_width = rescaled_max_width
                 video_height = rescaled_max_height

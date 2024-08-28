@@ -71,7 +71,6 @@ def worldview_search(
         time_str = f'{_fmt_time(min_time)}/{_fmt_time(max_time)}'
     else:
         time_str = f'{_fmt_time(timestamp)}Z'
-
     results = stac_catalog.search(
         method='GET',
         bbox=bbox,

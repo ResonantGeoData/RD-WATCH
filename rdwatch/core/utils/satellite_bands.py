@@ -4,6 +4,8 @@ from dataclasses import dataclass
 from datetime import datetime, timedelta
 from typing import cast
 
+from django.conf import settings
+
 from rdwatch.core.models.lookups import CommonBand, ProcessingLevel
 from rdwatch.core.utils.stac_search import stac_search
 
@@ -20,6 +22,18 @@ class Band:
     uri: str
     cloudcover: int
     collection: str
+
+
+COLLECTIONS: list[str] = []
+
+if settings.STAC_URL:
+    COLLECTIONS = ['sentinel-2-c1-l2a', 'sentinel-2-l2a', 'landsat-c2-l2']
+elif settings.settings.ACCENTURE_VERSION is not None:
+    COLLECTIONS = [
+        f'ta1-s2-acc-{settings.ACCENTURE_VERSION}',
+        f'ta1-ls-acc-{settings.ACCENTURE_VERSION}',
+        f'ta1-pd-acc-{settings.ACCENTURE_VERSION}',
+    ]
 
 
 def get_bands(
@@ -62,23 +76,8 @@ def get_bands(
 
         cloudcover = 0
         match feature:
-            case {'collection': 'landsat-c2l1' | 'sentinel-s2-l1c'}:
-                level, _ = ProcessingLevel.objects.get_or_create(
-                    slug='1C',
-                    defaults={'description': 'top of atmosphere radiance'},
-                )
             case {'collection': collection}:
-                if (
-                    collection
-                    in (
-                        'landsat-c2l2-sr',
-                        'sentinel-s2-l2a',
-                        'sentinel-s2-l2a-cogs',
-                    )
-                    or collection.startswith('ta1-s2-acc-')
-                    or collection.startswith('ta1-ls-acc-')
-                    or collection.startswith('ta1-pd-acc-')
-                ):
+                if collection in COLLECTIONS:
                     level, _ = ProcessingLevel.objects.get_or_create(
                         slug='2A',
                         defaults={'description': 'surface reflectance'},

@@ -27,7 +27,7 @@ def get_raster_bbox(
     uri: str,
     bbox: tuple[float, float, float, float],
     format='PNG',
-    scale: Literal['default', 'bits'] | list[int] = 'default',
+    scale: Literal['default', 'bits'] | list[int] = 'bits',
 ) -> bytes:
     with rasterio.Env(GDAL_DISABLE_READDIR_ON_OPEN='EMPTY_DIR'):
         if uri.startswith('https://sentinel-cogs.s3.us-west-2.amazonaws.com'):

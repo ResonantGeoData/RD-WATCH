@@ -88,7 +88,7 @@ def get_siteobservation_images_task(
     dayRange=14,
     no_data_limit=50,
     overrideDates: None | list[datetime, datetime] = None,
-    scale: Literal['default', 'bits'] | list[int] = 'default',
+    scale: Literal['default', 'bits'] | list[int] = 'bits',
     bboxScale: float = BboxScaleDefault,
     worldview_source: Literal['cog', 'nitf'] | None = 'cog',
 ) -> None:
@@ -122,7 +122,7 @@ def get_siteobservations_images(
     dayRange=14,
     no_data_limit=50,
     overrideDates: None | list[datetime, datetime] = None,
-    scale: Literal['default', 'bits'] | list[int] = 'default',
+    scale: Literal['default', 'bits'] | list[int] = 'bits',
     bboxScale: float = BboxScaleDefault,
     worldview_source: Literal['cog', 'nitf'] | None = 'cog',
 ) -> None:
@@ -352,11 +352,11 @@ def get_siteobservations_images(
         if capture_timestamp not in found_timestamps.keys():
             # we need to add a new image into the structure
             bytes = None
-            if worldview_source == 'cog':
+            if baseConstellation == 'WV' and worldview_source == 'cog':
                 bytes = get_worldview_processed_visual_bbox(
                     capture, max_bbox, 'PNG', scale
                 )
-            elif worldview_source == 'nitf':
+            elif baseConstellation == 'WV' and worldview_source == 'nitf':
                 bytes = get_worldview_nitf_bbox(capture, max_bbox, 'PNG', scale)
             else:
                 bytes = get_raster_bbox(capture.uri, max_bbox, 'PNG', scale)
@@ -559,7 +559,7 @@ def generate_site_images(
     dayRange=14,
     noData=50,
     overrideDates: None | list[datetime, datetime] = None,
-    scale: Literal['default', 'bits'] | list[int] = 'default',
+    scale: Literal['default', 'bits'] | list[int] = 'bits',
     bboxScale: float = BboxScaleDefault,
     worldview_source: Literal['cog', 'nitf'] | None = 'cog',
 ):
@@ -609,7 +609,7 @@ def generate_site_images_for_evaluation_run(
     dayRange=14,
     noData=50,
     overrideDates: None | list[datetime, datetime] = None,
-    scale: Literal['default', 'bits'] | list[int] = 'default',
+    scale: Literal['default', 'bits'] | list[int] = 'bits',
     bboxScale: float = BboxScaleDefault,
 ):
     sites = SiteEvaluation.objects.filter(configuration=model_run_id)

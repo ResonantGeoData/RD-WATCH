@@ -158,10 +158,10 @@ class BaseConfiguration(Configuration):
         environ_required=True, environ_prefix=_ENVIRON_PREFIX
     )
 
+    STAC_URL = values.URLValue(environ_required=False, environ_prefix=_ENVIRON_PREFIX)
     SMART_STAC_URL = values.URLValue(
         environ_required=True, environ_prefix=_ENVIRON_PREFIX
     )
-    STAC_URL = values.URLValue(environ_required=True, environ_prefix=_ENVIRON_PREFIX)
     SMART_STAC_KEY = values.SecretValue(
         environ_required=True, environ_prefix=_ENVIRON_PREFIX
     )

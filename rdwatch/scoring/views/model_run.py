@@ -44,6 +44,8 @@ from rdwatch.core.views.model_run import ModelRunDetailSchema, ModelRunPaginatio
 from rdwatch.scoring.models import (
     AnnotationProposalSet,
     AnnotationProposalSite,
+    EvaluationBroadAreaSearchDetection,
+    EvaluationBroadAreaSearchProposal,
     EvaluationRun,
     Region,
     SatelliteFetching,
@@ -715,6 +717,65 @@ def get_sites_query(model_run_id: UUID4):
                 ),
                 end_date=Coalesce(ExtractEpoch('end_date'), ExtractEpoch('point_date')),
                 originator=F('originator'),
+                color_code=Case(
+                    When(
+                        Q(originator='te') | Q(originator='iMERIT'),
+                        then=Subquery(
+                            EvaluationBroadAreaSearchDetection.objects.filter(
+                                Q(evaluation_run_uuid=model_run_id)
+                                & Q(activity_type='overall')
+                                & Q(rho=0.5)
+                                & Q(tau=0.2)
+                                & Q(min_confidence_score=0.0)
+                                & Q(site_truth=OuterRef('site_id'))
+                                & Q(
+                                    Q(min_spatial_distance_threshold__isnull=True)
+                                    | Q(min_spatial_distance_threshold=100.0)
+                                )
+                                & Q(
+                                    Q(central_spatial_distance_threshold__isnull=True)
+                                    | Q(central_spatial_distance_threshold=500.0)
+                                )
+                                & Q(max_spatial_distance_threshold__isnull=True)
+                                & Q(
+                                    Q(min_temporal_distance_threshold__isnull=True)
+                                    | Q(min_temporal_distance_threshold=730.0)
+                                )
+                                & Q(central_temporal_distance_threshold__isnull=True)
+                                & Q(max_temporal_distance_threshold__isnull=True)
+                            ).values('color_code')
+                        ),
+                    ),
+                    When(
+                        ~Q(originator='te') & ~Q(originator='iMERIT'),
+                        then=Subquery(
+                            EvaluationBroadAreaSearchProposal.objects.filter(
+                                Q(evaluation_run_uuid=model_run_id)
+                                & Q(activity_type='overall')
+                                & Q(rho=0.5)
+                                & Q(tau=0.2)
+                                & Q(min_confidence_score=0.0)
+                                & Q(site_proposal=OuterRef('site_id'))
+                                & Q(
+                                    Q(min_spatial_distance_threshold__isnull=True)
+                                    | Q(min_spatial_distance_threshold=100.0)
+                                )
+                                & Q(
+                                    Q(central_spatial_distance_threshold__isnull=True)
+                                    | Q(central_spatial_distance_threshold=500.0)
+                                )
+                                & Q(max_spatial_distance_threshold__isnull=True)
+                                & Q(
+                                    Q(min_temporal_distance_threshold__isnull=True)
+                                    | Q(min_temporal_distance_threshold=730.0)
+                                )
+                                & Q(central_temporal_distance_threshold__isnull=True)
+                                & Q(max_temporal_distance_threshold__isnull=True)
+                            ).values('color_code')
+                        ),
+                    ),
+                    default=Value(None),  # Set an appropriate default value here
+                ),
             ),
             ordering='site_id',
             default=[],

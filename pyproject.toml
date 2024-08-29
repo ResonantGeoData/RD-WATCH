@@ -33,7 +33,7 @@ files = ["rdwatch/__init__.py"]
 
 [tool.poetry.dependencies]
 python = ">=3.11.9,<4"
-django = ">=5.0.3,<5.1"
+django = ">=5.1,<5.2"
 psycopg2 = "~2.9.9"
 redis = { version = "~5.0.3", extras = [ "hiredis" ] }
 uritemplate = "^4.1.1"

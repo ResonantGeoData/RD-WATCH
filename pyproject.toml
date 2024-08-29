@@ -43,7 +43,7 @@ mercantile = "^1.2.1"
 django-ninja = "~0.22.2" # TODO: upgrade blocked on pydantic 2
 celery = "^5.4.0"
 django-extensions = "^3.2.3"
-pillow = "^10.2.0"
+pillow = "^10.4.0"
 django-configurations = {version = "^2.5", extras = ["database", "email"]}
 django-storages = {version = "^1.14.2", extras = ["s3"]}
 django-celery-results = "^2.5.1"

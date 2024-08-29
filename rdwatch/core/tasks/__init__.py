@@ -92,26 +92,33 @@ def get_siteobservation_images_task(
     bboxScale: float = BboxScaleDefault,
     worldview_source: Literal['cog', 'nitf'] | None = 'cog',
 ) -> None:
-    capture_count = 0
-    for constellation in baseConstellations:
-        capture_count += get_siteobservations_images(
-            self,
-            site_eval_id=site_eval_id,
-            baseConstellation=constellation,
-            force=force,
-            dayRange=dayRange,
-            no_data_limit=no_data_limit,
-            overrideDates=overrideDates,
-            scale=scale,
-            bboxScale=bboxScale,
-            worldview_source=worldview_source,
-        )
-    fetching_task = SatelliteFetching.objects.get(site_id=site_eval_id)
-    fetching_task.status = SatelliteFetching.Status.COMPLETE
-    if capture_count == 0:
-        fetching_task.error = 'No Captures found'
-    fetching_task.celery_id = ''
-    fetching_task.save()
+    try:
+        capture_count = 0
+        for constellation in baseConstellations:
+            capture_count += get_siteobservations_images(
+                self,
+                site_eval_id=site_eval_id,
+                baseConstellation=constellation,
+                force=force,
+                dayRange=dayRange,
+                no_data_limit=no_data_limit,
+                overrideDates=overrideDates,
+                scale=scale,
+                bboxScale=bboxScale,
+                worldview_source=worldview_source,
+            )
+        fetching_task = SatelliteFetching.objects.get(site_id=site_eval_id)
+        fetching_task.status = SatelliteFetching.Status.COMPLETE
+        if capture_count == 0:
+            fetching_task.error = 'No Captures found'
+        fetching_task.celery_id = ''
+        fetching_task.save()
+    except Exception as e:
+        logger.warning(f'EXCEPTION: {e}')
+        fetching_task = SatelliteFetching.objects.get(site_id=site_eval_id)
+        fetching_task.error = f'Error: {e}'
+        fetching_task.status = SatelliteFetching.Status.ERROR
+        fetching_task.save()
 
 
 def get_siteobservations_images(
@@ -579,6 +586,7 @@ def generate_site_images(
             # Otherwise, if the task exists but is *not* running, set the status
             # to running and kick off the task
             fetching_task.status = SatelliteFetching.Status.RUNNING
+            fetching_task.timestamp = datetime.now()
             fetching_task.save()
         else:
             fetching_task = SatelliteFetching.objects.create(

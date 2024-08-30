@@ -96,9 +96,10 @@ The Vue-based SPA frontend. Source code is in the ["vue"](https://github.com/Res
 
 Services the application requires.
 
-- [NGINX Unit](https://unit.nginx.org/): serves both the backend and the bundled static assets ([Dockerfile](https://github.com/ResonantGeoData/RD-WATCH/blob/phase-ii/Dockerfile))
-- [PostgreSQL 14](https://www.postgresql.org/docs/14/index.html) and [PostGIS 3.2](http://www.postgis.net/documentation/): data warehouse ([Dockerfile](https://github.com/ResonantGeoData/RD-WATCH/blob/phase-ii/docker/services/postgresql/Dockerfile))
-- [Redis 7](https://redis.io/docs/): caching (and maybe in the future as a job queue) ([Dockerfile](https://github.com/ResonantGeoData/RD-WATCH/blob/phase-ii/docker/services/redis/Dockerfile))
+- [NGINX Unit](https://unit.nginx.org/): serves both the backend and the bundled static assets
+- [PostgreSQL](https://www.postgresql.org/docs/14/index.html) and [PostGIS](http://www.postgis.net/documentation/): data warehouse
+- [MinIO/S3](https://min.io/): storage for satellite images for faster browsing
+- [Redis](https://redis.io/docs/): caching and job queue
 
 ### Ingesting Data
 

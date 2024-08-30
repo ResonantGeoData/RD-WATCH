@@ -119,6 +119,19 @@ export interface DownloadSettings {
   bboxScale?: number;
 }
 
+export interface DownloadAnimationSettings {
+  output_format: 'mp4' | 'gif';
+  fps: number;
+  point_radius: number;
+  sources: Constellation[];
+  labels: ('geom' | 'date' | 'source' | 'obs' | 'obs_label')[];
+  cloudCover: number;
+  noData: number;
+  include: ('obs'|'nonobs')[];
+  rescale: boolean;
+  rescale_border: number;
+}
+
 export type CeleryStates = 'FAILURE' | 'PENDING' | 'SUCCESS' | 'RETRY' | 'REVOKED' | 'STARTED';
 
 export interface SiteDetails {

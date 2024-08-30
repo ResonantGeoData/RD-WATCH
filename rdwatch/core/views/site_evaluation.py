@@ -201,7 +201,14 @@ def get_downloaded_animation(request: HttpRequest, task_id: UUID4):
 @router.get('/animation/{task_id}/status')
 def get_animation_status(request: HttpRequest, task_id: UUID4):
     task = AsyncResult(task_id)
-    return task.status
+    celery_data = {}
+    celery_data['state'] = task.state
+    celery_data['status'] = task.status
+    celery_data['info'] = (
+        str(task.info) if isinstance(task.info, RuntimeError) else task.info
+    )
+
+    return celery_data
 
 
 @router.post('/{id}/animation/debug')

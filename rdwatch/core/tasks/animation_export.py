@@ -1,15 +1,23 @@
 import logging
 import os
-import uuid
+import shutil
+import tempfile
+from datetime import datetime
 from typing import Literal
 
 import cv2
 import numpy as np
 from celery import shared_task
 from PIL import Image, ImageDraw, ImageFont
+from pydantic import UUID4, BaseModel, Field
 from pyproj import Transformer
 
-from rdwatch.core.models import SiteEvaluation, SiteImage
+from django.contrib.auth.models import User
+from django.core.files import File
+from django.db.models import Q
+
+from rdwatch.celery import app
+from rdwatch.core.models import AnimationSiteExport, SiteEvaluation, SiteImage
 
 logger = logging.getLogger(__name__)
 
@@ -182,9 +190,9 @@ def paste_image_with_bbox(
 
 
 def to_pixel_coords(lon, lat, bbox, xScale, yScale, xOffset=0, yOffset=0):
-    y = (lon - bbox[0]) * yScale + yOffset
-    x = (bbox[3] - lat) * xScale + xOffset
-    return y, x
+    x = (lon - bbox[0]) * xScale + xOffset
+    y = (bbox[3] - lat) * yScale + yOffset
+    return x, y
 
 
 def draw_text_in_box(
@@ -260,50 +268,80 @@ def draw_text_in_box(
     draw.text((text_x, text_y), text, font=font, fill=text_color)
 
 
-@shared_task
-def create_animation(
-    site_evaluation_id,
-    output_format: Literal['mp4', 'gif'] = 'mp4',
-    fps=1,
-    point_radius=5,
-    sources: list[Literal['WV', 'S2', 'L8', 'PL']] = [  # noqa: B006
-        'WV',
-        'S2',
-        'L8',
-        'PL',
-    ],
-    labels: list[
-        Literal['geom', 'date', 'source', 'obs', 'obs_label']
-    ] = [  # noqa: B006
+class GenerateAnimationSchema(BaseModel):
+    output_format: Literal['mp4', 'gif'] = 'mp4'
+    fps: int = Field(1, ge=1)  # FPS should be an integer >= 1
+    point_radius: int = Field(5, ge=1)  # Point radius should be an integer >= 1
+    sources: list[Literal['WV', 'S2', 'L8', 'PL']] = ['WV', 'S2', 'L8', 'PL']
+    labels: list[Literal['geom', 'date', 'source', 'obs', 'obs_label']] = [
         'geom',
         'date',
         'source',
         'obs',
         'obs_label',
-    ],
-    rescale=False,
-    rescale_border=1,
-):
+    ]
+    cloudCover: float | None = 100
+    noData: float | None = 100
+    include: list[Literal['obs', 'nonobs']] = ['obs', 'nonobs']
+    rescale: bool = False
+    rescale_border: int = Field(1, ge=0)  # Border rescale should be an integer >= 0
+
+
+@shared_task
+def create_animation(site_evaluation_id: UUID4, settings: GenerateAnimationSchema):
+    settingsSchema = GenerateAnimationSchema(**settings)
+    output_format = settingsSchema.output_format
+    fps = settingsSchema.fps
+    point_radius = settingsSchema.point_radius
+    sources = settingsSchema.sources
+    labels = settingsSchema.labels
+    rescale = settingsSchema.rescale
+    rescale_border = settingsSchema.rescale_border
+    filters = {
+        'cloudCover': settingsSchema.cloudCover,
+        'noData': settingsSchema.noData,
+        'include': settingsSchema.include,
+    }
+
     # Fetch the SiteEvaluation instance
     try:
         site_evaluation = SiteEvaluation.objects.get(id=site_evaluation_id)
     except SiteEvaluation.DoesNotExist:
-        return
+        return False, False
 
     # Determine the largest dimensions
-    max_width_px, max_height_px = 0, 0
     images_data = []
     # Create a transformer from EPSG:3857 to EPSG:4326
-    transformer = Transformer.from_crs('epsg:3857', 'epsg:4326', always_xy=True)
     transformer_other = Transformer.from_crs('epsg:4326', 'epsg:3857', always_xy=True)
 
     site_label = site_evaluation.label.slug
     site_label_mapped = label_mapping.get(site_label, False)
-    images = SiteImage.objects.filter(
-        site=site_evaluation_id, source__in=sources
-    ).order_by('timestamp')
+
+    query = Q(site=site_evaluation_id, source__in=sources)
+
+    # Apply cloudCover filter if provided
+    if filters.get('cloudCover') is not None:
+        query &= Q(cloudcover__lt=filters['cloudCover'])
+
+    # Apply noData filter (percent_black) if provided
+    if filters.get('noData') is not None:
+        query &= Q(percent_black__lt=filters['noData'])
+
+    # Apply include filter for observation
+    if filters.get('include'):
+        if 'obs' in filters['include'] and len(filters['include']) == 1:
+            query &= Q(observation__isnull=False)
+        if 'nonobs' in filters['include'] and len(filters['include']) == 1:
+            query &= Q(observation__isnull=True)
+
+    images = SiteImage.objects.filter(query).order_by('timestamp')
+
+    if len(images) == 0:
+        logger.warning('No Images found returning')
+        return False, False
 
     max_image_record = None
+    max_width_px, max_height_px = 0, 0
     for image_record in images:
         if image_record.image:
             img = Image.open(image_record.image)
@@ -374,8 +412,6 @@ def create_animation(
             # get the local pixel per unit
             local_x_pixel_scale = width / local_bbox_width
             local_y_pixel_scale = height / local_bbox_height
-
-            logger.warning(f'Processing image: ~~~~~~{image_record.source}~~~~~~~')
             img = paste_image_with_bbox(
                 img,
                 bbox,
@@ -398,6 +434,8 @@ def create_animation(
             continue
 
         bbox = image_record.image_bbox.extent  # minx, miny, maxx, maxy
+        bbox = transformer_other.transform_bounds(bbox[0], bbox[1], bbox[2], bbox[3])
+
         widthScale = max_width_px / width
         heightScale = max_height_px / height
         xScale = (width / (bbox[2] - bbox[0])) * widthScale
@@ -412,11 +450,12 @@ def create_animation(
             bbox_transform = transformer_other.transform_bounds(
                 bbox[0], bbox[1], bbox[2], bbox[3]
             )
-            logger.warning(f'BBOX: {bbox_transform}')
-            logger.warning(f'output_bbox_size: {output_bbox_size}')
-            x_offset = (bbox_transform[0] - output_bbox_size[0]) * x_pixel_per_unit
-            y_offset = (bbox_transform[1] - output_bbox_size[1]) * y_pixel_per_unit
-            logger.warning(f'Offset: {x_offset} {y_offset}')
+            xScale = max_width_px / (bbox_transform[2] - bbox_transform[0])
+            yScale = max_height_px / (bbox_transform[3] - bbox_transform[1])
+
+            x_offset = (bbox_transform[0] - output_bbox_size[0]) * xScale
+            y_offset = (bbox_transform[1] - output_bbox_size[1]) * yScale
+            bbox = bbox_transform
 
         # Draw geometry or point on the image
         observation = image_record.observation
@@ -431,9 +470,7 @@ def create_animation(
         if polygon and 'geom' in labels:
             if polygon.geom_type == 'Polygon':
                 base_coords = polygon.coords[0]
-                transformed_coords = [
-                    transformer.transform(lon, lat) for lon, lat in base_coords
-                ]
+                transformed_coords = [(lon, lat) for lon, lat in base_coords]
 
                 pixel_coords = [
                     to_pixel_coords(
@@ -454,7 +491,7 @@ def create_animation(
         if not point:
             point = site_evaluation.point
         if point and 'geom' in labels:
-            transformed_point = transformer.transform(point.x, point.y)
+            transformed_point = (point.x, point.y)
             pixel_point = to_pixel_coords(
                 transformed_point[0], transformed_point[1], bbox, xScale, yScale
             )
@@ -543,40 +580,101 @@ def create_animation(
         np_array.append(np.array(img))  # Convert PIL image to NumPy array
 
     # Save frames as an animated GIF
+    prefix = f'{site_evaluation.configuration.title.strip()}\
+        _{site_evaluation.configuration.region.name}\
+            _{site_evaluation.number}'
     if frames:
-        output_dir = os.path.join('./', 'animations')
-        os.makedirs(output_dir, exist_ok=True)
+        # Create a temporary directory
+        output_dir = '/tmp/animation'
+        if not os.path.exists(output_dir):
+            os.mkdir(output_dir)
         if output_format == 'gif':
-            output_file_path = os.path.join(output_dir, f'{uuid.uuid4()}.gif')
-            frames[0].save(
-                output_file_path,
-                save_all=True,
-                append_images=frames[1:],
-                duration=1000.0 / fps,
-                loop=0,
-                optimize=False,
-                quality=100,
+            # Create a temporary file for GIF
+            temp_file = tempfile.NamedTemporaryFile(
+                prefix=prefix, suffix='.mp4', dir=output_dir, delete=False
             )
+            with open(temp_file.name, 'w') as tmp_file:
+                output_file_path = tmp_file.name
+                frames[0].save(
+                    output_file_path,
+                    save_all=True,
+                    append_images=frames[1:],
+                    duration=1000.0 / fps,
+                    loop=0,
+                    optimize=False,
+                    quality=100,
+                )
         else:  # 'mp4'
-            output_file_path = os.path.join(output_dir, f'{uuid.uuid4()}.mp4')
-
-            # Initialize video writer
-            fourcc = cv2.VideoWriter_fourcc(*'mp4v')
-            video_width = max_width_px
-            video_height = max_height_px
-            if rescale:
-                video_width = rescaled_max_width
-                video_height = rescaled_max_height
-            video_writer = cv2.VideoWriter(
-                output_file_path, fourcc, fps, (video_width, video_height)
+            # Create a temporary file for MP4
+            temp_file = tempfile.NamedTemporaryFile(
+                prefix=prefix, suffix='.mp4', dir=output_dir, delete=False
             )
+            with open(temp_file.name, 'w') as tmp_file:
+                output_file_path = tmp_file.name
 
-            # Write each frame to the video
-            for frame in np_array:
-                frame_bgr = cv2.cvtColor(
-                    frame, cv2.COLOR_RGB2BGR
-                )  # Convert RGB to BGR for OpenCV
-                video_writer.write(frame_bgr)
+                # Initialize video writer
+                fourcc = cv2.VideoWriter_fourcc(*'mp4v')
+                video_width = max_width_px
+                video_height = max_height_px
+                if rescale:
+                    video_width = rescaled_max_width
+                    video_height = rescaled_max_height
+                video_writer = cv2.VideoWriter(
+                    output_file_path, fourcc, fps, (video_width, video_height)
+                )
 
-            video_writer.release()  # Close the video writer
-        return output_file_path
+                # Write each frame to the video
+                for frame in np_array:
+                    frame_bgr = cv2.cvtColor(
+                        frame, cv2.COLOR_RGB2BGR
+                    )  # Convert RGB to BGR for OpenCV
+                    video_writer.write(frame_bgr)
+
+                video_writer.release()  # Close the video writer
+        name = f'{prefix}.{output_format}'
+        return output_file_path, name
+    return False, False
+
+
+@app.task(bind=True)
+def create_site_animation_export(
+    self, site_evaluation_id: UUID4, settings: GenerateAnimationSchema, userId: int
+):
+    task_id = self.request.id
+    site_evaluation = SiteEvaluation.objects.get(pk=site_evaluation_id)
+    user = User.objects.get(pk=userId)
+    try:
+        site_export = AnimationSiteExport.objects.get(
+            site_evaluation=site_evaluation, user=user
+        )
+        if site_export:  # If there is an existing one we replace the file
+            site_export.delete()
+    except AnimationSiteExport.DoesNotExist:
+        site_export, created = AnimationSiteExport.objects.get_or_create(
+            name='',
+            created=datetime.now(),
+            site_evaluation=site_evaluation,
+            user=user,
+            celery_id=task_id,
+        )
+    try:
+        site_export.celery_id = task_id
+        site_export.save()
+        file_path, name = create_animation(site_evaluation_id, settings)
+        if file_path is False and name is False:
+            logger.warning('No Images were found')
+            site_export.delete()
+            return
+        site_export.name = name
+        with open(file_path, 'rb') as file:
+            site_export.export_file.save(name, File(file))
+        site_export.save()
+        if os.path.exists(file_path):
+            shutil.rmtree(os.path.dirname(file_path))
+    except Exception as e:
+        logger.warning(f'Error when processing Animation: {e}')
+        site_export = AnimationSiteExport.objects.get(
+            site_evaluation=site_evaluation, user=user
+        )
+        if site_export:
+            site_export.delete()

@@ -1,5 +1,9 @@
 from . import lookups
-from .annotation_exports import AnnotationExport
+from .annotation_exports import (
+    AnimationModelRunExport,
+    AnimationSiteExport,
+    AnnotationExport,
+)
 from .model_run import ModelRun
 from .performer import Performer
 from .region import Region
@@ -20,4 +24,6 @@ __all__ = [
     'SatelliteFetching',
     'SiteEvaluationTracking',
     'SiteObservationTracking',
+    'AnimationSiteExport',
+    'AnimationModelRunExport',
 ]

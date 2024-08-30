@@ -1,6 +1,7 @@
 from django.contrib import admin
 
 from rdwatch.core.models import (
+    AnimationSiteExport,
     ModelRun,
     Performer,
     Region,
@@ -123,3 +124,14 @@ class SiteObservationAdmin(admin.ModelAdmin):
     )
     list_filter = ('timestamp',)
     raw_id_fields = ('siteeval', 'label', 'constellation', 'spectrum')
+
+
+@admin.register(AnimationSiteExport)
+class AnimationSiteExportAdmin(admin.ModelAdmin):
+    list_display = (
+        'name',
+        'user',
+        'export_file',
+        'created',
+        'celery_id',
+    )

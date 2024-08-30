@@ -117,24 +117,6 @@ jobs:
         run: pip install --upgrade poetry tox
       - name: Run tests
         run: tox -e ${{ matrix.tox-env }}
-  test-vue:
-    name: Test [vue]
-    runs-on: ubuntu-22.04
-    steps:
-      - name: Checkout repository
-        uses: actions/checkout@v3
-      - name: Setup Node environment
-        uses: actions/setup-node@v3
-        with:
-          node-version: 16
-          cache: npm
-          cache-dependency-path: vue/package-lock.json
-      - name: Install packages
-        run: npm ci
-        working-directory: vue
-      - name: Run tests
-        run: npm run test
-        working-directory: vue
   test-docker-build:
     name: Test Docker build
     runs-on: ubuntu-22.04

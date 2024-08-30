@@ -188,6 +188,7 @@ def get_siteobservations_images(
                 'total': site_obs_count,
                 'mode': 'Site Observations',
                 'siteEvalId': site_eval_id,
+                'source': baseConstellation,
             },
         )
         if observation.timestamp is not None:
@@ -309,6 +310,7 @@ def get_siteobservations_images(
             'current': 0,
             'total': 0,
             'mode': 'Searching All Images',
+            'source': baseConstellation,
             'siteEvalId': site_eval_id,
         },
     )
@@ -326,6 +328,7 @@ def get_siteobservations_images(
                 'current': count,
                 'total': num_of_captures,
                 'mode': 'No Captures',
+                'source': baseConstellation,
                 'siteEvalId': site_eval_id,
             },
         )
@@ -339,6 +342,7 @@ def get_siteobservations_images(
                 'current': count,
                 'total': num_of_captures,
                 'mode': 'Image Captures',
+                'source': baseConstellation,
                 'siteEvalId': site_eval_id,
             },
         )

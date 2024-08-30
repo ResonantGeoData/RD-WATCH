@@ -132,6 +132,19 @@ export interface DownloadAnimationSettings {
   rescale_border: number;
 }
 
+export interface DownloadAnimationState {
+  state: string;
+  status: string;
+  info: {
+    current?: number;
+    total?: number;
+    mode?: string;
+    siteEvalId?: string;
+    modelRunId?: string;
+
+  }
+}
+
 export type CeleryStates = 'FAILURE' | 'PENDING' | 'SUCCESS' | 'RETRY' | 'REVOKED' | 'STARTED';
 
 export interface SiteDetails {
@@ -727,5 +740,29 @@ export class ApiService {
       url: `${this.getApiPrefix()}/regions/${regionId}/`,
     });
   }
+
+  public static generateSiteAnimation(
+    siteEvaluationid: string,
+    data: DownloadAnimationSettings
+  ): CancelablePromise<string> {
+    return __request(OpenAPI, {
+      method: "POST",
+      url: `${this.getApiPrefix()}/evaluations/{id}/animation/`,
+      path: {
+        id: siteEvaluationid,
+      },
+      body: {
+        ...data
+      }
+    });
+  }
+  public static getSiteAnimationDownloadStatus(task_id: string): CancelablePromise<DownloadAnimationState> {
+    return __request(OpenAPI, {
+      method: 'GET',
+      url: `${this.getApiPrefix()}/evaluations/animation/${task_id}/status/`,
+    })
+  }
+
+  
 
 }

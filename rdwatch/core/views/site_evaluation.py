@@ -167,7 +167,7 @@ def download_annotations(request: HttpRequest, id: UUID4):
     return 500, 'Unable to export data'
 
 
-@router.post('/{id}/animation')
+@router.post('/{id}/animation/')
 def generate_animation(
     request: HttpRequest,
     id: UUID4,
@@ -198,7 +198,7 @@ def get_downloaded_animation(request: HttpRequest, task_id: UUID4):
         return response
 
 
-@router.get('/animation/{task_id}/status')
+@router.get('/animation/{task_id}/status/')
 def get_animation_status(request: HttpRequest, task_id: UUID4):
     task = AsyncResult(task_id)
     celery_data = {}
@@ -211,7 +211,7 @@ def get_animation_status(request: HttpRequest, task_id: UUID4):
     return celery_data
 
 
-@router.post('/{id}/animation/debug')
+@router.post('/{id}/animation/debug/')
 def generate_animation_debug(
     request: HttpRequest,
     id: UUID4,

@@ -288,7 +288,9 @@ class GenerateAnimationSchema(BaseModel):
 
 
 @shared_task
-def create_animation(site_evaluation_id: UUID4, settings: GenerateAnimationSchema):
+def create_animation(
+    self, site_evaluation_id: UUID4, settings: GenerateAnimationSchema
+):
     settingsSchema = GenerateAnimationSchema(**settings)
     output_format = settingsSchema.output_format
     fps = settingsSchema.fps
@@ -339,7 +341,7 @@ def create_animation(site_evaluation_id: UUID4, settings: GenerateAnimationSchem
     if len(images) == 0:
         logger.warning('No Images found returning')
         return False, False
-
+    total_images = len(images)
     max_image_record = None
     max_width_px, max_height_px = 0, 0
     for image_record in images:
@@ -400,7 +402,17 @@ def create_animation(site_evaluation_id: UUID4, settings: GenerateAnimationSchem
     np_array = []
     polygon = None
     point = None
+    count = 0
     for img, width, height, image_record in images_data:
+        self.update_state(
+            state='PROGRESS',
+            meta={
+                'current': count,
+                'total': total_images,
+                'mode': 'Rendering Images',
+                'siteEvalId': site_evaluation_id,
+            },
+        )
         if rescale:
             bbox = image_record.image_bbox.extent  # minx, miny, maxx, maxy
             # place into the same pixel coordinate system
@@ -578,6 +590,7 @@ def create_animation(site_evaluation_id: UUID4, settings: GenerateAnimationSchem
 
         frames.append(img)
         np_array.append(np.array(img))  # Convert PIL image to NumPy array
+        count += 1
 
     # Save frames as an animated GIF
     prefix = f'{site_evaluation.configuration.title.strip()}\
@@ -585,6 +598,16 @@ def create_animation(site_evaluation_id: UUID4, settings: GenerateAnimationSchem
             _{site_evaluation.number}'
     if frames:
         # Create a temporary directory
+        self.update_state(
+            state='Progress',
+            meta={
+                'current': count,
+                'total': total_images,
+                'mode': f'Generating {output_format.upper()}',
+                'siteEvalId': site_evaluation_id,
+            },
+        )
+
         output_dir = '/tmp/animation'
         if not os.path.exists(output_dir):
             os.mkdir(output_dir)
@@ -632,6 +655,16 @@ def create_animation(site_evaluation_id: UUID4, settings: GenerateAnimationSchem
 
                 video_writer.release()  # Close the video writer
         name = f'{prefix}.{output_format}'
+        self.update_state(
+            state='SUCCESS',
+            meta={
+                'current': count,
+                'total': total_images,
+                'mode': 'Rendering Complete',
+                'siteEvalId': site_evaluation_id,
+            },
+        )
+
         return output_file_path, name
     return False, False
 
@@ -660,7 +693,7 @@ def create_site_animation_export(
     try:
         site_export.celery_id = task_id
         site_export.save()
-        file_path, name = create_animation(site_evaluation_id, settings)
+        file_path, name = create_animation(self, site_evaluation_id, settings)
         if file_path is False and name is False:
             logger.warning('No Images were found')
             site_export.delete()

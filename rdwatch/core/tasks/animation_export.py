@@ -604,7 +604,7 @@ def create_animation(
     # Save frames as an animated GIF
     prefix = f'{site_evaluation.configuration.title.strip()}\
         _{site_evaluation.configuration.region.name}\
-            _{site_evaluation.number}'
+            _{str(site_evaluation.number).zfill(4)}'
     if frames:
         # Create a temporary directory
         self.update_state(
@@ -685,7 +685,7 @@ def create_site_animation_export(
     task_id = self.request.id
     site_evaluation = SiteEvaluation.objects.get(pk=site_evaluation_id)
     user = User.objects.get(pk=userId)
-    site_export, created = AnimationSiteExport.objects.get_or_create(
+    site_export = AnimationSiteExport(
         name='',
         created=datetime.now(),
         site_evaluation=site_evaluation,
@@ -709,9 +709,6 @@ def create_site_animation_export(
             shutil.rmtree(os.path.dirname(file_path))
     except Exception as e:
         logger.warning(f'Error when processing Animation: {e}')
-        site_export = AnimationSiteExport.objects.get(
-            site_evaluation=site_evaluation, user=user
-        )
         if site_export:
             site_export.delete()
 

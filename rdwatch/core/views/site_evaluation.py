@@ -2,7 +2,6 @@ import json
 import tempfile
 from datetime import datetime
 
-from celery.result import AsyncResult
 from ninja import Router
 from pydantic import UUID4
 
@@ -13,18 +12,8 @@ from django.db.models.functions import JSONObject  # type: ignore
 from django.http import HttpRequest, HttpResponse
 from django.shortcuts import get_object_or_404
 
-from rdwatch.core.models import (
-    AnimationSiteExport,
-    SiteEvaluation,
-    SiteEvaluationTracking,
-    lookups,
-)
+from rdwatch.core.models import SiteEvaluation, SiteEvaluationTracking, lookups
 from rdwatch.core.schemas import SiteEvaluationRequest
-from rdwatch.core.tasks.animation_export import (
-    GenerateAnimationSchema,
-    create_animation,
-    create_site_animation_export,
-)
 
 router = Router()
 
@@ -164,67 +153,4 @@ def download_annotations(request: HttpRequest, id: UUID4):
 
             return response
     # TODO: Some Better Error response
-    return 500, 'Unable to export data'
-
-
-@router.post('/{id}/animation/')
-def generate_animation(
-    request: HttpRequest,
-    id: UUID4,
-    params: GenerateAnimationSchema,  # noqa: B008
-):
-    # Fetch the SiteEvaluation instance
-    task_id = create_site_animation_export.delay(
-        site_evaluation_id=id, settings=params.dict(), userId=request.user.pk
-    )
-    return task_id.id
-
-
-@router.get('/animation/{task_id}/')
-def get_downloaded_animation(request: HttpRequest, task_id: UUID4):
-    animation_export = AnimationSiteExport.objects.filter(
-        celery_id=task_id, user=request.user
-    )
-    if animation_export.exists():
-        animation_export = animation_export.first()
-        name = animation_export.name
-        content_type = 'video/mp4'
-        if name.endswith('.gif'):
-            content_type = 'image/gif'
-        response = HttpResponse(
-            animation_export.export_file.file, content_type=content_type
-        )
-        response['Content-Disposition'] = f'attachment; filename="{name}"'
-        return response
-
-
-@router.get('/animation/{task_id}/status/')
-def get_animation_status(request: HttpRequest, task_id: UUID4):
-    task = AsyncResult(task_id)
-    celery_data = {}
-    celery_data['state'] = task.state
-    celery_data['status'] = task.status
-    celery_data['info'] = (
-        str(task.info) if isinstance(task.info, RuntimeError) else task.info
-    )
-
-    return celery_data
-
-
-@router.post('/{id}/animation/debug/')
-def generate_animation_debug(
-    request: HttpRequest,
-    id: UUID4,
-    params: GenerateAnimationSchema,  # noqa: B008
-):
-    # Fetch the SiteEvaluation instance
-    datapath, name = create_animation(
-        site_evaluation_id=id,
-        settings=params.dict(),
-    )
-    if datapath:
-        with open(datapath, 'rb') as f:
-            response = HttpResponse(f.read(), content_type='application/octet-stream')
-            response['Content-Disposition'] = f'attachment; filename={name}'
-            return response
     return 500, 'Unable to export data'

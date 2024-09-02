@@ -20,11 +20,6 @@ logger = logging.getLogger(__name__)
 router = Router()
 
 
-@router.delete('/test/')
-def test_delete(request: HttpRequest):
-    return {'message': 'DELETE request successful'}
-
-
 def generate_download_data(
     exports: list[AnimationSiteExport] | list[AnimationModelRunExport],
 ):

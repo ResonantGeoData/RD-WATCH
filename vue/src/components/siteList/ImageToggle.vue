@@ -1,5 +1,4 @@
 <script setup lang="ts">
-import { ref } from "vue";
 import { ApiService } from "../../client/services/ApiService";
 import { state } from "../../store";
 const openNewTab = (id: string) => {

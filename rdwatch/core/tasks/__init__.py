@@ -472,7 +472,7 @@ def collect_garbage_task() -> None:
     ).delete()
 
     AnimationModelRunExport.objects.filter(
-        created__lte=timezone.now() - timedelta(hours=12)
+        created__lte=timezone.now() - timedelta(hours=48)
     ).delete()
 
     # Delete all SatelliteFetching tasks that are over an day old AND

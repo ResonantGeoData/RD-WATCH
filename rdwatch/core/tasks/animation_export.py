@@ -2,12 +2,15 @@ import logging
 import os
 import shutil
 import tempfile
+import time
+import zipfile
 from datetime import datetime
 from typing import Literal
 
 import cv2
 import numpy as np
-from celery import shared_task
+from celery import group, shared_task, states
+from celery.result import GroupResult
 from PIL import Image, ImageDraw, ImageFont
 from pydantic import UUID4, BaseModel, Field
 from pyproj import Transformer
@@ -17,7 +20,13 @@ from django.core.files import File
 from django.db.models import Q
 
 from rdwatch.celery import app
-from rdwatch.core.models import AnimationSiteExport, SiteEvaluation, SiteImage
+from rdwatch.core.models import (
+    AnimationModelRunExport,
+    AnimationSiteExport,
+    ModelRun,
+    SiteEvaluation,
+    SiteImage,
+)
 
 logger = logging.getLogger(__name__)
 
@@ -676,20 +685,14 @@ def create_site_animation_export(
     task_id = self.request.id
     site_evaluation = SiteEvaluation.objects.get(pk=site_evaluation_id)
     user = User.objects.get(pk=userId)
-    try:
-        site_export = AnimationSiteExport.objects.get(
-            site_evaluation=site_evaluation, user=user
-        )
-        if site_export:  # If there is an existing one we replace the file
-            site_export.delete()
-    except AnimationSiteExport.DoesNotExist:
-        site_export, created = AnimationSiteExport.objects.get_or_create(
-            name='',
-            created=datetime.now(),
-            site_evaluation=site_evaluation,
-            user=user,
-            celery_id=task_id,
-        )
+    site_export, created = AnimationSiteExport.objects.get_or_create(
+        name='',
+        created=datetime.now(),
+        site_evaluation=site_evaluation,
+        user=user,
+        celery_id=task_id,
+        arguments=settings,
+    )
     try:
         site_export.celery_id = task_id
         site_export.save()
@@ -711,3 +714,89 @@ def create_site_animation_export(
         )
         if site_export:
             site_export.delete()
+
+
+@app.task(bind=True)
+def create_modelrun_animation_export(
+    self, modelrun_id: UUID4, settings: GenerateAnimationSchema, userId: int
+):
+    task_id = self.request.id
+    model_run = ModelRun.objects.get(pk=modelrun_id)
+    user = User.objects.get(pk=userId)
+    modelrun_export, created = AnimationModelRunExport.objects.get_or_create(
+        name='',
+        created=datetime.now(),
+        configuration=model_run,
+        user=user,
+        celery_id=task_id,
+        arguments=settings,
+    )
+    # Now we create a task for each site in the image that has information
+    site_evals = SiteEvaluation.objects.filter(configuration_id=modelrun_id)
+    site_tasks = []
+    for site in site_evals:
+        if SiteImage.objects.filter(
+            site=site.pk
+        ).exists():  # Has images add it to the tasks
+            site_tasks.append(create_site_animation_export.s(site.pk, settings, userId))
+
+    subtasks = group(site_tasks)
+
+    result: GroupResult = subtasks.apply_async()
+
+    total = len(site_tasks)
+
+    while not result.ready():
+        completed_count = result.completed_count()
+        # Update the main task state with the overall progress
+        self.update_state(
+            state=states.STARTED,
+            meta={
+                'mode': 'Processing Site Animations',
+                'current': completed_count,
+                'total': total,
+            },
+        )
+
+        # Optionally, sleep for a while to avoid too frequent updates
+        time.sleep(10)
+    task_ids = [res.id for res in result.results]
+    self.update_state(
+        state=states.STARTED,
+        meta={
+            'mode': 'Generating Zip file',
+            'current': completed_count,
+            'total': total,
+        },
+    )
+    # now we take each AnimationModelRunExport file and create a zip file for it
+    exports = AnimationSiteExport.objects.filter(celery_id__in=task_ids)
+
+    # Prepare to create a zip file
+    zip_filename = f'modelrun_export_{modelrun_id}.zip'
+    zip_filepath = os.path.join('/tmp', zip_filename)
+
+    title = model_run.title
+    with zipfile.ZipFile(zip_filepath, 'w') as zip_file:
+        for export in exports:
+            if export.export_file and export.export_file.name:
+                # Open the file and write its content to the zip archive
+                format = export.arguments['output_format']
+                site_number = str(export.site_evaluation.number).zfill(4)
+                output_name = f'{title}_{site_number}.{format}'
+                with export.export_file.open('rb') as f:
+                    file_data = f.read()
+                    zip_file.writestr(output_name, file_data)
+
+    # Save the zip file to the AnimationModelRunExport instance
+    with open(zip_filepath, 'rb') as file:
+        modelrun_export.export_file.save(zip_filename, File(file))
+
+    modelrun_export.save()
+
+    # Clean up temporary zip file
+    if os.path.exists(zip_filepath):
+        os.remove(zip_filepath)
+
+    self.update_state(state=states.SUCCESS)
+    return {'status': 'Completed', 'zip_file': modelrun_export.export_file.url}

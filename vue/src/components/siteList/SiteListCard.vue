@@ -9,7 +9,7 @@ import { Ref, computed, ref } from "vue";
 import { hoveredInfo } from "../../interactions/mouseEvents";
 import ImageBrowser from './ImageBrowser.vue';
 import ImageToggle from './ImageToggle.vue';
-import AnimationDownloadDialog from "../AnimationDownloadDialog.vue";
+import AnimationDownloadDialog from "../animation/AnimationDownloadDialog.vue";
 
 export interface SiteDisplay {
   number: number;
@@ -394,7 +394,10 @@ const animationDialog = ref(false);
         :site-overview="site.selectedSite"
       />
     </v-card-text>
-    <v-dialog v-model="animationDialog" width="600">
+    <v-dialog
+      v-model="animationDialog"
+      width="900"
+    >
       <animation-download-dialog
         :id="site.id"
         type="site"

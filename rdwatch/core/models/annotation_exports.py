@@ -22,6 +22,11 @@ class AbstractFileExport(models.Model):
         help_text='Celery Task Id',
     )
 
+    def delete(self, *args, **kwargs):
+        if self.export_file:
+            self.export_file.delete(save=False)  # Delete the file from storage
+        super().delete(*args, **kwargs)  # Call the "real" delete() method of the model
+
 
 @receiver(models.signals.pre_delete, sender=AbstractFileExport)
 def delete_content(sender, instance, **kwargs):
@@ -45,14 +50,16 @@ class AnimationSiteExport(AbstractFileExport):
         help_text='SiteEvaluation for Animation export',
         db_index=True,
     )
+    arguments = models.JSONField(null=True, default=None)
     user = models.ForeignKey(User, on_delete=models.CASCADE, null=True, blank=True)
 
 
 class AnimationModelRunExport(AbstractFileExport):
-    configuation = models.ForeignKey(
+    configuration = models.ForeignKey(
         to='ModelRun',
         on_delete=models.PROTECT,
         help_text='ModelRun for Animation export',
         db_index=True,
     )
     user = models.ForeignKey(User, on_delete=models.CASCADE, null=True, blank=True)
+    arguments = models.JSONField(null=True, default=None)

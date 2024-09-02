@@ -218,7 +218,7 @@ const cancel = debounce(() => emit("close"), 5000, { leading: true });
               :items="includeChoices"
               item-value="value"
               item-title="name"
-              label="Display Labels"
+              label="Include Observations"
               class="mr-2"
             />
           </v-row>

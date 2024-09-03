@@ -9,7 +9,7 @@ from django.db import migrations, models
 
 class Migration(migrations.Migration):
     dependencies = [
-        ('core', '0032_siteevaluation_point_siteobservation_point_and_more'),
+        ('core', '0033_remove_region_unique_region_with_owner_and_more'),
     ]
 
     operations = [
@@ -45,14 +45,14 @@ class Migration(migrations.Migration):
                     'performer',
                     models.CharField(
                         blank=True,
-                        help_text='Override for the team that produced this evaluation',
+                        help_text='Shortcode override for the team that produced this evaluation',
                         max_length=1000,
                     ),
                 ),
                 ('zipfile', s3_file_field.fields.S3FileField()),
                 (
                     'task_id',
-                    models.CharField(help_text='celery task ID', max_length=128),
+                    models.CharField(help_text='Celery task ID', max_length=256),
                 ),
             ],
         ),

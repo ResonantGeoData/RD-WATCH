@@ -170,20 +170,16 @@ def generate_modelrun_animation(
 
 @router.get('/download/site/{task_id}/')
 def get_downloaded_site_animation(request: HttpRequest, task_id: UUID4):
-    animation_export = AnimationSiteExport.objects.filter(
-        celery_id=task_id, user=request.user
+    animation_export = get_object_or_404(AnimationSiteExport, celery_id=task_id, user=request.user)
+    name = animation_export.name
+    content_type = 'video/mp4'
+    if name.endswith('.gif'):
+        content_type = 'image/gif'
+    response = HttpResponse(
+        animation_export.export_file.file, content_type=content_type
     )
-    if animation_export.exists():
-        animation_export = animation_export.first()
-        name = animation_export.name
-        content_type = 'video/mp4'
-        if name.endswith('.gif'):
-            content_type = 'image/gif'
-        response = HttpResponse(
-            animation_export.export_file.file, content_type=content_type
-        )
-        response['Content-Disposition'] = f'attachment; filename="{name}"'
-        return response
+    response['Content-Disposition'] = f'attachment; filename="{name}"'
+    return response
 
 
 @router.get('/download/modelrun/{task_id}/')

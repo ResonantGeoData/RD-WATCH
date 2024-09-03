@@ -111,10 +111,6 @@ def delete_site_download(
 ):
     # Fetch the export object
     export = get_object_or_404(AnimationSiteExport, celery_id=id, user=request.user)
-    logger.warning(export)
-    # Check for ownership or permissions
-    if export.user != request.user:
-        return 403, {'error': 'You do not have permission to delete this export.'}
 
     # Perform the delete operation
     export.delete()

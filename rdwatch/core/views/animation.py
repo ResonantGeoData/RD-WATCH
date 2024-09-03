@@ -18,10 +18,10 @@ from rdwatch.core.tasks.animation_export import (
 logger = logging.getLogger(__name__)
 
 router = Router()
-
+from typing import Iterable
 
 def generate_download_data(
-    exports: list[AnimationSiteExport] | list[AnimationModelRunExport],
+    exports: Iterable[AnimationSiteExport] | Iterable[AnimationModelRunExport],
 ):
     output = []
     for export in exports:

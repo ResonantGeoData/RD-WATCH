@@ -184,17 +184,13 @@ def get_downloaded_site_animation(request: HttpRequest, task_id: UUID4):
 
 @router.get('/download/modelrun/{task_id}/')
 def get_downloaded_modelrun_animation(request: HttpRequest, task_id: UUID4):
-    animation_export = AnimationModelRunExport.objects.filter(
-        celery_id=task_id, user=request.user
+    animation_export = get_object_or_404(AnimationModelRunExport, celery_id=task_id, user=request.user)
+    name = animation_export.configuration.title
+    response = HttpResponse(
+        animation_export.export_file.file, content_type='application/zip'
     )
-    if animation_export.exists():
-        animation_export = animation_export.first()
-        name = animation_export.configuration.title
-        response = HttpResponse(
-            animation_export.export_file.file, content_type='application/zip'
-        )
-        response['Content-Disposition'] = f'attachment; filename="{name}.zip"'
-        return response
+    response['Content-Disposition'] = f'attachment; filename="{name}.zip"'
+    return response
 
 
 @router.get('/{task_id}/status/')

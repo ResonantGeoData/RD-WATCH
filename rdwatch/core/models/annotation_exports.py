@@ -51,7 +51,7 @@ class AnimationSiteExport(AbstractFileExport):
         db_index=True,
     )
     arguments = models.JSONField(null=True, default=None)
-    user = models.ForeignKey(User, on_delete=models.CASCADE, null=True, blank=True)
+    user = models.ForeignKey(User, on_delete=models.CASCADE)
 
 
 class AnimationModelRunExport(AbstractFileExport):

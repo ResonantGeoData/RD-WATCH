@@ -71,11 +71,7 @@ def stac_search(
         time_str = f'{_fmt_time(min_time)}/{_fmt_time(max_time)}'
     else:
         time_str = f'{_fmt_time(timestamp)}Z'
-    if source not in COLLECTIONS:
-        logger.warning(
-            'Source {source} not in Collections: {COLLECTIONS} returning empty list'
-        )
-        return {'features': [], 'links': []}
+
     results = stac_catalog.search(
         method='GET',
         bbox=bbox,
@@ -83,6 +79,7 @@ def stac_search(
         collections=COLLECTIONS[source],
         limit=100,
     )
+
     # TODO: return `results` directly instead of converting to a dict.
     # Before that can happen, the callers need to be updated to handle
     # an `ItemSearch` object.

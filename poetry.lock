@@ -916,8 +916,10 @@ files = [
 ]
 
 [package.dependencies]
+boto3 = {version = "*", optional = true, markers = "extra == \"s3\""}
 django = ">=3.2"
 django-minio-storage = {version = ">=0.5", optional = true, markers = "extra == \"minio\""}
+django-storages = {version = ">=1.14", extras = ["s3"], optional = true, markers = "extra == \"s3\""}
 djangorestframework = "*"
 minio = {version = ">=7", optional = true, markers = "extra == \"minio\""}
 
@@ -3025,4 +3027,4 @@ watchdog = ["watchdog (>=2.3)"]
 [metadata]
 lock-version = "2.0"
 python-versions = ">=3.11.9,<4"
-content-hash = "c55cb12c788340780fc3ae6da903164365d223d4c8e0f35af0be6c411bdb3b54"
+content-hash = "02594d6b27a077ae0e482f1780c1a6b59190824d748659cd60af85b6c2cfd267"

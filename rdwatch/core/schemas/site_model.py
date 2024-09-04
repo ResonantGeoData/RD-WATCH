@@ -1,7 +1,7 @@
 # flake8: noqa: F722
 import json
 from datetime import datetime
-from typing import Annotated, Any, Literal, TypeAlias
+from typing import Annotated, Any, ClassVar, Literal, TypeAlias
 
 from ninja import Field, Schema
 from pydantic import confloat, constr, root_validator, validator

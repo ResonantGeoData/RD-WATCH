@@ -623,7 +623,7 @@ def create_animation(
         if output_format == 'gif':
             # Create a temporary file for GIF
             temp_file = tempfile.NamedTemporaryFile(
-                prefix=prefix, suffix='.mp4', dir=output_dir, delete=False
+                prefix=prefix, suffix='.gif', dir=output_dir, delete=False
             )
             with open(temp_file.name, 'w') as tmp_file:
                 output_file_path = tmp_file.name

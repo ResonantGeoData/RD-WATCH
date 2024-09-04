@@ -4,8 +4,6 @@ from dataclasses import dataclass
 from datetime import datetime, timedelta
 from typing import cast
 
-from django.conf import settings
-
 from rdwatch.core.models.lookups import CommonBand, ProcessingLevel
 from rdwatch.core.utils.stac_search import stac_search
 
@@ -24,16 +22,7 @@ class Band:
     collection: str
 
 
-COLLECTIONS: list[str] = []
-
-if settings.STAC_URL:
-    COLLECTIONS = ['sentinel-2-c1-l2a', 'sentinel-2-l2a', 'landsat-c2-l2']
-elif settings.settings.ACCENTURE_VERSION is not None:
-    COLLECTIONS = [
-        f'ta1-s2-acc-{settings.ACCENTURE_VERSION}',
-        f'ta1-ls-acc-{settings.ACCENTURE_VERSION}',
-        f'ta1-pd-acc-{settings.ACCENTURE_VERSION}',
-    ]
+COLLECTIONS: list[str] = ['sentinel-2-c1-l2a', 'sentinel-2-l2a', 'landsat-c2-l2']
 
 
 def get_bands(

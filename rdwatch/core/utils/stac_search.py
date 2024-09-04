@@ -59,7 +59,7 @@ COLLECTIONS: dict[str, list[str]] = {
 STAC_URL = ''
 STAC_HEADERS = {}
 if settings.STAC_URL:
-    COLLECTIONS['S2'].append(['sentinel-2-c1-l2a', 'sentinel-2-l2a'])
+    COLLECTIONS['S2'] += ['sentinel-2-c1-l2a', 'sentinel-2-l2a']
     COLLECTIONS['L8'].append('landsat-c2-l2')
     STAC_URL = settings.STAC_URL
 elif settings.settings.ACCENTURE_VERSION is not None:

@@ -318,6 +318,7 @@ watch(databaseSource, () => {
         <v-col cols="8">
           <v-checkbox
             v-model="worldViewImagery"
+            :disabled="true"
             label="WorldView Imagery"
             density="compact"
           />

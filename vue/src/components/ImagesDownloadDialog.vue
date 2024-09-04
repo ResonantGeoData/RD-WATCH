@@ -19,10 +19,10 @@ const emit = defineEmits<{
     (e: "cancel"): void;
 }>();
 
-const constellationChoices = ref(['S2', 'WV', 'L8', 'PL'])
+const constellationChoices = ref(['S2', 'WV',]) // TODO: Image Download HotFix ref(['S2', 'WV', 'L8', 'PL'])
 const selectedConstellation: Ref<Constellation[]> = ref(['WV']);
-const worldviewSourceChoices = computed<string[] | null>(() => selectedConstellation.value.includes('WV') ? ['cog', 'nitf'] : null);
-const selectedWorldviewSource = ref<'cog' | 'nitf'>('cog');
+const worldviewSourceChoices = computed<string[] | null>(() => selectedConstellation.value.includes('WV') ? ['nitf'] : null); // TODO Image Download Hotfix: add back in cog
+const selectedWorldviewSource = ref<'nitf'>('nitf'); // // TODO: Image Download HotFix ref<'cog' | 'nitf'>('cog');
 const dayRange = ref(14);
 const noData = ref(50)
 const overrideDates: Ref<[string, string]> = ref([
@@ -31,8 +31,8 @@ const overrideDates: Ref<[string, string]> = ref([
 const showAdvanced = ref(false);
 const force =ref(false);
 const customDateRange = ref(false);
-const scaleOptions = ref(['default', 'bits', 'custom'])
-const scale: Ref<'default' | 'bits' | 'custom'> = ref('bits')
+const scaleOptions = ref(['default', 'bits', 'custom']);
+const scale: Ref<'default' | 'bits' | 'custom'> = ref('bits');
 const scaleNums: Ref<[number, number]> = ref([0, 10000])
 const bboxScale: Ref<number> = ref(1.2);
 const validForm = ref(true);

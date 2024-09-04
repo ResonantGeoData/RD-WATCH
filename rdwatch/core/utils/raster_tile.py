@@ -15,7 +15,17 @@ def get_raster_tile(uri: str, z: int, x: int, y: int) -> bytes:
                 s3_uri = 's3://sentinel-cogs/' + uri[49:]
                 with Reader(input=s3_uri) as cog:
                     img = cog.tile(x, y, z, tilesize=512)
-                    img.rescale(in_range=((0, 10000),))
+                    # TODO Rescaling is off for element84 img.rescale(in_range=((0, 10000),))
+                    # Using bit scaling instead
+                    stats = cog.statistics()
+                    low = 0
+                    high = 10000
+                    if 'b1' in stats.keys():
+                        stats_json = stats['b1']
+                        low = stats_json['percentile_2']
+                        high = stats_json['percentile_98']
+                    img.rescale(in_range=((low, high),))
+
                     return img.render(img_format='WEBP')
         with Reader(input=uri) as cog:
             img = cog.tile(x, y, z, tilesize=512)

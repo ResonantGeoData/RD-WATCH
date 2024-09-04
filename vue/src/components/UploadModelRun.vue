@@ -24,7 +24,7 @@ const modelRun = reactive({
 const successDialog = ref(false);
 const uploadDialog = ref(false);
 const validForm = ref(false);
-const uploadFile = ref<File>();
+const uploadFile = ref<File | File[]>();
 const uploadLoading = ref(false);
 const uploadError = ref<unknown>();
 // Infinity means indeterminate
@@ -88,7 +88,7 @@ async function upload() {
 
     const taskState = await untilTaskReady(taskId);
     if (taskState !== "SUCCESS") {
-      throw new Error('Upload failed');
+      throw new Error(`Upload failed with state: ${taskState}`);
     }
 
     successDialog.value = true;
@@ -104,9 +104,10 @@ function validateTitle(title: string) {
   return true;
 }
 
-function validateFile(files: File[]) {
-  if (files.length === 0) return "Must provide a model run file";
-  return true;
+function validateFile(file: File | File[] | undefined) {
+  if ((Array.isArray(file) && file.length === 1) || file)
+    return true;
+  return "Must provide a model run file";
 }
 
 function closeDialogs() {

@@ -1,4 +1,5 @@
 import logging
+from collections.abc import Iterable
 
 from celery.result import AsyncResult
 from ninja import Router
@@ -18,7 +19,7 @@ from rdwatch.core.tasks.animation_export import (
 logger = logging.getLogger(__name__)
 
 router = Router()
-from typing import Iterable
+
 
 def generate_download_data(
     exports: Iterable[AnimationSiteExport] | Iterable[AnimationModelRunExport],
@@ -170,7 +171,9 @@ def generate_modelrun_animation(
 
 @router.get('/download/site/{task_id}/')
 def get_downloaded_site_animation(request: HttpRequest, task_id: UUID4):
-    animation_export = get_object_or_404(AnimationSiteExport, celery_id=task_id, user=request.user)
+    animation_export = get_object_or_404(
+        AnimationSiteExport, celery_id=task_id, user=request.user
+    )
     name = animation_export.name
     content_type = 'video/mp4'
     if name.endswith('.gif'):
@@ -184,7 +187,9 @@ def get_downloaded_site_animation(request: HttpRequest, task_id: UUID4):
 
 @router.get('/download/modelrun/{task_id}/')
 def get_downloaded_modelrun_animation(request: HttpRequest, task_id: UUID4):
-    animation_export = get_object_or_404(AnimationModelRunExport, celery_id=task_id, user=request.user)
+    animation_export = get_object_or_404(
+        AnimationModelRunExport, celery_id=task_id, user=request.user
+    )
     name = animation_export.configuration.title
     response = HttpResponse(
         animation_export.export_file.file, content_type='application/zip'

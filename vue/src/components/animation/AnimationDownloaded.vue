@@ -12,14 +12,9 @@ const props = defineProps<{
 
 const currentList: Ref<DownloadedAnimation[]> = ref([]);
 
-function formatDateTime(timeString: string) {
-  // Create a Date object from the time string
-  const date = new Date(timeString);
-
-  // Define formatting options
-  const options: Intl.DateTimeFormatOptions = {
+const dateOptions: Intl.DateTimeFormatOptions = {
     year: "numeric",
-    month: "long",
+    month: "numeric",
     day: "numeric",
     hour: "2-digit",
     minute: "2-digit",
@@ -27,8 +22,20 @@ function formatDateTime(timeString: string) {
     hour12: false, // Set to false if you prefer a 24-hour format
   };
 
+const formatDateTime = (timeString: string) => {
+  // Create a Date object from the time string
+  const date = new Date(timeString);
+
   // Convert to human-readable format
-  return date.toLocaleString("en-US", options);
+  return date.toLocaleString("en-US", dateOptions);
+}
+
+const expiredTime = (timeString: string) => {
+    const date = new Date(timeString);
+    const addHours = props.type === 'site' ? 6 : 48;
+    const addTime = addHours * 60 *60 * 1000;
+    const expirdeDate = new Date(date.getTime() + addTime);
+    return expirdeDate.toLocaleString("en-US", dateOptions);
 }
 const checkDownloadStatus = async () => {
   let checkAgain = false;
@@ -72,7 +79,7 @@ const deleteItem = async (taskId: string) => {
         }
 }
 const headers = ref([
-  { title: "Created", key: "created", width: "250px" },
+  { title: "Date", key: "created", width: "250px" },
   { title: "Arguments", key: "arguments", width: "20px" },
   { title: "Status", key: "completed" },
 ]);
@@ -81,6 +88,14 @@ const headers = ref([
 <template>
   <div>
     <v-row><h2>Animation Download Status</h2></v-row>
+    <v-row>
+      <p v-if="type === 'site'">
+        Animation Downloads for Sites are removed automatically from the system after 6 hours.
+      </p>
+      <p v-if="type === 'modelRun'">
+        Animation Downloads for ModelRuns are removed automatically from the system after 48 hours.
+      </p>
+    </v-row>
     <v-data-table-virtual
       v-if="currentList.length && initialized"
       :headers="headers"
@@ -89,7 +104,8 @@ const headers = ref([
       item-value="key"
     >
       <template #[`item.created`]="{ item }">
-        <b>{{ formatDateTime(item.created) }}</b>
+        <v-row dense><v-col cols="5">Created:</v-col><v-col><b>{{ formatDateTime(item.created) }}</b></v-col></v-row>
+        <v-row dense><v-col cols="5">Expire:</v-col><v-col><b>{{ expiredTime(item.created) }}</b></v-col></v-row>
       </template>
       <template #[`item.arguments`]="{ item }">
         <div>

@@ -1,6 +1,5 @@
 import logging
 import os
-import shutil
 import tempfile
 import time
 import zipfile
@@ -413,6 +412,10 @@ def create_animation(
     point = None
     count = 0
     for img, width, height, image_record in images_data:
+        if img.mode in ('L', 'LA'):  # 'L' for grayscale, 'LA' for grayscale with alpha
+            # Convert grayscale to RGB
+            img = img.convert('RGB')
+
         self.update_state(
             state='PROGRESS',
             meta={
@@ -505,7 +508,7 @@ def create_animation(
                     )
                     for lon, lat in transformed_coords
                 ]
-                color = label_mapped.get('color', 'white')
+                color = label_mapped.get('color', (256, 256, 256))
                 draw.polygon(pixel_coords, outline=color)
         if not polygon and observation:
             point = observation.point
@@ -516,7 +519,7 @@ def create_animation(
             pixel_point = to_pixel_coords(
                 transformed_point[0], transformed_point[1], bbox, xScale, yScale
             )
-            color = label_mapped.get('color', 'white')
+            color = label_mapped.get('color', (256, 256, 256))
             draw.ellipse(
                 (
                     pixel_point[0] - point_radius,
@@ -582,7 +585,7 @@ def create_animation(
                 label_mapped['label'],
                 label_point,
                 label_size,
-                label_mapped['color'],
+                label_mapped.get('color', (256, 256, 256)),
             )
         if 'site_label' in labels and site_label_mapped:
             site_label_point = (
@@ -594,7 +597,7 @@ def create_animation(
                 site_label_mapped['label'],
                 site_label_point,
                 label_size,
-                site_label_mapped['color'],
+                site_label_mapped.get('color', (256, 256, 256)),
             )
 
         frames.append(img)
@@ -706,7 +709,7 @@ def create_site_animation_export(
             site_export.export_file.save(name, File(file))
         site_export.save()
         if os.path.exists(file_path):
-            shutil.rmtree(os.path.dirname(file_path))
+            os.remove(file_path)
     except Exception as e:
         logger.warning(f'Error when processing Animation: {e}')
         if site_export:
@@ -756,7 +759,7 @@ def create_modelrun_animation_export(
         )
 
         # Optionally, sleep for a while to avoid too frequent updates
-        time.sleep(10)
+        time.sleep(5)
     task_ids = [res.id for res in result.results]
     self.update_state(
         state=states.STARTED,

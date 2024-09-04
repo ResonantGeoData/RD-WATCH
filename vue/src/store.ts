@@ -182,6 +182,7 @@ export const state = reactive<{
   totalNumModelRuns: number;
   openedModelRuns: Set<KeyedModelRun["key"]>;
   gifSettings: { fps: number, quality: number, pointSize: number},
+  performerIds: number[],
   performerMapping: Record<number, Performer>,
   proposals: {
     ground_truths?: string | null,
@@ -267,6 +268,7 @@ export const state = reactive<{
   openedModelRuns: new Set<KeyedModelRun["key"]>(),
   gifSettings: { fps: 1, quality: 1, pointSize: 1},
   performerMapping: {},
+  performerIds: [],
   proposals: {},
   editGeoJSON: null,
   imageFilter: {
@@ -687,6 +689,21 @@ const refreshModelRunDownloadingStatuses = async () => {
   }
 };
 
+const updatePerformers = async () => {
+  const performerList = await ApiService.getPerformers();
+  const performerResults = performerList.items
+  performerResults.sort((a, b) => (a.team_name > b.team_name ? 1 : -1))
+
+  state.performerMapping = performerResults.reduce(
+    (acc, item) => ({
+      ...acc,
+      [item.id]: item
+    }),
+    {} as Record<number, Performer>,
+  );
+  state.performerIds = performerResults.map((item) => item.id);
+};
+
 export {
   loadAndToggleSatelliteImages,
   updateCameraBoundsBasedOnModelRunList,
@@ -694,5 +711,5 @@ export {
   updateRegionMap,
   queryModelRuns,
   refreshModelRunDownloadingStatuses,
+  updatePerformers,
 }
-

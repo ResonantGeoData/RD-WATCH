@@ -5,6 +5,8 @@ import S3FileFieldClient, {
 } from "django-s3-file-field";
 import { ApiService } from "../client";
 
+const emits = defineEmits(['upload']);
+
 const s3ffClient = new S3FileFieldClient({
   baseUrl: `${ApiService.getApiPrefix()}/s3-upload/`,
   apiConfig: {
@@ -92,6 +94,7 @@ async function upload() {
     }
 
     successDialog.value = true;
+    emits('upload');
   } catch (err) {
     uploadError.value = err;
   } finally {

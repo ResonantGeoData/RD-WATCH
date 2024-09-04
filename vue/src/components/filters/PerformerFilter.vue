@@ -1,9 +1,9 @@
 <script setup lang="ts">
-import { onMounted, ref, watch } from "vue";
-import { ApiService, PerformerList } from "../../client";
-import type { Ref } from "vue";
+import { computed, onMounted, ref, watch } from "vue";
+import { ApiService } from "../../client";
+import type { ComputedRef, Ref } from "vue";
 import type { Performer } from "../../client";
-import { state } from "../../store";
+import { state, updatePerformers } from "../../store";
 
 type SelectedPerformers = Performer[];
 
@@ -15,24 +15,20 @@ const emit = defineEmits<{
   (e: "update:modelValue", performer: SelectedPerformers): void;
 }>();
 
-const performers: Ref<{value: number; title: string}[]> = ref([]);
+const performers: ComputedRef<{value: number; title: string}[]> = computed(() => {
+  return state.performerIds.map((id) => {
+    const item = state.performerMapping[id];
+    return {
+      title: item.team_name,
+      value: item.id,
+    };
+  });
+});
 const selectedPerformers: Ref<number[]> = ref(props.modelValue.map((item) => item.id));
-const performerList: Ref<PerformerList | null> = ref(null);
-const performerIdMap: Record<number, Performer> = {}
-const loadPerformers = async () => {
-  performerList.value = await ApiService.getPerformers();
-  const performerResults = performerList.value.items
-  performerResults.sort((a, b) => (a.team_name > b.team_name ? 1 : -1))
-  performers.value = [];
-  performerResults.forEach((item) => {
-    performerIdMap[item.id] = item;
-    performers.value.push({title: item.team_name, value: item.id });
-  })
-  state.performerMapping = performerIdMap;
-};
-onMounted(() => loadPerformers());
 
-watch(() => ApiService.getPerformers(), loadPerformers);
+onMounted(() => updatePerformers());
+
+watch(() => ApiService.getPerformers(), updatePerformers);
 watch(() => props.modelValue, () => {
   selectedPerformers.value = props.modelValue.map((item) => item.id);
 });
@@ -41,7 +37,7 @@ watch(() => props.modelValue, () => {
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 const updateSelected =  (data: readonly any[]) => {
   if (selectedPerformers.value !== null) {
-    const newPerformers = data.map((item) => performerIdMap[item]);
+    const newPerformers = data.map((item) => state.performerMapping[item]);
     if (newPerformers.length) {
       emit("update:modelValue", newPerformers);
       return;

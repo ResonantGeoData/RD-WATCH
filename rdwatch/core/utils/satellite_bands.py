@@ -22,6 +22,9 @@ class Band:
     collection: str
 
 
+COLLECTIONS: list[str] = ['sentinel-2-c1-l2a', 'sentinel-2-l2a', 'landsat-c2-l2']
+
+
 def get_bands(
     constellation: str,
     timestamp: datetime,
@@ -62,23 +65,8 @@ def get_bands(
 
         cloudcover = 0
         match feature:
-            case {'collection': 'landsat-c2l1' | 'sentinel-s2-l1c'}:
-                level, _ = ProcessingLevel.objects.get_or_create(
-                    slug='1C',
-                    defaults={'description': 'top of atmosphere radiance'},
-                )
             case {'collection': collection}:
-                if (
-                    collection
-                    in (
-                        'landsat-c2l2-sr',
-                        'sentinel-s2-l2a',
-                        'sentinel-s2-l2a-cogs',
-                    )
-                    or collection.startswith('ta1-s2-acc-')
-                    or collection.startswith('ta1-ls-acc-')
-                    or collection.startswith('ta1-pd-acc-')
-                ):
+                if collection in COLLECTIONS:
                     level, _ = ProcessingLevel.objects.get_or_create(
                         slug='2A',
                         defaults={'description': 'surface reflectance'},

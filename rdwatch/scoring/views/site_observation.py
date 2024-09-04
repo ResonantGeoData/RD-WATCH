@@ -39,7 +39,7 @@ class GenerateImagesSchema(Schema):
     noData: int = 50
     overrideDates: None | list[str] = None
     force: bool = False
-    scale: Literal['default', 'bits', 'custom'] = 'default'
+    scale: Literal['default', 'bits', 'custom'] = 'bits'
     scaleNum: None | list[int] = None
     bboxScale: None | float = 1.2
 

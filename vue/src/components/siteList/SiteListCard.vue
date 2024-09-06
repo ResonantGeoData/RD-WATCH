@@ -30,6 +30,7 @@ export interface SiteDisplay {
   timestamp: number;
   downloading: boolean;
   groundTruth?: boolean;
+  color_code?: number;
   originator?: string;
   proposal?: boolean;
   details?: {

@@ -56,7 +56,7 @@ def get_worldview_nitf_bbox(
     capture: WorldViewNITFCapture,
     bbox: tuple[float, float, float, float],
     format='PNG',
-    scale: Literal['default', 'bits'] = 'default',
+    scale: Literal['default', 'bits'] = 'bits',
 ) -> bytes:
     with rasterio.Env(
         GDAL_DISABLE_READDIR_ON_OPEN='EMPTY_DIR',

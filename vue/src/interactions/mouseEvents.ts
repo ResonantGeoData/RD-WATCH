@@ -107,7 +107,7 @@ const unmountPopup = (popUpProps: Record<string, PopUpData>) => {
 }
 
 const leavePopupObservation = async (e: MapLayerMouseEvent) => {
- drawPopupObservation(e, true); 
+ drawPopupObservation(e, true);
 };
 const drawPopupObservation = async (e: MapLayerMouseEvent, remove=false) => {
   if (e.features && e.features[0]?.properties && map.value) {
@@ -283,8 +283,8 @@ const drawSitePopupObservation = async (e: MapLayerMouseEvent, remove=false) => 
                   ids.push(id);
                   htmlMap[id] = true;
                   }
-                  const start_date = item.properties.start_date ? item.properties.start_date .substring(0, 10) : 'null';
-                  const end_date = item.properties.end_date ? item.properties.end_date.substring(0, 10) : 'null';
+                  const start_date = item.properties.start_date ? item.properties.start_date.substring(0, 10) : item.properties.point_date ? item.properties.point_date.substring(0, 10) : 'null';
+                  const end_date = item.properties.end_date ? item.properties.end_date.substring(0, 10) : item.properties.point_date ? item.properties.point_date.substring(0, 10) : 'null';
                   const colorCode = item.properties.color_code as scoringColorsKeys;
                   const scoreColor  = scoringColors[colorCode] ? scoringColors[colorCode].hex : undefined
                   const scoreLabel  = scoringColors[colorCode] ? scoringColors[colorCode].title : undefined

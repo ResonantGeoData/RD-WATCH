@@ -15,7 +15,7 @@ from django.db.models import (
     Value,
     When,
 )
-from django.db.models.functions import Concat, JSONObject, Substr
+from django.db.models.functions import Coalesce, Concat, JSONObject, Substr
 from django.http import HttpRequest
 from django.shortcuts import get_object_or_404
 
@@ -44,8 +44,10 @@ def get_site_query(site_id: UUID4):
                 # S2='S2',
                 # WV='WV',
                 # L8='L8',
-                start_date=ExtractEpoch('start_date'),
-                end_date=ExtractEpoch('end_date'),
+                start_date=Coalesce(
+                    ExtractEpoch('start_date'), ExtractEpoch('point_date')
+                ),
+                end_date=Coalesce(ExtractEpoch('end_date'), ExtractEpoch('point_date')),
                 # status='status',
                 # filename='cache_originator_file',
                 # downloading='downloading',
@@ -116,8 +118,8 @@ def siteDetails(request: HttpRequest, id: UUID4):
                 ),
                 output_field=CharField(),
             ),
-            timemin=ExtractEpoch('start_date'),
-            timemax=ExtractEpoch('end_date'),
+            timemin=Coalesce(ExtractEpoch('start_date'), ExtractEpoch('point_date')),
+            timemax=Coalesce(ExtractEpoch('end_date'), ExtractEpoch('point_date')),
             regionName=F('region'),
             performer=F('originator'),
             siteNumber=Substr(F('site_id'), 9),  # pos is 1 indexed

@@ -11,6 +11,7 @@ import { SiteDisplay } from "./SiteListCard.vue";
 import SiteListHeader from "./SiteListHeader.vue";
 import SiteListFilter from "./SiteListFilter.vue";
 import { getSiteObservationDetails, state } from "../../store";
+import { scoringColors, scoringColorsKeys } from "../../mapstyle/annotationStyles";
 
 const props = defineProps<{
   modelRuns: string[];
@@ -107,6 +108,7 @@ const getSites = async (modelRun: string, initRun = false) => {
           WV: item.WV,
           L8: item.L8,
           PL: item.PL,
+          color_code: item.color_code,
           status: item.status,
           timestamp: item.timestamp,
           groundTruth: item.groundtruth,
@@ -134,11 +136,24 @@ const getAllSiteProposals = async (initRun = false) => {
         mainList = mainList.concat(results);
     }
     baseModifiedList.value = mainList;
-    const includeGroundTruth = (state.filters.drawObservations?.includes('groundtruth') || state.filters.drawSiteOutline?.includes('groundtruth'))
+    const includeGroundTruth = (state.filters.drawObservations?.includes('groundtruth') || state.filters.drawSiteOutline?.includes('groundtruth') || state.filters.scoringColoring)
     if (!includeGroundTruth) {
       modifiedList.value = baseModifiedList.value.filter((item) => !item.groundTruth);
     } else {
-      modifiedList.value = mainList;
+      if (state.filters.scoringColoring) { // Remove items based on color codes
+        modifiedList.value = baseModifiedList.value.filter((item) => {
+          if (item.color_code !== undefined) {
+            const colorKey = scoringColors[item.color_code as scoringColorsKeys];
+            if (state.filters.scoringColoring && colorKey && colorKey[state.filters.scoringColoring]) {
+              return true;
+            }
+            return false;
+          }
+          return false;
+        })
+      } else {
+        modifiedList.value = mainList;
+      }
     }
     modifiedList.value.sort((a, b) => {
       if (a.selected === b.selected) {
@@ -282,8 +297,8 @@ const startDownload = async (data: DownloadSettings) => {
 const cancelDownload = () => {
   setTimeout(() => getAllSiteProposals(), 1000);
 }
-watch([filter, () => state.filters.drawObservations, () => state.filters.drawSiteOutline], () => {
-  const includeGroundTruth = (state.filters.drawObservations?.includes('groundtruth') || state.filters.drawSiteOutline?.includes('groundtruth'))
+watch([filter, () => state.filters.drawObservations, () => state.filters.drawSiteOutline, () => state.filters.scoringColoring], () => {
+  const includeGroundTruth = (state.filters.drawObservations?.includes('groundtruth') || state.filters.drawSiteOutline?.includes('groundtruth') || state.filters.scoringColoring)
   let tempList: SiteDisplay[];
   if (filter.value) {
     tempList = baseModifiedList.value.filter((item) => item.name.includes(filter.value))
@@ -292,9 +307,22 @@ watch([filter, () => state.filters.drawObservations, () => state.filters.drawSit
   }
   if (!includeGroundTruth) {
     tempList = tempList.filter((item) => !item.groundTruth);
+  } else {
+      if (state.filters.scoringColoring) { // Remove items based on color codes
+        tempList = tempList.filter((item) => {
+          if (item.color_code !== undefined) {
+            const colorKey = scoringColors[item.color_code as scoringColorsKeys];
+            if (state.filters.scoringColoring && colorKey && colorKey[state.filters.scoringColoring]) {
+              return true;
+            }
+            return false;
+          }
+          return false;
+        });
+      }
   }
   modifiedList.value = tempList;
-});
+},{deep: true});
 
 const deselectAll = () => {
   const updatedList: SiteDisplay[] = [];
@@ -321,7 +349,7 @@ const deselectAll = () => {
   <v-card class="ma-0 pa-0">
     <v-card-title>
       <v-row>
-        <h5>Site Models</h5><span class="site-count">({{ totalCount }})</span>
+        <h5>Site Models</h5><span class="site-count">({{ modifiedList.length }}/{{ totalCount }})</span>
         <v-spacer />
         <SiteListFilter :model-runs="modelRunTitleList" />
       </v-row>

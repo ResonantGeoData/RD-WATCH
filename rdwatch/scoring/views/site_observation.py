@@ -39,7 +39,7 @@ class GenerateImagesSchema(Schema):
     noData: int = 50
     overrideDates: None | list[str] = None
     force: bool = False
-    scale: Literal['default', 'bits', 'custom'] = 'default'
+    scale: Literal['default', 'bits', 'custom'] = 'bits'
     scaleNum: None | list[int] = None
     bboxScale: None | float = 1.2
 
@@ -75,8 +75,12 @@ def site_observations(request: HttpRequest, evaluation_id: UUID4):
 
     site_eval_data = site_db_model.objects.filter(pk=evaluation_id).aggregate(
         timerange=JSONObject(
-            min=ExtractEpoch(Min('start_date')),
-            max=ExtractEpoch(Max('end_date')),
+            min=Coalesce(
+                ExtractEpoch(Min('start_date')), ExtractEpoch(Min('point_date'))
+            ),
+            max=Coalesce(
+                ExtractEpoch(Max('start_date')), ExtractEpoch(Max('point_date'))
+            ),
         ),
         bbox=BoundingBox(
             Collect(

@@ -9,6 +9,8 @@ from pydantic import confloat, constr, validator
 from django.contrib.gis.gdal import GDALException
 from django.contrib.gis.geos import GEOSGeometry, Polygon
 
+from rdwatch.core.models import Performer
+
 
 class RegionFeature(Schema):
     type: Literal['region']
@@ -34,7 +36,7 @@ class RegionFeature(Schema):
 class SiteSummaryFeature(Schema):
     type: Literal['site_summary']
     # match the site_id of format KR_R001_0001 or KR_R001_9990
-    site_id: constr(regex=r'^[A-Z]{2}_[RCST]\d{3}_\d{4,8}$')
+    site_id: constr(regex=r'^.{1,255}_\d{4,8}$')
     version: str | None
     mgrs: str
     status: Literal[
@@ -55,19 +57,13 @@ class SiteSummaryFeature(Schema):
     start_date: datetime | None
     end_date: datetime | None
     model_content: Literal['annotation', 'proposed'] | None
-    originator: Literal[
-        'te',
-        'pmo',
-        'acc',
-        'ara',
-        'ast',
-        'bla',
-        'iai',
-        'kit',
-        'str',
-        'iMERIT',
-        'imerit',
-    ]
+    originator: str
+
+    @validator('originator')
+    def validate_originator(cls, v: str) -> str:
+        if Performer.objects.filter(short_code=v.upper()).exists():
+            return v
+        raise ValueError(f'Invalid originator "{v}"')
 
     # Optional fields
     comments: str | None
@@ -93,7 +89,8 @@ class SiteSummaryFeature(Schema):
 
     @property
     def site_number(self) -> int:
-        return int(self.site_id[8:])
+        splits = self.site_id.split('_')
+        return int(splits[-1])
 
 
 class Feature(Schema):

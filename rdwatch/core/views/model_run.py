@@ -94,7 +94,7 @@ class ModelRunFilterSchema(FilterSchema):
 class ModelRunWriteSchema(Schema):
     performer: str
     title: constr(max_length=1000)
-    region: constr(regex=r'^[A-Z]{2}_[RCST][\dx]{3}$')  # noqa: F722
+    region: constr(min_length=1, max_length=255)
     parameters: dict
     expiration_time: int | None
     evaluation: int | None = None

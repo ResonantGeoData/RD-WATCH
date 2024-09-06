@@ -44,6 +44,8 @@ from rdwatch.core.views.model_run import ModelRunDetailSchema, ModelRunPaginatio
 from rdwatch.scoring.models import (
     AnnotationProposalSet,
     AnnotationProposalSite,
+    EvaluationBroadAreaSearchDetection,
+    EvaluationBroadAreaSearchProposal,
     EvaluationRun,
     Region,
     SatelliteFetching,
@@ -97,9 +99,10 @@ class ModelRunFilterSchema(FilterSchema):
         return eval_q
 
 
-def get_queryset():
+def get_queryset(id: UUID4):
     return (
         EvaluationRun.objects.filter(
+            Q(uuid=id),
             Q(evaluationbroadareasearchmetric__activity_type='overall'),
             Q(evaluationbroadareasearchmetric__tau=0.2),
             Q(evaluationbroadareasearchmetric__rho=0.5),
@@ -150,10 +153,19 @@ def get_queryset():
                     'site__confidence_score', Value('NaN'), output_field=FloatField()
                 )
             ),
-            timestamp=ExtractEpoch(Max('site__end_date')),
+            timestamp=Coalesce(
+                ExtractEpoch(Max('site__end_date')),
+                ExtractEpoch(Max('site__point_date')),
+            ),
             timerange=JSONObject(
-                min=ExtractEpoch(Min('site__start_date')),
-                max=ExtractEpoch(Max('site__end_date')),
+                min=Coalesce(
+                    ExtractEpoch(Min('site__start_date')),
+                    ExtractEpoch(Min('site__point_date')),
+                ),
+                max=Coalesce(
+                    ExtractEpoch(Max('site__end_date')),
+                    ExtractEpoch(Max('site__point_date')),
+                ),
             ),
             # bbox=Value({}, output_field=JSONField()),
             bbox=Func(
@@ -175,7 +187,7 @@ def get_queryset():
     )
 
 
-def get_queryset_proposal():
+def get_queryset_proposal(id: UUID4):
     proposed_count_subquery = (
         AnnotationProposalSite.objects.filter(
             annotation_proposal_set_uuid=OuterRef('pk')
@@ -196,7 +208,9 @@ def get_queryset_proposal():
     )
 
     return (
-        AnnotationProposalSet.objects.values().annotate(
+        AnnotationProposalSet.objects.filter(annotation_proposal_set_uuid=id)
+        .values()
+        .annotate(
             id=F('uuid'),
             region_name=F('region_id'),
             title=Concat(
@@ -443,10 +457,19 @@ def list_model_runs(
                 )
             ),
             numsites=F('evaluationbroadareasearchmetric__proposed_sites'),
-            timestamp=ExtractEpoch(Max('site__end_date')),
+            timestamp=Coalesce(
+                ExtractEpoch(Max('site__end_date')),
+                ExtractEpoch(Max('site__point_date')),
+            ),
             timerange=JSONObject(
-                min=ExtractEpoch(Min('site__start_date')),
-                max=ExtractEpoch(Max('site__end_date')),
+                min=Coalesce(
+                    ExtractEpoch(Min('site__start_date')),
+                    ExtractEpoch(Min('site__point_date')),
+                ),
+                max=Coalesce(
+                    ExtractEpoch(Max('site__end_date')),
+                    ExtractEpoch(Max('site__point_date')),
+                ),
             ),
             bbox=Func(
                 F('site__region__geometry'),
@@ -465,8 +488,14 @@ def list_model_runs(
 
     aggregate_kwargs = {
         'timerange': JSONObject(
-            min=ExtractEpoch(Min('site__start_date')),
-            max=ExtractEpoch(Max('site__end_date')),
+            min=Coalesce(
+                ExtractEpoch(Min('site__start_date')),
+                ExtractEpoch(Min('site__point_date')),
+            ),
+            max=Coalesce(
+                ExtractEpoch(Max('site__end_date')),
+                ExtractEpoch(Max('site__point_date')),
+            ),
         ),
     }
     if filters.region:
@@ -507,7 +536,7 @@ def list_model_runs(
 @router.get('/{id}/', response={200: ModelRunDetailSchema})
 def get_model_run(request: HttpRequest, id: UUID4):
     if EvaluationRun.objects.filter(pk=id).exists():
-        data = get_queryset()
+        data = get_queryset(id=id).first()
     elif AnnotationProposalSet.objects.filter(pk=id).exists():
         data = get_object_or_404(get_queryset_proposal(), id=id)
     else:
@@ -683,9 +712,70 @@ def get_sites_query(model_run_id: UUID4):
                     ),
                     default=False,
                 ),
-                start_date=ExtractEpoch('start_date'),
-                end_date=ExtractEpoch('end_date'),
+                start_date=Coalesce(
+                    ExtractEpoch('start_date'), ExtractEpoch('point_date')
+                ),
+                end_date=Coalesce(ExtractEpoch('end_date'), ExtractEpoch('point_date')),
                 originator=F('originator'),
+                color_code=Case(
+                    When(
+                        Q(originator='te') | Q(originator='iMERIT'),
+                        then=Subquery(
+                            EvaluationBroadAreaSearchDetection.objects.filter(
+                                Q(evaluation_run_uuid=model_run_id)
+                                & Q(activity_type='overall')
+                                & Q(rho=0.5)
+                                & Q(tau=0.2)
+                                & Q(min_confidence_score=0.0)
+                                & Q(site_truth=OuterRef('site_id'))
+                                & Q(
+                                    Q(min_spatial_distance_threshold__isnull=True)
+                                    | Q(min_spatial_distance_threshold=100.0)
+                                )
+                                & Q(
+                                    Q(central_spatial_distance_threshold__isnull=True)
+                                    | Q(central_spatial_distance_threshold=500.0)
+                                )
+                                & Q(max_spatial_distance_threshold__isnull=True)
+                                & Q(
+                                    Q(min_temporal_distance_threshold__isnull=True)
+                                    | Q(min_temporal_distance_threshold=730.0)
+                                )
+                                & Q(central_temporal_distance_threshold__isnull=True)
+                                & Q(max_temporal_distance_threshold__isnull=True)
+                            ).values('color_code')
+                        ),
+                    ),
+                    When(
+                        ~Q(originator='te') & ~Q(originator='iMERIT'),
+                        then=Subquery(
+                            EvaluationBroadAreaSearchProposal.objects.filter(
+                                Q(evaluation_run_uuid=model_run_id)
+                                & Q(activity_type='overall')
+                                & Q(rho=0.5)
+                                & Q(tau=0.2)
+                                & Q(min_confidence_score=0.0)
+                                & Q(site_proposal=OuterRef('site_id'))
+                                & Q(
+                                    Q(min_spatial_distance_threshold__isnull=True)
+                                    | Q(min_spatial_distance_threshold=100.0)
+                                )
+                                & Q(
+                                    Q(central_spatial_distance_threshold__isnull=True)
+                                    | Q(central_spatial_distance_threshold=500.0)
+                                )
+                                & Q(max_spatial_distance_threshold__isnull=True)
+                                & Q(
+                                    Q(min_temporal_distance_threshold__isnull=True)
+                                    | Q(min_temporal_distance_threshold=730.0)
+                                )
+                                & Q(central_temporal_distance_threshold__isnull=True)
+                                & Q(max_temporal_distance_threshold__isnull=True)
+                            ).values('color_code')
+                        ),
+                    ),
+                    default=Value(None),  # Set an appropriate default value here
+                ),
             ),
             ordering='site_id',
             default=[],

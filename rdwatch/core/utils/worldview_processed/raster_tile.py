@@ -57,7 +57,7 @@ def get_worldview_processed_visual_bbox(
     capture: WorldViewProcessedCapture,
     bbox: tuple[float, float, float, float],
     format='PNG',
-    scale: Literal['default', 'bits'] = 'default',
+    scale: Literal['default', 'bits'] = 'bits',
 ) -> bytes:
     with rasterio.Env(
         GDAL_DISABLE_READDIR_ON_OPEN='EMPTY_DIR',
@@ -72,8 +72,8 @@ def get_worldview_processed_visual_bbox(
     ):
         startTime = time.time()
         if not capture.panuri:
+            logger.warning(f'Image URI: {capture.uri}')
             with Reader(input=capture.uri) as img:
-                logger.warning(f'Image URI: {capture.uri}')
                 logger.warning(f'Base Info Time: {time.time() - startTime}')
                 rgb = img.part(bbox)
                 logger.warning(f'RGB Download Time: {time.time() - startTime}')

@@ -621,6 +621,7 @@ def generate_site_images(
             overrideDates,
             scale,
             bboxScale,
+            pointArea,
             worldview_source,
         )
         fetching_task.celery_id = task_id.id

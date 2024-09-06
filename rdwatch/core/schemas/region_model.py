@@ -22,6 +22,12 @@ class RegionFeature(Schema):
     end_date: datetime | None
     originator: str
 
+    @validator('originator')
+    def validate_originator(cls, v: str) -> str:
+        if Performer.objects.filter(short_code=v.upper()).exists():
+            return v
+        raise ValueError(f'Invalid originator "{v}"')
+
     # Optional fields
     comments: str | None
     performer_cache: dict[Any, Any] | None

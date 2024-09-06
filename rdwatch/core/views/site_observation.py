@@ -172,7 +172,6 @@ def site_observations(request: HttpRequest, evaluation_id: UUID4):
             ),
         )
     )
-    print(image_queryset)
 
     for image in image_queryset['results']:
         image['image'] = default_storage.url(image['image'])
@@ -212,20 +211,14 @@ class GenerateImagesSchema(Schema):
     noData: int = 50
     overrideDates: None | list[str] = None
     force: bool = False
-    scale: Literal['default', 'bits', 'custom'] = 'default'
+    scale: Literal['default', 'bits', 'custom'] = 'bits'
     scaleNum: None | list[int] = None
     bboxScale: None | float = 1.2
 
     @root_validator
     def validate_worldview_source(cls, values: dict[str, Any]):
-        print(values)
         if 'WV' in values['constellation'] and values['worldviewSource'] is None:
             raise ValueError('worldviewSource is required for WV constellation')
-        elif (
-            'WV' not in values['constellation']
-            and values['worldviewSource'] is not None
-        ):
-            raise ValueError('worldviewSource is only for WV constellation')
         return values
 
 

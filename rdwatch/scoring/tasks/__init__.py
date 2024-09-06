@@ -53,7 +53,7 @@ def get_siteobservation_images_task(
     dayRange=14,
     no_data_limit=50,
     overrideDates: None | list[datetime, datetime] = None,
-    scale: Literal['default', 'bits'] | list[int] = 'default',
+    scale: Literal['default', 'bits'] | list[int] = 'bits',
     bboxScale: float = BboxScaleDefault,
 ) -> None:
     capture_count = 0
@@ -85,7 +85,7 @@ def get_siteobservations_images(
     dayRange=14,
     no_data_limit=50,
     overrideDates: None | list[datetime, datetime] = None,
-    scale: Literal['default', 'bits'] | list[int] = 'default',
+    scale: Literal['default', 'bits'] | list[int] = 'bits',
     bboxScale: float = BboxScaleDefault,
 ) -> None:
     # Ensure we are using ints for the DayRange and no_data_limit
@@ -428,7 +428,7 @@ def generate_site_images(
     dayRange=14,
     noData=50,
     overrideDates: None | list[datetime, datetime] = None,
-    scale: Literal['default', 'bits'] | list[int] = 'default',
+    scale: Literal['default', 'bits'] | list[int] = 'bits',
     bboxScale: float = BboxScaleDefault,
 ):
     with transaction.atomic():
@@ -478,7 +478,7 @@ def generate_site_images_for_evaluation_run(
     dayRange=14,
     noData=50,
     overrideDates: None | list[datetime, datetime] = None,
-    scale: Literal['default', 'bits'] | list[int] = 'default',
+    scale: Literal['default', 'bits'] | list[int] = 'bits',
     bboxScale: float = BboxScaleDefault,
 ):
     try:

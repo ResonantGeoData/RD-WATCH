@@ -92,9 +92,9 @@ def get_range_captures(
     timebuffer: timedelta,
     worldView: Literal['cog', 'nitf'] | None,
 ):
-    if worldView == 'cog':
+    if constellation == 'WV' and worldView == 'cog':
         captures = get_worldview_captures(timestamp, bbox, timebuffer)
-    elif worldView == 'nitf':
+    elif constellation == 'WV' and worldView == 'nitf':
         captures = get_worldview_nitf_captures(timestamp, bbox, timebuffer)
     else:
         captures = list(get_bands(constellation, timestamp, bbox, timebuffer))
@@ -114,7 +114,7 @@ def fetch_boundbox_image(
     timestamp: datetime,
     constellation: str,
     worldView: Literal['cog', 'nitf'] | None = None,
-    scale: Literal['default', 'bits'] | list[int] = 'default',
+    scale: Literal['default', 'bits'] | list[int] = 'bits',
 ):
     timebuffer = timedelta(days=1)
     try:
@@ -133,9 +133,9 @@ def fetch_boundbox_image(
     if len(captures) == 0:
         return None
     closest_capture = min(captures, key=lambda band: abs(band.timestamp - timestamp))
-    if worldView == 'cog':
+    if worldView == 'cog' and constellation == 'wv':
         bytes = get_worldview_processed_visual_bbox(closest_capture, bbox, 'PNG', scale)
-    elif worldView == 'nitf':
+    elif worldView == 'nitf' and constellation == 'wv':
         bytes = get_worldview_nitf_bbox(closest_capture, bbox, 'PNG', scale)
     else:
         bytes = get_raster_bbox(closest_capture.uri, bbox, 'PNG', scale)

@@ -90,8 +90,8 @@ export const setSatelliteTimeStamp = (state: { filters: MapFilters, satellite: S
     // Lets try to get the closes timestamp that is less than the current time.
     // Try each date in the list until one works.
     for (const date of baseList) {
-      const timeStamp = date.toISOString().substring(0,19);
-      const currentIndex = state.satellite.satelliteTimeList.findIndex((item) => item.timestamp === timeStamp);
+      const timeStamp = date.toISOString().substring(0, 19);
+      const currentIndex = state.satellite.satelliteTimeList.findIndex((item) => item.timestamp.substring(0, 19) === timeStamp);
       if (currentIndex === -1) {
         continue;
       }

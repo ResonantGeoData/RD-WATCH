@@ -90,30 +90,37 @@ def get_siteobservation_images_task(
     dayRange=14,
     no_data_limit=50,
     overrideDates: None | list[datetime, datetime] = None,
-    scale: Literal['default', 'bits'] | list[int] = 'default',
+    scale: Literal['default', 'bits'] | list[int] = 'bits',
     bboxScale: float = BboxScaleDefault,
     worldview_source: Literal['cog', 'nitf'] | None = 'cog',
 ) -> None:
-    capture_count = 0
-    for constellation in baseConstellations:
-        capture_count += get_siteobservations_images(
-            self,
-            site_eval_id=site_eval_id,
-            baseConstellation=constellation,
-            force=force,
-            dayRange=dayRange,
-            no_data_limit=no_data_limit,
-            overrideDates=overrideDates,
-            scale=scale,
-            bboxScale=bboxScale,
-            worldview_source=worldview_source,
-        )
-    fetching_task = SatelliteFetching.objects.get(site_id=site_eval_id)
-    fetching_task.status = SatelliteFetching.Status.COMPLETE
-    if capture_count == 0:
-        fetching_task.error = 'No Captures found'
-    fetching_task.celery_id = ''
-    fetching_task.save()
+    try:
+        capture_count = 0
+        for constellation in baseConstellations:
+            capture_count += get_siteobservations_images(
+                self,
+                site_eval_id=site_eval_id,
+                baseConstellation=constellation,
+                force=force,
+                dayRange=dayRange,
+                no_data_limit=no_data_limit,
+                overrideDates=overrideDates,
+                scale=scale,
+                bboxScale=bboxScale,
+                worldview_source=worldview_source,
+            )
+        fetching_task = SatelliteFetching.objects.get(site_id=site_eval_id)
+        fetching_task.status = SatelliteFetching.Status.COMPLETE
+        if capture_count == 0:
+            fetching_task.error = 'No Captures found'
+        fetching_task.celery_id = ''
+        fetching_task.save()
+    except Exception as e:
+        logger.warning(f'EXCEPTION: {e}')
+        fetching_task = SatelliteFetching.objects.get(site_id=site_eval_id)
+        fetching_task.error = f'Error: {e}'
+        fetching_task.status = SatelliteFetching.Status.ERROR
+        fetching_task.save()
 
 
 def get_siteobservations_images(
@@ -124,7 +131,7 @@ def get_siteobservations_images(
     dayRange=14,
     no_data_limit=50,
     overrideDates: None | list[datetime, datetime] = None,
-    scale: Literal['default', 'bits'] | list[int] = 'default',
+    scale: Literal['default', 'bits'] | list[int] = 'bits',
     bboxScale: float = BboxScaleDefault,
     worldview_source: Literal['cog', 'nitf'] | None = 'cog',
 ) -> None:
@@ -358,11 +365,11 @@ def get_siteobservations_images(
         if capture_timestamp not in found_timestamps.keys():
             # we need to add a new image into the structure
             bytes = None
-            if worldview_source == 'cog':
+            if baseConstellation == 'WV' and worldview_source == 'cog':
                 bytes = get_worldview_processed_visual_bbox(
                     capture, max_bbox, 'PNG', scale
                 )
-            elif worldview_source == 'nitf':
+            elif baseConstellation == 'WV' and worldview_source == 'nitf':
                 bytes = get_worldview_nitf_bbox(capture, max_bbox, 'PNG', scale)
             else:
                 bytes = get_raster_bbox(capture.uri, max_bbox, 'PNG', scale)
@@ -573,7 +580,7 @@ def generate_site_images(
     dayRange=14,
     noData=50,
     overrideDates: None | list[datetime, datetime] = None,
-    scale: Literal['default', 'bits'] | list[int] = 'default',
+    scale: Literal['default', 'bits'] | list[int] = 'bits',
     bboxScale: float = BboxScaleDefault,
     worldview_source: Literal['cog', 'nitf'] | None = 'cog',
 ):
@@ -593,6 +600,7 @@ def generate_site_images(
             # Otherwise, if the task exists but is *not* running, set the status
             # to running and kick off the task
             fetching_task.status = SatelliteFetching.Status.RUNNING
+            fetching_task.timestamp = datetime.now()
             fetching_task.save()
         else:
             fetching_task = SatelliteFetching.objects.create(
@@ -623,7 +631,7 @@ def generate_site_images_for_evaluation_run(
     dayRange=14,
     noData=50,
     overrideDates: None | list[datetime, datetime] = None,
-    scale: Literal['default', 'bits'] | list[int] = 'default',
+    scale: Literal['default', 'bits'] | list[int] = 'bits',
     bboxScale: float = BboxScaleDefault,
 ):
     sites = SiteEvaluation.objects.filter(configuration=model_run_id)

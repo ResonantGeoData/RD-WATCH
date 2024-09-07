@@ -41,26 +41,26 @@ def get_bands(
         timebuffer=timebuffer or timedelta(hours=1),
     )
     if 'features' not in results:
-        logger.warning("Malformed STAC response: no 'features'")
+        logger.info("Malformed STAC response: no 'features'")
         return
 
     for feature in results['features']:
         if 'assets' not in feature:
-            logger.warning("Malformed STAC response: no 'assets'")
+            logger.info("Malformed STAC response: no 'assets'")
             continue
 
         match feature:
             case {'properties': {'datetime': timestr}}:
                 timestamp = datetime.fromisoformat(timestr.rstrip('Z'))
             case _:
-                logger.warning("Malformed STAC response: no 'properties.datetime'")
+                logger.info("Malformed STAC response: no 'properties.datetime'")
                 continue
 
         match feature:
             case {'bbox': bbox_lst}:
                 stac_bbox = cast(tuple[float, float, float, float], tuple(bbox_lst))
             case _:
-                logger.warning("Malformed STAC response: no 'bbox'")
+                logger.info("Malformed STAC response: no 'bbox'")
                 continue
 
         cloudcover = 0
@@ -72,12 +72,12 @@ def get_bands(
                         defaults={'description': 'surface reflectance'},
                     )
                 else:
-                    logger.warning(
+                    logger.info(
                         'Malformed STAC response: unknown collection ' f"'{collection}'"
                     )
                     continue
             case _:
-                logger.warning("Malformed STAC response: no 'collection'")
+                logger.info("Malformed STAC response: no 'collection'")
                 continue
         if 'properties' in feature.keys():
             if 'eo:cloud_cover' in feature['properties'].keys():
@@ -99,7 +99,7 @@ def get_bands(
                 case {'href': uri}:
                     ...
                 case _:
-                    logger.warning("Malformed STAC response: no 'href'")
+                    logger.info("Malformed STAC response: no 'href'")
                     continue
 
             yield Band(

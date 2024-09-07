@@ -32,9 +32,7 @@ class RDWatchSocialAccountAdapter(DefaultSocialAccountAdapter):
         if sociallogin.user.is_active:
             return
 
-        logger.warning(
-            f'User {sociallogin.user} is not active, checking if eligible...'
-        )
+        logger.info(f'User {sociallogin.user} is not active, checking if eligible...')
 
         gitlab_url: str = settings.SOCIALACCOUNT_PROVIDERS['gitlab']['APPS'][0][
             'settings'
@@ -46,7 +44,7 @@ class RDWatchSocialAccountAdapter(DefaultSocialAccountAdapter):
         groups = resp.json().get('groups', [])
 
         if any(group in settings.ALLOWED_GITLAB_GROUPS for group in groups):
-            logger.warning(
+            logger.info(
                 f'User {sociallogin.user} is a member of an allowed GitLab group'
             )
             sociallogin.user.is_active = True
@@ -57,6 +55,6 @@ class RDWatchSocialAccountAdapter(DefaultSocialAccountAdapter):
             if sociallogin.is_existing:
                 sociallogin.user.save()
         else:
-            logger.warning(
+            logger.info(
                 f'User {sociallogin.user} is not a member of any allowed GitLab group'
             )

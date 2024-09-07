@@ -126,8 +126,8 @@ def fetch_boundbox_image(
             worldView,
         )
     except URLError as e:
-        logger.warning('Failed to get range capture because of URLError')
-        logger.warning(e)
+        logger.info('Failed to get range capture because of URLError')
+        logger.info(e)
         return None
 
     if len(captures) == 0:

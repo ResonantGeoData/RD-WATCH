@@ -1,7 +1,10 @@
 import os
 from datetime import timedelta
 
+import sentry_sdk
 from configurations import Configuration, values
+
+sentry_sdk.init()
 
 _ENVIRON_PREFIX = 'RDWATCH'
 

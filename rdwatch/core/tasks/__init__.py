@@ -813,54 +813,67 @@ def process_model_run_upload(model_run_upload: ModelRunUpload):
         raise ValueError('Did not receive any site models')
     if len(region_models) == 0:
         raise ValueError('Did not receive any region models')
+    if len(region_models) > 1:
+        raise ValueError('Too many regions provided in the zip file')
 
-    all_region_ids: set[str] = set()
-    all_originators: set[str] = set()
+    region_model = region_models[0]
+    region_feature = region_model.region_feature
+    region_id = region_feature.properties.region_id
+    region_originator = region_feature.properties.originator
+
+    # validate site models against the single region model
     for model in site_models:
-        all_region_ids.add(model.site_feature.properties.region_id)
-        all_originators.add(model.site_feature.properties.originator)
-    for model in region_models:
-        all_region_ids.add(model.region_feature.properties.region_id)
-        all_originators.add(model.region_feature.properties.originator)
+        # if there is an override region ID,
+        # then set the region ID on the site model
+        if model_run_upload.region:
+            model.site_feature.properties.region_id = model_run_upload.region
+        elif model.site_feature.properties.region_id != region_id:
+            raise ValueError("Site model doesn't reference the region model")
 
-    if model_run_upload.region == '':
-        if len(all_region_ids) == 0:
-            raise ValueError('No regions in the zip file')
-        if len(all_region_ids) > 1:
-            raise ValueError('Too many regions provided in the zip file')
+        # if there is an override performer,
+        # then set the performer on the site model
+        if model_run_upload.performer:
+            model.site_feature.properties.originator = model_run_upload.performer
+        elif model.site_feature.properties.originator != region_originator:
+            raise ValueError(
+                "Site model's originator differs from the region model\'s originator"
+            )
 
-    if model_run_upload.performer == '':
-        if len(all_originators) == 0:
-            raise ValueError('No performers in the zip file')
-        if len(all_originators) > 1:
-            raise ValueError('Too many performers provided in the zip file')
-
-    region_id = model_run_upload.region or next(iter(all_region_ids))
-    performer_shortcode = model_run_upload.performer or next(iter(all_originators))
+    # apply overrides to the region model
+    if model_run_upload.region:
+        region_feature.properties.region_id = model_run_upload.region
+    if model_run_upload.performer:
+        region_feature.properties.originator = model_run_upload.performer
+        for site_summary_feature in region_model.site_summary_features:
+            site_summary_feature.properties.originator = model_run_upload.performer
 
     with transaction.atomic():
         # create a new ModelRun
-        region, _ = get_or_create_region(region_id)
-        performer, _ = Performer.objects.get_or_create(
-            short_code=performer_shortcode.upper(),
-            team_name=performer_shortcode,
+        region, _ = get_or_create_region(
+            region_feature.properties.region_id,
+            region_feature.parsed_geometry,
         )
+
+        performer_shortcode = region_feature.properties.originator
+        performer, created = Performer.objects.get_or_create(
+            short_code=performer_shortcode.upper(),
+        )
+        if created:
+            performer.team_name = performer_shortcode
+            performer.save()
+
         model_run = ModelRun.objects.create(
             title=model_run_upload.title,
             performer=performer,
             region=region,
-            # TODO toggle for {'ground_truth': True/False}?
-            # TODO is this where the private toggle can be used?
             parameters={},
-            # TODO handle expiration_time, evaluation, evaluation_run, proposal?
-            # TODO pass in the user?
             public=not model_run_upload.private,
         )
 
         for site_model in site_models:
             SiteEvaluation.bulk_create_from_site_model(site_model, model_run)
-        for region_model in region_models:
-            SiteEvaluation.bulk_create_from_region_model(region_model, model_run)
+
+        SiteEvaluation.bulk_create_from_region_model(region_model, model_run)
 
 
 @shared_task

@@ -511,13 +511,6 @@ const updateRegionList = async () => {
     return a.name.localeCompare(b.name);
   });
   state.regionList = regionResults;
-}
-
-const updateRegionMap = async () => {
-  const regionList = await ApiService.getRegionDetails();
-  const regionResults = regionList.items;
-  const tempRegionMap: RegionMapType = {};
-  regionResults.forEach((item) => tempRegionMap[item.value] = { id:item.id, deleteBlock: item.deleteBlock, hasGeom: item.hasGeom });
   state.regionMap = tempRegionMap;
 }
 
@@ -708,7 +701,6 @@ export {
   loadAndToggleSatelliteImages,
   updateCameraBoundsBasedOnModelRunList,
   updateRegionList,
-  updateRegionMap,
   queryModelRuns,
   refreshModelRunDownloadingStatuses,
   updatePerformers,

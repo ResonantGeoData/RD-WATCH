@@ -6,7 +6,7 @@ import ImageViewer from "../components/imageViewer/ImageViewer.vue";
 import SiteList from "../components/siteList/SiteList.vue";
 import MapLegend from "../components/MapLegend.vue";
 import { onMounted, watch } from "vue";
-import { state, updateRegionList, updateRegionMap } from "../store";
+import { state, updateRegionList } from "../store";
 import AddRegion from "../components/AddRegion.vue";
 import { ApiService } from "../client";
 interface Props {
@@ -20,7 +20,6 @@ const props = withDefaults(defineProps<Props>(), {
 
 onMounted(async () => {
   await updateRegionList();
-  await updateRegionMap();
   if (props.region) {
     state.filters = {
       ...state.filters,
@@ -31,7 +30,6 @@ onMounted(async () => {
 
 watch(()=> ApiService.getApiPrefix(), async () => {
   await updateRegionList();
-  await updateRegionMap();
   if (props.region) {
     state.filters = {
       ...state.filters,

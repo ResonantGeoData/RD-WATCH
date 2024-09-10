@@ -140,6 +140,7 @@ function closeDialogs() {
             label="Model Run Title"
             :rules="[validateTitle]"
             required
+            :disabled="uploadLoading"
           />
           <v-file-input
             v-model="uploadFile"
@@ -147,18 +148,22 @@ function closeDialogs() {
             clearable
             label="Model Run .zip file"
             :rules="[validateFile]"
+            :disabled="uploadLoading"
           />
           <v-text-field
             v-model="modelRun.region"
             label="Override Region (optional)"
+            :disabled="uploadLoading"
           />
           <v-text-field
             v-model="modelRun.performer"
             label="Override Performer (optional)"
+            :disabled="uploadLoading"
           />
           <v-checkbox
             v-model="modelRun.private"
             label="Mark as private"
+            :disabled="uploadLoading"
           />
           <v-alert
             v-if="uploadError"

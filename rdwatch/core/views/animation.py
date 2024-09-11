@@ -40,7 +40,9 @@ def generate_download_data(
             celery_data = {}
             celery_data['state'] = task.state
             celery_data['status'] = task.status
-            celery_data['info'] = str(task.info)
+            celery_data['info'] = (
+                str(task.info) if isinstance(task.info, Exception) else task.info
+            )
             output.append(
                 {
                     'created': export.created,

@@ -34,7 +34,7 @@ const labels: Ref<DownloadAnimationSettings["labels"]> = ref([
   "obs",
   "obs_label",
 ]);
-const cloudCover = ref(100);
+const cloudCover = ref(95);
 const noData = ref(100);
 const include: Ref<DownloadAnimationSettings["include"]> = ref([
   "obs",

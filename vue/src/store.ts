@@ -261,7 +261,7 @@ export const state = reactive<{
   editGeoJSON: null,
   imageFilter: {
     sources: ['WV', 'S2', 'L8', 'PL'],
-    cloudCover: 100,
+    cloudCover: 95,
     noData: 100,
     obsFilter: ['observations', 'non-observations']
   },

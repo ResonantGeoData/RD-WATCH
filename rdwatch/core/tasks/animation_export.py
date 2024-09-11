@@ -778,7 +778,7 @@ def create_modelrun_animation_export(
 
     title = model_run.title
     with zipfile.ZipFile(zip_filepath, 'w') as zip_file:
-        for export in exports:
+        for export in exports.iterator():
             if export.export_file and export.export_file.name:
                 # Open the file and write its content to the zip archive
                 format = export.arguments['output_format']

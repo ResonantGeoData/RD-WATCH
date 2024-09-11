@@ -167,33 +167,20 @@ def generate_modelrun_animation(
     return task_id.id
 
 
+from django.shortcuts import redirect
+
 @router.get('/download/site/{task_id}/')
 def get_downloaded_site_animation(request: HttpRequest, task_id: UUID4):
-    animation_export = get_object_or_404(
+    return redirect(get_object_or_404(
         AnimationSiteExport, celery_id=task_id, user=request.user
-    )
-    name = animation_export.name
-    content_type = 'video/mp4'
-    if name.endswith('.gif'):
-        content_type = 'image/gif'
-    response = HttpResponse(
-        animation_export.export_file.file, content_type=content_type
-    )
-    response['Content-Disposition'] = f'attachment; filename="{name}"'
-    return response
+    ), permanent=False)
 
 
 @router.get('/download/modelrun/{task_id}/')
 def get_downloaded_modelrun_animation(request: HttpRequest, task_id: UUID4):
-    animation_export = get_object_or_404(
+    return redirect(get_object_or_404(
         AnimationModelRunExport, celery_id=task_id, user=request.user
-    )
-    name = animation_export.configuration.title
-    response = HttpResponse(
-        animation_export.export_file.file, content_type='application/zip'
-    )
-    response['Content-Disposition'] = f'attachment; filename="{name}.zip"'
-    return response
+    ).export_file.url, permanent=False)
 
 
 @router.get('/{task_id}/status/')

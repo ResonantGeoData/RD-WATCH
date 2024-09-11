@@ -731,14 +731,14 @@ def create_modelrun_animation_export(
         celery_id=task_id,
         arguments=settings,
     )
+
     # Now we create a task for each site in the image that has information
-    site_evals = SiteEvaluation.objects.filter(configuration_id=modelrun_id)
-    site_tasks = []
-    for site in site_evals:
-        if SiteImage.objects.filter(
-            site=site.pk
-        ).exists():  # Has images add it to the tasks
-            site_tasks.append(create_site_animation_export.s(site.pk, settings, userId))
+    site_tasks = [
+        create_site_animation_export.s(site_id, settings, userId)
+        for site_id in SiteImage.objects.filter(
+            site__configuration_id=modelrun_id
+        ).values_list('site_id', flat=True).iterator()
+    ]
 
     subtasks = group(site_tasks)
 

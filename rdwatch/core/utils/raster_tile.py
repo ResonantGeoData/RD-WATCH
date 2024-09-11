@@ -44,7 +44,9 @@ def get_raster_bbox(
             with rasterio.Env(AWS_NO_SIGN_REQUEST='YES'):
                 s3_uri = 's3://sentinel-cogs/' + uri[49:]
                 with Reader(input=s3_uri) as cog:
-                    img = cog.part(bbox)
+                    # if there are multiple bands, use all of them
+                    indexes = list(range(1, cog.dataset.count + 1))
+                    img = cog.part(bbox, indexes=indexes)
                     if scale == 'default':
                         img.rescale(in_range=((0, 10000),))
                     elif scale == 'bits':
@@ -60,7 +62,9 @@ def get_raster_bbox(
                         img.rescale(in_range=((scale[0], scale[1]),))
                     return img.render(img_format=format)
         with Reader(input=uri) as cog:
-            img = cog.part(bbox)
+            # if there are multiple bands, use all of them
+            indexes = list(range(1, cog.dataset.count + 1))
+            img = cog.part(bbox, indexes=indexes)
             if scale == 'default':
                 img.rescale(in_range=((0, 10000),))
             elif scale == 'bits':

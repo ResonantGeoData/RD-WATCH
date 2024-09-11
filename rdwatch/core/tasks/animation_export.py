@@ -204,13 +204,13 @@ def to_pixel_coords(lon, lat, bbox, xScale, yScale, xOffset=0, yOffset=0):
 
 
 def draw_text_in_box(
-    draw,
-    text,
-    position,
-    box_size,
+    draw: ImageDraw,
+    text: str,
+    position: tuple[float, float],
+    box_size: tuple[float, float],
     box_color=(80, 80, 80),
     text_color=(255, 255, 255),
-    font_path=None,
+    font_path: str | None = None,
     initial_font_size=30,
 ):
     """

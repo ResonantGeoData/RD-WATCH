@@ -223,8 +223,8 @@ onMounted(() => loadModelRuns());
 </script>
 
 <template>
-  <div>
-    <v-row>
+  <div class="d-flex flex-column overflow-hidden">
+    <div class="d-flex flex-wrap flex-grow-0 pa-1 pb-2">
       <v-chip
         v-if="!loading && !loadingSatelliteTimestamps"
         style="font-size: 0.75em"
@@ -271,7 +271,7 @@ onMounted(() => loadModelRuns());
         <b>Satellite Timestamps</b>
         <v-progress-linear indeterminate />
       </div>
-    </v-row>
+    </div>
     <div
       v-if="state.satellite.loadingSatelliteImages"
       class="mt-5"
@@ -303,8 +303,7 @@ onMounted(() => loadModelRuns());
       </v-alert>
     </div>
     <v-container
-      class="overflow-y-auto p-5 mt-5"
-      :class="{ modelRuns: !compact, compactModelRuns: compact}"
+      class="overflow-y-auto flex-grow-1 flex-shrink-1"
       @scroll="handleScroll"
     >
       <ModelRunCard
@@ -325,12 +324,6 @@ onMounted(() => loadModelRuns());
 </template>
 
 <style scoped>
-.modelRuns {
-  height: calc(100vh - 350px);
-}
-.compactModelRuns {
-  height: calc(100vh - 150px);
-}
 .outlined {
   background-color: orange;
   border: 3px solid orange;

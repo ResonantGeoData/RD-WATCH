@@ -197,7 +197,7 @@ def paste_image_with_bbox(
     return output_image
 
 
-def to_pixel_coords(lon, lat, bbox, xScale, yScale, xOffset=0, yOffset=0):
+def to_pixel_coords(lon: float, lat: float, bbox: tuple[float, float, float, float], xScale: float, yScale: float, xOffset=0, yOffset=0):
     x = (lon - bbox[0]) * xScale + xOffset
     y = (bbox[3] - lat) * yScale + yOffset
     return x, y

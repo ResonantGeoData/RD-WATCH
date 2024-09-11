@@ -109,12 +109,12 @@ label_mapping = {
 }
 
 
-def rescale_bbox(bbox, scale):
+def rescale_bbox(bbox: tuple[float, float, float, float], scale: float) -> tuple[float, float, float, float]:
     """
     Rescales a bounding box by a given scaling factor.
 
     Parameters:
-    bbox (list): A list containing [minx, miny, maxx, maxy].
+    bbox (tuple): A tuple containing [minx, miny, maxx, maxy].
     scale (float): The scaling factor to apply to the bounding box.
 
     Returns:
@@ -128,7 +128,7 @@ def rescale_bbox(bbox, scale):
     width = (maxx - minx) * scale / 2
     height = (maxy - miny) * scale / 2
 
-    return [center_x - width, center_y - height, center_x + width, center_y + height]
+    return (center_x - width, center_y - height, center_x + width, center_y + height)
 
 
 def paste_image_with_bbox(

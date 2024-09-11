@@ -13,7 +13,9 @@ import { ApiService } from "../client";
 import { filteredSatelliteTimeList, state, updateCameraBoundsBasedOnModelRunList } from "../store";
 import type { KeyedModelRun } from '../store'
 import { hoveredInfo } from "../interactions/mouseEvents";
-const limit = 10;
+
+// This must match the page_size parameter for the list_model_runs endpoint
+const PAGE_SIZE = 10;
 
 interface Props {
   filters: QueryArguments;
@@ -48,7 +50,7 @@ async function loadModelRuns() {
   }
   const { mode, performer } = props.filters; // unwrap performer and mode arrays
   request = ApiService.getModelRuns({
-    limit,
+    page: page.value,
     ...props.filters,
     mode,
     performer,
@@ -120,7 +122,7 @@ const checkDownloading = async () => {
   }
   const { mode, performer } = props.filters; // unwrap performer and mode arrays
   request = ApiService.getModelRuns({
-    limit,
+    page: page.value,
     ...props.filters,
     mode,
     performer,
@@ -200,7 +202,7 @@ async function handleScroll(event: Event) {
   // fetch, bump the current page to trigger the loadMore function via a watcher.
   const heightPosCheck = Math.floor(target.scrollHeight - target.scrollTop) <= target.clientHeight;
   if (!loading.value && heightPosCheck && state.modelRuns.length < totalModelRuns.value) {
-    if (page.value !== undefined && Math.ceil(totalModelRuns.value / limit) > page.value ) {
+    if (page.value !== undefined && Math.ceil(totalModelRuns.value / PAGE_SIZE) > page.value ) {
       page.value += 1;
       loadModelRuns();
     }

@@ -54,6 +54,8 @@ from rdwatch.core.tasks import (
 from rdwatch.core.views.performer import PerformerSchema
 from rdwatch.core.views.site_observation import GenerateImagesSchema
 
+MODEL_RUN_PAGE_SIZE = 10
+
 router = RouterPaginated()
 
 
@@ -389,7 +391,7 @@ def _get_model_runs_cache_key(params: dict) -> str:
 
 
 @router.get('/', response={200: list[ModelRunListSchema]})
-@paginate(ModelRunPagination)
+@paginate(ModelRunPagination, page_size=MODEL_RUN_PAGE_SIZE)
 def list_model_runs(
     request: HttpRequest,
     filters: ModelRunFilterSchema = Query(...),  # noqa: B008

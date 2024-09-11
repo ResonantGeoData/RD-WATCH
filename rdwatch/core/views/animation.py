@@ -135,23 +135,6 @@ def delete_modelrun_download(
     return 200, {'success': 'ModelRun Animation Export deleted successfully.'}
 
 
-@router.post('/site/{id}/debug/')
-def generate_animation_debug(
-    request: HttpRequest,
-    id: UUID4,
-    params: GenerateAnimationSchema,  # noqa: B008
-):
-    # Fetch the SiteEvaluation instance
-    datapath, name = create_animation(
-        site_evaluation_id=id,
-        settings=params.dict(),
-    )
-    if datapath:
-        with open(datapath, 'rb') as f:
-            response = HttpResponse(f.read(), content_type='application/octet-stream')
-            response['Content-Disposition'] = f'attachment; filename={name}'
-            return response
-    return 500, 'Unable to export data'
 
 
 @router.post('/modelrun/{id}/')

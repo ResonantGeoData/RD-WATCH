@@ -108,6 +108,7 @@ class SiteImageAdmin(admin.ModelAdmin):
         'source',
     )
     list_filter = ('timestamp',)
+    raw_id_fields = ('site', 'observation')
 
 
 @admin.register(SiteObservation)

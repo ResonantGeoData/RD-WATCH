@@ -66,6 +66,15 @@ class SiteObservation(models.Model):
         tim = self.timestamp.isoformat() if self.timestamp else 'unknown'
         return f'{sit}[{lbl}@{tim}]'
 
+    @property
+    def boundingbox(self) -> tuple[float, float, float, float]:
+        if self.geom:
+            return self.geom.extent
+        if self.point:
+            x, y = self.point.coords
+            return x, y, x, y
+        return None
+
     @classmethod
     def bulk_create_from_site_evaluation(
         cls, site_eval: SiteEvaluation, site_model: SiteModel

@@ -2,25 +2,25 @@ import MapboxDraw, { DrawSelectionChangeEvent } from "@mapbox/mapbox-gl-draw";
 import { IControl, Map } from "maplibre-gl";
 import { Ref, ShallowRef, ref, shallowRef } from "vue";
 
-export interface EditPolygonType {
+export interface EditGeoJSONType {
   initialize: () => void;
-  setPolygonEdit: (polygon: GeoJSON.Polygon) => void;
-  setPolygonNew: () => void;
-  getEditingPolygon: () => GeoJSON.Polygon | null;
-  cancelPolygonEdit: () => void;
+  setGeoJSONEdit: (polygon: GeoJSON.Polygon | GeoJSON.Point) => void;
+  setGeoJSONNew: (type: GeoJSON.Geometry['type']) => void;
+  getEditingGeoJSON: () => GeoJSON.Polygon | GeoJSON.Point | null;
+  cancelGeoJSONEdit: () => void;
   deleteSelectedPoints: () => void;
   selectedPoints: Ref<DrawSelectionChangeEvent['points']>;
 }
 
-export default function useEditPolygon(mapObj: Map): EditPolygonType {
+export default function useEditPolygon(mapObj: Map): EditGeoJSONType {
   const map: ShallowRef<Map> = shallowRef(mapObj);
   const draw: Ref<MapboxDraw | null> = ref(null);
-  const editingPolygon: Ref<GeoJSON.Polygon | null> = ref(null);
+  const editingGeoJSON: Ref<GeoJSON.Polygon | GeoJSON.Point | null> = ref(null);
   const selectedPoints: Ref<DrawSelectionChangeEvent['points']> = ref([] as DrawSelectionChangeEvent['points']);
 
   const updated = (e: MapboxDraw.DrawUpdateEvent) => {
     if (e.features.length) {
-      editingPolygon.value = e.features[0].geometry as GeoJSON.Polygon;
+      editingGeoJSON.value = e.features[0].geometry as GeoJSON.Polygon;
     }
   };
 
@@ -185,23 +185,34 @@ export default function useEditPolygon(mapObj: Map): EditPolygonType {
     map.value.on("draw.selectionchange", selectionChange);
   };
 
-  const setPolygonEdit = (polygon: GeoJSON.Polygon) => {
+  const setGeoJSONEdit = (geoJSON: GeoJSON.Polygon | GeoJSON.Point) => {
     if (draw.value) {
       draw.value.deleteAll();
-      const featureIds = draw.value.add(polygon);
-      editingPolygon.value = polygon;
+      const featureIds = draw.value.add(geoJSON);
+      editingGeoJSON.value = geoJSON;
       selectedPoints.value = [];
-      draw.value.changeMode("direct_select", { featureId: featureIds[0] });
+      if (geoJSON.type === 'Point'){
+        draw.value.changeMode("simple_select");
+      } else {
+        draw.value.changeMode("direct_select", { featureId: featureIds[0] });
+      }
     }
-  };
 
-  const setPolygonNew = () => {
+  }
+
+  const setGeoJSONNew = (type: GeoJSON.Geometry['type']) => {
     if (draw.value) {
       draw.value.deleteAll();
-      editingPolygon.value = null;
+      editingGeoJSON.value = null;
       selectedPoints.value = [];
-      draw.value.changeMode('draw_polygon');
+      if (type === 'Point') {
+        draw.value.changeMode('draw_point');
+      } else {
+        draw.value.changeMode('draw_polygon');
+
+      }
     }
+
   }
 
   const deleteSelectedPoints = () => {
@@ -211,21 +222,21 @@ export default function useEditPolygon(mapObj: Map): EditPolygonType {
     }
   }
 
-  const cancelPolygonEdit = () => {
+  const cancelGeoJSONEdit = () => {
     if (draw.value) {
       draw.value.deleteAll();
     }
   };
-  const getEditingPolygon = () => {
-    return editingPolygon.value;
+  const getEditingGeoJSON = () => {
+    return editingGeoJSON.value;
   };
 
   return {
     initialize,
-    setPolygonEdit,
-    setPolygonNew,
-    getEditingPolygon,
-    cancelPolygonEdit,
+    setGeoJSONEdit,
+    setGeoJSONNew,
+    getEditingGeoJSON,
+    cancelGeoJSONEdit,
     deleteSelectedPoints,
     selectedPoints,
   };

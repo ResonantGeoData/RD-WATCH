@@ -62,6 +62,8 @@ logger = logging.getLogger(__name__)
 BaseTime = '2013-01-01'
 # Default scale multiplier for bounding box to provide more area
 BboxScaleDefault = 1.2
+# Default point Area found bounding box
+pointAreaDefault = 200
 # rough number to convert lat/long to Meters
 ToMeters = 111139.0
 # number in meters to add to the center of small polygons for S2/L8
@@ -92,6 +94,7 @@ def get_siteobservation_images_task(
     overrideDates: None | list[datetime, datetime] = None,
     scale: Literal['default', 'bits'] | list[int] = 'bits',
     bboxScale: float = BboxScaleDefault,
+    pointArea: float = pointAreaDefault,
     worldview_source: Literal['cog', 'nitf'] | None = 'cog',
 ) -> None:
     try:
@@ -107,6 +110,7 @@ def get_siteobservation_images_task(
                 overrideDates=overrideDates,
                 scale=scale,
                 bboxScale=bboxScale,
+                pointArea=pointArea,
                 worldview_source=worldview_source,
             )
         fetching_task = SatelliteFetching.objects.get(site_id=site_eval_id)
@@ -133,6 +137,7 @@ def get_siteobservations_images(
     overrideDates: None | list[datetime, datetime] = None,
     scale: Literal['default', 'bits'] | list[int] = 'bits',
     bboxScale: float = BboxScaleDefault,
+    pointArea: float = pointAreaDefault,
     worldview_source: Literal['cog', 'nitf'] | None = 'cog',
 ) -> None:
     constellationObj = Constellation.objects.filter(slug=baseConstellation).first()
@@ -159,10 +164,22 @@ def get_siteobservations_images(
     if max_time is None:
         max_time = datetime.now()
 
-    mercator: tuple[float, float, float, float] = baseSiteEval.geom.extent
+    mercator: tuple[float, float, float, float] = baseSiteEval.boundingbox
     tempbox = transformer.transform_bounds(
         mercator[0], mercator[1], mercator[2], mercator[3]
     )
+    # check if data is a point instead of geometry
+    if (
+        tempbox[2] == tempbox[0] and tempbox[3] == tempbox[1]
+    ):  # create bbox based on pointArea
+        size_diff = (pointArea * 0.5) / ToMeters
+        tempbox = [
+            tempbox[0] - size_diff,
+            tempbox[1] - size_diff,
+            tempbox[2] + size_diff,
+            tempbox[3] + size_diff,
+        ]
+
     bbox = [tempbox[1], tempbox[0], tempbox[3], tempbox[2]]
     # if width | height is too small we pad S2/L8 regions for more context
     bbox_width = (tempbox[2] - tempbox[0]) * ToMeters
@@ -183,6 +200,7 @@ def get_siteobservations_images(
     bbox = scale_bbox(bbox, bboxScale)
     # get the updated BBOX if it's bigger
     max_bbox = get_max_bbox(bbox, max_bbox)
+    logger.warning(f'UPGRADED BBOX: {bbox}')
 
     # First we gather all images that match observations
     count = 0
@@ -201,7 +219,6 @@ def get_siteobservations_images(
         if observation.timestamp is not None:
             min_time = min(min_time, observation.timestamp)
             max_time = max(max_time, observation.timestamp)
-        mercator: tuple[float, float, float, float] = observation.geom.extent
 
         timestamp = observation.timestamp
         constellation = observation.constellation
@@ -582,6 +599,7 @@ def generate_site_images(
     overrideDates: None | list[datetime, datetime] = None,
     scale: Literal['default', 'bits'] | list[int] = 'bits',
     bboxScale: float = BboxScaleDefault,
+    pointArea: float = pointAreaDefault,
     worldview_source: Literal['cog', 'nitf'] | None = 'cog',
 ):
     siteeval = SiteEvaluation.objects.get(pk=site_id)
@@ -617,6 +635,7 @@ def generate_site_images(
             overrideDates,
             scale,
             bboxScale,
+            pointArea,
             worldview_source,
         )
         fetching_task.celery_id = task_id.id
@@ -633,6 +652,7 @@ def generate_site_images_for_evaluation_run(
     overrideDates: None | list[datetime, datetime] = None,
     scale: Literal['default', 'bits'] | list[int] = 'bits',
     bboxScale: float = BboxScaleDefault,
+    pointArea: float = pointAreaDefault,
 ):
     sites = SiteEvaluation.objects.filter(configuration=model_run_id)
     for eval in sites.iterator():
@@ -645,6 +665,7 @@ def generate_site_images_for_evaluation_run(
             overrideDates,
             scale,
             bboxScale,
+            pointArea,
         )
 
 

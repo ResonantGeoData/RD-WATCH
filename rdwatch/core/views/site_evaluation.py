@@ -26,8 +26,14 @@ def patch_site_evaluation(request: HttpRequest, id: UUID4, data: SiteEvaluationR
         )
         old_geom = None
         if data.geom:
-            old_geom = site_evaluation.geom  # if geom is modified, backup
-            site_evaluation.geom = GEOSGeometry(json.dumps(data.geom))
+            old_geom = None
+            old_point = None
+            if data.geom.get('type', False) == 'Point':
+                old_point = site_evaluation.point
+                site_evaluation.point = GEOSGeometry(json.dumps(data.geom))
+            if data.geom.get('type', False) == 'Polygon':
+                old_geom = site_evaluation.geom
+                site_evaluation.geom = GEOSGeometry(json.dumps(data.geom))
         SiteEvaluationTracking.objects.create(
             score=site_evaluation.score,
             label=site_evaluation.label,
@@ -37,6 +43,7 @@ def patch_site_evaluation(request: HttpRequest, id: UUID4, data: SiteEvaluationR
             edited=datetime.now(),
             evaluation=site_evaluation,
             geom=old_geom,
+            point=old_point,
         )
         if data.label:
             site_evaluation.label = lookups.ObservationLabel.objects.get(

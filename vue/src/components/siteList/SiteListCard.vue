@@ -103,10 +103,6 @@ const selectingSite = async (e: boolean) => {
   }
 };
 
-const isSitePoint = (site: SiteDisplay) => {
-  return Object.values(site.bbox).every(value => value === null)
-}
-
 const animationDialog = ref(false);
 
 </script>
@@ -321,7 +317,7 @@ const animationDialog = ref(false);
           <span>Download JSON</span>
         </v-tooltip>
         <v-tooltip
-          v-if="!downloading && !isSitePoint(site)"
+          v-if="!downloading"
           open-delay="300"
         >
           <template #activator="{ props }">

@@ -103,6 +103,15 @@ class SiteEvaluation(models.Model):
         help_text='Hash of the file for proposals',
     )
 
+    @property
+    def boundingbox(self) -> tuple[float, float, float, float]:
+        if self.geom:
+            return self.geom.extent
+        if self.point:
+            x, y = self.point.coords
+            return x, y, x, y
+        return None
+
     @classmethod
     def bulk_create_from_site_model(
         cls, site_model: SiteModel, configuration: ModelRun
@@ -269,6 +278,13 @@ class SiteEvaluationTracking(models.Model):
 
     geom = PolygonField(
         help_text="Polygon from this site's Site Feature",
+        srid=3857,
+        spatial_index=True,
+        null=True,
+    )
+
+    point = PointField(
+        help_text="Point from this site's Site Feature",
         srid=3857,
         spatial_index=True,
         null=True,

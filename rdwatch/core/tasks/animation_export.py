@@ -132,23 +132,23 @@ def rescale_bbox(bbox, scale):
 
 
 def paste_image_with_bbox(
-    source_image,
-    bbox,
-    pixel_per_unit_x,
-    pixel_per_unit_y,
-    output_width,
-    output_height,
-    output_bbox,
-    output_pixel_per_unit_x,
-    output_pixel_per_unit_y,
-):
+    source_image: Image,
+    bbox: tuple[float, float, float, float],
+    pixel_per_unit_x: float,
+    pixel_per_unit_y: float,
+    output_width: int,
+    output_height: int,
+    output_bbox: tuple[float, float, float, float],
+    output_pixel_per_unit_x: float,
+    output_pixel_per_unit_y: float,
+) -> Image:
     """
     Pastes a source image into an output image based on matching bounding box coordinates,
     with different pixel-per-unit scales for the X and Y axes.
 
     Parameters:
     source_image_path (Image): source image.
-    bbox (list): Bounding box of the source image in the format [minx, miny, maxx, maxy].
+    bbox (tuple): Bounding box of the source image in the format [minx, miny, maxx, maxy].
     pixel_per_unit_x (float): Pixels per unit for the X-axis of the source image.
     pixel_per_unit_y (float): Pixels per unit for the Y-axis of the source image.
     output_width (int): Width of the output image.

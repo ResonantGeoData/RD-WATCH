@@ -109,7 +109,9 @@ label_mapping = {
 }
 
 
-def rescale_bbox(bbox: tuple[float, float, float, float], scale: float) -> tuple[float, float, float, float]:
+def rescale_bbox(
+    bbox: tuple[float, float, float, float], scale: float
+) -> tuple[float, float, float, float]:
     """
     Rescales a bounding box by a given scaling factor.
 
@@ -197,7 +199,15 @@ def paste_image_with_bbox(
     return output_image
 
 
-def to_pixel_coords(lon: float, lat: float, bbox: tuple[float, float, float, float], xScale: float, yScale: float, xOffset=0, yOffset=0):
+def to_pixel_coords(
+    lon: float,
+    lat: float,
+    bbox: tuple[float, float, float, float],
+    xScale: float,
+    yScale: float,
+    xOffset=0,
+    yOffset=0,
+):
     x = (lon - bbox[0]) * xScale + xOffset
     y = (bbox[3] - lat) * yScale + yOffset
     return x, y
@@ -735,9 +745,9 @@ def create_modelrun_animation_export(
     # Now we create a task for each site in the image that has information
     site_tasks = [
         create_site_animation_export.s(site_id, settings, userId)
-        for site_id in SiteImage.objects.filter(
-            site__configuration_id=modelrun_id
-        ).values_list('site_id', flat=True).iterator()
+        for site_id in SiteImage.objects.filter(site__configuration_id=modelrun_id)
+        .values_list('site_id', flat=True)
+        .iterator()
     ]
 
     subtasks = group(site_tasks)

@@ -44,6 +44,17 @@ const downloadingGifQuality = computed({
 });
 
 
+const downloadingGifPointSize = computed({
+  get() {
+    return state.gifSettings.pointSize || 1;
+  },
+  set(val: number) {
+    state.gifSettings = { ...state.gifSettings, pointSize: val };
+  },
+
+})
+
+
 const downloadingGif = ref(false);
 const downloadingGifState: Ref<null | 'drawing' | 'generating'> = ref(null);
 const downloadingGifProgress = ref(0);
@@ -107,6 +118,7 @@ function drawForDownload() {
         props.rescaleImage,
         props.fullscreen,
         props.rescalingBBox,
+        downloadingGifPointSize.value,
       );
       CanvasCapture.recordFrame();
       index += 1
@@ -222,6 +234,15 @@ function drawForDownload() {
               max="1"
               step="0.1"
               :label="`Quality (${downloadingGifQuality.toFixed(2)})`"
+            />
+          </v-row>
+          <v-row dense>
+            <v-slider
+              v-model="downloadingGifPointSize"
+              min="0"
+              max="10"
+              step="0.1"
+              :label="`Point Size (${downloadingGifPointSize.toFixed(2)})`"
             />
           </v-row>
         </v-card-text>

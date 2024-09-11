@@ -10,7 +10,7 @@ import { markRaw, onMounted, onUnmounted, reactive, shallowRef, watch, withDefau
 import type { FilterSpecification } from "maplibre-gl";
 import type { ShallowRef } from "vue";
 import { popupLogic, setPopupEvents } from "../interactions/mouseEvents";
-import useEditPolygon from "../interactions/editPolygon";
+import useEditPolygon from "../interactions/editGeoJSON";
 import { satelliteLoading } from "../interactions/satelliteLoading";
 import { setReference } from "../interactions/fillPatterns";
 import { setSatelliteTimeStamp } from "../mapstyle/satellite-image";
@@ -87,7 +87,7 @@ onMounted(() => {
     // Having an issue with the selectedPoints Ref, although it is the true type.
     // eslint-disable-next-line @typescript-eslint/ban-ts-comment
     // @ts-ignore
-    state.editPolygon = editPolygon;
+    state.editGeoJSON = editPolygon;
   }
   }
 });
@@ -99,7 +99,7 @@ const throttledSetSatelliteTimeStamp = throttle(setSatelliteTimeStamp, 300);
 
 watch([() => state.timestamp, () => state.filters, () => state.satellite, () => state.filters.scoringColoring,
 () => state.satellite.satelliteSources, () => state.enabledSiteImages, () => state.filters.hoverSiteId,
-() => state.modelRuns, () => state.openedModelRuns, () => state.filters.proposals, () => state.filters.randomKey, () => state.filters.editingPolygonSiteId], (newVals, oldVals) => {
+() => state.modelRuns, () => state.openedModelRuns, () => state.filters.proposals, () => state.filters.randomKey, () => state.filters.editingGeoJSONSiteId], (newVals, oldVals) => {
 
   if (state.satellite.satelliteImagesOn) {
     throttledSetSatelliteTimeStamp(state, filteredSatelliteTimeList.value);

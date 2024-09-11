@@ -5,7 +5,7 @@ import { state } from '../../store'
 
 interface Props {
     siteEvalId: string;
-    evalGeoJSON: GeoJSON.Polygon | null;
+    evalGeoJSON: GeoJSON.Polygon | null | GeoJSON.Point;
     samViewer: null | number;
 }
 const props = withDefaults(defineProps<Props>(), {
@@ -18,12 +18,12 @@ const emit = defineEmits<{
 }>();
 
 
-const editingPolygon = ref(false);
-const evaluationGeoJSON: Ref<GeoJSON.Polygon | null> = ref(props.evalGeoJSON); // holds the site geoJSON so it can be edited
+const editingGeoJSON = ref(false);
+const evaluationGeoJSON: Ref<GeoJSON.Polygon | GeoJSON.Point |  null> = ref(props.evalGeoJSON); // holds the site geoJSON so it can be edited
 
 
 watch([() => props.siteEvalId], () => {
-  cancelEditingPolygon();
+  cancelEditingGeoJSON();
   evaluationGeoJSON.value = props.evalGeoJSON;
   
   
@@ -32,48 +32,51 @@ watch(() => props.evalGeoJSON, () => {
   evaluationGeoJSON.value = props.evalGeoJSON;
 })
 
-watch(() => state.filters.editingPolygonSiteId, () => {
-  if (state.filters.editingPolygonSiteId !== null) {
-    editingPolygon.value = true;
+watch(() => state.filters.editingGeoJSONSiteId, () => {
+  if (state.filters.editingGeoJSONSiteId !== null) {
+    editingGeoJSON.value = true;
   } else {
-    editingPolygon.value = false;
+    editingGeoJSON.value = false;
   }
 });
 
-const startEditingPolygon = () => {
-  state.filters.editingPolygonSiteId = props.siteEvalId;
-  if (state.editPolygon && evaluationGeoJSON.value) {
-    state.editPolygon.setPolygonEdit(evaluationGeoJSON.value);
-    editingPolygon.value = true;
+const startEditingGeoJSON = () => {
+  state.filters.editingGeoJSONSiteId = props.siteEvalId;
+  if (state.editGeoJSON && evaluationGeoJSON.value) {
+    state.editGeoJSON.setGeoJSONEdit(evaluationGeoJSON.value);
+    editingGeoJSON.value = true;
   }
 }
 
-const cancelEditingPolygon = () => {
-  state.filters.editingPolygonSiteId = null;
-  if (state.editPolygon && evaluationGeoJSON.value) {
-    state.editPolygon.cancelPolygonEdit();
-    editingPolygon.value = false;
+const cancelEditingGeoJSON = () => {
+  state.filters.editingGeoJSONSiteId = null;
+  if (state.editGeoJSON && evaluationGeoJSON.value) {
+    state.editGeoJSON.cancelGeoJSONEdit();
+    editingGeoJSON.value = false;
   }
 }
 
-const saveEditingPolygon = async () => {
-  if (state.editPolygon) {
-    const polyGeoJSON = state.editPolygon.getEditingPolygon();
+const saveEditingGeoJSON = async () => {
+  if (state.editGeoJSON) {
+    const polyGeoJSON = state.editGeoJSON.getEditingGeoJSON();
     if (polyGeoJSON) {
       evaluationGeoJSON.value = polyGeoJSON;
       await ApiService.patchSiteEvaluation(props.siteEvalId, { geom: polyGeoJSON });
-      cancelEditingPolygon();
+      cancelEditingGeoJSON();
       emit('clear-storage');
     }
   }
 }
-const selectedPoints = computed(() => state.editPolygon && (state.editPolygon.selectedPoints).length);
+const selectedPoints = computed(() => state.editGeoJSON && (state.editGeoJSON.selectedPoints).length);
 
 const deleteSelectedPoints = () => {
-  if (state.editPolygon && selectedPoints.value) {
-    state.editPolygon.deleteSelectedPoints();
+  if (state.editGeoJSON && selectedPoints.value) {
+    state.editGeoJSON.deleteSelectedPoints();
   }
 }
+
+console.log(evaluationGeoJSON.value);
+console.log(editingGeoJSON.value);
 </script>
 
 <template>
@@ -82,21 +85,21 @@ const deleteSelectedPoints = () => {
     <v-col>
       <v-btn
         size="small"
-        :disabled="editingPolygon"
-        @click="startEditingPolygon()"
+        :disabled="editingGeoJSON || !(evaluationGeoJSON)"
+        @click="startEditingGeoJSON()"
       >
-        Edit Polygon
+        Edit GeoJSON
       </v-btn>
     </v-col>
     <v-spacer />
   </v-row>
   <v-row
-    v-if="editingPolygon"
+    v-if="editingGeoJSON"
     class="pt3"
   >
     <v-spacer />
     <h3 style="display:inline">
-      Polygon:
+      GeoJSON:
     </h3>
     <v-btn
       v-if="selectedPoints"
@@ -113,7 +116,7 @@ const deleteSelectedPoints = () => {
       size="small"
       color="error"
       class="mx-2"
-      @click="cancelEditingPolygon()"
+      @click="cancelEditingGeoJSON()"
     >
       Cancel
     </v-btn>
@@ -121,7 +124,7 @@ const deleteSelectedPoints = () => {
       size="small"
       color="success"
       class="mx-2"
-      @click="saveEditingPolygon()"
+      @click="saveEditingGeoJSON()"
     >
       Save
     </v-btn>

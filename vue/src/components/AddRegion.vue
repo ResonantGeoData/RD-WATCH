@@ -6,8 +6,8 @@ import maplibregl from "maplibre-gl";
 
 
 onMounted(() => {
-  if (state.editPolygon) {
-    state.editPolygon.setPolygonNew();
+  if (state.editGeoJSON) {
+    state.editGeoJSON.setGeoJSONNew('Polygon');
   }
   publicRegionId.value = true;
   regionId.value = 'Custom RegionId'
@@ -17,27 +17,27 @@ onMounted(() => {
 const regionId = ref("");
 const publicRegionId = ref(true);
 const deleteSelectedPoints = () => {
-  if (state.editPolygon && selectedPoints.value) {
-    state.editPolygon.deleteSelectedPoints();
+  if (state.editGeoJSON && selectedPoints.value) {
+    state.editGeoJSON.deleteSelectedPoints();
   }
 };
 const selectedPoints = computed(
-  () => state.editPolygon && state.editPolygon.selectedPoints.length
+  () => state.editGeoJSON && state.editGeoJSON.selectedPoints.length
 );
 
-const polygonExists = computed(() => state.editPolygon && state.editPolygon.getEditingPolygon());
+const polygonExists = computed(() => state.editGeoJSON && state.editGeoJSON.getEditingGeoJSON());
 
 
 
 const cancel = () => {
-  state.editPolygon?.cancelPolygonEdit();
+  state.editGeoJSON?.cancelGeoJSONEdit();
   state.filters.addingRegionPolygon = undefined;
 };
 
 const addRegion = async () => {
   // build up the SiteModel
-  if (state.editPolygon) {
-    const polyGeoJSON = state.editPolygon.getEditingPolygon();
+  if (state.editGeoJSON) {
+    const polyGeoJSON = state.editGeoJSON.getEditingGeoJSON();
     if (polyGeoJSON) {
         const regionUpload: RegionUpload = {
           type: "FeatureCollection",
@@ -61,7 +61,7 @@ const addRegion = async () => {
         // We need to update the source to get information
         // This reloads the source vector-tile to color it properly after data has been changed.
         state.filters.randomKey = `?randomKey=randomKey_${Math.random() * 1000}`; 
-        state.editPolygon.cancelPolygonEdit();
+        state.editGeoJSON.cancelGeoJSONEdit();
         state.filters.addingRegionPolygon = undefined;
         await updateRegionList();
         await updateRegionMap();

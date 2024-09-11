@@ -87,7 +87,7 @@ export interface SiteList {
 }
 export interface SiteEvaluationUpdateQuery {
   label?: string;
-  geom?: GeoJSON.Polygon;
+  geom?: GeoJSON.Polygon | GeoJSON.Point;
   score?: number,
   start_date?: string | null;
   end_date?: string | null;
@@ -97,7 +97,7 @@ export interface SiteEvaluationUpdateQuery {
 
 export interface SiteObservationUpdateQuery {
   label?: string;
-  geom?: GeoJSON.Polygon;
+  geom?: GeoJSON.Polygon | GeoJSON.Point;
   score?: number,
   timestamp: string;
   constellation: string;
@@ -117,6 +117,7 @@ export interface DownloadSettings {
   scale?: 'default' | 'bits' | 'custom';
   scaleNum?: number[];
   bboxScale?: number;
+  pointArea?: number;
 }
 
 export type CeleryStates = 'FAILURE' | 'PENDING' | 'SUCCESS' | 'RETRY' | 'REVOKED' | 'STARTED';

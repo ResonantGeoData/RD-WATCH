@@ -184,7 +184,7 @@ const clickObservation = async (e: MapLayerMouseEvent) => {
   const regions: string[] = [];
   const siteIds: string[] = [];
   const names: string[] = [];
-  if (state.filters.editingPolygonSiteId) {
+  if (state.filters.editingGeoJSONSiteId) {
     return;
   }
   if (e.features && e.features[0]?.properties && map.value) {
@@ -217,14 +217,14 @@ const clickSite = async (e: MapLayerMouseEvent) => {
   const regions: string[] = [];
   const siteIds: string[] = [];
   const names: string[] = [];
-  if (state.filters.editingPolygonSiteId) {
+  if (state.filters.editingGeoJSONSiteId) {
     return;
   }
   if (e.features && e.features[0]?.properties && map.value) {
     e.features.forEach(async (feature) => {
     if (feature.properties) {
         const siteId = feature.properties.uuid;
-        if (siteId === state.filters.editingPolygonSiteId) {
+        if (siteId === state.filters.editingGeoJSONSiteId) {
           return;
         }
         const siteDetails = {
@@ -319,7 +319,7 @@ const drawSitePopupObservation = async (e: MapLayerMouseEvent, remove=false) => 
 };
 
 const clickOutside = (e: MapLayerMouseEvent) => {
-  if (state.filters.editingPolygonSiteId) {
+  if (state.filters.editingGeoJSONSiteId) {
     return;
   }
   if (e.defaultPrevented === false) { // only clear when clicked not on a site/obs

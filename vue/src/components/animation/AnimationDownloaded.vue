@@ -81,7 +81,7 @@ const deleteItem = async (taskId: string) => {
 const headers = ref([
   { title: "Date", key: "created", width: "250px" },
   { title: "Arguments", key: "arguments", width: "20px" },
-  { title: "Status", key: "completed" },
+  { title: "Status", value: "completed", width: "250px" },
 ]);
 </script>
 
@@ -123,7 +123,7 @@ const headers = ref([
       </template>
       <template #[`item.completed`]="{ item }">
         <div v-if="item.completed">
-          <v-row dense>
+          <v-row dense align="center" justify="center">
             <v-btn @click="downloadItem(item.taskId)">
               Download <v-icon>mdi-download</v-icon>
             </v-btn>

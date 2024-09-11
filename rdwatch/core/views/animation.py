@@ -11,7 +11,6 @@ from django.shortcuts import get_object_or_404
 from rdwatch.core.models import AnimationModelRunExport, AnimationSiteExport
 from rdwatch.core.tasks.animation_export import (
     GenerateAnimationSchema,
-    create_animation,
     create_modelrun_animation_export,
     create_site_animation_export,
 )
@@ -135,8 +134,6 @@ def delete_modelrun_download(
     return 200, {'success': 'ModelRun Animation Export deleted successfully.'}
 
 
-
-
 @router.post('/modelrun/{id}/')
 def generate_modelrun_animation(
     request: HttpRequest,
@@ -150,20 +147,33 @@ def generate_modelrun_animation(
     return task_id.id
 
 
-from django.shortcuts import redirect
-
 @router.get('/download/site/{task_id}/')
 def get_downloaded_site_animation(request: HttpRequest, task_id: UUID4):
-    return redirect(get_object_or_404(
+    animation_export = get_object_or_404(
         AnimationSiteExport, celery_id=task_id, user=request.user
-    ), permanent=False)
+    )
+    name = animation_export.name
+    content_type = 'video/mp4'
+    if name.endswith('.gif'):
+        content_type = 'image/gif'
+    response = HttpResponse(
+        animation_export.export_file.file, content_type=content_type
+    )
+    response['Content-Disposition'] = f'attachment; filename="{name}"'
+    return response
 
 
 @router.get('/download/modelrun/{task_id}/')
 def get_downloaded_modelrun_animation(request: HttpRequest, task_id: UUID4):
-    return redirect(get_object_or_404(
+    animation_export = get_object_or_404(
         AnimationModelRunExport, celery_id=task_id, user=request.user
-    ).export_file.url, permanent=False)
+    )
+    name = animation_export.configuration.title
+    response = HttpResponse(
+        animation_export.export_file.file, content_type='application/zip'
+    )
+    response['Content-Disposition'] = f'attachment; filename="{name}.zip"'
+    return response
 
 
 @router.get('/{task_id}/status/')
@@ -173,7 +183,6 @@ def get_animation_status(request: HttpRequest, task_id: UUID4):
     celery_data['state'] = task.state
     celery_data['status'] = task.status
     celery_data['info'] = (
-        str(task.info) if isinstance(task.info, RuntimeError) else task.info
+        str(task.info) if isinstance(task.info, Exception) else task.info
     )
-
     return celery_data

@@ -10,8 +10,6 @@ from django.contrib.gis.gdal import GDALException
 from django.contrib.gis.geos import GEOSGeometry
 from django.contrib.gis.geos.error import GEOSException
 
-from rdwatch.core.models import Performer
-
 CurrentPhase: TypeAlias = Literal[
     'No Activity',
     'Site Preparation',
@@ -52,12 +50,6 @@ class SiteFeature(Schema):
     end_date: datetime | None
     model_content: Literal['annotation', 'proposed', 'update']
     originator: str
-
-    @validator('originator')
-    def validate_originator(cls, v: str) -> str:
-        if Performer.objects.filter(short_code=v.upper()).exists():
-            return v
-        raise ValueError(f'Invalid originator "{v}"')
 
     # Optional fields
     score: confloat(ge=0.0, le=1.0) | None

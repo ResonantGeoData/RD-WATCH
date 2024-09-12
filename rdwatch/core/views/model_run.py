@@ -682,7 +682,7 @@ def start_model_run_upload_processing(
         if not default_storage.exists(upload.zipfile.name):
             raise ValidationError('Invalid file name provided')
 
-        task = process_model_run_upload_task.delay(upload.id)
+        task = process_model_run_upload_task.delay_on_commit(upload.id)
         upload.task_id = task.id
         upload.save()
 

@@ -263,14 +263,6 @@ const satelliteLoadingColor = computed(() => {
         class="flex-grow-1"
         compact
         @modelrunlist="currentModelRunList = $event"
-        @update:timerange="
-          (timerange) => {
-            if (timerange !== null) {
-              timemin = timerange.min;
-              state.timeMin = timemin;
-            }
-          }
-        "
       />
     </v-row>
     <v-dialog

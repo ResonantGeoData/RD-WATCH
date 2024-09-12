@@ -1,21 +1,11 @@
 <script setup lang="ts">
 import ModelRunCard from "./ModelRunCard.vue";
 import type { ModelRunList } from "../client/models/ModelRunList";
-import { LngLatBounds } from "maplibre-gl";
-import {
-  CancelError,
-  CancelablePromise,
-  ModelRun,
-  QueryArguments,
-} from "../client";
+import type { QueryArguments } from "../client";
 import { computed, onMounted, ref, watch, withDefaults } from "vue";
-import { ApiService } from "../client";
-import { filteredSatelliteTimeList, state, updateCameraBoundsBasedOnModelRunList } from "../store";
+import { filteredSatelliteTimeList, queryModelRuns, refreshModelRunDownloadingStatuses, state, updateCameraBoundsBasedOnModelRunList } from "../store";
 import type { KeyedModelRun } from '../store'
 import { hoveredInfo } from "../interactions/mouseEvents";
-
-// This must match the page_size parameter for the list_model_runs endpoint
-const PAGE_SIZE = 10;
 
 interface Props {
   filters: QueryArguments;
@@ -26,125 +16,19 @@ const props = withDefaults(defineProps<Props>(), {
 });
 
 const emit = defineEmits<{
-  (e: "update:timerange", timerange: ModelRun["timerange"]): void;
   (e: "modelrunlist", modelRunList: ModelRunList): void;
 }>();
 
-const resultsBoundingBox = ref({
-  xmin: -180,
-  ymin: -90,
-  xmax: 180,
-  ymax: 90,
-});
-const totalModelRuns = ref(1);
-const loading = ref(false);
+const totalModelRuns = computed(() => state.totalNumModelRuns);
+const loading = computed(() => state.queryStates.loadModelRuns.inflightQueries > 0);
 const satelliteRegionTooLarge = ref(false);
-const page = ref(1);
 
-let request: CancelablePromise<ModelRunList> | undefined;
-
-async function loadModelRuns() {
-  loading.value = true;
-  if (request !== undefined) {
-    request.cancel();
-  }
-  const { mode, performer } = props.filters; // unwrap performer and mode arrays
-  request = ApiService.getModelRuns({
-    page: page.value,
-    ...props.filters,
-    mode,
-    performer,
-    proposal: props.compact ? 'PROPOSAL' : undefined, // if compact we are doing proposal adjudication
-  });
-  try {
-    const modelRunList = await request;
-    request = undefined;
-    loading.value = false;
-    totalModelRuns.value = modelRunList.count;
-
-    // sort list to show ground truth near the top
-    const modelRunResults = modelRunList.items;
-    const keyedModelRunResults = modelRunResults.map((val) => {
-      return {
-        ...val,
-        key: `${val.id}`,
-      };
-    });
-
-    // If a bounding box was provided for this model run list, zoom the camera to it.
-    if (modelRunList.bbox) {
-      const bounds = new LngLatBounds();
-      modelRunList.bbox.coordinates
-        .flat()
-        .forEach((c) => bounds.extend(c as [number, number]));
-      const bbox = {
-        xmin: bounds.getWest(),
-        ymin: bounds.getSouth(),
-        xmax: bounds.getEast(),
-        ymax: bounds.getNorth(),
-      };
-      resultsBoundingBox.value = bbox;
-      state.bbox = bbox;
-    } else if (!state.filters.regions?.length) {
-      const bbox = {
-        xmin: -180,
-        ymin: -90,
-        xmax: 180,
-        ymax: 90,
-      };
-      state.bbox = bbox;
-    }
-
-    // If we're on page 1, we *might* have switched to a different filter/grouping in the UI,
-    // meaning we would need to clear out any existing results.
-    // To account for this, just set the array to the results directly instead of concatenating.
-    if (page.value === 1) {
-      state.modelRuns = keyedModelRunResults;
-    } else {
-      state.modelRuns = state.modelRuns.concat(keyedModelRunResults);
-    }
-    emit("update:timerange", modelRunList["timerange"]);
-    emit("modelrunlist", modelRunList);
-  } catch (e) {
-    if (e instanceof CancelError) {
-      console.log('Request has been cancelled');
-    } else {
-      throw e;
-    }
-  }
+async function loadModelRuns(type: 'firstPage' | 'nextPage') {
+  const modelRunList = await queryModelRuns(type, props.filters, props.compact);
+  emit('modelrunlist', modelRunList);
 }
 
-// Used to update downloading status after an image download has been started.
-const checkDownloading = async () => {
-  if (request !== undefined) {
-    console.log('Cancelling request');
-    request.cancel();
-  }
-  const { mode, performer } = props.filters; // unwrap performer and mode arrays
-  request = ApiService.getModelRuns({
-    page: page.value,
-    ...props.filters,
-    mode,
-    performer,
-    proposal: props.compact ? 'PROPOSAL' : undefined, // if compact we are doing proposal adjudication
-  });
-    const modelRunList = await request;
-    request = undefined;
-    // sort list to show ground truth near the top
-    const modelRunResults = modelRunList.items;
-
-    for (let i = 0; i< state.modelRuns.length; i += 1) {
-      const currentModelRun = state.modelRuns[i];
-      const found = modelRunResults.find((item) => item.id === currentModelRun.id);
-      if (found) {
-        if (found.downloading) {
-          state.modelRuns[i].downloading = found.downloading;
-        }
-      }
-    }
-};
-
-watch(() => state.downloadingCheck, () => checkDownloading());
+watch(() => state.downloadingCheck, () => refreshModelRunDownloadingStatuses());
 
 const loadingSatelliteTimestamps = ref(false);
 
@@ -201,27 +85,23 @@ async function handleScroll(event: Event) {
   // If the user has scrolled to the bottom of the list AND there are still more model runs to
   // fetch, bump the current page to trigger the loadMore function via a watcher.
   const heightPosCheck = Math.floor(target.scrollHeight - target.scrollTop) <= target.clientHeight;
-  if (!loading.value && heightPosCheck && state.modelRuns.length < totalModelRuns.value) {
-    if (page.value !== undefined && Math.ceil(totalModelRuns.value / PAGE_SIZE) > page.value ) {
-      page.value += 1;
-      loadModelRuns();
-    }
+  if (!loading.value && heightPosCheck) {
+    loadModelRuns('nextPage');
   }
 }
 
 const hasSatelliteImages = computed(() => filteredSatelliteTimeList.value.length);
 
 watch([() => props.filters.region, () => props.filters.performer, () => props.filters.eval], () => {
-  page.value = 1;
   state.openedModelRuns.clear();
   state.filters = {
     ...state.filters,
     configuration_id: [],
   };
-  loadModelRuns();
+  loadModelRuns('firstPage');
 });
 
-onMounted(() => loadModelRuns());
+onMounted(() => loadModelRuns('firstPage'));
 </script>
 
 <template>

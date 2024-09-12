@@ -3,6 +3,7 @@ import socket
 from typing import Any
 
 from ninja import Field, Router, Schema
+from parver import Version
 
 from django.http import HttpRequest
 
@@ -40,6 +41,16 @@ def get_status(request: HttpRequest):
     hostname = socket.gethostname()
     ip = socket.gethostbyname(hostname)
 
+    parsed_version = Version.parse(api.version)
+
+    version = 'v'
+    version += '.'.join(str(v) for v in parsed_version.release)
+
+    # If this is a pre-release version, include the pre-release version string
+    post_num: int | None = parsed_version.post
+    if post_num is not None:
+        version += f'.post{post_num}+{parsed_version.local}'
+
     try:
         smartflow_status = SmartFlowClient().get_health().to_dict()
     except Exception:
@@ -49,6 +60,6 @@ def get_status(request: HttpRequest):
         uptime=uptime,
         hostname=hostname,
         ip=ip,
-        rdwatch_version=api.version,
+        rdwatch_version=version,
         smartflow=smartflow_status,
     )

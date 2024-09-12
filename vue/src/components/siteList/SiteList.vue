@@ -10,7 +10,7 @@ import SiteListCard from "./SiteListCard.vue";
 import { SiteDisplay } from "./SiteListCard.vue";
 import SiteListHeader from "./SiteListHeader.vue";
 import SiteListFilter from "./SiteListFilter.vue";
-import { getSiteObservationDetails, state } from "../../store";
+import { getSiteObservationDetails, refreshModelRunDownloadingStatuses, state } from "../../store";
 import { scoringColors, scoringColorsKeys } from "../../mapstyle/annotationStyles";
 
 const props = defineProps<{
@@ -283,12 +283,12 @@ const startDownload = async (data: DownloadSettings) => {
   const id = imageDownloadingId.value;
   imageDownloadDialog.value = false;
   if (id) {
-  await ApiService.getObservationImages(id, data);
-  // Notify the ModelRunList that downloading is happening
-  if (imageDownloadingModelRunId.value) {
-    emit('image-download', imageDownloadingModelRunId.value);
-  }
-  state.downloadingCheck += 1;
+    await ApiService.getObservationImages(id, data);
+    // Notify the ModelRunList that downloading is happening
+    if (imageDownloadingModelRunId.value) {
+      emit('image-download', imageDownloadingModelRunId.value);
+    }
+    refreshModelRunDownloadingStatuses();
     // Now we get the results to see if the service is running
     setTimeout(() => getAllSiteProposals(), 1000);
   }

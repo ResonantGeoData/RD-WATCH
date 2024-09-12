@@ -3,7 +3,7 @@ import ModelRunCard from "./ModelRunCard.vue";
 import type { ModelRunList } from "../client/models/ModelRunList";
 import type { QueryArguments } from "../client";
 import { computed, onMounted, ref, watch, withDefaults } from "vue";
-import { filteredSatelliteTimeList, queryModelRuns, refreshModelRunDownloadingStatuses, state, updateCameraBoundsBasedOnModelRunList } from "../store";
+import { filteredSatelliteTimeList, queryModelRuns, state, updateCameraBoundsBasedOnModelRunList } from "../store";
 import type { KeyedModelRun } from '../store'
 import { hoveredInfo } from "../interactions/mouseEvents";
 
@@ -27,8 +27,6 @@ async function loadModelRuns(type: 'firstPage' | 'nextPage') {
   const modelRunList = await queryModelRuns(type, props.filters, props.compact);
   emit('modelrunlist', modelRunList);
 }
-
-watch(() => state.downloadingCheck, () => refreshModelRunDownloadingStatuses());
 
 const loadingSatelliteTimestamps = ref(false);
 

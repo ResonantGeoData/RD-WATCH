@@ -4,6 +4,7 @@ import {
   ApiService,
   DownloadedAnimation,
 } from "../../client/services/ApiService";
+import { downloadPresignedFile } from "../../utils";
 
 const props = defineProps<{
   type: "site" | "modelRun";
@@ -67,9 +68,9 @@ onMounted(async () => {
     initialized.value = true;
 });
 
-const downloadItem = (taskId: string) => {
-  const url = ApiService.getAnimationDownloadString(taskId, props.type);
-  window.location.assign(url);
+const downloadItem = async (taskId: string) => {
+  const { url, filename}  = await ApiService.getAnimationDownloadString(taskId, props.type);
+  downloadPresignedFile(url, filename);
 };
 
 const deleteItem = async (taskId: string) => {
@@ -104,8 +105,16 @@ const headers = ref([
       item-value="key"
     >
       <template #[`item.created`]="{ item }">
-        <v-row dense><v-col cols="5">Created:</v-col><v-col><b>{{ formatDateTime(item.created) }}</b></v-col></v-row>
-        <v-row dense><v-col cols="5">Expire:</v-col><v-col><b>{{ expiredTime(item.created) }}</b></v-col></v-row>
+        <v-row dense>
+          <v-col cols="5">
+            Created:
+          </v-col><v-col><b>{{ formatDateTime(item.created) }}</b></v-col>
+        </v-row>
+        <v-row dense>
+          <v-col cols="5">
+            Expire:
+          </v-col><v-col><b>{{ expiredTime(item.created) }}</b></v-col>
+        </v-row>
       </template>
       <template #[`item.arguments`]="{ item }">
         <div>
@@ -123,7 +132,11 @@ const headers = ref([
       </template>
       <template #[`item.completed`]="{ item }">
         <div v-if="item.completed">
-          <v-row dense align="center" justify="center">
+          <v-row
+            dense
+            align="center"
+            justify="center"
+          >
             <v-btn @click="downloadItem(item.taskId)">
               Download <v-icon>mdi-download</v-icon>
             </v-btn>
@@ -150,6 +163,11 @@ const headers = ref([
               <div>{{ item.state.info.mode }}</div>
               <v-spacer />
             </v-row>
+          </div>
+          <div v-else-if="item.state && item.state.error">
+            <v-alert type="error">
+              {{ item.state.error }}
+            </v-alert>
           </div>
           <div v-else>
             <v-row dense>

@@ -136,6 +136,7 @@ export interface DownloadAnimationSettings {
 export interface DownloadAnimationState {
   state: string;
   status: string;
+  error?: string;
   info: {
     current?: number;
     total?: number;
@@ -788,9 +789,11 @@ export class ApiService {
       url: `${this.getApiPrefix()}/animation/${task_id}/status/`,
     })
   }
-  public static getAnimationDownloadString(task_id: string, type: 'site' | 'modelRun'): string {
-    const url = `${ApiService.getApiPrefix()}/animation/download/${type.toLowerCase()}/${task_id}/`
-    return url;
+  public static getAnimationDownloadString(task_id: string, type: 'site' | 'modelRun'): CancelablePromise<{url: string, filename: string}> {
+    return __request(OpenAPI, {
+      method: 'GET',
+      url: `${this.getApiPrefix()}/animation/download/${type.toLowerCase()}/${task_id}/`,
+    })
   }
 
 

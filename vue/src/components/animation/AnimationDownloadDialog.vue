@@ -100,7 +100,6 @@ const cancel = debounce(() => emit("close"), 5000, { leading: true });
 <template>
   <v-card
     v-if="!noImages && !loading"
-    style="min-height:850px"
   >
     <v-card-title>
       <v-tabs
@@ -124,7 +123,9 @@ const cancel = debounce(() => emit("close"), 5000, { leading: true });
         </v-tab>
       </v-tabs>
     </v-card-title>
-    <v-card-text>
+    <v-card-text    
+      style="max-height:70vh; overflow-y:auto"
+    >
       <div v-if="currentTab === 'download'">
         <v-form v-model="validForm">
           <v-row

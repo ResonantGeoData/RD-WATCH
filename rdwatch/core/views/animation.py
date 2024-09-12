@@ -5,7 +5,8 @@ from celery.result import AsyncResult
 from ninja import Router
 from pydantic import UUID4, BaseModel
 
-from django.http import HttpRequest, HttpResponse
+from django.core.files.storage import default_storage
+from django.http import HttpRequest
 from django.shortcuts import get_object_or_404
 
 from rdwatch.core.models import AnimationModelRunExport, AnimationSiteExport
@@ -155,14 +156,8 @@ def get_downloaded_site_animation(request: HttpRequest, task_id: UUID4):
         AnimationSiteExport, celery_id=task_id, user=request.user
     )
     name = animation_export.name
-    content_type = 'video/mp4'
-    if name.endswith('.gif'):
-        content_type = 'image/gif'
-    response = HttpResponse(
-        animation_export.export_file.file, content_type=content_type
-    )
-    response['Content-Disposition'] = f'attachment; filename="{name}"'
-    return response
+    presigned_url = default_storage.url(animation_export.export_file.name)
+    return {'url': presigned_url, 'filename': name}
 
 
 @router.get('/download/modelrun/{task_id}/')
@@ -170,12 +165,9 @@ def get_downloaded_modelrun_animation(request: HttpRequest, task_id: UUID4):
     animation_export = get_object_or_404(
         AnimationModelRunExport, celery_id=task_id, user=request.user
     )
-    name = animation_export.configuration.title
-    response = HttpResponse(
-        animation_export.export_file.file, content_type='application/zip'
-    )
-    response['Content-Disposition'] = f'attachment; filename="{name}.zip"'
-    return response
+    name = f'{animation_export.configuration.title}.zip'
+    presigned_url = default_storage.url(animation_export.export_file.name)
+    return {'url': presigned_url, 'filename': name}
 
 
 @router.get('/{task_id}/status/')
@@ -184,7 +176,8 @@ def get_animation_status(request: HttpRequest, task_id: UUID4):
     celery_data = {}
     celery_data['state'] = task.state
     celery_data['status'] = task.status
-    celery_data['info'] = (
-        str(task.info) if isinstance(task.info, Exception) else task.info
-    )
+    if isinstance(task.info, Exception):
+        celery_data['error'] = str(task.info)
+    else:
+        celery_data['info'] = task.info
     return celery_data

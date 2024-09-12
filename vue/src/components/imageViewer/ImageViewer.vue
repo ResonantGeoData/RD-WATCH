@@ -105,7 +105,7 @@ const hasGroundTruth = ref(false);
 const groundTruth: Ref<EvaluationImageResults["groundTruth"] | null> =
   ref(null);
 const drawGroundTruth = ref(false);
-const rescaleImage = ref(false);
+const rescaleImage = ref(true);
 const rescalingBBox = ref(1);
 const editingGeoJSON = ref(false);
 const SAMViewer: Ref<number | null> = ref(null);

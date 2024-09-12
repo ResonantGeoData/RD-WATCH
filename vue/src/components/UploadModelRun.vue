@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { reactive, ref } from "vue";
+import { reactive, ref, watch } from "vue";
 import S3FileFieldClient, {
   S3FileFieldResultState,
 } from "django-s3-file-field";
@@ -35,6 +35,19 @@ const uploadProgress = ref<number>(0);
 const QUERY_TASK_POLL_DELAY = 1000; // msec
 // from celery.states.READY_STATES
 const CELERY_READY_STATES = ["FAILURE", "SUCCESS", "REVOKED"];
+
+function resetModelRun() {
+  modelRun.title = "";
+  modelRun.region = "";
+  modelRun.performer = "";
+  modelRun.private = false;
+  uploadFile.value = undefined;
+}
+
+watch(uploadDialog, (visible) => {
+  if (!visible) return;
+  resetModelRun();
+})
 
 function openUploadDialog() {
   uploadDialog.value = true;
@@ -108,9 +121,9 @@ function validateTitle(title: string) {
 }
 
 function validateFile(file: File | File[] | undefined) {
-  if ((Array.isArray(file) && file.length === 1) || file)
-    return true;
-  return "Must provide a model run file";
+  if ((Array.isArray(file) && file.length !== 1) || !file)
+    return "Must provide a model run file";
+  return true;
 }
 
 function closeDialogs() {

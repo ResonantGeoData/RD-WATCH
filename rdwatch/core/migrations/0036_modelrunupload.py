@@ -9,7 +9,7 @@ from django.db import migrations, models
 
 class Migration(migrations.Migration):
     dependencies = [
-        ('core', '0033_remove_region_unique_region_with_owner_and_more'),
+        ('core', '0035_alter_annotationexport_export_file_and_more'),
     ]
 
     operations = [

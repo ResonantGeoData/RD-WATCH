@@ -46,7 +46,7 @@ from rdwatch.core.models import (
 from rdwatch.core.models.lookups import Constellation
 from rdwatch.core.models.region import get_or_create_region
 from rdwatch.core.schemas.region_model import RegionModel
-from rdwatch.core.schemas.site_model import SiteFeature, SiteModel
+from rdwatch.core.schemas.site_model import SiteModel
 from rdwatch.core.utils.images import (
     fetch_boundbox_image,
     get_max_bbox,
@@ -774,15 +774,9 @@ ModelT = TypeVar('ModelT', bound=BaseModel)
 
 def parse_model_json(ModelClass: type[ModelT], data: str | bytes) -> ModelT | None:
     try:
-        # SiteFeature's originator validator queries the db.
-        # Skip that validator, as we will create the performer if it doesn't exist.
-        SiteFeature.skip_validation_for.add('originator')
-
         return ModelClass.parse_raw(data)
     except ValidationError:
         return None
-    finally:
-        SiteFeature.skip_validation_for.remove('originator')
 
 
 def process_model_run_upload(model_run_upload: ModelRunUpload):

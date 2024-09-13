@@ -746,11 +746,9 @@ def create_modelrun_animation_export(
     site_tasks = [
         create_site_animation_export.s(site_id, settings, userId)
         for site_id in SiteImage.objects.filter(site__configuration_id=modelrun_id)
-        .values('site_id')  # Group by site_id
-        .annotate(image_count=Count('id'))  # Count images per site_id
-        .filter(image_count__gt=0)  # Only include site_ids with image count > 0
         .values_list('site_id', flat=True)  # Extract site_ids
-        .distinct()  # Ensure distinct site_ids
+        .distinct('site_id')  # Ensure distinct site_ids
+        .iterator()
     ]
     subtasks = group(site_tasks)
 

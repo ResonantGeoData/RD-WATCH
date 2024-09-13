@@ -681,12 +681,10 @@ def start_model_run_upload_processing(
             raise ValidationError('Invalid model run title')
         if not default_storage.exists(upload.zipfile.name):
             raise ValidationError('Invalid file name provided')
-
-        task = process_model_run_upload_task.delay_on_commit(upload.id)
-        upload.task_id = task.id
         upload.save()
 
-        return task.id
+    task = process_model_run_upload_task.delay(upload.id)
+    return task.id
 
 
 @router.get('/upload_status/{task_id}')

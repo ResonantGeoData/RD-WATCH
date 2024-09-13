@@ -870,11 +870,15 @@ def process_model_run_upload(model_run_upload: ModelRunUpload):
         SiteEvaluation.bulk_create_from_region_model(region_model, model_run)
 
 
-@shared_task
-def process_model_run_upload_task(upload_id: UUID):
+@shared_task(bind=True)
+def process_model_run_upload_task(task, upload_id: UUID):
     model_run_upload = ModelRunUpload.objects.get(pk=upload_id)
 
     try:
+        with transaction.atomic():
+            model_run_upload.task_id = task.request.id
+            model_run_upload.save()
+
         process_model_run_upload(model_run_upload)
     finally:
         model_run_upload.delete()

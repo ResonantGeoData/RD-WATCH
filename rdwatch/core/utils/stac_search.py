@@ -49,12 +49,15 @@ def _fmt_time(time: datetime):
 
 
 COLLECTIONS: dict[str, list[str]] = {
-    'L8': [],
+    'L8': ['landsat-c2l2-sr'],
     'S2': ['sentinel-2-c1-l2a', 'sentinel-2-l2a'],
     'PL': [],
 }
 
-STAC_URL = 'https://earth-search.aws.element84.com/v1/'
+STAC_URLs: dict[str, str] = {
+    'L8': 'https://landsatlook.usgs.gov/stac-server/',
+    'S2': 'https://earth-search.aws.element84.com/v1/',
+}
 
 
 def stac_search(
@@ -63,7 +66,7 @@ def stac_search(
     bbox: tuple[float, float, float, float],
     timebuffer: timedelta | None = None,
 ) -> Results:
-    stac_catalog = Client.open(STAC_URL)
+    stac_catalog = Client.open(STAC_URLs[source])
 
     if timebuffer is not None:
         min_time = timestamp - timebuffer

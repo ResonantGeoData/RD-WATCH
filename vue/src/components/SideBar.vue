@@ -165,7 +165,7 @@ const satelliteLoadingColor = computed(() => {
 
 <template>
   <v-card
-    class="pa-5 overflow-y-hidden"
+    class="pa-5 pb-1 overflow-y-hidden d-flex flex-column"
     style="max-height:100vh; min-height:100vh;"
   >
     <div>
@@ -416,7 +416,10 @@ const satelliteLoadingColor = computed(() => {
 }
 
 .modelRuns {
-  margin-top: 2em
+  margin-top: 1em;
+  overflow: hidden;
+  /* wrapping results in overflows being ignored */
+  flex-wrap: nowrap;
 }
 
 .sidebar-icon {

@@ -9,6 +9,7 @@ from django.utils import timezone
 
 from rdwatch.core.models import ModelRun, Performer, Region
 from rdwatch.core.tasks import collect_garbage_task
+from rdwatch.core.views.model_run import MODEL_RUN_PAGE_SIZE
 
 
 @pytest.mark.django_db(databases=['default'])
@@ -114,7 +115,7 @@ def test_model_run_rest_list(test_client: TestClient, region: Region) -> None:
                 region=new_region,
                 parameters={},
             )
-            for _ in range(20)
+            for _ in range(MODEL_RUN_PAGE_SIZE)
         ]
     )
     res = test_client.get(f'/model-runs/?region={new_region.name}')

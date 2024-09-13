@@ -1,10 +1,11 @@
-from django.urls import path
+from django.urls import include, path
 
 from . import views
 from .api import api
 
 urlpatterns = [
     path('', api.urls),
+    path('s3-upload/', include('s3_file_field.urls')),
     path('satellite-image/timestamps', views.satelliteimage_time_list),
     path('satellite-image/all-timestamps', views.all_satellite_timestamps),
     path(

@@ -60,6 +60,7 @@ apache-airflow-client = "^2.9.0"
 beautifulsoup4 = "^4.12.3"
 django-allauth = {extras = ["socialaccount"], version = "^0.63.2"}
 django-login-required-middleware = "^0.9.0"
+django-s3-file-field = {version = "^1.0.1", extras = ["s3"]}
 
 [tool.poetry.group.dev.dependencies]
 django-stubs = "^4.2.7"
@@ -68,6 +69,7 @@ tox = "^4.14.2"
 django-minio-storage = "^0.5.7"
 werkzeug = "^3.0.2"
 django-debug-toolbar = "^4.3.0"
+django-s3-file-field = {version = "^1.0.1", extras = ["minio"]}
 
 [tool.poetry.group.dev]
 optional = true

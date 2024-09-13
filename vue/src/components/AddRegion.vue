@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { computed, onMounted, ref } from "vue";
-import { state, updateRegionList, updateRegionMap } from "../store";
+import { state, updateRegionList } from "../store";
 import { ApiService, RegionUpload } from "../client/services/ApiService";
 import maplibregl from "maplibre-gl";
 
@@ -60,11 +60,10 @@ const addRegion = async () => {
         maplibregl.clearStorage();
         // We need to update the source to get information
         // This reloads the source vector-tile to color it properly after data has been changed.
-        state.filters.randomKey = `?randomKey=randomKey_${Math.random() * 1000}`; 
+        state.filters.randomKey = `?randomKey=randomKey_${Math.random() * 1000}`;
         state.editGeoJSON.cancelGeoJSONEdit();
         state.filters.addingRegionPolygon = undefined;
         await updateRegionList();
-        await updateRegionMap();
     }
   }
 };

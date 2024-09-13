@@ -4,6 +4,7 @@ from rdwatch.core.models import (
     AnimationModelRunExport,
     AnimationSiteExport,
     ModelRun,
+    ModelRunUpload,
     Performer,
     Region,
     SatelliteFetching,
@@ -150,4 +151,16 @@ class AnimationModelRunExportAdmin(admin.ModelAdmin):
         'created',
         'celery_id',
         'arguments',
+    )
+
+
+@admin.register(ModelRunUpload)
+class ModelRunUploadAdmin(admin.ModelAdmin):
+    list_display = (
+        'id',
+        'title',
+        'performer',
+        'region',
+        'zipfile',
+        'task_id',
     )

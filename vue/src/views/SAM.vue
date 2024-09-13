@@ -3,7 +3,7 @@ import { onMounted } from "vue";
 import { ApiService } from "../client";
 import SAMEditor from "../components/imageViewer/SAMEditor.vue";
 import { ref } from 'vue';
-import { updateRegionList, updateRegionMap } from "../store";
+import { updateRegionList } from "../store";
 
 
 const props = defineProps(
@@ -20,7 +20,6 @@ const embeddingURL = ref('');
 
 onMounted(async () => {
   await updateRegionList();
-  await updateRegionMap();
   const image = await ApiService.getSiteImage(parseInt(props.id, 10));
   imageURL.value = image.image;
   if (image.image_embedding) {

@@ -16,7 +16,6 @@ import { changeTime } from "../interactions/timeStepper";
 import { useRoute } from "vue-router";
 import ModeSelector from './ModeSelector.vue';
 
-const timemin = ref(Math.floor(new Date(0).valueOf() / 1000));
 
 const route = useRoute();
 watch(() => route.path, (oldPath, newPath) => {
@@ -186,7 +185,7 @@ const satelliteLoadingColor = computed(() => {
       <mode-selector />
       <v-row>
         <TimeSlider
-          :min="timemin"
+          :min="state.timeMin"
           :max="Math.floor(Date.now() / 1000)"
         />
       </v-row>

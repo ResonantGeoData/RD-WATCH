@@ -3,9 +3,10 @@ import ModelRunCard from "./ModelRunCard.vue";
 import type { ModelRunList } from "../client/models/ModelRunList";
 import type { QueryArguments } from "../client";
 import { computed, onMounted, ref, watch, withDefaults } from "vue";
-import { filteredSatelliteTimeList, queryModelRuns, state, updateCameraBoundsBasedOnModelRunList } from "../store";
+import { filteredSatelliteTimeList, queryModelRuns, state, updateCameraBoundsBasedOnModelRunList, updatePerformers, updateRegionList } from "../store";
 import type { KeyedModelRun } from '../store'
 import { hoveredInfo } from "../interactions/mouseEvents";
+import UploadModelRun from './UploadModelRun.vue';
 
 interface Props {
   filters: QueryArguments;
@@ -88,6 +89,12 @@ async function handleScroll(event: Event) {
   }
 }
 
+const refreshListings = () => {
+  updatePerformers();
+  updateRegionList();
+  queryModelRuns('firstPage', props.filters);
+};
+
 const hasSatelliteImages = computed(() => filteredSatelliteTimeList.value.length);
 
 watch([() => props.filters.region, () => props.filters.performer, () => props.filters.eval], () => {
@@ -104,7 +111,7 @@ onMounted(() => loadModelRuns('firstPage'));
 
 <template>
   <div class="d-flex flex-column overflow-hidden">
-    <div class="d-flex flex-wrap flex-grow-0 pa-1 pb-2">
+    <div class="d-flex flex-wrap flex-grow-0">
       <v-chip
         v-if="!loading && !loadingSatelliteTimestamps"
         style="font-size: 0.75em"
@@ -181,6 +188,9 @@ onMounted(() => loadModelRuns('firstPage'));
           </div>
         </div>
       </v-alert>
+    </div>
+    <div class="d-flex justify-end flex-grow-0 pb-2">
+      <upload-model-run @upload="refreshListings" />
     </div>
     <v-container
       class="overflow-y-auto flex-grow-1 flex-shrink-1"

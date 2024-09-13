@@ -134,10 +134,11 @@ function closeDialogs() {
 
 <template>
   <v-btn
+    density="compact"
     color="light-blue-lighten-4"
     @click="openUploadDialog"
   >
-    Upload Model Run
+    <v-icon>mdi-plus</v-icon> Upload Model Run
   </v-btn>
   <v-dialog
     v-model="uploadDialog"

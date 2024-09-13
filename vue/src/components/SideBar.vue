@@ -15,7 +15,6 @@ import type { Ref } from "vue";
 import { changeTime } from "../interactions/timeStepper";
 import { useRoute } from "vue-router";
 import ModeSelector from './ModeSelector.vue';
-import UploadModelRun from './UploadModelRun.vue';
 
 
 const route = useRoute();
@@ -158,12 +157,6 @@ const satelliteLoadingColor = computed(() => {
   }
   return 'black'
 })
-
-const refreshListings = () => {
-  updatePerformers();
-  updateRegionList();
-  queryModelRuns('firstPage', queryFilters.value);
-};
 </script>
 
 <template>
@@ -185,14 +178,6 @@ const refreshListings = () => {
           >
           <span class="text-caption">{{ state.appVersion }}</span>
         </div>
-      </v-row>
-      <v-row
-        dense
-        align="center"
-        justify="center"
-        class="mb-3"
-      >
-        <upload-model-run @upload="refreshListings" />
       </v-row>
       <mode-selector />
       <v-row>

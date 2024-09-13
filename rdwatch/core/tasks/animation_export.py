@@ -16,7 +16,7 @@ from pyproj import Transformer
 
 from django.contrib.auth.models import User
 from django.core.files import File
-from django.db.models import Count, Q
+from django.db.models import Q
 
 from rdwatch.celery import app
 from rdwatch.core.models import (

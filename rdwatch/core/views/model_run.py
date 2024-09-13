@@ -3,6 +3,7 @@ from typing import Any, Literal
 
 from celery.result import AsyncResult
 from ninja import Field, FilterSchema, Query, Schema
+from ninja.errors import ValidationError
 from ninja.pagination import PageNumberPagination, RouterPaginated, paginate
 from ninja.schema import validator
 from ninja.security import APIKeyHeader
@@ -12,7 +13,9 @@ from django.conf import settings
 from django.contrib.gis.db.models import GeometryField
 from django.contrib.gis.db.models.functions import Transform
 from django.contrib.postgres.aggregates import JSONBAgg
+from django.core import signing
 from django.core.cache import cache
+from django.core.files.storage import default_storage
 from django.db import transaction
 from django.db.models import (
     Avg,
@@ -38,6 +41,7 @@ from rdwatch.core.db.functions import BoundingBox, BoundingBoxGeoJSON, ExtractEp
 from rdwatch.core.models import (
     AnnotationExport,
     ModelRun,
+    ModelRunUpload,
     Performer,
     Region,
     SatelliteFetching,
@@ -50,6 +54,7 @@ from rdwatch.core.tasks import (
     cancel_generate_images_task,
     download_annotations,
     generate_site_images_for_evaluation_run,
+    process_model_run_upload_task,
 )
 from rdwatch.core.views.performer import PerformerSchema
 from rdwatch.core.views.site_observation import GenerateImagesSchema
@@ -165,6 +170,14 @@ class ModelRunListSchema(Schema):
     adjudicated: ModelRunAdjudicated | None = None
     groundTruthLink: UUID4 | None = None
     mode: Literal['batch', 'incremental'] | None = None
+
+
+class ModelRunUploadSchema(Schema):
+    title: str
+    region: str | None = None
+    performer: str | None = None
+    zipfileKey: str
+    private: bool = False
 
 
 def get_queryset():
@@ -648,3 +661,33 @@ def get_downloaded_annotations(request: HttpRequest, id: UUID4, task_id: str):
             'Content-Disposition'
         ] = f'attachment; filename="{annotation_export.name}.zip"'
         return response
+
+
+@router.post('/start_upload_processing')
+def start_model_run_upload_processing(
+    request: HttpRequest, upload_data: ModelRunUploadSchema
+):
+    zipfile_upload = signing.loads(upload_data.zipfileKey)
+
+    with transaction.atomic():
+        upload = ModelRunUpload.objects.create(
+            title=upload_data.title.strip(),
+            region=upload_data.region.strip(),
+            performer=upload_data.performer.strip(),
+            zipfile=zipfile_upload['object_key'],
+            private=upload_data.private,
+        )
+        if not upload.title:
+            raise ValidationError('Invalid model run title')
+        if not default_storage.exists(upload.zipfile.name):
+            raise ValidationError('Invalid file name provided')
+        upload.save()
+
+    task = process_model_run_upload_task.delay(upload.id)
+    return task.id
+
+
+@router.get('/upload_status/{task_id}')
+def model_run_upload_status(request: HttpRequest, task_id: str):
+    result = AsyncResult(task_id)
+    return result.status

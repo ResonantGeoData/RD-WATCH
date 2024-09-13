@@ -7,7 +7,7 @@ import RegionFilter from "./filters/RegionFilter.vue";
 import ModeFilter from "./filters/ModeFilter.vue";
 import SettingsPanel from "./SettingsPanel.vue";
 import ErrorPopup from './ErrorPopup.vue';
-import { filteredSatelliteTimeList, state } from "../store";
+import { filteredSatelliteTimeList, queryModelRuns, state, updatePerformers, updateRegionList } from "../store";
 import { computed, onMounted, ref, watch } from "vue";
 import { ApiService, Eval, Performer, QueryArguments, Region } from "../client";
 import { ModelRunList } from "../client/models/ModelRunList";
@@ -157,9 +157,6 @@ const satelliteLoadingColor = computed(() => {
   }
   return 'black'
 })
-
-
-
 </script>
 
 <template>

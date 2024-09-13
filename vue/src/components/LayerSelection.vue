@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { Ref, computed, onMounted, ref, watch } from "vue";
 import { ApiService } from "../client";
-import { state, updateRegionList, updateRegionMap } from "../store";
+import { state, updateRegionList } from "../store";
 import { useRoute } from 'vue-router';
 
 
@@ -119,7 +119,7 @@ const toggleObs = (type?: undefined | 'model' | 'groundtruth') => {
     const onVal:string[] = [];
     if (groundTruthState.value !== GroundTruthState.AllGroundTruth) {
       onVal.push('model');
-    } 
+    }
     if (groundTruthState.value === GroundTruthState.HasGroundTruth || groundTruthState.value === GroundTruthState.AllGroundTruth) {
       onVal.push('groundtruth');
     }
@@ -151,7 +151,7 @@ const toggleSite = (type?: undefined | 'model' | 'groundtruth') => {
     const onVal:string[] = [];
     if (groundTruthState.value !== GroundTruthState.AllGroundTruth) {
       onVal.push('model');
-    } 
+    }
     if (groundTruthState.value === GroundTruthState.HasGroundTruth || groundTruthState.value === GroundTruthState.AllGroundTruth) {
       onVal.push('groundtruth');
     }
@@ -216,7 +216,6 @@ const deleteRegion = async () => {
         state.filters = { ...state.filters, regions: undefined };
       }
       await updateRegionList();
-      await updateRegionMap();
     }
   }
 }
@@ -320,7 +319,7 @@ watch(() => state.filters.regions?.length, () => {
             </div>
             <v-checkbox-btn
               :model-value="state.filters.drawObservations?.includes('model')"
-              
+
               density="compact"
               :disabled="groundTruthState === GroundTruthState.AllGroundTruth"
               hide-details
@@ -577,7 +576,7 @@ watch(() => state.filters.regions?.length, () => {
                 </v-row>
               </v-list-item>
             </template>
-    
+
             <v-alert v-if="getRegionInfo && !getRegionInfo.hasGeom">
               Cannot Download the region because there is no geometry
             </v-alert>

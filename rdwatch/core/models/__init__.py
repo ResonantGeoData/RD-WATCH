@@ -5,6 +5,7 @@ from .annotation_exports import (
     AnnotationExport,
 )
 from .model_run import ModelRun
+from .model_run_upload import ModelRunUpload
 from .performer import Performer
 from .region import Region
 from .satellite_fetching import SatelliteFetching
@@ -16,6 +17,7 @@ __all__ = [
     'AnnotationExport',
     'lookups',
     'ModelRun',
+    'ModelRunUpload',
     'Performer',
     'Region',
     'SiteEvaluation',

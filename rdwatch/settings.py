@@ -61,6 +61,7 @@ class BaseConfiguration(Configuration):
             'allauth.socialaccount',
             'allauth.socialaccount.providers.gitlab',
             'rdwatch.core.apps.RDWatchConfig',
+            's3_file_field',
         ]
         if 'RDWATCH_POSTGRESQL_SCORING_URI' in os.environ:
             base_applications.append('rdwatch.scoring.apps.ScoringConfig')

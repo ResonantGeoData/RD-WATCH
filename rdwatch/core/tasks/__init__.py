@@ -6,8 +6,8 @@ import tempfile
 import zipfile
 from collections.abc import Iterable
 from datetime import datetime, timedelta
-from typing import Literal
-from uuid import uuid4
+from typing import Literal, TypeVar
+from uuid import UUID, uuid4
 
 import cv2
 import numpy as np
@@ -18,7 +18,7 @@ from celery.states import READY_STATES
 from django_celery_results.models import TaskResult
 from more_itertools import ichunked
 from PIL import Image
-from pydantic import UUID4
+from pydantic import UUID4, BaseModel, ValidationError
 from pyproj import Transformer
 from segment_anything import SamPredictor, sam_model_registry
 
@@ -36,12 +36,17 @@ from rdwatch.core.models import (
     AnimationSiteExport,
     AnnotationExport,
     ModelRun,
+    ModelRunUpload,
+    Performer,
     SatelliteFetching,
     SiteEvaluation,
     SiteImage,
     SiteObservation,
 )
 from rdwatch.core.models.lookups import Constellation
+from rdwatch.core.models.region import get_or_create_region
+from rdwatch.core.schemas.region_model import RegionModel
+from rdwatch.core.schemas.site_model import SiteModel
 from rdwatch.core.utils.images import (
     fetch_boundbox_image,
     get_max_bbox,
@@ -762,3 +767,114 @@ def download_sam_model_if_not_exists(**kwargs):
             return f'Error downloading file: {e}'
     else:
         return f'File already exists at {file_path}'
+
+
+ModelT = TypeVar('ModelT', bound=BaseModel)
+
+
+def parse_model_json(ModelClass: type[ModelT], data: str | bytes) -> ModelT | None:
+    try:
+        return ModelClass.parse_raw(data)
+    except ValidationError:
+        return None
+
+
+def process_model_run_upload(model_run_upload: ModelRunUpload):
+    # parse out the site and region models from the uploaded zipfile
+    site_models: list[SiteModel] = []
+    region_models: list[RegionModel] = []
+
+    with model_run_upload.zipfile.open('rb') as fp, zipfile.ZipFile(fp, 'r') as zipfp:
+        for filename in zipfp.namelist():
+            if not filename.endswith('.geojson'):
+                continue
+
+            contents = zipfp.read(filename)
+
+            model = parse_model_json(RegionModel, contents)
+            if model:
+                region_models.append(model)
+                continue
+
+            model = parse_model_json(SiteModel, contents)
+            if model:
+                site_models.append(model)
+                continue
+
+            logger.info('[process_model_run_upload] Cannot handle file: %s', filename)
+
+    if len(site_models) == 0:
+        raise ValueError('Did not receive any site models')
+    if len(region_models) == 0:
+        raise ValueError('Did not receive any region models')
+    if len(region_models) > 1:
+        raise ValueError('Too many regions provided in the zip file')
+
+    region_model = region_models[0]
+    region_feature = region_model.region_feature
+    region_id = region_feature.properties.region_id
+    region_originator = region_feature.properties.originator
+
+    # validate site models against the single region model
+    for model in site_models:
+        # if there is an override region ID,
+        # then set the region ID on the site model
+        if model_run_upload.region:
+            model.site_feature.properties.region_id = model_run_upload.region
+        elif model.site_feature.properties.region_id != region_id:
+            raise ValueError("Site model doesn't reference the region model")
+
+        # if there is an override performer,
+        # then set the performer on the site model
+        if model_run_upload.performer:
+            model.site_feature.properties.originator = model_run_upload.performer
+        elif model.site_feature.properties.originator != region_originator:
+            raise ValueError(
+                "Site model's originator differs from the region model\'s originator"
+            )
+
+    # apply overrides to the region model
+    if model_run_upload.region:
+        region_feature.properties.region_id = model_run_upload.region
+    if model_run_upload.performer:
+        region_feature.properties.originator = model_run_upload.performer
+        for site_summary_feature in region_model.site_summary_features:
+            site_summary_feature.properties.originator = model_run_upload.performer
+
+    with transaction.atomic():
+        # create a new ModelRun
+        region, _ = get_or_create_region(
+            region_feature.properties.region_id,
+            region_feature.parsed_geometry,
+        )
+
+        performer_shortcode = region_feature.properties.originator
+        performer, created = Performer.objects.get_or_create(
+            short_code=performer_shortcode.upper(),
+        )
+        if created:
+            performer.team_name = performer_shortcode
+            performer.save()
+
+        model_run = ModelRun.objects.create(
+            title=model_run_upload.title,
+            performer=performer,
+            region=region,
+            parameters={},
+            public=not model_run_upload.private,
+        )
+
+        for site_model in site_models:
+            SiteEvaluation.bulk_create_from_site_model(site_model, model_run)
+
+        SiteEvaluation.bulk_create_from_region_model(region_model, model_run)
+
+
+@shared_task(bind=True)
+def process_model_run_upload_task(task, upload_id: UUID):
+    ModelRunUpload.objects.filter(pk=upload_id).update(task_id=task.request.id)
+
+    try:
+        process_model_run_upload(ModelRunUpload.objects.get(pk=upload_id))
+    finally:
+        ModelRunUpload.objects.filter(pk=upload_id).delete()

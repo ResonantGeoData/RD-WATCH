@@ -877,4 +877,4 @@ def process_model_run_upload_task(task, upload_id: UUID):
     try:
         process_model_run_upload(ModelRunUpload.objects.get(pk=upload_id))
     finally:
-        model_run_upload.delete()
+        ModelRunUpload.objects.filter(pk=upload_id).delete()

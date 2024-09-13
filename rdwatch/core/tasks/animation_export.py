@@ -746,10 +746,10 @@ def create_modelrun_animation_export(
     site_tasks = [
         create_site_animation_export.s(site_id, settings, userId)
         for site_id in SiteImage.objects.filter(site__configuration_id=modelrun_id)
-        .values_list('site_id', flat=True)
+        .values_list('site_id', flat=True)  # Extract site_ids
+        .distinct('site_id')  # Ensure distinct site_ids
         .iterator()
     ]
-
     subtasks = group(site_tasks)
 
     result: GroupResult = subtasks.apply_async()

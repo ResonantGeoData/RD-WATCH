@@ -5,6 +5,7 @@ from ninja.security import django_auth
 from rdwatch import __version__ as rdwatch_version
 
 from .views import site
+from .views.animation import router as animation_router
 from .views.model_run import router as model_run_router
 from .views.performer import router as performer_router
 from .views.region import router as region_router
@@ -25,6 +26,7 @@ api.add_router('/regions/', region_router)
 api.add_router('/status/', server_status_router)
 api.add_router('/sites/', site.router)
 api.add_router('/satellite-fetching/', satellite_fetching_router)
+api.add_router('/animation/', animation_router)
 
 
 # useful for getting information back about validation errors

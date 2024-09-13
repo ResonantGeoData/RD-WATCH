@@ -44,7 +44,7 @@ const download = debounce(
   () => {
     emit('download', {
       constellation: selectedConstellation.value,
-      worldviewSource: selectedWorldviewSource.value,
+      worldviewSource: selectedConstellation.value.includes('WV') ? selectedWorldviewSource.value : undefined,
       dayRange: dayRange.value,
       noData: noData.value,
       overrideDates: customDateRange.value ? overrideDates.value : undefined,

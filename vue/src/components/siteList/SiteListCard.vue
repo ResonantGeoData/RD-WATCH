@@ -9,6 +9,7 @@ import { Ref, computed, ref } from "vue";
 import { hoveredInfo } from "../../interactions/mouseEvents";
 import ImageBrowser from './ImageBrowser.vue';
 import ImageToggle from './ImageToggle.vue';
+import AnimationDownloadDialog from "../animation/AnimationDownloadDialog.vue";
 
 export interface SiteDisplay {
   number: number;
@@ -101,6 +102,8 @@ const selectingSite = async (e: boolean) => {
     close();
   }
 };
+
+const animationDialog = ref(false);
 
 </script>
 
@@ -261,13 +264,36 @@ const selectingSite = async (e: boolean) => {
           </span>
         </v-tooltip>
         <image-toggle
-          v-else-if="!localSite.filename && site.selectedSite"
+          v-if="!localSite.filename && site.selectedSite"
           :site-id="localSite.id"
           :site-name="localSite.name"
           :has-images="hasImages"
           :images-active="imagesActive"
           @site-toggled="hasImages && toggleSatelliteImages(site.selectedSite)"
         />
+        <v-tooltip
+          v-if="!localSite.filename && site.selectedSite && hasImages"
+          open-delay="0"
+          bottom
+        >
+          <template #activator="{ props }">
+            <v-btn
+              variant="tonal"
+              density="compact"
+              class="pa-0 ma-1 site-icon"
+              size="small"
+              v-bind="props"
+              @click.stop="animationDialog = true"
+            >
+              <v-icon size="small">
+                mdi-movie-roll
+              </v-icon>
+            </v-btn>
+          </template>
+          <span>
+            Download Image Animation
+          </span>
+        </v-tooltip>
         <v-spacer />
         <v-tooltip 
           v-if="!ApiService.getApiPrefix().includes('scoring')"
@@ -364,6 +390,16 @@ const selectingSite = async (e: boolean) => {
         :site-overview="site.selectedSite"
       />
     </v-card-text>
+    <v-dialog
+      v-model="animationDialog"
+      width="900"
+    >
+      <animation-download-dialog
+        :id="site.id"
+        type="site"
+        @close="animationDialog = false"
+      />
+    </v-dialog>
   </v-card>
 </template>
 

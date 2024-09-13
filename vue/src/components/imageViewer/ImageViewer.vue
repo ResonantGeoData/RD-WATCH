@@ -105,7 +105,7 @@ const hasGroundTruth = ref(false);
 const groundTruth: Ref<EvaluationImageResults["groundTruth"] | null> =
   ref(null);
 const drawGroundTruth = ref(false);
-const rescaleImage = ref(false);
+const rescaleImage = ref(true);
 const rescalingBBox = ref(1);
 const editingGeoJSON = ref(false);
 const SAMViewer: Ref<number | null> = ref(null);
@@ -433,7 +433,7 @@ const clearStorage = async () => {
             density="compact"
             class="pa-0 ma-1 sidebar-icon"
             :color="rescaleImage ? 'blue' : ''"
-            :disabled="!mapImagesOn || combinedImages.length === 0"
+            :disabled="combinedImages.length === 0"
             @click="rescaleImage = !rescaleImage"
           >
             <v-icon>mdi-resize</v-icon>
@@ -442,7 +442,7 @@ const clearStorage = async () => {
         <span> Rescale Images</span>
       </v-tooltip>
       <image-gif-creation
-        :disabled="!mapImagesOn || combinedImages.length === 0"
+        :disabled="combinedImages.length === 0"
         :background="background"
         :filtered-images="filteredImages"
         :fullscreen="fullscreen"

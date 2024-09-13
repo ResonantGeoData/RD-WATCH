@@ -32,6 +32,8 @@ from django.utils import timezone
 
 from rdwatch.celery import app
 from rdwatch.core.models import (
+    AnimationModelRunExport,
+    AnimationSiteExport,
     AnnotationExport,
     ModelRun,
     SatelliteFetching,
@@ -211,6 +213,7 @@ def get_siteobservations_images(
                 'total': site_obs_count,
                 'mode': 'Site Observations',
                 'siteEvalId': site_eval_id,
+                'source': baseConstellation,
             },
         )
         if observation.timestamp is not None:
@@ -331,6 +334,7 @@ def get_siteobservations_images(
             'current': 0,
             'total': 0,
             'mode': 'Searching All Images',
+            'source': baseConstellation,
             'siteEvalId': site_eval_id,
         },
     )
@@ -348,6 +352,7 @@ def get_siteobservations_images(
                 'current': count,
                 'total': num_of_captures,
                 'mode': 'No Captures',
+                'source': baseConstellation,
                 'siteEvalId': site_eval_id,
             },
         )
@@ -361,6 +366,7 @@ def get_siteobservations_images(
                 'current': count,
                 'total': num_of_captures,
                 'mode': 'Image Captures',
+                'source': baseConstellation,
                 'siteEvalId': site_eval_id,
             },
         )
@@ -483,6 +489,14 @@ def collect_garbage_task() -> None:
     # Delete all S3 Export Files that are over an hour old
     AnnotationExport.objects.filter(
         created__lte=timezone.now() - timedelta(hours=1)
+    ).delete()
+
+    AnimationSiteExport.objects.filter(
+        created__lte=timezone.now() - timedelta(hours=6)
+    ).delete()
+
+    AnimationModelRunExport.objects.filter(
+        created__lte=timezone.now() - timedelta(hours=48)
     ).delete()
 
     # Delete all SatelliteFetching tasks that are over an day old AND

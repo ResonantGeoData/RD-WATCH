@@ -4,6 +4,7 @@ import { ApiService, ModelRun } from "../client";
 import { Ref, computed, onBeforeMount, onBeforeUnmount, ref, watch, withDefaults } from "vue";
 import { timeRangeFormat } from "../utils";
 import ImagesDownloadDialog from "./ImagesDownloadDialog.vue";
+import AnimationDownloadDialog from "./animation/AnimationDownloadDialog.vue";
 import { DownloadSettings } from "../client/services/ApiService";
 import { useRoute } from "vue-router";
 import { debounce } from 'lodash';
@@ -134,6 +135,8 @@ const getModeIcon = (mode: ModelRun['mode']) => (mode ? {
   incremental: 'mdi-trending-up',
 }[mode] : null);
 
+
+const animationDialog = ref(false);
 </script>
 
 <template>
@@ -362,6 +365,26 @@ const getModeIcon = (mode: ModelRun['mode']) => (mode ? {
           </template>
           <span> Download Satellite Images</span>
         </v-tooltip>
+        <v-tooltip>
+          <template #activator="{ props }">
+            <v-btn
+              v-bind="props"
+              variant="tonal"
+              density="compact"
+              class="pa-0 ma-1 modelrun-icon"
+              :disabled="downloading > 0"
+              color="primary"
+              @click.stop="animationDialog = true"
+            >
+              <v-icon
+                v-if="!downloadingModelRun"
+              >
+                mdi-movie-roll
+              </v-icon>
+            </v-btn>
+          </template>
+          <span> Download Image Animation</span>
+        </v-tooltip>
       </v-row>
       <v-row dense />
       <v-row v-if="downloading > 0">
@@ -419,6 +442,16 @@ const getModeIcon = (mode: ModelRun['mode']) => (mode ? {
           </v-row>
         </v-card-actions>
       </v-card>
+    </v-dialog>
+    <v-dialog
+      v-model="animationDialog"
+      width="900"
+    >
+      <animation-download-dialog
+        :id="modelRun.id"
+        type="modelRun"
+        @close="animationDialog = false"
+      />
     </v-dialog>
   </v-card>
 </template>

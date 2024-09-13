@@ -13,7 +13,26 @@ const timeRangeFormat = (range: SiteOverview['timerange']) => {
     return '--'
   }
   
+  async function downloadPresignedFile(url: string, filename: string) {
+    try {
+        const response = await fetch(url);
+        if (!response.ok) {
+            throw new Error('Response error');
+        }
+        const blob = await response.blob();
+        const a = document.createElement('a');
+        a.href = window.URL.createObjectURL(blob);
+        a.download = filename;
+        document.body.appendChild(a);
+        a.click();
+        a.remove();
+        window.URL.revokeObjectURL(a.href);
+    } catch (error) {
+        console.error('Error downloading file:', error);
+    }
+}
 
 export {
     timeRangeFormat,
+    downloadPresignedFile,
 }

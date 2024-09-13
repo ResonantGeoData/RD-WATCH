@@ -120,6 +120,33 @@ export interface DownloadSettings {
   pointArea?: number;
 }
 
+export interface DownloadAnimationSettings {
+  output_format: 'mp4' | 'gif';
+  fps: number;
+  point_radius: number;
+  sources: Constellation[];
+  labels: ('geom' | 'date' | 'source' | 'obs' | 'obs_label')[];
+  cloudCover: number;
+  noData: number;
+  include: ('obs'|'nonobs')[];
+  rescale: boolean;
+  rescale_border: number;
+}
+
+export interface DownloadAnimationState {
+  state: string;
+  status: string;
+  error?: string;
+  info: {
+    current?: number;
+    total?: number;
+    mode?: string;
+    siteEvalId?: string;
+    modelRunId?: string;
+
+  }
+}
+
 export type CeleryStates = 'FAILURE' | 'PENDING' | 'SUCCESS' | 'RETRY' | 'REVOKED' | 'STARTED';
 
 export interface SiteDetails {
@@ -185,6 +212,14 @@ export interface RegionUpload {
     type: 'FeatureCollection',
   features: SMARTRegionFeature[];
 
+}
+
+export interface DownloadedAnimation {
+  created: string;
+  completed: boolean;
+  arguments: DownloadAnimationSettings;
+  taskId: string;
+  state?: DownloadAnimationState;
 }
 
 type ApiPrefix = '/api' | '/api/scoring';
@@ -714,6 +749,79 @@ export class ApiService {
       method: "DELETE",
       url: `${this.getApiPrefix()}/regions/${regionId}/`,
     });
+  }
+
+  public static generateSiteAnimation(
+    siteEvaluationid: string,
+    data: DownloadAnimationSettings
+  ): CancelablePromise<string> {
+    return __request(OpenAPI, {
+      method: "POST",
+      url: `${this.getApiPrefix()}/animation/site/{id}/`,
+      path: {
+        id: siteEvaluationid,
+      },
+      body: {
+        ...data
+      }
+    });
+  }
+
+  public static generateModelRunAnimation(
+    modelRunId: string,
+    data: DownloadAnimationSettings
+  ): CancelablePromise<string> {
+    return __request(OpenAPI, {
+      method: "POST",
+      url: `${this.getApiPrefix()}/animation/modelrun/{id}/`,
+      path: {
+        id: modelRunId,
+      },
+      body: {
+        ...data
+      }
+    });
+  }
+
+  public static getSiteAnimationDownloadStatus(task_id: string): CancelablePromise<DownloadAnimationState> {
+    return __request(OpenAPI, {
+      method: 'GET',
+      url: `${this.getApiPrefix()}/animation/${task_id}/status/`,
+    })
+  }
+  public static getAnimationDownloadString(task_id: string, type: 'site' | 'modelRun'): CancelablePromise<{url: string, filename: string}> {
+    return __request(OpenAPI, {
+      method: 'GET',
+      url: `${this.getApiPrefix()}/animation/download/${type.toLowerCase()}/${task_id}/`,
+    })
+  }
+
+
+  public static getAnimationSiteDownloaded(siteId: string): CancelablePromise<DownloadedAnimation[]> {
+    return __request(OpenAPI, {
+      method: 'GET',
+      url: `${this.getApiPrefix()}/animation/site/${siteId}/downloads/`,
+    })
+  }
+  public static getAnimationModelRunDownloaded(modelRun: string): CancelablePromise<DownloadedAnimation[]> {
+    return __request(OpenAPI, {
+      method: 'GET',
+      url: `${this.getApiPrefix()}/animation/modelrun/${modelRun}/downloads/`,
+    })
+  }
+
+  public static deleteAnimationSiteDownload(taskId: string): CancelablePromise<{error?: string, success?: string}> {
+    return __request(OpenAPI, {
+      method: 'DELETE',
+      url: `${this.getApiPrefix()}/animation/site/${taskId}/`,
+    })
+  }
+
+  public static deleteAnimationModelRunDownload(taskId: string): CancelablePromise<{error?: string, success?: string}> {
+    return __request(OpenAPI, {
+      method: 'DELETE',
+      url: `${this.getApiPrefix()}/animation/modelrun/${taskId}/`,
+    })
   }
 
 }

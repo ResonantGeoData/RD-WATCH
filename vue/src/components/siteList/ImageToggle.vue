@@ -1,7 +1,6 @@
 <script setup lang="ts">
 import { ApiService } from "../../client/services/ApiService";
 import { state } from "../../store";
-
 const openNewTab = (id: string) => {
   const name = `#${ApiService.getApiPrefix().replace('api/','').replace('/api','')}/imageViewer/${id}`
   window.open(name, '_blank');

@@ -872,13 +872,9 @@ def process_model_run_upload(model_run_upload: ModelRunUpload):
 
 @shared_task(bind=True)
 def process_model_run_upload_task(task, upload_id: UUID):
-    model_run_upload = ModelRunUpload.objects.get(pk=upload_id)
+    ModelRunUpload.objects.filter(pk=upload_id).update(task_id=task.request.id)
 
     try:
-        with transaction.atomic():
-            model_run_upload.task_id = task.request.id
-            model_run_upload.save()
-
-        process_model_run_upload(model_run_upload)
+        process_model_run_upload(ModelRunUpload.objects.get(pk=upload_id))
     finally:
         model_run_upload.delete()

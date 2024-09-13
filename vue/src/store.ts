@@ -1,10 +1,11 @@
 import { computed, reactive } from "vue";
 
-import { ApiService, ModelRun, Performer, Region } from "./client";
+import { ApiService, CancelError, CancelablePromise, ModelRun, ModelRunList, Performer, QueryArguments, Region } from "./client";
 import { EditGeoJSONType } from "./interactions/editGeoJSON";
 import { BaseBBox, EvaluationImage } from "./types";
 import { LngLatBounds } from "maplibre-gl";
 import { RegionDetail } from "./client/models/Region";
+import { emptyModelRunList } from "./client/models/ModelRunList";
 
 export interface MapFilters {
   configuration_id?: string[];
@@ -178,7 +179,8 @@ export const state = reactive<{
   loopingInterval: NodeJS.Timeout | null,
   loopingId: string | null,
   modelRuns: KeyedModelRun[],
-  openedModelRuns: Set<KeyedModelRun["key"]>
+  totalNumModelRuns: number;
+  openedModelRuns: Set<KeyedModelRun["key"]>;
   gifSettings: { fps: number, quality: number, pointSize: number},
   performerMapping: Record<number, Performer>,
   proposals: {
@@ -203,13 +205,20 @@ export const state = reactive<{
   // Region map is used to index names and owners with ids
   regionMap: RegionMapType;
   regionList: RegionDetail[];
-  // Downloading Check - used to indicate to the modelRunList to check for downloading images
-  downloadingCheck: number;
+  // Query states - stores states for network queries
+  queryStates: {
+    loadModelRuns: {
+      request: CancelablePromise<ModelRunList> | undefined;
+      inflightQueries: number;
+      nextPage: number;
+      activeFilters: QueryArguments;
+    };
+  };
 }>({
   appVersion: '',
   errorText: '',
   timestamp: Math.floor(Date.now() / 1000),
-  timeMin: new Date(0).valueOf(),
+  timeMin: Math.floor(new Date(0).valueOf() / 1000),
   settings: {
     autoZoom: false,
   },
@@ -254,6 +263,7 @@ export const state = reactive<{
   loopingInterval: null,
   loopingId: null,
   modelRuns: [],
+  totalNumModelRuns: 0,
   openedModelRuns: new Set<KeyedModelRun["key"]>(),
   gifSettings: { fps: 1, quality: 1, pointSize: 1},
   performerMapping: {},
@@ -280,7 +290,14 @@ export const state = reactive<{
   groundTruthLinks: {},
   regionMap: {},
   regionList: [],
-  downloadingCheck: 0,
+  queryStates: {
+    loadModelRuns: {
+      inflightQueries: 0,
+      request: undefined,
+      nextPage: 1,
+      activeFilters: {},
+    },
+  },
 });
 
 export const filteredSatelliteTimeList = computed(() => {
@@ -442,7 +459,7 @@ function updateCameraBoundsBasedOnModelRunList(filtered = true, force = false) {
     );
   }
   if (
-    !force && 
+    !force &&
     !state.settings.autoZoom &&
     state.filters.regions &&
     state.filters.regions?.length > 0
@@ -490,7 +507,7 @@ const updateRegionList = async () => {
     }
     // If both have owners or both do not, sort by name
     return a.name.localeCompare(b.name);
-  });  
+  });
   state.regionList = regionResults;
 }
 
@@ -502,11 +519,180 @@ const updateRegionMap = async () => {
   state.regionMap = tempRegionMap;
 }
 
+/**
+ * Loads a page of model runs.
+ *
+ * Next page information is only saved when the request completes.
+ * Therefore, request nextPage while firstPage is inflight will cancel
+ * the firstPage request.
+ *
+ * @param type "firstPage" or "nextPage"
+ * @param filters query filters
+ * @param compact
+ * @returns
+ */
+async function queryModelRuns(type: 'firstPage' | 'nextPage', filters: QueryArguments, compact  = false): Promise<ModelRunList> {
+  const queryState = state.queryStates.loadModelRuns;
+
+  queryState.request?.cancel();
+  queryState.request = undefined;
+
+  if (type !== 'firstPage' && state.modelRuns.length === state.totalNumModelRuns) {
+    return emptyModelRunList();
+  }
+
+  let page = 0;
+  if (type === 'firstPage') {
+    page = 1;
+  } else if (type === 'nextPage') {
+    page = queryState.nextPage;
+  } else {
+    throw new Error('Invalid call to loadModelRuns');
+  }
+
+  const { mode, performer } = filters; // unwrap performer and mode arrays
+  queryState.activeFilters = {
+    ...filters,
+    mode,
+    performer,
+    proposal: compact ? 'PROPOSAL' : undefined, // if compact we are doing proposal adjudication
+  };
+  queryState.request = ApiService.getModelRuns({
+    ...queryState.activeFilters,
+    page,
+  });
+  try {
+    queryState.inflightQueries++;
+    const modelRunList = await queryState.request;
+    queryState.request = undefined;
+    state.totalNumModelRuns = modelRunList.count;
+    queryState.nextPage = page + 1;
+
+    // sort list to show ground truth near the top
+    const modelRunResults = modelRunList.items;
+    const keyedModelRunResults = modelRunResults.map((val) => {
+      return {
+        ...val,
+        key: `${val.id}`,
+      };
+    });
+
+    // If a bounding box was provided for this model run list, zoom the camera to it.
+    if (modelRunList.bbox) {
+      const bounds = new LngLatBounds();
+      modelRunList.bbox.coordinates
+        .flat()
+        .forEach((c) => bounds.extend(c as [number, number]));
+      const bbox = {
+        xmin: bounds.getWest(),
+        ymin: bounds.getSouth(),
+        xmax: bounds.getEast(),
+        ymax: bounds.getNorth(),
+      };
+      state.bbox = bbox;
+    } else if (!state.filters.regions?.length) {
+      const bbox = {
+        xmin: -180,
+        ymin: -90,
+        xmax: 180,
+        ymax: 90,
+      };
+      state.bbox = bbox;
+    }
+
+    // If we're on page 1, we *might* have switched to a different filter/grouping in the UI,
+    // meaning we would need to clear out any existing results.
+    // To account for this, just set the array to the results directly instead of concatenating.
+    if (page === 1) {
+      state.modelRuns = keyedModelRunResults;
+    } else {
+      state.modelRuns = state.modelRuns.concat(keyedModelRunResults);
+    }
+
+    if (modelRunList['timerange'] !== null) {
+      state.timeMin = modelRunList['timerange'].min;
+    }
+
+    return modelRunList;
+  } catch (e) {
+    if (e instanceof CancelError) {
+      console.log('Request has been cancelled');
+    } else {
+      throw e;
+    }
+  } finally {
+    queryState.inflightQueries--;
+  }
+
+  return emptyModelRunList();
+}
+
+/**
+ * Refreshes the downloading state for the queried model runs.
+ *
+ * This will paginate the model run listing endpoint until all loaded
+ * pages are satisfied.
+ *
+ * - Only operates on the loaded pages at the time of invocation.
+ * - If an existing request is inflight, this will chain onto the
+ *   existing request (a CancelablePromise).
+ * - If cancelled, the entire chain is cancelled.
+ */
+const refreshModelRunDownloadingStatuses = async () => {
+  const queryState = state.queryStates.loadModelRuns;
+  const loadedPages = queryState.nextPage - 1;
+  const activeFilters = queryState.activeFilters;
+
+  let existingRequest = queryState.request as CancelablePromise<void> | undefined;
+
+  // chain cancelable requests
+  for (let page = 0; page < loadedPages; page++) {
+    const prevReq = existingRequest;
+    existingRequest = new CancelablePromise(async (resolve, reject, onCancel) => {
+      let apiCallRequest: CancelablePromise<ModelRunList> | undefined;
+
+      onCancel(() => {
+        prevReq?.cancel();
+        apiCallRequest?.cancel();
+      });
+
+      try {
+        await prevReq;
+
+        apiCallRequest = ApiService.getModelRuns({
+          ...activeFilters,
+          page,
+        });
+        const modelRunList = await apiCallRequest;
+
+        const modelRuns = modelRunList.items;
+        // NOTE this is inefficient if modelRuns.length is large and/or
+        // if the page size is large. Practically, this shouldn't be an issue.
+        // A better solution here is to use a lookup table (id -> modelRun).
+        for (let i = 0; i < state.modelRuns.length; i += 1) {
+          const currentModelRun = state.modelRuns[i];
+          const found = modelRuns.find((item) => item.id === currentModelRun.id);
+          if (found) {
+            if (found.downloading) {
+              state.modelRuns[i].downloading = found.downloading;
+            }
+          }
+        }
+      } catch (err) {
+        if (!(err instanceof CancelError)) reject(err);
+      }
+
+      resolve();
+    });
+  }
+};
 
 export {
   loadAndToggleSatelliteImages,
   updateCameraBoundsBasedOnModelRunList,
   updateRegionList,
   updateRegionMap,
+  queryModelRuns,
+  refreshModelRunDownloadingStatuses,
 }
 

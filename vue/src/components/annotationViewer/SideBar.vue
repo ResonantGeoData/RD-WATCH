@@ -11,7 +11,6 @@ import type { Ref } from "vue";
 import { changeTime } from "../../interactions/timeStepper";
 import ErrorPopup from "../ErrorPopup.vue";
 import ModeSelector from "../ModeSelector.vue";
-const timemin = ref(Math.floor(new Date(0).valueOf() / 1000));
 
 const queryFilters = computed<QueryArguments>(() => ({
   performer: selectedPerformer.value.map((item) => item.short_code),
@@ -150,7 +149,7 @@ const satelliteLoadingColor = computed(() => {
       <mode-selector />
       <v-row>
         <TimeSlider
-          :min="timemin || 0"
+          :min="state.timeMin"
           :max="Math.floor(Date.now() / 1000)"
         />
       </v-row>
@@ -263,14 +262,6 @@ const satelliteLoadingColor = computed(() => {
         class="flex-grow-1"
         compact
         @modelrunlist="currentModelRunList = $event"
-        @update:timerange="
-          (timerange) => {
-            if (timerange !== null) {
-              timemin = timerange.min;
-              state.timeMin = timemin;
-            }
-          }
-        "
       />
     </v-row>
     <v-dialog

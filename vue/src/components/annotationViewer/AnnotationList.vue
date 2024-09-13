@@ -5,7 +5,7 @@ import {
   DownloadSettings,
   SiteList,
 } from "../../client/services/ApiService";
-import { state, updateCameraBoundsBasedOnModelRunList } from "../../store";
+import { refreshModelRunDownloadingStatuses, state, updateCameraBoundsBasedOnModelRunList } from "../../store";
 import { clickedInfo, hoveredInfo } from "../../interactions/mouseEvents";
 import ImagesDownloadDialog from "../ImagesDownloadDialog.vue";
 import SiteListCard from "../siteList/SiteListCard.vue";
@@ -128,7 +128,6 @@ const getSiteProposals = async () => {
       if (selected) {
         selectSite(selected);
       }
-      
     }
   }
 };
@@ -238,8 +237,8 @@ const startDownload = async (data: DownloadSettings) => {
   const id = imageDownloadingId.value;
   imageDownloadDialog.value = false;
   if (id) {
-  await ApiService.getObservationImages(id, data);
-  state.downloadingCheck += 1;
+    await ApiService.getObservationImages(id, data);
+    refreshModelRunDownloadingStatuses();
     // Now we get the results to see if the service is running
     setTimeout(() => getSiteProposals(), 1000);
   }

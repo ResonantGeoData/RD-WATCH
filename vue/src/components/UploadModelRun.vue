@@ -188,7 +188,10 @@ function closeDialogs() {
       </v-card-text>
       <v-card-actions>
         <v-spacer />
-        <v-btn :disabled="uploadLoading" @click="uploadDialog = false">
+        <v-btn
+          :disabled="uploadLoading"
+          @click="uploadDialog = false"
+        >
           Cancel
         </v-btn>
         <v-btn
@@ -203,7 +206,11 @@ function closeDialogs() {
       </v-card-actions>
     </v-card>
   </v-dialog>
-  <v-dialog v-model="successDialog" persistent width="25%">
+  <v-dialog
+    v-model="successDialog"
+    persistent
+    width="25%"
+  >
     <v-card>
       <v-card-title>Upload Successful</v-card-title>
       <v-card-text>
@@ -211,7 +218,9 @@ function closeDialogs() {
       </v-card-text>
       <v-card-actions>
         <v-spacer />
-        <v-btn @click="closeDialogs">OK</v-btn>
+        <v-btn @click="closeDialogs">
+          OK
+        </v-btn>
       </v-card-actions>
     </v-card>
   </v-dialog>

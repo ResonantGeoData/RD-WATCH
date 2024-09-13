@@ -31,7 +31,6 @@ const selectedModelRun = computed(() => {
 
 onMounted(async () => {
   await updateRegionList();
-  await updateRegionMap();
   if (props.region) {
     state.filters = {
       ...state.filters,

@@ -1,53 +1,45 @@
-
 import logging
 import os
 import tempfile
 import time
 import zipfile
 from datetime import datetime
-from typing import Literal
 
 import cv2
 import numpy as np
 from celery import group, shared_task, states
 from celery.result import GroupResult
-from PIL import Image, ImageDraw, ImageFont
-from pydantic import UUID4, BaseModel, Field
+from PIL import Image, ImageDraw
+from pydantic import UUID4
 from pyproj import Transformer
-from django.contrib.gis.geos import Polygon, Point
 
 from django.contrib.auth.models import User
+from django.contrib.gis.geos import Point, Polygon
 from django.core.files import File
 from django.db.models import Q
 
 from rdwatch.celery import app
+from rdwatch.core.tasks.animation_export import (
+    GenerateAnimationSchema,
+    draw_text_in_box,
+    label_mapping,
+    paste_image_with_bbox,
+    rescale_bbox,
+    to_pixel_coords,
+)
 from rdwatch.scoring.models import (
-    Site,
-    SiteImage,
     AnimationModelRunExport,
     AnimationSiteExport,
-    AnnotationProposalSite,
     AnnotationProposalObservation,
+    AnnotationProposalSite,
     EvaluationRun,
     Observation,
-)
-from rdwatch.core.models import (
-    AnimationModelRunExport,
-    AnimationSiteExport,
-    ModelRun,
-    SiteEvaluation,
+    Site,
     SiteImage,
 )
 
-from rdwatch.core.tasks.animation_export import (
-    label_mapping,
-    rescale_bbox,
-    paste_image_with_bbox,
-    draw_text_in_box,
-    to_pixel_coords,
-    GenerateAnimationSchema,
-)
 logger = logging.getLogger(__name__)
+
 
 @shared_task
 def create_animation(
@@ -96,9 +88,13 @@ def create_animation(
     # Apply include filter for observation
     if filters.get('include'):
         if 'obs' in filters['include'] and len(filters['include']) == 1:
-            query &= Q(observation__isnull=False) # TODO Check if it needs to change _isempty or something like that
+            query &= Q(
+                observation__isnull=False
+            )  # TODO Check if it needs to change _isempty or something like that
         if 'nonobs' in filters['include'] and len(filters['include']) == 1:
-            query &= Q(observation__isnull=True)  # TODO check if it needs to change _isempty or something like taht
+            query &= Q(
+                observation__isnull=True
+            )  # TODO check if it needs to change _isempty or something like taht
 
     images = SiteImage.objects.filter(query).order_by('timestamp')
 
@@ -128,7 +124,7 @@ def create_animation(
     # using the max_image_bbox we apply the rescale_border
     if rescale:
         # Need the geometry base site evaluation bbox plus 20% around it for rescaling
-        max_image_bbox =  Polygon.from_ewkt(site_evaluation.geometry).extent
+        max_image_bbox = Polygon.from_ewkt(site_evaluation.geometry).extent
         max_image_bbox = rescale_bbox(max_image_bbox, 1.2)
 
         # Rescale the large box larger based on the rescale border
@@ -242,14 +238,18 @@ def create_animation(
         try:
             observation = Observation.objects.get(pk=image_record.observation)
         except Observation.DoesNotExist:
-            observation = AnnotationProposalObservation.objects.get(pk=image_record.observation)
+            observation = AnnotationProposalObservation.objects.get(
+                pk=image_record.observation
+            )
         if observation:
             polygon = Polygon.from_ewkt(observation.geometry)
             label = observation.phase
             label_mapped = label_mapping.get(label, {})
         elif not polygon:
             polygon = Polygon.from_ewkt(site_evaluation.geometry)
-            label_mapped = label_mapping.get(site_evaluation.status_annotated.replace(' ', '_'), {})
+            label_mapped = label_mapping.get(
+                site_evaluation.status_annotated.replace(' ', '_'), {}
+            )
         if polygon and 'geom' in labels:
             if polygon.geom_type == 'Polygon':
                 base_coords = polygon.coords[0]
@@ -270,7 +270,8 @@ def create_animation(
                 color = label_mapped.get('color', (256, 256, 256))
                 draw.polygon(pixel_coords, outline=color)
         if not polygon and observation:
-            # Probably an error because I don't think we support observation points in the scoring DB
+            # Probably an error because I don't think we
+            # support observation points in the scoring DB
             point = observation.point
         if not point:
             point = Point.from_ewkt(site_evaluation.point_geometry)
@@ -366,7 +367,10 @@ def create_animation(
 
     # Save frames as an animated GIF
     evaluation_run = EvaluationRun.objects.get(pk=site_evaluation.evaluation_run_uuid)
-    base_str = f'Eval_{evaluation_run.evaluation_number}_{evaluation_run.evaluation_run_number}_{evaluation_run.performer}'
+    base_str = f'Eval_\
+        {evaluation_run.evaluation_number}\
+            _{evaluation_run.evaluation_run_number}\
+                _{evaluation_run.performer}'
     prefix = f'{base_str}\
         _{str(site_evaluation.site_id)}'
     if frames:

@@ -1,5 +1,5 @@
 import logging
-from typing import Literal
+from typing import Any, Literal
 
 from celery.result import AsyncResult
 from ninja import Query, Router, Schema
@@ -50,6 +50,7 @@ class GenerateImagesSchema(Schema):
         if 'WV' in values['constellation'] and values['worldviewSource'] is None:
             raise ValueError('worldviewSource is required for WV constellation')
         return values
+
 
 @router.get('/{evaluation_id}/', response={200: SiteObservationsListSchema})
 def site_observations(request: HttpRequest, evaluation_id: UUID4):

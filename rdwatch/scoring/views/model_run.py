@@ -570,8 +570,7 @@ def generate_images(
         scalVal,
         params.bboxScale,
         params.pointArea,
-        params.worldviewSource
-
+        params.worldviewSource,
     )
     return 202, True
 

@@ -9,7 +9,7 @@ from celery.result import AsyncResult
 from PIL import Image
 from pydantic import UUID4
 
-from django.contrib.gis.geos import Polygon, Point
+from django.contrib.gis.geos import Point, Polygon
 from django.core.files import File
 from django.db import transaction
 
@@ -17,12 +17,12 @@ from rdwatch.celery import app
 from rdwatch.core.tasks import (
     BaseTime,
     BboxScaleDefault,
-    pointAreaDefault,
     ToMeters,
-    get_worldview_processed_visual_bbox,
     get_worldview_nitf_bbox,
+    get_worldview_processed_visual_bbox,
     is_inside_range,
     overrideImageSize,
+    pointAreaDefault,
 )
 from rdwatch.core.utils.images import (
     fetch_boundbox_image,
@@ -110,13 +110,15 @@ def get_siteobservations_images(
         # check if geometry is null and use point
         if not geometry:
             point = Point.from_ewkt(base_site_eval.point_geometry)
-            geometry = Polygon((
-                (point.x, point.y),
-                (point.x, point.y),
-                (point.x, point.y),
-                (point.x, point.y),
-                (point.x, point.y),
-            )).ewkt
+            geometry = Polygon(
+                (
+                    (point.x, point.y),
+                    (point.x, point.y),
+                    (point.x, point.y),
+                    (point.x, point.y),
+                    (point.x, point.y),
+                )
+            ).ewkt
         site_observations = Observation.objects.filter(
             site_uuid=site_eval_id
         )  # need a full list for min/max times
@@ -150,7 +152,7 @@ def get_siteobservations_images(
     else:
         max_time = datetime.combine(max_time, datetime.min.time())
 
-    bbox: tuple[float, float, float, float] = Polygon.from_ewkt(geometry).extent
+    tempbox: tuple[float, float, float, float] = Polygon.from_ewkt(geometry).extent
     # check if data is a point instead of geometry
     if (
         tempbox[2] == tempbox[0] and tempbox[3] == tempbox[1]
@@ -541,5 +543,5 @@ def generate_site_images_for_evaluation_run(
             scale,
             bboxScale,
             pointArea,
-            worldview_source
+            worldview_source,
         )

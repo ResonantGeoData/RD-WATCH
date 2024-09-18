@@ -34,7 +34,8 @@ from .annotation_proposal_set import AnnotationProposalSet  # isort:skip
 from .annotation_proposal_site import AnnotationProposalSite  # isort:skip
 from .annotation_proposal_site_log import AnnotationProposalSiteLog  # isort:skip
 from .annotation_proposal_observation import AnnotationProposalObservation  # isort:skip
-from .taskexport import AnimationSiteExport, AnimationModelRunExport # isort:skip
+from .taskexport import AnimationSiteExport, AnimationModelRunExport  # isort:skip
+
 __all__ = [
     'Region',
     'AnimationSiteExport',

@@ -851,11 +851,11 @@ def process_model_run_upload(model_run_upload: ModelRunUpload):
     # validate the site models
     for model in site_models:
         if model.site_feature.properties.region_id != region_id:
-            raise ValueError("Site model doesn't reference the given region model")
+            raise ValueError("Site model doesn't reference the region model/override region")
 
         if model.site_feature.properties.originator != performer_shortcode:
             raise ValueError(
-                "Site model's originator differs from the given originator"
+                "Site model's originator differs from the region model's originator/override originator"
             )
 
     with transaction.atomic():

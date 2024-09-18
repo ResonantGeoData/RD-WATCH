@@ -1,9 +1,10 @@
 <script setup lang="ts">
-import { reactive, ref, watch } from "vue";
+import { computed, reactive, ref, watch } from "vue";
 import S3FileFieldClient, {
   S3FileFieldResultState,
 } from "django-s3-file-field";
 import { ApiService } from "../client";
+import { state } from '../store';
 
 const emits = defineEmits(['upload']);
 
@@ -35,6 +36,9 @@ const uploadProgress = ref<number>(0);
 const QUERY_TASK_POLL_DELAY = 1000; // msec
 // from celery.states.READY_STATES
 const CELERY_READY_STATES = ["FAILURE", "SUCCESS", "REVOKED"];
+
+const regionList = computed(() => state.regionList.map((region) => region.name));
+const performerList = computed(() => state.performerIds.map((id) => state.performerMapping[id].short_code));
 
 function resetModelRun() {
   modelRun.title = "";
@@ -170,13 +174,15 @@ function closeDialogs() {
             :rules="[validateFile]"
             :disabled="uploadLoading"
           />
-          <v-text-field
+          <v-combobox
             v-model="modelRun.region"
+            :items="regionList"
             label="Override Region (optional)"
             :disabled="uploadLoading"
           />
-          <v-text-field
+          <v-combobox
             v-model="modelRun.performer"
+            :items="performerList"
             label="Override Performer (optional)"
             :disabled="uploadLoading"
           />

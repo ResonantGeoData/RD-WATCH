@@ -140,6 +140,11 @@ function closeDialogs() {
   successDialog.value = false;
   uploadDialog.value = false;
 }
+
+// close both dialogs when closing the success dialog (e.g. via ESC)
+watch(successDialog, (visible) => {
+  if (!visible) closeDialogs();
+})
 </script>
 
 <template>
@@ -153,7 +158,7 @@ function closeDialogs() {
   <v-dialog
     v-model="uploadDialog"
     width="70%"
-    persistent
+    :persistent="uploadLoading"
   >
     <v-card>
       <v-card-title>Upload a new model run</v-card-title>
@@ -221,7 +226,6 @@ function closeDialogs() {
   </v-dialog>
   <v-dialog
     v-model="successDialog"
-    persistent
     width="25%"
   >
     <v-card>

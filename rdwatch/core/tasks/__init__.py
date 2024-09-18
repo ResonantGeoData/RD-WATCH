@@ -841,7 +841,9 @@ def process_model_run_upload(model_run_upload: ModelRunUpload):
         performer_shortcode = region_originator
     else:
         # pull performer from site models
-        all_originators = set(model.site_feature.properties.originator for model in site_models)
+        all_originators = {
+            model.site_feature.properties.originator for model in site_models
+        }
         if len(all_originators) == 0:
             raise ValueError('No performer provided')
         if len(all_originators) > 1:
@@ -851,19 +853,19 @@ def process_model_run_upload(model_run_upload: ModelRunUpload):
     # validate the site models
     for model in site_models:
         if model.site_feature.properties.region_id != region_id:
-            raise ValueError("Site model doesn't reference the region model/override region")
+            raise ValueError(
+                "Site model doesn't reference the region model/override region"
+            )
 
         if model.site_feature.properties.originator != performer_shortcode:
             raise ValueError(
-                "Site model's originator differs from the region model's originator/override originator"
+                "Site model's originator differs from the region model's"
+                'originator/override originator'
             )
 
     with transaction.atomic():
         # create a new ModelRun
-        region, _ = get_or_create_region(
-            region_id,
-            region_polygon=region_geometry
-        )
+        region, _ = get_or_create_region(region_id, region_polygon=region_geometry)
 
         performer, created = Performer.objects.get_or_create(
             short_code=performer_shortcode.upper(),

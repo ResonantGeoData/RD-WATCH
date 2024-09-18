@@ -692,6 +692,6 @@ def start_model_run_upload_processing(
 def model_run_upload_status(request: HttpRequest, task_id: str):
     result = AsyncResult(task_id)
     return {
-        "status": result.status,
-        "traceback": result.traceback,
+        'status': result.status,
+        'traceback': result.traceback,
     }

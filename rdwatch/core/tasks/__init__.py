@@ -318,6 +318,11 @@ def get_siteobservations_images(
         timestamp = (min_time - timedelta(days=30)) + timebuffer
 
     # Now we get a list of all the timestamps and captures that fall in this range.
+    logger.warning('MAXBBOX')
+    logger.warning(max_bbox)
+    logger.warning('timestamp')
+    logger.warning(timestamp)
+    logger.warning(timebuffer)
     if matchConstellation == '':
         matchConstellation = Constellation.objects.filter(
             slug=baseConstellation

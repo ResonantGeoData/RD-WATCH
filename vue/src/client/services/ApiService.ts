@@ -647,7 +647,7 @@ export class ApiService {
     });
   }
 
-  public static getModelRunUploadTaskStatus(taskId: string): CancelablePromise<string> {
+  public static getModelRunUploadTaskStatus(taskId: string): CancelablePromise<{ status: string, traceback: string | null }> {
     return __request(OpenAPI, {
       method: "GET",
       url: `${this.getApiPrefix()}/model-runs/upload_status/${taskId}`,

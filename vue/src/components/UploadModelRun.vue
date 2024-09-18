@@ -44,6 +44,11 @@ function resetModelRun() {
   uploadFile.value = undefined;
 }
 
+function errorStrFromTraceback(traceback: string): string {
+  const lines = traceback.trim().split('\n');
+  return lines[lines.length - 1];
+}
+
 watch(uploadDialog, (visible) => {
   if (!visible) return;
   resetModelRun();
@@ -56,11 +61,11 @@ function openUploadDialog() {
 }
 
 async function untilTaskReady(taskId: string) {
-  return new Promise((resolve) => {
+  return new Promise<{ status: string, traceback: string | null}>((resolve) => {
     async function queryTask() {
       const result = await ApiService.getModelRunUploadTaskStatus(taskId);
 
-      if (CELERY_READY_STATES.includes(result)) {
+      if (CELERY_READY_STATES.includes(result.status)) {
         resolve(result);
       } else {
         setTimeout(() => {
@@ -101,9 +106,10 @@ async function upload() {
       private: modelRun.private,
     });
 
-    const taskState = await untilTaskReady(taskId);
-    if (taskState !== "SUCCESS") {
-      throw new Error(`Upload failed with state: ${taskState}`);
+    const taskResult = await untilTaskReady(taskId);
+    if (taskResult.status !== "SUCCESS") {
+      const error = errorStrFromTraceback(taskResult.traceback || "unknown server error");
+      throw new Error(`Upload failed: ${error}`);
     }
 
     successDialog.value = true;

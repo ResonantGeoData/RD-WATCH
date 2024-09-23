@@ -61,9 +61,13 @@ def create_animation(
 
     # Fetch the SiteEvaluation instance
     try:
-        site_evaluation = Site.objects.get(id=site_evaluation_id)
+        site_evaluation = Site.objects.get(uuid=site_evaluation_id)
+        site_label = site_evaluation.status_annotated or site_evaluation.point_status
     except Site.DoesNotExist:
-        site_evaluation = AnnotationProposalSite.objects.get(pk=site_evaluation_id)
+        site_evaluation = AnnotationProposalSite.objects.get(
+            annotation_proposal_set_uuid=site_evaluation_id
+        )
+        site_label = site_evaluation.status
     except AnnotationProposalSite.DoesNotExist:
         return False, False
 
@@ -72,7 +76,6 @@ def create_animation(
     # Create a transformer from EPSG:3857 to EPSG:4326
     transformer_other = Transformer.from_crs('epsg:4326', 'epsg:3857', always_xy=True)
 
-    site_label = site_evaluation.label.slug
     site_label_mapped = label_mapping.get(site_label, False)
 
     query = Q(site=site_evaluation_id, source__in=sources)
@@ -124,7 +127,8 @@ def create_animation(
     # using the max_image_bbox we apply the rescale_border
     if rescale:
         # Need the geometry base site evaluation bbox plus 20% around it for rescaling
-        max_image_bbox = Polygon.from_ewkt(site_evaluation.geometry).extent
+        logger.warning(site_evaluation.union_geometry)
+        max_image_bbox = Polygon.from_ewkt(site_evaluation.union_geometry).extent
         max_image_bbox = rescale_bbox(max_image_bbox, 1.2)
 
         # Rescale the large box larger based on the rescale border
@@ -238,15 +242,19 @@ def create_animation(
         try:
             observation = Observation.objects.get(pk=image_record.observation)
         except Observation.DoesNotExist:
-            observation = AnnotationProposalObservation.objects.get(
-                pk=image_record.observation
-            )
+            try:
+                observation = AnnotationProposalObservation.objects.get(
+                    pk=image_record.observation
+                )
+            except AnnotationProposalObservation.DoesNotExist:
+                observation = None
+
         if observation:
             polygon = Polygon.from_ewkt(observation.geometry)
             label = observation.phase
             label_mapped = label_mapping.get(label, {})
         elif not polygon:
-            polygon = Polygon.from_ewkt(site_evaluation.geometry)
+            polygon = Polygon.from_ewkt(site_evaluation.union_geometry)
             label_mapped = label_mapping.get(
                 site_evaluation.status_annotated.replace(' ', '_'), {}
             )
@@ -274,7 +282,8 @@ def create_animation(
             # support observation points in the scoring DB
             point = observation.point
         if not point:
-            point = Point.from_ewkt(site_evaluation.point_geometry)
+            if site_evaluation.point_geometry:
+                point = Point.from_ewkt(site_evaluation.point_geometry)
         if point and 'geom' in labels:
             transformed_point = (point.x, point.y)
             pixel_point = to_pixel_coords(
@@ -459,29 +468,29 @@ def create_site_animation_export(
     site_export = AnimationSiteExport(
         name='',
         created=datetime.now(),
-        site_evaluation=site_evaluation,
+        site_evaluation=site_evaluation.uuid,
         user=user,
         celery_id=task_id,
         arguments=settings,
     )
-    try:
-        site_export.celery_id = task_id
-        site_export.save()
-        file_path, name = create_animation(self, site_evaluation_id, settings)
-        if file_path is False and name is False:
-            logger.warning('No Images were found')
-            site_export.delete()
-            return
-        site_export.name = name
-        with open(file_path, 'rb') as file:
-            site_export.export_file.save(name, File(file))
-        site_export.save()
-        if os.path.exists(file_path):
-            os.remove(file_path)
-    except Exception as e:
-        logger.warning(f'Error when processing Animation: {e}')
-        if site_export:
-            site_export.delete()
+    # try:
+    site_export.celery_id = task_id
+    site_export.save()
+    file_path, name = create_animation(self, site_evaluation_id, settings)
+    if file_path is False and name is False:
+        logger.warning('No Images were found')
+        site_export.delete()
+        return
+    site_export.name = name
+    with open(file_path, 'rb') as file:
+        site_export.export_file.save(name, File(file))
+    site_export.save()
+    if os.path.exists(file_path):
+        os.remove(file_path)
+    # except Exception as e:
+    #     logger.warning(f'Error when processing Animation: {e}')
+    #     if site_export:
+    #         site_export.delete()
 
 
 @app.task(bind=True)

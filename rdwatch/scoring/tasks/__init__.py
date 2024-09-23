@@ -165,7 +165,7 @@ def get_siteobservations_images(
             tempbox[3] + size_diff,
         ]
 
-    bbox = [tempbox[1], tempbox[0], tempbox[3], tempbox[2]]
+    bbox = tempbox
     # if width | height is too small we pad S2/L8/PL regions for more context
     bbox_width = (bbox[2] - bbox[0]) * ToMeters
     bbox_height = (bbox[3] - bbox[1]) * ToMeters

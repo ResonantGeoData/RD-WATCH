@@ -13,6 +13,10 @@ from rdwatch.core.models import (
     SiteObservation,
     lookups,
 )
+from rdwatch.scoring.models import (
+    AnimationModelRunExport as ScoringAnimationModelRunExport,
+)
+from rdwatch.scoring.models import AnimationSiteExport as ScoringAnimationSiteExport
 
 
 @admin.register(lookups.CommonBand)
@@ -144,6 +148,31 @@ class AnimationSiteExportAdmin(admin.ModelAdmin):
 
 @admin.register(AnimationModelRunExport)
 class AnimationModelRunExportAdmin(admin.ModelAdmin):
+    list_display = (
+        'name',
+        'user',
+        'export_file',
+        'created',
+        'celery_id',
+        'arguments',
+    )
+
+
+@admin.register(ScoringAnimationSiteExport)
+class ScoringAnimationSiteExportAdmin(admin.ModelAdmin):
+    list_display = (
+        'name',
+        'user',
+        'site_evaluation',
+        'export_file',
+        'created',
+        'celery_id',
+        'arguments',
+    )
+
+
+@admin.register(ScoringAnimationModelRunExport)
+class ScoringAnimationModelRunExportAdmin(admin.ModelAdmin):
     list_display = (
         'name',
         'user',

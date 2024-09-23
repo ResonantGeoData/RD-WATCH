@@ -1,12 +1,23 @@
 from typing import Literal, TypeAlias
 
+from django.contrib.auth.models import User
 from django.db.models import Model
 
-from rdwatch.scoring.models import SatelliteFetching, SiteImage
+from rdwatch.scoring.models import (
+    AnimationModelRunExport,
+    AnimationSiteExport,
+    SatelliteFetching,
+    SiteImage,
+)
 
 DbName: TypeAlias = Literal['default', 'scoringdb']
 
-RGD_DB_MODELS: set[type[Model]] = {SiteImage, SatelliteFetching}
+RGD_DB_MODELS: set[type[Model]] = {
+    SiteImage,
+    SatelliteFetching,
+    AnimationSiteExport,
+    AnimationModelRunExport,
+}
 
 
 class ScoringRouter:
@@ -41,6 +52,10 @@ class ScoringRouter:
         involved.
         """
         labels = {obj1._meta.app_label, obj2._meta.app_label}
+        if obj1._meta.app_label == 'auth' and isinstance(obj1, User):
+            return obj2._meta.app_label == 'scoring'
+        if obj2._meta.app_label == 'auth' and isinstance(obj2, User):
+            return obj1._meta.app_label == 'scoring'
         if 'rdwatch' in labels or 'scoring' in labels:
             return obj1._meta.app_label == obj2._meta.app_label
         return None

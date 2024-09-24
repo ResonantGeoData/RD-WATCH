@@ -162,7 +162,6 @@ def paste_image_with_bbox(
     Returns:
     Image: The output image with the source image pasted in.
     """
-
     # Calculate the dimensions of the source image in pixels
     source_width_px = int((bbox[2] - bbox[0]) * pixel_per_unit_x)
     source_height_px = int((bbox[3] - bbox[1]) * pixel_per_unit_y)
@@ -406,7 +405,7 @@ def create_animation(
         y_pixel_per_unit = max_height_px / (
             max_image_record_bbox[3] - max_image_record_bbox[1]
         )
-        logger.warning('PixelPerUnit : {x_pixel_perunit}, {y_pixel_per_unit}')
+        logger.warning(f'PixelPerUnit : {x_pixel_per_unit}, {y_pixel_per_unit}')
         logger.warning(
             f'Rescaled: {rescaled_image_bbox_width} {rescaled_image_bbox_height}'
         )

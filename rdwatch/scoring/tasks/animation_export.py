@@ -11,7 +11,6 @@ from celery import group, shared_task, states
 from celery.result import GroupResult
 from PIL import Image, ImageDraw
 from pydantic import UUID4
-from pyproj import Transformer
 
 from django.contrib.auth.models import User
 from django.contrib.gis.geos import Point, Polygon
@@ -73,8 +72,6 @@ def create_animation(
 
     # Determine the largest dimensions
     images_data = []
-    # Create a transformer from EPSG:3857 to EPSG:4326
-    transformer_other = Transformer.from_crs('epsg:4326', 'epsg:3857', always_xy=True)
 
     site_label_mapped = label_mapping.get(site_label, False)
 
@@ -127,8 +124,8 @@ def create_animation(
     # using the max_image_bbox we apply the rescale_border
     if rescale:
         # Need the geometry base site evaluation bbox plus 20% around it for rescaling
-        logger.warning(site_evaluation.union_geometry)
         max_image_bbox = Polygon.from_ewkt(site_evaluation.union_geometry).extent
+        # SCORING GEOMETRY IS STORED IN 4326
         max_image_bbox = rescale_bbox(max_image_bbox, 1.2)
 
         # Rescale the large box larger based on the rescale border
@@ -139,20 +136,13 @@ def create_animation(
         # Determine pixels per unit for the rescaled image
         # This is used to determine the size of the output image
         max_image_record_bbox = max_image_record.image_bbox.extent
-        max_image_record_bbox = transformer_other.transform_bounds(
-            max_image_record_bbox[0],
-            max_image_record_bbox[1],
-            max_image_record_bbox[2],
-            max_image_record_bbox[3],
-        )
-
         x_pixel_per_unit = max_width_px / (
             max_image_record_bbox[2] - max_image_record_bbox[0]
         )
         y_pixel_per_unit = max_height_px / (
             max_image_record_bbox[3] - max_image_record_bbox[1]
         )
-        logger.warning('PixelPerUnit : {x_pixel_perunit}, {y_pixel_per_unit}')
+        logger.warning(f'PixelPerUnit : {x_pixel_per_unit}, {y_pixel_per_unit}')
         logger.warning(
             f'Rescaled: {rescaled_image_bbox_width} {rescaled_image_bbox_height}'
         )
@@ -183,10 +173,6 @@ def create_animation(
         )
         if rescale:
             bbox = image_record.image_bbox.extent  # minx, miny, maxx, maxy
-            # place into the same pixel coordinate system
-            bbox = transformer_other.transform_bounds(
-                bbox[0], bbox[1], bbox[2], bbox[3]
-            )
             local_bbox_width = bbox[2] - bbox[0]
             local_bbox_height = bbox[3] - bbox[1]
             # get the local pixel per unit
@@ -203,6 +189,7 @@ def create_animation(
                 x_pixel_per_unit,
                 y_pixel_per_unit,
             )
+            logger.warning(f'{img}')
             x_offset = 0
             y_offset = 0
         else:
@@ -214,7 +201,7 @@ def create_animation(
             continue
 
         bbox = image_record.image_bbox.extent  # minx, miny, maxx, maxy
-        bbox = transformer_other.transform_bounds(bbox[0], bbox[1], bbox[2], bbox[3])
+        # bbox = transformer_other.transform_bounds(bbox[0], bbox[1], bbox[2], bbox[3])
 
         widthScale = max_width_px / width
         heightScale = max_height_px / height
@@ -227,9 +214,10 @@ def create_animation(
             xScale = max_width_px / (bbox[2] - bbox[0])
             yScale = max_height_px / (bbox[3] - bbox[1])
             # We need the bbox offset size based on the transform bounds difference
-            bbox_transform = transformer_other.transform_bounds(
-                bbox[0], bbox[1], bbox[2], bbox[3]
-            )
+            # bbox_transform = transformer_other.transform_bounds(
+            #     bbox[0], bbox[1], bbox[2], bbox[3]
+            # )
+            bbox_transform = bbox
             xScale = max_width_px / (bbox_transform[2] - bbox_transform[0])
             yScale = max_height_px / (bbox_transform[3] - bbox_transform[1])
 
@@ -375,7 +363,7 @@ def create_animation(
         count += 1
 
     # Save frames as an animated GIF
-    evaluation_run = EvaluationRun.objects.get(pk=site_evaluation.evaluation_run_uuid)
+    evaluation_run = site_evaluation.evaluation_run_uuid
     base_str = f'Eval_\
         {evaluation_run.evaluation_number}\
             _{evaluation_run.evaluation_run_number}\

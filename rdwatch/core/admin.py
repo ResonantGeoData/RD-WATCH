@@ -17,6 +17,7 @@ from rdwatch.scoring.models import (
     AnimationModelRunExport as ScoringAnimationModelRunExport,
 )
 from rdwatch.scoring.models import AnimationSiteExport as ScoringAnimationSiteExport
+from rdwatch.scoring.models import SiteImage as ScoringSiteImage
 
 
 @admin.register(lookups.CommonBand)
@@ -114,6 +115,23 @@ class SiteImageAdmin(admin.ModelAdmin):
     )
     list_filter = ('timestamp',)
     raw_id_fields = ('site', 'observation')
+
+
+@admin.register(ScoringSiteImage)
+class ScoringSiteImageAdmin(admin.ModelAdmin):
+    list_display = (
+        'id',
+        'timestamp',
+        'image',
+        'image_embedding',
+        'cloudcover',
+        'percent_black',
+        'source',
+        'site',
+        'observation',
+        'image_bbox',
+    )
+    list_filter = ('timestamp',)
 
 
 @admin.register(SiteObservation)

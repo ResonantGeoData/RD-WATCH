@@ -6,6 +6,7 @@ from ninja import Router
 from pydantic import UUID4, BaseModel
 
 from django.core.files.storage import default_storage
+from django.db import transaction
 from django.http import HttpRequest
 from django.shortcuts import get_object_or_404
 
@@ -181,3 +182,22 @@ def get_animation_status(request: HttpRequest, task_id: UUID4):
     else:
         celery_data['info'] = task.info
     return celery_data
+
+
+@router.post('/{task_id}/cancel/')
+def cancel_animation_status(request: HttpRequest, task_id: UUID4):
+    try:
+        export_record = AnimationSiteExport.objects.get(celery_id=task_id)
+    except AnimationSiteExport.DoesNotExist:
+        export_record = AnimationModelRunExport.objects.get(celery_id=task_id)
+    if export_record:
+        with transaction.atomic():
+            # Use select_for_update here to lock the AnimationExport row
+            # for the duration of this transaction in order to ensure its
+            # status doesn't change out from under us
+            export_record.delete()
+            task = AsyncResult(task_id)
+            if task:
+                task.revoke(terminate=True)
+            return 202, True
+    return 404, False

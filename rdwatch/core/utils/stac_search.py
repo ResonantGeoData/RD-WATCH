@@ -1,6 +1,6 @@
 import logging
 from datetime import datetime, timedelta
-from typing import Literal, TypedDict, cast
+from typing import Literal, TypedDict
 
 from pystac_client import Client
 
@@ -62,8 +62,8 @@ def stac_search(
     timestamp: datetime,
     bbox: tuple[float, float, float, float],
     timebuffer: timedelta | None = None,
-) -> Results:
     stac_catalog = Client.open(STAC_URL)
+) -> ItemSearch:
 
     if timebuffer is not None:
         min_time = timestamp - timebuffer
@@ -80,7 +80,4 @@ def stac_search(
         limit=100,
     )
 
-    # TODO: return `results` directly instead of converting to a dict.
-    # Before that can happen, the callers need to be updated to handle
-    # an `ItemSearch` object.
-    return cast(Results, results.item_collection_as_dict())
+    return results

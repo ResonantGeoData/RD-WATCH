@@ -40,67 +40,42 @@ def get_bands(
         bbox,
         timebuffer=timebuffer or timedelta(hours=1),
     )
-    if 'features' not in results:
-        logger.warning("Malformed STAC response: no 'features'")
-        return
 
-    for feature in results['features']:
-        if 'assets' not in feature:
-            logger.warning("Malformed STAC response: no 'assets'")
+    for item in results.items():
+        timestr = item.properties.get('datetime')
+        if not timestr:
+            logger.warning("Malformed STAC response: no 'properties.datetime'")
             continue
 
-        match feature:
-            case {'properties': {'datetime': timestr}}:
-                timestamp = datetime.fromisoformat(timestr.rstrip('Z'))
-            case _:
-                logger.warning("Malformed STAC response: no 'properties.datetime'")
-                continue
+        timestamp = datetime.fromisoformat(timestr.rstrip('Z'))
+        stac_bbox = item.bbox
 
-        match feature:
-            case {'bbox': bbox_lst}:
-                stac_bbox = cast(tuple[float, float, float, float], tuple(bbox_lst))
-            case _:
-                logger.warning("Malformed STAC response: no 'bbox'")
-                continue
+        if item.collection_id not in COLLECTIONS:
+            logger.warning("Malformed STAC response: unknown collection %s", item.collection_id)
+            continue
 
-        cloudcover = 0
-        match feature:
-            case {'collection': collection}:
-                if collection in COLLECTIONS:
-                    level, _ = ProcessingLevel.objects.get_or_create(
-                        slug='2A',
-                        defaults={'description': 'surface reflectance'},
-                    )
-                else:
-                    logger.warning(
-                        'Malformed STAC response: unknown collection ' f"'{collection}'"
-                    )
-                    continue
-            case _:
-                logger.warning("Malformed STAC response: no 'collection'")
-                continue
-        if 'properties' in feature.keys():
-            if 'eo:cloud_cover' in feature['properties'].keys():
-                cloudcover = feature['properties']['eo:cloud_cover']
+        level, _ = ProcessingLevel.objects.get_or_create(
+            slug='2A',
+            defaults={'description': 'surface reflectance'},
+        )
 
-        for name, asset in feature['assets'].items():
-            if name == 'visual':
+        cloudcover = item.properties.get('eo:cloud_cover', 0)
+
+        for name, asset in item.assets.items():
+            if name == 'visual' or 'visual' in asset.roles:
                 spectrum = CommonBand.objects.get(slug='visual')
             else:
-                match asset:
+                match asset.extra_fields:
                     case {'eo:bands': [{'common_name': common_name}]}:
                         spectrum = CommonBand.objects.get(slug=common_name)
                     case _:
                         continue
 
-            match asset:
+            match asset.extra_fields:
                 case {'alternate': {'s3': {'href': uri}}}:
                     ...
-                case {'href': uri}:
-                    ...
                 case _:
-                    logger.warning("Malformed STAC response: no 'href'")
-                    continue
+                    uri = asset.href
 
             yield Band(
                 constellation=constellation,
@@ -110,5 +85,5 @@ def get_bands(
                 bbox=stac_bbox,
                 uri=uri,
                 cloudcover=cloudcover,
-                collection=feature['collection'],
+                collection=item.collection_id,
             )

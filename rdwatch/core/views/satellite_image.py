@@ -16,7 +16,10 @@ from django.urls import reverse
 from django.views.decorators.cache import cache_page
 
 from rdwatch.core.models.lookups import Constellation
-from rdwatch.core.utils.raster_tile import get_raster_bbox, get_raster_tile
+from rdwatch.core.utils.raster_tile import (
+    get_raster_bbox_from_reader,
+    get_raster_tile_from_reader,
+)
 from rdwatch.core.utils.satellite_bands import get_bands
 from rdwatch.core.utils.worldview_processed.raster_tile import (
     get_worldview_processed_visual_bbox,
@@ -92,13 +95,16 @@ def get_satelliteimage_raster(
 
     # Sort bands so that bands in TIF format come first (TIFs are cheaper to tile
     # and are preferred over other formats when possible)
-    bands.sort(key=lambda band: band.uri.lower().endswith('.tif'), reverse=True)
+    bands.sort(
+        key=lambda band: all(uri.lower().endswith('.tif') for uri in band.uris),
+        reverse=True,
+    )
 
     if precise_timestamp == timestamp:
         if request_type == 'bbox':
-            tile = get_raster_bbox(bands[0].uri, bbox, format)
+            tile = get_raster_bbox_from_reader(bands[0].stac_reader, bbox, format)
         else:
-            tile = get_raster_tile(bands[0].uri, z, x, y)
+            tile = get_raster_tile_from_reader(bands[0].stac_reader, z, x, y)
         return HttpResponse(
             tile,
             content_type=f'image/{format}',

@@ -1,8 +1,9 @@
 import logging
 from datetime import datetime, timedelta
+from itertools import chain
 from typing import Literal, TypedDict
 
-from pystac_client import Client
+from pystac_client import Client, ItemSearch
 
 logger = logging.getLogger(__name__)
 
@@ -48,13 +49,20 @@ def _fmt_time(time: datetime):
     return f'{time.isoformat()[:19]}Z'
 
 
-COLLECTIONS: dict[str, list[str]] = {
-    'L8': [],
+COLLECTIONS_BY_SOURCE: dict[str, list[str]] = {
+    'L8': ['landsat-c2l2-sr'],
     'S2': ['sentinel-2-c1-l2a', 'sentinel-2-l2a'],
     'PL': [],
 }
 
-STAC_URL = 'https://earth-search.aws.element84.com/v1/'
+SOURCES: list[str] = COLLECTIONS_BY_SOURCE.keys()
+
+COLLECTIONS: list[str] = list(chain(COLLECTIONS_BY_SOURCE.values()))
+
+STAC_URLS: dict[str, str] = {
+    'L8': 'https://landsatlook.usgs.gov/stac-server/',
+    'S2': 'https://earth-search.aws.element84.com/v1/',
+}
 
 
 def stac_search(
@@ -62,8 +70,8 @@ def stac_search(
     timestamp: datetime,
     bbox: tuple[float, float, float, float],
     timebuffer: timedelta | None = None,
-    stac_catalog = Client.open(STAC_URL)
 ) -> ItemSearch:
+    stac_catalog = Client.open(STAC_URLS[source])
 
     if timebuffer is not None:
         min_time = timestamp - timebuffer
@@ -76,7 +84,7 @@ def stac_search(
         method='GET',
         bbox=bbox,
         datetime=time_str,
-        collections=COLLECTIONS[source],
+        collections=COLLECTIONS_BY_SOURCE[source],
         limit=100,
     )
 

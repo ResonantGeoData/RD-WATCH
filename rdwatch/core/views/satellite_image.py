@@ -102,9 +102,11 @@ def get_satelliteimage_raster(
 
     if precise_timestamp == timestamp:
         if request_type == 'bbox':
-            tile = get_raster_bbox_from_reader(bands[0].stac_reader, bbox, format)
+            with bands[0].open_reader() as reader:
+                tile = get_raster_bbox_from_reader(reader, bbox, format)
         else:
-            tile = get_raster_tile_from_reader(bands[0].stac_reader, z, x, y)
+            with bands[0].open_reader() as reader:
+                tile = get_raster_tile_from_reader(reader, z, x, y)
         return HttpResponse(
             tile,
             content_type=f'image/{format}',

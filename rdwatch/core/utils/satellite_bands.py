@@ -4,9 +4,9 @@ from dataclasses import dataclass
 from datetime import datetime, timedelta
 
 from pystac import Item
-from rio_tiler.io import STACReader
 
 from rdwatch.core.models.lookups import CommonBand, ProcessingLevel
+from rdwatch.core.utils.capture import STACCapture
 from rdwatch.core.utils.stac_search import COLLECTIONS, SOURCES, stac_search
 
 logger = logging.getLogger(__name__)
@@ -14,8 +14,8 @@ logger = logging.getLogger(__name__)
 RED_GREEN_BLUE = ['red', 'green', 'blue']
 
 
-@dataclass(frozen=True)
-class Band:
+@dataclass
+class Band(STACCapture):
     constellation: str
     spectrum: CommonBand
     level: ProcessingLevel
@@ -23,20 +23,6 @@ class Band:
     bbox: tuple[float, float, float, float]
     cloudcover: int
     collection: str
-
-    # Used for extracting a region specified by the STACReader.
-    # This is used as a general interface for extracting regions
-    # from single bands and composite bands
-    # (e.g. compositing red, green and blue for "true color")
-    stac_reader: STACReader
-
-    @property
-    def uris(self):
-        """Get URIs for each asset in included in the STACReader."""
-        return [
-            self.stac_reader.item.assets[name].href
-            for name in self.stac_reader.include_assets
-        ]
 
 
 def update_assets_prefer_s3(item: Item):
@@ -53,7 +39,6 @@ def get_bands(
     bbox: tuple[float, float, float, float],
     timebuffer: timedelta | None = None,
 ) -> Iterator[Band]:
-    if constellation not in ('S2', 'L8', 'PL'):
     if constellation not in SOURCES:
         raise ValueError(f'Unsupported constellation {constellation}')
 
@@ -102,8 +87,6 @@ def get_bands(
                     case _:
                         continue
 
-            stac_reader = STACReader(None, item=item.to_dict(), include_assets={name})
-
             yield Band(
                 constellation=constellation,
                 timestamp=timestamp,
@@ -112,7 +95,8 @@ def get_bands(
                 bbox=stac_bbox,
                 cloudcover=cloudcover,
                 collection=item.collection_id,
-                stac_reader=stac_reader,
+                stac_item=item,
+                stac_assets={name},
             )
 
         # Combine red/green/blue together to make our own visual band
@@ -123,9 +107,6 @@ def get_bands(
             and 'green' in item.assets
             and 'blue' in item.assets
         ):
-            stac_reader = STACReader(
-                None, item=item.to_dict(), include_assets=set(RED_GREEN_BLUE)
-            )
             yield Band(
                 constellation=constellation,
                 timestamp=timestamp,
@@ -134,5 +115,6 @@ def get_bands(
                 bbox=stac_bbox,
                 cloudcover=cloudcover,
                 collection=item.collection_id,
-                stac_reader=stac_reader,
+                stac_item=item,
+                stac_assets=set(RED_GREEN_BLUE),
             )

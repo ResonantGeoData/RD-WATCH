@@ -55,9 +55,8 @@ COLLECTIONS_BY_SOURCE: dict[str, list[str]] = {
     'PL': [],
 }
 
-SOURCES: list[str] = COLLECTIONS_BY_SOURCE.keys()
-
-COLLECTIONS: list[str] = list(chain(COLLECTIONS_BY_SOURCE.values()))
+SOURCES: list[str] = list(COLLECTIONS_BY_SOURCE.keys())
+COLLECTIONS: list[str] = list(chain(*COLLECTIONS_BY_SOURCE.values()))
 
 STAC_URLS: dict[str, str] = {
     'L8': 'https://landsatlook.usgs.gov/stac-server/',

@@ -2,14 +2,14 @@ from dataclasses import dataclass
 from datetime import datetime, timedelta
 from typing import cast
 
+from rdwatch.core.utils.capture import URICapture
 from rdwatch.core.utils.worldview_processed.stac_search import worldview_search
 
 
 @dataclass()
-class WorldViewProcessedCapture:
+class WorldViewProcessedCapture(URICapture):
     timestamp: datetime
     bbox: tuple[float, float, float, float]
-    uri: str
     panuri: str | None
     cloudcover: int | None
     collection: str

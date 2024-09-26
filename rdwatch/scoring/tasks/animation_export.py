@@ -40,6 +40,26 @@ from rdwatch.scoring.models import (
 logger = logging.getLogger(__name__)
 
 
+def find_closest_observation(site_uuid, timestamp, model='Observation'):
+    if model == 'Observation':
+        observation_model = Observation
+    elif model == 'AnnotationProposalObservation':
+        observation_model = AnnotationProposalObservation
+    else:
+        raise ValueError(
+            "Invalid model. Choose either 'Observation' or 'AnnotationProposalObservation'."
+        )
+
+    # Fetch the closest observation where the date is before the SiteImage timestamp
+    closest_observation = (
+        observation_model.objects.filter(site_uuid=site_uuid, date__lte=timestamp)
+        .order_by('-date')
+        .first()
+    )
+
+    return closest_observation
+
+
 @shared_task
 def create_animation(
     self, site_evaluation_id: UUID4, settings: GenerateAnimationSchema
@@ -189,7 +209,6 @@ def create_animation(
                 x_pixel_per_unit,
                 y_pixel_per_unit,
             )
-            logger.warning(f'{img}')
             x_offset = 0
             y_offset = 0
         else:
@@ -228,15 +247,18 @@ def create_animation(
         # Draw geometry or point on the image
         # observation is a string we need the object for it
         try:
-            observation = Observation.objects.get(pk=image_record.observation)
+            observation = find_closest_observation(
+                site_evaluation_id, image_record.timestamp
+            )
         except Observation.DoesNotExist:
             try:
-                observation = AnnotationProposalObservation.objects.get(
-                    pk=image_record.observation
+                observation = find_closest_observation(
+                    site_evaluation_id,
+                    image_record.timestamp,
+                    'AnnotationProposalObservation',
                 )
             except AnnotationProposalObservation.DoesNotExist:
                 observation = None
-
         if observation:
             polygon = Polygon.from_ewkt(observation.geometry)
             label = observation.phase
@@ -250,7 +272,6 @@ def create_animation(
             if polygon.geom_type == 'Polygon':
                 base_coords = polygon.coords[0]
                 transformed_coords = [(lon, lat) for lon, lat in base_coords]
-
                 pixel_coords = [
                     to_pixel_coords(
                         lon,
@@ -265,13 +286,37 @@ def create_animation(
                 ]
                 color = label_mapped.get('color', (256, 256, 256))
                 draw.polygon(pixel_coords, outline=color)
+            elif polygon.geom_type == 'MultiPolygon':
+                # Handle MultiPolygon by iterating over each polygon
+                for poly in polygon:
+                    base_coords = poly.coords[
+                        0
+                    ]  # Get the exterior coordinates of the Polygon
+                    transformed_coords = [(lon, lat) for lon, lat in base_coords]
+                    pixel_coords = [
+                        to_pixel_coords(
+                            lon,
+                            lat,
+                            bbox,
+                            xScale,
+                            yScale,
+                            x_offset,
+                            y_offset,
+                        )
+                        for lon, lat in transformed_coords
+                    ]
+                    color = label_mapped.get('color', (256, 256, 256))
+                    draw.polygon(pixel_coords, outline=color)
         if not polygon and observation:
             # Probably an error because I don't think we
             # support observation points in the scoring DB
+            raise ValueError(
+                "Polygon not found in Observation and Points aren't supported"
+            )
             point = observation.point
-        if not point:
-            if site_evaluation.point_geometry:
-                point = Point.from_ewkt(site_evaluation.point_geometry)
+            if not point:
+                if site_evaluation.point_geometry:
+                    point = Point.from_ewkt(site_evaluation.point_geometry)
         if point and 'geom' in labels:
             transformed_point = (point.x, point.y)
             pixel_point = to_pixel_coords(
@@ -364,10 +409,7 @@ def create_animation(
 
     # Save frames as an animated GIF
     evaluation_run = site_evaluation.evaluation_run_uuid
-    base_str = f'Eval_\
-        {evaluation_run.evaluation_number}\
-            _{evaluation_run.evaluation_run_number}\
-                _{evaluation_run.performer}'
+    base_str = f'Eval_{evaluation_run.evaluation_number}_{evaluation_run.evaluation_run_number}_{evaluation_run.performer}'  # noqa: E501
     prefix = f'{base_str}\
         _{str(site_evaluation.site_id)}'
     if frames:

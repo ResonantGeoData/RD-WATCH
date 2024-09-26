@@ -25,9 +25,8 @@ def patch_site_evaluation(request: HttpRequest, id: UUID4, data: SiteEvaluationR
             SiteEvaluation.objects.select_for_update(), pk=id
         )
         old_geom = None
+        old_point = None
         if data.geom:
-            old_geom = None
-            old_point = None
             if data.geom.get('type', False) == 'Point':
                 old_point = site_evaluation.point
                 site_evaluation.point = GEOSGeometry(json.dumps(data.geom))

@@ -30,79 +30,75 @@ from rdwatch.core.models import (
 logger = logging.getLogger(__name__)
 
 label_mapping = {
-    'active_construction': {
+    'Active Construction': {
         'color': (192, 0, 0),
         'label': 'Active Construction',
     },
-    'post_construction': {
+    'Post Construction': {
         'color': (91, 155, 213),
         'label': 'Post Construction',
     },
-    'site_preparation': {
+    'Site Preparation': {
         'color': (255, 217, 102),
         'label': 'Site Preparation',
     },
-    'unknown': {
+    'Unknown': {
         'color': (112, 48, 160),
         'label': 'Unknown',
     },
-    'no_activity': {
+    'No Activity': {
         'color': (166, 166, 166),
         'label': 'No Activity',
     },
-    'positive_annotated': {
+    'Positive Annotated': {
         'color': (127, 0, 0),
         'label': 'Positive Annotated',
     },
-    'positive': {
-        'color': (127, 0, 0),
-        'label': 'Positive Annotated',
-    },
-    'positive_partial': {
+    'Positive Partial': {
         'color': (0, 0, 139),
         'label': 'Positive Partial',
     },
-    'positive_annotated_static': {
+    'Positive Annotated Static': {
         'color': (255, 140, 0),
         'label': 'Positive Annotated Static',
     },
-    'positive_partial_static': {
+    'Positive Partial Static': {
         'color': (255, 255, 0),
         'label': 'Positive Partial Static',
     },
-    'positive_pending': {
+    'Positive Pending': {
         'color': (30, 144, 255),
         'label': 'Positive Pending',
     },
-    'positive_excluded': {
+    'Positive Excluded': {
         'color': (0, 255, 255),
         'label': 'Positive Excluded',
     },
-    'negative': {
+    'Negative': {
         'color': (255, 0, 255),
         'label': 'Negative',
     },
-    'ignore': {
+    'Ignore': {
         'color': (0, 255, 0),
         'label': 'Ignore',
     },
-    'transient_positive': {
+    'Transient Positive': {
         'color': (255, 105, 180),
         'label': 'Transient Positive',
     },
-    'transient_negative': {
+    'Transient Negative': {
         'color': (255, 228, 196),
         'label': 'Transient Negative',
     },
-    'system_proposed': {
+    'System Proposed': {
         'color': (31, 119, 180),
         'label': 'System Proposed',
     },
-    'system_confirmed': {
+    'System Confirmed': {
         'color': (31, 119, 180),
         'label': 'System Confirmed',
     },
-    'system_rejected': {
+    'System Rejected': {
         'color': (31, 119, 180),
         'label': 'System Rejected',
     },

@@ -171,9 +171,9 @@ def paste_image_with_bbox(
     rescale_y_factor = output_pixel_per_unit_x / pixel_per_unit_x
     rescale_x = int(rescale_x_factor * source_width_px)
     rescale_y = int(rescale_y_factor * source_height_px)
-    # logger.warning(f'\tRescaling Source: {source_width_px} {source_height_px}')
-    # logger.warning(f'\tRescale Size: {rescale_x} {rescale_y}')
-    # logger.warning(f'\tRescaling Factor: {rescale_x_factor} {rescale_y_factor}')
+    # logger.info(f'\tRescaling Source: {source_width_px} {source_height_px}')
+    # logger.info(f'\tRescale Size: {rescale_x} {rescale_y}')
+    # logger.info(f'\tRescaling Factor: {rescale_x_factor} {rescale_y_factor}')
     rescaled_source_image = source_image.resize((rescale_x, rescale_y))
 
     # determine what section of the new image to grab based on the output_bbox_size
@@ -184,7 +184,7 @@ def paste_image_with_bbox(
         (output_bbox[2] - bbox[0]) * output_pixel_per_unit_x,
         (output_bbox[3] - bbox[1]) * output_pixel_per_unit_y,
     )
-    # logger.warning(f'\tCrop: {crop}')
+    # logger.info(f'\tCrop: {crop}')
     cropped_img = rescaled_source_image.crop(
         (crop[0], crop[1], crop[2], crop[3])
     )  # left, top, right, bottom
@@ -357,7 +357,7 @@ def create_animation(
     images = SiteImage.objects.filter(query).order_by('timestamp')
 
     if len(images) == 0:
-        logger.warning('No Images found returning')
+        logger.info('No Images found returning')
         return False, False
     total_images = len(images)
     max_image_record = None
@@ -406,8 +406,8 @@ def create_animation(
         y_pixel_per_unit = max_height_px / (
             max_image_record_bbox[3] - max_image_record_bbox[1]
         )
-        logger.warning('PixelPerUnit : {x_pixel_perunit}, {y_pixel_per_unit}')
-        logger.warning(
+        logger.info('PixelPerUnit : {x_pixel_perunit}, {y_pixel_per_unit}')
+        logger.info(
             f'Rescaled: {rescaled_image_bbox_width} {rescaled_image_bbox_height}'
         )
         # Update the rescaled max dimensions
@@ -711,7 +711,7 @@ def create_site_animation_export(
         site_export.save()
         file_path, name = create_animation(self, site_evaluation_id, settings)
         if file_path is False and name is False:
-            logger.warning('No Images were found')
+            logger.info('No Images were found')
             site_export.delete()
             return
         site_export.name = name

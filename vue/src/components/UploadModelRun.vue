@@ -8,6 +8,19 @@ import { state } from '../store';
 
 const emits = defineEmits(['upload']);
 
+class ErrorWithTraceback extends Error {
+  traceback: string | null | undefined;
+
+  constructor(msg: string, traceback?: string | null) {
+    super(msg)
+    this.traceback = traceback;
+  }
+
+  toString() {
+    return `${this.message}\n${this.traceback}`;
+  }
+}
+
 const s3ffClient = new S3FileFieldClient({
   baseUrl: `${ApiService.getApiPrefix()}/s3-upload/`,
   apiConfig: {
@@ -99,7 +112,7 @@ async function upload() {
     );
     if (uploadResult.state !== S3FileFieldResultState.Successful) {
       const status = ["was aborted", "", "errored"][uploadResult.state];
-      throw new Error(`File upload ${status}`);
+      throw new ErrorWithTraceback(`Could not upload the file (status = ${status})`);
     }
 
     const taskId = await ApiService.postModelRunUpload({
@@ -113,13 +126,19 @@ async function upload() {
     const taskResult = await untilTaskReady(taskId);
     if (taskResult.status !== "SUCCESS") {
       const error = errorStrFromTraceback(taskResult.traceback || "unknown server error");
-      throw new Error(`Upload failed: ${error}`);
+      throw new ErrorWithTraceback(error, taskResult.traceback);
     }
 
     successDialog.value = true;
     emits('upload');
   } catch (err) {
-    uploadError.value = err;
+    if (err instanceof ErrorWithTraceback) {
+      uploadError.value = err.message;
+    } else {
+      uploadError.value = err;
+    }
+    // propagate to the app-level error handler
+    throw err;
   } finally {
     uploadLoading.value = false;
   }

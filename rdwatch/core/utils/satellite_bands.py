@@ -103,7 +103,7 @@ def get_bands(
                 cloudcover=cloudcover,
                 collection=item.collection_id,
                 stac_item=item,
-                stac_assets={name},
+                stac_assets=[name],
                 s3_requester_pays=s3_requester_pays,
             )
 
@@ -124,6 +124,6 @@ def get_bands(
                 cloudcover=cloudcover,
                 collection=item.collection_id,
                 stac_item=item,
-                stac_assets=set(RED_GREEN_BLUE),
+                stac_assets=RED_GREEN_BLUE,
                 s3_requester_pays=s3_requester_pays,
             )

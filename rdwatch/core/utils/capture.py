@@ -1,10 +1,10 @@
 from abc import ABC, abstractmethod
 from collections.abc import Generator
-from contextlib import contextmanager, ExitStack
-from dataclasses import dataclass
+from contextlib import ExitStack, contextmanager
+from dataclasses import dataclass, field
 
-from pystac.item import Item
 import rasterio
+from pystac.item import Item
 from rio_tiler.io.base import BaseReader, MultiBaseReader
 from rio_tiler.io.rasterio import Reader
 from rio_tiler.io.stac import STACReader
@@ -24,7 +24,9 @@ class URICapture(AbstractCapture):
     def open_reader(self) -> Generator[Reader, None, None]:
         uri = self.uri
         with ExitStack() as cxt_stack:
-            cxt_stack.enter_context(rasterio.Env(GDAL_DISABLE_READDIR_ON_OPEN='EMPTY_DIR'))
+            cxt_stack.enter_context(
+                rasterio.Env(GDAL_DISABLE_READDIR_ON_OPEN='EMPTY_DIR')
+            )
 
             if uri.startswith('https://sentinel-cogs.s3.us-west-2.amazonaws.com'):
                 cxt_stack.enter_context(rasterio.Env(AWS_NO_SIGN_REQUEST='YES'))
@@ -38,15 +40,19 @@ class URICapture(AbstractCapture):
 class STACCapture(AbstractCapture):
     stac_item: Item
     stac_assets: set[str]
+    s3_requester_pays: bool = field(kw_only=True, default=False)
 
     @contextmanager
     def open_reader(self) -> Generator[STACReader, None, None]:
-        with STACReader(None, item=self.stac_item, include_assets=self.stac_assets) as reader:
+        with ExitStack() as cxt_stack:
+            reader = cxt_stack.enter_context(
+                STACReader(None, item=self.stac_item, include_assets=self.stac_assets)
+            )
+            if self.s3_requester_pays:
+                cxt_stack.enter_context(rasterio.Env(AWS_REQUEST_PAYER='requester'))
             yield reader
 
     @property
     def uris(self):
         """Get URIs for each asset in included in the STACReader."""
-        return [
-            self.stac_item.assets[name].href for name in self.stac_assets
-        ]
+        return [self.stac_item.assets[name].href for name in self.stac_assets]

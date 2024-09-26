@@ -57,6 +57,7 @@ COLLECTIONS_BY_SOURCE: dict[str, list[str]] = {
 
 SOURCES: list[str] = list(COLLECTIONS_BY_SOURCE.keys())
 COLLECTIONS: list[str] = list(chain(*COLLECTIONS_BY_SOURCE.values()))
+S3_REQUESTER_PAYS_COLLECTIONS = ('L8',)
 
 STAC_URLS: dict[str, str] = {
     'L8': 'https://landsatlook.usgs.gov/stac-server/',

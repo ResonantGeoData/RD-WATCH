@@ -7,7 +7,12 @@ from pystac import Item
 
 from rdwatch.core.models.lookups import CommonBand, ProcessingLevel
 from rdwatch.core.utils.capture import STACCapture
-from rdwatch.core.utils.stac_search import COLLECTIONS, SOURCES, stac_search
+from rdwatch.core.utils.stac_search import (
+    COLLECTIONS,
+    S3_REQUESTER_PAYS_COLLECTIONS,
+    SOURCES,
+    stac_search,
+)
 
 logger = logging.getLogger(__name__)
 
@@ -41,6 +46,8 @@ def get_bands(
 ) -> Iterator[Band]:
     if constellation not in SOURCES:
         raise ValueError(f'Unsupported constellation {constellation}')
+
+    s3_requester_pays = constellation in S3_REQUESTER_PAYS_COLLECTIONS
 
     results = stac_search(
         constellation,
@@ -97,6 +104,7 @@ def get_bands(
                 collection=item.collection_id,
                 stac_item=item,
                 stac_assets={name},
+                s3_requester_pays=s3_requester_pays,
             )
 
         # Combine red/green/blue together to make our own visual band
@@ -117,4 +125,5 @@ def get_bands(
                 collection=item.collection_id,
                 stac_item=item,
                 stac_assets=set(RED_GREEN_BLUE),
+                s3_requester_pays=s3_requester_pays,
             )

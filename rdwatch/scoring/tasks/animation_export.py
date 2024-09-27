@@ -18,6 +18,7 @@ from django.core.files import File
 from django.db.models import Q
 
 from rdwatch.celery import app
+from rdwatch.core.tasks import ToMeters
 from rdwatch.core.tasks.animation_export import (
     GenerateAnimationSchema,
     draw_text_in_box,
@@ -144,7 +145,24 @@ def create_animation(
     # using the max_image_bbox we apply the rescale_border
     if rescale:
         # Need the geometry base site evaluation bbox plus 20% around it for rescaling
-        max_image_bbox = Polygon.from_ewkt(site_evaluation.union_geometry).extent
+        if site_evaluation.union_geometry:
+            max_image_bbox = Polygon.from_ewkt(site_evaluation.union_geometry).extent
+        if site_evaluation.point_geometry:
+            tempbox: tuple[float, float, float, float] = Polygon.from_ewkt(
+                site_evaluation.point_geometry
+            ).extent
+            if (
+                tempbox[2] == tempbox[0] and tempbox[3] == tempbox[1]
+            ):  # create bbox based on point
+                size_diff = (500 * 0.5) / ToMeters
+                tempbox = [
+                    tempbox[0] - size_diff,
+                    tempbox[1] - size_diff,
+                    tempbox[2] + size_diff,
+                    tempbox[3] + size_diff,
+                ]
+            max_image_bbox = tempbox
+
         # SCORING GEOMETRY IS STORED IN 4326
         max_image_bbox = rescale_bbox(max_image_bbox, 1.2)
 
@@ -161,10 +179,6 @@ def create_animation(
         )
         y_pixel_per_unit = max_height_px / (
             max_image_record_bbox[3] - max_image_record_bbox[1]
-        )
-        logger.warning(f'PixelPerUnit : {x_pixel_per_unit}, {y_pixel_per_unit}')
-        logger.warning(
-            f'Rescaled: {rescaled_image_bbox_width} {rescaled_image_bbox_height}'
         )
         # Update the rescaled max dimensions
         rescaled_max_width = int(rescaled_image_bbox_width * x_pixel_per_unit)
@@ -264,10 +278,12 @@ def create_animation(
             label = observation.phase
             label_mapped = label_mapping.get(label, {})
         elif not polygon:
-            polygon = Polygon.from_ewkt(site_evaluation.union_geometry)
-            label_mapped = label_mapping.get(
-                site_evaluation.status_annotated.replace(' ', '_'), {}
-            )
+            if site_evaluation.union_geometry:
+                polygon = Polygon.from_ewkt(site_evaluation.union_geometry)
+            if site_evaluation.point_geometry:
+                point = Point.from_ewkt(site_evaluation.point_geometry)
+
+            label_mapped = label_mapping.get(site_label.replace(' ', '_'), {})
         if polygon and 'geom' in labels:
             if polygon.geom_type == 'Polygon':
                 base_coords = polygon.coords[0]
@@ -313,10 +329,6 @@ def create_animation(
             raise ValueError(
                 "Polygon not found in Observation and Points aren't supported"
             )
-            point = observation.point
-            if not point:
-                if site_evaluation.point_geometry:
-                    point = Point.from_ewkt(site_evaluation.point_geometry)
         if point and 'geom' in labels:
             transformed_point = (point.x, point.y)
             pixel_point = to_pixel_coords(
@@ -530,10 +542,11 @@ def create_modelrun_animation_export(
     task_id = self.request.id
     model_run = EvaluationRun.objects.get(pk=modelrun_id)
     user = User.objects.get(pk=userId)
+    title = f'Eval_{model_run.evaluation_number}_{model_run.evaluation_run_number}_{model_run.performer}'  # noqa: E501
     modelrun_export, created = AnimationModelRunExport.objects.get_or_create(
-        name='',
+        name=title,
         created=datetime.now(),
-        configuration=model_run,
+        configuration=modelrun_id,
         user=user,
         celery_id=task_id,
         arguments=settings,
@@ -542,7 +555,7 @@ def create_modelrun_animation_export(
     # Now we create a task for each site in the image that has information
     site_tasks = []
     for site in Site.objects.filter(evaluation_run_uuid=modelrun_id).iterator():
-        if SiteImage.objects.filter(pk=site.pk).exists():
+        if SiteImage.objects.filter(site=site.pk).exists():
             site_tasks.append(create_site_animation_export.s(site.pk, settings, userId))
     subtasks = group(site_tasks)
 
@@ -579,14 +592,13 @@ def create_modelrun_animation_export(
     # Prepare to create a zip file
     zip_filename = f'modelrun_export_{modelrun_id}.zip'
     zip_filepath = os.path.join('/tmp', zip_filename)
-
-    title = model_run.title
     with zipfile.ZipFile(zip_filepath, 'w') as zip_file:
         for export in exports.iterator():
             if export.export_file and export.export_file.name:
+                site_evaluation = Site.objects.get(uuid=export.site_evaluation)
                 # Open the file and write its content to the zip archive
                 format = export.arguments['output_format']
-                site_number = str(export.site_evaluation.number).zfill(4)
+                site_number = str(site_evaluation.site_id)
                 output_name = f'{title}_{site_number}.{format}'
                 with export.export_file.open('rb') as f:
                     file_data = f.read()

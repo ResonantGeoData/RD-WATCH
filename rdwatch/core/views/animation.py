@@ -199,5 +199,5 @@ def cancel_animation_status(request: HttpRequest, task_id: UUID4):
             task = AsyncResult(task_id)
             if task:
                 task.revoke(terminate=True)
-            return 202, True
-    return 404, False
+            return 202
+    return 404

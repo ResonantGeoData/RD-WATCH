@@ -62,6 +62,26 @@ To score data:
 - the `rm_dir` and `sm_dir` should be your test annotations.
 - ground truth annotations can be retrieved from the [Annotation Repo](https://smartgitlab.com/TE/annotations)
 - be sure to set the `val_num` and `eval_run_num` and remember them when ingesting data into RGD. The `region`, `eval_num`, `eval_run_num` and `performer` are used to connect data loaded in RGD to the scoring data.
+- For Scoring data with points execute the following command:
+```
+  python -m iarpa_smart_metrics.run_evaluation \
+               --roi KR_R002 \
+               --output_dir ../KR_R002_point_scoring/output \
+               --eval_num 24 \
+               --eval_run_num 1 \
+               --performer kit \
+               --no-viz \
+               --no-viz-detection-table \
+               --no-viz-comparison-table \
+               --no-viz-associate-metrics \
+               --no-viz-activity-metrics \
+               --sequestered_id KR_R002 \
+               --db_conn_str postgresql+psycopg2://scoring:secretkey@localhost:5433/scoring \
+               --rm_dir ../KR_R002/region_models/ \
+               --sm_dir ../KR_R002/site_models/ \
+               --gt_points_file ../annotations/supplemental_data/point_based_annotations.geojson
+```
+
 
 ## Manually Loading
 

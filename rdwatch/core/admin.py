@@ -17,6 +17,7 @@ from rdwatch.scoring.models import (
     AnimationModelRunExport as ScoringAnimationModelRunExport,
 )
 from rdwatch.scoring.models import AnimationSiteExport as ScoringAnimationSiteExport
+from rdwatch.scoring.models import SatelliteFetching as ScoringSatelliteFetching
 from rdwatch.scoring.models import SiteImage as ScoringSiteImage
 
 
@@ -84,6 +85,18 @@ class SatelliteFetchingAdmin(admin.ModelAdmin):
         'error',
     )
     raw_id_fields = ('site',)
+
+
+@admin.register(ScoringSatelliteFetching)
+class ScoringSatelliteFetchingAdmin(admin.ModelAdmin):
+    list_display = (
+        'id',
+        'site',
+        'timestamp',
+        'status',
+        'celery_id',
+        'error',
+    )
 
 
 @admin.register(SiteEvaluation)
@@ -194,6 +207,7 @@ class ScoringAnimationSiteExportAdmin(admin.ModelAdmin):
 class ScoringAnimationModelRunExportAdmin(admin.ModelAdmin):
     list_display = (
         'name',
+        'configuration',
         'user',
         'export_file',
         'created',

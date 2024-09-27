@@ -13,12 +13,6 @@ from rdwatch.core.models import (
     SiteObservation,
     lookups,
 )
-from rdwatch.scoring.models import (
-    AnimationModelRunExport as ScoringAnimationModelRunExport,
-)
-from rdwatch.scoring.models import AnimationSiteExport as ScoringAnimationSiteExport
-from rdwatch.scoring.models import SatelliteFetching as ScoringSatelliteFetching
-from rdwatch.scoring.models import SiteImage as ScoringSiteImage
 
 
 @admin.register(lookups.CommonBand)
@@ -87,18 +81,6 @@ class SatelliteFetchingAdmin(admin.ModelAdmin):
     raw_id_fields = ('site',)
 
 
-@admin.register(ScoringSatelliteFetching)
-class ScoringSatelliteFetchingAdmin(admin.ModelAdmin):
-    list_display = (
-        'id',
-        'site',
-        'timestamp',
-        'status',
-        'celery_id',
-        'error',
-    )
-
-
 @admin.register(SiteEvaluation)
 class SiteEvaluationAdmin(admin.ModelAdmin):
     list_display = (
@@ -129,23 +111,6 @@ class SiteImageAdmin(admin.ModelAdmin):
     )
     list_filter = ('timestamp',)
     raw_id_fields = ('site', 'observation')
-
-
-@admin.register(ScoringSiteImage)
-class ScoringSiteImageAdmin(admin.ModelAdmin):
-    list_display = (
-        'id',
-        'timestamp',
-        'image',
-        'image_embedding',
-        'cloudcover',
-        'percent_black',
-        'source',
-        'site',
-        'observation',
-        'image_bbox',
-    )
-    list_filter = ('timestamp',)
 
 
 @admin.register(SiteObservation)
@@ -182,32 +147,6 @@ class AnimationSiteExportAdmin(admin.ModelAdmin):
 class AnimationModelRunExportAdmin(admin.ModelAdmin):
     list_display = (
         'name',
-        'user',
-        'export_file',
-        'created',
-        'celery_id',
-        'arguments',
-    )
-
-
-@admin.register(ScoringAnimationSiteExport)
-class ScoringAnimationSiteExportAdmin(admin.ModelAdmin):
-    list_display = (
-        'name',
-        'user',
-        'site_evaluation',
-        'export_file',
-        'created',
-        'celery_id',
-        'arguments',
-    )
-
-
-@admin.register(ScoringAnimationModelRunExport)
-class ScoringAnimationModelRunExportAdmin(admin.ModelAdmin):
-    list_display = (
-        'name',
-        'configuration',
         'user',
         'export_file',
         'created',

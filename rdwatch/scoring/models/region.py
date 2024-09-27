@@ -12,4 +12,5 @@ class Region(models.Model):
 
     class Meta:
         managed = False
+        app_label = 'scoring'
         db_table = 'region'

@@ -21,6 +21,7 @@ class EvaluationRun(models.Model):
 
     class Meta:
         managed = False
+        app_label = 'scoring'
         db_table = 'evaluation_run'
         unique_together = (
             (

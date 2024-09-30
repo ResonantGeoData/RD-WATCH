@@ -2,27 +2,40 @@ import logging
 from collections.abc import Iterator
 from dataclasses import dataclass
 from datetime import datetime, timedelta
-from typing import cast
+
+from pystac import Item
 
 from rdwatch.core.models.lookups import CommonBand, ProcessingLevel
-from rdwatch.core.utils.stac_search import stac_search
+from rdwatch.core.utils.capture import STACCapture
+from rdwatch.core.utils.stac_search import (
+    COLLECTIONS,
+    S3_REQUESTER_PAYS_COLLECTIONS,
+    SOURCES,
+    stac_search,
+)
 
 logger = logging.getLogger(__name__)
 
+RED_GREEN_BLUE = ['red', 'green', 'blue']
 
-@dataclass(frozen=True)
-class Band:
+
+@dataclass
+class Band(STACCapture):
     constellation: str
     spectrum: CommonBand
     level: ProcessingLevel
     timestamp: datetime
     bbox: tuple[float, float, float, float]
-    uri: str
     cloudcover: int
     collection: str
 
 
-COLLECTIONS: list[str] = ['sentinel-2-c1-l2a', 'sentinel-2-l2a', 'landsat-c2-l2']
+def update_assets_prefer_s3(item: Item):
+    """Update an Item's Assets' href to point to s3 if available."""
+    for asset in item.assets.values():
+        match asset.extra_fields:
+            case {'alternate': {'s3': {'href': uri}}}:
+                asset.href = uri
 
 
 def get_bands(
@@ -31,8 +44,10 @@ def get_bands(
     bbox: tuple[float, float, float, float],
     timebuffer: timedelta | None = None,
 ) -> Iterator[Band]:
-    if constellation not in ('S2', 'L8', 'PL'):
+    if constellation not in SOURCES:
         raise ValueError(f'Unsupported constellation {constellation}')
+
+    s3_requester_pays = constellation in S3_REQUESTER_PAYS_COLLECTIONS
 
     results = stac_search(
         constellation,
@@ -40,67 +55,44 @@ def get_bands(
         bbox,
         timebuffer=timebuffer or timedelta(hours=1),
     )
-    if 'features' not in results:
-        logger.warning("Malformed STAC response: no 'features'")
-        return
 
-    for feature in results['features']:
-        if 'assets' not in feature:
-            logger.warning("Malformed STAC response: no 'assets'")
+    level, _ = ProcessingLevel.objects.get_or_create(
+        slug='2A',
+        defaults={'description': 'surface reflectance'},
+    )
+
+    for item in results.items():
+        timestr = item.properties.get('datetime')
+        if not timestr:
+            logger.warning("Malformed STAC response: no 'properties.datetime'")
             continue
 
-        match feature:
-            case {'properties': {'datetime': timestr}}:
-                timestamp = datetime.fromisoformat(timestr.rstrip('Z'))
-            case _:
-                logger.warning("Malformed STAC response: no 'properties.datetime'")
-                continue
+        timestamp = datetime.fromisoformat(timestr.rstrip('Z'))
+        stac_bbox = item.bbox
 
-        match feature:
-            case {'bbox': bbox_lst}:
-                stac_bbox = cast(tuple[float, float, float, float], tuple(bbox_lst))
-            case _:
-                logger.warning("Malformed STAC response: no 'bbox'")
-                continue
+        if item.collection_id not in COLLECTIONS:
+            logger.warning(
+                'Malformed STAC response: unknown collection %s', item.collection_id
+            )
+            continue
 
-        cloudcover = 0
-        match feature:
-            case {'collection': collection}:
-                if collection in COLLECTIONS:
-                    level, _ = ProcessingLevel.objects.get_or_create(
-                        slug='2A',
-                        defaults={'description': 'surface reflectance'},
-                    )
-                else:
-                    logger.warning(
-                        'Malformed STAC response: unknown collection ' f"'{collection}'"
-                    )
-                    continue
-            case _:
-                logger.warning("Malformed STAC response: no 'collection'")
-                continue
-        if 'properties' in feature.keys():
-            if 'eo:cloud_cover' in feature['properties'].keys():
-                cloudcover = feature['properties']['eo:cloud_cover']
+        # Prefer S3 URIs. Do this before passing the item to STACReader
+        # so that STACReader will read the S3 URIs.
+        update_assets_prefer_s3(item)
 
-        for name, asset in feature['assets'].items():
-            if name == 'visual':
+        cloudcover = item.properties.get('eo:cloud_cover', 0)
+        has_visual_band = False
+
+        for name, asset in item.assets.items():
+            if name == 'visual' or 'visual' in asset.roles:
+                has_visual_band = True
                 spectrum = CommonBand.objects.get(slug='visual')
             else:
-                match asset:
+                match asset.extra_fields:
                     case {'eo:bands': [{'common_name': common_name}]}:
                         spectrum = CommonBand.objects.get(slug=common_name)
                     case _:
                         continue
-
-            match asset:
-                case {'alternate': {'s3': {'href': uri}}}:
-                    ...
-                case {'href': uri}:
-                    ...
-                case _:
-                    logger.warning("Malformed STAC response: no 'href'")
-                    continue
 
             yield Band(
                 constellation=constellation,
@@ -108,7 +100,30 @@ def get_bands(
                 level=level,
                 spectrum=spectrum,
                 bbox=stac_bbox,
-                uri=uri,
                 cloudcover=cloudcover,
-                collection=feature['collection'],
+                collection=item.collection_id,
+                stac_item=item,
+                stac_assets=[name],
+                s3_requester_pays=s3_requester_pays,
+            )
+
+        # Combine red/green/blue together to make our own visual band
+        # if we didn't encounter a visual band.
+        if (
+            not has_visual_band
+            and 'red' in item.assets
+            and 'green' in item.assets
+            and 'blue' in item.assets
+        ):
+            yield Band(
+                constellation=constellation,
+                timestamp=timestamp,
+                level=level,
+                spectrum=CommonBand.objects.get(slug='visual'),
+                bbox=stac_bbox,
+                cloudcover=cloudcover,
+                collection=item.collection_id,
+                stac_item=item,
+                stac_assets=RED_GREEN_BLUE,
+                s3_requester_pays=s3_requester_pays,
             )

@@ -19,7 +19,7 @@ const emit = defineEmits<{
     (e: "cancel"): void;
 }>();
 
-const constellationChoices = ref(['S2', 'WV',]) // TODO: Image Download HotFix ref(['S2', 'WV', 'L8', 'PL'])
+const constellationChoices = ref(['S2', 'WV', "L8"]) // TODO: Image Download HotFix ref(['S2', 'WV', 'L8', 'PL'])
 const selectedConstellation: Ref<Constellation[]> = ref(['S2']);
 const worldviewSourceChoices = computed<string[] | null>(() => selectedConstellation.value.includes('WV') ? ['nitf'] : null); // TODO Image Download Hotfix: add back in cog
 const selectedWorldviewSource = ref<'nitf'>('nitf'); // // TODO: Image Download HotFix ref<'cog' | 'nitf'>('cog');

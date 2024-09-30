@@ -8,7 +8,8 @@ from urllib.error import URLError
 
 from PIL import Image
 
-from rdwatch.core.utils.raster_tile import get_raster_bbox
+from rdwatch.core.utils.capture import AbstractCapture
+from rdwatch.core.utils.raster_tile import get_raster_bbox_from_reader
 from rdwatch.core.utils.satellite_bands import get_bands
 from rdwatch.core.utils.worldview_nitf.raster_tile import get_worldview_nitf_bbox
 from rdwatch.core.utils.worldview_nitf.satellite_captures import (
@@ -91,7 +92,7 @@ def get_range_captures(
     constellation: str,
     timebuffer: timedelta,
     worldView: Literal['cog', 'nitf'] | None,
-):
+) -> list[AbstractCapture]:
     if constellation == 'WV' and worldView == 'cog':
         captures = get_worldview_captures(timestamp, bbox, timebuffer)
     elif constellation == 'WV' and worldView == 'nitf':
@@ -138,7 +139,8 @@ def fetch_boundbox_image(
     elif worldView == 'nitf' and constellation == 'wv':
         bytes = get_worldview_nitf_bbox(closest_capture, bbox, 'PNG', scale)
     else:
-        bytes = get_raster_bbox(closest_capture.uri, bbox, 'PNG', scale)
+        with closest_capture.open_reader() as reader:
+            bytes = get_raster_bbox_from_reader(reader, bbox, 'PNG', scale)
     return {
         'bytes': bytes,
         'cloudcover': closest_capture.cloudcover,

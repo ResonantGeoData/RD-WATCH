@@ -81,7 +81,7 @@ def is_inside_range(
     for timestamp in timestamps:
         time_difference = check_timestamp - timestamp
         if abs(time_difference.days) <= days_range:
-            logger.warning(
+            logger.info(
                 f'Skipping Timestamp because difference is: {time_difference.days}'
             )
             return True
@@ -125,7 +125,7 @@ def get_siteobservation_images_task(
         fetching_task.celery_id = ''
         fetching_task.save()
     except Exception as e:
-        logger.warning(f'EXCEPTION: {e}')
+        logger.info(f'EXCEPTION: {e}')
         fetching_task = SatelliteFetching.objects.get(site_id=site_eval_id)
         fetching_task.error = f'Error: {e}'
         fetching_task.status = SatelliteFetching.Status.ERROR
@@ -205,7 +205,7 @@ def get_siteobservations_images(
     bbox = scale_bbox(bbox, bboxScale)
     # get the updated BBOX if it's bigger
     max_bbox = get_max_bbox(bbox, max_bbox)
-    logger.warning(f'UPGRADED BBOX: {bbox}')
+    logger.info(f'UPGRADED BBOX: {bbox}')
 
     # First we gather all images that match observations
     count = 0
@@ -228,7 +228,7 @@ def get_siteobservations_images(
         timestamp = observation.timestamp
         constellation = observation.constellation
         # We need to grab the image for this timerange and type
-        logger.warning(timestamp)
+        logger.info(timestamp)
         if str(constellation) == baseConstellation and timestamp is not None:
             count += 1
             baseSiteEval = observation.siteeval
@@ -246,7 +246,7 @@ def get_siteobservations_images(
                     found_timestamps.keys(), observation.timestamp, dayRange
                 )
             ):
-                logger.warning(f'Skipping Timestamp: {timestamp}')
+                logger.info(f'Skipping Timestamp: {timestamp}')
                 continue
             if found.exists() and not force:
                 found_timestamps[observation.timestamp] = True
@@ -259,20 +259,19 @@ def get_siteobservations_images(
                 scale,
             )
             if results is None:
-                logger.warning(f'COULD NOT FIND ANY IMAGE FOR TIMESTAMP: {timestamp}')
+                logger.info(f'COULD NOT FIND ANY IMAGE FOR TIMESTAMP: {timestamp}')
                 continue
             bytes = results['bytes']
             percent_black = get_percent_black_pixels(bytes)
             cloudcover = results['cloudcover']
             found_timestamp = results['timestamp']
             if bytes is None:
-                logger.warning(f'COULD NOT FIND ANY IMAGE FOR TIMESTAMP: {timestamp}')
+                logger.info(f'COULD NOT FIND ANY IMAGE FOR TIMESTAMP: {timestamp}')
                 continue
             if dayRange != -1 and percent_black < no_data_limit:
                 found_timestamps[found_timestamp] = True
             elif dayRange == -1:
                 found_timestamps[found_timestamp] = True
-            # logger.warning(f'Retrieved Image with timestamp: {timestamp}')
             output = f'tile_image_{observation.id}.png'
             image = File(io.BytesIO(bytes), name=output)
             with ignore_pillow_filesize_limits():
@@ -318,16 +317,11 @@ def get_siteobservations_images(
         timestamp = (min_time - timedelta(days=30)) + timebuffer
 
     # Now we get a list of all the timestamps and captures that fall in this range.
-    logger.warning('MAXBBOX')
-    logger.warning(max_bbox)
-    logger.warning('timestamp')
-    logger.warning(timestamp)
-    logger.warning(timebuffer)
     if matchConstellation == '':
         matchConstellation = Constellation.objects.filter(
             slug=baseConstellation
         ).first()
-        logger.warning(
+        logger.info(
             f'Utilizing Constellation: {matchConstellation} - {matchConstellation.slug}'
         )
 
@@ -354,7 +348,7 @@ def get_siteobservations_images(
         baseSiteEval = SiteEvaluation.objects.filter(pk=site_eval_id).first()
     count = 1
     num_of_captures = len(captures)
-    logger.warning(f'Found {num_of_captures} captures')
+    logger.info(f'Found {num_of_captures} captures')
     if num_of_captures == 0:
         self.update_state(
             state='PROGRESS',
@@ -367,7 +361,7 @@ def get_siteobservations_images(
             },
         )
 
-    logger.warning(f'Found {num_of_captures} captures')
+    logger.info(f'Found {num_of_captures} captures')
     # Now we go through the list and add in a timestamp if it doesn't exist
     for capture in captures:
         self.update_state(
@@ -402,7 +396,7 @@ def get_siteobservations_images(
                 bytes = get_raster_bbox(capture.uri, max_bbox, 'PNG', scale)
             if bytes is None:
                 count += 1
-                logger.warning(f'COULD NOT FIND ANY IMAGE FOR TIMESTAMP: {timestamp}')
+                logger.info(f'COULD NOT FIND ANY IMAGE FOR TIMESTAMP: {timestamp}')
                 continue
             percent_black = get_percent_black_pixels(bytes)
             cloudcover = capture.cloudcover
@@ -683,7 +677,7 @@ def generate_site_images_for_evaluation_run(
 def generate_image_embedding(id: int):
     site_image = SiteImage.objects.get(pk=id)
     try:
-        logger.warning('Loading checkpoint Model')
+        logger.info('Loading checkpoint Model')
         checkpoint = settings.SAM_CHECKPOINT_MODEL
         model_type = 'vit_h'
         sam = sam_model_registry[model_type](checkpoint=checkpoint)
@@ -694,14 +688,14 @@ def generate_image_embedding(id: int):
             site_image.image.open(mode='rb')
             temp_image_file.write(site_image.image.read())
 
-            logger.warning('Reading local image file')
+            logger.info('Reading local image file')
 
             image = cv2.imread(temp_image_file.name)
-            logger.warning('Setting the predictor for the file')
+            logger.info('Setting the predictor for the file')
             predictor.set_image(image)
-            logger.warning('Creating the embedding')
+            logger.info('Creating the embedding')
             image_embedding = predictor.get_image_embedding().cpu().numpy()
-            logger.warning('Saving the npy')
+            logger.info('Saving the npy')
 
             # Assuming you want to save the numpy array to the image_embedding
             with tempfile.NamedTemporaryFile(
@@ -732,7 +726,7 @@ def generate_image_embedding(id: int):
 @signals.worker_ready.connect
 def download_sam_model_if_not_exists(**kwargs):
     file_path = settings.SAM_CHECKPOINT_MODEL
-    logger.warning('Trying to download SAM')
+    logger.info('Trying to download SAM')
 
     # Check if the file exists
     if not os.path.exists(file_path):

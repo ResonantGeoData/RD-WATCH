@@ -169,10 +169,6 @@ def get_siteobservations_images(
     # if width | height is too small we pad S2/L8/PL regions for more context
     bbox_width = (bbox[2] - bbox[0]) * ToMeters
     bbox_height = (bbox[3] - bbox[1]) * ToMeters
-    logger.warning('BBOX')
-    logger.warning(bbox)
-    logger.warning(bbox_width)
-    logger.warning(bbox_height)
     if baseConstellation != 'WV' and (
         bbox_width < overrideImageSize or bbox_height < overrideImageSize
     ):
@@ -189,7 +185,6 @@ def get_siteobservations_images(
     bbox = scale_bbox(bbox, bboxScale)
     # get the updated BBOX if it's bigger
     max_bbox = get_max_bbox(bbox, max_bbox)
-    logger.warning(max_bbox)
 
     # First we gather all images that match observations
     count = 0
@@ -306,11 +301,6 @@ def get_siteobservations_images(
         timestamp = (min_time - timedelta(days=30)) + timebuffer
 
     # Now we get a list of all the timestamps and captures that fall in this range.
-    logger.warning('MAXBBOX')
-    logger.warning(max_bbox)
-    logger.warning('timestamp')
-    logger.warning(timestamp)
-    logger.warning(timebuffer)
     captures = get_range_captures(
         max_bbox, timestamp, baseConstellation, timebuffer, worldview_source
     )
@@ -329,7 +319,7 @@ def get_siteobservations_images(
         base_site_eval = site_db_model.objects.filter(pk=site_eval_id).first()
     count = 1
     num_of_captures = len(captures)
-    logger.warning(f'Found {num_of_captures} captures')
+    logger.info(f'Found {num_of_captures} captures')
     if num_of_captures == 0:
         self.update_state(
             state='PROGRESS',
@@ -376,7 +366,7 @@ def get_siteobservations_images(
                 bytes = get_raster_bbox(capture.uri, max_bbox, 'PNG', scale)
             if bytes is None:
                 count += 1
-                logger.warning(f'COULD NOT FIND ANY IMAGE FOR TIMESTAMP: {timestamp}')
+                logger.info(f'COULD NOT FIND ANY IMAGE FOR TIMESTAMP: {timestamp}')
                 continue
             percent_black = get_percent_black_pixels(bytes)
             cloudcover = capture.cloudcover

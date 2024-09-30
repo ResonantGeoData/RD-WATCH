@@ -22,7 +22,6 @@ from rdwatch.core.tasks import ToMeters
 from rdwatch.core.tasks.animation_export import (
     GenerateAnimationSchema,
     draw_text_in_box,
-    label_mapping,
     paste_image_with_bbox,
     rescale_bbox,
     to_pixel_coords,
@@ -39,6 +38,81 @@ from rdwatch.scoring.models import (
 )
 
 logger = logging.getLogger(__name__)
+
+label_mapping = {
+    'Active Construction': {
+        'color': (192, 0, 0),
+        'label': 'Active Construction',
+    },
+    'Post Construction': {
+        'color': (91, 155, 213),
+        'label': 'Post Construction',
+    },
+    'Site Preparation': {
+        'color': (255, 217, 102),
+        'label': 'Site Preparation',
+    },
+    'Unknown': {
+        'color': (112, 48, 160),
+        'label': 'Unknown',
+    },
+    'No Activity': {
+        'color': (166, 166, 166),
+        'label': 'No Activity',
+    },
+    'Positive Annotated': {
+        'color': (127, 0, 0),
+        'label': 'Positive Annotated',
+    },
+    'Positive Partial': {
+        'color': (0, 0, 139),
+        'label': 'Positive Partial',
+    },
+    'Positive Annotated Static': {
+        'color': (255, 140, 0),
+        'label': 'Positive Annotated Static',
+    },
+    'Positive Partial Static': {
+        'color': (255, 255, 0),
+        'label': 'Positive Partial Static',
+    },
+    'Positive Pending': {
+        'color': (30, 144, 255),
+        'label': 'Positive Pending',
+    },
+    'Positive Excluded': {
+        'color': (0, 255, 255),
+        'label': 'Positive Excluded',
+    },
+    'Negative': {
+        'color': (255, 0, 255),
+        'label': 'Negative',
+    },
+    'Ignore': {
+        'color': (0, 255, 0),
+        'label': 'Ignore',
+    },
+    'Transient Positive': {
+        'color': (255, 105, 180),
+        'label': 'Transient Positive',
+    },
+    'Transient Negative': {
+        'color': (255, 228, 196),
+        'label': 'Transient Negative',
+    },
+    'System Proposed': {
+        'color': (31, 119, 180),
+        'label': 'System Proposed',
+    },
+    'System Confirmed': {
+        'color': (31, 119, 180),
+        'label': 'System Confirmed',
+    },
+    'System Rejected': {
+        'color': (31, 119, 180),
+        'label': 'System Rejected',
+    },
+}
 
 
 def find_closest_observation(site_uuid, timestamp, model='Observation'):
@@ -300,7 +374,7 @@ def create_animation(
                     )
                     for lon, lat in transformed_coords
                 ]
-                color = label_mapped.get('color', (256, 256, 256))
+                color = label_mapped.get('color', (255, 255, 255))
                 draw.polygon(pixel_coords, outline=color)
             elif polygon.geom_type == 'MultiPolygon':
                 # Handle MultiPolygon by iterating over each polygon
@@ -321,7 +395,7 @@ def create_animation(
                         )
                         for lon, lat in transformed_coords
                     ]
-                    color = label_mapped.get('color', (256, 256, 256))
+                    color = label_mapped.get('color', (255, 255, 255))
                     draw.polygon(pixel_coords, outline=color)
         if not polygon and observation:
             # Probably an error because I don't think we
@@ -332,9 +406,15 @@ def create_animation(
         if point and 'geom' in labels:
             transformed_point = (point.x, point.y)
             pixel_point = to_pixel_coords(
-                transformed_point[0], transformed_point[1], bbox, xScale, yScale
+                transformed_point[0],
+                transformed_point[1],
+                bbox,
+                xScale,
+                yScale,
+                x_offset,
+                y_offset,
             )
-            color = label_mapped.get('color', (256, 256, 256))
+            color = label_mapped.get('color', (255, 255, 255))
             draw.ellipse(
                 (
                     pixel_point[0] - point_radius,
@@ -400,7 +480,7 @@ def create_animation(
                 label_mapped['label'],
                 label_point,
                 label_size,
-                label_mapped.get('color', (256, 256, 256)),
+                label_mapped.get('color', (255, 255, 255)),
             )
         if 'site_label' in labels and site_label_mapped:
             site_label_point = (
@@ -412,7 +492,7 @@ def create_animation(
                 site_label_mapped['label'],
                 site_label_point,
                 label_size,
-                site_label_mapped.get('color', (256, 256, 256)),
+                site_label_mapped.get('color', (255, 255, 255)),
             )
 
         frames.append(img)

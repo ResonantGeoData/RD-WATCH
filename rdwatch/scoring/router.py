@@ -1,3 +1,4 @@
+import logging
 from typing import Literal, TypeAlias
 
 from django.contrib.auth.models import User
@@ -18,6 +19,7 @@ RGD_DB_MODELS: set[type[Model]] = {
     AnimationSiteExport,
     AnimationModelRunExport,
 }
+logger = logging.getLogger(__name__)
 
 
 class ScoringRouter:
@@ -48,16 +50,15 @@ class ScoringRouter:
         self, obj1: type[Model], obj2: type[Model], **hints
     ) -> bool | None:
         """
-        Allow relations if a model in the scoring app is
-        involved.
+        Allow relations if a model is all core or all scoring/
         """
         labels = {obj1._meta.app_label, obj2._meta.app_label}
+        if 'core' in labels and 'scoring' in labels:
+            return False
         if obj1._meta.app_label == 'auth' and isinstance(obj1, User):
-            return obj2._meta.app_label == 'scoring'
+            return True
         if obj2._meta.app_label == 'auth' and isinstance(obj2, User):
-            return obj1._meta.app_label == 'scoring'
-        if 'rdwatch' in labels or 'scoring' in labels:
-            return obj1._meta.app_label == obj2._meta.app_label
+            return True
         return None
 
     def allow_migrate(

@@ -30,75 +30,79 @@ from rdwatch.core.models import (
 logger = logging.getLogger(__name__)
 
 label_mapping = {
-    'Active Construction': {
+    'active_construction': {
         'color': (192, 0, 0),
         'label': 'Active Construction',
     },
-    'Post Construction': {
+    'post_construction': {
         'color': (91, 155, 213),
         'label': 'Post Construction',
     },
-    'Site Preparation': {
+    'site_preparation': {
         'color': (255, 217, 102),
         'label': 'Site Preparation',
     },
-    'Unknown': {
+    'unknown': {
         'color': (112, 48, 160),
         'label': 'Unknown',
     },
-    'No Activity': {
+    'no_activity': {
         'color': (166, 166, 166),
         'label': 'No Activity',
     },
-    'Positive Annotated': {
+    'positive_annotated': {
         'color': (127, 0, 0),
         'label': 'Positive Annotated',
     },
-    'Positive Partial': {
+    'positive': {
+        'color': (127, 0, 0),
+        'label': 'Positive Annotated',
+    },
+    'positive_partial': {
         'color': (0, 0, 139),
         'label': 'Positive Partial',
     },
-    'Positive Annotated Static': {
+    'positive_annotated_static': {
         'color': (255, 140, 0),
         'label': 'Positive Annotated Static',
     },
-    'Positive Partial Static': {
+    'positive_partial_static': {
         'color': (255, 255, 0),
         'label': 'Positive Partial Static',
     },
-    'Positive Pending': {
+    'positive_pending': {
         'color': (30, 144, 255),
         'label': 'Positive Pending',
     },
-    'Positive Excluded': {
+    'positive_excluded': {
         'color': (0, 255, 255),
         'label': 'Positive Excluded',
     },
-    'Negative': {
+    'negative': {
         'color': (255, 0, 255),
         'label': 'Negative',
     },
-    'Ignore': {
+    'ignore': {
         'color': (0, 255, 0),
         'label': 'Ignore',
     },
-    'Transient Positive': {
+    'transient_positive': {
         'color': (255, 105, 180),
         'label': 'Transient Positive',
     },
-    'Transient Negative': {
+    'transient_negative': {
         'color': (255, 228, 196),
         'label': 'Transient Negative',
     },
-    'System Proposed': {
+    'system_proposed': {
         'color': (31, 119, 180),
         'label': 'System Proposed',
     },
-    'System Confirmed': {
+    'system_confirmed': {
         'color': (31, 119, 180),
         'label': 'System Confirmed',
     },
-    'System Rejected': {
+    'system_rejected': {
         'color': (31, 119, 180),
         'label': 'System Rejected',
     },
@@ -166,9 +170,9 @@ def paste_image_with_bbox(
     rescale_y_factor = output_pixel_per_unit_x / pixel_per_unit_x
     rescale_x = int(rescale_x_factor * source_width_px)
     rescale_y = int(rescale_y_factor * source_height_px)
-    # logger.warning(f'\tRescaling Source: {source_width_px} {source_height_px}')
-    # logger.warning(f'\tRescale Size: {rescale_x} {rescale_y}')
-    # logger.warning(f'\tRescaling Factor: {rescale_x_factor} {rescale_y_factor}')
+    # logger.info(f'\tRescaling Source: {source_width_px} {source_height_px}')
+    # logger.info(f'\tRescale Size: {rescale_x} {rescale_y}')
+    # logger.info(f'\tRescaling Factor: {rescale_x_factor} {rescale_y_factor}')
     rescaled_source_image = source_image.resize((rescale_x, rescale_y))
 
     # determine what section of the new image to grab based on the output_bbox_size
@@ -179,7 +183,7 @@ def paste_image_with_bbox(
         (output_bbox[2] - bbox[0]) * output_pixel_per_unit_x,
         (output_bbox[3] - bbox[1]) * output_pixel_per_unit_y,
     )
-    # logger.warning(f'\tCrop: {crop}')
+    # logger.info(f'\tCrop: {crop}')
     cropped_img = rescaled_source_image.crop(
         (crop[0], crop[1], crop[2], crop[3])
     )  # left, top, right, bottom
@@ -352,7 +356,7 @@ def create_animation(
     images = SiteImage.objects.filter(query).order_by('timestamp')
 
     if len(images) == 0:
-        logger.warning('No Images found returning')
+        logger.info('No Images found returning')
         return False, False
     total_images = len(images)
     max_image_record = None
@@ -377,7 +381,21 @@ def create_animation(
     # using the max_image_bbox we apply the rescale_border
     if rescale:
         # Need the geometry base site evaluation bbox plus 20% around it for rescaling
-        max_image_bbox = site_evaluation.geom.extent
+        if site_evaluation.geom:
+            max_image_bbox = site_evaluation.geom.extent
+        elif site_evaluation.point:
+            tempbox = site_evaluation.point.extent
+            if (
+                tempbox[2] == tempbox[0] and tempbox[3] == tempbox[1]
+            ):  # create bbox based on pointArea
+                size_diff = 500 * 0.5
+                max_image_bbox = [
+                    tempbox[0] - size_diff,
+                    tempbox[1] - size_diff,
+                    tempbox[2] + size_diff,
+                    tempbox[3] + size_diff,
+                ]
+
         max_image_bbox = rescale_bbox(max_image_bbox, 1.2)
 
         # Rescale the large box larger based on the rescale border
@@ -400,10 +418,6 @@ def create_animation(
         )
         y_pixel_per_unit = max_height_px / (
             max_image_record_bbox[3] - max_image_record_bbox[1]
-        )
-        logger.warning(f'PixelPerUnit : {x_pixel_per_unit}, {y_pixel_per_unit}')
-        logger.warning(
-            f'Rescaled: {rescaled_image_bbox_width} {rescaled_image_bbox_height}'
         )
         # Update the rescaled max dimensions
         rescaled_max_width = int(rescaled_image_bbox_width * x_pixel_per_unit)
@@ -513,7 +527,7 @@ def create_animation(
                     )
                     for lon, lat in transformed_coords
                 ]
-                color = label_mapped.get('color', (256, 256, 256))
+                color = label_mapped.get('color', (255, 255, 255))
                 draw.polygon(pixel_coords, outline=color)
         if not polygon and observation:
             point = observation.point
@@ -522,9 +536,15 @@ def create_animation(
         if point and 'geom' in labels:
             transformed_point = (point.x, point.y)
             pixel_point = to_pixel_coords(
-                transformed_point[0], transformed_point[1], bbox, xScale, yScale
+                transformed_point[0],
+                transformed_point[1],
+                bbox,
+                xScale,
+                yScale,
+                x_offset,
+                y_offset,
             )
-            color = label_mapped.get('color', (256, 256, 256))
+            color = label_mapped.get('color', (255, 255, 255))
             draw.ellipse(
                 (
                     pixel_point[0] - point_radius,
@@ -590,7 +610,7 @@ def create_animation(
                 label_mapped['label'],
                 label_point,
                 label_size,
-                label_mapped.get('color', (256, 256, 256)),
+                label_mapped.get('color', (255, 255, 255)),
             )
         if 'site_label' in labels and site_label_mapped:
             site_label_point = (
@@ -602,7 +622,7 @@ def create_animation(
                 site_label_mapped['label'],
                 site_label_point,
                 label_size,
-                site_label_mapped.get('color', (256, 256, 256)),
+                site_label_mapped.get('color', (255, 255, 255)),
             )
 
         frames.append(img)
@@ -706,7 +726,7 @@ def create_site_animation_export(
         site_export.save()
         file_path, name = create_animation(self, site_evaluation_id, settings)
         if file_path is False and name is False:
-            logger.warning('No Images were found')
+            logger.info('No Images were found')
             site_export.delete()
             return
         site_export.name = name
@@ -716,7 +736,7 @@ def create_site_animation_export(
         if os.path.exists(file_path):
             os.remove(file_path)
     except Exception as e:
-        logger.warning(f'Error when processing Animation: {e}')
+        logger.info(f'Error when processing Animation: {e}')
         if site_export:
             site_export.delete()
 

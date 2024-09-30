@@ -55,7 +55,7 @@ from rdwatch.core.utils.images import (
     ignore_pillow_filesize_limits,
     scale_bbox,
 )
-from rdwatch.core.utils.raster_tile import get_raster_bbox
+from rdwatch.core.utils.raster_tile import get_raster_bbox_from_reader
 from rdwatch.core.utils.worldview_nitf.raster_tile import get_worldview_nitf_bbox
 from rdwatch.core.utils.worldview_processed.raster_tile import (
     get_worldview_processed_visual_bbox,
@@ -394,7 +394,8 @@ def get_siteobservations_images(
             elif baseConstellation == 'WV' and worldview_source == 'nitf':
                 bytes = get_worldview_nitf_bbox(capture, max_bbox, 'PNG', scale)
             else:
-                bytes = get_raster_bbox(capture.uri, max_bbox, 'PNG', scale)
+                with capture.open_reader() as reader:
+                    bytes = get_raster_bbox_from_reader(reader, max_bbox, 'PNG', scale)
             if bytes is None:
                 count += 1
                 logger.warning(f'COULD NOT FIND ANY IMAGE FOR TIMESTAMP: {timestamp}')
@@ -424,7 +425,7 @@ def get_siteobservations_images(
                 existing.image.delete()
                 existing.cloudcover = cloudcover
                 existing.image = image
-                existing.aws_location = capture.uri
+                existing.aws_location = getattr(capture, 'uri', '')
                 existing.image_bbox = Polygon.from_bbox(max_bbox)
                 existing.image_dimensions = [imageObj.width, imageObj.height]
                 existing.save()
@@ -432,7 +433,7 @@ def get_siteobservations_images(
                 SiteImage.objects.create(
                     site=baseSiteEval,
                     timestamp=capture_timestamp,
-                    aws_location=capture.uri,
+                    aws_location=getattr(capture, 'uri', ''),
                     image=image,
                     cloudcover=cloudcover,
                     percent_black=percent_black,

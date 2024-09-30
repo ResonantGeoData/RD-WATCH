@@ -219,7 +219,7 @@ def get_siteobservations_images(
             observation.sensor_name if proposal else observation.sensor_name or 'WV'
         )
         # We need to grab the image for this timerange and type
-        logger.warning(timestamp)
+        logger.info(timestamp)
         if str(constellation) == baseConstellation and timestamp is not None:
             count += 1
             base_site_eval = site_eval_id
@@ -234,7 +234,7 @@ def get_siteobservations_images(
                 and dayRange > -1
                 and is_inside_range(found_timestamps.keys(), observation.date, dayRange)
             ):
-                logger.warning(f'Skipping Timestamp: {timestamp}')
+                logger.info(f'Skipping Timestamp: {timestamp}')
                 continue
             if found.exists() and not force:
                 found_timestamps[observation.date] = True
@@ -243,20 +243,20 @@ def get_siteobservations_images(
                 bbox, timestamp, constellation.slug, baseConstellation == 'WV', scale
             )
             if results is None:
-                logger.warning(f'COULD NOT FIND ANY IMAGE FOR TIMESTAMP: {timestamp}')
+                logger.info(f'COULD NOT FIND ANY IMAGE FOR TIMESTAMP: {timestamp}')
                 continue
             bytes = results['bytes']
             percent_black = get_percent_black_pixels(bytes)
             cloudcover = results['cloudcover']
             found_timestamp = results['timestamp']
             if bytes is None:
-                logger.warning(f'COULD NOT FIND ANY IMAGE FOR TIMESTAMP: {timestamp}')
+                logger.info(f'COULD NOT FIND ANY IMAGE FOR TIMESTAMP: {timestamp}')
                 continue
             if dayRange != -1 and percent_black < no_data_limit:
                 found_timestamps[found_timestamp] = True
             elif dayRange == -1:
                 found_timestamps[found_timestamp] = True
-            # logger.warning(f'Retrieved Image with timestamp: {timestamp}')
+            # logger.info(f'Retrieved Image with timestamp: {timestamp}')
             output = f'tile_image_{observation.pk}.png'
             image = File(io.BytesIO(bytes), name=output)
             imageObj = Image.open(io.BytesIO(bytes))

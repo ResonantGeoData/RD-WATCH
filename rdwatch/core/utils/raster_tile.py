@@ -71,7 +71,7 @@ def get_raster_tile_from_reader(
 
 
 def get_raster_tile(uri: str, z: int, x: int, y: int) -> bytes:
-    # logger.warning(f'SITE URI: {uri}')
+    # logger.info(f'SITE URI: {uri}')
     with ExitStack() as cxt_stack:
         cxt_stack.enter_context(rasterio.Env(GDAL_DISABLE_READDIR_ON_OPEN='EMPTY_DIR'))
 

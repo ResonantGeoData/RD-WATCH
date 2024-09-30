@@ -26,10 +26,10 @@ def _download_nitf_image(uri: str) -> Generator[str, None, None]:
 
     with NamedTemporaryFile(suffix='.nitf') as f:
         startTime = time.time()
-        logger.warning(f'Image URI: {uri}')
-        logger.warning(f'Base Info Time: {time.time() - startTime}')
+        logger.info(f'Image URI: {uri}')
+        logger.info(f'Base Info Time: {time.time() - startTime}')
         s3.download_fileobj(s3_bucket, s3_path, f)
-        logger.warning(f'RGB Download Time: {time.time() - startTime}')
+        logger.info(f'RGB Download Time: {time.time() - startTime}')
         yield f.name
 
 

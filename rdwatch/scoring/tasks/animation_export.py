@@ -199,7 +199,7 @@ def create_animation(
     total_images = len(images)
     max_image_record = None
     max_width_px, max_height_px = 0, 0
-    for image_record in images:
+    for image_record in images.iterator():
         if image_record.image:
             img = Image.open(image_record.image)
             width, height = image_record.image_dimensions

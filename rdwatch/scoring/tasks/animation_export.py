@@ -617,7 +617,7 @@ def create_site_animation_export(
 
 @app.task(bind=True)
 def create_modelrun_animation_export(
-    self, modelrun_id: UUID4, settings: GenerateAnimationSchema, userId: int
+    self, modelrun_id: UUID4, settings: dict[str,  Any], userId: int
 ):
     task_id = self.request.id
     model_run = EvaluationRun.objects.get(pk=modelrun_id)

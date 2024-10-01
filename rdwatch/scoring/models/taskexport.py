@@ -1,7 +1,7 @@
 from django.contrib.auth.models import User
 from django.db import models
 
-from rdwatch.core.models.annotation_exports import AbstractFileExport
+from rdwatch.core.models.task_exports import AbstractFileExport
 
 
 class AnimationSiteExport(AbstractFileExport):

@@ -114,6 +114,20 @@ RUN npm run build
 RUN chmod -R u=rX,g=rX,o= /app/vue/dist
 
 
+# Run collectstatic for django application
+FROM django-builder AS django-collectstatic
+COPY rdwatch/ /app/rdwatch/
+# Copy dev env var setup to enable us to run collectstatic.
+# These will not be used in production, but the collectstatic
+# management command requires them to be set to *something*.
+COPY dev/ /app/dev/
+ENV RDWATCH_SMART_STAC_KEY="test"
+ENV RDWATCH_SMART_STAC_URL="http://test.example.com"
+ENV RDWATCH_ALLOWED_GITLAB_GROUPS=""
+ENV RDWATCH_SECRET_KEY="foobar"
+RUN bash -c "source dev/export-env.sh && export DJANGO_CONFIGURATION=ProductionConfiguration && poetry run django-admin collectstatic --noinput"
+
+
 # Built virtual environment for django-rdwatch
 #    editable source is in /app/rdwatch
 #    virtual environment is in /app/rdwatch/.venv
@@ -140,6 +154,11 @@ COPY --from=django-dist \
      --chown=rdwatch:rdwatch \
      /app/ \
      /app/
+# Copy django static assets
+COPY --from=django-collectstatic \
+     --chown=rdwatch:rdwatch \
+     /app/static \
+     /app/static
 # Copy vue static assets
 COPY --from=vue-dist \
      --chown=unit:unit \

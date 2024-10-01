@@ -3,13 +3,14 @@ from collections.abc import Iterable
 
 from celery.result import AsyncResult
 from ninja import Router
-from pydantic import UUID4, BaseModel
+from pydantic import UUID4
 
 from django.core.files.storage import default_storage
 from django.db import transaction
 from django.http import HttpRequest
 from django.shortcuts import get_object_or_404
 
+from rdwatch.core.views.animation import DeleteErrorSchema, DeleteSuccessSchema
 from rdwatch.scoring.models import (
     AnimationModelRunExport,
     AnimationSiteExport,
@@ -95,14 +96,6 @@ def get_modelrun_downloads(
     ).order_by('-created')
     logger.warning(f'Found: {exports.exists()} with id: {id}')
     return generate_download_data(exports)
-
-
-class DeleteErrorSchema(BaseModel):
-    error: str
-
-
-class DeleteSuccessSchema(BaseModel):
-    success: str
 
 
 @router.delete(

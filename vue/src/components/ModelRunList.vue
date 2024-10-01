@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import ModelRunCard from "./ModelRunCard.vue";
 import type { ModelRunList } from "../client/models/ModelRunList";
-import type { QueryArguments } from "../client";
+import { ApiService, type QueryArguments } from "../client";
 import { computed, onMounted, ref, watch, withDefaults } from "vue";
 import { filteredSatelliteTimeList, queryModelRuns, state, updateCameraBoundsBasedOnModelRunList, updatePerformers, updateRegionList } from "../store";
 import type { KeyedModelRun } from '../store'
@@ -30,6 +30,8 @@ async function loadModelRuns(type: 'firstPage' | 'nextPage') {
 }
 
 const loadingSatelliteTimestamps = ref(false);
+
+const isScoring = computed(() => ApiService.isScoring());
 
 function handleToggle(modelRun: KeyedModelRun) {
   if (state.selectedImageSite) {
@@ -190,7 +192,10 @@ onMounted(() => loadModelRuns('firstPage'));
       </v-alert>
     </div>
     <div class="d-flex justify-end flex-grow-0 pb-2">
-      <upload-model-run @upload="refreshListings" />
+      <upload-model-run
+        v-if="!isScoring"
+        @upload="refreshListings"
+      />
     </div>
     <v-container
       class="overflow-y-auto flex-grow-1 flex-shrink-1"

@@ -1,9 +1,9 @@
 import logging
-from typing import Literal
+from typing import Any, Literal
 
 from celery.result import AsyncResult
 from ninja import Query, Router, Schema
-from pydantic import UUID4
+from pydantic import UUID4, root_validator
 
 from django.contrib.gis.db.models.aggregates import Collect
 from django.contrib.gis.db.models.fields import GeometryField
@@ -35,6 +35,7 @@ router = Router()
 
 class GenerateImagesSchema(Schema):
     constellation: list[Literal['WV', 'S2', 'L8', 'PL']] = ['WV']
+    worldviewSource: Literal['cog', 'nitf'] | None = None
     dayRange: int = 14
     noData: int = 50
     overrideDates: None | list[str] = None
@@ -42,6 +43,13 @@ class GenerateImagesSchema(Schema):
     scale: Literal['default', 'bits', 'custom'] = 'bits'
     scaleNum: None | list[int] = None
     bboxScale: None | float = 1.2
+    pointArea: None | float = 200
+
+    @root_validator
+    def validate_worldview_source(cls, values: dict[str, Any]):
+        if 'WV' in values['constellation'] and values['worldviewSource'] is None:
+            raise ValueError('worldviewSource is required for WV constellation')
+        return values
 
 
 @router.get('/{evaluation_id}/', response={200: SiteObservationsListSchema})
@@ -246,6 +254,8 @@ def get_site_observation_images(
         params.overrideDates,
         scalVal,
         params.bboxScale,
+        params.pointArea,
+        params.worldviewSource,
     )
     return 202, True
 

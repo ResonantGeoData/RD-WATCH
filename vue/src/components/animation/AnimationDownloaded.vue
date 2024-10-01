@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { Ref, defineProps, onMounted, ref } from "vue";
+import { Ref, defineProps, onMounted, onUnmounted, ref } from "vue";
 import {
   ApiService,
   DownloadedAnimation,
@@ -22,6 +22,8 @@ const dateOptions: Intl.DateTimeFormatOptions = {
     second: "2-digit",
     hour12: false, // Set to false if you prefer a 24-hour format
   };
+
+let timeoutVal: NodeJS.Timeout | null = null;
 
 const formatDateTime = (timeString: string) => {
   // Create a Date object from the time string
@@ -58,7 +60,11 @@ const checkDownloadStatus = async () => {
     currentList.value = data;
   }
   if (checkAgain) {
-    setTimeout(checkDownloadStatus, 1000);
+    if (timeoutVal !== null) {
+      clearTimeout(timeoutVal)
+      timeoutVal = null;
+    }
+    timeoutVal = setTimeout(checkDownloadStatus, 1000);
   }
 };
 const initialized = ref(false);
@@ -67,6 +73,12 @@ onMounted(async () => {
     await checkDownloadStatus();
     initialized.value = true;
 });
+
+onUnmounted(() => {
+  if (timeoutVal !== null) {
+      clearTimeout(timeoutVal)
+    }
+})
 
 const downloadItem = async (taskId: string) => {
   const { url, filename}  = await ApiService.getAnimationDownloadString(taskId, props.type);
@@ -79,6 +91,14 @@ const deleteItem = async (taskId: string) => {
             checkDownloadStatus();
         }
 }
+
+const cancelAnimation = async (taskId: string) => {
+  const result = await ApiService.cancelAnimationDownload(taskId);
+  if (result.success) {
+    checkDownloadStatus();
+  }
+}
+
 const headers = ref([
   { title: "Date", key: "created", width: "250px" },
   { title: "Arguments", key: "arguments", width: "20px" },
@@ -163,6 +183,17 @@ const headers = ref([
               <div>{{ item.state.info.mode }}</div>
               <v-spacer />
             </v-row>
+            <v-row dense>
+              <v-spacer />
+              <v-btn
+                size="x-small"
+                color="error"
+                @click="cancelAnimation(item.taskId)"
+              >
+                Cancel
+              </v-btn>
+              <v-spacer />
+            </v-row>
           </div>
           <div v-else-if="item.state && item.state.error">
             <v-alert type="error">
@@ -179,6 +210,17 @@ const headers = ref([
             <v-row dense>
               <v-spacer />
               <div>Pending</div>
+              <v-spacer />
+            </v-row>
+            <v-row dense>
+              <v-spacer />
+              <v-btn
+                size="x-small"
+                color="error"
+                @click="cancelAnimation(item.taskId)"
+              >
+                Cancel
+              </v-btn>
               <v-spacer />
             </v-row>
           </div>

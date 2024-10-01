@@ -3,15 +3,20 @@ from collections.abc import Iterable
 
 from celery.result import AsyncResult
 from ninja import Router
-from pydantic import UUID4, BaseModel
+from pydantic import UUID4
 
 from django.core.files.storage import default_storage
 from django.db import transaction
 from django.http import HttpRequest
 from django.shortcuts import get_object_or_404
 
-from rdwatch.core.models import AnimationModelRunExport, AnimationSiteExport
-from rdwatch.core.tasks.animation_export import (
+from rdwatch.core.views.animation import DeleteErrorSchema, DeleteSuccessSchema
+from rdwatch.scoring.models import (
+    AnimationModelRunExport,
+    AnimationSiteExport,
+    EvaluationRun,
+)
+from rdwatch.scoring.tasks.animation_export import (
     GenerateAnimationSchema,
     create_modelrun_animation_export,
     create_site_animation_export,
@@ -89,15 +94,8 @@ def get_modelrun_downloads(
     exports = AnimationModelRunExport.objects.filter(
         configuration=id, user=request.user
     ).order_by('-created')
+    logger.warning(f'Found: {exports.exists()} with id: {id}')
     return generate_download_data(exports)
-
-
-class DeleteErrorSchema(BaseModel):
-    error: str
-
-
-class DeleteSuccessSchema(BaseModel):
-    success: str
 
 
 @router.delete(
@@ -166,7 +164,9 @@ def get_downloaded_modelrun_animation(request: HttpRequest, task_id: UUID4):
     animation_export = get_object_or_404(
         AnimationModelRunExport, celery_id=task_id, user=request.user
     )
-    name = f'{animation_export.configuration.title}.zip'
+    model_run = EvaluationRun.objects.get(pk=animation_export.configuration)
+    title = f'Eval_{model_run.evaluation_number}_{model_run.evaluation_run_number}_{model_run.performer}'  # noqa: E501
+    name = f'{title}.zip'
     presigned_url = default_storage.url(animation_export.export_file.name)
     return {'url': presigned_url, 'filename': name}
 

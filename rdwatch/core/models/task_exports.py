@@ -51,7 +51,9 @@ class AnimationSiteExport(AbstractFileExport):
         db_index=True,
     )
     arguments = models.JSONField(null=True, default=None)
-    user = models.ForeignKey(User, on_delete=models.CASCADE)
+    user = models.ForeignKey(
+        User, on_delete=models.CASCADE, related_name='core_animationsiteexports'
+    )
 
 
 class AnimationModelRunExport(AbstractFileExport):
@@ -61,5 +63,7 @@ class AnimationModelRunExport(AbstractFileExport):
         help_text='ModelRun for Animation export',
         db_index=True,
     )
-    user = models.ForeignKey(User, on_delete=models.CASCADE)
+    user = models.ForeignKey(
+        User, on_delete=models.CASCADE, related_name='core_animationmodelrunexports'
+    )
     arguments = models.JSONField(null=True, default=None)

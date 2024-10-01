@@ -53,6 +53,7 @@ class ModelRunAdmin(admin.ModelAdmin):
         'region',
         'title',
         'performer',
+        'proposal',
         'parameters',
         'evaluation',
         'evaluation_run',

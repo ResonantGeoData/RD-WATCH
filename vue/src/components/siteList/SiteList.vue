@@ -129,19 +129,14 @@ const getSites = async (modelRun: string, initRun = false) => {
     return [];
 };
 
-const getAllSiteProposals = async (initRun = false) => {
-    let mainList: SiteDisplay[] = [];
-    for (let i = 0; i < props.modelRuns.length; i += 1) {
-        const results = await getSites(props.modelRuns[i], initRun);
-        mainList = mainList.concat(results);
-    }
-    baseModifiedList.value = mainList;
-    const includeGroundTruth = (state.filters.drawObservations?.includes('groundtruth') || state.filters.drawSiteOutline?.includes('groundtruth') || state.filters.scoringColoring)
-    if (!includeGroundTruth) {
-      modifiedList.value = baseModifiedList.value.filter((item) => !item.groundTruth);
+const filterGroundTruth = (list:SiteDisplay[]) => {
+  let returnList: SiteDisplay[] = [];
+  const includeGroundTruth = (state.filters.drawObservations?.includes('groundtruth') || state.filters.drawSiteOutline?.includes('groundtruth') || state.filters.scoringColoring)
+  if (!includeGroundTruth) {
+    returnList = list.filter((item) => !item.groundTruth);
     } else {
       if (state.filters.scoringColoring) { // Remove items based on color codes
-        modifiedList.value = baseModifiedList.value.filter((item) => {
+        returnList = list.filter((item) => {
           if (item.color_code !== undefined) {
             const colorKey = scoringColors[item.color_code as scoringColorsKeys];
             if (state.filters.scoringColoring && colorKey && colorKey[state.filters.scoringColoring]) {
@@ -152,15 +147,28 @@ const getAllSiteProposals = async (initRun = false) => {
           return false;
         })
       } else {
-        modifiedList.value = mainList;
+        returnList = list;
       }
     }
-    modifiedList.value.sort((a, b) => {
+
+    returnList.sort((a, b) => {
       if (a.selected === b.selected) {
         return a.name.localeCompare(b.name);
       }
       return a.selected ? -1 : 1;
     });
+    return returnList;
+  }
+
+const getAllSiteProposals = async (initRun = false) => {
+    let mainList: SiteDisplay[] = [];
+    for (let i = 0; i < props.modelRuns.length; i += 1) {
+        const results = await getSites(props.modelRuns[i], initRun);
+        mainList = mainList.concat(results);
+    }
+    baseModifiedList.value = mainList;
+
+    modifiedList.value = filterGroundTruth(baseModifiedList.value);
 }
 onMounted(() => getAllSiteProposals(true));
 onUnmounted(() => {
@@ -211,13 +219,7 @@ const selectSite = async (selectedSite: SiteDisplay, deselect= false) => {
     item.selected = !!item.selectedSite;
     updatedList.push(item);
   })
-  updatedList.sort((a, b) => {
-    if (a.selected === b.selected) {
-      return a.name.localeCompare(b.name);
-    }
-    return a.selected ? -1 : 1;
-  });
-  modifiedList.value = updatedList;
+  modifiedList.value = filterGroundTruth(updatedList);
   if (!deselect) {
     nextTick(() => {
       const id = selectedSite.id;

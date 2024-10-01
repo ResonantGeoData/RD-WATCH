@@ -635,13 +635,11 @@ async function queryModelRuns(type: 'firstPage' | 'nextPage', filters: QueryArgu
  */
 const refreshModelRunDownloadingStatuses = async () => {
   const queryState = state.queryStates.loadModelRuns;
-  const loadedPages = queryState.nextPage - 1;
   const activeFilters = queryState.activeFilters;
-
   let existingRequest = queryState.request as CancelablePromise<void> | undefined;
 
   // chain cancelable requests
-  for (let page = 0; page < loadedPages; page++) {
+  for (let page = 1; page < queryState.nextPage; page++) {
     const prevReq = existingRequest;
     existingRequest = new CancelablePromise(async (resolve, reject, onCancel) => {
       let apiCallRequest: CancelablePromise<ModelRunList> | undefined;

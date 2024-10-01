@@ -833,6 +833,13 @@ export class ApiService {
     })
   }
 
+  public static cancelAnimationDownload(taskId: string): CancelablePromise<{error?: string, success?: string}> {
+    return __request(OpenAPI, {
+      method: 'POST',
+      url: `${this.getApiPrefix()}/animation/${taskId}/cancel/`,
+    })
+  }
+
   public static deleteAnimationSiteDownload(taskId: string): CancelablePromise<{error?: string, success?: string}> {
     return __request(OpenAPI, {
       method: 'DELETE',

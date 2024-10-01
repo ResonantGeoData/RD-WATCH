@@ -569,6 +569,8 @@ def generate_images(
         params.overrideDates,
         scalVal,
         params.bboxScale,
+        params.pointArea,
+        params.worldviewSource,
     )
     return 202, True
 

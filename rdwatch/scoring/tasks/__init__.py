@@ -9,7 +9,7 @@ from celery.result import AsyncResult
 from PIL import Image
 from pydantic import UUID4
 
-from django.contrib.gis.geos import Polygon
+from django.contrib.gis.geos import Point, Polygon
 from django.core.files import File
 from django.db import transaction
 
@@ -18,9 +18,11 @@ from rdwatch.core.tasks import (
     BaseTime,
     BboxScaleDefault,
     ToMeters,
+    get_worldview_nitf_bbox,
     get_worldview_processed_visual_bbox,
     is_inside_range,
     overrideImageSize,
+    pointAreaDefault,
 )
 from rdwatch.core.utils.images import (
     fetch_boundbox_image,
@@ -55,6 +57,8 @@ def get_siteobservation_images_task(
     overrideDates: None | list[datetime, datetime] = None,
     scale: Literal['default', 'bits'] | list[int] = 'bits',
     bboxScale: float = BboxScaleDefault,
+    pointArea: float = pointAreaDefault,
+    worldview_source: Literal['cog', 'nitf'] | None = 'cog',
 ) -> None:
     capture_count = 0
     for constellation in baseConstellations:
@@ -68,6 +72,8 @@ def get_siteobservation_images_task(
             overrideDates=overrideDates,
             scale=scale,
             bboxScale=bboxScale,
+            pointArea=pointArea,
+            worldview_source=worldview_source,
         )
     fetching_task = SatelliteFetching.objects.get(site=site_eval_id)
     fetching_task.status = SatelliteFetching.Status.COMPLETE
@@ -87,6 +93,8 @@ def get_siteobservations_images(
     overrideDates: None | list[datetime, datetime] = None,
     scale: Literal['default', 'bits'] | list[int] = 'bits',
     bboxScale: float = BboxScaleDefault,
+    pointArea: float = pointAreaDefault,
+    worldview_source: Literal['cog', 'nitf'] | None = 'cog',
 ) -> None:
     # Ensure we are using ints for the DayRange and no_data_limit
     dayRange = int(dayRange)
@@ -99,6 +107,18 @@ def get_siteobservations_images(
         base_site_eval = Site.objects.get(pk=site_eval_id)
         site_db_model = Site
         geometry = base_site_eval.union_geometry
+        # check if geometry is null and use point
+        if not geometry:
+            point = Point.from_ewkt(base_site_eval.point_geometry)
+            geometry = Polygon(
+                (
+                    (point.x, point.y),
+                    (point.x, point.y),
+                    (point.x, point.y),
+                    (point.x, point.y),
+                    (point.x, point.y),
+                )
+            ).ewkt
         site_observations = Observation.objects.filter(
             site_uuid=site_eval_id
         )  # need a full list for min/max times
@@ -132,15 +152,23 @@ def get_siteobservations_images(
     else:
         max_time = datetime.combine(max_time, datetime.min.time())
 
-    bbox: tuple[float, float, float, float] = Polygon.from_ewkt(geometry).extent
+    tempbox: tuple[float, float, float, float] = Polygon.from_ewkt(geometry).extent
+    # check if data is a point instead of geometry
+    if (
+        tempbox[2] == tempbox[0] and tempbox[3] == tempbox[1]
+    ):  # create bbox based on pointArea
+        size_diff = (pointArea * 0.5) / ToMeters
+        tempbox = [
+            tempbox[0] - size_diff,
+            tempbox[1] - size_diff,
+            tempbox[2] + size_diff,
+            tempbox[3] + size_diff,
+        ]
 
+    bbox = tempbox
     # if width | height is too small we pad S2/L8/PL regions for more context
     bbox_width = (bbox[2] - bbox[0]) * ToMeters
     bbox_height = (bbox[3] - bbox[1]) * ToMeters
-    logger.info('BBOX')
-    logger.info(bbox)
-    logger.info(bbox_width)
-    logger.info(bbox_height)
     if baseConstellation != 'WV' and (
         bbox_width < overrideImageSize or bbox_height < overrideImageSize
     ):
@@ -157,7 +185,6 @@ def get_siteobservations_images(
     bbox = scale_bbox(bbox, bboxScale)
     # get the updated BBOX if it's bigger
     max_bbox = get_max_bbox(bbox, max_bbox)
-    logger.info(max_bbox)
 
     # First we gather all images that match observations
     count = 0
@@ -274,14 +301,8 @@ def get_siteobservations_images(
         timestamp = (min_time - timedelta(days=30)) + timebuffer
 
     # Now we get a list of all the timestamps and captures that fall in this range.
-    worldView = baseConstellation == 'WV'
-    logger.info('MAXBBOX')
-    logger.info(max_bbox)
-    logger.info('timestamp')
-    logger.info(timestamp)
-    logger.info(timebuffer)
     captures = get_range_captures(
-        max_bbox, timestamp, baseConstellation, timebuffer, worldView
+        max_bbox, timestamp, baseConstellation, timebuffer, worldview_source
     )
     self.update_state(
         state='PROGRESS',
@@ -306,6 +327,7 @@ def get_siteobservations_images(
                 'current': count,
                 'total': num_of_captures,
                 'mode': 'No Captures',
+                'source': baseConstellation,
                 'siteEvalId': site_eval_id,
             },
         )
@@ -318,6 +340,7 @@ def get_siteobservations_images(
                 'current': count,
                 'total': num_of_captures,
                 'mode': 'Image Captures',
+                'source': baseConstellation,
                 'siteEvalId': site_eval_id,
             },
         )
@@ -333,10 +356,12 @@ def get_siteobservations_images(
         if capture_timestamp not in found_timestamps.keys():
             # we need to add a new image into the structure
             bytes = None
-            if worldView:
+            if baseConstellation == 'WV' and worldview_source == 'cog':
                 bytes = get_worldview_processed_visual_bbox(
                     capture, max_bbox, 'PNG', scale
                 )
+            elif baseConstellation == 'WV' and worldview_source == 'nitf':
+                bytes = get_worldview_nitf_bbox(capture, max_bbox, 'PNG', scale)
             else:
                 with capture.open_reader() as reader:
                     bytes = get_raster_bbox_from_reader(reader, max_bbox, 'PNG', scale)
@@ -431,6 +456,8 @@ def generate_site_images(
     overrideDates: None | list[datetime, datetime] = None,
     scale: Literal['default', 'bits'] | list[int] = 'bits',
     bboxScale: float = BboxScaleDefault,
+    pointArea: float = pointAreaDefault,
+    worldview_source: Literal['cog', 'nitf'] | None = 'cog',
 ):
     with transaction.atomic():
         # Use select_for_update here to lock the SatelliteFetching row
@@ -466,6 +493,8 @@ def generate_site_images(
             overrideDates,
             scale,
             bboxScale,
+            pointArea,
+            worldview_source,
         )
         fetching_task.celery_id = task_id.id
         fetching_task.save()
@@ -481,6 +510,8 @@ def generate_site_images_for_evaluation_run(
     overrideDates: None | list[datetime, datetime] = None,
     scale: Literal['default', 'bits'] | list[int] = 'bits',
     bboxScale: float = BboxScaleDefault,
+    pointArea: float = pointAreaDefault,
+    worldview_source: Literal['cog', 'nitf'] | None = 'cog',
 ):
     try:
         EvaluationRun.objects.get(pk=model_run_uuid)
@@ -502,4 +533,6 @@ def generate_site_images_for_evaluation_run(
             overrideDates,
             scale,
             bboxScale,
+            pointArea,
+            worldview_source,
         )

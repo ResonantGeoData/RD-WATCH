@@ -1,4 +1,5 @@
 from . import (
+    animation,
     eval,
     model_run,
     performer,
@@ -23,4 +24,5 @@ __all__ = [
     'site',
     'eval',
     'satellite_fetching',
+    'animation',
 ]

@@ -272,7 +272,6 @@ def get_siteobservations_images(
                 found_timestamps[found_timestamp] = True
             elif dayRange == -1:
                 found_timestamps[found_timestamp] = True
-            # logger.info(f'Retrieved Image with timestamp: {timestamp}')
             output = f'tile_image_{observation.id}.png'
             image = File(io.BytesIO(bytes), name=output)
             with ignore_pillow_filesize_limits():

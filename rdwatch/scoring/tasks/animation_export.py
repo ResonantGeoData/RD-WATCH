@@ -137,7 +137,7 @@ def find_closest_observation(site_uuid, timestamp, model='Observation'):
 
 @shared_task
 def create_animation(
-    self, site_evaluation_id: UUID4, settings: GenerateAnimationSchema
+    self, site_evaluation_id: UUID4, settings: dict[str, Any]
 ):
     settingsSchema = GenerateAnimationSchema(**settings)
     output_format = settingsSchema.output_format

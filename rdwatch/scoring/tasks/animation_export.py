@@ -579,7 +579,7 @@ def create_animation(
 
 @app.task(bind=True)
 def create_site_animation_export(
-    self, site_evaluation_id: UUID4, settings: GenerateAnimationSchema, userId: int
+    self, site_evaluation_id: UUID4, settings: dict[str, Any], userId: int
 ):
     task_id = self.request.id
     try:

@@ -7,6 +7,7 @@ import { filteredSatelliteTimeList, queryModelRuns, state, updateCameraBoundsBas
 import type { KeyedModelRun } from '../store'
 import { hoveredInfo } from "../interactions/mouseEvents";
 import UploadModelRun from './UploadModelRun.vue';
+import { useRoute } from 'vue-router';
 
 interface Props {
   filters: QueryArguments;
@@ -23,6 +24,11 @@ const emit = defineEmits<{
 const totalModelRuns = computed(() => state.totalNumModelRuns);
 const loading = computed(() => state.queryStates.loadModelRuns.inflightQueries > 0);
 const satelliteRegionTooLarge = ref(false);
+
+const route = useRoute();
+const isAnnotatorMode = computed(() => {
+  return route.fullPath.replace(/\/$/, '').endsWith('proposals')
+});
 
 async function loadModelRuns(type: 'firstPage' | 'nextPage') {
   const modelRunList = await queryModelRuns(type, props.filters, props.compact);
@@ -193,7 +199,7 @@ onMounted(() => loadModelRuns('firstPage'));
     </div>
     <div class="d-flex justify-end flex-grow-0 pb-2">
       <upload-model-run
-        v-if="!isScoring"
+        v-if="!isScoring && !isAnnotatorMode"
         @upload="refreshListings"
       />
     </div>

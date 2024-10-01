@@ -691,4 +691,7 @@ def start_model_run_upload_processing(
 @router.get('/upload_status/{task_id}')
 def model_run_upload_status(request: HttpRequest, task_id: str):
     result = AsyncResult(task_id)
-    return result.status
+    return {
+        'status': result.status,
+        'traceback': result.traceback,
+    }

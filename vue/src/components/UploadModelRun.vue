@@ -1,11 +1,25 @@
 <script setup lang="ts">
-import { reactive, ref, watch } from "vue";
+import { computed, reactive, ref, watch } from "vue";
 import S3FileFieldClient, {
   S3FileFieldResultState,
 } from "django-s3-file-field";
 import { ApiService } from "../client";
+import { state } from '../store';
 
 const emits = defineEmits(['upload']);
+
+class ErrorWithTraceback extends Error {
+  traceback: string | null | undefined;
+
+  constructor(msg: string, traceback?: string | null) {
+    super(msg)
+    this.traceback = traceback;
+  }
+
+  toString() {
+    return `${this.message}\n${this.traceback}`;
+  }
+}
 
 const s3ffClient = new S3FileFieldClient({
   baseUrl: `${ApiService.getApiPrefix()}/s3-upload/`,
@@ -36,12 +50,20 @@ const QUERY_TASK_POLL_DELAY = 1000; // msec
 // from celery.states.READY_STATES
 const CELERY_READY_STATES = ["FAILURE", "SUCCESS", "REVOKED"];
 
+const regionList = computed(() => state.regionList.map((region) => region.name));
+const performerList = computed(() => state.performerIds.map((id) => state.performerMapping[id].short_code));
+
 function resetModelRun() {
   modelRun.title = "";
   modelRun.region = "";
   modelRun.performer = "";
   modelRun.private = false;
   uploadFile.value = undefined;
+}
+
+function errorStrFromTraceback(traceback: string): string {
+  const lines = traceback.trim().split('\n');
+  return lines[lines.length - 1];
 }
 
 watch(uploadDialog, (visible) => {
@@ -56,11 +78,11 @@ function openUploadDialog() {
 }
 
 async function untilTaskReady(taskId: string) {
-  return new Promise((resolve) => {
+  return new Promise<{ status: string, traceback: string | null}>((resolve) => {
     async function queryTask() {
       const result = await ApiService.getModelRunUploadTaskStatus(taskId);
 
-      if (CELERY_READY_STATES.includes(result)) {
+      if (CELERY_READY_STATES.includes(result.status)) {
         resolve(result);
       } else {
         setTimeout(() => {
@@ -90,7 +112,7 @@ async function upload() {
     );
     if (uploadResult.state !== S3FileFieldResultState.Successful) {
       const status = ["was aborted", "", "errored"][uploadResult.state];
-      throw new Error(`File upload ${status}`);
+      throw new ErrorWithTraceback(`Could not upload the file (status = ${status})`);
     }
 
     const taskId = await ApiService.postModelRunUpload({
@@ -101,15 +123,22 @@ async function upload() {
       private: modelRun.private,
     });
 
-    const taskState = await untilTaskReady(taskId);
-    if (taskState !== "SUCCESS") {
-      throw new Error(`Upload failed with state: ${taskState}`);
+    const taskResult = await untilTaskReady(taskId);
+    if (taskResult.status !== "SUCCESS") {
+      const error = errorStrFromTraceback(taskResult.traceback || "unknown server error");
+      throw new ErrorWithTraceback(error, taskResult.traceback);
     }
 
     successDialog.value = true;
     emits('upload');
   } catch (err) {
-    uploadError.value = err;
+    if (err instanceof ErrorWithTraceback) {
+      uploadError.value = err.message;
+    } else {
+      uploadError.value = err;
+    }
+    // propagate to the app-level error handler
+    throw err;
   } finally {
     uploadLoading.value = false;
   }
@@ -130,6 +159,11 @@ function closeDialogs() {
   successDialog.value = false;
   uploadDialog.value = false;
 }
+
+// close both dialogs when closing the success dialog (e.g. via ESC)
+watch(successDialog, (visible) => {
+  if (!visible) closeDialogs();
+})
 </script>
 
 <template>
@@ -143,7 +177,7 @@ function closeDialogs() {
   <v-dialog
     v-model="uploadDialog"
     width="70%"
-    persistent
+    :persistent="uploadLoading"
   >
     <v-card>
       <v-card-title>Upload a new model run</v-card-title>
@@ -164,13 +198,15 @@ function closeDialogs() {
             :rules="[validateFile]"
             :disabled="uploadLoading"
           />
-          <v-text-field
+          <v-combobox
             v-model="modelRun.region"
+            :items="regionList"
             label="Override Region (optional)"
             :disabled="uploadLoading"
           />
-          <v-text-field
+          <v-combobox
             v-model="modelRun.performer"
+            :items="performerList"
             label="Override Performer (optional)"
             :disabled="uploadLoading"
           />
@@ -209,7 +245,6 @@ function closeDialogs() {
   </v-dialog>
   <v-dialog
     v-model="successDialog"
-    persistent
     width="25%"
   >
     <v-card>

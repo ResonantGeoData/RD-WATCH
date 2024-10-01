@@ -1,5 +1,6 @@
 import os
 from datetime import timedelta
+from pathlib import Path
 
 from configurations import Configuration, values
 
@@ -19,6 +20,7 @@ class _AlwaysContains:
 
 
 class BaseConfiguration(Configuration):
+    BASE_DIR = Path(__file__).resolve().parent.parent
     ROOT_URLCONF = 'rdwatch.urls'
     USE_I18N = False
     USE_TZ = False
@@ -26,9 +28,14 @@ class BaseConfiguration(Configuration):
     WSGI_APPLICATION = 'rdwatch.wsgi.application'
     ALLOWED_HOSTS = ['*']
     DEBUG = values.BooleanValue(False, environ_prefix='RDWATCH_DJANGO')
+
     # Django's docs suggest that STATIC_URL should be a relative path,
     # for convenience serving a site on a subpath.
     STATIC_URL = 'static/'
+
+    @property
+    def STATIC_ROOT(self) -> str:
+        return str(self.BASE_DIR / 'static')
 
     # The `/accounts/*` endpoints are the only endpoints that should *not*
     # require authentication to access

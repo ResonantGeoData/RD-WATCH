@@ -4,6 +4,7 @@ import tempfile
 import time
 import zipfile
 from datetime import datetime
+from typing import Any
 
 import cv2
 import numpy as np
@@ -136,9 +137,7 @@ def find_closest_observation(site_uuid, timestamp, model='Observation'):
 
 
 @shared_task
-def create_animation(
-    self, site_evaluation_id: UUID4, settings: dict[str, Any]
-):
+def create_animation(self, site_evaluation_id: UUID4, settings: dict[str, Any]):
     settingsSchema = GenerateAnimationSchema(**settings)
     output_format = settingsSchema.output_format
     fps = settingsSchema.fps
@@ -617,7 +616,7 @@ def create_site_animation_export(
 
 @app.task(bind=True)
 def create_modelrun_animation_export(
-    self, modelrun_id: UUID4, settings: dict[str,  Any], userId: int
+    self, modelrun_id: UUID4, settings: dict[str, Any], userId: int
 ):
     task_id = self.request.id
     model_run = EvaluationRun.objects.get(pk=modelrun_id)

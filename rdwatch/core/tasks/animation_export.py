@@ -4,7 +4,7 @@ import tempfile
 import time
 import zipfile
 from datetime import datetime
-from typing import Literal
+from typing import Any, Literal
 
 import cv2
 import numpy as np
@@ -305,9 +305,7 @@ class GenerateAnimationSchema(BaseModel):
 
 
 @shared_task
-def create_animation(
-    self, site_evaluation_id: UUID4, settings: GenerateAnimationSchema
-):
+def create_animation(self, site_evaluation_id: UUID4, settings: dict[str, Any]):
     settingsSchema = GenerateAnimationSchema(**settings)
     output_format = settingsSchema.output_format
     fps = settingsSchema.fps
@@ -708,7 +706,7 @@ def create_animation(
 
 @app.task(bind=True)
 def create_site_animation_export(
-    self, site_evaluation_id: UUID4, settings: GenerateAnimationSchema, userId: int
+    self, site_evaluation_id: UUID4, settings: dict[str, Any], userId: int
 ):
     task_id = self.request.id
     site_evaluation = SiteEvaluation.objects.get(pk=site_evaluation_id)
@@ -743,7 +741,7 @@ def create_site_animation_export(
 
 @app.task(bind=True)
 def create_modelrun_animation_export(
-    self, modelrun_id: UUID4, settings: GenerateAnimationSchema, userId: int
+    self, modelrun_id: UUID4, settings: dict[str, Any], userId: int
 ):
     task_id = self.request.id
     model_run = ModelRun.objects.get(pk=modelrun_id)

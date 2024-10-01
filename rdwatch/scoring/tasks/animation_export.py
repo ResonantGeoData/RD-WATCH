@@ -194,7 +194,7 @@ def create_animation(
     images = SiteImage.objects.filter(query).order_by('timestamp')
 
     if len(images) == 0:
-        logger.warning('No Images found returning')
+        logger.debug('No Images found returning')
         return False, False
     total_images = len(images)
     max_image_record = None

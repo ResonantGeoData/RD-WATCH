@@ -334,3 +334,20 @@ class ProductionConfiguration(BaseConfiguration):
     LOGIN_URL = '/accounts/gitlab/login/'
 
     ACCOUNT_EMAIL_VERIFICATION = 'none'
+
+    SENTRY_DSN = values.Value(
+        None,
+        environ_prefix=_ENVIRON_PREFIX,
+        environ_required=False,
+    )
+    SENTRY_ENVIRONMENT = values.Value(
+        None,
+        environ_prefix=_ENVIRON_PREFIX,
+        environ_required=False,
+    )
+
+    @property
+    def SENTRY_RELEASE(self) -> str:
+        import rdwatch
+
+        return rdwatch.__version__

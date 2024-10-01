@@ -232,8 +232,32 @@ def get_site_observation_images(
     scalVal = params.scale
     if params.scale == 'custom':
         scalVal = params.scaleNum
+
+    site_eval = get_object_or_404(SiteEvaluation, pk=evaluation_id)
+
+    with transaction.atomic():
+        satellite_fetching = (
+            SatelliteFetching.objects.select_for_update().filter(site=site_eval).first()
+        )
+        if satellite_fetching is not None:
+            # If the task already exists and is running, return a 409 and do not
+            # start another one.
+            if satellite_fetching.status == SatelliteFetching.Status.RUNNING:
+                return 409, 'Image generation already in progress.'
+            # Otherwise, if the task exists but is *not* running, set the status
+            # to running and kick off the task
+            satellite_fetching.status = SatelliteFetching.Status.RUNNING
+            satellite_fetching.timestamp = datetime.now()
+            satellite_fetching.save()
+        else:
+            fetching_task = SatelliteFetching.objects.create(
+                site=site_eval,
+                timestamp=datetime.now(),
+                status=SatelliteFetching.Status.RUNNING,
+            )
     generate_site_images.delay(
         evaluation_id,
+        fetching_task.pk,
         params.constellation,
         params.force,
         params.dayRange,

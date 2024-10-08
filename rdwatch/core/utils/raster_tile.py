@@ -1,4 +1,5 @@
 import logging
+from collections.abc import Sequence
 from contextlib import ExitStack
 from typing import Literal
 
@@ -40,18 +41,33 @@ def get_read_kwargs_for_reader(reader: Reader | STACReader):
     return {'indexes': list(range(1, reader.dataset.count + 1))}
 
 
-def get_rescale_range_from_reader(reader: Reader | STACReader) -> tuple[float, float]:
-    """Get the rescale range from the reader statistics."""
+def get_rescale_range_from_reader(
+    reader: Reader | STACReader,
+) -> Sequence[tuple[float, float]]:
+    """Get the rescale range from the reader statistics.
+
+    Returns a sequence of ranges, with each range corresponding to a band.
+    """
     if isinstance(reader, STACReader):
-        all_stats = reader.merged_statistics()
+        all_stats = reader.merged_statistics(assets=reader.include_assets)
+        bands: list[str] = []
+        for asset_name in reader.include_assets:
+            for band_idx in range(
+                1, get_asset_num_bands(reader.item.assets[asset_name]) + 1
+            ):
+                bands.append(f'{asset_name}_b{band_idx}')
     else:
         all_stats = reader.statistics()
+        bands = [f'b{band_idx}' for band_idx in range(1, reader.dataset.count + 1)]
 
     if len(all_stats) == 0:
-        return DEFAULT_RESCALE_RANGE
-    # TODO This only gets the "first" band of the "first" asset. Acceptable?
-    band_stats = next(iter(all_stats.values()))
-    return band_stats['percentile_2'], band_stats['percentile_98']
+        return (DEFAULT_RESCALE_RANGE,)
+
+    ranges: Sequence[tuple[float, float]] = []
+    for band in bands:
+        band_stats = all_stats[band]
+        ranges.append((band_stats['percentile_2'], band_stats['percentile_98']))
+    return ranges
 
 
 def get_raster_tile_from_reader(
@@ -63,10 +79,10 @@ def get_raster_tile_from_reader(
 ) -> bytes:
     img = reader.tile(x, y, z, tilesize=512)
     if scale == 'default':
-        img.rescale(in_range=((0, 10000),))
+        img.rescale(in_range=(DEFAULT_RESCALE_RANGE,))
     elif scale == 'bits':
-        low, high = get_rescale_range_from_reader(reader)
-        img.rescale(in_range=((low, high),))
+        band_ranges = get_rescale_range_from_reader(reader)
+        img.rescale(in_range=band_ranges)
     return img.render(img_format='WEBP')
 
 
@@ -79,7 +95,7 @@ def get_raster_tile(uri: str, z: int, x: int, y: int) -> bytes:
         if uri.startswith('https://sentinel-cogs.s3.us-west-2.amazonaws.com'):
             cxt_stack.enter_context(rasterio.Env(AWS_NO_SIGN_REQUEST='YES'))
             uri = 's3://sentinel-cogs/' + uri[49:]
-            # rescale S2 data wit hbits
+            # rescale S2 data with bits
             scale_by = 'bits'
 
         cog = cxt_stack.enter_context(Reader(input=uri))
@@ -94,10 +110,10 @@ def get_raster_bbox_from_reader(
 ) -> bytes:
     img = reader.part(bbox, **get_read_kwargs_for_reader(reader))
     if scale == 'default':
-        img.rescale(in_range=((0, 10000),))
+        img.rescale(in_range=(DEFAULT_RESCALE_RANGE,))
     elif scale == 'bits':
-        low, high = get_rescale_range_from_reader(reader)
-        img.rescale(in_range=((low, high),))
+        band_ranges = get_rescale_range_from_reader(reader)
+        img.rescale(in_range=band_ranges)
     elif isinstance(scale, list) and len(scale) == 2:
         img.rescale(in_range=((scale[0], scale[1]),))
     return img.render(img_format=format_)

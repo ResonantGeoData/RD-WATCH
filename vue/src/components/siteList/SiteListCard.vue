@@ -11,6 +11,14 @@ import ImageBrowser from './ImageBrowser.vue';
 import ImageToggle from './ImageToggle.vue';
 import AnimationDownloadDialog from "../animation/AnimationDownloadDialog.vue";
 
+export interface satelliteFetchingDownloadingInfo {
+  current: number;
+  total: number;
+  mode: string;
+  source: string;
+  siteEvalId: string;
+}
+
 export interface SiteDisplay {
   number: number;
   id: string;
@@ -30,6 +38,7 @@ export interface SiteDisplay {
   status?: SiteModelStatus;
   timestamp: number;
   downloading: boolean;
+  downloadingData?: satelliteFetchingDownloadingInfo;
   groundTruth?: boolean;
   color_code?: number;
   originator?: string;
@@ -62,6 +71,7 @@ const localSite: Ref<SiteDisplay> = ref({...props.site});
 const imagesActive = computed(() => state.enabledSiteImages.findIndex((item) => item.id === props.site.id) !== -1);
 const hasImages = computed(() =>  props.site.WV > 0 || props.site.S2 > 0 || props.site.PL > 0 || props.site.L8 > 0);
 const downloading = computed(() => props.site.downloading);
+const downloadingData = computed(() => props.site.downloadingData);
 
 const statusMap: Record<SiteModelStatus, { name: string; color: string, icon: string }> = {
   PROPOSAL: { name: "Proposed", color: "orange", icon: "mdi-dots-horizontal-circle" },
@@ -365,7 +375,34 @@ const animationDialog = ref(false);
                 <v-icon>mdi-image-sync</v-icon>
               </v-btn>
             </template>
-            <span>Currently Downloading Images</span>
+            <v-card v-if="downloadingData" width="200">
+              <v-card-title><h4>{{ downloadingData?.mode }} for {{ downloadingData?.source }}</h4></v-card-title>
+              <v-card-text>
+                <v-row dense>
+                  <v-progress-linear
+                    :model-value="downloadingData.current"
+                    :max="downloadingData?.total"
+                    height="25"
+                    label
+                  >
+                    <template #default="{ value }">
+                      <strong>{{ Math.ceil(value) }}%</strong>
+                    </template>
+                  </v-progress-linear>
+                </v-row>
+                <v-row dense>
+                  <v-spacer>
+                  <span>Downloading {{ downloadingData.current }} of {{  downloadingData.total }}</span>
+                  </v-spacer>
+                </v-row>
+                <v-row dense>
+                  <p>The total number is the found images, due to settings for timing and removing NoData/Cloud Cover all images may not be downloaded</p>
+                </v-row>
+              </v-card-text>
+            </v-card>
+            <div v-else>
+              Fetching Progress...
+            </div>
           </v-tooltip>
           <v-tooltip open-delay="300">
             <template #activator="{ props }">

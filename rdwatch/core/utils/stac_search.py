@@ -81,7 +81,7 @@ def stac_search(
         time_str = f'{_fmt_time(timestamp)}Z'
 
     results = stac_catalog.search(
-        method='GET',
+        method='POST',
         bbox=bbox,
         datetime=time_str,
         collections=COLLECTIONS_BY_SOURCE[source],

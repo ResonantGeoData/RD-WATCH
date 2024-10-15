@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import {
   ApiService,
+  SatelliteFetchingDownloadingInfo,
   SiteModelStatus,
 } from "../../client/services/ApiService";
 import { SiteOverview, state, toggleSatelliteImages } from "../../store";
@@ -11,13 +12,6 @@ import ImageBrowser from './ImageBrowser.vue';
 import ImageToggle from './ImageToggle.vue';
 import AnimationDownloadDialog from "../animation/AnimationDownloadDialog.vue";
 
-export interface satelliteFetchingDownloadingInfo {
-  current: number;
-  total: number;
-  mode: string;
-  source: string;
-  siteEvalId: string;
-}
 
 export interface SiteDisplay {
   number: number;
@@ -38,7 +32,7 @@ export interface SiteDisplay {
   status?: SiteModelStatus;
   timestamp: number;
   downloading: boolean;
-  downloadingData?: satelliteFetchingDownloadingInfo;
+  downloadingData?: SatelliteFetchingDownloadingInfo;
   groundTruth?: boolean;
   color_code?: number;
   originator?: string;
@@ -243,13 +237,6 @@ const animationDialog = ref(false);
           <span class="image-label">L8:</span>
           <span class="image-value">{{ localSite.L8 }}</span>
         </v-col>
-        <v-col cols="1">
-          <span class="image-line" />
-        </v-col>
-        <v-col>
-          <span class="image-label">PL:</span>
-          <span class="image-value">{{ localSite.PL || 0 }}</span>
-        </v-col>
       </v-row>
       <v-row
         dense
@@ -375,14 +362,18 @@ const animationDialog = ref(false);
                 <v-icon>mdi-image-sync</v-icon>
               </v-btn>
             </template>
-            <v-card v-if="downloadingData" width="200">
-              <v-card-title><h4>{{ downloadingData?.mode }} for {{ downloadingData?.source }}</h4></v-card-title>
+            <v-card
+              v-if="downloadingData"
+              width="400"
+            >
+              <v-card-title><span style="font-size: 12px; font-weight:bold">{{ downloadingData.mode }}</span></v-card-title>
               <v-card-text>
                 <v-row dense>
                   <v-progress-linear
                     :model-value="downloadingData.current"
                     :max="downloadingData?.total"
                     height="25"
+                    color="primary"
                     label
                   >
                     <template #default="{ value }">
@@ -392,7 +383,7 @@ const animationDialog = ref(false);
                 </v-row>
                 <v-row dense>
                   <v-spacer>
-                  <span>Downloading {{ downloadingData.current }} of {{  downloadingData.total }}</span>
+                    <span>Downloading {{ downloadingData.current }} of {{ downloadingData.total }} in source: {{ downloadingData.source}}</span>
                   </v-spacer>
                 </v-row>
                 <v-row dense>

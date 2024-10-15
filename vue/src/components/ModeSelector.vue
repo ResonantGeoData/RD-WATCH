@@ -1,9 +1,10 @@
 <script setup lang="ts">
 import { computed } from "vue";
 import { useRoute } from "vue-router";
+import { state } from "../store";
 
 const route = useRoute();
-const scoringApp = computed(()=> route.path.includes('scoring'));
+const scoringApp = computed(() => state.dataSource === 'scoring');
 const proposalView = computed(() => route.path.includes('proposals'));
 
 </script>

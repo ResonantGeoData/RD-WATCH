@@ -159,6 +159,7 @@ export interface KeyedModelRun extends ModelRun {
 
 export const state = reactive<{
   appVersion: string;
+  dataSource: string | null;
   errorText: string;
   timestamp: number;
   timeMin: number;
@@ -217,6 +218,7 @@ export const state = reactive<{
   };
 }>({
   appVersion: '',
+  dataSource: null,
   errorText: '',
   timestamp: Math.floor(Date.now() / 1000),
   timeMin: Math.floor(new Date(0).valueOf() / 1000),

@@ -15,7 +15,7 @@ const emit = defineEmits<{
 const evals: Ref<Eval[]> = ref([]);
 const selectedEvals: Ref<Eval[]> = ref(props.modelValue);
 const loadEvals = async () => {
-  if (ApiService.getApiPrefix().includes('scoring')) {
+  if (ApiService.isScoring()) {
     const evalList = await ApiService.getEvals();
     const evalResults = evalList.items
     evals.value = evalResults;

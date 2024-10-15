@@ -506,10 +506,6 @@ def create_animation(self, site_evaluation_id: UUID4, settings: dict[str, Any]):
             if upscaled:
                 xScale = xScale * (rescaled_max_width / base_rescaled_max_width)
                 yScale = yScale * (rescaled_max_height / base_rescaled_max_height)
-            #     baseXScale = width / (bbox_transform[2] - bbox_transform[0])
-            #     baseYScale = height / (bbox_transform[3] - bbox_transform[1])
-            #     xScale = xScale / baseXScale
-            #     yScale = yScale / baseYScale
 
             x_offset = (bbox_transform[0] - output_bbox_size[0]) * xScale
             y_offset = (bbox_transform[1] - output_bbox_size[1]) * yScale

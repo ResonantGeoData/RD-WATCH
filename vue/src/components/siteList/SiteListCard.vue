@@ -33,6 +33,7 @@ export interface SiteDisplay {
   timestamp: number;
   downloading: boolean;
   downloadingData?: SatelliteFetchingDownloadingInfo;
+  downloadingError?: string;
   groundTruth?: boolean;
   color_code?: number;
   originator?: string;
@@ -66,6 +67,7 @@ const imagesActive = computed(() => state.enabledSiteImages.findIndex((item) => 
 const hasImages = computed(() =>  props.site.WV > 0 || props.site.S2 > 0 || props.site.PL > 0 || props.site.L8 > 0);
 const downloading = computed(() => props.site.downloading);
 const downloadingData = computed(() => props.site.downloadingData);
+const downloadingError = computed(() => props.site.downloadingError);
 
 const statusMap: Record<SiteModelStatus, { name: string; color: string, icon: string }> = {
   PROPOSAL: { name: "Proposed", color: "orange", icon: "mdi-dots-horizontal-circle" },
@@ -356,7 +358,7 @@ const animationDialog = ref(false);
                 density="compact"
                 class="pa-0 ma-1 site-icon animate-flicker"
                 size="xmall"
-                color="warning"
+                :color="!downloadingError ? 'warning' : 'error'"
                 v-bind="props"
               >
                 <v-icon>mdi-image-sync</v-icon>
@@ -388,6 +390,17 @@ const animationDialog = ref(false);
                 </v-row>
                 <v-row dense>
                   <p>The total number is the found images, due to settings for timing and removing NoData/Cloud Cover all images may not be downloaded</p>
+                </v-row>
+              </v-card-text>
+            </v-card>
+            <v-card
+              v-else-if="downloadingError"
+              width="400"
+            >
+              <v-card-title>Downloading Error</v-card-title>
+              <v-card-text>
+                <v-row dense>
+                  <p>{{ downloadingError }}</p>
                 </v-row>
               </v-card-text>
             </v-card>

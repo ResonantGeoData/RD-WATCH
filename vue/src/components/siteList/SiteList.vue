@@ -49,12 +49,15 @@ const satelliteFetchingCheck = async () => {
     if (item.downloading && !foundDownloadItem) {
       item.downloading = false;
       item.downloadingData = undefined;
+      item.downloadingError = undefined;
     } else if (!item.downloading && !!foundDownloadItem) {
       item.downloading = true;
       item.downloadingData = foundDownloadItem.info;
+      item.downloadingError = foundDownloadItem.error;
     }
     if (foundDownloadItem) {
       item.downloadingData = foundDownloadItem.info;
+      item.downloadingError = foundDownloadItem.error;
     }
     newList.push(item)
   });

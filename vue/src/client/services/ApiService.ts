@@ -738,7 +738,7 @@ export class ApiService {
     })
   }
 
-  public static getSatelliteFetchingRunning(modelRunIds?: string[]): CancelablePromise<{items: {siteId: string, info:SatelliteFetchingDownloadingInfo}[], count: number}> {
+  public static getSatelliteFetchingRunning(modelRunIds?: string[]): CancelablePromise<{items: {siteId: string, info:SatelliteFetchingDownloadingInfo, error?: string}[], count: number}> {
     return __request(OpenAPI, {
       method: 'GET',
       url: `${this.getApiPrefix()}/satellite-fetching/running/`,

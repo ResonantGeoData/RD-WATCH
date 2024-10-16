@@ -208,9 +208,9 @@ watch(hiddenCanvas, () => {
 
 watch(databaseSource, () => {
   if (databaseSource.value === 'Scoring') {
-    setDataSource('scoring');
+    setDataSource('scoring', { persist: true });
   } else {
-    setDataSource(null);
+    setDataSource(null, { persist: true });
   }
 })
 </script>

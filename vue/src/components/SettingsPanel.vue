@@ -2,11 +2,9 @@
 import { Ref, computed, nextTick, onMounted, ref, watch } from "vue";
 import { state } from "../store";
 import { addPattern } from "../interactions/fillPatterns";
-import { useRoute, useRouter } from "vue-router";
+import { setDataSource } from "../actions/dataSource";
 
-const route = useRoute();
-const router = useRouter();
-const scoringApp = computed(()=> route.path.includes('scoring'));
+const scoringApp = computed(() => state.dataSource === 'scoring');
 const databaseSource: Ref<'RD-WATCH' | 'Scoring'> = ref(scoringApp.value ? 'Scoring' : 'RD-WATCH');
 const autoZoom = computed({
   get() {
@@ -210,15 +208,9 @@ watch(hiddenCanvas, () => {
 
 watch(databaseSource, () => {
   if (databaseSource.value === 'Scoring') {
-    localStorage.setItem('databaseSource', 'Scoring');
-    if (!scoringApp.value) {
-      router.push('scoring');
-    }
+    setDataSource('scoring', { persist: true });
   } else {
-    localStorage.removeItem('databaseSource');
-    if (scoringApp.value) {
-      router.push('/');
-    }
+    setDataSource(null, { persist: true });
   }
 })
 </script>
@@ -311,7 +303,7 @@ watch(databaseSource, () => {
           />
         </v-col>
       </v-row>
-      <v-row 
+      <v-row
         v-if="imagesOn"
         dense
       >

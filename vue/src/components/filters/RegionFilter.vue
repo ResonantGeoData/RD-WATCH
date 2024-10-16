@@ -1,12 +1,12 @@
 <script setup lang="ts">
-import { ref, watch } from "vue";
+import { computed, ref, watch } from "vue";
 import type { Ref } from "vue";
 import type { Region } from "../../client";
 import { useRouter, } from 'vue-router';
 import { state } from "../../store";
 
 const router = useRouter();
-
+const isScoringApp = computed(() => state.dataSource === 'scoring');
 
 const props = defineProps<{
   modelValue?: Region;
@@ -39,7 +39,7 @@ watch(() => state.filters.regions, () => {
 
 watch(selectedRegion, (val) => {
   let prepend = '/'
-  if (router.currentRoute.value.fullPath.includes('scoring')) {
+  if (isScoringApp.value) {
     prepend += 'scoring/'
   }
   if (router.currentRoute.value.fullPath.includes('proposals')) {

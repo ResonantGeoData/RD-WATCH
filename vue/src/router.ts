@@ -5,7 +5,6 @@ import Annotation from './views/AnnotationViewer.vue';
 import FullScreenImageViewer from './views/FullScreenImageViewer.vue';
 import SAM from './views/SAM.vue';
 import SmartFlow from "./views/SmartFlow.vue";
-import { ApiService } from './client/services/ApiService'; // Import your ApiService implementation
 
 const routes = [
   { path: '/imageViewer/:siteEvalId', component: FullScreenImageViewer, props:true, },
@@ -23,15 +22,5 @@ const router = createRouter({
     history: createWebHashHistory(),
     routes, // short for `routes: routes`
   })
-
-router.beforeEach((to, from, next) => {
-    // Check if the current route has a prefix '/scoring'
-    const isScoringRoute = to.path.startsWith('/scoring');
-
-    // Set the ApiService prefix URL accordingly
-    ApiService.setApiPrefix(isScoringRoute ? "/api/scoring" : "/api");
-
-    next(); // Continue with the navigation
-  });
 
 export default router;

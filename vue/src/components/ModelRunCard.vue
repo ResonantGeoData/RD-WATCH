@@ -6,7 +6,6 @@ import { timeRangeFormat } from "../utils";
 import ImagesDownloadDialog from "./ImagesDownloadDialog.vue";
 import AnimationDownloadDialog from "./animation/AnimationDownloadDialog.vue";
 import { DownloadSettings } from "../client/services/ApiService";
-import { useRoute } from "vue-router";
 import { debounce } from 'lodash';
 import { state } from "../store";
 
@@ -32,8 +31,7 @@ async function handleClick(modelRun: ModelRun) {
   emit("toggle");
 }
 
-const route = useRoute();
-const scoringApp = computed(() => route.path.includes('scoring'));
+const scoringApp = computed(() => state.dataSource === 'scoring');
 const downloadImages = ref(false);
 
 let loopingInterval: NodeJS.Timeout | null = null;
@@ -156,7 +154,7 @@ const animationDialog = ref(false);
         </div>
         <v-spacer />
         <v-col cols="1">
-          <v-checkbox 
+          <v-checkbox
             v-if="!props.modelRun.proposal"
             :model-value="props.open"
             density="compact"
@@ -164,7 +162,7 @@ const animationDialog = ref(false);
             hide-details
             @update:model-value="handleClick(modelRun)"
           />
-          <v-radio 
+          <v-radio
             v-else-if="props.modelRun.proposal"
             :model-value="props.open"
             density="compact"

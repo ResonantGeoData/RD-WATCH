@@ -17,7 +17,7 @@ class AbstractCapture(ABC):
 
     @property
     def uris(self) -> list[str]:
-        '''A list of URIs that make up the capture.'''
+        """A list of URIs that make up the capture."""
         raise NotImplementedError
 
 

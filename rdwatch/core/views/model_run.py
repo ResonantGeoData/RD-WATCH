@@ -14,7 +14,6 @@ from django.contrib.gis.db.models import GeometryField
 from django.contrib.gis.db.models.functions import Transform
 from django.contrib.postgres.aggregates import JSONBAgg
 from django.core import signing
-from django.core.cache import cache
 from django.core.files.storage import default_storage
 from django.db import transaction
 from django.db.models import (
@@ -205,31 +204,14 @@ def get_queryset():
 
     return (
         ModelRun.objects.select_related('performer')
-        # Get minimum score and performer so that we can tell which runs
-        # are ground truth
-        .annotate(
-            min_score=Min('evaluations__score'),
-        )
-        # Label ground truths as such. A ground truth is defined as a model run
-        # with a min_score of 1 and a performer of "TE"
-        .alias(
-            groundtruth=Case(
-                When(min_score=1, performer__short_code__iexact='TE', then=True),
-                default=False,
-            )
-        )
         # Order queryset so that ground truths are first
-        .order_by('groundtruth', '-created')
-        .alias(
-            evaluation_configuration=F('evaluations__configuration'),
-            proposal_val=F('proposal'),
-        )
+        .order_by('ground_truth', '-created')
         .annotate(
             region_name=F('region__name'),
             downloading=Coalesce(
                 Subquery(
                     SatelliteFetching.objects.filter(
-                        site__configuration_id=OuterRef('evaluation_configuration'),
+                        site__configuration_id=OuterRef('pk'),
                         status=SatelliteFetching.Status.RUNNING,
                     )
                     .annotate(count=Func(F('id'), function='Count'))
@@ -271,7 +253,7 @@ def get_queryset():
             ),
             adjudicated=Case(
                 When(
-                    ~Q(proposal_val=None),  # When proposal has a value
+                    ~Q(proposal=None),  # When proposal has a value
                     then=JSONObject(
                         proposed=Coalesce(Subquery(proposed_count_subquery), 0),
                         other=Coalesce(Subquery(other_count_subquery), 0),
@@ -306,44 +288,30 @@ class ModelRunPagination(PageNumberPagination):
         filters: ModelRunFilterSchema,
         **params,
     ) -> dict[str, Any]:
-        # TODO: remove caching after model runs endpoint is
-        # refactored to be more efficient.
-        model_runs = None
-        cache_key = _get_model_runs_cache_key(filters.dict() | pagination.dict())
-
-        # If we have a cache miss, execute the query and save the results to cache
-        # before returning.
-        if model_runs is None:
-            qs = super().paginate_queryset(queryset, pagination, **params)
-            aggregate_kwargs = {
-                'timerange': JSONObject(
-                    min=ExtractEpoch(Min('evaluations__start_date')),
-                    max=ExtractEpoch(Max('evaluations__end_date')),
-                ),
-            }
-            if filters.region:
-                aggregate_kwargs['bbox'] = Coalesce(
-                    BoundingBoxGeoJSON('region__geom'),
-                    BoundingBoxGeoJSON('evaluations__geom'),
-                )
-
-            model_runs = qs | queryset.aggregate(**aggregate_kwargs)
-            if filters.region:
-                if qs['count'] == 0:  # No model runs we set bbox to Region bbox
-                    region_filter = filters.dict()['region']
-                    regions = [
-                        obj
-                        for obj in Region.objects.all()
-                        if obj.value == region_filter
-                    ]
-                    if len(regions) > 0:
-                        bbox = regions[0].geojson
-                        model_runs['bbox'] = bbox
-            cache.set(
-                key=cache_key,
-                value=model_runs,
-                timeout=timedelta(days=30).total_seconds(),
+        qs = super().paginate_queryset(queryset, pagination, **params)
+        aggregate_kwargs = {
+            'timerange': JSONObject(
+                min=ExtractEpoch(Min('evaluations__start_date')),
+                max=ExtractEpoch(Max('evaluations__end_date')),
+            ),
+        }
+        if filters.region:
+            aggregate_kwargs['bbox'] = Coalesce(
+                BoundingBoxGeoJSON('region__geom'),
+                BoundingBoxGeoJSON('evaluations__geom'),
             )
+
+        model_runs = qs | queryset.aggregate(**aggregate_kwargs)
+        if filters.region:
+            if qs['count'] == 0:  # No model runs; we set bbox to Region bbox
+                region_filter = filters.dict()['region']
+                # We do a full table scan because this isn't a common case and isn't a bottleneck;
+                # the equivalent database query is really annoying due to the logic of the
+                # `Region.value` property.
+                for region in Region.objects.all():
+                    if region.value == region_filter:
+                        model_runs['bbox'] = region.geojson
+                        break
 
         return model_runs
 
@@ -388,27 +356,14 @@ def create_model_run(
     }
 
 
-def _get_model_runs_cache_key(params: dict) -> str:
-    """Generate a cache key for the model runs listing endpoint."""
-    most_recent_evaluation = ModelRun.objects.aggregate(
-        latest_eval=Max('evaluations__timestamp')
-    )['latest_eval']
-
-    return '|'.join(
-        [
-            ModelRun.__name__,
-            str(most_recent_evaluation),
-            *[f'{key}={value}' for key, value in params.items()],
-        ]
-    ).replace(' ', '_')
-
-
 @router.get('/', response={200: list[ModelRunListSchema]})
 @paginate(ModelRunPagination, page_size=MODEL_RUN_PAGE_SIZE)
 def list_model_runs(
     request: HttpRequest,
     filters: ModelRunFilterSchema = Query(...),  # noqa: B008
 ):
+    # TODO maybe the aggregate stats should have a separate endpoint since they only need to
+    # be queried when the filters change, not every time a new page is loaded
     return filters.filter(get_queryset())
 
 

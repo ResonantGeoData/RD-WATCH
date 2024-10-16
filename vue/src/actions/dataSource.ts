@@ -42,9 +42,19 @@ function updateApiService() {
   ApiService.setApiPrefix(isScoringRoute ? "/api/scoring" : "/api");
 }
 
-export function reloadDataSourceFromStorage() {
-  const storageValue = localStorage.getItem(LOCAL_STORAGE_KEY)?.toLowerCase() ?? null;
-  setDataSource(storageValue);
+export function initializeDataSourceConfig() {
+  // first read from URL
+  const dataSource = ALLOWED_DATA_SOURCES.find(
+    (src) => Router.currentRoute.value.fullPath.startsWith(`/${src}`)
+  );
+
+  if (dataSource) {
+    setDataSource(dataSource);
+  } else {
+    // fallback to local storage
+    const storageValue = localStorage.getItem(LOCAL_STORAGE_KEY)?.toLowerCase() ?? null;
+    setDataSource(storageValue);
+  }
 }
 
 export function setDataSource(db: string | null) {

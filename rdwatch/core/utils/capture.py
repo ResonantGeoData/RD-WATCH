@@ -13,7 +13,12 @@ from rio_tiler.io.stac import STACReader
 class AbstractCapture(ABC):
     @abstractmethod
     def open_reader(self) -> Generator[BaseReader | MultiBaseReader, None, None]:
-        ...
+        raise NotImplementedError
+
+    @property
+    def uris(self) -> list[str]:
+        '''A list of URIs that make up the capture.'''
+        raise NotImplementedError
 
 
 @dataclass
@@ -34,6 +39,10 @@ class URICapture(AbstractCapture):
 
             cog = cxt_stack.enter_context(Reader(input=uri))
             yield cog
+
+    @property
+    def uris(self):
+        return [self.uri]
 
 
 @dataclass

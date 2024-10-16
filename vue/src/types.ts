@@ -18,7 +18,7 @@ export interface EvaluationImage {
     percent_black: number;
     bbox: BaseBBox;
     image_dimensions: [number, number];
-    aws_location: string;
+    uri_locations: string[];
     image_embedding?: string;
 }
 

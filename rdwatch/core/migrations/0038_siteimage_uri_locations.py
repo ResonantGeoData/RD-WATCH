@@ -15,7 +15,7 @@ class Migration(migrations.Migration):
             name='uri_locations',
             field=django.contrib.postgres.fields.ArrayField(
                 base_field=models.CharField(max_length=2048),
-                null=True,
+                default=list,
                 help_text='Links to base files used to construct this image',
                 size=None,
             ),

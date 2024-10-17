@@ -17,7 +17,6 @@ from django.core import signing
 from django.core.files.storage import default_storage
 from django.db import transaction
 from django.db.models import (
-    Avg,
     Case,
     Count,
     Exists,
@@ -36,7 +35,12 @@ from django.http import Http404, HttpRequest, HttpResponse
 from django.shortcuts import get_object_or_404
 from django.views.decorators.csrf import csrf_exempt
 
-from rdwatch.core.db.functions import BoundingBox, BoundingBoxGeoJSON, ExtractEpoch
+from rdwatch.core.db.functions import (
+    AsGeoJSONDeserialized,
+    BoundingBox,
+    BoundingBoxGeoJSON,
+    ExtractEpoch,
+)
 from rdwatch.core.models import (
     AnnotationExport,
     ModelRun,
@@ -134,9 +138,9 @@ class ModelRunDetailSchema(Schema):
     region: str = Field(alias='region_name')
     performer: PerformerSchema
     parameters: dict
-    numsites: int | None = 0
+    numsites: int | None = Field(0, alias='cached_score')
     downloading: int | None = None
-    score: float | None = None
+    score: float | None = Field(None, alias='cached_score')
     timestamp: int | None = None
     timerange: TimeRangeSchema | None = None
     bbox: dict | None
@@ -155,9 +159,9 @@ class ModelRunListSchema(Schema):
     region: str = Field(..., alias='region_name')
     performer: PerformerSchema
     parameters: dict
-    numsites: int | None = 0
+    numsites: int | None = Field(0, alias='cached_numsites')
     downloading: int | None = None
-    score: float | None = None
+    score: float | None = Field(None, alias='cached_score')
     timestamp: int | None = None
     timerange: TimeRangeSchema | None = None
     bbox: dict | None
@@ -205,8 +209,7 @@ def get_queryset():
     return (
         ModelRun.objects.select_related('performer')
         # Order queryset so that ground truths are first
-        .order_by('ground_truth', '-created')
-        .annotate(
+        .order_by('ground_truth', '-created').annotate(
             region_name=F('region__name'),
             downloading=Coalesce(
                 Subquery(
@@ -219,14 +222,12 @@ def get_queryset():
                 ),
                 0,  # Default value when evaluations are None
             ),
-            numsites=Count('evaluations__pk', distinct=True),
-            score=Avg('evaluations__score'),
-            timestamp=ExtractEpoch(Max('evaluations__timestamp')),
+            timestamp=ExtractEpoch('cached_timestamp'),
             timerange=JSONObject(
-                min=ExtractEpoch(Min('evaluations__start_date')),
-                max=ExtractEpoch(Max('evaluations__end_date')),
+                min=ExtractEpoch('cached_timerange_min'),
+                max=ExtractEpoch('cached_timerange_max'),
             ),
-            bbox=BoundingBoxGeoJSON('evaluations__geom'),
+            bbox=AsGeoJSONDeserialized('cached_bbox'),
             groundTruthLink=Case(
                 When(
                     Q(ground_truth=False),

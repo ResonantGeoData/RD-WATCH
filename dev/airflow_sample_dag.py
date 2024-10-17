@@ -8,9 +8,7 @@ with DAG(
     dag_id="RD-WATCH-AIRFLOW-DEMO-DAG",
     description="Test DAG",
     params={
-        "region_id": Param(
-            default="BR_R002", type="string", pattern=r"^.{1,255}$"
-        ),
+        "region_id": Param(default="BR_R002", type="string", pattern=r"^.{1,255}$"),
         "model_run_title": Param(default="test_run", type="string"),
     },
     start_date=datetime(2022, 3, 1),

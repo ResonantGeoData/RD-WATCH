@@ -56,7 +56,7 @@ class SiteEvaluationImageSchema(Schema):
     observation_id: str | None
     bbox: BoundingBoxSchema
     image_dimensions: list[int]
-    uri_locations: str
+    uri_locations: list[str]
 
 
 class SiteEvaluationImageListSchema(Schema):

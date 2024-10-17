@@ -9,7 +9,7 @@ def migrate_aws_location_to_uri_locations(apps, schema_editor):
     for site_image in SiteImage.objects.using(dbalias).all():
         if site_image.aws_location:
             site_image.uri_locations = [site_image.aws_location]
-        site_image.save()
+        site_image.save(using=dbalias)
 
 
 def reverse_migrate_aws_location_to_uri_locations(apps, schema_editor):
@@ -21,7 +21,7 @@ def reverse_migrate_aws_location_to_uri_locations(apps, schema_editor):
             site_image.aws_location = site_image.uri_locations[0]
         else:
             site_image.aws_location = ''
-        site_image.save()
+        site_image.save(using=dbalias)
 
 
 class Migration(migrations.Migration):

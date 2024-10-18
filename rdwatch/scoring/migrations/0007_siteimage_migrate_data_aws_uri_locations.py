@@ -5,23 +5,21 @@ from django.db import migrations
 
 def migrate_aws_location_to_uri_locations(apps, schema_editor):
     SiteImage = apps.get_model('scoring', 'SiteImage')
-    dbalias = schema_editor.connection.alias
-    for site_image in SiteImage.objects.using(dbalias).all():
+    for site_image in SiteImage.objects.all():
         if site_image.aws_location:
             site_image.uri_locations = [site_image.aws_location]
-        site_image.save(using=dbalias)
+        site_image.save()
 
 
 def reverse_migrate_aws_location_to_uri_locations(apps, schema_editor):
     SiteImage = apps.get_model('scoring', 'SiteImage')
-    dbalias = schema_editor.connection.alias
-    for site_image in SiteImage.objects.using(dbalias).all():
+    for site_image in SiteImage.objects.all():
         if site_image.uri_locations:
             # pick the first URI
             site_image.aws_location = site_image.uri_locations[0]
         else:
             site_image.aws_location = ''
-        site_image.save(using=dbalias)
+        site_image.save()
 
 
 class Migration(migrations.Migration):

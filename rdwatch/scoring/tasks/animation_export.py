@@ -310,7 +310,7 @@ def create_animation(self, site_evaluation_id: UUID4, settings: dict[str, Any]):
             x_offset = 0
             y_offset = 0
         else:
-            img = img.resize((max_width_px, max_height_px))
+            img = img.resize((max_width_px, max_height_px), Image.Resampling.NEAREST)
         draw = ImageDraw.Draw(img)
 
         # Extract image dimensions and bounding box

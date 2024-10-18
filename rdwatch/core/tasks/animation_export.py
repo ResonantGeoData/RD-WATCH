@@ -173,7 +173,9 @@ def paste_image_with_bbox(
     # logger.info(f'\tRescaling Source: {source_width_px} {source_height_px}')
     # logger.info(f'\tRescale Size: {rescale_x} {rescale_y}')
     # logger.info(f'\tRescaling Factor: {rescale_x_factor} {rescale_y_factor}')
-    rescaled_source_image = source_image.resize((rescale_x, rescale_y))
+    rescaled_source_image = source_image.resize(
+        (rescale_x, rescale_y), Image.Resampling.NEAREST
+    )
 
     # determine what section of the new image to grab based on the output_bbox_size
     # this requires finding the difference between the source and output
@@ -478,7 +480,7 @@ def create_animation(self, site_evaluation_id: UUID4, settings: dict[str, Any]):
             x_offset = 0
             y_offset = 0
         else:
-            img = img.resize((max_width_px, max_height_px))
+            img = img.resize((max_width_px, max_height_px), Image.Resampling.NEAREST)
         draw = ImageDraw.Draw(img)
 
         # Extract image dimensions and bounding box

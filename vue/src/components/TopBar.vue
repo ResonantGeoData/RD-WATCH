@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import LayerToggles from './topbar/LayerToggles.vue';
-
+import RegionButton from './topbar/RegionButton.vue';
+import SatelliteRegionButton from './topbar/SatelliteRegionButton.vue';
 </script>
 
 <template>
@@ -12,6 +13,8 @@ import LayerToggles from './topbar/LayerToggles.vue';
       dense
     >
       <layer-toggles />
+      <region-button />
+      <satellite-region-button />
       <v-spacer />
     </v-row>
     <v-spacer />

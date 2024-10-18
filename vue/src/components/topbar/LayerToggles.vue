@@ -184,338 +184,338 @@ const toggleSite = (type?: undefined | 'model' | 'groundtruth') => {
 
 
 <template>
-  <v-col v-if="scoringApp">
-    <v-menu
-      open-on-hover
-    >
-      <template #activator="{ props }">
-        <v-btn
-          class="px-2 mx-2"
-          v-bind="props"
-          size="large"
-          :disabled="!modelRunEnabled"
-          :color="state.filters.scoringColoring ? 'primary' : ''"
-          style="min-width:125px"
-          @click="toggleScoring()"
+  <v-menu
+    v-if="scoringApp"
+    open-on-hover
+  >
+    <template #activator="{ props }">
+      <v-btn
+        class="px-2 mx-2"
+        v-bind="props"
+        size="large"
+        :disabled="!modelRunEnabled"
+        :color="state.filters.scoringColoring ? 'primary' : ''"
+        style="min-width:125px"
+        @click="toggleScoring()"
+      >
+        <span>
+          Scoring
+        </span>
+        <div
+          v-if="state.filters.scoringColoring == 'simple'"
+          class="layer-icon mx-1"
         >
-          <span>
-            Scoring
-          </span>
+          S
+        </div>
+        <div
+          v-if="state.filters.scoringColoring == 'detailed'"
+          class="layer-icon mx-1"
+        >
+          D
+        </div>
+        <v-icon :color="state.filters.scoringColoring ? 'white' : 'black'">
+          mdi-menu-down
+        </v-icon>
+      </v-btn>
+    </template>
+    <v-card outlined>
+      <v-list>
+        <v-list-item
+          value="Simple"
+          @click="toggleScoring('simple')"
+        >
           <div
-            v-if="state.filters.scoringColoring == 'simple'"
-            class="layer-icon mx-1"
+            class="layer-icon pl-1"
           >
             S
           </div>
+
           <div
-            v-if="state.filters.scoringColoring == 'detailed'"
-            class="layer-icon mx-1"
+            class="layer-text"
+          >
+            Simple
+          </div>
+          <v-radio
+            :model-value="state.filters.scoringColoring == 'simple'"
+            density="compact"
+            hide-details
+            readonly
+            class="item-checkbox"
+          />
+        </v-list-item>
+        <v-list-item
+          value="Detailed"
+          @click="toggleScoring('detailed')"
+        >
+          <div
+            class="layer-icon pl-1"
           >
             D
           </div>
-          <v-icon :color="state.filters.scoringColoring ? 'white' : 'black'">
-            mdi-menu-down
-          </v-icon>
-        </v-btn>
-      </template>
-      <v-card outlined>
-        <v-list>
-          <v-list-item
-            value="Simple"
-            @click="toggleScoring('simple')"
+          <div
+            class="layer-text"
           >
-            <div
-              class="layer-icon pl-1"
-            >
-              S
-            </div>
-
-            <div
-              class="layer-text"
-            >
-              Simple
-            </div>
-            <v-radio
-              :model-value="state.filters.scoringColoring == 'simple'"
-              density="compact"
-              hide-details
-              readonly
-              class="item-checkbox"
-            />
-          </v-list-item>
-          <v-list-item
-            value="Detailed"
-            @click="toggleScoring('detailed')"
-          >
-            <div
-              class="layer-icon pl-1"
-            >
-              D
-            </div>
-            <div
-              class="layer-text"
-            >
-              Detailed
-            </div>
-            <v-radio
-              :model-value="state.filters.scoringColoring == 'detailed'"
-              density="compact"
-              hide-details
-              readonly
-              class="item-checkbox"
-            />
-          </v-list-item>
-        </v-list>
-      </v-card>
-    </v-menu>
-    <v-divider v-if="scoringApp" vertical />
-  </v-col>
-  <v-col>
-    <v-menu
-      open-on-hover
-    >
-      <template #activator="{ props }">
-        <v-btn
-          class="px-2 mx-2"
-          size="large"
-          v-bind="props"
-          :disabled="!modelRunEnabled"
-          :color="state.filters.drawObservations ? 'primary' : ''"
-          style="min-width: 200px"
+            Detailed
+          </div>
+          <v-radio
+            :model-value="state.filters.scoringColoring == 'detailed'"
+            density="compact"
+            hide-details
+            readonly
+            class="item-checkbox"
+          />
+        </v-list-item>
+      </v-list>
+    </v-card>
+  </v-menu>
+  <v-divider
+    v-if="scoringApp"
+    vertical
+  />
+  <v-menu
+    open-on-hover
+  >
+    <template #activator="{ props }">
+      <v-btn
+        class="px-2 mx-2"
+        size="large"
+        v-bind="props"
+        :disabled="!modelRunEnabled"
+        :color="state.filters.drawObservations ? 'primary' : ''"
+        style="min-width: 200px"
+        @click="toggleObs()"
+      >
+        <span>
+          Observations
+        </span>
+        <div
+          v-if="state.filters.drawObservations?.includes('model')"
+          class="layer-icon mx-1"
+        >
+          M
+        </div>
+        <div
+          v-if="state.filters.drawObservations?.includes('groundtruth')"
+          class="layer-icon mx-1"
+        >
+          G
+        </div>
+        <v-icon :color="state.filters.drawObservations ? 'white' : 'black'">
+          mdi-menu-down
+        </v-icon>
+      </v-btn>
+    </template>
+    <v-card outlined>
+      <v-list>
+        <v-list-item
+          value="All"
+          class="rootItem"
           @click="toggleObs()"
         >
-          <span>
-            Observations
-          </span>
+          <v-row
+            dense
+            align="center"
+            class="pa-0 ma-0"
+          >
+            <v-spacer />
+            <v-checkbox
+              :model-value="state.filters.drawObservations?.includes('model') && state.filters.drawObservations?.includes('groundtruth')"
+              density="compact"
+              hide-details
+              class="item-checkbox"
+            />
+          </v-row>
+        </v-list-item>
+        <v-list-item
+          value="Model"
+          :class="{'disabled-item': groundTruthState === GroundTruthState.AllGroundTruth}"
+          :disabled="groundTruthState === GroundTruthState.AllGroundTruth"
+          @click="groundTruthState !== GroundTruthState.AllGroundTruth && toggleObs('model')"
+        >
           <div
-            v-if="state.filters.drawObservations?.includes('model')"
-            class="layer-icon mx-1"
+            class="layer-icon pl-1"
           >
             M
           </div>
           <div
-            v-if="state.filters.drawObservations?.includes('groundtruth')"
-            class="layer-icon mx-1"
+            class="layer-text"
+          >
+            Model
+          </div>
+          <v-checkbox-btn
+            :model-value="state.filters.drawObservations?.includes('model')"
+
+            density="compact"
+            :disabled="groundTruthState === GroundTruthState.AllGroundTruth"
+            hide-details
+            readonly
+            class="item-checkbox"
+          />
+        </v-list-item>
+        <v-list-item
+          value="GroundTruth"
+          :class="{'disabled-item': groundTruthState === GroundTruthState.NoGroundTruth}"
+          :disabled="groundTruthState === GroundTruthState.NoGroundTruth"
+          @click="toggleObs('groundtruth')"
+        >
+          <div
+            class="layer-icon pl-1"
           >
             G
           </div>
-          <v-icon :color="state.filters.drawObservations ? 'white' : 'black'">
-            mdi-menu-down
-          </v-icon>
-        </v-btn>
-      </template>
-      <v-card outlined>
-        <v-list>
-          <v-list-item
-            value="All"
-            class="rootItem"
-            @click="toggleObs()"
+          <div
+            class="layer-text"
           >
-            <v-row
-              dense
-              align="center"
-              class="pa-0 ma-0"
-            >
-              <v-spacer />
-              <v-checkbox
-                :model-value="state.filters.drawObservations?.includes('model') && state.filters.drawObservations?.includes('groundtruth')"
-                density="compact"
-                hide-details
-                class="item-checkbox"
-              />
-            </v-row>
-          </v-list-item>
-          <v-list-item
-            value="Model"
-            :class="{'disabled-item': groundTruthState === GroundTruthState.AllGroundTruth}"
-            :disabled="groundTruthState === GroundTruthState.AllGroundTruth"
-            @click="groundTruthState !== GroundTruthState.AllGroundTruth && toggleObs('model')"
-          >
-            <div
-              class="layer-icon pl-1"
-            >
-              M
-            </div>
-            <div
-              class="layer-text"
-            >
-              Model
-            </div>
-            <v-checkbox-btn
-              :model-value="state.filters.drawObservations?.includes('model')"
-
-              density="compact"
-              :disabled="groundTruthState === GroundTruthState.AllGroundTruth"
-              hide-details
-              readonly
-              class="item-checkbox"
-            />
-          </v-list-item>
-          <v-list-item
-            value="GroundTruth"
-            :class="{'disabled-item': groundTruthState === GroundTruthState.NoGroundTruth}"
+            GroundTruth
+          </div>
+          <v-checkbox-btn
+            :model-value="state.filters.drawObservations?.includes('groundtruth')"
+            density="compact"
             :disabled="groundTruthState === GroundTruthState.NoGroundTruth"
-            @click="toggleObs('groundtruth')"
-          >
-            <div
-              class="layer-icon pl-1"
-            >
-              G
-            </div>
-            <div
-              class="layer-text"
-            >
-              GroundTruth
-            </div>
-            <v-checkbox-btn
-              :model-value="state.filters.drawObservations?.includes('groundtruth')"
-              density="compact"
-              :disabled="groundTruthState === GroundTruthState.NoGroundTruth"
-              hide-details
-              readonly
-              class="item-checkbox"
-            />
-          </v-list-item>
-        </v-list>
-      </v-card>
-    </v-menu>
-    <v-menu
-      open-on-hover
-    >
-      <template #activator="{ props }">
-        <v-btn
-          class="px-2 mx-2"
-          v-bind="props"
-          size="large"
-          :disabled="!modelRunEnabled"
-          :color="state.filters.drawSiteOutline ? 'primary' : ''"
-          style="min-width:150px"
+            hide-details
+            readonly
+            class="item-checkbox"
+          />
+        </v-list-item>
+      </v-list>
+    </v-card>
+  </v-menu>
+  <v-menu
+    open-on-hover
+  >
+    <template #activator="{ props }">
+      <v-btn
+        class="px-2 mx-2"
+        v-bind="props"
+        size="large"
+        :disabled="!modelRunEnabled"
+        :color="state.filters.drawSiteOutline ? 'primary' : ''"
+        style="min-width:150px"
+        @click="toggleSite()"
+      >
+        <span>
+          Sites
+        </span>
+        <div
+          v-if="state.filters.drawSiteOutline?.includes('model')"
+          class="layer-icon mx-1"
+        >
+          M
+        </div>
+        <div
+          v-if="state.filters.drawSiteOutline?.includes('groundtruth')"
+          class="layer-icon mx-1"
+        >
+          G
+        </div>
+        <div
+          v-if="state.filters.siteTimeLimits"
+          class="layer-icon mx-1"
+        >
+          T
+        </div>
+        <v-icon :color="state.filters.drawSiteOutline ? 'white' : 'black'">
+          mdi-menu-down
+        </v-icon>
+      </v-btn>
+    </template>
+    <v-card outlined>
+      <v-list>
+        <v-list-item
+          value="All"
+          class="rootItem"
           @click="toggleSite()"
         >
-          <span>
-            Sites
-          </span>
+          <v-row
+            dense
+            align="center"
+            class="pa-0 ma-0"
+          >
+            <v-spacer />
+            <v-checkbox
+              :model-value="state.filters.drawSiteOutline?.includes('model') && state.filters.drawSiteOutline?.includes('groundtruth')"
+              density="compact"
+              hide-details
+              class="item-checkbox"
+            />
+          </v-row>
+        </v-list-item>
+        <v-list-item
+          value="Model"
+          :class="{'disabled-item': groundTruthState === GroundTruthState.AllGroundTruth}"
+          :disabled="groundTruthState === GroundTruthState.AllGroundTruth"
+          @click="toggleSite('model')"
+        >
           <div
-            v-if="state.filters.drawSiteOutline?.includes('model')"
-            class="layer-icon mx-1"
+            class="layer-icon pl-1"
           >
             M
           </div>
           <div
-            v-if="state.filters.drawSiteOutline?.includes('groundtruth')"
-            class="layer-icon mx-1"
+            class="layer-text"
+          >
+            Model
+          </div>
+          <v-checkbox-btn
+            :model-value="state.filters.drawSiteOutline?.includes('model')"
+            density="compact"
+            hide-details
+            :disabled="groundTruthState === GroundTruthState.AllGroundTruth"
+            readonly
+            class="item-checkbox"
+          />
+        </v-list-item>
+        <v-list-item
+          value="GroundTruth"
+          :class="{'disabled-item': groundTruthState === GroundTruthState.NoGroundTruth}"
+          :disabled="groundTruthState === GroundTruthState.NoGroundTruth"
+          @click="toggleSite('groundtruth')"
+        >
+          <div
+            class="layer-icon pl-1"
           >
             G
           </div>
           <div
-            v-if="state.filters.siteTimeLimits"
-            class="layer-icon mx-1"
+            class="layer-text"
+          >
+            GroundTruth
+          </div>
+          <v-checkbox-btn
+            :model-value="state.filters.drawSiteOutline?.includes('groundtruth')"
+            density="compact"
+            hide-details
+            :disabled="groundTruthState === GroundTruthState.NoGroundTruth"
+            readonly
+            class="item-checkbox"
+          />
+        </v-list-item>
+        <v-list-item
+          value="GroundTruth"
+          @click="toggleSiteTimeLimits()"
+        >
+          <div
+            class="layer-icon pl-1"
           >
             T
           </div>
-          <v-icon :color="state.filters.drawSiteOutline ? 'white' : 'black'">
-            mdi-menu-down
-          </v-icon>
-        </v-btn>
-      </template>
-      <v-card outlined>
-        <v-list>
-          <v-list-item
-            value="All"
-            class="rootItem"
-            @click="toggleSite()"
-          >
-            <v-row
-              dense
-              align="center"
-              class="pa-0 ma-0"
-            >
-              <v-spacer />
-              <v-checkbox
-                :model-value="state.filters.drawSiteOutline?.includes('model') && state.filters.drawSiteOutline?.includes('groundtruth')"
-                density="compact"
-                hide-details
-                class="item-checkbox"
-              />
-            </v-row>
-          </v-list-item>
-          <v-list-item
-            value="Model"
-            :class="{'disabled-item': groundTruthState === GroundTruthState.AllGroundTruth}"
-            :disabled="groundTruthState === GroundTruthState.AllGroundTruth"
-            @click="toggleSite('model')"
-          >
-            <div
-              class="layer-icon pl-1"
-            >
-              M
-            </div>
-            <div
-              class="layer-text"
-            >
-              Model
-            </div>
-            <v-checkbox-btn
-              :model-value="state.filters.drawSiteOutline?.includes('model')"
-              density="compact"
-              hide-details
-              :disabled="groundTruthState === GroundTruthState.AllGroundTruth"
-              readonly
-              class="item-checkbox"
-            />
-          </v-list-item>
-          <v-list-item
-            value="GroundTruth"
-            :class="{'disabled-item': groundTruthState === GroundTruthState.NoGroundTruth}"
-            :disabled="groundTruthState === GroundTruthState.NoGroundTruth"
-            @click="toggleSite('groundtruth')"
-          >
-            <div
-              class="layer-icon pl-1"
-            >
-              G
-            </div>
-            <div
-              class="layer-text"
-            >
-              GroundTruth
-            </div>
-            <v-checkbox-btn
-              :model-value="state.filters.drawSiteOutline?.includes('groundtruth')"
-              density="compact"
-              hide-details
-              :disabled="groundTruthState === GroundTruthState.NoGroundTruth"
-              readonly
-              class="item-checkbox"
-            />
-          </v-list-item>
-          <v-list-item
-            value="GroundTruth"
-            @click="toggleSiteTimeLimits()"
-          >
-            <div
-              class="layer-icon pl-1"
-            >
-              T
-            </div>
 
-            <div
-              class="layer-text"
-            >
-              Time Limits
-            </div>
-            <v-checkbox-btn
-              :model-value="state.filters.siteTimeLimits"
-              density="compact"
-              hide-details
-              readonly
-              class="item-checkbox"
-            />
-          </v-list-item>
-        </v-list>
-      </v-card>
-    </v-menu>
-  </v-col>
+          <div
+            class="layer-text"
+          >
+            Time Limits
+          </div>
+          <v-checkbox-btn
+            :model-value="state.filters.siteTimeLimits"
+            density="compact"
+            hide-details
+            readonly
+            class="item-checkbox"
+          />
+        </v-list-item>
+      </v-list>
+    </v-card>
+  </v-menu>
 </template>
 
 <style scoped>

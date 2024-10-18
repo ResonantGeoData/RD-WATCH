@@ -216,7 +216,7 @@ def get_siteobservations_images(
             meta={
                 'current': count,
                 'total': site_obs_count,
-                'mode': 'Site Observations',
+                'mode': 'Finding Matching Site Observations',
                 'siteEvalId': site_eval_id,
                 'source': baseConstellation,
             },
@@ -355,7 +355,7 @@ def get_siteobservations_images(
             meta={
                 'current': count,
                 'total': num_of_captures,
-                'mode': 'No Captures',
+                'mode': f'Found {num_of_captures} Additional Captures',
                 'source': baseConstellation,
                 'siteEvalId': site_eval_id,
             },
@@ -369,7 +369,7 @@ def get_siteobservations_images(
             meta={
                 'current': count,
                 'total': num_of_captures,
-                'mode': 'Image Captures',
+                'mode': 'Additional Image Captures Downloading',
                 'source': baseConstellation,
                 'siteEvalId': site_eval_id,
             },
@@ -658,6 +658,7 @@ def generate_site_images_for_evaluation_run(
     scale: Literal['default', 'bits'] | list[int] = 'bits',
     bboxScale: float = BboxScaleDefault,
     pointArea: float = pointAreaDefault,
+    worldview_source: Literal['cog', 'nitf'] | None = 'cog',
 ):
     sites = SiteEvaluation.objects.filter(configuration=model_run_id)
     for eval in sites.iterator():
@@ -671,6 +672,7 @@ def generate_site_images_for_evaluation_run(
             scale,
             bboxScale,
             pointArea,
+            worldview_source,
         )
 
 

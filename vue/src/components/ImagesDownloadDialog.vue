@@ -207,7 +207,7 @@ const display = ref(true);
                   </v-icon>
                 </template>
                 <span>
-                  Day Limit applies to S2/L8/PL imagery to grab one image every X days.  This is to prevent loading hundreds of images
+                  Day Limit applies to S2/L8 imagery to grab one image every X days.  This is to prevent loading hundreds of images
                 </span>
               </v-tooltip>
             </v-row>

@@ -24,8 +24,8 @@ const outputFormat: Ref<DownloadAnimationSettings["output_format"]> =
 const formatChoices = ref(["mp4", "gif"]);
 const fps = ref(1);
 const pointRadius = ref(5);
-const constellationChoices = ref(["S2", "WV", "L8", "PL"]);
-const selectedSources: Ref<Constellation[]> = ref(["WV", "S2", "WV", "PL"]);
+const constellationChoices = ref(["S2", "WV", "L8"]);
+const selectedSources: Ref<Constellation[]> = ref(["WV", "S2"]);
 const labelChoices = ref(["geom", "date", "source", "obs", "obs_label"]);
 const labels: Ref<DownloadAnimationSettings["labels"]> = ref([
   "geom",

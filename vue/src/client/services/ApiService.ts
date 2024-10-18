@@ -230,6 +230,15 @@ export interface ModelRunUpload {
   private: boolean;
 }
 
+export interface SatelliteFetchingDownloadingInfo {
+  current: number;
+  total: number;
+  mode: string;
+  source: string;
+  siteEvalId: string;
+}
+
+
 type ApiPrefix = '/api' | '/api/scoring';
 
 export class ApiService {
@@ -729,11 +738,11 @@ export class ApiService {
     })
   }
 
-  public static getSatelliteFetchingRunning(modelRunIds?: string[], limit=2000, offset=0): CancelablePromise<{items: string[], count: number}> {
+  public static getSatelliteFetchingRunning(modelRunIds?: string[]): CancelablePromise<{items: {siteId: string, info:SatelliteFetchingDownloadingInfo, error?: string}[], count: number}> {
     return __request(OpenAPI, {
       method: 'GET',
       url: `${this.getApiPrefix()}/satellite-fetching/running/`,
-      query: { model_runs: modelRunIds, limit, offset },
+      query: { model_runs: modelRunIds },
     })
   }
 

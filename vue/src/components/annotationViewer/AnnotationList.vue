@@ -30,7 +30,7 @@ const virtualList: Ref<null | VueElement & { $el: HTMLElement } > = ref(null);
 const satelliteFetchingCheck = async () => {
   const downloadList = (await ApiService.getSatelliteFetchingRunning(props.modelRun ? [props.modelRun] : [])).items;
   // Check if we are still downloading any items
-  const stillDownloading = modifiedList.value.some((item) => downloadList.includes(item.id));
+  const stillDownloading = modifiedList.value.some((item) => !!downloadList.find((listItem) => listItem.siteId === item.id));
   if (!stillDownloading && downloadCheckInterval) {
     clearInterval(downloadCheckInterval);
     downloadCheckInterval = null;
@@ -39,9 +39,9 @@ const satelliteFetchingCheck = async () => {
   // We want to make sure we update the list to indicate which items are downloading in the modifiedList
   const newList: SiteDisplay[] = [];
   modifiedList.value.forEach((item) => {
-    if (item.downloading && !downloadList.includes(item.id)) {
+    if (item.downloading && !downloadList.find((listItem) => listItem.siteId === item.id)) {
       item.downloading = false;
-    } else if (!item.downloading && downloadList.includes(item.id)) {
+    } else if (!item.downloading && !!downloadList.find((listItem) => listItem.siteId === item.id)) {
       item.downloading = true;
     }
     newList.push(item)

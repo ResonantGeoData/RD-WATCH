@@ -5,15 +5,14 @@ from datetime import datetime
 from ninja import Router
 from pydantic import UUID4
 
-from django.contrib.gis.db.models.functions import Transform
 from django.contrib.gis.geos import GEOSGeometry
 from django.db import transaction
-from django.db.models.functions import JSONObject  # type: ignore
 from django.http import HttpRequest, HttpResponse
 from django.shortcuts import get_object_or_404
 
 from rdwatch.core.models import SiteEvaluation, SiteEvaluationTracking, lookups
 from rdwatch.core.schemas import SiteEvaluationRequest
+from rdwatch.core.tasks import get_site_model_feature_JSON
 
 router = Router()
 
@@ -61,87 +60,6 @@ def patch_site_evaluation(request: HttpRequest, id: UUID4, data: SiteEvaluationR
         site_evaluation.save()
 
     return 200
-
-
-def get_site_model_feature_JSON(id: UUID4, obsevations=False):
-    query = (
-        SiteEvaluation.objects.filter(pk=id)
-        .values()
-        .annotate(
-            json=JSONObject(
-                site=JSONObject(
-                    region='configuration__region__name',
-                    number='number',
-                ),
-                configuration='configuration__parameters',
-                version='version',
-                performer=JSONObject(
-                    id='configuration__performer__id',
-                    team_name='configuration__performer__team_name',
-                    short_code='configuration__performer__short_code',
-                ),
-                cache_originator_file='cache_originator_file',
-                cache_timestamp='cache_timestamp',
-                cache_commit_hash='cache_commit_hash',
-                notes='notes',
-                score='score',
-                status='label__slug',
-                geom=Transform('geom', srid=4326),
-                start_date=('start_date'),
-                end_date=('end_date'),
-            )
-        )
-    )
-    if query.exists():
-        data = query[0]['json']
-
-        region_name = data['site']['region']
-        site_id = f'{region_name}_{str(data["site"]["number"]).zfill(4)}'
-        version = data['version']
-        output = {
-            'type': 'FeatureCollection',
-            'features': [
-                {
-                    'type': 'Feature',
-                    'properties': {
-                        'type': 'site',
-                        'region_id': region_name,
-                        'site_id': site_id,
-                        'version': version,
-                        'status': data['status'],
-                        'score': data['score'],
-                        'start_date': (
-                            None
-                            if data['start_date'] is None
-                            else datetime.fromisoformat(data['start_date']).strftime(
-                                '%Y-%m-%d'
-                            )
-                        ),
-                        'end_date': (
-                            None
-                            if data['end_date'] is None
-                            else datetime.fromisoformat(data['end_date']).strftime(
-                                '%Y-%m-%d'
-                            )
-                        ),
-                        'model_content': 'annotation',
-                        'originator': data['performer']['short_code'],
-                    },
-                    'geometry': data['geom'],
-                }
-            ],
-        }
-        filename = None
-        if data['cache_originator_file']:
-            filename = data['cache_originator_file']
-            output['features'][0]['properties']['cache'] = {
-                'cache_originator_file': data['cache_originator_file'],
-                'cache_timestamp': data['cache_timestamp'],
-                'cache_commit_hash': data['cache_commit_hash'],
-                'cache_notes': data['notes'],
-            }
-        return output, site_id, filename
-    return None, None
 
 
 @router.get('/{id}/download/')

@@ -28,7 +28,7 @@ class SiteImageSchema(Schema):
     percent_black: float | None
     bbox: BoundingBoxSchema
     image_dimensions: list[int]
-    aws_location: str
+    uri_locations: list[str]
     image_embedding: str | None
     id: int
 
@@ -84,7 +84,7 @@ def site_images(request: HttpRequest, id: UUID4):
                     observation_id='observation_id',
                     bbox=BoundingBox('image_bbox'),
                     image_dimensions='image_dimensions',
-                    aws_location='aws_location',
+                    uri_locations='uri_locations',
                     image_embedding='image_embedding',
                 )
             ),
@@ -213,7 +213,7 @@ def get_site_image(request: HttpRequest, id: int):
             'bbox',
             'percent_black',
             'image_dimensions',
-            'aws_location',
+            'uri_locations',
             'image_embedding',
             'pk',  # Assuming 'pk' is the primary key field name
         )
@@ -229,7 +229,7 @@ def get_site_image(request: HttpRequest, id: int):
             'percent_black': site_image['percent_black'],
             'bbox': site_image['bbox'],
             'image_dimensions': site_image['image_dimensions'],
-            'aws_location': site_image['aws_location'],
+            'uri_locations': site_image['uri_locations'],
             'image_embedding': default_storage.url(site_image['image_embedding']),
             'id': site_image['pk'],
         }

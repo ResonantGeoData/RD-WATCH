@@ -293,5 +293,5 @@ def site_image(site_evaluation: SiteEvaluation, request) -> SiteImage:
         source=request.param,
         image_bbox=site_evaluation.geom,
         image_dimensions=img.size,
-        aws_location='s3://bucket/key',
+        uri_locations=['s3://bucket/key'],
     )

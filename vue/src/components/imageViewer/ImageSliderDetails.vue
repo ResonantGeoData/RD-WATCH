@@ -55,9 +55,9 @@ const setEditingMode = (mode: EditModes) => {
   emit('editDialog', mode);
 };
 
-const copyURL = async (mytext: string) => {
+const copyURLs = async (urls: string[]) => {
   try {
-    await navigator.clipboard.writeText(mytext);
+    await navigator.clipboard.writeText(urls.join(' '));
   } catch ($e) {
     alert("Cannot copy");
   }
@@ -144,13 +144,13 @@ onUnmounted(() => {
         <template #activator="{ props }">
           <v-icon
             v-bind="props"
-            @click="copyURL(filteredImages[currentImage].image.aws_location)"
+            @click="copyURLs(filteredImages[currentImage].image.uri_locations)"
           >
             mdi-information
           </v-icon>
         </template>
         <span>
-          Click to Copy: {{ filteredImages[currentImage].image.aws_location }}
+          Click to Copy asset URIs
         </span>
       </v-tooltip>
     </v-col>

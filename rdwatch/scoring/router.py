@@ -4,21 +4,18 @@ from typing import Literal, TypeAlias
 from django.contrib.auth.models import User
 from django.db.models import Model
 
-from rdwatch.scoring.models import (
-    AnimationModelRunExport,
-    AnimationSiteExport,
-    SatelliteFetching,
-    SiteImage,
-)
-
 DbName: TypeAlias = Literal['default', 'scoringdb']
 
-RGD_DB_MODELS: set[type[Model]] = {
-    SiteImage,
-    SatelliteFetching,
-    AnimationSiteExport,
-    AnimationModelRunExport,
+# (app name, model object name) -> db name
+# (app name, '*') is the fallback key for a given app
+DB_ROUTES: dict[tuple[str, str], str] = {
+    ('scoring', 'SiteImage'): 'default',
+    ('scoring', 'SatelliteFetching'): 'default',
+    ('scoring', 'AnimationSiteExport'): 'default',
+    ('scoring', 'AnimationModelRunExport'): 'default',
+    ('scoring', '*'): 'scoringdb',
 }
+
 logger = logging.getLogger(__name__)
 
 
@@ -32,19 +29,23 @@ class ScoringRouter:
 
     def db_for_read(self, model: type[Model], **hints) -> DbName:
         """
-        Attempts to read scoring and contenttypes models go to scoringdb.
+        Route database reads.
         """
-        if model not in RGD_DB_MODELS and model._meta.app_label == 'scoring':
-            return 'scoringdb'
-        return 'default'
+        app_label = model._meta.app_label
+        object_name = model._meta.object_name
+        return DB_ROUTES.get(
+            (app_label, object_name), DB_ROUTES.get((app_label, '*'), 'default')
+        )
 
     def db_for_write(self, model: type[Model], **hints) -> DbName | None:
         """
-        Attempts to write scoringdb models go to auth_db.
+        Route database writes.
         """
-        if model not in RGD_DB_MODELS and model._meta.app_label == 'scoring':
-            return 'scoringdb'
-        return 'default'
+        app_label = model._meta.app_label
+        object_name = model._meta.object_name
+        return DB_ROUTES.get(
+            (app_label, object_name), DB_ROUTES.get((app_label, '*'), 'default')
+        )
 
     def allow_relation(
         self, obj1: type[Model], obj2: type[Model], **hints

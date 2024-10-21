@@ -510,8 +510,7 @@ def create_animation(self, site_evaluation_id: UUID4, settings: dict[str, Any]):
     # Save frames as an animated GIF
     evaluation_run = site_evaluation.evaluation_run_uuid
     base_str = f'Eval_{evaluation_run.evaluation_number}_{evaluation_run.evaluation_run_number}_{evaluation_run.performer}'  # noqa: E501
-    prefix = f'{base_str}\
-        _{str(site_evaluation.site_id)}'
+    prefix = f'{base_str}_{str(site_evaluation.site_id)}'
     if frames:
         # Create a temporary directory
         self.update_state(

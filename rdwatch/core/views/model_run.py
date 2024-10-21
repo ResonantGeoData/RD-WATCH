@@ -368,6 +368,19 @@ def list_model_runs(
     return filters.filter(get_queryset())
 
 
+@router.post(
+    '/{id}/finalization/',
+    response={200: ModelRunDetailSchema},
+    auth=[ModelRunAuth()],
+)
+# this is safe because we're using a nonstandard header w/ API Key for auth
+@csrf_exempt
+def finalize_model_run(request: HttpRequest, id: UUID4):
+    model_run = get_object_or_404(ModelRun, pk=id)
+    model_run.compute_aggregate_stats()
+    return model_run
+
+
 @router.get('/{id}/', response={200: ModelRunDetailSchema})
 def get_model_run(request: HttpRequest, id: UUID4):
     return get_object_or_404(get_queryset(), id=id)

@@ -210,10 +210,9 @@ def create_animation(self, site_evaluation_id: UUID4, settings: dict[str, Any]):
                 max_height_px = height
                 max_image_record = image_record
 
-    if max_width_px < 500 or max_height_px < 500:
-        while max_width_px < 500 or max_height_px < 500:
-            max_width_px *= 2
-            max_height_px *= 2
+    while max_width_px < 500 or max_height_px < 500:
+        max_width_px *= 2
+        max_height_px *= 2
 
     # using the max_image_bbox we apply the rescale_border
     if rescale:

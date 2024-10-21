@@ -373,7 +373,7 @@ const animationDialog = ref(false);
                 <v-row dense>
                   <v-progress-linear
                     :model-value="downloadingData.current"
-                    :max="downloadingData?.total"
+                    :max="downloadingData.total"
                     height="25"
                     color="primary"
                     label

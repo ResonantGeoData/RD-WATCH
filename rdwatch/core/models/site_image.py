@@ -43,10 +43,10 @@ class BaseSiteImage(models.Model):
         blank=True,
     )
     image_dimensions = ArrayField(models.IntegerField(), size=2, null=True)
-    aws_location = models.CharField(
-        max_length=2048,
-        blank=True,
-        help_text='S3 Link to base file used to download this image',
+    uri_locations = ArrayField(
+        models.CharField(max_length=2048),
+        default=list,
+        help_text='Links to base files used to construct this image',
     )
 
     def __str__(self) -> str:

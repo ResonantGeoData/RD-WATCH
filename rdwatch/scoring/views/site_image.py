@@ -89,7 +89,7 @@ def site_images(request: HttpRequest, id: UUID4):
                     ),
                     bbox=BoundingBox('image_bbox'),
                     image_dimensions='image_dimensions',
-                    aws_location='aws_location',
+                    uri_locations='uri_locations',
                 ),
                 default=[],
             ),

@@ -4,7 +4,7 @@ import App from "./App.vue";
 import PopupComponent from "./components/PopUpComponent.vue";
 import { PopUpData, PopUpSiteData } from './interactions/popUpType';
 import 'vuetify/styles'
-import { createVuetify, type ThemeDefinition } from 'vuetify'
+import { type ThemeDefinition, createVuetify } from 'vuetify'
 import * as components from 'vuetify/components'
 import * as directives from 'vuetify/directives'
 import '@mdi/font/css/materialdesignicons.css' // Ensure you are using css-loader

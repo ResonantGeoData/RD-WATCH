@@ -1,7 +1,6 @@
 <script setup lang="ts">
 import SideBar from "../components/SideBar.vue";
 import MapLibre from "../components/MapLibre.vue";
-import LayerSelection from "../components/LayerSelection.vue";
 import ImageViewer from "../components/imageViewer/ImageViewer.vue";
 import SiteList from "../components/siteList/SiteList.vue";
 import MapLegend from "../components/MapLegend.vue";

@@ -66,14 +66,19 @@ watch(() => state.filters.regions?.length, () => {
       <v-btn
         v-bind="props"
         class="px-2 mx-2"
-        size="large"
         :color="state.filters.drawRegionPoly ? 'primary' : ''"
         @click="getRegionInfo && getRegionInfo.hasGeom && toggleRegion()"
       >
-        <v-icon :color="state.filters.drawRegionPoly ? 'white' : ''">
+        <v-icon
+          :color="state.filters.drawRegionPoly ? 'white' : ''"
+          size="x-large"
+        >
           mdi-select
         </v-icon>
-        <v-icon :color="state.filters.drawRegionPoly ? 'white' : 'black'">
+        <v-icon
+          :color="state.filters.drawRegionPoly ? 'white' : 'black'"
+          size="large"
+        >
           mdi-menu-down
         </v-icon>
       </v-btn>

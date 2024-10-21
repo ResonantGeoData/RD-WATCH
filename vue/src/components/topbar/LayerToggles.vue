@@ -1,8 +1,8 @@
 
 <script setup lang="ts">
-import { Ref, computed, onMounted, ref, watch } from "vue";
+import { computed, onMounted, watch } from "vue";
 import { ApiService } from "../../client";
-import { state, updateRegionList } from "../../store";
+import { state } from "../../store";
 import { useRoute } from 'vue-router';
 
 
@@ -178,6 +178,22 @@ const toggleSite = (type?: undefined | 'model' | 'groundtruth') => {
   checkGroundTruth();
 }
 
+const toggleSiteTimeLimits = () => {
+    state.filters = { ...state.filters, siteTimeLimits: !state.filters.siteTimeLimits, scoringColoring: undefined };
+}
+
+const toggleScoring = (data? : undefined | 'simple' | 'detailed') => {
+  let val = state.filters.scoringColoring ? undefined : 'simple';
+  if (data) {
+    val = data;
+  }
+  if (val !== undefined) {
+    // We turn off other state;
+    state.filters = { ...state.filters, drawObservations: undefined, drawSiteOutline: undefined}
+
+  }
+  state.filters = { ...state.filters, scoringColoring: val as 'simple' | 'detailed' | undefined };
+}
 
 
 </script>
@@ -278,7 +294,6 @@ const toggleSite = (type?: undefined | 'model' | 'groundtruth') => {
     <template #activator="{ props }">
       <v-btn
         class="px-2 mx-2"
-        size="large"
         v-bind="props"
         :disabled="!modelRunEnabled"
         :color="state.filters.drawObservations ? 'primary' : ''"
@@ -387,7 +402,6 @@ const toggleSite = (type?: undefined | 'model' | 'groundtruth') => {
       <v-btn
         class="px-2 mx-2"
         v-bind="props"
-        size="large"
         :disabled="!modelRunEnabled"
         :color="state.filters.drawSiteOutline ? 'primary' : ''"
         style="min-width:150px"

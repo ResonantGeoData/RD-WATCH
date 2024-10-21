@@ -4,7 +4,7 @@ import { ApiService, ModelRunList, Region } from '../../client';
 import { filteredSatelliteTimeList, state } from '../../store';
 const selectedRegion: Ref<Region | undefined> = ref(undefined);
 
-const currentModelRunList: Ref<ModelRunList | null> = ref(null);
+const currentModelRunList: Ref<ModelRunList | null> = ref(state.modelRunList || null);
 const satelliteRegionTooLarge = ref(false);
 const loadingSatelliteTimestamps = ref(false);
 const askDownloadSatelliteTimestamps = ref(false);
@@ -42,11 +42,16 @@ async function getSatelliteTimestamps(modelRun: ModelRunList, force=false) {
 
 const startLoadingSatelliteTimeStamps = async () => {
   askDownloadSatelliteTimestamps.value = false;
+  console.log(currentModelRunList.value);
   if (currentModelRunList.value) {
     getSatelliteTimestamps(currentModelRunList.value);
   }
 }
-
+watch(() => state.modelRunList, () => {
+    if (state.modelRunList) {
+        currentModelRunList.value = state.modelRunList;
+    }
+});
 const satelliteLoadingColor = computed(() => {
   if (satelliteRegionTooLarge.value) {
     return 'warning'
@@ -70,8 +75,6 @@ watch(selectedRegion, () => {
   state.filters = { ...state.filters, regions: selectedRegion.value ? [selectedRegion.value] : undefined };
 });
 
-const expandSettings = ref(false);
-
 const imagesOn = computed({
   get() {
     return state.satellite.satelliteImagesOn || false;
@@ -81,29 +84,186 @@ const imagesOn = computed({
   },
 });
 
+const imageOpacity = computed({
+  get() {
+    return state.satellite.imageOpacity || 0;
+  },
+  set(val: number) {
+    state.satellite = { ...state.satellite, imageOpacity: val };
+  },
+});
+
+const cloudCover = computed({
+  get() {
+    return state.satellite.cloudCover || 1000;
+  },
+  set(val: number) {
+    state.satellite = { ...state.satellite, cloudCover: val };
+  },
+});
+
+
+const S2Imagery = computed({
+  get() {
+    return state.satellite.satelliteSources.includes('S2');
+  },
+  set(val: boolean) {
+    if (!state.satellite.satelliteSources.includes('S2') && val) {
+      state.satellite.satelliteSources.push('S2')
+    } else if (state.satellite.satelliteSources.includes('S2')) {
+      const index = state.satellite.satelliteSources.indexOf('S2');
+      state.satellite.satelliteSources.splice(index, 1);
+    }
+  },
+});
+
+
+
+const worldViewImagery = computed({
+  get() {
+    return state.satellite.satelliteSources.includes('WorldView');
+  },
+  set(val: boolean) {
+    if (!state.satellite.satelliteSources.includes('WorldView') && val) {
+      state.satellite.satelliteSources.push('WorldView')
+    } else if (state.satellite.satelliteSources.includes('WorldView')) {
+      const index = state.satellite.satelliteSources.indexOf('WorldView');
+      state.satellite.satelliteSources.splice(index, 1);
+    }
+  },
+});
+
+const satelliteImageState = computed(() => (selectedRegion.value !== null && !(filteredSatelliteTimeList.value.length === 0 && state.satellite.satelliteSources.length !== 0)))
+
 </script>
 
 
 
 <template>
-  <v-btn
-    v-if="selectedRegion !== null && !(filteredSatelliteTimeList.length === 0 && state.satellite.satelliteSources.length !== 0)"
-    class="px-2 mx-2"
-    size="large"
-    :class="{
-      'animate-flicker': state.satellite.loadingSatelliteImages,
-    }"
-    :color="imagesOn ? 'primary' : ''"
-    :disabled="selectedRegion === null || (filteredSatelliteTimeList.length === 0 && state.satellite.satelliteSources.length !== 0)"
-    @click="imagesOn = selectedRegion !== null && (filteredSatelliteTimeList.length !== 0 || state.satellite.satelliteSources.length === 0) ? !imagesOn : imagesOn"
+  <v-menu
+    v-if="satelliteImageState"
+    open-on-hover
+    width="400"
   >
-    <v-icon>mdi-image</v-icon>
-  </v-btn>
-  <v-tooltip v-else>
+    <template #activator="{ props }">
+      <v-btn
+        v-bind="props"
+        class="px-2 mx-2"
+        :class="{
+          'animate-flicker': state.satellite.loadingSatelliteImages,
+        }"
+        :color="imagesOn ? 'primary' : ''"
+        :disabled="selectedRegion === null || (filteredSatelliteTimeList.length === 0 && state.satellite.satelliteSources.length !== 0)"
+        @click="imagesOn = selectedRegion !== null && (filteredSatelliteTimeList.length !== 0 || state.satellite.satelliteSources.length === 0) ? !imagesOn : imagesOn"
+      >
+        <v-icon
+          color="imagesOn ? 'white' : 'black'"
+          size="x-large"
+        >
+          mdi-image
+        </v-icon>
+        <v-icon
+          :color="imagesOn ? 'white' : 'black'"
+          size="large"
+        >
+          mdi-menu-down
+        </v-icon>
+      </v-btn>
+    </template>
+    <v-card outlined>
+      <v-card-title>Satellite Imagery</v-card-title>
+      <v-card-text>
+        <v-row dense>
+          <v-checkbox label="Show Satellite image timestamps" />
+        </v-row>
+        <v-row dense>
+          <v-divider />
+        </v-row>
+        <v-row dense>
+          <h3>Source</h3>
+        </v-row>
+        <v-row dense>
+          <v-radio v-model="S2Imagery">
+            <template #label>
+              <span>S2 Imagery</span> <span
+                style="color:gray"
+                class="pl-2"
+              > (default)</span>
+            </template>
+          </v-radio>
+        </v-row>
+        <v-row dense>
+          <span style="color:gray">Sentinel-2 Imagery from Element 84</span>
+        </v-row>
+        <v-row dense>
+          <v-radio
+            v-model="worldViewImagery"
+            label="World View Imagery"
+          />
+        </v-row>
+        <v-row dense>
+          <span style="color:gray">WorldView Imagery from SMART STAC Server</span>
+        </v-row>
+        <v-row>
+          <v-divider />
+        </v-row>
+        <v-row
+          dense
+          align="center"
+          justify="center"
+        >
+          <v-col cols="4">
+            <span>Image Opacity:</span>
+          </v-col>
+          <v-col cols="6">
+            <v-slider
+              v-model.number="imageOpacity"
+              min="0"
+              max="1"
+              step="0.1"
+              color="primary"
+              density="compact"
+              class="mt-5"
+            />
+          </v-col>
+          <v-col cols="2">
+            <span class="">{{ (imageOpacity * 100).toFixed(0) }}%</span>
+          </v-col>
+        </v-row>
+        <v-row
+          dense
+          align="center"
+          justify="center"
+        >
+          <v-col>
+            <span class="label">Cloud Cover:</span>
+          </v-col>
+          <v-col cols="6">
+            <v-slider
+              v-model.number="cloudCover"
+              :disabled="state.satellite.loadingSatelliteImages"
+              min="0"
+              max="100"
+              step="20"
+              color="primary"
+              density="compact"
+              class="mt-5"
+            />
+          </v-col>
+          <v-col cols="2">
+            <span class="label">&lt;{{ cloudCover }}%</span>
+          </v-col>
+        </v-row>
+      </v-card-text>
+    </v-card>
+  </v-menu>
+  <v-tooltip
+    v-else
+    location="bottom"
+  >
     <template #activator="{ props: props }">
       <v-btn
         class="px-2 mx-2"
-        size="large"
         v-bind="props"
         :disabled="!selectedRegion"
         :class="{

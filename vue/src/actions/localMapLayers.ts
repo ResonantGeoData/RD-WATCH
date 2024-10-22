@@ -1,6 +1,4 @@
 import { state } from "../store";
-import { getGeoJSONBounds } from "../utils";
-import { FitBoundsEvent } from "./map";
 
 let id = 1;
 
@@ -15,8 +13,6 @@ export function addLocalMapLayer(feature: GeoJSON.GeoJSON): number {
     geojson: feature,
   };
   state.localMapFeatureIds.push(id);
-
-  FitBoundsEvent.trigger(getGeoJSONBounds(feature));
 
   return id;
 }

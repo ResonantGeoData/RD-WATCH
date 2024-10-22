@@ -17,7 +17,7 @@ import { setSatelliteTimeStamp } from "../mapstyle/satellite-image";
 import { isEqual, throttle } from 'lodash';
 import { updateImageMapSources } from "../mapstyle/images";
 import { FitBoundsEvent } from "../actions/map";
-import { BoundingBox } from "../utils";
+import { type BoundingBox, getGeoJSONBounds } from "../utils";
 
 const mapContainer: ShallowRef<null | HTMLElement> = shallowRef(null);
 const map: ShallowRef<null | Map> = shallowRef(null);
@@ -194,6 +194,11 @@ watch([shallowRef(map), () => state.localMapFeatureIds], ([, newIds]) => {
       },
     });
   });
+
+  if (addedIds.length === 1) {
+    const data = state.localMapFeatureById[addedIds[0]].geojson;
+    fitBounds(getGeoJSONBounds(data));
+  }
 }, { immediate: true, deep: true });
 
 </script>

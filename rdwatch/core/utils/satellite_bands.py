@@ -81,18 +81,13 @@ def get_bands(
         update_assets_prefer_s3(item)
 
         cloudcover = item.properties.get('eo:cloud_cover', 0)
-        has_visual_band = False
 
         for name, asset in item.assets.items():
-            if name == 'visual' or 'visual' in asset.roles:
-                has_visual_band = True
-                spectrum = CommonBand.objects.get(slug='visual')
-            else:
-                match asset.extra_fields:
-                    case {'eo:bands': [{'common_name': common_name}]}:
-                        spectrum = CommonBand.objects.get(slug=common_name)
-                    case _:
-                        continue
+            match asset.extra_fields:
+                case {'eo:bands': [{'common_name': common_name}]}:
+                    spectrum = CommonBand.objects.get(slug=common_name)
+                case _:
+                    continue
 
             yield Band(
                 constellation=constellation,
@@ -108,13 +103,7 @@ def get_bands(
             )
 
         # Combine red/green/blue together to make our own visual band
-        # if we didn't encounter a visual band.
-        if (
-            not has_visual_band
-            and 'red' in item.assets
-            and 'green' in item.assets
-            and 'blue' in item.assets
-        ):
+        if 'red' in item.assets and 'green' in item.assets and 'blue' in item.assets:
             yield Band(
                 constellation=constellation,
                 timestamp=timestamp,

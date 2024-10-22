@@ -165,7 +165,7 @@ const tab = ref();
 <template>
   <v-card
     class="pa-5 pb-1 overflow-y-hidden d-flex flex-column"
-    style="max-height:100vh; min-height:100vh;"
+    style="max-height:100vh; min-height:100vh; height: 100vh;"
   >
     <v-row
       dense
@@ -184,7 +184,7 @@ const tab = ref();
     </v-row>
     <v-tabs
       v-model="tab"
-      class="mb-4"
+      class="mb-4 flex-shrink-0"
     >
       <v-tab value="model-runs">
         Model Runs
@@ -195,7 +195,7 @@ const tab = ref();
     </v-tabs>
     <v-window
       v-model="tab"
-      class="overflow-visible"
+      class="overflow-visible h-100"
     >
       <v-window-item value="model-runs">
         <mode-selector />
@@ -353,7 +353,10 @@ const tab = ref();
           />
         </v-row>
       </v-window-item>
-      <v-window-item value="local-layers">
+      <v-window-item
+        value="local-layers"
+        class="h-100"
+      >
         <local-layers />
       </v-window-item>
     </v-window>

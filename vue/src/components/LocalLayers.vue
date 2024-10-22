@@ -1,13 +1,15 @@
 <script setup lang="ts">
-import { computed } from 'vue';
+import { computed, ref } from 'vue';
 import { addLocalMapLayer, removeLocalMapLayer } from '../actions/localMapLayers';
 import { state } from '../store';
 import { getGeoJSONBounds } from '../utils';
 import { FitBoundsEvent } from '../actions/map';
 
+const isLoading = ref(false);
+
 async function loadFiles(files: File[]) {
-  await Promise.all(files.map(async (file) => {
-    const data = await new Promise<string>((resolve, reject) => {
+  const promise = Promise.all(files.map(async (file) => {
+    return new Promise<string>((resolve, reject) => {
       const reader = new FileReader();
       reader.onload = function() {
         resolve(reader.result as string);
@@ -15,8 +17,18 @@ async function loadFiles(files: File[]) {
       reader.onerror = reject;
       reader.readAsText(file, 'utf-8');
     });
-    addLocalMapLayer(JSON.parse(data));
   }));
+
+  isLoading.value = true;
+  promise.finally(() => {
+    isLoading.value = false;
+  });
+
+  const geoJsons = await promise;
+
+  geoJsons.forEach((data) => {
+    addLocalMapLayer(JSON.parse(data));
+  });
 }
 
 async function promptForGeoJSONs() {
@@ -56,11 +68,13 @@ const localLayers = computed(() => {
 </script>
 
 <template>
-  <div>
+  <div class="h-100 overflow-y-auto">
     <div class="text-center">
       <v-btn
         variant="flat"
         color="secondary"
+        :disabled="isLoading"
+        :loading="isLoading"
         @click="promptForGeoJSONs"
       >
         <template #prepend>

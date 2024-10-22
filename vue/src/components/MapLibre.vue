@@ -6,7 +6,7 @@ import {
   buildSiteFilter,
 } from "../mapstyle/rdwatchtiles";
 import { filteredSatelliteTimeList, state } from "../store";
-import { markRaw, onMounted, onUnmounted, reactive, shallowRef, watch, withDefaults } from "vue";
+import { markRaw, onBeforeUnmount, onMounted, onUnmounted, reactive, shallowRef, watch } from "vue";
 import type { FilterSpecification } from "maplibre-gl";
 import type { ShallowRef } from "vue";
 import { popupLogic, setPopupEvents } from "../interactions/mouseEvents";
@@ -16,6 +16,8 @@ import { setReference } from "../interactions/fillPatterns";
 import { setSatelliteTimeStamp } from "../mapstyle/satellite-image";
 import { isEqual, throttle } from 'lodash';
 import { updateImageMapSources } from "../mapstyle/images";
+import { FitBoundsEvent } from "../actions/map";
+import { BoundingBox } from "../utils";
 
 const mapContainer: ShallowRef<null | HTMLElement> = shallowRef(null);
 const map: ShallowRef<null | Map> = shallowRef(null);
@@ -28,7 +30,7 @@ function setFilter(layerID: string, filter: FilterSpecification) {
   });
 }
 
-function fitBounds(bbox: typeof state["bbox"]) {
+function fitBounds(bbox: BoundingBox) {
   map.value?.fitBounds(
     [
       [bbox.xmin, bbox.ymin],
@@ -36,10 +38,17 @@ function fitBounds(bbox: typeof state["bbox"]) {
     ],
     {
       padding: 160,
-      offset: [80, 0],
     }
   );
 }
+
+onMounted(() => {
+  FitBoundsEvent.on(fitBounds);
+});
+
+onBeforeUnmount(() => {
+  FitBoundsEvent.off(fitBounds);
+});
 
 onMounted(() => {
   if (mapContainer.value !== null) {
@@ -61,8 +70,8 @@ onMounted(() => {
           regionIds,
         ),
         bounds: [
-          [state.bbox.xmin, state.bbox.ymin],
-          [state.bbox.xmax, state.bbox.ymax],
+          [-180, -90],
+          [180, 90],
         ],
       })
     );
@@ -142,10 +151,6 @@ watch([() => state.timestamp, () => state.filters, () => state.satellite, () => 
 
 });
 
-watch(
-  () => state.bbox,
-  (val) => fitBounds(val)
-);
 
 
 </script>

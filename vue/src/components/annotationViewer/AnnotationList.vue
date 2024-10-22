@@ -11,6 +11,7 @@ import ImagesDownloadDialog from "../ImagesDownloadDialog.vue";
 import SiteListCard from "../siteList/SiteListCard.vue";
 import { SiteDisplay } from "../siteList/SiteListCard.vue";
 import SiteListHeader from "../siteList/SiteListHeader.vue";
+import { FitBoundsEvent } from "../../actions/map";
 
 const props = defineProps<{
   modelRun: string | null;
@@ -153,7 +154,7 @@ watch(clickedInfo, () => {
           dateRange: [found.startDate, found.endDate]
         }
       }
-      state.bbox = found.bbox;
+      FitBoundsEvent.trigger(found.bbox);
       scrollVirtualList(found.id);
     }
   } else {
@@ -170,7 +171,7 @@ const selectSite = (item: SiteDisplay) => {
           dateRange: [item.startDate, item.endDate]
         }
   }
-      state.bbox = item.bbox;
+  FitBoundsEvent.trigger(item.bbox);
 }
 
 watch(() => props.selectedEval, () => {

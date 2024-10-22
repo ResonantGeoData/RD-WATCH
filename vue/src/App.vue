@@ -11,7 +11,7 @@ const router = useRouter();
 // Check if the user is logged in before rendering any UI. If they're not,
 // redirect them to the login page.
 onBeforeMount(async () => {
-  
+
   try {
     const data = await fetch('/api/status/', { redirect: 'error' });
     const json = await data.json();

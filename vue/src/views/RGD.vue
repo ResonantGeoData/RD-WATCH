@@ -49,7 +49,7 @@ watch(()=> ApiService.getApiPrefix(), async () => {
   >
     <SideBar />
   </v-navigation-drawer>
-  <v-main style="z-index: 1">
+  <v-main style="z-index: 1; height: 100%">
     <layer-selection />
     <MapLibre />
     <ImageViewer

@@ -15,16 +15,7 @@ import { satelliteLoading } from "../interactions/satelliteLoading";
 import { setReference } from "../interactions/fillPatterns";
 import { setSatelliteTimeStamp } from "../mapstyle/satellite-image";
 import { isEqual, throttle } from 'lodash';
-import { nextTick } from "vue";
 import { updateImageMapSources } from "../mapstyle/images";
-
-interface Props {
-  compact?: boolean
-}
-
-const props = withDefaults(defineProps<Props>(), {
-  compact: false,
-});
 
 const mapContainer: ShallowRef<null | HTMLElement> = shallowRef(null);
 const map: ShallowRef<null | Map> = shallowRef(null);
@@ -156,22 +147,13 @@ watch(
   (val) => fitBounds(val)
 );
 
-watch(() => props.compact, () => {
-  // Wait for it to resize the map based on CSS before resizing and fitting
-  nextTick(() => {
-    map.value?.resize();
-    if (props.compact) {
-      fitBounds(state.bbox);
-    }
-  });
-});
 
 </script>
 
 <template>
   <div
     ref="mapContainer"
-    :class="{map: !compact, compactMap: compact, mapProposalAdjust: compact}"
+    class="map"
   />
 </template>
 
@@ -179,20 +161,9 @@ watch(() => props.compact, () => {
 @import "maplibre-gl/dist/maplibre-gl.css";
 
 .map {
-  position: fixed;
-  width: 100vw;
-  height: 100vh;
+  height: 100%;
   inset: 0;
   z-index: -1;
-}
-
-.compactMap {
-  position: fixed;
-  width: 100%;
-  max-height:50vh;
-  height: 50vh;
-  z-index: -1;
-  inset: 0;
 }
 
 .mapboxgl-popup {
@@ -207,6 +178,6 @@ watch(() => props.compact, () => {
 
 /* hides the editing controls in the viewer */
 .mapboxgl-ctrl-group {
-  display: none; 
+  display: none;
 }
 </style>

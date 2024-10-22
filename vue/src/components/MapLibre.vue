@@ -38,6 +38,7 @@ function fitBounds(bbox: BoundingBox) {
     ],
     {
       padding: 160,
+      duration: 5000,
     }
   );
 }
@@ -151,7 +152,49 @@ watch([() => state.timestamp, () => state.filters, () => state.satellite, () => 
 
 });
 
+let loadedLocalLayerIds: number[] = [];
 
+watch([shallowRef(map), () => state.localMapFeatureIds], ([, newIds]) => {
+  if (!map.value) return;
+
+  const addedIds = newIds.filter((id) => !loadedLocalLayerIds.includes(id));
+  const removedIds = loadedLocalLayerIds.filter((id) => !newIds.includes(id));
+
+  loadedLocalLayerIds = [...newIds];
+
+  removedIds.forEach((id) => {
+    map.value?.removeLayer(`local-layer-${id}:fill`);
+    map.value?.removeLayer(`local-layer-${id}:outline`);
+    map.value?.removeSource(`local-source-${id}`);
+  });
+
+  addedIds.forEach((id) => {
+    map.value?.addSource(`local-source-${id}`, {
+      type: 'geojson',
+      data: state.localMapFeatureById[id].geojson,
+    });
+    map.value?.addLayer({
+      id: `local-layer-${id}:fill`,
+      type: 'fill',
+      source: `local-source-${id}`,
+      layout: {},
+      paint: {
+        'fill-color': '#088',
+        'fill-opacity': 0.5
+      },
+    });
+    map.value?.addLayer({
+      id: `local-layer-${id}:outline`,
+      type: 'line',
+      source: `local-source-${id}`,
+      layout: {},
+      paint: {
+        'line-color': '#055',
+        'line-width': 2,
+      },
+    });
+  });
+}, { immediate: true, deep: true });
 
 </script>
 

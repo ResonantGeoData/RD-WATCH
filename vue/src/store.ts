@@ -216,6 +216,8 @@ export const state = reactive<{
       activeFilters: QueryArguments;
     };
   };
+  localMapFeatureIds: number[]
+  localMapFeatureById: Record<number, { id: number, geojson: GeoJSON.GeoJSON }>
 }>({
   appVersion: '',
   errorText: '',
@@ -295,6 +297,8 @@ export const state = reactive<{
       activeFilters: {},
     },
   },
+  localMapFeatureIds: [],
+  localMapFeatureById: {},
 });
 
 export const filteredSatelliteTimeList = computed(() => {

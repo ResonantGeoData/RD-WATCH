@@ -6,6 +6,8 @@ import { BaseBBox, EvaluationImage } from "./types";
 import { LngLatBounds } from "maplibre-gl";
 import { RegionDetail } from "./client/models/Region";
 import { emptyModelRunList } from "./client/models/ModelRunList";
+import { BoundingBox } from "./utils";
+import { FitBoundsEvent } from "./actions/map";
 
 export interface MapFilters {
   configuration_id?: string[];
@@ -130,7 +132,7 @@ export interface SiteOverview {
   }
   imagesActive: boolean;
   job?: SiteDownloadJob;
-  bbox: { xmin: number; ymin: number; xmax: number; ymax: number };
+  bbox: BoundingBox;
 }
 
 
@@ -166,7 +168,6 @@ export const state = reactive<{
   settings: {
     autoZoom: boolean;
   };
-  bbox: { xmin: number; ymin: number; xmax: number; ymax: number };
   filters: MapFilters;
   mapLegend: boolean;
   satellite: SatelliteData;
@@ -227,12 +228,6 @@ export const state = reactive<{
   timeMin: Math.floor(new Date(0).valueOf() / 1000),
   settings: {
     autoZoom: false,
-  },
-  bbox: {
-    xmin: -180,
-    ymin: -90,
-    xmax: 180,
-    ymax: 90,
   },
   filters: {
     drawObservations: undefined,
@@ -485,14 +480,14 @@ function updateCameraBoundsBasedOnModelRunList(filtered = true, force = false) {
       xmax: 180,
       ymax: 90,
     };
-    state.bbox = bbox;
+    FitBoundsEvent.trigger(bbox);
   } else {
-    state.bbox = {
+    FitBoundsEvent.trigger({
       xmin: bounds.getWest(),
       ymin: bounds.getSouth(),
       xmax: bounds.getEast(),
       ymax: bounds.getNorth(),
-    };
+    });
   }
 }
 
@@ -589,15 +584,14 @@ async function queryModelRuns(type: 'firstPage' | 'nextPage', filters: QueryArgu
         xmax: bounds.getEast(),
         ymax: bounds.getNorth(),
       };
-      state.bbox = bbox;
+      FitBoundsEvent.trigger(bbox);
     } else if (!state.filters.regions?.length) {
-      const bbox = {
+      FitBoundsEvent.trigger({
         xmin: -180,
         ymin: -90,
         xmax: 180,
         ymax: 90,
-      };
-      state.bbox = bbox;
+      });
     }
 
     // If we're on page 1, we *might* have switched to a different filter/grouping in the UI,

@@ -1,7 +1,5 @@
 import { SiteOverview } from "./store"
 
-
-
 const timeRangeFormat = (range: SiteOverview['timerange']) => {
     if (range === null || (range.max === null && range.min === null)) {
       return '--'
@@ -12,7 +10,7 @@ const timeRangeFormat = (range: SiteOverview['timerange']) => {
     }
     return '--'
   }
-  
+
   async function downloadPresignedFile(url: string, filename: string) {
     try {
         const response = await fetch(url);
@@ -31,6 +29,29 @@ const timeRangeFormat = (range: SiteOverview['timerange']) => {
         console.error('Error downloading file:', error);
     }
 }
+
+export type EventCallback<T> = (e: T) => void;
+
+const createEventHook = <T = unknown>() => {
+  const cbs = new Set<EventCallback<T>>();
+
+  const off = (fn: EventCallback<T>) => {
+    cbs.delete(fn);
+  };
+
+  const on = (fn: EventCallback<T>) => {
+    cbs.add(fn);
+    return { off: () => off(fn) };
+  };
+
+  const trigger = (e: T) => {
+    Array.from(cbs).forEach((fn) => fn(e));
+  };
+
+  return { on, off, trigger };
+}
+
+export type BoundingBox = { xmin: number; ymin: number; xmax: number; ymax: number };
 
 export {
     timeRangeFormat,

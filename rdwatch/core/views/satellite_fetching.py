@@ -36,7 +36,13 @@ def satellite_fetching_running(
     results = []
     for item in running_site_ids:
         task = AsyncResult(item['celery_id'])
+        task_info = None
+        error = item['error']
+        if isinstance(task.info, Exception):
+            error = str(task.info)
+        else:
+            task_info = task.info
         site_id = item['site_id']
-        results.append({'siteId': site_id, 'info': task.info, 'error': item['error']})
+        results.append({'siteId': site_id, 'info': task_info, 'error': error})
 
     return {'items': results, 'count': len(running_site_ids)}

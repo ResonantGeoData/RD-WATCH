@@ -44,7 +44,7 @@ export interface SiteDisplay {
     region: string;
     title: string;
   };
-  selectedSite?: SiteOverview; 
+  selectedSite?: SiteOverview;
 }
 
 const props = defineProps<{
@@ -144,7 +144,7 @@ const animationDialog = ref(false);
             bottom
           >
             <template #activator="{ props }">
-              <v-icon 
+              <v-icon
                 size="20"
                 class="pa-0 ma-0 site-icon"
                 :color="statusMap[localSite.status].color"
@@ -294,8 +294,8 @@ const animationDialog = ref(false);
           </span>
         </v-tooltip>
         <v-spacer />
-        <v-tooltip 
-          v-if="!ApiService.getApiPrefix().includes('scoring')"
+        <v-tooltip
+          v-if="!ApiService.isScoring()"
           open-delay="300"
         >
           <template #activator="{ props }">

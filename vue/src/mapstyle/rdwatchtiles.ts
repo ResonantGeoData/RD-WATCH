@@ -294,7 +294,7 @@ export const buildSourceFilter = (timestamp: number, modelRunIds: string[], regi
       maxzoom: 14,
     };
   });
-  if (!ApiService.getApiPrefix().includes('scoring')) {
+  if (!ApiService.isScoring()) {
     regionIds.forEach((id) => {
     const source = `vectorTileRegionSource_${id}`;
     results[source] = {
@@ -453,7 +453,7 @@ export const buildLayerFilter = (
     }
   });
   regionIds.forEach((id) => {
-    if (!ApiService.getApiPrefix().includes('scoring')) {
+    if (!ApiService.isScoring()) {
       results.push( {
         id: `baseregions-outline-${id}`,
         type: "line",

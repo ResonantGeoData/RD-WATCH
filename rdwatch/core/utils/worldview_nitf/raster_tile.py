@@ -74,7 +74,7 @@ def get_worldview_nitf_bbox(
                 rgb = img.part(bbox)
 
         if scale == 'default':
-            rgb.rescale(in_range=((0, 10000),))
+            rgb.rescale(in_range=((0, 255),))
         elif scale == 'bits':
             if capture.bits_per_pixel != 8:
                 max_bits = 2**capture.bits_per_pixel - 1

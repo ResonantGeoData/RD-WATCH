@@ -9,7 +9,7 @@ from rio_tiler.io.stac import STACReader
 
 logger = logging.getLogger(__name__)
 
-DEFAULT_RESCALE_RANGE = (1, 10000)
+DEFAULT_RESCALE_RANGE = (0, 255)
 
 
 def get_asset_num_bands(asset: Asset) -> int:
@@ -61,9 +61,9 @@ def get_raster_tile_from_reader(
     y: int,
     scale: Literal['default', 'bits'] | list[int] = 'default',
 ) -> bytes:
-    img = reader.tile(x, y, z, tilesize=512)
+    img = reader.tile(x, y, z, **get_read_kwargs_for_reader(reader))
     if scale == 'default':
-        img.rescale(in_range=((0, 10000),))
+        img.rescale(in_range=((0, 255),))
     elif scale == 'bits':
         low, high = get_rescale_range_from_reader(reader)
         img.rescale(in_range=((low, high),))
@@ -94,7 +94,7 @@ def get_raster_bbox_from_reader(
 ) -> bytes:
     img = reader.part(bbox, **get_read_kwargs_for_reader(reader))
     if scale == 'default':
-        img.rescale(in_range=((0, 10000),))
+        img.rescale(in_range=((0, 255),))
     elif scale == 'bits':
         low, high = get_rescale_range_from_reader(reader)
         img.rescale(in_range=((low, high),))

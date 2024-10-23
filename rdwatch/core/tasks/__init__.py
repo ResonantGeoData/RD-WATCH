@@ -740,6 +740,7 @@ def generate_site_images_for_evaluation_run(
     scale: Literal['default', 'bits'] | list[int] = 'bits',
     bboxScale: float = BboxScaleDefault,
     pointArea: float = pointAreaDefault,
+    worldview_source: Literal['cog', 'nitf'] | None = 'cog',
 ):
     sites = SiteEvaluation.objects.filter(configuration=model_run_id)
     for eval in sites.iterator():
@@ -753,6 +754,7 @@ def generate_site_images_for_evaluation_run(
             scale,
             bboxScale,
             pointArea,
+            worldview_source,
         )
 
 

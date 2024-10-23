@@ -269,7 +269,7 @@ def get_siteobservations_images(
                 existing.cloudcover = cloudcover
                 existing.image = image
                 existing.percent_black = percent_black
-                existing.aws_location = results['uri']
+                existing.uri_locations = results['uris']
                 existing.image_bbox = Polygon.from_bbox(max_bbox)
                 existing.image_dimensions = [imageObj.width, imageObj.height]
                 existing.save()
@@ -279,7 +279,7 @@ def get_siteobservations_images(
                     observation=observation,
                     timestamp=observation.date,
                     image=image,
-                    aws_location=results['uri'],
+                    uri_locations=results['uris'],
                     cloudcover=cloudcover,
                     source=baseConstellation,
                     percent_black=percent_black,
@@ -393,7 +393,7 @@ def get_siteobservations_images(
                 existing.image.delete()
                 existing.cloudcover = cloudcover
                 existing.image = image
-                existing.aws_location = getattr(capture, 'uri', '')
+                existing.uri_locations = capture.uris
                 existing.image_bbox = Polygon.from_bbox(max_bbox)
                 existing.image_dimensions = [imageObj.width, imageObj.height]
                 existing.save()
@@ -401,7 +401,7 @@ def get_siteobservations_images(
                 SiteImage.objects.create(
                     site=base_site_eval.pk,
                     timestamp=capture_timestamp,
-                    aws_location=getattr(capture, 'uri', ''),
+                    uri_locations=capture.uris,
                     image=image,
                     cloudcover=cloudcover,
                     percent_black=percent_black,

@@ -42,12 +42,22 @@ function updateApiService() {
   ApiService.setApiPrefix(isScoringRoute ? "/api/scoring" : "/api");
 }
 
-export function reloadDataSourceFromStorage() {
-  const storageValue = localStorage.getItem(LOCAL_STORAGE_KEY)?.toLowerCase() ?? null;
-  setDataSource(storageValue);
+export function initializeDataSourceConfig() {
+  // first read from URL
+  const dataSource = ALLOWED_DATA_SOURCES.find(
+    (src) => Router.currentRoute.value.fullPath.startsWith(`/${src}`)
+  );
+
+  if (dataSource) {
+    setDataSource(dataSource);
+  } else {
+    // fallback to local storage
+    const storageValue = localStorage.getItem(LOCAL_STORAGE_KEY)?.toLowerCase() ?? null;
+    setDataSource(storageValue);
+  }
 }
 
-export function setDataSource(db: string | null) {
+export function setDataSource(db: string | null, options?: { persist?: boolean }) {
   if (db && !ALLOWED_DATA_SOURCES.includes(db)) {
     throw new Error(`DB ${db} is not supported`)
   }
@@ -55,7 +65,11 @@ export function setDataSource(db: string | null) {
   const oldDataSource = state.dataSource;
   state.dataSource = db;
 
-  persistSetting();
   updateRoute(oldDataSource, db);
   updateApiService();
+
+  const persist = options?.persist ?? false;
+  if (persist) {
+    persistSetting();
+  }
 }

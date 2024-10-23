@@ -3,7 +3,7 @@ import { state } from './store';
 import type { ServerStatus } from './client';
 
 import { onBeforeMount, onErrorCaptured, ref } from "vue";
-import { reloadDataSourceFromStorage } from './actions/dataSource';
+import { initializeDataSourceConfig } from './actions/dataSource';
 
 const isLoggedIn = ref(false);
 
@@ -32,7 +32,7 @@ onBeforeMount(async () => {
     }
   }
 
-  reloadDataSourceFromStorage();
+  initializeDataSourceConfig();
 });
 
 onErrorCaptured((err) => {

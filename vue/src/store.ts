@@ -258,7 +258,7 @@ export const state = reactive<{
   selectedSites: [],
   enabledSiteImages: [],
   siteOverviewSatSettings: {
-    observationSources: ['S2', 'WV', 'L8', 'PL'],
+    observationSources: ['S2', 'WV', 'L8'],
     cloudCoverFilter: 70,
     percentBlackFilter: 70,
     imageOpacity: 100.0,
@@ -274,7 +274,7 @@ export const state = reactive<{
   proposals: {},
   editGeoJSON: null,
   imageFilter: {
-    sources: ['WV', 'S2', 'L8', 'PL'],
+    sources: ['WV', 'S2', 'L8'],
     cloudCover: 95,
     noData: 100,
     obsFilter: ['observations', 'non-observations']

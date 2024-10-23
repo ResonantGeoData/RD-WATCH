@@ -44,7 +44,7 @@ def get_worldview_processed_visual_tile(
                     rgb = rgb.from_array(
                         pansharpening_brovey(rgb.data, pan.data, 0.2, 'uint16')
                     )
-            rgb.rescale(in_range=((0, 10000),))
+            rgb.rescale(in_range=((0, 255),))
         return rgb.render(img_format='WEBP')
 
 
@@ -93,7 +93,7 @@ def get_worldview_processed_visual_bbox(
                     logger.info(f'Pan Sharpening Time: {time.time() - startTime}')
 
         if scale == 'default':
-            rgb.rescale(in_range=((0, 10000),))
+            rgb.rescale(in_range=((0, 255),))
         elif scale == 'bits':
             if capture.bits_per_pixel != 8:
                 max_bits = 2**capture.bits_per_pixel - 1

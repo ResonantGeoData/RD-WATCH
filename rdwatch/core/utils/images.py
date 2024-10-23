@@ -134,9 +134,9 @@ def fetch_boundbox_image(
     if len(captures) == 0:
         return None
     closest_capture = min(captures, key=lambda band: abs(band.timestamp - timestamp))
-    if worldView == 'cog' and constellation == 'wv':
+    if worldView == 'cog' and constellation == 'WV':
         bytes = get_worldview_processed_visual_bbox(closest_capture, bbox, 'PNG', scale)
-    elif worldView == 'nitf' and constellation == 'wv':
+    elif worldView == 'nitf' and constellation == 'WV':
         bytes = get_worldview_nitf_bbox(closest_capture, bbox, 'PNG', scale)
     else:
         with closest_capture.open_reader() as reader:

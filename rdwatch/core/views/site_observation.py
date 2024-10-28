@@ -56,7 +56,7 @@ class SiteEvaluationImageSchema(Schema):
     observation_id: str | None
     bbox: BoundingBoxSchema
     image_dimensions: list[int]
-    aws_location: str
+    uri_locations: list[str]
 
 
 class SiteEvaluationImageListSchema(Schema):
@@ -166,7 +166,7 @@ def site_observations(request: HttpRequest, evaluation_id: UUID4):
                     observation_id='observation_id',
                     bbox=BoundingBox('image_bbox'),
                     image_dimensions='image_dimensions',
-                    aws_location='aws_location',
+                    uri_locations='uri_locations',
                 ),
                 default=[],
             ),
@@ -269,11 +269,8 @@ def cancel_site_observation_images(request: HttpRequest, evaluation_id: UUID4):
                 fetching_task.celery_id = ''
                 fetching_task.save()
             else:
-                return (
-                    409,
-                    f'There is no running task for Observation Id: {evaluation_id}',
-                )
-
+                # if the task is already terminated we remove the status
+                fetching_task.delete()
         else:
             return (
                 404,

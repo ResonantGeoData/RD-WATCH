@@ -141,7 +141,7 @@ const getImageData = async () => {
   siteEvaluationNotes.value = data.notes || "";
   siteEvaluationLabel.value = data.label;
   siteStatus.value = data.status || null;
-  
+
   if (data.groundTruth) {
     hasGroundTruth.value = true;
     groundTruth.value = data.groundTruth;
@@ -489,9 +489,9 @@ const clearStorage = async () => {
         <span> Toggle between Site Polygon and Observation Polygon </span>
       </v-tooltip>
       <v-tooltip
-        v-if="editMode && !loading && 
+        v-if="editMode && !loading &&
           evaluationGeoJSON?.type !== 'Point' &&
-          !ApiService.getApiPrefix().includes('scoring') &&
+          !ApiService.isScoring() &&
           filteredImages.length &&
           filteredImages[currentImage] &&
           filteredImages[currentImage].image &&

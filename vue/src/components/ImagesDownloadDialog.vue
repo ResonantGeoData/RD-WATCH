@@ -33,7 +33,7 @@ const force =ref(false);
 const customDateRange = ref(false);
 const scaleOptions = ref(['default', 'bits', 'custom']);
 const scale: Ref<'default' | 'bits' | 'custom'> = ref('bits');
-const scaleNums: Ref<[number, number]> = ref([0, 10000])
+const scaleNums: Ref<[number, number]> = ref([0, 255])
 const bboxScale: Ref<number> = ref(1.2);
 const validForm = ref(true);
 const dateAdpter = useDate();
@@ -207,7 +207,7 @@ const display = ref(true);
                   </v-icon>
                 </template>
                 <span>
-                  Day Limit applies to S2/L8/PL imagery to grab one image every X days.  This is to prevent loading hundreds of images
+                  Day Limit applies to S2/L8 imagery to grab one image every X days.  This is to prevent loading hundreds of images
                 </span>
               </v-tooltip>
             </v-row>

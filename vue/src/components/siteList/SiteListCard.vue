@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import {
   ApiService,
+  SatelliteFetchingDownloadingInfo,
   SiteModelStatus,
 } from "../../client/services/ApiService";
 import { SiteOverview, state, toggleSatelliteImages } from "../../store";
@@ -10,6 +11,7 @@ import { hoveredInfo } from "../../interactions/mouseEvents";
 import ImageBrowser from './ImageBrowser.vue';
 import ImageToggle from './ImageToggle.vue';
 import AnimationDownloadDialog from "../animation/AnimationDownloadDialog.vue";
+
 
 export interface SiteDisplay {
   number: number;
@@ -30,6 +32,8 @@ export interface SiteDisplay {
   status?: SiteModelStatus;
   timestamp: number;
   downloading: boolean;
+  downloadingData?: SatelliteFetchingDownloadingInfo;
+  downloadingError?: string;
   groundTruth?: boolean;
   color_code?: number;
   originator?: string;
@@ -40,7 +44,7 @@ export interface SiteDisplay {
     region: string;
     title: string;
   };
-  selectedSite?: SiteOverview; 
+  selectedSite?: SiteOverview;
 }
 
 const props = defineProps<{
@@ -62,6 +66,8 @@ const localSite: Ref<SiteDisplay> = ref({...props.site});
 const imagesActive = computed(() => state.enabledSiteImages.findIndex((item) => item.id === props.site.id) !== -1);
 const hasImages = computed(() =>  props.site.WV > 0 || props.site.S2 > 0 || props.site.PL > 0 || props.site.L8 > 0);
 const downloading = computed(() => props.site.downloading);
+const downloadingData = computed(() => props.site.downloadingData);
+const downloadingError = computed(() => props.site.downloadingError);
 
 const statusMap: Record<SiteModelStatus, { name: string; color: string, icon: string }> = {
   PROPOSAL: { name: "Proposed", color: "orange", icon: "mdi-dots-horizontal-circle" },
@@ -138,7 +144,7 @@ const animationDialog = ref(false);
             bottom
           >
             <template #activator="{ props }">
-              <v-icon 
+              <v-icon
                 size="20"
                 class="pa-0 ma-0 site-icon"
                 :color="statusMap[localSite.status].color"
@@ -233,13 +239,6 @@ const animationDialog = ref(false);
           <span class="image-label">L8:</span>
           <span class="image-value">{{ localSite.L8 }}</span>
         </v-col>
-        <v-col cols="1">
-          <span class="image-line" />
-        </v-col>
-        <v-col>
-          <span class="image-label">PL:</span>
-          <span class="image-value">{{ localSite.PL || 0 }}</span>
-        </v-col>
       </v-row>
       <v-row
         dense
@@ -295,8 +294,8 @@ const animationDialog = ref(false);
           </span>
         </v-tooltip>
         <v-spacer />
-        <v-tooltip 
-          v-if="!ApiService.getApiPrefix().includes('scoring')"
+        <v-tooltip
+          v-if="!ApiService.isScoring()"
           open-delay="300"
         >
           <template #activator="{ props }">
@@ -359,13 +358,55 @@ const animationDialog = ref(false);
                 density="compact"
                 class="pa-0 ma-1 site-icon animate-flicker"
                 size="xmall"
-                color="warning"
+                :color="!downloadingError ? 'warning' : 'error'"
                 v-bind="props"
               >
                 <v-icon>mdi-image-sync</v-icon>
               </v-btn>
             </template>
-            <span>Currently Downloading Images</span>
+            <v-card
+              v-if="downloadingData"
+              width="400"
+            >
+              <v-card-title><span style="font-size: 12px; font-weight:bold">{{ downloadingData.mode }}</span></v-card-title>
+              <v-card-text>
+                <v-row dense>
+                  <v-progress-linear
+                    :model-value="downloadingData.current"
+                    :max="downloadingData.total"
+                    height="25"
+                    color="primary"
+                    label
+                  >
+                    <template #default="{ value }">
+                      <strong>{{ Math.ceil(value) }}%</strong>
+                    </template>
+                  </v-progress-linear>
+                </v-row>
+                <v-row dense>
+                  <v-spacer>
+                    <span>Downloading {{ downloadingData.current }} of {{ downloadingData.total }} in source: {{ downloadingData.source}}</span>
+                  </v-spacer>
+                </v-row>
+                <v-row dense>
+                  <p>The total number is the found images, due to settings for timing and removing NoData/Cloud Cover all images may not be downloaded</p>
+                </v-row>
+              </v-card-text>
+            </v-card>
+            <v-card
+              v-else-if="downloadingError"
+              width="400"
+            >
+              <v-card-title>Downloading Error</v-card-title>
+              <v-card-text>
+                <v-row dense>
+                  <p>{{ downloadingError }}</p>
+                </v-row>
+              </v-card-text>
+            </v-card>
+            <div v-else>
+              Fetching Progress...
+            </div>
           </v-tooltip>
           <v-tooltip open-delay="300">
             <template #activator="{ props }">

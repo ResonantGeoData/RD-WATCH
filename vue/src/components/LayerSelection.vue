@@ -5,8 +5,7 @@ import { state, updateRegionList } from "../store";
 import { useRoute } from 'vue-router';
 
 
-
-const scoringApp = computed(()=> ApiService.getApiPrefix().includes('scoring'));
+const scoringApp = computed(() => state.dataSource === 'scoring');
 const route = useRoute();
 const proposals = computed(() => route.path.includes('proposals'));
 

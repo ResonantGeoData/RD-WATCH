@@ -23,11 +23,13 @@ from pyproj import Transformer
 from segment_anything import SamPredictor, sam_model_registry
 
 from django.conf import settings
+from django.contrib.gis.db.models.functions import Transform
 from django.contrib.gis.geos import Polygon
 from django.core.files import File
 from django.core.files.base import ContentFile
 from django.db import transaction
 from django.db.models import DateTimeField, ExpressionWrapper, F, OuterRef, Subquery
+from django.db.models.functions import JSONObject  # type: ignore
 from django.utils import timezone
 
 from rdwatch.celery import app
@@ -60,7 +62,6 @@ from rdwatch.core.utils.worldview_nitf.raster_tile import get_worldview_nitf_bbo
 from rdwatch.core.utils.worldview_processed.raster_tile import (
     get_worldview_processed_visual_bbox,
 )
-from rdwatch.core.views.site_evaluation import get_site_model_feature_JSON
 
 logger = logging.getLogger(__name__)
 # lowest time to use if time is null for observations
@@ -73,6 +74,87 @@ pointAreaDefault = 200
 ToMeters = 111139.0
 # number in meters to add to the center of small polygons for S2/L8
 overrideImageSize = 1000
+
+
+def get_site_model_feature_JSON(id: UUID4, obsevations=False):
+    query = (
+        SiteEvaluation.objects.filter(pk=id)
+        .values()
+        .annotate(
+            json=JSONObject(
+                site=JSONObject(
+                    region='configuration__region__name',
+                    number='number',
+                ),
+                configuration='configuration__parameters',
+                version='version',
+                performer=JSONObject(
+                    id='configuration__performer__id',
+                    team_name='configuration__performer__team_name',
+                    short_code='configuration__performer__short_code',
+                ),
+                cache_originator_file='cache_originator_file',
+                cache_timestamp='cache_timestamp',
+                cache_commit_hash='cache_commit_hash',
+                notes='notes',
+                score='score',
+                status='label__slug',
+                geom=Transform('geom', srid=4326),
+                start_date=('start_date'),
+                end_date=('end_date'),
+            )
+        )
+    )
+    if query.exists():
+        data = query[0]['json']
+
+        region_name = data['site']['region']
+        site_id = f'{region_name}_{str(data["site"]["number"]).zfill(4)}'
+        version = data['version']
+        output = {
+            'type': 'FeatureCollection',
+            'features': [
+                {
+                    'type': 'Feature',
+                    'properties': {
+                        'type': 'site',
+                        'region_id': region_name,
+                        'site_id': site_id,
+                        'version': version,
+                        'status': data['status'],
+                        'score': data['score'],
+                        'start_date': (
+                            None
+                            if data['start_date'] is None
+                            else datetime.fromisoformat(data['start_date']).strftime(
+                                '%Y-%m-%d'
+                            )
+                        ),
+                        'end_date': (
+                            None
+                            if data['end_date'] is None
+                            else datetime.fromisoformat(data['end_date']).strftime(
+                                '%Y-%m-%d'
+                            )
+                        ),
+                        'model_content': 'annotation',
+                        'originator': data['performer']['short_code'],
+                    },
+                    'geometry': data['geom'],
+                }
+            ],
+        }
+        filename = None
+        if data['cache_originator_file']:
+            filename = data['cache_originator_file']
+            output['features'][0]['properties']['cache'] = {
+                'cache_originator_file': data['cache_originator_file'],
+                'cache_timestamp': data['cache_timestamp'],
+                'cache_commit_hash': data['cache_commit_hash'],
+                'cache_notes': data['notes'],
+            }
+        return output, site_id, filename
+    return None, None
 
 
 def is_inside_range(
@@ -216,7 +298,7 @@ def get_siteobservations_images(
             meta={
                 'current': count,
                 'total': site_obs_count,
-                'mode': 'Site Observations',
+                'mode': 'Finding Matching Site Observations',
                 'siteEvalId': site_eval_id,
                 'source': baseConstellation,
             },
@@ -285,7 +367,7 @@ def get_siteobservations_images(
                 existing.cloudcover = cloudcover
                 existing.image = image
                 existing.percent_black = percent_black
-                existing.aws_location = results['uri']
+                existing.uri_locations = results['uris']
                 existing.image_bbox = Polygon.from_bbox(max_bbox)
                 existing.image_dimensions = [imageObj.width, imageObj.height]
                 existing.save()
@@ -295,7 +377,7 @@ def get_siteobservations_images(
                     observation=observation,
                     timestamp=observation.timestamp,
                     image=image,
-                    aws_location=results['uri'],
+                    uri_locations=results['uris'],
                     cloudcover=cloudcover,
                     source=baseConstellation,
                     percent_black=percent_black,
@@ -355,7 +437,7 @@ def get_siteobservations_images(
             meta={
                 'current': count,
                 'total': num_of_captures,
-                'mode': 'No Captures',
+                'mode': f'Found {num_of_captures} Additional Captures',
                 'source': baseConstellation,
                 'siteEvalId': site_eval_id,
             },
@@ -369,7 +451,7 @@ def get_siteobservations_images(
             meta={
                 'current': count,
                 'total': num_of_captures,
-                'mode': 'Image Captures',
+                'mode': 'Additional Image Captures Downloading',
                 'source': baseConstellation,
                 'siteEvalId': site_eval_id,
             },
@@ -424,7 +506,7 @@ def get_siteobservations_images(
                 existing.image.delete()
                 existing.cloudcover = cloudcover
                 existing.image = image
-                existing.aws_location = getattr(capture, 'uri', '')
+                existing.uri_locations = capture.uris
                 existing.image_bbox = Polygon.from_bbox(max_bbox)
                 existing.image_dimensions = [imageObj.width, imageObj.height]
                 existing.save()
@@ -432,7 +514,7 @@ def get_siteobservations_images(
                 SiteImage.objects.create(
                     site=baseSiteEval,
                     timestamp=capture_timestamp,
-                    aws_location=getattr(capture, 'uri', ''),
+                    uri_locations=capture.uris,
                     image=image,
                     cloudcover=cloudcover,
                     percent_black=percent_black,
@@ -658,6 +740,7 @@ def generate_site_images_for_evaluation_run(
     scale: Literal['default', 'bits'] | list[int] = 'bits',
     bboxScale: float = BboxScaleDefault,
     pointArea: float = pointAreaDefault,
+    worldview_source: Literal['cog', 'nitf'] | None = 'cog',
 ):
     sites = SiteEvaluation.objects.filter(configuration=model_run_id)
     for eval in sites.iterator():
@@ -671,6 +754,7 @@ def generate_site_images_for_evaluation_run(
             scale,
             bboxScale,
             pointArea,
+            worldview_source,
         )
 
 

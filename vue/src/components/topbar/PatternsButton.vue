@@ -1,14 +1,15 @@
 <script setup lang="ts">
-import { Ref,computed, nextTick, onMounted, ref, watch} from "vue";
+import { Ref, computed, nextTick, onMounted, ref, watch } from "vue";
 import { state } from "../../store";
 import { addPattern } from "../../interactions/fillPatterns";
 
 const groundImg: Ref<null | HTMLImageElement> = ref(null);
+const menuImg: Ref<null | HTMLImageElement> = ref(null);
 const performerImg: Ref<null | HTMLImageElement> = ref(null);
 const siteOutlineImg: Ref<null | HTMLImageElement> = ref(null);
 const hiddenCanvas: Ref<null | HTMLCanvasElement> = ref(null);
 const patternDensity: Ref<number> = ref(1);
-const patternDensityIndex = ref([64, 128, 256, 512, 1024])
+const patternDensityIndex = ref([64, 128, 256, 512, 1024]);
 
 const groundTruthPattern = computed({
   get() {
@@ -73,15 +74,15 @@ const drawCanvasPattern = () => {
       const size = 8;
       for (let i = 0; i <= width; i += size) {
         ctx.beginPath();
-        ctx.lineCap = 'round'
+        ctx.lineCap = "round";
         ctx.moveTo(0, width - i * size);
-        ctx.lineCap = 'round'
+        ctx.lineCap = "round";
         ctx.lineTo(width - i * size, 0);
         ctx.stroke();
         ctx.beginPath();
-        ctx.lineCap = 'round'
-        ctx.moveTo(0, width + i * size );
-        ctx.lineCap = 'round'
+        ctx.lineCap = "round";
+        ctx.moveTo(0, width + i * size);
+        ctx.lineCap = "round";
         ctx.lineTo(width + i * size, 0);
         ctx.stroke();
       }
@@ -89,6 +90,9 @@ const drawCanvasPattern = () => {
       const dataURL = hiddenCanvas.value.toDataURL();
       if (groundImg.value) {
         groundImg.value.src = dataURL;
+      }
+      if (menuImg.value) {
+        menuImg.value.src = dataURL;
       }
       ctx.clearRect(0, 0, width, height);
       for (let i = 0; i <= width; i += size) {
@@ -109,27 +113,33 @@ const drawCanvasPattern = () => {
   }
 };
 onMounted(() => {
-drawCanvasPattern();
-nextTick(() => {
-      if (performerImg.value !== null && groundImg.value !== null) {
-        addPattern(performerImg.value, groundImg.value);
-      }
+  drawCanvasPattern();
+  nextTick(() => {
+    if (performerImg.value !== null && groundImg.value !== null) {
+      addPattern(performerImg.value, groundImg.value);
+    }
   });
 });
 
+const menuOpened = () => {
+  nextTick(() => {
+    drawCanvasPattern();
+    if (performerImg.value !== null && groundImg.value !== null) {
+      addPattern(performerImg.value, groundImg.value);
+    }
+  });
+};
 
 watch([patternThickness, patternOpacity, patternDensity], () => {
+  nextTick(() => {
+    drawCanvasPattern();
     nextTick(() => {
-      drawCanvasPattern();
-      nextTick(() => {
-        if (performerImg.value !== null && groundImg.value !== null) {
-          addPattern(performerImg.value, groundImg.value);
-        }
-      });
+      if (performerImg.value !== null && groundImg.value !== null) {
+        addPattern(performerImg.value, groundImg.value);
+      }
     });
+  });
 });
-
-
 </script>
 
 <template>
@@ -143,15 +153,17 @@ watch([patternThickness, patternOpacity, patternDensity], () => {
     open-on-click
     :close-on-content-click="false"
     width="400"
+    @update:model-value="menuOpened"
   >
     <template #activator="{ props }">
       <v-btn
         v-bind="props"
         class="px-2 mx-2"
+        :variant="groundTruthPattern || otherPattern ? undefined : 'text'"
         :color="groundTruthPattern || otherPattern ? 'primary' : ''"
       >
         <img
-          ref="performerImg"
+          ref="menuImg"
           class="img-pixelated"
           height="24"
           width="24"
@@ -161,16 +173,16 @@ watch([patternThickness, patternOpacity, patternDensity], () => {
         </v-icon>
       </v-btn>
     </template>
-    <v-card>
-      <v-row dense>
-        <v-col cols="8">
-          <v-checkbox
-            v-model="groundTruthPattern"
-            label="Ground Truth Pattern:"
-            density="compact"
-          />
-        </v-col>
-        <v-col>
+    <v-card class="pa-4 pattern-card">
+      <v-card-title class="card-title mb-2">
+        Fill Pattern
+      </v-card-title>
+      <v-row
+        class="px-3"
+        align="center"
+        justify="center"
+      >
+        <v-col cols="2">
           <img
             ref="groundImg"
             class="img-pixelated"
@@ -178,26 +190,48 @@ watch([patternThickness, patternOpacity, patternDensity], () => {
             width="32"
           >
         </v-col>
-      </v-row>
-      <v-row dense>
-        <v-col cols="8">
+        <v-col>
+          Ground Truth Pattern
+        </v-col>
+        <v-col cols="2">
           <v-checkbox
-            v-model="otherPattern"
-            label="PerformerPattern:"
+            v-model="groundTruthPattern"
             density="compact"
+            hide-details
           />
         </v-col>
-        <v-col>
+      </v-row>
+      <v-row
+        class="px-3"
+        justify="center"
+        align="center"
+      >
+        <v-col cols="2">
           <img
             ref="performerImg"
             height="32"
             width="32"
           >
         </v-col>
+        <v-col>
+          Performer Pattern
+        </v-col>
+        <v-col cols="2">
+          <v-checkbox
+            v-model="otherPattern"
+            density="compact"
+            hide-details
+          />
+        </v-col>
       </v-row>
-      <v-row dense>
+      <v-row
+        dense
+        class="px-3"
+        align="center"
+        justify="center"
+      >
         <v-col cols="4">
-          <span>Pattern Thickness:</span>
+          <span>Thickness:</span>
         </v-col>
         <v-col>
           <v-slider
@@ -211,9 +245,14 @@ watch([patternThickness, patternOpacity, patternDensity], () => {
           />
         </v-col>
       </v-row>
-      <v-row dense>
+      <v-row
+        dense
+        class="px-3"
+        align="center"
+        justify="center"
+      >
         <v-col cols="4">
-          <span>Pattern Opacity:</span>
+          <span>Opacity:</span>
         </v-col>
         <v-col>
           <v-slider
@@ -227,9 +266,14 @@ watch([patternThickness, patternOpacity, patternDensity], () => {
           />
         </v-col>
       </v-row>
-      <v-row dense>
+      <v-row
+        dense
+        class="px-3"
+        align="center"
+        justify="center"
+      >
         <v-col cols="4">
-          <span>Pattern Density:</span>
+          <span>Density:</span>
         </v-col>
         <v-col>
           <v-slider
@@ -253,5 +297,8 @@ watch([patternThickness, patternOpacity, patternDensity], () => {
 }
 .img-pixelated {
   image-rendering: crisp-edges;
+}
+.card-title {
+  background-color: #F3F3F3;
 }
 </style>

@@ -5,25 +5,34 @@ import SatelliteRegionButton from './topbar/SatelliteRegionButton.vue';
 import BaseMapButton from './topbar/BaseMapButton.vue';
 import TextButton from './topbar/TextButton.vue';
 import PatternsButton from './topbar/PatternsButton.vue';
+import LegendButton from './topbar/LegendButton.vue';
+import MapLegend from './MapLegend.vue';
 </script>
 
 <template>
   <v-row
     dense
+    class="flex-nowrap"
   >
-    <v-row
-      class="toolbar-background"
-      dense
-    >
-      <layer-toggles />
-      <region-button />
-      <base-map-button />
-      <satellite-region-button />
-      <text-button />
-      <patterns-button />
-      <v-spacer />
-    </v-row>
     <v-spacer />
+    <v-col cols="auto">
+      <v-row
+        class="toolbar-background d-flex"
+        dense
+      >
+        <layer-toggles />
+        <region-button />
+        <base-map-button />
+        <satellite-region-button />
+        <text-button />
+        <patterns-button />
+        <legend-button />
+        <v-spacer />
+      </v-row>
+    </v-col>
+    <v-col cols="auto">
+      <MapLegend class="static-map-legend" />
+    </v-col>
   </v-row>
 </template>
 

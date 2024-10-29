@@ -12,7 +12,6 @@ import { state } from '../store';
   >
     <v-card
       density="compact"
-      color="black"
       class="legend-base"
     >
       <v-card-title>
@@ -34,7 +33,7 @@ import { state } from '../store';
           </v-col>
         </v-row>
       </v-card-title>
-      <v-card-text>
+      <v-card-text class="legend-card-text">
         <v-row dense>
           <v-card
             v-if="state.filters.drawSiteOutline && !state.filters.scoringColoring"
@@ -154,9 +153,10 @@ import { state } from '../store';
 }
 .legend-card-text {
   background-color: white;
-  opacity: 1.0;
+  opacity: 1.0 !important;
 }
 .legend-base {
   opacity: 0.75;
+  background-color: #FFFFFFBB
 }
 </style>

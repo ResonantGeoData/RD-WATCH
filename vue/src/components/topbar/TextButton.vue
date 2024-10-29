@@ -18,6 +18,7 @@ const toggleText = () => {
       <v-btn
         v-bind="props"
         class="px-2 mx-2"
+        :variant="state.filters.showText ? undefined : 'text'"
         :color="state.filters.showText ? 'primary' : ''"
         @click="toggleText"
       >

@@ -66,6 +66,7 @@ watch(() => state.filters.regions?.length, () => {
       <v-btn
         v-bind="props"
         class="px-2 mx-2"
+        :variant="state.filters.drawRegionPoly ? undefined : 'text'"
         :color="state.filters.drawRegionPoly ? 'primary' : ''"
         @click="getRegionInfo && getRegionInfo.hasGeom && toggleRegion()"
       >

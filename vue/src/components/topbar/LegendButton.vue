@@ -23,18 +23,18 @@ const drawMap = computed({
       <v-btn
         v-bind="props"
         class="px-2 mx-2"
-        :variant="drawMap ? undefined : 'text'"
-        :color="drawMap ? 'primary' : ''"
-        @click="drawMap = !drawMap"
+        :variant="state.mapLegend ? undefined : 'text'"
+        :color="state.mapLegend ? 'primary' : ''"
+        @click="state.mapLegend = !state.mapLegend"
       >
         <v-icon
-          :color="drawMap ? 'white': ''"
+          :color="state.mapLegend ? 'white': ''"
           size="x-large"
         >
-          mdi-road
+          mdi-map-legend
         </v-icon>
       </v-btn>
     </template>
-    <span>Toggle On/Off BaseMap</span>
+    <span>Toggle On/Off Legend</span>
   </v-tooltip>
 </template>

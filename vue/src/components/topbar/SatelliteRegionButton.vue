@@ -42,7 +42,6 @@ async function getSatelliteTimestamps(modelRun: ModelRunList, force=false) {
 
 const startLoadingSatelliteTimeStamps = async () => {
   askDownloadSatelliteTimestamps.value = false;
-  console.log(currentModelRunList.value);
   if (currentModelRunList.value) {
     getSatelliteTimestamps(currentModelRunList.value);
   }
@@ -152,6 +151,7 @@ const satelliteImageState = computed(() => (selectedRegion.value !== null && !(f
         :class="{
           'animate-flicker': state.satellite.loadingSatelliteImages,
         }"
+        :variant="imagesOn ? undefined : 'text'"
         :color="imagesOn ? 'primary' : ''"
         :disabled="selectedRegion === null || (filteredSatelliteTimeList.length === 0 && state.satellite.satelliteSources.length !== 0)"
         @click="imagesOn = selectedRegion !== null && (filteredSatelliteTimeList.length !== 0 || state.satellite.satelliteSources.length === 0) ? !imagesOn : imagesOn"
@@ -174,12 +174,6 @@ const satelliteImageState = computed(() => (selectedRegion.value !== null && !(f
       <v-card-title>Satellite Imagery</v-card-title>
       <v-card-text>
         <v-row dense>
-          <v-checkbox label="Show Satellite image timestamps" />
-        </v-row>
-        <v-row dense>
-          <v-divider />
-        </v-row>
-        <v-row dense>
           <h3>Source</h3>
         </v-row>
         <v-row dense>
@@ -198,11 +192,17 @@ const satelliteImageState = computed(() => (selectedRegion.value !== null && !(f
         <v-row dense>
           <v-radio
             v-model="worldViewImagery"
+            :disabled="true"
             label="World View Imagery"
           />
         </v-row>
         <v-row dense>
-          <span style="color:gray">WorldView Imagery from SMART STAC Server</span>
+          <div style="color:gray">
+            WorldView Imagery from SMART STAC Server
+          </div>
+          <div style="color:gray">
+            (disabled until NITF download is stabilized)
+          </div>
         </v-row>
         <v-row>
           <v-divider />
@@ -258,6 +258,28 @@ const satelliteImageState = computed(() => (selectedRegion.value !== null && !(f
     </v-card>
   </v-menu>
   <v-tooltip
+    v-else-if="loadingSatelliteTimestamps"
+    location="bottom"
+  >
+    <template #activator="{ props: props }">
+      <v-btn
+        class="px-2 mx-2"
+        v-bind="props"
+        :class="{
+          'animate-flicker': loadingSatelliteTimestamps,
+        }"
+        :color="satelliteLoadingColor"
+      >
+        <v-icon>mdi-sync mdi-spin</v-icon>
+      </v-btn>
+    </template>
+    <v-alert
+      type="warning"
+      title="Downloading Satellite Timestamps"
+      text="Downloading Timestamps for Satellite Images in the selected/visible ModelRun Time ranges"
+    />
+  </v-tooltip>
+  <v-tooltip
     v-else
     location="bottom"
   >
@@ -270,6 +292,7 @@ const satelliteImageState = computed(() => (selectedRegion.value !== null && !(f
           'animate-flicker': loadingSatelliteTimestamps,
         }"
         :color="satelliteLoadingColor"
+        variant="text"
         @click="askDownloadSatelliteTimestamps = true"
       >
         <v-icon>mdi-satellite-variant</v-icon>

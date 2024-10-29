@@ -3,7 +3,6 @@ import SideBar from "../components/SideBar.vue";
 import MapLibre from "../components/MapLibre.vue";
 import ImageViewer from "../components/imageViewer/ImageViewer.vue";
 import SiteList from "../components/siteList/SiteList.vue";
-import MapLegend from "../components/MapLegend.vue";
 import TopBar from "../components/TopBar.vue";
 import { onMounted, watch } from "vue";
 import { state, updateRegionList } from "../store";
@@ -77,7 +76,6 @@ watch(()=> ApiService.getApiPrefix(), async () => {
       </v-col>
     </v-row>
   </v-navigation-drawer>
-  <MapLegend class="static-map-legend" />
   <v-main style="z-index: 1">
     <MapLibre />
     <top-bar />

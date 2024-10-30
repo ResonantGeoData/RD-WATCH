@@ -14,6 +14,8 @@ class WorldViewNITFCapture(URICapture):
     collection: str
     bits_per_pixel: int
     epsg: int
+    panuri: int | None
+    instruments: list[str]
 
 
 def get_features(
@@ -34,13 +36,22 @@ def get_captures(
         timebuffer = timedelta(hours=1)
 
     features = [f for f in get_features(timestamp, bbox, timebuffer=timebuffer)]
-    captures = []
+    vis_captures: list[WorldViewNITFCapture] = []
+    pan_captures: list[WorldViewNITFCapture] = []
     for feature in features:
         if 'data' in feature['assets']:
             cloudcover = 0
+            instruments = []
             if 'properties' in feature:
                 if 'eo:cloud_cover' in feature['properties']:
                     cloudcover = feature['properties']['eo:cloud_cover']
+                if (
+                    'nitf:compression' in feature['properties']
+                    and feature['properties']['nitf:compression'] != 'NC'
+                ):
+                    continue
+                if 'instruments' in feature['properties']:
+                    instruments = feature['properties']['instruments']
             capture = WorldViewNITFCapture(
                 timestamp=datetime.fromisoformat(
                     feature['properties']['datetime'].rstrip('Z')
@@ -50,8 +61,27 @@ def get_captures(
                 bits_per_pixel=feature['properties']['nitf:bits_per_pixel'],
                 cloudcover=cloudcover,
                 collection=feature['collection'],
+                instruments=instruments,
+                panuri=None,
                 epsg=feature['properties']['proj:epsg'],
             )
-            captures.append(capture)
+            if 'panchromatic' in instruments:
+                pan_captures.append(capture)
+            elif 'vis-multi' in instruments:
+                vis_captures.append(capture)
+            else:
+                raise ValueError(
+                    f'Instruments: {instruments} does not contain panchromatic or vis-multi'
+                )
+    # Attempt to add panuri elements to visual captures that exist
+    for pan_capture in pan_captures:
+        pan_timestamp = pan_capture.timestamp
+        for vis_capture in vis_captures:
+            vis_timestamp = vis_capture.timestamp
+            # Compare bbox and timestamp (within a tolerance for timestamp)
+            if abs((vis_timestamp - pan_timestamp).total_seconds()) < 60:
+                # If a match is found, update the vis-multi capture's panuri field
+                vis_capture.panuri = pan_capture.uri
+                break
 
-    return captures
+    return vis_captures

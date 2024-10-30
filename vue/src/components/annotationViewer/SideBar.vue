@@ -4,7 +4,7 @@ import TimeSlider from "../TimeSlider.vue";
 import PerformerFilter from "../filters/PerformerFilter.vue";
 import RegionFilter from "../filters/RegionFilter.vue";
 import SettingsPanel from "../SettingsPanel.vue";
-import { filteredSatelliteTimeList, state } from "../../store";
+import { state } from "../../store";
 import { computed, onMounted, ref, watch } from "vue";
 import { ApiService, ModelRunList, type Performer, type QueryArguments, type Region } from "../../client";
 import type { Ref } from "vue";
@@ -50,32 +50,6 @@ onMounted(() => {
   });
 });
 
-const groundTruthPattern = computed({
-  get() {
-    return state.filters.groundTruthPattern || false;
-  },
-  set(val: boolean) {
-    state.filters = { ...state.filters, groundTruthPattern: val };
-  },
-});
-const drawMap = computed({
-  get() {
-    return state.filters.drawMap || false;
-  },
-  set(val: boolean) {
-    state.filters = { ...state.filters, drawMap: val };
-  },
-});
-
-const imagesOn = computed({
-  get() {
-    return state.satellite.satelliteImagesOn || false;
-  },
-  set(val: boolean) {
-    state.satellite = { ...state.satellite, satelliteImagesOn: val };
-  },
-});
-
 
 async function getSatelliteTimestamps(modelRun: ModelRunList, force=false) {
   satelliteRegionTooLarge.value = false;
@@ -116,16 +90,6 @@ const startLoadingSatelliteTimeStamps = async () => {
   }
 }
 
-const satelliteLoadingColor = computed(() => {
-  if (satelliteRegionTooLarge.value) {
-    return 'warning'
-  }
-  if (loadingSatelliteTimestamps.value) {
-    return 'primary';
-  }
-  return 'black'
-})
-
 </script>
 
 <template>
@@ -155,78 +119,6 @@ const satelliteLoadingColor = computed(() => {
       </v-row>
       <v-row class="mt-2">
         <v-spacer />
-        <v-btn
-          variant="tonal"
-          density="compact"
-          class="pa-0 ma-1 sidebar-icon"
-          :color="groundTruthPattern ? 'primary' : 'black'"
-          @click="groundTruthPattern = !groundTruthPattern"
-        >
-          <v-icon>mdi-gradient-horizontal</v-icon>
-        </v-btn>
-        <v-btn
-          variant="tonal"
-          density="compact"
-          class="pa-0 ma-1 sidebar-icon"
-          :color="drawMap ? 'primary' : 'black'"
-          @click="drawMap = !drawMap"
-        >
-          <v-icon>mdi-road</v-icon>
-        </v-btn>
-
-        <v-btn
-          v-if="selectedRegion !== null && !(filteredSatelliteTimeList.length === 0 && state.satellite.satelliteSources.length !== 0)"
-          variant="tonal"
-          density="compact"
-          class="pa-0 ma-1 sidebar-icon"
-          :class="{
-            'animate-flicker': state.satellite.loadingSatelliteImages,
-          }"
-          :color="imagesOn ? 'primary' : 'black'"
-          :disabled="selectedRegion === null || (filteredSatelliteTimeList.length === 0 && state.satellite.satelliteSources.length !== 0)"
-          @click="imagesOn = selectedRegion !== null && (filteredSatelliteTimeList.length !== 0 || state.satellite.satelliteSources.length === 0) ? !imagesOn : imagesOn"
-        >
-          <v-icon>mdi-image</v-icon>
-        </v-btn>
-        <v-tooltip v-else>
-          <template #activator="{ props: props }">
-            <v-btn
-              variant="tonal"
-              v-bind="props"
-              :disabled="!selectedRegion"
-              density="compact"
-              :class="{
-                'animate-flicker': loadingSatelliteTimestamps,
-              }"
-              class="pa-0 ma-1 sidebar-icon"
-              :color="satelliteLoadingColor"
-              @click="askDownloadSatelliteTimestamps = true"
-            >
-              <v-icon>mdi-satellite-variant</v-icon>
-            </v-btn>
-          </template>
-          <v-alert
-            v-if="!satelliteRegionTooLarge"
-            type="warning"
-            title="Download Region Satellite Timestamps"
-            text="This is a long running process that could cause instability on the server.  Please only run this if you are sure you need to use the region satellite feature."
-          />
-          <v-alert
-            v-else
-            type="warning"
-            title="Region Too Large to Download Timestamps"
-            text="The Region is too large to download timestamps for."
-          />
-        </v-tooltip>
-        <v-btn
-          :color="state.mapLegend ? 'primary' : 'gray'"
-          variant="tonal"
-          density="compact"
-          class="pa-0 ma-1 sidebar-icon"
-          @click="state.mapLegend = !state.mapLegend"
-        >
-          <v-icon>mdi-map-legend</v-icon>
-        </v-btn>
         <v-btn
           :color="expandSettings ? 'primary' : 'gray'"
           variant="tonal"

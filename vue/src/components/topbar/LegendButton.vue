@@ -1,17 +1,5 @@
 <script setup lang="ts">
-import { computed,} from "vue";
 import { state } from "../../store";
-
-
-
-const drawMap = computed({
-  get() {
-    return state.filters.drawMap || false;
-  },
-  set(val: boolean) {
-    state.filters = { ...state.filters, drawMap: val };
-  },
-});
 
 </script>
 

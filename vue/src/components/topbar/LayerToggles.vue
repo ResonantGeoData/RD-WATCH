@@ -1,10 +1,17 @@
 
 <script setup lang="ts">
-import { computed, onMounted, watch } from "vue";
+import { computed, defineProps, onMounted, watch, withDefaults } from "vue";
 import { ApiService } from "../../client";
 import { state } from "../../store";
 import { useRoute } from 'vue-router';
 
+
+
+withDefaults(defineProps<{
+  annotation: boolean;
+}>(), {
+  annotation: false,
+});
 
 
 const scoringApp = computed(()=> ApiService.getApiPrefix().includes('scoring'));
@@ -193,6 +200,10 @@ const toggleScoring = (data? : undefined | 'simple' | 'detailed') => {
 
   }
   state.filters = { ...state.filters, scoringColoring: val as 'simple' | 'detailed' | undefined };
+}
+
+const addProposal = () => {
+  state.filters.addingSitePolygon = true;
 }
 
 
@@ -533,6 +544,29 @@ const toggleScoring = (data? : undefined | 'simple' | 'detailed') => {
       </v-list>
     </v-card>
   </v-menu>
+  <v-tooltip
+    text="Add Proposal"
+    location="bottom"
+  >
+    <template #activator="{ props }">
+      <v-btn
+        v-if="proposals && annotation && !scoringApp"
+        class="px-2 mx-2"
+        v-bind="props"
+        :variant="state.filters.addingSitePolygon && modelRunEnabled ? undefined : 'text'"
+        :disabled="state.filters.addingSitePolygon || !modelRunEnabled"
+        :color="state.filters.addingSitePolygon ? 'primary' : ''"
+        @click="addProposal()"
+      >
+        <v-icon
+          size="x-large"
+          :color="state.filters.addingSitePolygon ? 'white' : ''"
+        >
+          mdi-vector-polygon
+        </v-icon><v-icon>mdi-plus</v-icon>
+      </v-btn>
+    </template>
+  </v-tooltip>
 </template>
 
 <style scoped>

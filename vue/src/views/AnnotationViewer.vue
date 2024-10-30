@@ -2,11 +2,9 @@
 import SideBar from "../components/annotationViewer/SideBar.vue"
 import ImageViewer from "../components/imageViewer/ImageViewer.vue"
 import MapLibre from "../components/MapLibre.vue";
-import LayerSelection from "../components/LayerSelection.vue";
 import AnnotationList from "../components/annotationViewer/AnnotationList.vue"
 import AddProposal from "../components/annotationViewer/AddProposal.vue"
-import AddRegion from "../components/AddRegion.vue"
-import MapLegend from "../components/MapLegend.vue";
+import TopBar from "../components/TopBar.vue";
 import { Ref, computed, onMounted, ref, watch } from "vue";
 import { state, updateRegionList } from "../store";
 import { ApiService } from "../client";
@@ -74,8 +72,8 @@ const updateSiteList = async () => {
     <SideBar />
   </v-navigation-drawer>
   <v-main style="z-index:1">
-    <layer-selection />
     <MapLibre :compact="!!state.selectedImageSite" />
+    <top-bar annotation />
     <ImageViewer
       v-if="!!state.selectedImageSite"
       :site-eval-id="state.selectedImageSite.siteId"
@@ -112,15 +110,9 @@ const updateSiteList = async () => {
             v-if="state.filters.addingSitePolygon"
             :region="region"
           />
-          <add-region
-            v-if="state.filters.addingRegionPolygon"
-          />
         </v-col>
       </v-row>
     </v-navigation-drawer>
-    <MapLegend
-      class="static-map-legend"
-    />
   </span>
 </template>
 

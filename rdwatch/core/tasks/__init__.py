@@ -184,34 +184,34 @@ def get_siteobservation_images_task(
     pointArea: float = pointAreaDefault,
     worldview_source: Literal['cog', 'nitf'] | None = 'cog',
 ) -> None:
-    try:
-        capture_count = 0
-        for constellation in baseConstellations:
-            capture_count += get_siteobservations_images(
-                self,
-                site_eval_id=site_eval_id,
-                baseConstellation=constellation,
-                force=force,
-                dayRange=dayRange,
-                no_data_limit=no_data_limit,
-                overrideDates=overrideDates,
-                scale=scale,
-                bboxScale=bboxScale,
-                pointArea=pointArea,
-                worldview_source=worldview_source,
-            )
-        fetching_task = SatelliteFetching.objects.get(site_id=site_eval_id)
-        fetching_task.status = SatelliteFetching.Status.COMPLETE
-        if capture_count == 0:
-            fetching_task.error = 'No Captures found'
-        fetching_task.celery_id = ''
-        fetching_task.save()
-    except Exception as e:
-        logger.info(f'EXCEPTION: {e}')
-        fetching_task = SatelliteFetching.objects.get(site_id=site_eval_id)
-        fetching_task.error = f'Error: {e}'
-        fetching_task.status = SatelliteFetching.Status.ERROR
-        fetching_task.save()
+    # try:
+    capture_count = 0
+    for constellation in baseConstellations:
+        capture_count += get_siteobservations_images(
+            self,
+            site_eval_id=site_eval_id,
+            baseConstellation=constellation,
+            force=force,
+            dayRange=dayRange,
+            no_data_limit=no_data_limit,
+            overrideDates=overrideDates,
+            scale=scale,
+            bboxScale=bboxScale,
+            pointArea=pointArea,
+            worldview_source=worldview_source,
+        )
+    fetching_task = SatelliteFetching.objects.get(site_id=site_eval_id)
+    fetching_task.status = SatelliteFetching.Status.COMPLETE
+    if capture_count == 0:
+        fetching_task.error = 'No Captures found'
+    fetching_task.celery_id = ''
+    fetching_task.save()
+    # except Exception as e:
+    #     logger.info(f'EXCEPTION: {e}')
+    #     fetching_task = SatelliteFetching.objects.get(site_id=site_eval_id)
+    #     fetching_task.error = f'Error: {e}'
+    #     fetching_task.status = SatelliteFetching.Status.ERROR
+    #     fetching_task.save()
 
 
 def get_siteobservations_images(
@@ -331,7 +331,7 @@ def get_siteobservations_images(
                 logger.info(f'Skipping Timestamp: {timestamp}')
                 continue
             if found.exists() and not force:
-                found_timestamps[observation.timestamp] = True
+                found_timestamps[observation.timestamp.replace(microsecond=0)] = True
                 continue
             results = fetch_boundbox_image(
                 bbox,
@@ -346,7 +346,7 @@ def get_siteobservations_images(
             bytes = results['bytes']
             percent_black = get_percent_black_pixels(bytes)
             cloudcover = results['cloudcover']
-            found_timestamp = results['timestamp']
+            found_timestamp = results['timestamp'].replace(microsecond=0)
             if bytes is None:
                 logger.info(f'COULD NOT FIND ANY IMAGE FOR TIMESTAMP: {timestamp}')
                 continue
@@ -523,6 +523,7 @@ def get_siteobservations_images(
                     image_dimensions=[imageObj.width, imageObj.height],
                 )
         else:
+            logger.info('Skipping timestamp because image already found')
             count += 1
     return downloaded_count
 

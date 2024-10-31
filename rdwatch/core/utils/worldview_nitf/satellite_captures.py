@@ -70,8 +70,9 @@ def get_captures(
             elif 'vis-multi' in instruments:
                 vis_captures.append(capture)
             else:
+                uri = feature['assets']['data']['href']
                 raise ValueError(
-                    f'Instruments: {instruments} does not contain panchromatic or vis-multi'
+                    f'Instruments: {instruments} does not contain panchromatic or vis-multi: {uri}'
                 )
     # Attempt to add panuri elements to visual captures that exist
     for pan_capture in pan_captures:

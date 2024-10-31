@@ -90,47 +90,64 @@ def get_worldview_nitf_bbox(
     with rasterio.Env(
         GDAL_DISABLE_READDIR_ON_OPEN='EMPTY_DIR',
         GDAL_HTTP_MERGE_CONSECUTIVE_RANGES='YES',
-        GDAL_CACHEMAX=200,
-        CPL_VSIL_CURL_CACHE_SIZE=20000000,
-        CPL_VSIL_CURL_CHUNK_SIZE=524288,
-        GDAL_BAND_BLOCK_CACHE='HASHSET',
         GDAL_HTTP_MULTIPLEX='YES',
         GDAL_HTTP_VERSION=2,
-        VSI_CACHE='TRUE',
-        VSI_CACHE_SIZE=5000000,
+        CPL_VSIL_CURL_CHUNK_SIZE=524288,
     ):
+        logger.info(f'Downloading WorldView NITF bbox: {bbox} scale: {scale}')
         if capture.panuri is not None:
             with Reader(input=capture.panuri) as pan_img:
-                pan_chip = pan_img.part(bbox=bbox)
+                logger.info(f'Downloading PanURI Chip: {capture.panuri}')
+                start_pan_time = time.monotonic()
+                pan_chip = pan_img.part(bbox=bbox, dst_crs='epsg:4326')
+                finish_pan_time = time.monotonic() - start_pan_time
+                logger.info(f'Done Downloading PanURI in: {finish_pan_time}')
                 with Reader(input=capture.uri) as vis_img:
                     information = vis_img.info()
                     rgb_channels = find_rgb_channels(information.colorinterp)
                     if all(
                         channel is not None for channel in rgb_channels
                     ):  # Ensure all RGB channels exist
+                        start_vis_time = time.monotonic() - finish_pan_time
+                        logger.info('Starting Visual Download')
                         vis_chip = vis_img.part(
                             bbox=bbox,
                             indexes=rgb_channels,
+                            dst_crs='epsg:4326',
                             width=pan_chip.width,
                             height=pan_chip.height,
                         )
+                        end_vis_time = time.monotonic() - start_vis_time
+                        logger.info(f'Finished Visual Download: {end_vis_time}')
                         final_chip = ImageData(
                             pansharpening_brovey(
                                 vis_chip.data, pan_chip.data, 0.2, 'uint16'
                             )
+                        )
+                        logger.info(
+                            f'Finished Pansharening: {time.monotonic() - end_vis_time}'
                         )
                         statistics = list(final_chip.statistics().values())
                         if scale == 'default':
                             in_range = tuple(
                                 (item.min, item.max) for item in statistics
                             )
-                            final_chip.rescale(in_range=in_range)
+                        elif scale == 'bits':
+                            in_range = tuple(
+                                (item['percentile_2'], item['percentile_98'])
+                                for item in statistics
+                            )
                         elif (
                             isinstance(scale, list) and len(scale) == 2
                         ):  # scale is an integeter range
                             in_range = tuple(
                                 (scale[0], scale[1]) for item in statistics
                             )
+                        logger.info(f'Rescale: {in_range}')
+                        final_chip.rescale(in_range=in_range)
+                        logger.info(
+                            f'Returning Final Render: {time.monotonic() - start_pan_time}'
+                        )
                         return final_chip.render(img_format=format)
         else:
             with Reader(input=capture.uri) as vis_img:
@@ -139,18 +156,30 @@ def get_worldview_nitf_bbox(
                 if all(
                     channel is not None for channel in rgb_channels
                 ):  # Ensure all RGB channels exist
+                    start_vis_time = time.monotonic()
+                    logger.info('Starting Visual Download')
                     final_chip = vis_img.part(
                         bbox=bbox,
+                        dst_crs='epsg:4326',
                         indexes=rgb_channels,
-                        width=pan_chip.width,
-                        height=pan_chip.height,
+                    )
+                    logger.info(
+                        f'Ending Download Visual: {time.monotonic() - start_vis_time}'
                     )
                     statistics = list(final_chip.statistics().values())
                     if scale == 'default':
                         in_range = tuple((item.min, item.max) for item in statistics)
-                        final_chip.rescale(in_range=in_range)
+                    elif scale == 'bits':
+                        in_range = tuple(
+                            (item['percentile_2'], item['percentile_98'])
+                            for item in statistics
+                        )
                     elif (
                         isinstance(scale, list) and len(scale) == 2
                     ):  # scale is an integeter range
                         in_range = tuple((scale[0], scale[1]) for item in statistics)
+                    final_chip.rescale(in_range=in_range)
+                    logger.info(
+                        f'Returning Visual Chip: {time.monotonic() - start_vis_time}'
+                    )
                     return final_chip.render(img_format=format)

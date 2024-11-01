@@ -269,11 +269,8 @@ def cancel_site_observation_images(request: HttpRequest, evaluation_id: UUID4):
                 fetching_task.celery_id = ''
                 fetching_task.save()
             else:
-                return (
-                    409,
-                    f'There is no running task for Observation Id: {evaluation_id}',
-                )
-
+                # if the task is already terminated we remove the status
+                fetching_task.delete()
         else:
             return (
                 404,

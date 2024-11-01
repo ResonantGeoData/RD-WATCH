@@ -210,10 +210,9 @@ def create_animation(self, site_evaluation_id: UUID4, settings: dict[str, Any]):
                 max_height_px = height
                 max_image_record = image_record
 
-    if max_width_px < 500 or max_height_px < 500:
-        new_height = (max_height_px / max_width_px) * 500
-        max_width_px = int(500)
-        max_height_px = int(new_height)
+    while max_width_px < 500 or max_height_px < 500:
+        max_width_px *= 2
+        max_height_px *= 2
 
     # using the max_image_bbox we apply the rescale_border
     if rescale:
@@ -256,6 +255,17 @@ def create_animation(self, site_evaluation_id: UUID4, settings: dict[str, Any]):
         # Update the rescaled max dimensions
         rescaled_max_width = int(rescaled_image_bbox_width * x_pixel_per_unit)
         rescaled_max_height = int(rescaled_image_bbox_height * y_pixel_per_unit)
+        upscaled = False
+        base_rescaled_max_width = rescaled_max_width
+        base_rescaled_max_height = rescaled_max_height
+        if rescaled_max_width < 500 or rescaled_max_height < 500:
+            while rescaled_max_width < 500 or rescaled_max_height < 500:
+                rescaled_max_width *= 2
+                rescaled_max_height *= 2
+                x_pixel_per_unit = rescaled_max_width / rescaled_image_bbox_width
+                y_pixel_per_unit = rescaled_max_height / rescaled_image_bbox_height
+            upscaled = True
+
     else:
         x_offset = 0
         y_offset = 0
@@ -299,7 +309,7 @@ def create_animation(self, site_evaluation_id: UUID4, settings: dict[str, Any]):
             x_offset = 0
             y_offset = 0
         else:
-            img = img.resize((max_width_px, max_height_px))
+            img = img.resize((max_width_px, max_height_px), Image.Resampling.NEAREST)
         draw = ImageDraw.Draw(img)
 
         # Extract image dimensions and bounding box
@@ -317,15 +327,13 @@ def create_animation(self, site_evaluation_id: UUID4, settings: dict[str, Any]):
         if rescale:
             # We draw the max_image_record bbox polygon on the center of the screen
             bbox = max_image_record.image_bbox.extent
-            xScale = max_width_px / (bbox[2] - bbox[0])
-            yScale = max_height_px / (bbox[3] - bbox[1])
-            # We need the bbox offset size based on the transform bounds difference
-            # bbox_transform = transformer_other.transform_bounds(
-            #     bbox[0], bbox[1], bbox[2], bbox[3]
-            # )
+
             bbox_transform = bbox
             xScale = max_width_px / (bbox_transform[2] - bbox_transform[0])
             yScale = max_height_px / (bbox_transform[3] - bbox_transform[1])
+            if upscaled:
+                xScale = xScale * (rescaled_max_width / base_rescaled_max_width)
+                yScale = yScale * (rescaled_max_height / base_rescaled_max_height)
 
             x_offset = (bbox_transform[0] - output_bbox_size[0]) * xScale
             y_offset = (bbox_transform[1] - output_bbox_size[1]) * yScale
@@ -501,8 +509,7 @@ def create_animation(self, site_evaluation_id: UUID4, settings: dict[str, Any]):
     # Save frames as an animated GIF
     evaluation_run = site_evaluation.evaluation_run_uuid
     base_str = f'Eval_{evaluation_run.evaluation_number}_{evaluation_run.evaluation_run_number}_{evaluation_run.performer}'  # noqa: E501
-    prefix = f'{base_str}\
-        _{str(site_evaluation.site_id)}'
+    prefix = f'{base_str}_{str(site_evaluation.site_id)}'
     if frames:
         # Create a temporary directory
         self.update_state(

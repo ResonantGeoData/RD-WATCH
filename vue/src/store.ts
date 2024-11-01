@@ -159,6 +159,7 @@ export interface KeyedModelRun extends ModelRun {
 
 export const state = reactive<{
   appVersion: string;
+  dataSource: string | null;
   errorText: string;
   timestamp: number;
   timeMin: number;
@@ -217,6 +218,7 @@ export const state = reactive<{
   };
 }>({
   appVersion: '',
+  dataSource: null,
   errorText: '',
   timestamp: Math.floor(Date.now() / 1000),
   timeMin: Math.floor(new Date(0).valueOf() / 1000),
@@ -256,7 +258,7 @@ export const state = reactive<{
   selectedSites: [],
   enabledSiteImages: [],
   siteOverviewSatSettings: {
-    observationSources: ['S2', 'WV', 'L8', 'PL'],
+    observationSources: ['S2', 'WV', 'L8'],
     cloudCoverFilter: 70,
     percentBlackFilter: 70,
     imageOpacity: 100.0,
@@ -272,7 +274,7 @@ export const state = reactive<{
   proposals: {},
   editGeoJSON: null,
   imageFilter: {
-    sources: ['WV', 'S2', 'L8', 'PL'],
+    sources: ['WV', 'S2', 'L8'],
     cloudCover: 95,
     noData: 100,
     obsFilter: ['observations', 'non-observations']

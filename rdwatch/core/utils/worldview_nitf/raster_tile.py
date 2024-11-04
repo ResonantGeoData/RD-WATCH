@@ -98,34 +98,33 @@ def get_worldview_nitf_bbox(
         if capture.panuri is not None:
             with Reader(input=capture.panuri) as pan_img:
                 logger.info(f'Downloading PanURI Chip: {capture.panuri}')
-                start_pan_time = time.monotonic()
-                pan_chip = pan_img.part(bbox=bbox, dst_crs='epsg:4326')
-                finish_pan_time = time.monotonic() - start_pan_time
-                logger.info(f'Done Downloading PanURI in: {finish_pan_time}')
+                try:
+                    pan_chip = pan_img.part(bbox=bbox, dst_crs='epsg:4326')
+                except ValueError as e:
+                    logger.info(f'Value Error: {e} - {capture.panuri}')
+                    return None
                 with Reader(input=capture.uri) as vis_img:
+                    logger.info(f'Downloading URI Chip: {capture.uri}')
                     information = vis_img.info()
                     rgb_channels = find_rgb_channels(information.colorinterp)
                     if all(
                         channel is not None for channel in rgb_channels
                     ):  # Ensure all RGB channels exist
-                        start_vis_time = time.monotonic() - finish_pan_time
-                        logger.info('Starting Visual Download')
-                        vis_chip = vis_img.part(
-                            bbox=bbox,
-                            indexes=rgb_channels,
-                            dst_crs='epsg:4326',
-                            width=pan_chip.width,
-                            height=pan_chip.height,
-                        )
-                        end_vis_time = time.monotonic() - start_vis_time
-                        logger.info(f'Finished Visual Download: {end_vis_time}')
+                        try:
+                            vis_chip = vis_img.part(
+                                bbox=bbox,
+                                indexes=rgb_channels,
+                                dst_crs='epsg:4326',
+                                width=pan_chip.width,
+                                height=pan_chip.height,
+                            )
+                        except ValueError as e:
+                            logger.info(f'Value Error: {e} - {capture.uri}')
+                            return None
                         final_chip = ImageData(
                             pansharpening_brovey(
                                 vis_chip.data, pan_chip.data, 0.2, 'uint16'
                             )
-                        )
-                        logger.info(
-                            f'Finished Pansharening: {time.monotonic() - end_vis_time}'
                         )
                         statistics = list(final_chip.statistics().values())
                         if scale == 'default':
@@ -143,11 +142,7 @@ def get_worldview_nitf_bbox(
                             in_range = tuple(
                                 (scale[0], scale[1]) for item in statistics
                             )
-                        logger.info(f'Rescale: {in_range}')
                         final_chip.rescale(in_range=in_range)
-                        logger.info(
-                            f'Returning Final Render: {time.monotonic() - start_pan_time}'
-                        )
                         return final_chip.render(img_format=format)
         else:
             with Reader(input=capture.uri) as vis_img:
@@ -156,16 +151,15 @@ def get_worldview_nitf_bbox(
                 if all(
                     channel is not None for channel in rgb_channels
                 ):  # Ensure all RGB channels exist
-                    start_vis_time = time.monotonic()
-                    logger.info('Starting Visual Download')
-                    final_chip = vis_img.part(
-                        bbox=bbox,
-                        dst_crs='epsg:4326',
-                        indexes=rgb_channels,
-                    )
-                    logger.info(
-                        f'Ending Download Visual: {time.monotonic() - start_vis_time}'
-                    )
+                    try:
+                        final_chip = vis_img.part(
+                            bbox=bbox,
+                            dst_crs='epsg:4326',
+                            indexes=rgb_channels,
+                        )
+                    except ValueError as e:
+                        logger.info(f'Value Error: {e} - {capture.uri}')
+                        return None
                     statistics = list(final_chip.statistics().values())
                     if scale == 'default':
                         in_range = tuple((item.min, item.max) for item in statistics)
@@ -179,7 +173,4 @@ def get_worldview_nitf_bbox(
                     ):  # scale is an integeter range
                         in_range = tuple((scale[0], scale[1]) for item in statistics)
                     final_chip.rescale(in_range=in_range)
-                    logger.info(
-                        f'Returning Visual Chip: {time.monotonic() - start_vis_time}'
-                    )
                     return final_chip.render(img_format=format)

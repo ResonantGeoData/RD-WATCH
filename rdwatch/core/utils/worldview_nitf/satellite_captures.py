@@ -1,9 +1,12 @@
+import logging
 from dataclasses import dataclass
 from datetime import datetime, timedelta
 from typing import cast
 
 from rdwatch.core.utils.capture import URICapture
 from rdwatch.core.utils.worldview_nitf.stac_search import worldview_search
+
+logger = logging.getLogger(__name__)
 
 
 @dataclass()
@@ -70,10 +73,7 @@ def get_captures(
             elif 'vis-multi' in instruments:
                 vis_captures.append(capture)
             else:
-                uri = feature['assets']['data']['href']
-                raise ValueError(
-                    f'Instruments: {instruments} does not contain panchromatic or vis-multi: {uri}'
-                )
+                logger.info(f'Instrument type {instruments} is no supported')
     # Attempt to add panuri elements to visual captures that exist
     for pan_capture in pan_captures:
         pan_timestamp = pan_capture.timestamp

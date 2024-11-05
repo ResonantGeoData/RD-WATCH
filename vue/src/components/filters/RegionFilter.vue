@@ -45,6 +45,9 @@ watch(selectedRegion, (val) => {
   if (router.currentRoute.value.fullPath.includes('proposals')) {
     prepend += 'proposals/'
   }
+  if (router.currentRoute.value.fullPath.startsWith('/iqr')) {
+    prepend += 'iqr/'
+  }
   if (val) {
     router.push(`${prepend}${val}`)
     emit("update:modelValue", val);

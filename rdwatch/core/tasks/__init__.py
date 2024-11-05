@@ -967,8 +967,13 @@ def process_model_run_upload(model_run_upload: ModelRunUpload):
             public=not model_run_upload.private,
         )
 
+        iqr_enabled = False
         for site_model in site_models:
-            SiteEvaluation.bulk_create_from_site_model(site_model, model_run)
+            site_eval = SiteEvaluation.bulk_create_from_site_model(site_model, model_run)
+            iqr_enabled = iqr_enabled or site_eval.smqtk_uuid != None
+
+        if iqr_enabled:
+            region_model.region_feature.properties.iqr_enabled = iqr_enabled
 
         if region_model:
             SiteEvaluation.bulk_create_from_region_model(region_model, model_run)

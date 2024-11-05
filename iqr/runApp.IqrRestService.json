@@ -1,0 +1,148 @@
+{
+  "flask_app": {
+      "BASIC_AUTH_PASSWORD": "demo",
+      "BASIC_AUTH_USERNAME": "demo",
+      "SECRET_KEY": "MySuperUltraSecret",
+      "debug_server": true
+  },
+  "server": {
+      "host": "0.0.0.0",
+      "port": 5001
+  },
+  "iqr_service": {
+    "plugin_notes": {
+        "classification_factory": "Selection of the backend in which classifications are stored. The in-memory version is recommended because normal caching mechanisms will not account for the variety of classifiers that can potentially be created via this utility.",
+        "classifier_config": "The configuration to use for training and using classifiers for the /classifier endpoint. When configuring a classifier for use, don't fill out model persistence values as many classifiers may be created and thrown away during this service's operation.",
+        "descriptor_factory": "What descriptor element factory to use when asked to compute a descriptor on data.",
+        "descriptor_generator": "Descriptor generation algorithm to use when requested to describe data.",
+        "descriptor_set": "This is the index from which given positive and negative example descriptors are retrieved from. Not used for nearest neighbor querying. This index must contain all descriptors that could possibly be used as positive/negative examples and updated accordingly.",
+        "neighbor_index": "This is the neighbor index to pull initial near-positive descriptors from.",
+        "relevancy_index_config": "The relevancy index config provided should not have persistent storage configured as it will be used in such a way that instances are created, built and destroyed often."
+    },
+      "plugins": {
+          "classification_factory": {
+              "smqtk_classifier.impls.classification_element.memory.MemoryClassificationElement": {},
+              "type": "smqtk_classifier.impls.classification_element.memory.MemoryClassificationElement"
+          },
+          "classifier_config": {
+            "smqtk_classifier.impls.classify_descriptor_supervised.sklearn_logistic_regression.SkLearnLogisticRegression": {
+            },
+            "type": "smqtk_classifier.impls.classify_descriptor_supervised.sklearn_logistic_regression.SkLearnLogisticRegression"
+           },
+          "descriptor_factory": {
+              "smqtk_descriptors.impls.descriptor_element.memory.DescriptorMemoryElement": {},
+              "type": "smqtk_descriptors.impls.descriptor_element.memory.DescriptorMemoryElement"
+          },
+          "descriptor_generator": {
+              "smqtk_descriptors.impls.descriptor_generator.prepopulated.PrePopulatedDescriptorGenerator": {
+                },
+              "type": "smqtk_descriptors.impls.descriptor_generator.prepopulated.PrePopulatedDescriptorGenerator"
+            },
+          "descriptor_set": {
+              "smqtk_descriptors.impls.descriptor_set.memory.MemoryDescriptorSet": {
+                  "cache_element": {
+                      "smqtk_dataprovider.impls.data_element.file.DataFileElement": {
+                          "explicit_mimetype": null,
+                          "filepath": "workdir/descriptor_set.pickle",
+                          "readonly": false
+                      },
+                      "type": "smqtk_dataprovider.impls.data_element.file.DataFileElement"
+                  },
+                  "pickle_protocol": -1
+              },
+              "type": "smqtk_descriptors.impls.descriptor_set.memory.MemoryDescriptorSet"
+          },
+          "neighbor_index": {
+            "smqtk_indexing.impls.nn_index.faiss.FaissNearestNeighborsIndex": {
+                "descriptor_set": {
+                    "smqtk_descriptors.impls.descriptor_set.memory.MemoryDescriptorSet": {
+                      "cache_element": {
+                          "smqtk_dataprovider.impls.data_element.file.DataFileElement": {
+                              "explicit_mimetype": null,
+                              "filepath": "workdir/descriptor_set.pickle",
+                              "readonly": false
+                          },
+                          "type": "smqtk_dataprovider.impls.data_element.file.DataFileElement"
+                      },
+                      "pickle_protocol": -1
+                  },
+                  "type": "smqtk_descriptors.impls.descriptor_set.memory.MemoryDescriptorSet"
+                },
+                "factory_string": "IDMap,Flat",
+                "gpu_id": 0,
+                "idx2uid_kvs": {
+                    "smqtk_dataprovider.impls.key_value_store.memory.MemoryKeyValueStore": {
+                      "cache_element": {
+                          "smqtk_dataprovider.impls.data_element.file.DataFileElement": {
+                              "explicit_mimetype": null,
+                              "filepath": "workdir/idx2uid.mem_kvstore.pickle",
+                              "readonly": false
+                          },
+                          "type": "smqtk_dataprovider.impls.data_element.file.DataFileElement"
+                      }
+                  },
+                  "type": "smqtk_dataprovider.impls.key_value_store.memory.MemoryKeyValueStore"
+                },
+                "uid2idx_kvs": {
+                    "smqtk_dataprovider.impls.key_value_store.memory.MemoryKeyValueStore": {
+                      "cache_element": {
+                          "smqtk_dataprovider.impls.data_element.file.DataFileElement": {
+                              "explicit_mimetype": null,
+                              "filepath": "workdir/uid2idx.mem_kvstore.pickle",
+                              "readonly": false
+                          },
+                          "type": "smqtk_dataprovider.impls.data_element.file.DataFileElement"
+                      }
+                  },
+                  "type": "smqtk_dataprovider.impls.key_value_store.memory.MemoryKeyValueStore"
+                },
+                "index_element": {
+                    "smqtk_dataprovider.impls.data_element.file.DataFileElement": {
+                        "filepath": "models/faiss_index",
+                        "readonly": false
+                    },
+                    "type": "smqtk_dataprovider.impls.data_element.file.DataFileElement"
+                },
+                "index_param_element": {
+                    "smqtk_dataprovider.impls.data_element.file.DataFileElement": {
+                        "filepath": "models/faiss_index_params.json",
+                        "readonly": false
+                    },
+                    "type": "smqtk_dataprovider.impls.data_element.file.DataFileElement"
+                },
+                "ivf_nprobe": 64,
+                "metric_type": "l2",
+                "random_seed": 0,
+                "read_only": false,
+                "use_gpu": false
+            },
+            "type": "smqtk_indexing.impls.nn_index.faiss.FaissNearestNeighborsIndex"
+        },
+        "rank_relevancy_with_feedback": {
+            "smqtk_relevancy.impls.rank_relevancy.margin_sampling.RankRelevancyWithMarginSampledFeedback": {
+                "rank_relevancy": {
+                    "smqtk_relevancy.impls.rank_relevancy.wrap_classifier.RankRelevancyWithSupervisedClassifier": {
+                        "classifier_inst": {
+                            "smqtk_classifier.impls.classify_descriptor_supervised.sklearn_logistic_regression.SkLearnLogisticRegression": {
+                            },
+                            "type": "smqtk_classifier.impls.classify_descriptor_supervised.sklearn_logistic_regression.SkLearnLogisticRegression"
+                        }
+                    },
+                    "type": "smqtk_relevancy.impls.rank_relevancy.wrap_classifier.RankRelevancyWithSupervisedClassifier"
+                },
+                "n": 10,
+                "center": 0.5
+            },
+            "type": "smqtk_relevancy.impls.rank_relevancy.margin_sampling.RankRelevancyWithMarginSampledFeedback"
+        }
+      },
+      "session_control": {
+          "positive_seed_neighbors": 500,
+          "session_expiration": {
+              "check_interval_seconds": 30,
+              "enabled": true,
+              "session_timeout": 3600
+          }
+      }
+  }
+}

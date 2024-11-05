@@ -23,6 +23,9 @@ class SiteFeatureCache(Schema):
     originator_file: str | None
     timestamp: datetime | None
     commit_hash: str | None
+    # smqtk
+    video_name: str | None
+    smqtk_uuid: str | None
 
 
 class SiteFeature(Schema):

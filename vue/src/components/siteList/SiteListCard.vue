@@ -11,6 +11,7 @@ import { hoveredInfo } from "../../interactions/mouseEvents";
 import ImageBrowser from './ImageBrowser.vue';
 import ImageToggle from './ImageToggle.vue';
 import AnimationDownloadDialog from "../animation/AnimationDownloadDialog.vue";
+import { useIQR } from "../../use/useIQR";
 
 
 export interface SiteDisplay {
@@ -45,6 +46,7 @@ export interface SiteDisplay {
     title: string;
   };
   selectedSite?: SiteOverview;
+  smqtkUuid?: string | null;
 }
 
 const props = defineProps<{
@@ -111,6 +113,18 @@ const selectingSite = async (e: boolean) => {
 
 const animationDialog = ref(false);
 
+const iqr = useIQR();
+
+const runIQR = (site: SiteDisplay) => {
+  if (!site.smqtkUuid) return;
+  iqr.setPrimarySite({
+    name: site.name,
+    id: site.id,
+    smqtkUuid: site.smqtkUuid,
+    modelRunId: site.modelRunId,
+  });
+  iqr.initializeSession();
+};
 </script>
 
 <template>
@@ -314,6 +328,27 @@ const animationDialog = ref(false);
             </v-btn>
           </template>
           <span>Download JSON</span>
+        </v-tooltip>
+        <v-tooltip
+          v-if="iqr.enabled && !ApiService.isScoring() && localSite.smqtkUuid != null"
+          open-delay="300"
+        >
+          <template #activator="{ props }">
+            <v-btn
+              variant="tonal"
+              density="compact"
+              class="pa-0 ma-1 site-icon"
+              size="small"
+              color="primary"
+              v-bind="props"
+              @click.stop="runIQR(localSite)"
+            >
+              <v-icon size="small">
+                mdi-database-search
+              </v-icon>
+            </v-btn>
+          </template>
+          <span>IQR</span>
         </v-tooltip>
         <v-tooltip
           v-if="!downloading"

@@ -69,6 +69,7 @@ export interface SiteInfo {
     downloading: boolean;
     groundtruth?: boolean;
     originator?: string;
+    smqtk_uuid?: string | null;
 }
 export interface SiteList {
   region: Region;
@@ -251,6 +252,33 @@ export interface SatelliteFetchingDownloadingInfo {
   siteEvalId: string;
 }
 
+export interface IQRInitializeResponse {
+  sid: string;
+  success: boolean;
+}
+
+export interface IQRSessionInfo {
+  success: boolean;
+  sid: string;
+  time: object;
+  uuids_neg: string[];
+  uuids_neg_ext: string[];
+  uuids_neg_ext_in_model: string[];
+  uuids_neg_in_model: string[];
+  uuids_pos: string[];
+  uuids_pos_ext: string[];
+  uuids_pos_ext_in_model: string[];
+  uuids_pos_in_model: string[];
+  wi_count: number;
+}
+
+export interface IQROrderedResults {
+  i: number;
+  j: number;
+  sid: string;
+  total_results: number;
+  results: Array<[string, number]>;
+}
 
 type ApiPrefix = '/api' | '/api/scoring';
 
@@ -526,6 +554,47 @@ export class ApiService {
     return __request(OpenAPI, {
       method: "GET",
       url: `${this.getApiPrefix()}/eval-numbers/`,
+    });
+  }
+
+  public static iqrInitialize(sessionId: string | null, posUuid: string): CancelablePromise<IQRInitializeResponse> {
+    return __request(OpenAPI, {
+      method: 'POST',
+      url: `${this.getApiPrefix()}/iqr/initialize`,
+      body: {
+        sid: sessionId,
+        init_pos_uuid: posUuid,
+      },
+    });
+  }
+
+  public static iqrRefine(sessionId: string): CancelablePromise<{ success: boolean }> {
+    return __request(OpenAPI, {
+      method: 'POST',
+      url: `${this.getApiPrefix()}/iqr/{sid}/refine`,
+      path: {
+        sid: sessionId,
+      },
+    });
+  }
+
+  public static iqrGetSessionInfo(sessionId: string): CancelablePromise<IQRSessionInfo> {
+    return __request(OpenAPI, {
+      method: 'GET',
+      url: `${this.getApiPrefix()}/iqr/{sid}`,
+      path: {
+        sid: sessionId,
+      },
+    });
+  }
+
+  public static iqrGetOrderedResults(sessionId: string): CancelablePromise<IQROrderedResults> {
+    return __request(OpenAPI, {
+      method: 'GET',
+      url: `${this.getApiPrefix()}/iqr/{sid}/results`,
+      path: {
+        sid: sessionId,
+      },
     });
   }
 

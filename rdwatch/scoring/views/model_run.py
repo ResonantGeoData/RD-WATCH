@@ -40,7 +40,11 @@ from django.http import Http404, HttpRequest, HttpResponseNotFound
 from django.shortcuts import get_object_or_404
 
 from rdwatch.core.db.functions import BoundingBox, ExtractEpoch
-from rdwatch.core.views.model_run import ModelRunDetailSchema, ModelRunPagination
+from rdwatch.core.views.model_run import (
+    GetSitesResponseSchema,
+    ModelRunDetailSchema,
+    ModelRunPagination,
+)
 from rdwatch.scoring.models import (
     AnnotationProposalSet,
     AnnotationProposalSite,
@@ -889,7 +893,7 @@ def get_proposals(request: HttpRequest, annotation_proposal_set_uuid: UUID4):
     return 200, query
 
 
-@router.get('/{model_run_id}/sites/')
+@router.get('/{model_run_id}/sites/', response=GetSitesResponseSchema)
 def get_sites(request: HttpRequest, model_run_id: UUID4):
     data = get_model_run_details(model_run_id).values_list('json', flat=True)
     if not data.exists():

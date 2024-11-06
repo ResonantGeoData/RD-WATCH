@@ -49,7 +49,7 @@ from rdwatch.core.models import (
 )
 from rdwatch.core.models.region import get_or_create_region
 from rdwatch.core.schemas import RegionModel, SiteModel
-from rdwatch.core.schemas.common import TimeRangeSchema
+from rdwatch.core.schemas.common import BoundingBoxSchema, TimeRangeSchema
 from rdwatch.core.tasks import (
     cancel_generate_images_task,
     download_annotations,
@@ -618,7 +618,29 @@ def get_proposals(request: HttpRequest, model_run_id: UUID4):
     return 200, query
 
 
-@router.get('/{model_run_id}/sites/')
+class GetSitesResponseSchema(Schema):
+    class SiteSchema(Schema):
+        id: UUID4
+        number: str
+        bbox: BoundingBoxSchema
+        groundtruth: bool
+        start_date: int | None
+        end_date: int | None
+        color_code: int | None
+
+    class ModelRunDetailsSchema(Schema):
+        title: str
+        region: str
+        version: str
+        proposal: bool | None
+        performer: PerformerSchema
+
+    sites: list[SiteSchema]
+    region: str
+    modelRunDetails: ModelRunDetailsSchema
+
+
+@router.get('/{model_run_id}/sites/', response=GetSitesResponseSchema)
 def get_sites(request: HttpRequest, model_run_id: UUID4):
     data = get_model_run_details(model_run_id).values_list('json', flat=True)
     if not data.exists():

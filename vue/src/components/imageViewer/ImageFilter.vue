@@ -32,6 +32,15 @@ const downloadingGifPointSize = computed({
   },
 });
 
+const lineThicknessFactor = computed({
+  get() {
+    return state.gifSettings.lineThicknessFactor;
+  },
+  set(val: number) {
+    state.gifSettings = { ...state.gifSettings, lineThicknessFactor: val };
+  },
+});
+
 const playbackFps = computed({
   get() {
     return state.gifSettings.fps || 1;
@@ -72,7 +81,13 @@ watch([
   () => state.imageFilter.sources,
   () => state.imageFilter.obsFilter,
   () => state.imageFilter.cloudCover,
-  () => state.imageFilter.noData], () => {
+  () => state.imageFilter.noData,
+  () => props.rescaleImage,
+  rescaleBorder,
+  playbackFps,
+  downloadingGifPointSize,
+  lineThicknessFactor,
+], (newData, [,,,,,oldRescaleBorder]) => {
   const defaultAnimationSettings: DefaultAnimationSettings = {
     cloudCover: state.imageFilter.cloudCover,
     noData: state.imageFilter.noData,
@@ -82,23 +97,13 @@ watch([
     rescale_border: rescaleBorder.value,
     fps: playbackFps.value,
     point_radius: downloadingGifPointSize.value,
-  }
-  console.log('Emitting Animation Defaults');
-  emit('animationDefaults', defaultAnimationSettings);
-})
-watch(rescaleBorder, () => {
-  const defaultAnimationSettings: DefaultAnimationSettings = {
-    cloudCover: state.imageFilter.cloudCover,
-    noData: state.imageFilter.noData,
-    sources: state.imageFilter.sources,
-    include: state.imageFilter.obsFilter.map((item) => item === 'non-observations' ? 'nonobs' : 'obs'),
-    rescale: props.rescaleImage,
-    rescale_border: rescaleBorder.value,
-    fps: playbackFps.value,
-    point_radius: downloadingGifPointSize.value,
+    line_thickness_factor: lineThicknessFactor.value,
   }
   emit('animationDefaults', defaultAnimationSettings);
-  emit('rescaleBBox', rescaleBorder.value);
+
+  if (rescaleBorder.value !== oldRescaleBorder) {
+    emit('rescaleBBox', rescaleBorder.value);
+  }
 })
 </script>
 
@@ -284,6 +289,28 @@ watch(rescaleBorder, () => {
         <v-col>
           <span class="pl-2">
             {{ downloadingGifPointSize }}px
+          </span>
+        </v-col>
+        <v-col
+          cols="2"
+          class="slider-label"
+        >
+          <span>Line Width Factor:</span>
+        </v-col>
+        <v-col cols="7">
+          <v-slider
+            v-model.number="lineThicknessFactor"
+            :min="0.1"
+            :max="2"
+            :step="0.1"
+            density="compact"
+            color="primary"
+            hide-details
+          />
+        </v-col>
+        <v-col>
+          <span class="pl-2">
+            {{ lineThicknessFactor }}
           </span>
         </v-col>
       </v-row>

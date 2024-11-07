@@ -53,6 +53,7 @@ const drawData = (
     fullscreen = false,
     canvasScale = 1,
     radiusMultiplier = 1,
+    lineThicknessFactor = 1,
     ) => {
       const context = canvas.getContext('2d');
       const imageObj = new Image();
@@ -154,7 +155,7 @@ const drawData = (
                 }
               });
               const lineDivisor = Math.max(canvas.width, canvas.height);
-              context.lineWidth = lineDivisor/ 100.0;
+              context.lineWidth = lineDivisor * lineThicknessFactor / 100;
               context.strokeStyle = getColorFromLabel(poly.label);
               context.stroke();
             });
@@ -306,7 +307,7 @@ const normalizePolygon = (bbox: BaseBBox, imageWidth: number, imageHeight: numbe
           imageNormalizePoly[imageNormalizePoly.length -1].push({x: image_x, y: image_y});
           });
         });
-      } 
+      }
     });
   } else if (polygon.type === 'Point') {
         imageNormalizePoly.push([]);

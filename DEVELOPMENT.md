@@ -134,7 +134,7 @@ To score data:
   python -m iarpa_smart_metrics.run_evaluation \
                --roi KR_R001 \
                --gt_dir ../annotations/site_models/ \
-               --rm_dir ../KR_R001/region_models/ \
+               --rm_path ../KR_R001/region_model.geojson \
                --sm_dir ../KR_R001/site_models/ \
                --output_dir ../KR_R001/output \
                --eval_num 12 \
@@ -148,6 +148,6 @@ To score data:
                --sequestered_id KR_R001 \
                --db_conn_str postgresql+psycopg2://scoring:secretkey@localhost:5433/scoring
 ```
-- the rm_dir and sm_dir shgould be your test annotaitons.
+- the rm_path and sm_dir shgould be your test annotaitons.
 - gt annotations can be retrieved from the [Annotation Repo](https://smartgitlab.com/TE/annotations)
 - be sure to set the val_num and eval_run_num and remember them when ingesting data into RGD.  The region, eval_num, eval_run_num and performer are used to connect data loaded in RGD to the scoring data.

@@ -1,4 +1,4 @@
-from datetime import datetime, timedelta
+from datetime import date, datetime, timedelta
 from typing import Any, Literal
 
 from celery.result import AsyncResult
@@ -49,7 +49,7 @@ from rdwatch.core.models import (
 )
 from rdwatch.core.models.region import get_or_create_region
 from rdwatch.core.schemas import RegionModel, SiteModel
-from rdwatch.core.schemas.common import BoundingBoxSchema, TimeRangeSchema
+from rdwatch.core.schemas.common import TimeRangeSchema
 from rdwatch.core.tasks import (
     cancel_generate_images_task,
     download_annotations,
@@ -618,23 +618,37 @@ def get_proposals(request: HttpRequest, model_run_id: UUID4):
     return 200, query
 
 
+class SiteSchema(Schema):
+    id: UUID4
+    number: str
+    bbox: dict
+    groundtruth: bool
+    start_date: int | None
+    end_date: int | None
+    color_code: int | None
+
+    @validator('start_date', 'end_date', pre=True)
+    def convert_datetime_to_epoch(cls, v: int | datetime | date | None) -> int | None:
+        if v is None or isinstance(v, int):
+            return v
+
+        # Scoring DB stores dates as `date` objects, with no time component.
+        # We need to convert these to `datetime` objects with the time component
+        if isinstance(v, date):
+            v = datetime.combine(v, datetime.min.time())
+
+        return int(v.timestamp())
+
+
+class ModelRunDetailsSchema(Schema):
+    title: str
+    region: str
+    version: str
+    proposal: bool | None
+    performer: PerformerSchema
+
+
 class GetSitesResponseSchema(Schema):
-    class SiteSchema(Schema):
-        id: UUID4
-        number: str
-        bbox: BoundingBoxSchema
-        groundtruth: bool
-        start_date: int | None
-        end_date: int | None
-        color_code: int | None
-
-    class ModelRunDetailsSchema(Schema):
-        title: str
-        region: str
-        version: str
-        proposal: bool | None
-        performer: PerformerSchema
-
     sites: list[SiteSchema]
     region: str
     modelRunDetails: ModelRunDetailsSchema

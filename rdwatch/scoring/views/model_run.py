@@ -697,97 +697,89 @@ def get_proposals_query(annotation_proposal_set_uuid: UUID4):
 
 def get_sites_query(model_run_id: UUID4):
     performer = EvaluationRun.objects.get(pk=model_run_id).performer
-    site_list = Site.objects.filter(evaluation_run_uuid=model_run_id).aggregate(
-        sites=JSONBAgg(
-            JSONObject(
-                id='pk',
-                number=Substr(F('site_id'), 9, 4),  # pos is 1 indexed,
-                bbox=BoundingBox(
-                    Func(
-                        F('union_geometry'),
-                        4326,
-                        function='ST_GeomFromText',
-                        output_field=GeometryField(),
-                    )
-                ),
-                groundtruth=Case(
-                    When(
-                        ~Q(originator=performer)
-                        & (Q(originator='te') | Q(originator='iMERIT')),
-                        True,
-                    ),
-                    default=False,
-                ),
-                start_date=Coalesce(
-                    ExtractEpoch('start_date'), ExtractEpoch('point_date')
-                ),
-                end_date=Coalesce(ExtractEpoch('end_date'), ExtractEpoch('point_date')),
-                originator=F('originator'),
-                color_code=Case(
-                    When(
-                        Q(originator='te') | Q(originator='iMERIT'),
-                        then=Subquery(
-                            EvaluationBroadAreaSearchDetection.objects.filter(
-                                Q(evaluation_run_uuid=model_run_id)
-                                & Q(activity_type='overall')
-                                & Q(rho=0.5)
-                                & Q(tau=0.2)
-                                & Q(min_confidence_score=0.0)
-                                & Q(site_truth=OuterRef('site_id'))
-                                & Q(
-                                    Q(min_spatial_distance_threshold__isnull=True)
-                                    | Q(min_spatial_distance_threshold=100.0)
-                                )
-                                & Q(
-                                    Q(central_spatial_distance_threshold__isnull=True)
-                                    | Q(central_spatial_distance_threshold=500.0)
-                                )
-                                & Q(max_spatial_distance_threshold__isnull=True)
-                                & Q(
-                                    Q(min_temporal_distance_threshold__isnull=True)
-                                    | Q(min_temporal_distance_threshold=730.0)
-                                )
-                                & Q(central_temporal_distance_threshold__isnull=True)
-                                & Q(max_temporal_distance_threshold__isnull=True)
-                            ).values('color_code')
-                        ),
-                    ),
-                    When(
-                        ~Q(originator='te') & ~Q(originator='iMERIT'),
-                        then=Subquery(
-                            EvaluationBroadAreaSearchProposal.objects.filter(
-                                Q(evaluation_run_uuid=model_run_id)
-                                & Q(activity_type='overall')
-                                & Q(rho=0.5)
-                                & Q(tau=0.2)
-                                & Q(min_confidence_score=0.0)
-                                & Q(site_proposal=OuterRef('site_id'))
-                                & Q(
-                                    Q(min_spatial_distance_threshold__isnull=True)
-                                    | Q(min_spatial_distance_threshold=100.0)
-                                )
-                                & Q(
-                                    Q(central_spatial_distance_threshold__isnull=True)
-                                    | Q(central_spatial_distance_threshold=500.0)
-                                )
-                                & Q(max_spatial_distance_threshold__isnull=True)
-                                & Q(
-                                    Q(min_temporal_distance_threshold__isnull=True)
-                                    | Q(min_temporal_distance_threshold=730.0)
-                                )
-                                & Q(central_temporal_distance_threshold__isnull=True)
-                                & Q(max_temporal_distance_threshold__isnull=True)
-                            ).values('color_code')
-                        ),
-                    ),
-                    default=Value(None),  # Set an appropriate default value here
+    site_list = Site.objects.filter(evaluation_run_uuid=model_run_id).annotate(
+        id=F('pk'),
+        number=Substr(F('site_id'), 9, 4),  # pos is 1 indexed,
+        bbox=BoundingBox(
+            Func(
+                F('union_geometry'),
+                4326,
+                function='ST_GeomFromText',
+                output_field=GeometryField(),
+            )
+        ),
+        groundtruth=Case(
+            When(
+                ~Q(originator=performer)
+                & (Q(originator='te') | Q(originator='iMERIT')),
+                True,
+            ),
+            default=False,
+        ),
+        # start_date=Coalesce(ExtractEpoch("start_date"), ExtractEpoch("point_date")),
+        # end_date=Coalesce(ExtractEpoch("end_date"), ExtractEpoch("point_date")),
+        # originator=F("originator"),
+        color_code=Case(
+            When(
+                Q(originator='te') | Q(originator='iMERIT'),
+                then=Subquery(
+                    EvaluationBroadAreaSearchDetection.objects.filter(
+                        Q(evaluation_run_uuid=model_run_id)
+                        & Q(activity_type='overall')
+                        & Q(rho=0.5)
+                        & Q(tau=0.2)
+                        & Q(min_confidence_score=0.0)
+                        & Q(site_truth=OuterRef('site_id'))
+                        & Q(
+                            Q(min_spatial_distance_threshold__isnull=True)
+                            | Q(min_spatial_distance_threshold=100.0)
+                        )
+                        & Q(
+                            Q(central_spatial_distance_threshold__isnull=True)
+                            | Q(central_spatial_distance_threshold=500.0)
+                        )
+                        & Q(max_spatial_distance_threshold__isnull=True)
+                        & Q(
+                            Q(min_temporal_distance_threshold__isnull=True)
+                            | Q(min_temporal_distance_threshold=730.0)
+                        )
+                        & Q(central_temporal_distance_threshold__isnull=True)
+                        & Q(max_temporal_distance_threshold__isnull=True)
+                    ).values('color_code')
                 ),
             ),
-            ordering='site_id',
-            default=[],
+            When(
+                ~Q(originator='te') & ~Q(originator='iMERIT'),
+                then=Subquery(
+                    EvaluationBroadAreaSearchProposal.objects.filter(
+                        Q(evaluation_run_uuid=model_run_id)
+                        & Q(activity_type='overall')
+                        & Q(rho=0.5)
+                        & Q(tau=0.2)
+                        & Q(min_confidence_score=0.0)
+                        & Q(site_proposal=OuterRef('site_id'))
+                        & Q(
+                            Q(min_spatial_distance_threshold__isnull=True)
+                            | Q(min_spatial_distance_threshold=100.0)
+                        )
+                        & Q(
+                            Q(central_spatial_distance_threshold__isnull=True)
+                            | Q(central_spatial_distance_threshold=500.0)
+                        )
+                        & Q(max_spatial_distance_threshold__isnull=True)
+                        & Q(
+                            Q(min_temporal_distance_threshold__isnull=True)
+                            | Q(min_temporal_distance_threshold=730.0)
+                        )
+                        & Q(central_temporal_distance_threshold__isnull=True)
+                        & Q(max_temporal_distance_threshold__isnull=True)
+                    ).values('color_code')
+                ),
+            ),
+            default=Value(None),  # Set an appropriate default value here
         ),
     )
-    site_ids = [str(s['id']) for s in site_list['sites']]
+    site_ids = [str(s['id']) for s in site_list.values('id')]
 
     image_queryset = (
         SiteImage.objects.filter(site__in=site_ids)
@@ -808,24 +800,33 @@ def get_sites_query(model_run_id: UUID4):
 
     image_info = {i['site']: i for i in image_queryset}
 
-    for s in site_list['sites']:
-        if s['id'] in image_info.keys():
-            site_image_info = image_info[s['id']]
+    sites = []
+    for s in site_list:
+        # s = model_to_dict(s)
+        if s.uuid in image_info.keys():
+            site_image_info = image_info[s.uuid]
         else:
             site_image_info = {'S2': 0, 'WV': 0, 'L8': 0, 'PL': 0, 'downloading': False}
 
-        s['images'] = (
-            site_image_info['S2']
-            + site_image_info['WV']
-            + site_image_info['L8']
-            + site_image_info['PL']
+        setattr(
+            s,
+            'images',
+            (
+                site_image_info['S2']
+                + site_image_info['WV']
+                + site_image_info['L8']
+                + site_image_info['PL']
+            ),
         )
-        s['S2'] = site_image_info['S2']
-        s['WV'] = site_image_info['WV']
-        s['L8'] = site_image_info['L8']
-        s['PL'] = site_image_info['PL']
-        s['downloading'] = site_image_info['downloading']
-    return site_list
+        setattr(s, 'S2', site_image_info['S2'])
+        setattr(s, 'WV', site_image_info['WV'])
+        setattr(s, 'L8', site_image_info['L8'])
+        setattr(s, 'PL', site_image_info['PL'])
+        setattr(s, 'downloading', site_image_info['downloading'])
+        # s["id"] = s.pop("uuid")
+        sites.append(s)
+
+    return sites
 
 
 def get_model_run_details(model_run_id: UUID4):
@@ -899,9 +900,14 @@ def get_sites(request: HttpRequest, model_run_id: UUID4):
     if not data.exists():
         raise Http404()
 
-    query = get_sites_query(model_run_id)
+    sites = get_sites_query(model_run_id)
     model_run = data[0]
-    # TODO: Remove the region in the client side to focus on modelRunDetails
-    query['region'] = model_run['region']
-    query['modelRunDetails'] = model_run
-    return 200, query
+
+    response = {
+        'sites': sites,
+        # TODO: Remove the region in the client side to focus on modelRunDetails
+        'region': model_run['region'],
+        'modelRunDetails': model_run,
+    }
+
+    return 200, response

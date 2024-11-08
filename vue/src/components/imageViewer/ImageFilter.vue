@@ -152,7 +152,10 @@ watch(rescaleBorder, () => {
         justify="center"
         align="center"
       >
-        <v-col cols="2" class="slider-label">
+        <v-col
+          cols="2"
+          class="slider-label"
+        >
           <span>Cloud Cover:</span>
         </v-col>
         <v-col cols="7">
@@ -177,7 +180,10 @@ watch(rescaleBorder, () => {
         justify="center"
         align="center"
       >
-        <v-col cols="2" class="slider-label">
+        <v-col
+          cols="2"
+          class="slider-label"
+        >
           <span>NoData:</span>
         </v-col>
         <v-col cols="7">
@@ -202,7 +208,10 @@ watch(rescaleBorder, () => {
         justify="center"
         align="center"
       >
-        <v-col cols="2" class="slider-label">
+        <v-col
+          cols="2"
+          class="slider-label"
+        >
           <span>FPS:</span>
         </v-col>
         <v-col cols="7">
@@ -227,7 +236,10 @@ watch(rescaleBorder, () => {
         justify="center"
         align="center"
       >
-        <v-col cols="2" class="slider-label">
+        <v-col
+          cols="2"
+          class="slider-label"
+        >
           <span>Rescale Border:</span>
         </v-col>
         <v-col cols="7">
@@ -252,7 +264,10 @@ watch(rescaleBorder, () => {
         justify="center"
         align="center"
       >
-        <v-col cols="2" class="slider-label">
+        <v-col
+          cols="2"
+          class="slider-label"
+        >
           <span>Point Radius:</span>
         </v-col>
         <v-col cols="7">

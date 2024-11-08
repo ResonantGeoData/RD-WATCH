@@ -455,7 +455,7 @@ const clearStorage = async () => {
             @click="animationDialog = true"
           >
             <v-icon>
-              mdi-download-box-outline
+              mdi-movie-roll
             </v-icon>
           </v-btn>
         </template>

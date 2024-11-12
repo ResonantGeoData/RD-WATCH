@@ -36,10 +36,6 @@ const labels: Ref<DownloadAnimationSettings["labels"]> = ref([
   "obs",
   "obs_label",
 ]);
-onMounted(() => {
-  console.log('Animation Defaults');
-  console.log(props.defaults);
-});
 const cloudCover = ref(props.defaults ? props.defaults.cloudCover : 95);
 const noData = ref(props.defaults ? props.defaults.noData : 100);
 const include: Ref<DownloadAnimationSettings["include"]> = ref(props.defaults?.include || [

@@ -184,7 +184,8 @@ export const state = reactive<{
   openedModelRuns: Set<KeyedModelRun["key"]>;
   gifSettings: { 
     fps: number,
-    pointSize: number,},
+    pointSize: number,
+  },
   performerIds: number[],
   performerMapping: Record<number, Performer>,
   proposals: {

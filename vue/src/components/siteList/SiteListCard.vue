@@ -385,7 +385,7 @@ const animationDialog = ref(false);
                 </v-row>
                 <v-row dense>
                   <v-spacer>
-                    <span>Downloading {{ downloadingData.current }} of {{ downloadingData.total }} in source: {{ downloadingData.source}}</span>
+                    <span>Downloading {{ downloadingData.current }} of {{ downloadingData.total }} in source: {{ downloadingData.source }}</span>
                   </v-spacer>
                 </v-row>
                 <v-row dense>

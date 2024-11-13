@@ -159,6 +159,11 @@ export interface KeyedModelRun extends ModelRun {
   key: string;
 }
 
+export interface LocalGeoJSONFeature {
+  id: number;
+  geojson: GeoJSON.GeoJSON;
+}
+
 export const state = reactive<{
   appVersion: string;
   dataSource: string | null;
@@ -183,7 +188,7 @@ export const state = reactive<{
   modelRuns: KeyedModelRun[],
   totalNumModelRuns: number;
   openedModelRuns: Set<KeyedModelRun["key"]>;
-  gifSettings: { 
+  gifSettings: {
     fps: number,
     pointSize: number,
   },
@@ -221,7 +226,7 @@ export const state = reactive<{
     };
   };
   localMapFeatureIds: number[]
-  localMapFeatureById: Record<number, { id: number, geojson: GeoJSON.GeoJSON }>
+  localMapFeatureById: Record<number, LocalGeoJSONFeature>
 }>({
   appVersion: '',
   dataSource: null,

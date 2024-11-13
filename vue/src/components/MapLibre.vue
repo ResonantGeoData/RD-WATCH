@@ -6,7 +6,7 @@ import {
   buildSiteFilter,
 } from "../mapstyle/rdwatchtiles";
 import { filteredSatelliteTimeList, state } from "../store";
-import { markRaw, onBeforeUnmount, onMounted, onUnmounted, reactive, shallowRef, watch } from "vue";
+import { computed, markRaw, onBeforeUnmount, onMounted, onUnmounted, reactive, shallowRef, watch } from "vue";
 import type { FilterSpecification } from "maplibre-gl";
 import type { ShallowRef } from "vue";
 import { popupLogic, setPopupEvents } from "../interactions/mouseEvents";
@@ -23,6 +23,10 @@ const mapContainer: ShallowRef<null | HTMLElement> = shallowRef(null);
 const map: ShallowRef<null | Map> = shallowRef(null);
 
 const modelRunVectorLayers = reactive<Set<string>>(new Set());
+
+const localGeoJSONFeatures = computed(() => {
+  return state.localMapFeatureIds.map((id) => state.localMapFeatureById[id]);
+});
 
 function setFilter(layerID: string, filter: FilterSpecification) {
   map.value?.setFilter(layerID, filter, {
@@ -69,6 +73,7 @@ onMounted(() => {
           state.siteOverviewSatSettings,
           Array.from(modelRunVectorLayers),
           regionIds,
+          localGeoJSONFeatures.value,
         ),
         bounds: [
           [-180, -90],
@@ -100,7 +105,8 @@ const throttledSetSatelliteTimeStamp = throttle(setSatelliteTimeStamp, 300);
 
 watch([() => state.timestamp, () => state.filters, () => state.satellite, () => state.filters.scoringColoring,
 () => state.satellite.satelliteSources, () => state.enabledSiteImages, () => state.filters.hoverSiteId,
-() => state.modelRuns, () => state.openedModelRuns, () => state.filters.proposals, () => state.filters.randomKey, () => state.filters.editingGeoJSONSiteId], (newVals, oldVals) => {
+() => state.modelRuns, () => state.openedModelRuns, () => state.filters.proposals, () => state.filters.randomKey, () => state.filters.editingGeoJSONSiteId,
+localGeoJSONFeatures], (newVals, oldVals) => {
 
   if (state.satellite.satelliteImagesOn) {
     throttledSetSatelliteTimeStamp(state, filteredSatelliteTimeList.value);
@@ -131,7 +137,7 @@ watch([() => state.timestamp, () => state.filters, () => state.satellite, () => 
     updateImageMapSources(state.timestamp, state.enabledSiteImages, state.siteOverviewSatSettings, map.value )
   }
   map.value?.setStyle(
-    style(state.timestamp, state.filters, state.satellite, state.enabledSiteImages, state.siteOverviewSatSettings, Array.from(modelRunVectorLayers), regionIds, state.filters.randomKey),
+    style(state.timestamp, state.filters, state.satellite, state.enabledSiteImages, state.siteOverviewSatSettings, Array.from(modelRunVectorLayers), regionIds, localGeoJSONFeatures.value, state.filters.randomKey),
   );
 
   const siteFilter = buildSiteFilter(state.timestamp, state.filters);
@@ -156,45 +162,7 @@ let loadedLocalLayerIds: number[] = [];
 
 watch([shallowRef(map), () => state.localMapFeatureIds], ([, newIds]) => {
   if (!map.value) return;
-
   const addedIds = newIds.filter((id) => !loadedLocalLayerIds.includes(id));
-  const removedIds = loadedLocalLayerIds.filter((id) => !newIds.includes(id));
-
-  loadedLocalLayerIds = [...newIds];
-
-  removedIds.forEach((id) => {
-    map.value?.removeLayer(`local-layer-${id}:fill`);
-    map.value?.removeLayer(`local-layer-${id}:outline`);
-    map.value?.removeSource(`local-source-${id}`);
-  });
-
-  addedIds.forEach((id) => {
-    map.value?.addSource(`local-source-${id}`, {
-      type: 'geojson',
-      data: state.localMapFeatureById[id].geojson,
-    });
-    map.value?.addLayer({
-      id: `local-layer-${id}:fill`,
-      type: 'fill',
-      source: `local-source-${id}`,
-      layout: {},
-      paint: {
-        'fill-color': '#088',
-        'fill-opacity': 0.5
-      },
-    });
-    map.value?.addLayer({
-      id: `local-layer-${id}:outline`,
-      type: 'line',
-      source: `local-source-${id}`,
-      layout: {},
-      paint: {
-        'line-color': '#055',
-        'line-width': 2,
-      },
-    });
-  });
-
   if (addedIds.length === 1) {
     const data = state.localMapFeatureById[addedIds[0]].geojson;
     fitBounds(getGeoJSONBounds(data));

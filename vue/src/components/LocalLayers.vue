@@ -1,9 +1,7 @@
 <script setup lang="ts">
 import { computed, ref } from 'vue';
-import { addLocalMapLayer, removeLocalMapLayer } from '../actions/localMapLayers';
+import { addLocalMapLayer, focusLayer, removeLocalMapLayer, setLayerName, setLayerVisibility } from '../actions/localMapLayers';
 import { state } from '../store';
-import { getGeoJSONBounds } from '../utils';
-import { FitBoundsEvent } from '../actions/map';
 
 const isLoading = ref(false);
 
@@ -51,14 +49,6 @@ function deleteLayer(layerId: number) {
   removeLocalMapLayer(layerId);
 }
 
-function focusLayer(layerId: number) {
-  const layer = state.localMapFeatureById[layerId];
-  if (!layer) return;
-
-  const bounds = getGeoJSONBounds(layer.geojson);
-  FitBoundsEvent.trigger(bounds);
-}
-
 const localLayers = computed(() => {
   return state.localMapFeatureIds.map(
     (id) => state.localMapFeatureById[id],
@@ -93,8 +83,13 @@ const localLayers = computed(() => {
       <v-list-item
         v-for="layer in localLayers"
         :key="layer.id"
-        :title="`Layer ${layer.id}`"
       >
+        <v-text-field
+          variant="underlined"
+          :placeholder="`Layer ${layer.id}`"
+          :model-value="layer.name"
+          @model-value:update="setLayerName(layer.id, $event)"
+        />
         <template #append>
           <v-btn
             color="grey-darken-1"
@@ -108,6 +103,20 @@ const localLayers = computed(() => {
               location="bottom"
             >
               Focus
+            </v-tooltip>
+          </v-btn>
+          <v-btn
+            color="grey-darken-1"
+            icon
+            variant="text"
+            @click="setLayerVisibility(layer.id, !layer.visible)"
+          >
+            <v-icon>{{ layer.visible ? 'mdi-eye' : 'mdi-eye-off' }}</v-icon>
+            <v-tooltip
+              activator="parent"
+              location="bottom"
+            >
+              Toggle Visibility
             </v-tooltip>
           </v-btn>
           <v-btn

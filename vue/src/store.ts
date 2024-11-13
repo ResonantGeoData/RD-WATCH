@@ -162,6 +162,8 @@ export interface KeyedModelRun extends ModelRun {
 export interface LocalGeoJSONFeature {
   id: number;
   geojson: GeoJSON.GeoJSON;
+  visible: boolean;
+  name: string;
 }
 
 export const state = reactive<{

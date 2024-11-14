@@ -115,7 +115,7 @@ const animationDialog = ref(false);
 
 const iqr = useIQR();
 
-const runIQR = (site: SiteDisplay) => {
+const runIQR = async (site: SiteDisplay) => {
   if (!site.smqtkUuid) return;
   iqr.setPrimarySite({
     name: site.name,
@@ -123,7 +123,7 @@ const runIQR = (site: SiteDisplay) => {
     smqtkUuid: site.smqtkUuid,
     modelRunId: site.modelRunId,
   });
-  iqr.initializeSession();
+  await iqr.initializeSession();
 };
 </script>
 

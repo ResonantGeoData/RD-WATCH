@@ -1,6 +1,6 @@
-import { type InjectionKey, inject, reactive, readonly } from "vue";
+import { type InjectionKey, computed, inject, reactive, readonly, triggerRef } from "vue";
 import { ApiService } from "../client";
-import { IQRSessionInfo } from "../client/services/ApiService";
+import { IQROrderedResultItem, IQRSessionInfo } from "../client/services/ApiService";
 
 export const IQR_KEY: InjectionKey<boolean> = Symbol('IQR_KEY');
 
@@ -17,7 +17,7 @@ const state = reactive<{
   site: Site | null;
   positives: Set<string>;
   negatives: Set<string>;
-  results: Array<[string, number]>;
+  results: Array<IQROrderedResultItem>;
 }>({
   sessionId: null,
   sessionInfo: null,
@@ -26,6 +26,12 @@ const state = reactive<{
   negatives: new Set(),
   results: [],
 });
+
+function getUuidStatus(uuid: string): 'positive' | 'neutral' | 'negative' {
+  if (state.positives.has(uuid)) return 'positive';
+  if (state.negatives.has(uuid)) return 'negative';
+  return 'neutral';
+}
 
 export function useIQR() {
   const iqrEnabled = inject(IQR_KEY, false);
@@ -39,6 +45,28 @@ export function useIQR() {
     await ApiService.iqrRefine(state.sessionId);
   };
 
+  const adjudicate = async (adjudications: Array<{ uuid: string, status: 'positive' | 'neutral' | 'negative' }>) => {
+    if (!state.sessionId) throw new Error('No active session');
+    await ApiService.iqrAdjudicate(state.sessionId, adjudications);
+
+    const positives = new Set(state.positives);
+    const negatives = new Set(state.negatives);
+
+    adjudications.forEach((entry) => {
+      positives.delete(entry.uuid);
+      negatives.delete(entry.uuid);
+
+      if (entry.status === 'positive') {
+        positives.add(entry.uuid);
+      } else if (entry.status === 'negative') {
+        negatives.add(entry.uuid);
+      }
+    });
+
+    state.positives = positives;
+    state.negatives = negatives;
+  };
+
   const refreshSessionInfo = async () => {
     if (!state.sessionId) throw new Error('No active session');
     state.sessionInfo = await ApiService.iqrGetSessionInfo(state.sessionId);
@@ -50,7 +78,13 @@ export function useIQR() {
     if (!state.sessionId) throw new Error('No active session');
     const result = await ApiService.iqrGetOrderedResults(state.sessionId);
     state.results = result.results;
-  }
+  };
+
+  const refineAndRefresh = async () => {
+    await refine();
+    await refreshSessionInfo();
+    await refreshResults();
+  };
 
   const initializeSession = async () => {
     if (!state.site) throw new Error('No selected site');
@@ -60,17 +94,27 @@ export function useIQR() {
     const sid = result.sid;
     state.sessionId = sid;
 
-    await refine();
-    await refreshSessionInfo();
-    await refreshResults();
+    await refineAndRefresh();
   };
 
   return {
     enabled: iqrEnabled,
     setPrimarySite,
     initializeSession,
-    refine,
+    refine: refineAndRefresh,
     refreshSessionInfo,
+    adjudicate,
     state: readonly(state),
+    queryResults: computed(() => {
+      return state.results.map((result) => {
+        return {
+          pk: result.pk,
+          siteId: result.site_id,
+          smqtkUuid: result.smqtk_uuid,
+          status: getUuidStatus(result.smqtk_uuid),
+          confidence: result.confidence,
+        };
+      });
+    }),
   };
 }

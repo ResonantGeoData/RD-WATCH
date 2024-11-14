@@ -10,6 +10,8 @@ import { state, updateRegionList } from "../store";
 import AddRegion from "../components/AddRegion.vue";
 import { ApiService } from "../client";
 import { IQR_KEY, useIQR } from "../use/useIQR";
+import IqrCandidate from "../components/iqr/IqrCandidate.vue";
+
 interface Props {
   region?: string;
   selected?: number[] | string;
@@ -29,7 +31,7 @@ onMounted(async () => {
   }
 });
 
-watch(()=> ApiService.getApiPrefix(), async () => {
+watch(() => ApiService.getApiPrefix(), async () => {
   await updateRegionList();
   if (props.region) {
     state.filters = {
@@ -42,6 +44,15 @@ watch(()=> ApiService.getApiPrefix(), async () => {
 provide(IQR_KEY, true);
 const iqr = useIQR();
 
+const { queryResults } = iqr;
+
+function updateCandidateStatus(uuid: string, status: 'positive' | 'neutral' | 'negative') {
+  iqr.adjudicate([{ uuid, status }]);
+}
+
+function refine() {
+  iqr.refine();
+}
 </script>
 
 <template>
@@ -108,12 +119,21 @@ const iqr = useIQR();
         <div>
           Query: {{ iqr.state.site.name }}
         </div>
-        <div
-          v-for="(result, idx) in iqr.state.results"
-          :key="idx"
-        >
-          <span>{{ result[0] }}, {{ (result[1] * 100).toFixed(2) }}%</span>
-        </div>
+        <v-btn @click="refine">Refine</v-btn>
+        <div class="mt-3">
+          <div
+            v-for="result in queryResults"
+            :key="result.smqtkUuid"
+          >
+            <iqr-candidate
+              :pk="result.pk"
+              :site-id="result.siteId"
+              :smqtk-uuid="result.smqtkUuid"
+              :status="result.status"
+              :confidence="result.confidence"
+              @status-changed="updateCandidateStatus(result.smqtkUuid, $event)"
+            />
+          </div></div>
       </v-navigation-drawer>
     </span>
   </span>

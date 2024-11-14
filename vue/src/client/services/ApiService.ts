@@ -272,12 +272,20 @@ export interface IQRSessionInfo {
   wi_count: number;
 }
 
+export interface IQROrderedResultItem {
+  pk: string;
+  site_id: string;
+  smqtk_uuid: string;
+  confidence: number;
+  geom: string;
+}
+
 export interface IQROrderedResults {
   i: number;
   j: number;
   sid: string;
   total_results: number;
-  results: Array<[string, number]>;
+  results: Array<IQROrderedResultItem>;
 }
 
 type ApiPrefix = '/api' | '/api/scoring';
@@ -575,6 +583,17 @@ export class ApiService {
       path: {
         sid: sessionId,
       },
+    });
+  }
+
+  public static iqrAdjudicate(sessionId: string, adjudications: Array<{ uuid: string, status: 'positive' | 'neutral' | 'negative' }>): CancelablePromise<{ success: boolean }> {
+    return __request(OpenAPI, {
+      method: 'POST',
+      url: `${this.getApiPrefix()}/iqr/{sid}/adjudicate`,
+      path: {
+        sid: sessionId,
+      },
+      body: { adjudications },
     });
   }
 

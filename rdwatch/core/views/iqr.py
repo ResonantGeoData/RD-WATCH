@@ -1,9 +1,17 @@
 import json
 import logging
+from typing import Literal, Any
 
 from ninja import Router, Schema
 from django.http import HttpRequest
+from django.db.models import Case, When
+from django.core.files.storage import default_storage
 import requests
+
+from rdwatch.core.models import (
+    SiteEvaluation,
+    SiteImage,
+)
 
 logger = logging.getLogger(__name__)
 router = Router()
@@ -34,12 +42,27 @@ class IQRSessionInfo(Schema):
     uuids_pos_in_model: list[str]
     wi_count: int
 
+class IQROrderedResultItem(Schema):
+    pk: str
+    site_id: str
+    smqtk_uuid: str
+    confidence: float
+    geom: str
+
 class IQROrderedResults(Schema):
     sid: str
-    i: int
-    j: int
+    # i: int
+    # j: int
     total_results: int
-    results: list[tuple[str, float]]
+    results: list[IQROrderedResultItem]
+    # results: list[tuple[str, float]]
+
+class IQRAdjudicationEntry(Schema):
+    uuid: str
+    status: Literal['positive', 'neutral', 'negative']
+
+class IQRAdjudicationRequest(Schema):
+    adjudications: list[IQRAdjudicationEntry]
 
 @router.post(
     '/initialize',
@@ -97,9 +120,75 @@ def get_session_info(request: HttpRequest, sid: str):
     return 200, resp.json()
 
 @router.get('/{sid}/results', response={200: IQROrderedResults, 400: SuccessResponse})
-def get_session_info(request: HttpRequest, sid: str):
+def get_ordered_results(request: HttpRequest, sid: str):
     resp = session.get(f'{BASE}/get_results', params={'sid': sid})
     if resp.status_code != 200:
         logger.error('Could not get session info (code: %d)', resp.status_code)
         return 400, { 'success': False }
-    return 200, resp.json()
+    resp_results = resp.json()
+    uuids: list[str] = []
+    for smqtk_uuid, _ in resp_results['results']:
+        uuids.append(smqtk_uuid)
+
+    order_by = Case(*[When(smqtk_uuid=uuid, then=pos) for pos, uuid in enumerate(uuids)])
+    site_evals = SiteEvaluation.objects.filter(smqtk_uuid__in=uuids).order_by(order_by)
+
+    rich_results = {
+        'sid': sid,
+        'total_results': resp_results['total_results'],
+        'results': [],
+    }
+    for site_eval, result_item in zip(site_evals, resp_results['results']):
+        smqtk_uuid, confidence = result_item
+        assert site_eval.smqtk_uuid == smqtk_uuid, 'Mismatching smqtk uuids'
+        rich_results['results'].append({
+            'pk': str(site_eval.id),
+            'site_id': str(site_eval.site_id),
+            'smqtk_uuid': smqtk_uuid,
+            'confidence': confidence,
+            'geom': str(site_eval.geom),
+        })
+
+    return 200, rich_results
+
+@router.post(
+    '/{sid}/adjudicate',
+    response={200: SuccessResponse, 400: SuccessResponse }
+)
+def adjudicate(request: HttpRequest, sid: str, adjudications: IQRAdjudicationRequest):
+    positives: list[str] = []
+    neturals: list[str] = []
+    negatives: list[str] = []
+
+    for entry in adjudications.adjudications:
+        if entry.status == 'positive':
+            positives.append(entry.uuid)
+        elif entry.status == 'neutral':
+            neturals.append(entry.uuid)
+        elif entry.status == 'negative':
+            negatives.append(entry.uuid)
+
+    resp = session.post(f'{BASE}/adjudicate', data={
+        'sid': sid,
+        'pos': json.dumps(positives),
+        'neg': json.dumps(negatives),
+        'neutral': json.dumps(neturals),
+    })
+    if resp.status_code != 200:
+        logger.error('Could not adjudicate (code: %d)', resp.status_code)
+        return 400, { 'success': False }
+    return 200, { 'success': True }
+
+@router.get('/{smqtk_uuid}/image-url')
+def get_image_url(request: HttpRequest, smqtk_uuid: str):
+    # TODO handle DoesNotExist and MultipleObjectsReturned
+    try:
+        site_eval = SiteEvaluation.objects.get(smqtk_uuid=smqtk_uuid)
+    except SiteEvaluation.DoesNotExist:
+        return None
+
+    try:
+        site_image = SiteImage.objects.filter(site__id=site_eval.id).order_by('timestamp')[0]
+        return default_storage.url(site_image.image)
+    except IndexError:
+        return None

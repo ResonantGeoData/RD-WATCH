@@ -223,6 +223,7 @@ def draw_text_in_box(
     text_color=(255, 255, 255),
     font_path: str | None = None,
     initial_font_size=30,
+    label: str | None = None,
 ):
     """
     Draws text within a given box with adjustable font size and a background square.
@@ -236,6 +237,7 @@ def draw_text_in_box(
     :param text_color: Color of the text (R, G, B).
     :param font_path: Path to a .ttf font file, or None to use default font.
     :param initial_font_size: Starting font size.
+    :param label: An optional label for the text.
     """
     max_width, max_height = box_size
 
@@ -283,6 +285,12 @@ def draw_text_in_box(
     draw.rectangle(
         [position, (text_x + box_width, text_y + box_height)], fill=box_color
     )
+
+    if label:
+        draw.text(
+            (text_x, text_y // 3), label, font=get_font(font.size // 2), fill=text_color
+        )
+
     # Draw text
     draw.text((text_x, text_y), text, font=font, fill=text_color)
 
@@ -585,6 +593,7 @@ def create_animation(self, site_evaluation_id: UUID4, settings: dict[str, Any]):
                 image_record.timestamp.strftime('%Y-%m-%d'),
                 date_box_point,
                 date_box_size,
+                label='img date:',
             )
         # Draw Source
         source_point = (0, 0)
@@ -597,18 +606,22 @@ def create_animation(self, site_evaluation_id: UUID4, settings: dict[str, Any]):
                 source_size,
             )
         # Draw Observation
-        obs_width = ui_max_width / 10.0
+        obs_width = ui_max_width / 7.0
         obs_point = (ui_max_width - obs_width, 0)
-        obs_size = (ui_max_width / 10.0, date_height)
-        obs_text = '+obs'
-        if image_record.observation is None:
+        obs_size = (ui_max_width / 7.0, date_height)
+        if observation:
+            obs_text = observation.timestamp.strftime('%Y-%m-%d')
+            obs_label = 'obs date:'
+        else:
             obs_text = '-obs'
+            obs_label = None
         if 'obs' in labels:
             draw_text_in_box(
                 draw,
                 obs_text,
                 obs_point,
                 obs_size,
+                label=obs_label,
             )
         # Draw Label
         label_width = ui_max_width / 3.0

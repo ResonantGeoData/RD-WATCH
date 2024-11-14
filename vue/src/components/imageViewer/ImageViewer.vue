@@ -18,13 +18,13 @@ import {
 import type { PixelPoly } from "./imageUtils";
 import { drawData, processImagePoly } from "./imageUtils";
 import maplibregl from "maplibre-gl";
-import ImageGifCreation from "./ImageGifCreation.vue";
+import AnimationDownloadDialog from "../animation/AnimationDownloadDialog.vue";
 import ImageFilter from "./ImageFilter.vue";
 import ImageEditorDetails from "./ImageEditorDetails.vue";
 import ImageSliderDetails from "./ImageSliderDetails.vue";
 import ImagePolygonEditor from "./ImagePolygonEditor.vue";
 import ImageSAM from "./ImageSAM.vue";
-import { SiteModelStatus } from "../../client/services/ApiService";
+import { DefaultAnimationSettings, SiteModelStatus } from "../../client/services/ApiService";
 interface Props {
   siteEvalId: string;
   dialog?: boolean;
@@ -111,7 +111,8 @@ const editingGeoJSON = ref(false);
 const SAMViewer: Ref<number | null> = ref(null);
 const sidePanelExpanded = ref(false || props.editable);
 const sidePanelTab: Ref<null | string> = ref(null);
-
+const animationDefaults: Ref<DefaultAnimationSettings | undefined> = ref(undefined);
+const animationDialog = ref(false);
 
 const evaluationGeoJSON: Ref<GeoJSON.Polygon | GeoJSON.Point | null> = ref(null); // holds the site geoJSON so it can be edited
 
@@ -441,17 +442,25 @@ const clearStorage = async () => {
         </template>
         <span> Rescale Images</span>
       </v-tooltip>
-      <image-gif-creation
-        :disabled="combinedImages.length === 0"
-        :background="background"
-        :filtered-images="filteredImages"
-        :fullscreen="fullscreen"
-        :rescale-image="rescaleImage"
-        :site-evaluation-name="siteEvaluationName"
-        :rescaling-b-box="rescalingBBox"
-        :draw-ground-truth="drawGroundTruth"
-        @rescale-b-box="rescalingBBox = $event"
-      />
+      <v-tooltip
+        open-delay="50"
+        bottom
+      >
+        <template #activator="{ props }">
+          <v-btn
+            v-bind="props"
+            variant="tonal"
+            density="compact"
+            class="pa-0 ma-1 sidebar-icon"
+            @click="animationDialog = true"
+          >
+            <v-icon>
+              mdi-movie-roll
+            </v-icon>
+          </v-btn>
+        </template>
+        <span>Download Animation</span>
+      </v-tooltip>
       <v-tooltip>
         <template #activator="{ props }">
           <v-btn
@@ -694,7 +703,10 @@ const clearStorage = async () => {
           <div v-show="sidePanelTab === 'Filter'">
             <image-filter
               :combined-images="combinedImages"
+              :rescale-image="rescaleImage"
+              @rescale-b-box="rescalingBBox = $event"
               @image-filter="filteredImages = $event"
+              @animation-defaults="animationDefaults = $event"
             />
           </div>
           <div v-if="sidePanelTab === 'Editing' && editMode">
@@ -709,6 +721,17 @@ const clearStorage = async () => {
         </v-card>
       </v-col>
     </v-row>
+    <v-dialog
+      v-model="animationDialog"
+      width="900"
+    >
+      <animation-download-dialog
+        :id="siteEvalId"
+        :defaults="animationDefaults"
+        type="site"
+        @close="animationDialog = false"
+      />
+    </v-dialog>
   </v-card>
 </template>
 

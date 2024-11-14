@@ -120,6 +120,17 @@ export interface DownloadSettings {
   pointArea?: number;
 }
 
+export interface DefaultAnimationSettings {
+  fps: number;
+  sources: Constellation[];
+  noData: number;
+  include: ('obs' | 'nonobs')[];
+  point_radius: number;
+  cloudCover: number;
+  rescale: boolean;
+  rescale_border: number;
+}
+
 export interface DownloadAnimationSettings {
   output_format: 'mp4' | 'gif';
   fps: number;

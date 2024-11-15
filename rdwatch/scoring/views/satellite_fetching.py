@@ -31,7 +31,7 @@ def satellite_fetching_running(
             error = str(task.info)
         else:
             task_info = task.info
-        site_id = item['site_id']
+        site_id = item['site']
         results.append({'siteId': site_id, 'info': task_info, 'error': error})
 
     return {'items': results, 'count': len(running_site_ids)}

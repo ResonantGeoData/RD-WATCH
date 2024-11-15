@@ -15,8 +15,9 @@ import {
   layers as satelliteLayers,
 } from "./satellite-image";
 import type { StyleSpecification } from "maplibre-gl";
-import { EnabledSiteOverviews,  MapFilters, SatelliteData, siteOverviewSatSettings } from "../store";
+import { EnabledSiteOverviews, type LocalGeoJSONFeature, MapFilters, SatelliteData, siteOverviewSatSettings } from "../store";
 import { buildImageLayerFilter, buildImageSourceFilter } from "./images";
+import { localGeoJSONLayers, localGeoJSONSources } from "./localgeojson";
 
 const tileServerURL =
   import.meta.env.VITE_TILE_SERVER_URL || "https://basemap.kitware.watch";
@@ -28,6 +29,7 @@ export const style = (
   settings: siteOverviewSatSettings,
   modelRunIds: string[],
   regionIds: number[],
+  localGeoJSONFeatures: LocalGeoJSONFeature[],
   randomKey=''
 ): StyleSpecification => ({
   version: 8,
@@ -37,6 +39,7 @@ export const style = (
     ...buildImageSourceFilter(timestamp, enabledSiteImages, settings),
     ...buildRdwatchtilesSources(timestamp, modelRunIds, regionIds, randomKey),
     ...openmaptilesSources(filters),
+    ...localGeoJSONSources(localGeoJSONFeatures),
   },
   sprite: `${tileServerURL}/sprites/osm-liberty`,
   glyphs: `${tileServerURL}/fonts/{fontstack}/{range}.pbf`,
@@ -51,5 +54,6 @@ export const style = (
     ...satelliteLayers(timestamp, satellite),
     ...buildImageLayerFilter(timestamp, enabledSiteImages, settings),
     ...rdwatchtilesLayers(timestamp, filters, modelRunIds, regionIds),
+    ...localGeoJSONLayers(localGeoJSONFeatures),
   ],
 });

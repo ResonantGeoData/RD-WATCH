@@ -1,10 +1,9 @@
 <script setup lang="ts">
 import SideBar from "../components/SideBar.vue";
 import MapLibre from "../components/MapLibre.vue";
-import LayerSelection from "../components/LayerSelection.vue";
 import ImageViewer from "../components/imageViewer/ImageViewer.vue";
 import SiteList from "../components/siteList/SiteList.vue";
-import MapLegend from "../components/MapLegend.vue";
+import TopBar from "../components/TopBar.vue";
 import { onMounted, watch } from "vue";
 import { state, updateRegionList } from "../store";
 import AddRegion from "../components/AddRegion.vue";
@@ -49,9 +48,37 @@ watch(()=> ApiService.getApiPrefix(), async () => {
   >
     <SideBar />
   </v-navigation-drawer>
+  <v-navigation-drawer
+    v-if="state.filters.configuration_id?.length || state.filters.addingRegionPolygon"
+    location="left"
+    floating
+    width="250"
+    sticky
+    permanent
+    class="fill-height site-list"
+    style="overflow-y: hidden"
+  >
+    <v-row
+      dense
+      class="pa-0 ma-0"
+    >
+      <v-col class="navcolumn">
+        <SiteList
+          v-if="
+            state.filters.configuration_id &&
+              !state.filters.addingSitePolygon &&
+              !state.filters.addingRegionPolygon
+          "
+          :model-runs="state.filters.configuration_id"
+          style="flex-grow: 1"
+        />
+        <add-region v-if="state.filters.addingRegionPolygon" />
+      </v-col>
+    </v-row>
+  </v-navigation-drawer>
   <v-main style="z-index: 1">
-    <layer-selection />
     <MapLibre />
+    <top-bar />
     <ImageViewer
       v-if="!!state.selectedImageSite"
       :site-eval-id="state.selectedImageSite.siteId"
@@ -60,39 +87,6 @@ watch(()=> ApiService.getApiPrefix(), async () => {
       style="top: 40vh !important; height: 60vh"
     />
   </v-main>
-  <span>
-    <span>
-      <v-navigation-drawer
-        v-if="state.filters.configuration_id?.length || state.filters.addingRegionPolygon"
-        location="left"
-        floating
-        width="250"
-        sticky
-        permanent
-        class="fill-height site-list"
-        style="overflow-y: hidden"
-      >
-        <v-row
-          dense
-          class="pa-0 ma-0"
-        >
-          <v-col class="navcolumn">
-            <SiteList
-              v-if="
-                state.filters.configuration_id &&
-                  !state.filters.addingSitePolygon &&
-                  !state.filters.addingRegionPolygon
-              "
-              :model-runs="state.filters.configuration_id"
-              style="flex-grow: 1"
-            />
-            <add-region v-if="state.filters.addingRegionPolygon" />
-          </v-col>
-        </v-row>
-      </v-navigation-drawer>
-      <MapLegend class="static-map-legend" />
-    </span>
-  </span>
 </template>
 
 <style scoped>

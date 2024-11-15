@@ -219,6 +219,8 @@ export const state = reactive<{
       activeFilters: QueryArguments;
     };
   };
+  // ModelRunList - New Design doesn't need to rely on passing props
+  modelRunList?: ModelRunList;
 }>({
   appVersion: '',
   dataSource: null,

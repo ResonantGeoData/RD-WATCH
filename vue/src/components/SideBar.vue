@@ -7,7 +7,7 @@ import RegionFilter from "./filters/RegionFilter.vue";
 import ModeFilter from "./filters/ModeFilter.vue";
 import SettingsPanel from "./SettingsPanel.vue";
 import ErrorPopup from './ErrorPopup.vue';
-import { filteredSatelliteTimeList, state } from "../store";
+import { state } from "../store";
 import { computed, onMounted, ref, watch } from "vue";
 import { ApiService, Eval, Performer, QueryArguments, Region } from "../client";
 import { ModelRunList } from "../client/models/ModelRunList";
@@ -69,23 +69,7 @@ watch(selectedRegion, () => {
 
 const expandSettings = ref(false);
 
-const imagesOn = computed({
-  get() {
-    return state.satellite.satelliteImagesOn || false;
-  },
-  set(val: boolean) {
-    state.satellite = { ...state.satellite, satelliteImagesOn: val };
-  },
-});
 
-const drawMap = computed({
-  get() {
-    return state.filters.drawMap || false;
-  },
-  set(val: boolean) {
-    state.filters = { ...state.filters, drawMap: val };
-  },
-});
 
 onMounted(() => {
   window.document.addEventListener('keydown', (event) => {
@@ -98,11 +82,6 @@ onMounted(() => {
     }
   });
 });
-
-const toggleText = () => {
-  const val = !state.filters.showText;
-  state.filters = { ...state.filters, showText: val };
-}
 
 // Satellite downloading Variables
 const currentModelRunList: Ref<ModelRunList | null> = ref(null);
@@ -148,15 +127,6 @@ const startLoadingSatelliteTimeStamps = async () => {
   }
 }
 
-const satelliteLoadingColor = computed(() => {
-  if (satelliteRegionTooLarge.value) {
-    return 'warning'
-  }
-  if (loadingSatelliteTimestamps.value) {
-    return 'primary';
-  }
-  return 'black'
-})
 </script>
 
 <template>
@@ -192,77 +162,6 @@ const satelliteLoadingColor = computed(() => {
         class="py-2"
       >
         <v-spacer />
-        <v-btn
-          variant="tonal"
-          density="compact"
-          class="pa-0 ma-1 sidebar-icon"
-          :color="drawMap ? 'primary' : 'black'"
-          @click="drawMap = !drawMap"
-        >
-          <v-icon>mdi-road</v-icon>
-        </v-btn>
-        <v-btn
-          v-if="selectedRegion !== null && !(filteredSatelliteTimeList.length === 0 && state.satellite.satelliteSources.length !== 0)"
-          variant="tonal"
-          density="compact"
-          class="pa-0 ma-1 sidebar-icon"
-          :class="{
-            'animate-flicker': state.satellite.loadingSatelliteImages,
-          }"
-          :color="imagesOn ? 'primary' : 'black'"
-          :disabled="selectedRegion === null || (filteredSatelliteTimeList.length === 0 && state.satellite.satelliteSources.length !== 0)"
-          @click="imagesOn = selectedRegion !== null && (filteredSatelliteTimeList.length !== 0 || state.satellite.satelliteSources.length === 0) ? !imagesOn : imagesOn"
-        >
-          <v-icon>mdi-image</v-icon>
-        </v-btn>
-        <v-tooltip v-else>
-          <template #activator="{ props: props }">
-            <v-btn
-              variant="tonal"
-              v-bind="props"
-              :disabled="!selectedRegion"
-              density="compact"
-              :class="{
-                'animate-flicker': loadingSatelliteTimestamps,
-              }"
-              class="pa-0 ma-1 sidebar-icon"
-              :color="satelliteLoadingColor"
-              @click="askDownloadSatelliteTimestamps = true"
-            >
-              <v-icon>mdi-satellite-variant</v-icon>
-            </v-btn>
-          </template>
-          <v-alert
-            v-if="!satelliteRegionTooLarge"
-            type="warning"
-            title="Download Region Satellite Timestamps"
-            text="This is a long running process that could cause instability on the server.  Please only run this if you are sure you need to use the region satellite feature."
-          />
-          <v-alert
-            v-else
-            type="warning"
-            title="Region Too Large to Download Timestamps"
-            text="The Region is too large to download timestamps for."
-          />
-        </v-tooltip>
-        <v-btn
-          :color="state.filters.showText ? 'primary' : 'gray'"
-          variant="tonal"
-          class="pa-0 ma-1 sidebar-icon"
-          density="compact"
-          @click="toggleText()"
-        >
-          <v-icon>mdi-format-text</v-icon>
-        </v-btn>
-        <v-btn
-          :color="state.mapLegend ? 'primary' : 'gray'"
-          variant="tonal"
-          class="pa-0 ma-1 sidebar-icon"
-          density="compact"
-          @click="state.mapLegend = !state.mapLegend"
-        >
-          <v-icon>mdi-map-legend</v-icon>
-        </v-btn>
         <v-tooltip>
           <template #activator="{ props: props }">
             <v-btn

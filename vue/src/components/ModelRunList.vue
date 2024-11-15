@@ -32,6 +32,7 @@ const isAnnotatorMode = computed(() => {
 
 async function loadModelRuns(type: 'firstPage' | 'nextPage') {
   const modelRunList = await queryModelRuns(type, props.filters, props.compact);
+  state.modelRunList = modelRunList;
   emit('modelrunlist', modelRunList);
 }
 

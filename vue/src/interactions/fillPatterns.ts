@@ -4,7 +4,7 @@ import { Map } from "maplibre-gl";
 const mapReference: Ref<null | Map> = ref(null);
 
 
-const addPattern = (diagonalLeftImage: HTMLImageElement, diagonalRightImage: HTMLImageElement   ) => {
+const addPattern = (diagonalLeftImage: HTMLImageElement, diagonalRightImage: HTMLImageElement, menuImg?: HTMLImageElement) => {
   if (mapReference.value) {
     if (!mapReference.value.hasImage("null")) {
       mapReference.value.addImage("null", {
@@ -22,6 +22,9 @@ const addPattern = (diagonalLeftImage: HTMLImageElement, diagonalRightImage: HTM
     }
     mapReference.value.addImage("diagonal-right", diagonalRightImage );
     mapReference.value.addImage("diagonal-left", diagonalLeftImage);
+    if (menuImg) {
+      mapReference.value.addImage("diagonal-left", diagonalLeftImage)
+    }
   }
 }
 const setReference = (map: ShallowRef<Map | null>) => {

@@ -163,6 +163,7 @@ let loadedLocalLayerIds: number[] = [];
 watch([shallowRef(map), () => state.localMapFeatureIds], ([, newIds]) => {
   if (!map.value) return;
   const addedIds = newIds.filter((id) => !loadedLocalLayerIds.includes(id));
+  loadedLocalLayerIds = [...newIds];
   if (addedIds.length === 1) {
     const data = state.localMapFeatureById[addedIds[0]].geojson;
     fitBounds(getGeoJSONBounds(data));

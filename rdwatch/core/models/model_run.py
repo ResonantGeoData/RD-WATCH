@@ -148,5 +148,5 @@ class ModelRun(models.Model):
         # Unfortunately, Django ORM doesn't support joins in update queries, so doing this in a
         # single join query would require raw SQL that would be a pain to maintain.
         # Since this should only rarely run, we don't mind looping here.
-        for model_run in qs:
+        for model_run in qs.iterator(chunk_size=1000):
             model_run.compute_aggregate_stats()

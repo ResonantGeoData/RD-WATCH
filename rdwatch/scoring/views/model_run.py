@@ -66,11 +66,11 @@ Mode: TypeAlias = Literal['batch', 'incremental']
 
 
 class ModelRunFilterSchema(FilterSchema):
-    performer: list[str] | None
-    region: str | None
-    eval: list[str] | None
+    performer: list[str] | None = None
+    region: str | None = None
+    eval: list[str] | None = None
     # proposal: str | None = Field(q='proposal', ignore_none=False)
-    mode: list[Mode] | None
+    mode: list[Mode] | None = None
 
     def filter_performer(self, value: list[str] | None) -> Q:
         if value is None or not value:

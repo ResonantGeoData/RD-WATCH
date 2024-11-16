@@ -14,8 +14,8 @@ logger = logging.getLogger(__name__)
 
 class ResultsSchema(Schema):
     siteId: UUID4
-    info: dict | None
-    error: str | None
+    info: dict | None = None
+    error: str | None = None
 
 
 class RunningSatelliteFetchingSchema(Schema):

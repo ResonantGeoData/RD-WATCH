@@ -13,11 +13,11 @@ from django.contrib.gis.geos import GEOSGeometry, Polygon
 class RegionFeature(Schema):
     type: Literal['region']
     region_id: str  # a Region isn't limited to their format for RDWATCH
-    version: str | None
+    version: str | None = None
     mgrs: str
-    model_content: Literal['empty', 'annotation', 'proposed'] | None
-    start_date: datetime | None
-    end_date: datetime | None
+    model_content: Literal['empty', 'annotation', 'proposed'] | None = None
+    start_date: datetime | None = Field(default=None, validate_default=True)
+    end_date: datetime | None = Field(default=None, validate_default=True)
     originator: str
 
     # Optional fields
@@ -25,6 +25,7 @@ class RegionFeature(Schema):
     performer_cache: dict[Any, Any] | None = None
 
     @field_validator('start_date', 'end_date', mode='before')
+    @classmethod
     def parse_dates(cls, v: str | None) -> datetime | None:
         if v is None:
             return v
@@ -35,7 +36,7 @@ class SiteSummaryFeature(Schema):
     type: Literal['site_summary']
     # match the site_id of format KR_R001_0001 or KR_R001_9990
     site_id: Annotated[str, StringConstraints(pattern=r'^.{1,255}_\d{4,8}$')]
-    version: str | None
+    version: str | None = None
     mgrs: str
     status: Literal[
         'positive_annotated',
@@ -52,24 +53,28 @@ class SiteSummaryFeature(Schema):
         'system_confirmed',
         'system_rejected',
     ]
-    start_date: datetime | None
-    end_date: datetime | None
-    model_content: Literal['annotation', 'proposed'] | None
+    start_date: datetime | None = Field(default=None, validate_default=True)
+    end_date: datetime | None = Field(default=None, validate_default=True)
+    model_content: Literal['annotation', 'proposed'] | None = None
     originator: str
 
     # Optional fields
     comments: str | None = None
-    score: Annotated[float, Field(ge=0.0, le=1.0)] | None = None
+    score: Annotated[float, Field(ge=0.0, le=1.0)] | None = Field(
+        default=None, validate_default=True
+    )
     validated: Literal['True', 'False'] | None = None
     annotation_cache: dict[Any, Any] | None = None
 
     @field_validator('start_date', 'end_date', mode='before')
+    @classmethod
     def parse_dates(cls, v: str | None) -> datetime | None:
         if v is None:
             return v
         return datetime.strptime(v, '%Y-%m-%d')
 
     @field_validator('score', mode='before')
+    @classmethod
     def parse_score(cls, v: float | None) -> float:
         """
         Score is an optional field, and defaults to 1.0 if one isn't provided

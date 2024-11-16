@@ -71,10 +71,10 @@ class ModelRunAuth(APIKeyHeader):
 
 
 class ModelRunFilterSchema(FilterSchema):
-    performer: list[str] | None
-    region: str | None = Field(q='region__name')
-    proposal: str | None = Field(q='proposal', ignore_none=False)
-    groundtruth: bool | None
+    performer: list[str] | None = None
+    region: str | None = Field(q='region__name', default=None)
+    proposal: str | None = Field(q='proposal', ignore_none=False, default=None)
+    groundtruth: bool | None = None
 
     def filter_performer(self, value: list[str] | None) -> Q:
         if value is None or not value:
@@ -102,7 +102,7 @@ class ModelRunWriteSchema(Schema):
     title: Annotated[str, StringConstraints(max_length=1000)]
     region: Annotated[str, StringConstraints(min_length=1, max_length=255)]
     parameters: dict
-    expiration_time: int | None
+    expiration_time: int | None = None
     evaluation: int | None = None
     evaluation_run: int | None = None
     proposal: bool | None = None
@@ -126,7 +126,7 @@ class ModelRunWriteSchema(Schema):
 class ModelRunAdjudicated(Schema):
     proposed: int
     other: int
-    ground_truths: str | None
+    ground_truths: str | None = None
 
 
 class ModelRunDetailSchema(Schema):
@@ -141,12 +141,12 @@ class ModelRunDetailSchema(Schema):
     score: float | None = None
     timestamp: int | None = None
     timerange: TimeRangeSchema | None = None
-    bbox: dict | None
+    bbox: dict | None = None
     created: datetime
     expiration_time: timedelta | None = None
     evaluation: int | None = None
     evaluation_run: int | None = None
-    proposal: str = None
+    proposal: str | None = None
     adjudicated: ModelRunAdjudicated | None = None
 
 
@@ -162,12 +162,12 @@ class ModelRunListSchema(Schema):
     score: float | None = None
     timestamp: int | None = None
     timerange: TimeRangeSchema | None = None
-    bbox: dict | None
+    bbox: dict | None = None
     created: datetime
     expiration_time: timedelta | None = None
     evaluation: int | None = None
     evaluation_run: int | None = None
-    proposal: str = None
+    proposal: str | None = None
     adjudicated: ModelRunAdjudicated | None = None
     groundTruthLink: UUID4 | None = None
     mode: Literal['batch', 'incremental'] | None = None

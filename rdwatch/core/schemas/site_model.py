@@ -20,9 +20,9 @@ CurrentPhase: TypeAlias = Literal[
 
 
 class SiteFeatureCache(Schema):
-    originator_file: str | None
-    timestamp: datetime | None
-    commit_hash: str | None
+    originator_file: str | None = None
+    timestamp: datetime | None = None
+    commit_hash: str | None = None
 
 
 class SiteFeature(Schema):
@@ -46,13 +46,15 @@ class SiteFeature(Schema):
         'system_confirmed',
         'system_rejected',
     ]
-    start_date: datetime | None
-    end_date: datetime | None
+    start_date: datetime | None = Field(default=None, validate_default=True)
+    end_date: datetime | None = Field(default=None, validate_default=True)
     model_content: Literal['annotation', 'proposed', 'update']
     originator: str
 
     # Optional fields
-    score: Annotated[float, Field(ge=0.0, le=1.0)] | None = None
+    score: Annotated[float, Field(ge=0.0, le=1.0)] | None = Field(
+        default=None, validate_default=True
+    )
     validated: Literal['True', 'False'] | None = None
     cache: SiteFeatureCache | None = None
     predicted_phase_transition: (
@@ -61,17 +63,19 @@ class SiteFeature(Schema):
             'Post Construction',
         ]
         | None
-    )
+    ) = None
     predicted_phase_transition_date: str | None = None
     misc_info: dict[str, Any] | None = None
 
     @field_validator('start_date', 'end_date', mode='before')
+    @classmethod
     def parse_dates(cls, v: str | None) -> datetime | None:
         if v is None:
             return v
         return datetime.strptime(v, '%Y-%m-%d')
 
     @field_validator('score', mode='before')
+    @classmethod
     def parse_score(cls, v: float | None) -> float:
         """
         Score is an optional field, and defaults to 1.0 if one isn't provided
@@ -87,14 +91,17 @@ class SiteFeature(Schema):
 
 class ObservationFeature(Schema):
     type: Literal['observation']
-    observation_date: datetime | None
-    source: str | None
-    sensor_name: Literal['Landsat 8', 'Sentinel-2', 'WorldView', 'Planet'] | None
-    current_phase: list[CurrentPhase] | None = None
-    is_occluded: list[bool] | None = None
-    is_site_boundary: list[bool] | None = None
+    observation_date: datetime | None = Field(default=None, validate_default=True)
+    source: str | None = None
+    sensor_name: Literal['Landsat 8', 'Sentinel-2', 'WorldView', 'Planet'] | None = None
+    current_phase: list[CurrentPhase] | None = Field(
+        default=None, validate_default=True
+    )
+    is_occluded: list[bool] | None = Field(default=None, validate_default=True)
+    is_site_boundary: list[bool] | None = Field(default=None, validate_default=True)
 
     @field_validator('is_occluded', 'is_site_boundary', mode='before')
+    @classmethod
     def convert_bools_to_list(cls, val: str | None):
         """
         Converts comma-space-separated strings into lists of bools.
@@ -141,10 +148,13 @@ class ObservationFeature(Schema):
         return values
 
     # Optional fields
-    score: Annotated[float, Field(ge=0.0, le=1.0)] | None = None
+    score: Annotated[float, Field(ge=0.0, le=1.0)] | None = Field(
+        default=None, validate_default=True
+    )
     misc_info: dict[str, Any] | None = None
 
     @field_validator('score', mode='before')
+    @classmethod
     def parse_score(cls, v: float | None) -> float:
         """
         Score is an optional field, and defaults to 1.0 if one isn't provided

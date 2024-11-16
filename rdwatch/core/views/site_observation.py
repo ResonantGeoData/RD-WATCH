@@ -37,11 +37,11 @@ router = Router()
 
 class SiteObservationSchema(Schema):
     id: UUID4
-    label: str | None
-    score: float | None
-    constellation: str | None
-    spectrum: str | None
-    timestamp: int | None
+    label: str | None = None
+    score: float | None = None
+    constellation: str | None = None
+    spectrum: str | None = None
+    timestamp: int | None = None
     bbox: BoundingBoxSchema
     area: float
 
@@ -53,7 +53,7 @@ class SiteEvaluationImageSchema(Schema):
     cloudcover: float
     percent_black: float
     source: str
-    observation_id: str | None
+    observation_id: str | None = None
     bbox: BoundingBoxSchema
     image_dimensions: list[int]
     uri_locations: list[str]
@@ -78,13 +78,13 @@ class JobStatusSchema(Schema):
 
 class SiteObservationsListSchema(Schema):
     count: int
-    timerange: TimeRangeSchema | None
-    timestamp: int | None
-    status: str | None
+    timerange: TimeRangeSchema | None = None
+    timestamp: int | None = None
+    status: str | None = None
     bbox: BoundingBoxSchema
     results: list[SiteObservationSchema]
     images: SiteEvaluationImageListSchema
-    job: JobStatusSchema | None
+    job: JobStatusSchema | None = None
 
 
 @router.get('/{evaluation_id}/', response={200: SiteObservationsListSchema})

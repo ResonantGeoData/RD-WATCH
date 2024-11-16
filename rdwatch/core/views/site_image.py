@@ -22,14 +22,14 @@ router = Router()
 class SiteImageSchema(Schema):
     timestamp: int
     source: str
-    cloudcover: float | None
+    cloudcover: float | None = None
     image: str
-    observation_id: UUID4 | None
-    percent_black: float | None
+    observation_id: UUID4 | None = None
+    percent_black: float | None = None
     bbox: BoundingBoxSchema
     image_dimensions: list[int]
     uri_locations: list[str]
-    image_embedding: str | None
+    image_embedding: str | None = None
     id: int
 
 
@@ -39,16 +39,16 @@ class SiteImageListSchema(Schema):
 
 
 class SiteObsGeomSchema(Schema):
-    timestamp: int | None
+    timestamp: int | None = None
     geoJSON: dict  # TODO: Replace with pydantics geoJSON
     bbox: dict
-    label: str | None
+    label: str | None = None
 
 
 class GroundTruthSchema(Schema):
     timerange: TimeRangeSchema | None = None
     geoJSON: dict
-    label: str | None
+    label: str | None = None
 
 
 class SiteImageResponse(Schema):
@@ -56,10 +56,10 @@ class SiteImageResponse(Schema):
     geoJSON: list[SiteObsGeomSchema]
     evaluationGeoJSON: dict
     evaluationBBox: dict
-    status: str | None
-    label: str | None
-    notes: str | None
-    groundTruth: GroundTruthSchema | None
+    status: str | None = None
+    label: str | None = None
+    notes: str | None = None
+    groundTruth: GroundTruthSchema | None = None
 
 
 @router.get('/{id}/', response=SiteImageResponse)

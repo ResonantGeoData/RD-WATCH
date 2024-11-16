@@ -1,6 +1,6 @@
 import logging
 from datetime import datetime
-from typing import Any, Literal
+from typing import Literal
 
 from celery.result import AsyncResult
 from ninja import Query, Router, Schema
@@ -217,10 +217,10 @@ class GenerateImagesSchema(Schema):
     pointArea: None | float = 200
 
     @model_validator(mode='after')
-    def validate_worldview_source(cls, values: dict[str, Any]):
-        if 'WV' in values['constellation'] and values['worldviewSource'] is None:
+    def validate_worldview_source(self):
+        if 'WV' in self.constellation and self.worldviewSource is None:
             raise ValueError('worldviewSource is required for WV constellation')
-        return values
+        return self
 
 
 @router.post('/{evaluation_id}/generate-images/', response={202: bool, 409: str})

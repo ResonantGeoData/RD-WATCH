@@ -135,17 +135,17 @@ class ObservationFeature(Schema):
         return datetime.strptime(v, '%Y-%m-%d')
 
     @model_validator(mode='after')
-    def ensure_consistent_list_lengths(cls, values: dict[str, Any]):
+    def ensure_consistent_list_lengths(self):
         lists = [
-            values.get(field)
+            getattr(self, field)
             for field in ('current_phase', 'is_occluded', 'is_site_boundary')
-            if values.get(field) is not None
+            if getattr(self, field) is not None
         ]
         if len(lists) and len({len(l) for l in lists}) != 1:
             raise ValueError(
                 'current_phase/is_occluded/is_site_boundary lists must be the same length!'
             )
-        return values
+        return self
 
     # Optional fields
     score: Annotated[float, Field(ge=0.0, le=1.0)] | None = Field(
@@ -185,14 +185,14 @@ class Feature(Schema):
         return v
 
     @model_validator(mode='after')
-    def ensure_correct_geometry_type(cls, values: dict[str, Any]):
-        if 'properties' not in values or 'geometry' not in values:
-            return values
-        if isinstance(values['properties'], SiteFeature) and (
-            values['geometry'].get('type') not in ['Polygon', 'Point']
+    def ensure_correct_geometry_type(self):
+        if not self.properties or not self.geometry:
+            return self
+        if isinstance(self.properties, SiteFeature) and (
+            self.geometry.get('type') not in ['Polygon', 'Point']
         ):
             raise ValueError('Site geometry must be of type "Polygon" or "Point"')
-        return values
+        return self
 
 
 class SiteModel(Schema):

@@ -14,8 +14,8 @@ router = Router()
 
 class SiteImageSiteDetailResponse(Schema):
     regionName: str
-    configurationId: str | int  # some values still ints in my case
-    siteNumber: str
+    configurationId: UUID4
+    siteNumber: int
     version: str | None = None
     title: str
     performer: str | None = None

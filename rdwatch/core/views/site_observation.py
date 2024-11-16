@@ -47,7 +47,7 @@ class SiteObservationSchema(Schema):
 
 
 class SiteEvaluationImageSchema(Schema):
-    id: str
+    id: int
     timestamp: int
     image: str
     cloudcover: float
@@ -72,7 +72,7 @@ class SiteEvaluationListSchema(Schema):
 class JobStatusSchema(Schema):
     status: str
     error: str | None = None
-    timestamp: int
+    timestamp: float
     celery: dict  # celery information for task
 
 

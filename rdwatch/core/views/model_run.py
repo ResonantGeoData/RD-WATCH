@@ -1,13 +1,12 @@
 from datetime import datetime, timedelta
-from typing import Any, Literal
+from typing import Annotated, Any, Literal
 
 from celery.result import AsyncResult
 from ninja import Field, FilterSchema, Query, Schema
 from ninja.errors import ValidationError
 from ninja.pagination import PageNumberPagination, RouterPaginated, paginate
-from ninja.schema import validator
 from ninja.security import APIKeyHeader
-from pydantic import UUID4, constr  # type: ignore
+from pydantic import UUID4, StringConstraints, field_validator  # type: ignore
 
 from django.conf import settings
 from django.contrib.gis.db.models import GeometryField
@@ -100,22 +99,24 @@ class ModelRunFilterSchema(FilterSchema):
 
 class ModelRunWriteSchema(Schema):
     performer: str
-    title: constr(max_length=1000)
-    region: constr(min_length=1, max_length=255)
+    title: Annotated[str, StringConstraints(max_length=1000)]
+    region: Annotated[str, StringConstraints(min_length=1, max_length=255)]
     parameters: dict
     expiration_time: int | None
     evaluation: int | None = None
     evaluation_run: int | None = None
     proposal: bool | None = None
 
-    @validator('performer')
+    @field_validator('performer')
+    @classmethod
     def validate_performer(cls, v: str) -> Performer:
         try:
             return Performer.objects.get(short_code=v.upper())
         except Performer.DoesNotExist:
             raise ValueError(f"Invalid performer '{v}'")
 
-    @validator('expiration_time')
+    @field_validator('expiration_time')
+    @classmethod
     def validate_expiration_time(cls, v: int | None) -> timedelta | None:
         if v is not None:
             return timedelta(hours=v)

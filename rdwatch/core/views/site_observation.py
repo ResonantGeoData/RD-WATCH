@@ -4,7 +4,7 @@ from typing import Any, Literal
 
 from celery.result import AsyncResult
 from ninja import Query, Router, Schema
-from pydantic import UUID4, root_validator
+from pydantic import UUID4, model_validator
 
 from django.contrib.gis.db.models import FloatField, PolygonField
 from django.contrib.gis.db.models.aggregates import Collect
@@ -216,7 +216,7 @@ class GenerateImagesSchema(Schema):
     bboxScale: None | float = 1.2
     pointArea: None | float = 200
 
-    @root_validator
+    @model_validator(mode='after')
     def validate_worldview_source(cls, values: dict[str, Any]):
         if 'WV' in values['constellation'] and values['worldviewSource'] is None:
             raise ValueError('worldviewSource is required for WV constellation')

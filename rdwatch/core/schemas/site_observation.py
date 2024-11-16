@@ -1,7 +1,7 @@
 from datetime import datetime
 
 from ninja import Schema
-from pydantic import validator
+from pydantic import field_validator
 
 
 class SiteObservationRequest(Schema):
@@ -13,7 +13,8 @@ class SiteObservationRequest(Schema):
     spectrum: str | None
     notes: str | None
 
-    @validator('timestamp', pre=True)
+    @field_validator('timestamp', mode='before')
+    @classmethod
     def parse_dates(cls, v: str | None) -> datetime | None:
         if v is None:
             return v

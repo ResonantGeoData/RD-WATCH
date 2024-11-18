@@ -8,6 +8,7 @@ from typing import Any, Literal
 
 import cv2
 import numpy as np
+import sentry_sdk
 from celery import group, shared_task, states
 from celery.result import GroupResult
 from PIL import Image, ImageDraw, ImageFont
@@ -763,6 +764,7 @@ def create_site_animation_export(
             os.remove(file_path)
     except Exception as e:
         logger.info(f'Error when processing Animation: {e}')
+        sentry_sdk.capture_exception(e)
         if site_export:
             site_export.delete()
 

@@ -8,6 +8,7 @@ from typing import Any
 
 import cv2
 import numpy as np
+import sentry_sdk
 from celery import group, shared_task, states
 from celery.result import GroupResult
 from PIL import Image, ImageDraw
@@ -605,24 +606,24 @@ def create_site_animation_export(
         celery_id=task_id,
         arguments=settings,
     )
-    # try:
-    site_export.celery_id = task_id
-    site_export.save()
-    file_path, name = create_animation(self, site_evaluation_id, settings)
-    if file_path is False and name is False:
-        logger.warning('No Images were found')
-        site_export.delete()
-        return
-    site_export.name = name
-    with open(file_path, 'rb') as file:
-        site_export.export_file.save(name, File(file))
-    site_export.save()
-    if os.path.exists(file_path):
-        os.remove(file_path)
-    # except Exception as e:
-    #     logger.warning(f'Error when processing Animation: {e}')
-    #     if site_export:
-    #         site_export.delete()
+    try:
+        site_export.celery_id = task_id
+        site_export.save()
+        file_path, name = create_animation(self, site_evaluation_id, settings)
+        if file_path is False and name is False:
+            logger.warning('No Images were found')
+            site_export.delete()
+            return
+        site_export.name = name
+        with open(file_path, 'rb') as file:
+            site_export.export_file.save(name, File(file))
+        site_export.save()
+        if os.path.exists(file_path):
+            os.remove(file_path)
+    except Exception as e:
+        sentry_sdk.capture_exception(e)
+        if site_export:
+            site_export.delete()
 
 
 @app.task(bind=True)

@@ -161,6 +161,7 @@ def get_worldview_nitf_bbox(
                         )
                     except ValueError as e:
                         logger.info(f'Value Error: {e} - {capture.uri}')
+                        sentry_sdk.capture_exception(e)
                         return None
                     statistics = list(final_chip.statistics().values())
                     if scale == 'default':

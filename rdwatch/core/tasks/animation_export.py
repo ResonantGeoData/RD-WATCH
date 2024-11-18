@@ -446,6 +446,7 @@ def create_animation(self, site_evaluation_id: UUID4, settings: dict[str, Any]):
     frames = []
     np_array = []
     polygon = None
+    last_obs_date = None
     point = None
     count = 0
     for img, width, height, image_record in images_data:
@@ -526,6 +527,7 @@ def create_animation(self, site_evaluation_id: UUID4, settings: dict[str, Any]):
             polygon = observation.geom
             label = observation.label
             label_mapped = label_mapping.get(label.slug, {})
+            last_obs_date = observation.timestamp.strftime('%Y-%m-%d')
         elif not polygon:
             polygon = site_evaluation.geom
             label_mapped = label_mapping.get(site_evaluation.label.slug, {})
@@ -606,15 +608,11 @@ def create_animation(self, site_evaluation_id: UUID4, settings: dict[str, Any]):
                 source_size,
             )
         # Draw Observation
-        obs_width = ui_max_width / 7.0
+        obs_width = ui_max_width / 6.0
         obs_point = (ui_max_width - obs_width, 0)
-        obs_size = (ui_max_width / 7.0, date_height)
-        if observation:
-            obs_text = observation.timestamp.strftime('%Y-%m-%d')
-            obs_label = 'obs date:'
-        else:
-            obs_text = '-obs'
-            obs_label = None
+        obs_size = (ui_max_width / 6.0, date_height)
+        obs_text = last_obs_date or '----------'
+        obs_label = 'last obs date:'
         if 'obs' in labels:
             draw_text_in_box(
                 draw,

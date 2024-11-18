@@ -155,7 +155,7 @@ const drawData = (
                 }
               });
               const lineDivisor = Math.max(canvas.width, canvas.height);
-              context.lineWidth = lineDivisor * lineThicknessFactor / 100;
+              context.lineWidth = Math.floor(lineDivisor * lineThicknessFactor / 100);
               context.strokeStyle = getColorFromLabel(poly.label);
               context.stroke();
             });

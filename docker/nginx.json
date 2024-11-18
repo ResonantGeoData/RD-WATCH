@@ -62,7 +62,7 @@
   ],
   "applications": {
     "rdwatch": {
-      "type": "python 3.11",
+      "type": "python 3.13",
       "user": "rdwatch",
       "group": "rdwatch",
       "home": "/poetry/venvs/rdwatch/",

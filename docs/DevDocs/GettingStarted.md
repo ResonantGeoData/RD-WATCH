@@ -31,7 +31,7 @@ but allows developers to run Python code on their native system.
 1. Make a copy of `template.env` and call it `.env`.
 2. Set the environment variables in `.env`.
 3. Run `docker compose -f ./docker-compose.yaml up -d`
-4. Install Python 3.11
+4. Install Python 3.13
 5. Install
    [`psycopg2` build prerequisites](https://www.psycopg.org/docs/install.html#build-prerequisites)
 6. Install Poetry

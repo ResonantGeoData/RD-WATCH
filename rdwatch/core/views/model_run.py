@@ -378,7 +378,20 @@ def list_model_runs(
 def finalize_model_run(request: HttpRequest, id: UUID4):
     model_run = get_object_or_404(ModelRun, pk=id)
     model_run.compute_aggregate_stats()
-    return model_run
+    return {
+        'id': model_run.pk,
+        'title': model_run.title,
+        'performer': {
+            'id': model_run.performer.pk,
+            'team_name': model_run.performer.team_name,
+            'short_code': model_run.performer.short_code,
+        },
+        'region_name': model_run.region.name,
+        'parameters': model_run.parameters,
+        'numsites': 0,
+        'created': model_run.created,
+        'expiration_time': model_run.expiration_time,
+    }
 
 
 @router.get('/{id}/', response={200: ModelRunDetailSchema})

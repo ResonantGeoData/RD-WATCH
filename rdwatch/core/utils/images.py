@@ -26,7 +26,7 @@ logger = logging.getLogger(__name__)
 
 
 @contextmanager
-def ignore_pillow_filesize_limits() -> Generator[None, None, None]:
+def ignore_pillow_filesize_limits() -> Generator[None]:
     """
     Large image files can cause Pillow to raise a DecompressionBombError.
     This context manager temporarily disables the Pillow limit on the maximum image

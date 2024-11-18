@@ -32,7 +32,7 @@ jobs:
       - name: Setup Python environment
         uses: actions/setup-python@v4
         with:
-          python-version: "3.11"
+          python-version: "3.13"
       - name: Install pre-commit
         run: pip install pre-commit
       - name: Cache pre-commit hooks
@@ -112,7 +112,7 @@ jobs:
       - name: Setup Python environment
         uses: actions/setup-python@v4
         with:
-          python-version: "3.11"
+          python-version: "3.13"
       - name: Install poetry and tox
         run: pip install --upgrade poetry tox
       - name: Run tests

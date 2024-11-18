@@ -30,10 +30,10 @@ repos:
         args: [--settings-file, pyproject.toml]
 
   - repo: https://github.com/asottile/pyupgrade
-    rev: v3.15.1
+    rev: v3.19.0
     hooks:
       - id: pyupgrade
-        args: [--py311-plus]
+        args: [--py313-plus]
 
   - repo: https://github.com/adamchainz/django-upgrade
     rev: 1.16.0

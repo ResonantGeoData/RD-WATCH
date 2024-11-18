@@ -1,30 +1,29 @@
 # Base runtime environment for rdwatch
-FROM python:3.11.9 AS base
+FROM python:3.13.0 AS base
 COPY docker/nginx.json /usr/local/etc/unit/config.json
 COPY docker/docker-entrypoint.sh /docker-entrypoint.sh
 COPY docker/keyrings/nginx.gpg /usr/share/keyrings/nginx.gpg
 RUN apt-get update \
  && apt-get install --no-install-recommends --yes ca-certificates curl gnupg
-RUN echo "deb [signed-by=/usr/share/keyrings/nginx.gpg] https://packages.nginx.org/unit/debian/ bookworm unit" > /etc/apt/sources.list.d/unit.list \
- && echo "deb-src [signed-by=/usr/share/keyrings/nginx.gpg] https://packages.nginx.org/unit/debian/ bookworm unit" >> /etc/apt/sources.list.d/unit.list
 RUN apt-get update \
  && apt-get install --no-install-recommends --yes \
       libproj25 \
       libgdal32 \
       netcat-openbsd \
-      python3-cachecontrol \
-      python3-pip \
-      python3.11-venv \
       tzdata \
-      unit \
-      unit-python3.11 \
       wget \
       # opencv dependencies
       ffmpeg \
       libsm6 \
       libxext6 \
- && rm -rf /var/lib/apt/lists/* \
- && mkdir /run/unit \
+ && rm -rf /var/lib/apt/lists/*
+RUN git clone https://github.com/nginx/unit \
+ && cd unit \
+ && git checkout 1.33.0 \
+ && ./configure --group=unit --user=unit \
+ && make install \
+ && useradd --no-create-home unit
+RUN mkdir /run/unit \
  && chmod +x /docker-entrypoint.sh \
  && useradd --no-create-home rdwatch \
  && usermod --lock rdwatch \

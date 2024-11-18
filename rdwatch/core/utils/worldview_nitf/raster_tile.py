@@ -16,7 +16,7 @@ logger = logging.getLogger(__name__)
 
 
 @contextmanager
-def _download_nitf_image(uri: str) -> Generator[str, None, None]:
+def _download_nitf_image(uri: str) -> Generator[str]:
     s3 = boto3.client('s3')
 
     parsed_url = urlparse(uri)

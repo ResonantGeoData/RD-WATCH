@@ -102,7 +102,7 @@ class ModelRunWriteSchema(Schema):
     title: Annotated[str, StringConstraints(max_length=1000)]
     region: Annotated[str, StringConstraints(min_length=1, max_length=255)]
     parameters: dict
-    expiration_time: int | None = None
+    expiration_time: int | None = Field(default=None, validate_default=True)
     evaluation: int | None = None
     evaluation_run: int | None = None
     proposal: bool | None = None

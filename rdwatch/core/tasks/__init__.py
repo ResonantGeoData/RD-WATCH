@@ -973,6 +973,8 @@ def process_model_run_upload(model_run_upload: ModelRunUpload):
         if region_model:
             SiteEvaluation.bulk_create_from_region_model(region_model, model_run)
 
+        model_run.compute_aggregate_stats()
+
 
 @shared_task(bind=True)
 def process_model_run_upload_task(task, upload_id: UUID):

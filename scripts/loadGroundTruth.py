@@ -94,6 +94,15 @@ def _upload_model_run(
             print(res.status_code, res.text)
             continue
 
+    res = requests.post(
+        f'{rgd_endpoint}/api/model-runs/{model_run_id}/finalization/',
+        headers={
+            'X-RDWATCH-API-KEY': rgd_api_key,
+        },
+    )
+    if res.status_code >= 400:
+        print(res.status_code, res.text)
+
 
 def upload_to_rgd(
     base_dir: Path,

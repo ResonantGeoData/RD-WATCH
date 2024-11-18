@@ -78,6 +78,12 @@ class BoundingBoxGeoJSON(Cast):
         return super().__init__(json_str, JSONField())  # noqa: B037
 
 
+class AsGeoJSONDeserialized(Cast):
+    def __init__(self, field):
+        json_str = AsGeoJSON(field)
+        return super().__init__(json_str, JSONField())  # noqa: B037
+
+
 class TimeRangeJSON(NullIf):
     """Represents the min/max time of a field as JSON"""
 

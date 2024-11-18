@@ -121,6 +121,7 @@ def get_worldview_nitf_bbox(
                             )
                         except ValueError as e:
                             logger.info(f'Value Error: {e} - {capture.uri}')
+                            sentry_sdk.capture_exception(e)
                             return None
                         final_chip = ImageData(
                             pansharpening_brovey(

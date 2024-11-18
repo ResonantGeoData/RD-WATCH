@@ -12,7 +12,7 @@ from rio_tiler.io.stac import STACReader
 
 class AbstractCapture(ABC):
     @abstractmethod
-    def open_reader(self) -> Generator[BaseReader | MultiBaseReader, None, None]:
+    def open_reader(self) -> Generator[BaseReader | MultiBaseReader]:
         raise NotImplementedError
 
     @property
@@ -26,7 +26,7 @@ class URICapture(AbstractCapture):
     uri: str
 
     @contextmanager
-    def open_reader(self) -> Generator[Reader, None, None]:
+    def open_reader(self) -> Generator[Reader]:
         uri = self.uri
         with ExitStack() as cxt_stack:
             cxt_stack.enter_context(
@@ -52,7 +52,7 @@ class STACCapture(AbstractCapture):
     s3_requester_pays: bool = field(kw_only=True, default=False)
 
     @contextmanager
-    def open_reader(self) -> Generator[STACReader, None, None]:
+    def open_reader(self) -> Generator[STACReader]:
         with ExitStack() as cxt_stack:
             reader = cxt_stack.enter_context(
                 STACReader(None, item=self.stac_item, include_assets=self.stac_assets)

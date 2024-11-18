@@ -4,6 +4,7 @@ import { debounce } from "lodash";
 import {
   ApiService,
   Constellation,
+  DefaultAnimationSettings,
   DownloadAnimationSettings,
 } from "../../client/services/ApiService";
 import AnimationDownloaded from "./AnimationDownloaded.vue";
@@ -11,6 +12,7 @@ import AnimationDownloaded from "./AnimationDownloaded.vue";
 const props = defineProps<{
   type: "site" | "modelRun";
   id: string;
+  defaults?: DefaultAnimationSettings;
 }>();
 
 const emit = defineEmits<{
@@ -22,10 +24,10 @@ const validForm = ref(true);
 const outputFormat: Ref<DownloadAnimationSettings["output_format"]> =
   ref("mp4");
 const formatChoices = ref(["mp4", "gif"]);
-const fps = ref(1);
-const pointRadius = ref(5);
-const constellationChoices = ref(["S2", "WV", "L8"]);
-const selectedSources: Ref<Constellation[]> = ref(["WV", "S2"]);
+const fps = ref(props.defaults ? props.defaults.fps : 1);
+const pointRadius = ref(props.defaults ? props.defaults.point_radius : 5);
+const constellationChoices = ref( ["S2", "WV", "L8"]);
+const selectedSources: Ref<Constellation[]> = ref(props.defaults?.sources || ["WV", "S2"]);
 const labelChoices = ref(["geom", "date", "source", "obs", "obs_label"]);
 const labels: Ref<DownloadAnimationSettings["labels"]> = ref([
   "geom",
@@ -34,9 +36,9 @@ const labels: Ref<DownloadAnimationSettings["labels"]> = ref([
   "obs",
   "obs_label",
 ]);
-const cloudCover = ref(95);
-const noData = ref(100);
-const include: Ref<DownloadAnimationSettings["include"]> = ref([
+const cloudCover = ref(props.defaults ? props.defaults.cloudCover : 95);
+const noData = ref(props.defaults ? props.defaults.noData : 100);
+const include: Ref<DownloadAnimationSettings["include"]> = ref(props.defaults?.include || [
   "obs",
   "nonobs",
 ]);
@@ -158,9 +160,9 @@ const cancel = debounce(() => emit("close"), 5000, { leading: true });
           >
             <v-slider
               v-model="fps"
-              min="1"
-              max="60"
-              step="1"
+              min="0.1"
+              max="30"
+              step="0.1"
               thumb-label="always"
               label="FPS"
               class="pt-2"

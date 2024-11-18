@@ -3,20 +3,43 @@ import { computed, ref, watch, withDefaults } from "vue";
 import { EvaluationImage } from "../../types";
 import { PixelPoly } from "./imageUtils";
 import { state } from '../../store';
+import { DefaultAnimationSettings } from "../../client/services/ApiService";
 
 interface Props {
     combinedImages: {image: EvaluationImage; poly: PixelPoly, groundTruthPoly?: PixelPoly}[];
+    rescaleImage: boolean;
 }
 const props = withDefaults(defineProps<Props>(), {
 });
 
 const emit = defineEmits<{
-    (e: "imageFilter", data: {image: EvaluationImage; poly: PixelPoly, groundTruthPoly?: PixelPoly}[]): void;
+    (e: "imageFilter", data: {image: EvaluationImage; poly: PixelPoly, groundTruthPoly?: PixelPoly}[]): void,
+    (e: "animationDefaults", data: DefaultAnimationSettings): void;
+    (e: "rescaleBBox", data: number): void;
 }>();
 
 const baseImageSources = ref(['S2', 'WV', 'L8', 'PL'])
 const baseObs = ref(['observations', 'non-observations'])
 const filterSettings = ref(true);
+const rescaleBorder = ref(1)
+
+const downloadingGifPointSize = computed({
+  get() {
+    return state.gifSettings.pointSize || 1;
+  },
+  set(val: number) {
+    state.gifSettings = { ...state.gifSettings, pointSize: val };
+  },
+});
+
+const playbackFps = computed({
+  get() {
+    return state.gifSettings.fps || 1;
+  },
+  set(val: number) {
+    state.gifSettings = { ...state.gifSettings, fps: val };
+  },
+});
 
 
 const filteredImages = computed(() => {
@@ -43,6 +66,39 @@ const filteredImages = computed(() => {
 })
 watch(filteredImages, () => {
   emit('imageFilter', filteredImages.value);
+})
+
+watch([
+  () => state.imageFilter.sources,
+  () => state.imageFilter.obsFilter,
+  () => state.imageFilter.cloudCover,
+  () => state.imageFilter.noData], () => {
+  const defaultAnimationSettings: DefaultAnimationSettings = {
+    cloudCover: state.imageFilter.cloudCover,
+    noData: state.imageFilter.noData,
+    sources: state.imageFilter.sources,
+    include: state.imageFilter.obsFilter.map((item) => item === 'non-observations' ? 'nonobs' : 'obs'),
+    rescale: props.rescaleImage,
+    rescale_border: rescaleBorder.value,
+    fps: playbackFps.value,
+    point_radius: downloadingGifPointSize.value,
+  }
+  console.log('Emitting Animation Defaults');
+  emit('animationDefaults', defaultAnimationSettings);
+})
+watch(rescaleBorder, () => {
+  const defaultAnimationSettings: DefaultAnimationSettings = {
+    cloudCover: state.imageFilter.cloudCover,
+    noData: state.imageFilter.noData,
+    sources: state.imageFilter.sources,
+    include: state.imageFilter.obsFilter.map((item) => item === 'non-observations' ? 'nonobs' : 'obs'),
+    rescale: props.rescaleImage,
+    rescale_border: rescaleBorder.value,
+    fps: playbackFps.value,
+    point_radius: downloadingGifPointSize.value,
+  }
+  emit('animationDefaults', defaultAnimationSettings);
+  emit('rescaleBBox', rescaleBorder.value);
 })
 </script>
 
@@ -77,6 +133,7 @@ watch(filteredImages, () => {
           multiple
           closable-chips
           chips
+          density="compact"
           class="mx-2"
         />
         <v-select
@@ -85,6 +142,7 @@ watch(filteredImages, () => {
           :items="baseImageSources"
           multiple
           closable-chips
+          density="compact"
           chips
           class="mx-2"
         />
@@ -94,7 +152,10 @@ watch(filteredImages, () => {
         justify="center"
         align="center"
       >
-        <v-col cols="3">
+        <v-col
+          cols="2"
+          class="slider-label"
+        >
           <span>Cloud Cover:</span>
         </v-col>
         <v-col cols="7">
@@ -105,7 +166,7 @@ watch(filteredImages, () => {
             step="1"
             color="primary"
             density="compact"
-            class="mt-5"
+            hide-details
           />
         </v-col>
         <v-col>
@@ -119,7 +180,10 @@ watch(filteredImages, () => {
         justify="center"
         align="center"
       >
-        <v-col cols="3">
+        <v-col
+          cols="2"
+          class="slider-label"
+        >
           <span>NoData:</span>
         </v-col>
         <v-col cols="7">
@@ -129,8 +193,8 @@ watch(filteredImages, () => {
             max="100"
             step="1"
             color="primary"
+            hide-details
             density="compact"
-            class="mt-5"
           />
         </v-col>
         <v-col>
@@ -139,6 +203,96 @@ watch(filteredImages, () => {
           </span>
         </v-col>
       </v-row>
+      <v-row
+        dense
+        justify="center"
+        align="center"
+      >
+        <v-col
+          cols="2"
+          class="slider-label"
+        >
+          <span>FPS:</span>
+        </v-col>
+        <v-col cols="7">
+          <v-slider
+            v-model.number="playbackFps"
+            min="0.1"
+            max="30"
+            step="0.1"
+            color="primary"
+            hide-details
+            density="compact"
+          />
+        </v-col>
+        <v-col>
+          <span>
+            {{ playbackFps.toFixed(2) }}fps
+          </span>
+        </v-col>
+      </v-row>
+      <v-row
+        dense
+        justify="center"
+        align="center"
+      >
+        <v-col
+          cols="2"
+          class="slider-label"
+        >
+          <span>Rescale Border:</span>
+        </v-col>
+        <v-col cols="7">
+          <v-slider
+            v-model.number="rescaleBorder"
+            min="1"
+            max="5"
+            step="1"
+            color="primary"
+            hide-details
+            density="compact"
+          />
+        </v-col>
+        <v-col>
+          <span class="pl-2">
+            {{ rescaleBorder }}X
+          </span>
+        </v-col>
+      </v-row>
+      <v-row
+        dense
+        justify="center"
+        align="center"
+      >
+        <v-col
+          cols="2"
+          class="slider-label"
+        >
+          <span>Point Radius:</span>
+        </v-col>
+        <v-col cols="7">
+          <v-slider
+            v-model.number="downloadingGifPointSize"
+            min="1"
+            max="20"
+            step="1"
+            color="primary"
+            hide-details
+            density="compact"
+          />
+        </v-col>
+        <v-col>
+          <span class="pl-2">
+            {{ downloadingGifPointSize }}px
+          </span>
+        </v-col>
+      </v-row>
     </div>
   </div>
 </template>
+
+<style scoped>
+.slider-label {
+  font-size: 0.75em;
+}
+</style>

@@ -1,7 +1,7 @@
 services:
   # PostgreSQL
   postgresql:
-    image: postgis/postgis:latest
+    image: postgis/postgis:16-3.5
     environment:
       POSTGRES_USER: rdwatch
       POSTGRES_DB: rdwatch
@@ -35,7 +35,7 @@ services:
 
   # Scoring database
   scoredb:
-    image: postgis/postgis:latest
+    image: postgis/postgis:16-3.5
     environment:
       POSTGRES_USER: scoring
       POSTGRES_DB: scoring

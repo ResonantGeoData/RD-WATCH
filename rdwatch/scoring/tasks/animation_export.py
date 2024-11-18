@@ -616,7 +616,7 @@ def create_site_animation_export(
         if os.path.exists(file_path):
             os.remove(file_path)
     except Exception as e:
-        logger.warning(f'Error when processing Animation: {e}')
+        sentry_sdk.capture_exception(e)
         if site_export:
             site_export.delete()
 

@@ -102,6 +102,7 @@ def get_worldview_nitf_bbox(
                     pan_chip = pan_img.part(bbox=bbox, dst_crs='epsg:4326')
                 except ValueError as e:
                     logger.info(f'Value Error: {e} - {capture.panuri}')
+                    sentry_sdk.capture_exception(e)
                     return None
                 with Reader(input=capture.uri) as vis_img:
                     logger.info(f'Downloading URI Chip: {capture.uri}')

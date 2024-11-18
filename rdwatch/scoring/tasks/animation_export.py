@@ -8,6 +8,7 @@ from typing import Any
 
 import cv2
 import numpy as np
+import sentry_sdk
 from celery import group, shared_task, states
 from celery.result import GroupResult
 from PIL import Image, ImageDraw

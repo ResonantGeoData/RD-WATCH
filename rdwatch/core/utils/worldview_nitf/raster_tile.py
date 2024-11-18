@@ -1,13 +1,8 @@
 import logging
-import time
-from collections.abc import Generator
-from contextlib import contextmanager
-from tempfile import NamedTemporaryFile
 from typing import Literal
-from urllib.parse import urlparse
 
-import boto3
 import rasterio  # type: ignore
+import sentry_sdk
 from rio_tiler.io.rasterio import Reader
 from rio_tiler.models import ImageData
 from rio_tiler.utils import pansharpening_brovey
@@ -17,7 +12,7 @@ from rdwatch.core.utils.worldview_nitf.satellite_captures import WorldViewNITFCa
 logger = logging.getLogger(__name__)
 
 
-def find_rgb_channels(colorinterp):
+def find_channels(colorinterp):
     rgb_indexes = {}
 
     # Define the channels to look for
@@ -42,24 +37,6 @@ def find_rgb_channels(colorinterp):
         )
 
 
-@contextmanager
-def _download_nitf_image(uri: str) -> Generator[str, None, None]:
-    s3 = boto3.client('s3')
-
-    parsed_url = urlparse(uri)
-
-    s3_bucket = parsed_url.netloc
-    s3_path = parsed_url.path.lstrip('/')
-
-    with NamedTemporaryFile(suffix='.nitf') as f:
-        startTime = time.time()
-        logger.info(f'Image URI: {uri}')
-        logger.info(f'Base Info Time: {time.time() - startTime}')
-        s3.download_fileobj(s3_bucket, s3_path, f)
-        logger.info(f'RGB Download Time: {time.time() - startTime}')
-        yield f.name
-
-
 def get_worldview_nitf_tile(
     capture: WorldViewNITFCapture, z: int, x: int, y: int
 ) -> bytes:
@@ -76,7 +53,7 @@ def get_worldview_nitf_tile(
     ):
         with Reader(input=capture.uri) as vis_img:
             information = vis_img.info()
-            rgb_channels = find_rgb_channels(information.colorinterp)
+            rgb_channels = find_channels(information.colorinterp)
             rgb = vis_img.tile(x, y, z, tilesize=512, indexes=rgb_channels)
         return rgb.render(img_format='WEBP')
 
@@ -95,85 +72,56 @@ def get_worldview_nitf_bbox(
         CPL_VSIL_CURL_CHUNK_SIZE=524288,
     ):
         logger.info(f'Downloading WorldView NITF bbox: {bbox} scale: {scale}')
-        if capture.panuri is not None:
-            with Reader(input=capture.panuri) as pan_img:
-                logger.info(f'Downloading PanURI Chip: {capture.panuri}')
-                try:
-                    pan_chip = pan_img.part(bbox=bbox, dst_crs='epsg:4326')
-                except ValueError as e:
-                    logger.info(f'Value Error: {e} - {capture.panuri}')
-                    sentry_sdk.capture_exception(e)
-                    return None
-                with Reader(input=capture.uri) as vis_img:
-                    logger.info(f'Downloading URI Chip: {capture.uri}')
-                    information = vis_img.info()
-                    rgb_channels = find_rgb_channels(information.colorinterp)
-                    if all(
-                        channel is not None for channel in rgb_channels
-                    ):  # Ensure all RGB channels exist
-                        try:
-                            vis_chip = vis_img.part(
-                                bbox=bbox,
-                                indexes=rgb_channels,
-                                dst_crs='epsg:4326',
-                                width=pan_chip.width,
-                                height=pan_chip.height,
-                            )
-                        except ValueError as e:
-                            logger.info(f'Value Error: {e} - {capture.uri}')
-                            sentry_sdk.capture_exception(e)
-                            return None
-                        final_chip = ImageData(
-                            pansharpening_brovey(
-                                vis_chip.data, pan_chip.data, 0.2, 'uint16'
-                            )
-                        )
-                        statistics = list(final_chip.statistics().values())
-                        if scale == 'default':
-                            in_range = tuple(
-                                (item.min, item.max) for item in statistics
-                            )
-                        elif scale == 'bits':
-                            in_range = tuple(
-                                (item['percentile_2'], item['percentile_98'])
-                                for item in statistics
-                            )
-                        elif (
-                            isinstance(scale, list) and len(scale) == 2
-                        ):  # scale is an integeter range
-                            in_range = tuple(
-                                (scale[0], scale[1]) for item in statistics
-                            )
-                        final_chip.rescale(in_range=in_range)
-                        return final_chip.render(img_format=format)
-        else:
-            with Reader(input=capture.uri) as vis_img:
-                information = vis_img.info()
-                rgb_channels = find_rgb_channels(information.colorinterp)
-                if all(
-                    channel is not None for channel in rgb_channels
-                ):  # Ensure all RGB channels exist
+        with Reader(input=capture.uri) as vis_img:
+            pan_chip = None
+            if capture.panuri is not None:
+                with Reader(input=capture.panuri) as pan_img:
                     try:
-                        final_chip = vis_img.part(
-                            bbox=bbox,
-                            dst_crs='epsg:4326',
-                            indexes=rgb_channels,
-                        )
+                        pan_chip = pan_img.part(bbox=bbox, dst_crs='epsg:4326')
                     except ValueError as e:
-                        logger.info(f'Value Error: {e} - {capture.uri}')
+                        logger.info(f'Value Error: {e} - {capture.panuri}')
                         sentry_sdk.capture_exception(e)
                         return None
-                    statistics = list(final_chip.statistics().values())
-                    if scale == 'default':
-                        in_range = tuple((item.min, item.max) for item in statistics)
-                    elif scale == 'bits':
-                        in_range = tuple(
-                            (item['percentile_2'], item['percentile_98'])
-                            for item in statistics
+            size = (
+                {'width': pan_chip.width, 'height': pan_chip.height} if pan_chip else {}
+            )
+            information = vis_img.info()
+            rgb_channels = find_channels(information.colorinterp)
+            if all(
+                channel is not None for channel in rgb_channels
+            ):  # Ensure all RGB channels exist
+                try:
+                    vis_chip = vis_img.part(
+                        bbox=bbox,
+                        dst_crs='epsg:4326',
+                        indexes=rgb_channels,
+                        **size,
+                    )
+                except ValueError as e:
+                    logger.info(f'Value Error: {e} - {capture.uri}')
+                    sentry_sdk.capture_exception(e)
+                    return None
+                if pan_chip:
+                    final_chip = ImageData(
+                        pansharpening_brovey(
+                            vis_chip.data, pan_chip.data, 0.2, 'uint16'
                         )
-                    elif (
-                        isinstance(scale, list) and len(scale) == 2
-                    ):  # scale is an integeter range
-                        in_range = tuple((scale[0], scale[1]) for item in statistics)
-                    final_chip.rescale(in_range=in_range)
-                    return final_chip.render(img_format=format)
+                    )
+                else:
+                    final_chip = vis_chip
+
+                statistics = list(final_chip.statistics().values())
+                if scale == 'default':
+                    in_range = tuple((item.min, item.max) for item in statistics)
+                elif scale == 'bits':
+                    in_range = tuple(
+                        (item['percentile_2'], item['percentile_98'])
+                        for item in statistics
+                    )
+                elif (
+                    isinstance(scale, list) and len(scale) == 2
+                ):  # scale is an integeter range
+                    in_range = tuple((scale[0], scale[1]) for item in statistics)
+                final_chip.rescale(in_range=in_range)
+                return final_chip.render(img_format=format)
+    return None

@@ -312,6 +312,7 @@ class GenerateAnimationSchema(BaseModel):
     include: list[Literal['obs', 'nonobs']] = ['obs', 'nonobs']
     rescale: bool = False
     rescale_border: int = Field(1, ge=0)  # Border rescale should be an integer >= 0
+    line_thickness_factor: float = 1.0
 
 
 @shared_task
@@ -329,6 +330,7 @@ def create_animation(self, site_evaluation_id: UUID4, settings: dict[str, Any]):
         'noData': settingsSchema.noData,
         'include': settingsSchema.include,
     }
+    line_thickness_factor = settingsSchema.line_thickness_factor
 
     # Fetch the SiteEvaluation instance
     try:
@@ -550,7 +552,10 @@ def create_animation(self, site_evaluation_id: UUID4, settings: dict[str, Any]):
                     for lon, lat in transformed_coords
                 ]
                 color = label_mapped.get('color', (255, 255, 255))
-                draw.polygon(pixel_coords, outline=color)
+                polyline_width = int(
+                    (max(max_height_px, max_width_px) * line_thickness_factor) / 100
+                )
+                draw.polygon(pixel_coords, outline=color, width=polyline_width)
         if not polygon and observation:
             point = observation.point
         if not point:

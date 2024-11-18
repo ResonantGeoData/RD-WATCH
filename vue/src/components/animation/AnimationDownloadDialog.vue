@@ -26,6 +26,7 @@ const outputFormat: Ref<DownloadAnimationSettings["output_format"]> =
 const formatChoices = ref(["mp4", "gif"]);
 const fps = ref(props.defaults ? props.defaults.fps : 1);
 const pointRadius = ref(props.defaults ? props.defaults.point_radius : 5);
+const lineThicknessFactor = ref(props.defaults?.line_thickness_factor ?? 1);
 const constellationChoices = ref( ["S2", "WV", "L8"]);
 const selectedSources: Ref<Constellation[]> = ref(props.defaults?.sources || ["WV", "S2"]);
 const labelChoices = ref(["geom", "date", "source", "obs", "obs_label"]);
@@ -83,8 +84,9 @@ const download = debounce(
       include: include.value,
       rescale: rescale.value,
       rescale_border: rescaleBorder.value,
+      line_thickness_factor: lineThicknessFactor.value,
     };
-    
+
     const response = props.type === 'site' ?
     await ApiService.generateSiteAnimation(props.id,downloadSettings) :
      await ApiService.generateModelRunAnimation(props.id, downloadSettings);
@@ -125,7 +127,7 @@ const cancel = debounce(() => emit("close"), 5000, { leading: true });
         </v-tab>
       </v-tabs>
     </v-card-title>
-    <v-card-text    
+    <v-card-text
       style="max-height:70vh; overflow-y:auto"
     >
       <div v-if="currentTab === 'download'">
@@ -242,6 +244,35 @@ const cancel = debounce(() => emit("close"), 5000, { leading: true });
               max="5"
               step="0.1"
               :label="`Rescale Border ${rescaleBorder.toFixed(2)}X`"
+              thumb-label="always"
+            />
+          </v-row>
+          <v-row
+            dense
+            align="center"
+            class="pb-5"
+          >
+            <v-slider
+              v-model="pointRadius"
+              min="1"
+              max="20"
+              step="1"
+              label="Point size"
+              thumb-label="always"
+            />
+          </v-row>
+          <v-row
+            dense
+            align="center"
+            class="pb-5"
+          >
+            <v-slider
+              v-model.number="lineThicknessFactor"
+              min="0.1"
+              max="2"
+              step="0.1"
+              label="Line Width Factor"
+              thumb-label="always"
             />
           </v-row>
         </v-form>

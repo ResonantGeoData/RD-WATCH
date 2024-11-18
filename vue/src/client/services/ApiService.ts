@@ -129,6 +129,7 @@ export interface DefaultAnimationSettings {
   cloudCover: number;
   rescale: boolean;
   rescale_border: number;
+  line_thickness_factor: number;
 }
 
 export interface DownloadAnimationSettings {
@@ -142,6 +143,7 @@ export interface DownloadAnimationSettings {
   include: ('obs'|'nonobs')[];
   rescale: boolean;
   rescale_border: number;
+  line_thickness_factor: number;
 }
 
 export interface DownloadAnimationState {

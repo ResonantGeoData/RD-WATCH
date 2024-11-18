@@ -57,7 +57,7 @@ watch(()=> ApiService.getApiPrefix(), async () => {
       :site-eval-id="state.selectedImageSite.siteId"
       :site-evaluation-name="state.selectedImageSite.siteName"
       :date-range="state.selectedImageSite.dateRange"
-      style="top: 40vh !important; height: 60vh"
+      style="position: relative; top: -60vh !important; height: 60vh"
     />
   </v-main>
   <span>

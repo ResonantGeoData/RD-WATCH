@@ -58,8 +58,8 @@ const localLayers = computed(() => {
 </script>
 
 <template>
-  <div class="h-100 overflow-y-auto">
-    <div class="text-center">
+  <div class="h-100 overflow-y-auto d-flex flex-column">
+    <div class="text-center py-2">
       <v-btn
         variant="flat"
         color="secondary"
@@ -79,7 +79,7 @@ const localLayers = computed(() => {
         No local layers
       </div>
     </div>
-    <v-list>
+    <v-list class="overflow-y-auto">
       <v-list-item
         v-for="layer in localLayers"
         :key="layer.id"

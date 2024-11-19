@@ -118,7 +118,7 @@ onMounted(() => loadModelRuns('firstPage'));
 </script>
 
 <template>
-  <div class="d-flex flex-column overflow-hidden">
+  <div class="d-flex flex-column overflow-hidden pr-2">
     <div class="d-flex flex-wrap flex-grow-0">
       <v-chip
         v-if="!loading && !loadingSatelliteTimestamps"

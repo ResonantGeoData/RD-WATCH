@@ -164,8 +164,7 @@ const tab = ref();
 
 <template>
   <v-card
-    class="pa-5 pb-1 overflow-y-hidden d-flex flex-column"
-    style="max-height:100vh; min-height:100vh; height: 100vh;"
+    class="pa-5 pb-1 h-100 overflow-y-hidden d-flex flex-column"
   >
     <v-row
       dense
@@ -195,9 +194,12 @@ const tab = ref();
     </v-tabs>
     <v-window
       v-model="tab"
-      class="overflow-visible h-100"
+      class="overflow-hidden flex-grow-1 flex-shrink-1 h-100"
     >
-      <v-window-item value="model-runs">
+      <v-window-item
+        value="model-runs"
+        class="window-item-flex-container"
+      >
         <mode-selector />
         <v-row>
           <TimeSlider
@@ -355,7 +357,7 @@ const tab = ref();
       </v-window-item>
       <v-window-item
         value="local-layers"
-        class="h-100"
+        class="h-100 window-item-flex-container"
       >
         <local-layers />
       </v-window-item>
@@ -439,5 +441,11 @@ const tab = ref();
 .sidebar-icon {
   min-width: 40px;
   min-height: 40px;;
+}
+
+.window-item-flex-container {
+  height: inherit;
+  display: flex;
+  flex-flow: column;
 }
 </style>

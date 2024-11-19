@@ -44,8 +44,8 @@ watch(()=> ApiService.getApiPrefix(), async () => {
     location="left"
     width="400"
     sticky
-    style="max-height: 100vh"
     permanent
+    class="h-100 overflow-hidden"
   >
     <SideBar />
   </v-navigation-drawer>

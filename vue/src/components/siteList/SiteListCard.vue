@@ -307,6 +307,26 @@ const runIQR = async (site: SiteDisplay) => {
             Generate Image Animation
           </span>
         </v-tooltip>
+        <v-tooltip
+          v-if="iqr.enabled && !ApiService.isScoring() && localSite.smqtkUuid != null && site.selected"
+          open-delay="300"
+        >
+          <template #activator="{ props }">
+            <v-btn
+              variant="tonal"
+              density="compact"
+              class="pa-0 ma-1 site-icon"
+              size="small"
+              v-bind="props"
+              @click.stop="runIQR(localSite)"
+            >
+              <v-icon size="small">
+                mdi-database-search
+              </v-icon>
+            </v-btn>
+          </template>
+          <span>IQR</span>
+        </v-tooltip>
         <v-spacer />
         <v-tooltip
           v-if="!ApiService.isScoring()"
@@ -328,27 +348,6 @@ const runIQR = async (site: SiteDisplay) => {
             </v-btn>
           </template>
           <span>Download JSON</span>
-        </v-tooltip>
-        <v-tooltip
-          v-if="iqr.enabled && !ApiService.isScoring() && localSite.smqtkUuid != null"
-          open-delay="300"
-        >
-          <template #activator="{ props }">
-            <v-btn
-              variant="tonal"
-              density="compact"
-              class="pa-0 ma-1 site-icon"
-              size="small"
-              color="primary"
-              v-bind="props"
-              @click.stop="runIQR(localSite)"
-            >
-              <v-icon size="small">
-                mdi-database-search
-              </v-icon>
-            </v-btn>
-          </template>
-          <span>IQR</span>
         </v-tooltip>
         <v-tooltip
           v-if="!downloading"

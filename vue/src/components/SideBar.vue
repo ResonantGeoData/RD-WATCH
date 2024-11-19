@@ -198,150 +198,152 @@ const tab = ref();
     >
       <v-window-item
         value="model-runs"
-        class="window-item-flex-container"
+        class="window-item-flex-container pt-2"
       >
-        <mode-selector />
-        <v-row>
-          <TimeSlider
-            :min="state.timeMin"
-            :max="Math.floor(Date.now() / 1000)"
-          />
-        </v-row>
-        <v-row
-          dense
-          align="center"
-          class="py-2"
-        >
-          <v-spacer />
-          <v-btn
-            variant="tonal"
-            density="compact"
-            class="pa-0 ma-1 sidebar-icon"
-            :color="drawMap ? 'primary' : 'black'"
-            @click="drawMap = !drawMap"
-          >
-            <v-icon>mdi-road</v-icon>
-          </v-btn>
-          <v-btn
-            v-if="selectedRegion !== null && !(filteredSatelliteTimeList.length === 0 && state.satellite.satelliteSources.length !== 0)"
-            variant="tonal"
-            density="compact"
-            class="pa-0 ma-1 sidebar-icon"
-            :class="{
-              'animate-flicker': state.satellite.loadingSatelliteImages,
-            }"
-            :color="imagesOn ? 'primary' : 'black'"
-            :disabled="selectedRegion === null || (filteredSatelliteTimeList.length === 0 && state.satellite.satelliteSources.length !== 0)"
-            @click="imagesOn = selectedRegion !== null && (filteredSatelliteTimeList.length !== 0 || state.satellite.satelliteSources.length === 0) ? !imagesOn : imagesOn"
-          >
-            <v-icon>mdi-image</v-icon>
-          </v-btn>
-          <v-tooltip v-else>
-            <template #activator="{ props: props }">
-              <v-btn
-                variant="tonal"
-                v-bind="props"
-                :disabled="!selectedRegion"
-                density="compact"
-                :class="{
-                  'animate-flicker': loadingSatelliteTimestamps,
-                }"
-                class="pa-0 ma-1 sidebar-icon"
-                :color="satelliteLoadingColor"
-                @click="askDownloadSatelliteTimestamps = true"
-              >
-                <v-icon>mdi-satellite-variant</v-icon>
-              </v-btn>
-            </template>
-            <v-alert
-              v-if="!satelliteRegionTooLarge"
-              type="warning"
-              title="Fetch Region Satellite Timestamps"
-              text="This is a long running process that could cause instability on the server.  Please only run this if you are sure you need to use the region satellite feature."
+        <div class="flex-grow-0">
+          <mode-selector />
+          <v-row>
+            <TimeSlider
+              :min="state.timeMin"
+              :max="Math.floor(Date.now() / 1000)"
             />
-            <v-alert
-              v-else
-              type="warning"
-              title="Region Too Large to Fetch Timestamps"
-              text="The Region is too large to fetch timestamps for."
+          </v-row>
+          <v-row
+            dense
+            align="center"
+            class="py-2"
+          >
+            <v-spacer />
+            <v-btn
+              variant="tonal"
+              density="compact"
+              class="pa-0 ma-1 sidebar-icon"
+              :color="drawMap ? 'primary' : 'black'"
+              @click="drawMap = !drawMap"
+            >
+              <v-icon>mdi-road</v-icon>
+            </v-btn>
+            <v-btn
+              v-if="selectedRegion !== null && !(filteredSatelliteTimeList.length === 0 && state.satellite.satelliteSources.length !== 0)"
+              variant="tonal"
+              density="compact"
+              class="pa-0 ma-1 sidebar-icon"
+              :class="{
+                'animate-flicker': state.satellite.loadingSatelliteImages,
+              }"
+              :color="imagesOn ? 'primary' : 'black'"
+              :disabled="selectedRegion === null || (filteredSatelliteTimeList.length === 0 && state.satellite.satelliteSources.length !== 0)"
+              @click="imagesOn = selectedRegion !== null && (filteredSatelliteTimeList.length !== 0 || state.satellite.satelliteSources.length === 0) ? !imagesOn : imagesOn"
+            >
+              <v-icon>mdi-image</v-icon>
+            </v-btn>
+            <v-tooltip v-else>
+              <template #activator="{ props: props }">
+                <v-btn
+                  variant="tonal"
+                  v-bind="props"
+                  :disabled="!selectedRegion"
+                  density="compact"
+                  :class="{
+                    'animate-flicker': loadingSatelliteTimestamps,
+                  }"
+                  class="pa-0 ma-1 sidebar-icon"
+                  :color="satelliteLoadingColor"
+                  @click="askDownloadSatelliteTimestamps = true"
+                >
+                  <v-icon>mdi-satellite-variant</v-icon>
+                </v-btn>
+              </template>
+              <v-alert
+                v-if="!satelliteRegionTooLarge"
+                type="warning"
+                title="Fetch Region Satellite Timestamps"
+                text="This is a long running process that could cause instability on the server.  Please only run this if you are sure you need to use the region satellite feature."
+              />
+              <v-alert
+                v-else
+                type="warning"
+                title="Region Too Large to Fetch Timestamps"
+                text="The Region is too large to fetch timestamps for."
+              />
+            </v-tooltip>
+            <v-btn
+              :color="state.filters.showText ? 'primary' : 'gray'"
+              variant="tonal"
+              class="pa-0 ma-1 sidebar-icon"
+              density="compact"
+              @click="toggleText()"
+            >
+              <v-icon>mdi-format-text</v-icon>
+            </v-btn>
+            <v-btn
+              :color="state.mapLegend ? 'primary' : 'gray'"
+              variant="tonal"
+              class="pa-0 ma-1 sidebar-icon"
+              density="compact"
+              @click="state.mapLegend = !state.mapLegend"
+            >
+              <v-icon>mdi-map-legend</v-icon>
+            </v-btn>
+            <v-tooltip>
+              <template #activator="{ props: props }">
+                <v-btn
+                  variant="tonal"
+                  v-bind="props"
+                  density="compact"
+                  class="pa-0 ma-1 sidebar-icon"
+                  :color="groundtruth ? 'primary' : 'gray'"
+                  @click="groundtruth = !groundtruth"
+                >
+                  <v-icon>mdi-check-decagram</v-icon>
+                </v-btn>
+              </template>
+              <span> Toggle Ground Truth in the list</span>
+            </v-tooltip>
+            <v-btn
+              :color="expandSettings ? 'primary' : 'gray'"
+              variant="tonal"
+              class="pa-0 ma-1 sidebar-icon"
+              density="compact"
+              @click="expandSettings = !expandSettings"
+            >
+              <v-icon>mdi-cog</v-icon>
+            </v-btn>
+          </v-row>
+          <v-row
+            dense
+            class="mt-3"
+          >
+            <PerformerFilter
+              v-model="selectedPerformer"
+              cols="6"
+              class="px-1"
+              hide-details
             />
-          </v-tooltip>
-          <v-btn
-            :color="state.filters.showText ? 'primary' : 'gray'"
-            variant="tonal"
-            class="pa-0 ma-1 sidebar-icon"
-            density="compact"
-            @click="toggleText()"
+            <RegionFilter
+              v-model="selectedRegion"
+              cols="6"
+              class="px-1"
+              hide-details
+            />
+          </v-row>
+          <v-row
+            v-if="ApiService.isScoring()"
+            class="pt-2"
+            dense
           >
-            <v-icon>mdi-format-text</v-icon>
-          </v-btn>
-          <v-btn
-            :color="state.mapLegend ? 'primary' : 'gray'"
-            variant="tonal"
-            class="pa-0 ma-1 sidebar-icon"
-            density="compact"
-            @click="state.mapLegend = !state.mapLegend"
-          >
-            <v-icon>mdi-map-legend</v-icon>
-          </v-btn>
-          <v-tooltip>
-            <template #activator="{ props: props }">
-              <v-btn
-                variant="tonal"
-                v-bind="props"
-                density="compact"
-                class="pa-0 ma-1 sidebar-icon"
-                :color="groundtruth ? 'primary' : 'gray'"
-                @click="groundtruth = !groundtruth"
-              >
-                <v-icon>mdi-check-decagram</v-icon>
-              </v-btn>
-            </template>
-            <span> Toggle Ground Truth in the list</span>
-          </v-tooltip>
-          <v-btn
-            :color="expandSettings ? 'primary' : 'gray'"
-            variant="tonal"
-            class="pa-0 ma-1 sidebar-icon"
-            density="compact"
-            @click="expandSettings = !expandSettings"
-          >
-            <v-icon>mdi-cog</v-icon>
-          </v-btn>
-        </v-row>
-        <v-row
-          dense
-          class="mt-3"
-        >
-          <PerformerFilter
-            v-model="selectedPerformer"
-            cols="6"
-            class="px-1"
-            hide-details
-          />
-          <RegionFilter
-            v-model="selectedRegion"
-            cols="6"
-            class="px-1"
-            hide-details
-          />
-        </v-row>
-        <v-row
-          v-if="ApiService.isScoring()"
-          class="pt-2"
-          dense
-        >
-          <ModeFilter
-            v-model="selectedModes"
-            class="px-1"
-            hide-details
-          />
-          <EvalFilter
-            v-model="selectedEval"
-            class="px-1"
-            hide-details
-          />
-        </v-row>
+            <ModeFilter
+              v-model="selectedModes"
+              class="px-1"
+              hide-details
+            />
+            <EvalFilter
+              v-model="selectedEval"
+              class="px-1"
+              hide-details
+            />
+          </v-row>
+        </div>
         <v-row
           dense
           class="modelRuns"

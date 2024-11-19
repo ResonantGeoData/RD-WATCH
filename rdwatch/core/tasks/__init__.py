@@ -969,7 +969,9 @@ def process_model_run_upload(model_run_upload: ModelRunUpload):
 
         iqr_enabled = False
         for site_model in site_models:
-            site_eval = SiteEvaluation.bulk_create_from_site_model(site_model, model_run)
+            site_eval = SiteEvaluation.bulk_create_from_site_model(
+                site_model, model_run
+            )
             iqr_enabled = iqr_enabled or site_eval.smqtk_uuid != None
 
         if iqr_enabled:

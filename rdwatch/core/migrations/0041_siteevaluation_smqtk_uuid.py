@@ -4,7 +4,6 @@ from django.db import migrations, models
 
 
 class Migration(migrations.Migration):
-
     dependencies = [
         ('core', '0040_remove_siteimage_aws_location'),
     ]
@@ -13,6 +12,8 @@ class Migration(migrations.Migration):
         migrations.AddField(
             model_name='siteevaluation',
             name='smqtk_uuid',
-            field=models.CharField(blank=True, help_text='SMQTK UUID', max_length=256, null=True),
+            field=models.CharField(
+                blank=True, help_text='SMQTK UUID', max_length=256, null=True
+            ),
         ),
     ]

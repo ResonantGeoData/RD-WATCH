@@ -1,4 +1,4 @@
-import { type InjectionKey, computed, inject, reactive, readonly, triggerRef } from "vue";
+import { type InjectionKey, computed, inject, reactive, readonly } from "vue";
 import { ApiService } from "../client";
 import { IQROrderedResultItem, IQRSessionInfo } from "../client/services/ApiService";
 
@@ -110,6 +110,7 @@ export function useIQR() {
         return {
           pk: result.pk,
           siteId: result.site_id,
+          imageUrl: result.image_url,
           smqtkUuid: result.smqtk_uuid,
           status: getUuidStatus(result.smqtk_uuid),
           confidence: result.confidence,

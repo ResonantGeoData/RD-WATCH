@@ -275,6 +275,7 @@ export interface IQRSessionInfo {
 export interface IQROrderedResultItem {
   pk: string;
   site_id: string;
+  image_url: string | null;
   smqtk_uuid: string;
   confidence: number;
   geom: string;

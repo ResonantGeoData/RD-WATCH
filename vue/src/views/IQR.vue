@@ -10,7 +10,7 @@ import { state, updateRegionList } from "../store";
 import AddRegion from "../components/AddRegion.vue";
 import { ApiService } from "../client";
 import { IQR_KEY, useIQR } from "../use/useIQR";
-import IqrCandidate from "../components/iqr/IqrCandidate.vue";
+import IqrSimilarSites from "../components/iqr/IqrSimilarSites.vue";
 
 interface Props {
   region?: string;
@@ -43,16 +43,6 @@ watch(() => ApiService.getApiPrefix(), async () => {
 
 provide(IQR_KEY, true);
 const iqr = useIQR();
-
-const { queryResults } = iqr;
-
-function updateCandidateStatus(uuid: string, status: 'positive' | 'neutral' | 'negative') {
-  iqr.adjudicate([{ uuid, status }]);
-}
-
-function refine() {
-  iqr.refine();
-}
 </script>
 
 <template>
@@ -116,24 +106,7 @@ function refine() {
         permanent
         class="fill-height site-list overflow-y-hidden"
       >
-        <div>
-          Query: {{ iqr.state.site.name }}
-        </div>
-        <v-btn @click="refine">Refine</v-btn>
-        <div class="mt-3">
-          <div
-            v-for="result in queryResults"
-            :key="result.smqtkUuid"
-          >
-            <iqr-candidate
-              :pk="result.pk"
-              :site-id="result.siteId"
-              :smqtk-uuid="result.smqtkUuid"
-              :status="result.status"
-              :confidence="result.confidence"
-              @status-changed="updateCandidateStatus(result.smqtkUuid, $event)"
-            />
-          </div></div>
+        <iqr-similar-sites :site="iqr.state.site" />
       </v-navigation-drawer>
     </span>
   </span>
@@ -150,5 +123,9 @@ function refine() {
   display: flex;
   flex-flow: column;
   height: 100vh;
+}
+
+.iqr-candidate {
+  border-top: 1px solid rgba(0, 0, 0, 0.5);
 }
 </style>

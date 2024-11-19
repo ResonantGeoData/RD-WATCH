@@ -5,7 +5,7 @@ from django.db import migrations, models
 
 class Migration(migrations.Migration):
     dependencies = [
-        ('core', '0040_remove_siteimage_aws_location'),
+        ('core', '0041_merge_20241021_1458'),
     ]
 
     operations = [

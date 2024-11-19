@@ -254,14 +254,14 @@ const tab = ref();
             <v-alert
               v-if="!satelliteRegionTooLarge"
               type="warning"
-              title="Download Region Satellite Timestamps"
+              title="Fetch Region Satellite Timestamps"
               text="This is a long running process that could cause instability on the server.  Please only run this if you are sure you need to use the region satellite feature."
             />
             <v-alert
               v-else
               type="warning"
-              title="Region Too Large to Download Timestamps"
-              text="The Region is too large to download timestamps for."
+              title="Region Too Large to Fetch Timestamps"
+              text="The Region is too large to fetch timestamps for."
             />
           </v-tooltip>
           <v-btn

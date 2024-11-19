@@ -357,11 +357,11 @@ const animationDialog = ref(false);
               <v-icon
                 v-if="!downloadingModelRun"
               >
-                mdi-image
+                mdi-image-sync
               </v-icon>
             </v-btn>
           </template>
-          <span> Download Satellite Images</span>
+          <span>Fetch Satellite Image Chips</span>
         </v-tooltip>
         <v-tooltip>
           <template #activator="{ props }">

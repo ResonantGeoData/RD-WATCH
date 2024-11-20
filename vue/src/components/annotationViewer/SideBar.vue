@@ -130,10 +130,9 @@ const satelliteLoadingColor = computed(() => {
 
 <template>
   <v-card
-    class="pa-5 overflow-y-hidden"
-    style="max-height:100vh; min-height:100vh;"
+    class="pa-5 pb-1 h-100 overflow-hidden d-flex flex-column"
   >
-    <div>
+    <div class="flex-grow-0">
       <v-row
         dense
       >
@@ -255,7 +254,7 @@ const satelliteLoadingColor = computed(() => {
     </div>
     <v-row
       dense
-      class="modelRuns"
+      class="modelRuns h-inherit overflow-hidden"
     >
       <ModelRunListVue
         :filters="queryFilters"

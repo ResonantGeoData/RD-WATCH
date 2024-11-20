@@ -50,12 +50,12 @@ const iqr = useIQR();
     location="left"
     width="400"
     sticky
-    style="max-height: 100vh"
     permanent
+    class="h-100 overflow-hidden"
   >
     <SideBar />
   </v-navigation-drawer>
-  <v-main style="z-index: 1">
+  <v-main style="z-index: 1; height: 100%">
     <layer-selection />
     <MapLibre />
     <ImageViewer
@@ -63,7 +63,7 @@ const iqr = useIQR();
       :site-eval-id="state.selectedImageSite.siteId"
       :site-evaluation-name="state.selectedImageSite.siteName"
       :date-range="state.selectedImageSite.dateRange"
-      style="top: 40vh !important; height: 60vh"
+      style="position: relative; top: -60vh !important; height: 60vh"
     />
   </v-main>
   <span>

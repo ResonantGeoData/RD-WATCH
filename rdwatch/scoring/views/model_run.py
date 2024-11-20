@@ -735,6 +735,8 @@ def get_sites_query(model_run_id: UUID4):
             WV=Count(Case(When(source='WV', then=1))),
             L8=Count(Case(When(source='L8', then=1))),
             PL=Count(Case(When(source='PL', then=1))),
+            # the below will only find sites that have images and model run running
+            # for sites that don't have images we need a separate query
             downloading=Exists(
                 SatelliteFetching.objects.filter(
                     site=OuterRef('site'),
@@ -743,8 +745,24 @@ def get_sites_query(model_run_id: UUID4):
             ),
         )
     )
-
     image_info = {i['site']: i for i in image_queryset}
+    # we need to get downloading for sites that don't have images as well
+    downloading_sites_set = {
+        ds['site']
+        for ds in SatelliteFetching.objects.filter(
+            model_run_uuid=model_run_id, status=SatelliteFetching.Status.RUNNING
+        ).values('site')
+    }
+    # update the image info if the site is downloading
+    for downloading_site in downloading_sites_set:
+        if downloading_site not in image_info.keys():
+            image_info[downloading_site] = {
+                'S2': 0,
+                'WV': 0,
+                'L8': 0,
+                'PL': 0,
+                'downloading': True,
+            }
 
     # Build a mapping of site_id to color code.
     # We do this in a separate query to avoid a slow subquery in the main query,

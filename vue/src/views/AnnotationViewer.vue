@@ -68,12 +68,12 @@ const updateSiteList = async () => {
     location="left"
     width="400"
     sticky
-    style="max-height:100vh;"
     permanent
+    class="h-100 overflow-hidden"
   >
     <SideBar />
   </v-navigation-drawer>
-  <v-main style="z-index:1">
+  <v-main style="z-index:1; height: 100%">
     <layer-selection />
     <MapLibre :compact="!!state.selectedImageSite" />
     <ImageViewer

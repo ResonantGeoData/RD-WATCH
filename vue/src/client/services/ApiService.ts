@@ -279,6 +279,7 @@ export interface IQROrderedResultItem {
   smqtk_uuid: string;
   confidence: number;
   geom: string;
+  geom_extent: number[];
 }
 
 export interface IQROrderedResults {

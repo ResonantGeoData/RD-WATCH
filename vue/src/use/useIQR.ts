@@ -114,6 +114,7 @@ export function useIQR() {
           smqtkUuid: result.smqtk_uuid,
           status: getUuidStatus(result.smqtk_uuid),
           confidence: result.confidence,
+          geomExtent: result.geom_extent,
         };
       });
     }),

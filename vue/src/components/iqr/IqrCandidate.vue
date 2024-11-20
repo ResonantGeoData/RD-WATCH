@@ -11,6 +11,7 @@ const props = defineProps<{
 
 const emit = defineEmits<{
   'status-changed': ['positive' | 'neutral' | 'negative'];
+  'image-click': [];
 }>();
 </script>
 
@@ -19,6 +20,7 @@ const emit = defineEmits<{
     <div
       class="border-thin"
       style="min-width: 100px"
+      @click="emit('image-click')"
     >
       <v-img
         v-if="imageUrl"

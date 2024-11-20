@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import { FitBoundsEvent } from '../../actions/map';
 import { Site, useIQR } from '../../use/useIQR';
 import IqrCandidate from './IqrCandidate.vue';
 
@@ -16,6 +17,15 @@ function updateCandidateStatus(uuid: string, status: 'positive' | 'neutral' | 'n
 
 function refine() {
   iqr.refine();
+}
+
+function focusCandidate(geomExtent: number[]) {
+  FitBoundsEvent.trigger({
+    xmin: geomExtent[0],
+    ymin: geomExtent[1],
+    xmax: geomExtent[2],
+    ymax: geomExtent[3],
+  });
 }
 </script>
 
@@ -51,6 +61,7 @@ function refine() {
         :status="result.status"
         :confidence="result.confidence"
         @status-changed="updateCandidateStatus(result.smqtkUuid, $event)"
+        @image-click="focusCandidate(result.geomExtent)"
       />
     </div>
   </div>

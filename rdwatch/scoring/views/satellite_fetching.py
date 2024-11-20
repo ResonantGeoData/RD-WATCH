@@ -26,6 +26,7 @@ def satellite_fetching_running(
     results = []
     for item in running_site_ids:
         task = AsyncResult(item['celery_id'])
+        task_info = None
         error = item['error']
         if isinstance(task.info, Exception):
             error = str(task.info)

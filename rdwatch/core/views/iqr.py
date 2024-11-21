@@ -129,12 +129,12 @@ def get_session_info(request: HttpRequest, sid: str):
     return 200, resp.json()
 
 
-def pick_site_image(images: list[SiteImage], observations: list[SiteObservation]):
+def pick_site_image(images: list[SiteImage], observations: list[SiteObservation]) -> SiteImage | None:
     # ignore observations with no timestamps
     observations = [o for o in observations if o.timestamp is not None]
 
     if not len(images):
-        raise Exception('no observations or images')
+        return None
     if not len(observations):
         return images[-1]
 

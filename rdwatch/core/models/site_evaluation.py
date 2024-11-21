@@ -158,6 +158,9 @@ class SiteEvaluation(models.Model):
 
             point = None
             geom = None
+            smqtk_uuid = None
+            if site_feature.properties.cache:
+                smqtk_uuid = site_feature.properties.cache.smqtk_uuid
             if isinstance(site_feature.parsed_geometry, Point):
                 point = site_feature.parsed_geometry
             else:
@@ -177,7 +180,7 @@ class SiteEvaluation(models.Model):
                 cache_originator_file=cache_originator_file,
                 cache_timestamp=cache_timestamp,
                 cache_commit_hash=cache_commit_hash,
-                smqtk_uuid=site_feature.properties.cache.smqtk_uuid,
+                smqtk_uuid=smqtk_uuid,
                 modified_timestamp=datetime.now(),
             )
             SiteObservation.bulk_create_from_site_evaluation(site_eval, site_model)

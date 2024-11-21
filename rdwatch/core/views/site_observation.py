@@ -192,7 +192,7 @@ def site_observations(request: HttpRequest, evaluation_id: UUID4):
             celery_data['state'] = task.state
             celery_data['status'] = task.status
             celery_data['info'] = (
-                str(task.info) if isinstance(task.info, RuntimeError) else task.info
+                str(task.info) if isinstance(task.info, Exception) else task.info
             )
 
         queryset['job'] = {

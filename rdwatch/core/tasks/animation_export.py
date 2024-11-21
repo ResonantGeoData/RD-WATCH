@@ -8,6 +8,7 @@ from typing import Any, Literal
 
 import cv2
 import numpy as np
+import sentry_sdk
 from celery import group, shared_task, states
 from celery.result import GroupResult
 from PIL import Image, ImageDraw, ImageFont
@@ -223,6 +224,7 @@ def draw_text_in_box(
     text_color=(255, 255, 255),
     font_path: str | None = None,
     initial_font_size=30,
+    label: str | None = None,
 ):
     """
     Draws text within a given box with adjustable font size and a background square.
@@ -236,6 +238,7 @@ def draw_text_in_box(
     :param text_color: Color of the text (R, G, B).
     :param font_path: Path to a .ttf font file, or None to use default font.
     :param initial_font_size: Starting font size.
+    :param label: An optional label for the text.
     """
     max_width, max_height = box_size
 
@@ -283,6 +286,12 @@ def draw_text_in_box(
     draw.rectangle(
         [position, (text_x + box_width, text_y + box_height)], fill=box_color
     )
+
+    if label:
+        draw.text(
+            (text_x, text_y // 3), label, font=get_font(font.size // 2), fill=text_color
+        )
+
     # Draw text
     draw.text((text_x, text_y), text, font=font, fill=text_color)
 
@@ -304,6 +313,7 @@ class GenerateAnimationSchema(BaseModel):
     include: list[Literal['obs', 'nonobs']] = ['obs', 'nonobs']
     rescale: bool = False
     rescale_border: int = Field(1, ge=0)  # Border rescale should be an integer >= 0
+    line_thickness_factor: float = 1.0
 
 
 @shared_task
@@ -321,6 +331,7 @@ def create_animation(self, site_evaluation_id: UUID4, settings: dict[str, Any]):
         'noData': settingsSchema.noData,
         'include': settingsSchema.include,
     }
+    line_thickness_factor = settingsSchema.line_thickness_factor
 
     # Fetch the SiteEvaluation instance
     try:
@@ -438,6 +449,7 @@ def create_animation(self, site_evaluation_id: UUID4, settings: dict[str, Any]):
     frames = []
     np_array = []
     polygon = None
+    last_obs_date = None
     point = None
     count = 0
     for img, width, height, image_record in images_data:
@@ -518,6 +530,7 @@ def create_animation(self, site_evaluation_id: UUID4, settings: dict[str, Any]):
             polygon = observation.geom
             label = observation.label
             label_mapped = label_mapping.get(label.slug, {})
+            last_obs_date = observation.timestamp.strftime('%Y-%m-%d')
         elif not polygon:
             polygon = site_evaluation.geom
             label_mapped = label_mapping.get(site_evaluation.label.slug, {})
@@ -540,7 +553,10 @@ def create_animation(self, site_evaluation_id: UUID4, settings: dict[str, Any]):
                     for lon, lat in transformed_coords
                 ]
                 color = label_mapped.get('color', (255, 255, 255))
-                draw.polygon(pixel_coords, outline=color)
+                polyline_width = int(
+                    (max(max_height_px, max_width_px) * line_thickness_factor) / 100
+                )
+                draw.polygon(pixel_coords, outline=color, width=polyline_width)
         if not polygon and observation:
             point = observation.point
         if not point:
@@ -585,6 +601,7 @@ def create_animation(self, site_evaluation_id: UUID4, settings: dict[str, Any]):
                 image_record.timestamp.strftime('%Y-%m-%d'),
                 date_box_point,
                 date_box_size,
+                label='img date:',
             )
         # Draw Source
         source_point = (0, 0)
@@ -597,18 +614,18 @@ def create_animation(self, site_evaluation_id: UUID4, settings: dict[str, Any]):
                 source_size,
             )
         # Draw Observation
-        obs_width = ui_max_width / 10.0
+        obs_width = ui_max_width / 6.0
         obs_point = (ui_max_width - obs_width, 0)
-        obs_size = (ui_max_width / 10.0, date_height)
-        obs_text = '+obs'
-        if image_record.observation is None:
-            obs_text = '-obs'
+        obs_size = (ui_max_width / 6.0, date_height)
+        obs_text = last_obs_date or '----------'
+        obs_label = 'last obs date:'
         if 'obs' in labels:
             draw_text_in_box(
                 draw,
                 obs_text,
                 obs_point,
                 obs_size,
+                label=obs_label,
             )
         # Draw Label
         label_width = ui_max_width / 3.0
@@ -747,6 +764,7 @@ def create_site_animation_export(
             os.remove(file_path)
     except Exception as e:
         logger.info(f'Error when processing Animation: {e}')
+        sentry_sdk.capture_exception(e)
         if site_export:
             site_export.delete()
 

@@ -99,14 +99,16 @@ def site_images(request: HttpRequest, id: UUID4):
     geom_queryset = observations.aggregate(
         results=JSONBAgg(
             JSONObject(
-                label=Func(
-                    F(observation_db_model_cols['phase']),
-                    Value(', '),
-                    function='array_to_string',
-                    output=CharField(),
-                )
-                if proposal
-                else observation_db_model_cols['phase'],
+                label=(
+                    Func(
+                        F(observation_db_model_cols['phase']),
+                        Value(', '),
+                        function='array_to_string',
+                        output=CharField(),
+                    )
+                    if proposal
+                    else observation_db_model_cols['phase']
+                ),
                 timestamp=ExtractEpoch(observation_db_model_cols['date']),
                 geoJSON=Func(
                     F('geometry'),
@@ -132,9 +134,11 @@ def site_images(request: HttpRequest, id: UUID4):
         .annotate(
             json=JSONObject(
                 label=F(site_db_model_cols['status']),
-                status=F(site_db_model_cols['proposal_status'])
-                if site_db_model_cols['proposal_status']
-                else Value(''),
+                status=(
+                    F(site_db_model_cols['proposal_status'])
+                    if site_db_model_cols['proposal_status']
+                    else Value('')
+                ),
                 evaluationGeoJSON=Func(
                     F(site_db_model_cols['geometry']),
                     4326,
@@ -149,9 +153,11 @@ def site_images(request: HttpRequest, id: UUID4):
                         output_field=GeometryField(),
                     )
                 ),
-                notes=F(site_db_model_cols['notes'])
-                if site_db_model_cols['notes']
-                else Value(''),  # TODO
+                notes=(
+                    F(site_db_model_cols['notes'])
+                    if site_db_model_cols['notes']
+                    else Value('')
+                ),  # TODO
             )
         )[0]
     )

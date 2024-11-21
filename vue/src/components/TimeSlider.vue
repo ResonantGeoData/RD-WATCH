@@ -33,7 +33,7 @@ const maxDate = computed(() => convertUnixToDate(props.max));
 </script>
 
 <template>
-  <v-container class="mr-2">
+  <v-container class="mr-2 time-slider">
     <v-row
       align="center"
       justify="center"
@@ -88,5 +88,9 @@ const maxDate = computed(() => convertUnixToDate(props.max));
 <style scoped>
 .calendar {
   opacity: 1.0;
+}
+
+.time-slider {
+  box-sizing: content-box;
 }
 </style>

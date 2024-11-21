@@ -331,7 +331,7 @@ def get_siteobservations_images(
                 logger.info(f'Skipping Timestamp: {timestamp}')
                 continue
             if found.exists() and not force:
-                found_timestamps[observation.timestamp] = True
+                found_timestamps[observation.timestamp.replace(microsecond=0)] = True
                 continue
             results = fetch_boundbox_image(
                 bbox,
@@ -344,12 +344,12 @@ def get_siteobservations_images(
                 logger.info(f'COULD NOT FIND ANY IMAGE FOR TIMESTAMP: {timestamp}')
                 continue
             bytes = results['bytes']
-            percent_black = get_percent_black_pixels(bytes)
-            cloudcover = results['cloudcover']
-            found_timestamp = results['timestamp']
+            found_timestamp = results['timestamp'].replace(microsecond=0)
             if bytes is None:
                 logger.info(f'COULD NOT FIND ANY IMAGE FOR TIMESTAMP: {timestamp}')
                 continue
+            percent_black = get_percent_black_pixels(bytes)
+            cloudcover = results['cloudcover']
             if dayRange != -1 and percent_black < no_data_limit:
                 found_timestamps[found_timestamp] = True
             elif dayRange == -1:
@@ -523,6 +523,7 @@ def get_siteobservations_images(
                     image_dimensions=[imageObj.width, imageObj.height],
                 )
         else:
+            logger.info('Skipping timestamp because image already found')
             count += 1
     return downloaded_count
 
@@ -971,6 +972,8 @@ def process_model_run_upload(model_run_upload: ModelRunUpload):
 
         if region_model:
             SiteEvaluation.bulk_create_from_region_model(region_model, model_run)
+
+        model_run.compute_aggregate_stats()
 
 
 @shared_task(bind=True)

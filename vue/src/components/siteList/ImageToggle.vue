@@ -30,6 +30,7 @@ const openImageBrowser = () => {
 
 <template>
   <v-menu
+    v-if="hasImages"
     open-on-hover
     open-delay="600"
   >

@@ -130,10 +130,9 @@ const satelliteLoadingColor = computed(() => {
 
 <template>
   <v-card
-    class="pa-5 overflow-y-hidden"
-    style="max-height:100vh; min-height:100vh;"
+    class="pa-5 pb-1 h-100 overflow-hidden d-flex flex-column"
   >
-    <div>
+    <div class="flex-grow-0">
       <v-row
         dense
       >
@@ -208,14 +207,14 @@ const satelliteLoadingColor = computed(() => {
           <v-alert
             v-if="!satelliteRegionTooLarge"
             type="warning"
-            title="Download Region Satellite Timestamps"
+            title="Fetch Region Satellite Timestamps"
             text="This is a long running process that could cause instability on the server.  Please only run this if you are sure you need to use the region satellite feature."
           />
           <v-alert
             v-else
             type="warning"
-            title="Region Too Large to Download Timestamps"
-            text="The Region is too large to download timestamps for."
+            title="Region Too Large to Fetch Timestamps"
+            text="The Region is too large to fetch timestamps for."
           />
         </v-tooltip>
         <v-btn
@@ -255,7 +254,7 @@ const satelliteLoadingColor = computed(() => {
     </div>
     <v-row
       dense
-      class="modelRuns"
+      class="modelRuns h-inherit overflow-hidden"
     >
       <ModelRunListVue
         :filters="queryFilters"
@@ -269,10 +268,10 @@ const satelliteLoadingColor = computed(() => {
       width="600"
     >
       <v-card>
-        <v-card-title>Download Satellite Timestamps</v-card-title>
+        <v-card-title>Fetch Satellite Timestamps</v-card-title>
         <v-card-text>
           <v-alert type="warning">
-            Downloading satellite timestamps can cause the server to become unstable.  Only use this feature if you need to view full region satellite images and realize that usage will impact other users on the server.
+            Fetchiin satellite timestamps from the STAC server can cause the server to become unstable.  Only use this feature if you need to view full region satellite images and realize that usage will impact other users on the server.
           </v-alert>
         </v-card-text>
         <v-card-actions>

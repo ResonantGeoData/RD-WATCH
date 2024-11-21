@@ -290,7 +290,7 @@ const animationDialog = ref(false);
             </v-btn>
           </template>
           <span>
-            Download Image Animation
+            Generate Image Animation
           </span>
         </v-tooltip>
         <v-spacer />
@@ -309,7 +309,7 @@ const animationDialog = ref(false);
               @click.stop="download(localSite.id)"
             >
               <v-icon size="small">
-                mdi-export
+                mdi-download-box-outline
               </v-icon>
             </v-btn>
           </template>
@@ -347,8 +347,8 @@ const animationDialog = ref(false);
             </v-btn>
           </template>
           <span>
-            <div v-if="!localSite.images"> No Site Images Downloaded</div>
-            Click to Download Satellite Images</span>
+            <div v-if="!localSite.images"> No Site Image Chips Fetched</div>
+            Click to Fetch Satellite Image Chips</span>
         </v-tooltip>
         <div v-else-if="downloading">
           <v-tooltip open-delay="300">
@@ -385,11 +385,11 @@ const animationDialog = ref(false);
                 </v-row>
                 <v-row dense>
                   <v-spacer>
-                    <span>Downloading {{ downloadingData.current }} of {{ downloadingData.total }} in source: {{ downloadingData.source }}</span>
+                    <span>Fetching {{ downloadingData.current }} of {{ downloadingData.total }} in source: {{ downloadingData.source }}</span>
                   </v-spacer>
                 </v-row>
                 <v-row dense>
-                  <p>The total number is the found images, due to settings for timing and removing NoData/Cloud Cover all images may not be downloaded</p>
+                  <p>The total number is the found images, due to settings for timing and removing NoData/Cloud Cover all images may not be fetched</p>
                 </v-row>
               </v-card-text>
             </v-card>
@@ -397,7 +397,7 @@ const animationDialog = ref(false);
               v-else-if="downloadingError"
               width="400"
             >
-              <v-card-title>Downloading Error</v-card-title>
+              <v-card-title>Fetching Error</v-card-title>
               <v-card-text>
                 <v-row dense>
                   <p>{{ downloadingError }}</p>
@@ -422,7 +422,7 @@ const animationDialog = ref(false);
                 <v-icon>mdi-image-remove</v-icon>
               </v-btn>
             </template>
-            <span>Cancel Image Downloading</span>
+            <span>Cancel Image Fetching</span>
           </v-tooltip>
         </div>
       </v-row>

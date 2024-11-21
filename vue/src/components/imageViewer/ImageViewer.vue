@@ -126,6 +126,10 @@ const currentTimestamp = computed(() => {
   return new Date().toISOString().split("T")[0];
 });
 
+const lineThicknessFactor = computed(() => {
+  return animationDefaults.value?.line_thickness_factor ?? 1;
+});
+
 watch(currentTimestamp, () => {
   currentDate.value = currentTimestamp.value;
 });
@@ -219,6 +223,7 @@ const load = async (newValue?: string, oldValue?: string) => {
       props.fullscreen,
       rescalingBBox.value,
       state.gifSettings.pointSize,
+      lineThicknessFactor.value,
     );
   }
   loading.value = false;
@@ -248,6 +253,7 @@ watch(
     drawGroundTruth,
     rescaleImage,
     rescalingBBox,
+    lineThicknessFactor,
   ],
   () => {
     if (
@@ -275,6 +281,7 @@ watch(
           props.fullscreen,
           rescalingBBox.value,
           state.gifSettings.pointSize,
+          lineThicknessFactor.value,
         );
       }
       if (

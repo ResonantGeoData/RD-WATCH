@@ -145,6 +145,19 @@ def upload_to_rgd(
             ),
         )
 
+    response = requests.post(
+        f'{rgd_endpoint}/api/model-runs/{model_run_id}/finalization/',
+        headers={
+            'X-RDWATCH-API-KEY': rgd_api_key,
+        },
+    )
+    if response.status_code != 200:
+        print(
+            f'Error finalizing model run {model_run_id}, status code: [{response.status_code}]',
+            file=sys.stderr,
+        )
+        print(response.text, file=sys.stderr, end='\n\n')
+
 
 def post_site(post_site_url: str, site_filepath: str, rgd_api_key: str | None):
     print(f"Uploading '{site_filepath}' ..")

@@ -246,12 +246,12 @@ def get_siteobservations_images(
                 logger.info(f'COULD NOT FIND ANY IMAGE FOR TIMESTAMP: {timestamp}')
                 continue
             bytes = results['bytes']
-            percent_black = get_percent_black_pixels(bytes)
-            cloudcover = results['cloudcover']
-            found_timestamp = results['timestamp']
             if bytes is None:
                 logger.info(f'COULD NOT FIND ANY IMAGE FOR TIMESTAMP: {timestamp}')
                 continue
+            percent_black = get_percent_black_pixels(bytes)
+            cloudcover = results['cloudcover']
+            found_timestamp = results['timestamp']
             if dayRange != -1 and percent_black < no_data_limit:
                 found_timestamps[found_timestamp] = True
             elif dayRange == -1:

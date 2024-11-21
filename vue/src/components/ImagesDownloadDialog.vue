@@ -80,7 +80,7 @@ const display = ref(true);
     width="400"
   >
     <v-card>
-      <v-card-title>Download Model-Run Images</v-card-title>
+      <v-card-title>Fetch Satellite Image Chips</v-card-title>
       <v-form v-model="validForm">
         <v-card-text>
           <v-row
@@ -118,7 +118,7 @@ const display = ref(true);
                 v-model="force"
                 density="compact"
                 label="Force"
-                hint="Force redownloading all images"
+                hint="Force refetcing all images"
                 persistent-hint
               />
             </v-row>
@@ -333,7 +333,7 @@ const display = ref(true);
             :disabled="!validForm"
             @click="download()"
           >
-            Download
+            Fetch Chips
           </v-btn>
         </v-row>
       </v-card-actions>

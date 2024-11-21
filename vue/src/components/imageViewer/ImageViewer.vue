@@ -130,6 +130,13 @@ const lineThicknessFactor = computed(() => {
   return animationDefaults.value?.line_thickness_factor ?? 1;
 });
 
+watch([rescalingBBox, rescaleImage], () => {
+  if (animationDefaults.value) {
+    animationDefaults.value.rescale = rescaleImage.value;
+    animationDefaults.value.rescale_border
+  }
+})
+
 watch(currentTimestamp, () => {
   currentDate.value = currentTimestamp.value;
 });
@@ -141,7 +148,6 @@ const getImageData = async () => {
   const images = data.images.results.sort((a, b) => a.timestamp - b.timestamp);
   const polygons = data.geoJSON;
   evaluationGeoJSON.value = data.evaluationGeoJSON;
-  console.log(evaluationGeoJSON.value);
   polygons.sort((a, b) => a.timestamp - b.timestamp);
   siteEvaluationNotes.value = data.notes || "";
   siteEvaluationLabel.value = data.label;

@@ -47,8 +47,8 @@ const includeChoices = ref([
   { value: "obs", name: "Include Observation Images" },
   { value: "nonobs", name: "Include Non-Observation Images" },
 ]);
-const rescale = ref(true);
-const rescaleBorder = ref(1);
+const rescale = ref(props.defaults ? props.defaults.rescale : true);
+const rescaleBorder = ref(props.defaults ? props.defaults.rescale_border : 1);
 
 const currentTab: Ref<"download" | "downloaded"> = ref("download");
 const noImages = ref(true);

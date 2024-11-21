@@ -876,4 +876,11 @@ export class ApiService {
     })
   }
 
+  public static getModelRunColorCodes(id: string): CancelablePromise<Record<string, number>> {
+    return __request(OpenAPI, {
+      method: 'GET',
+      url: `${this.getApiPrefix()}/model-runs/${id}/vector-tile/color-codes/`,
+    })
+  }
+
 }

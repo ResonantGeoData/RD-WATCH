@@ -274,6 +274,7 @@ def create_animation(self, site_evaluation_id: UUID4, settings: dict[str, Any]):
     frames = []
     np_array = []
     polygon = None
+    last_obs_date = None
     point = None
     count = 0
     for img, width, height, image_record in images_data:
@@ -356,6 +357,11 @@ def create_animation(self, site_evaluation_id: UUID4, settings: dict[str, Any]):
                 )
             except AnnotationProposalObservation.DoesNotExist:
                 observation = None
+        if observation:
+            polygon = observation.geom
+            label = observation.label
+            label_mapped = label_mapping.get(label.slug, {})
+            last_obs_date = observation.timestamp.strftime('%Y-%m-%d')
         if observation:
             polygon = Polygon.from_ewkt(observation.geometry)
             label = observation.phase
@@ -455,6 +461,7 @@ def create_animation(self, site_evaluation_id: UUID4, settings: dict[str, Any]):
                 image_record.timestamp.strftime('%Y-%m-%d'),
                 date_box_point,
                 date_box_size,
+                label='img date:',
             )
         # Draw Source
         source_point = (0, 0)
@@ -467,18 +474,18 @@ def create_animation(self, site_evaluation_id: UUID4, settings: dict[str, Any]):
                 source_size,
             )
         # Draw Observation
-        obs_width = ui_max_width / 10.0
+        obs_width = ui_max_width / 6.0
         obs_point = (ui_max_width - obs_width, 0)
-        obs_size = (ui_max_width / 10.0, date_height)
-        obs_text = '+obs'
-        if image_record.observation is None:
-            obs_text = '-obs'
+        obs_size = (ui_max_width / 6.0, date_height)
+        obs_text = last_obs_date or '----------'
+        obs_label = 'last obs date:'
         if 'obs' in labels:
             draw_text_in_box(
                 draw,
                 obs_text,
                 obs_point,
                 obs_size,
+                label=obs_label,
             )
         # Draw Label
         label_width = ui_max_width / 3.0

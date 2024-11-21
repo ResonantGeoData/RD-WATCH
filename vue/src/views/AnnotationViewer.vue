@@ -82,7 +82,7 @@ const updateSiteList = async () => {
       :site-evaluation-name="state.selectedImageSite.siteName"
       :date-range="state.selectedImageSite.dateRange"
       editable
-      style="top:40vh !important; height:60vh"
+      style="position: relative; top: -60vh !important; height: 60vh"
       @update-list="updateSiteList()"
     />
   </v-main>

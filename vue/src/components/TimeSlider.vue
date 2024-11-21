@@ -91,6 +91,7 @@ const maxDate = computed(() => convertUnixToDate(props.max));
 }
 
 .time-slider {
-  box-sizing: content-box;
+  /* avoid getting cut off due to parent overflow: hidden */
+  padding: 24px;
 }
 </style>

@@ -133,7 +133,7 @@ const lineThicknessFactor = computed(() => {
 watch([rescalingBBox, rescaleImage], () => {
   if (animationDefaults.value) {
     animationDefaults.value.rescale = rescaleImage.value;
-    animationDefaults.value.rescale_border
+    animationDefaults.value.rescale_border = rescalingBBox.value;
   }
 })
 

@@ -133,7 +133,9 @@ const getSites = async (modelRun: string, initRun = false) => {
         checkDownloading();
       }
 
-      state.modelRunColorCodeMappings[modelRun] = await ApiService.getModelRunColorCodes(modelRun);
+      if (ApiService.isScoring()) {
+        state.modelRunColorCodeMappings[modelRun] = await ApiService.getModelRunColorCodes(modelRun);
+      }
 
       return modList;
     }

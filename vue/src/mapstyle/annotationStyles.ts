@@ -1,5 +1,5 @@
 import { DataDrivenPropertyValueSpecification, FormattedSpecification } from "maplibre-gl";
-import { MapFilters } from "../store";
+import { MapFilters, state } from "../store";
 
 export type AnnotationStyle = Record<string, { color: string, type: string, label: string }>;
 
@@ -229,13 +229,26 @@ const scoringColors = {
 const getAnnotationColor = (filters: MapFilters, fillProposals?: 'sites' | 'observations') => {
     const result = [];
     result.push('case');
-    if (filters.scoringColoring) {
-      Object.entries(scoringColors).forEach(([id, { hex }]) => {
-        result.push(['==', ['get', 'color_code'], parseInt(id, 10)])
-        result.push(hex)
-      })
-    } 
-    if (filters.proposals && fillProposals) {  
+    if (filters.scoringColoring && state.modelRunColorCodeMappings) {
+      for (const [modelRunId, colorCodeMapping] of Object.entries(state.modelRunColorCodeMappings)) {
+        for (const [siteId, colorCode] of Object.entries(colorCodeMapping)) {
+          result.push([
+            'all',
+            ['==', ['get', 'base_site_id'], siteId],
+            ['==', ['get', 'configuration_id'], modelRunId],
+          ]);
+
+          const stringifiedColorCode = colorCode.toString();
+
+          if (Object.keys(scoringColors).includes(stringifiedColorCode)) {
+            result.push(scoringColors[stringifiedColorCode as unknown as keyof typeof scoringColors].hex);
+          } else {
+            result.push(defaultAnnotationColor);
+          }
+        }
+      }
+    }
+    if (filters.proposals && fillProposals) {
       const idKey = fillProposals === 'sites' ? 'id' : 'siteeval_id'
       result.push(['in', ['get', idKey], ['literal', filters.proposals.accepted]])
       result.push('green');

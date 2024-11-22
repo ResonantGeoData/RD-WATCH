@@ -240,7 +240,7 @@ def get_queryset():
                                 proposal=None,
                             )
                             .order_by('-created')
-                            .values_list('pk')
+                            .values_list('pk')[:1]  # grab first in the list
                         ),
                         None,
                     ),

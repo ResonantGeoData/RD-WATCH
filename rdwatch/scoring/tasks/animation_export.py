@@ -427,6 +427,9 @@ def create_animation(self, site_evaluation_id: UUID4, settings: dict[str, Any]):
                 y_offset,
             )
             color = label_mapped.get('color', (255, 255, 255))
+            circle_line_width = int(
+                (max(max_height_px, max_width_px) * line_thickness_factor) / 100
+            )
             draw.ellipse(
                 (
                     pixel_point[0] - point_radius,
@@ -435,6 +438,7 @@ def create_animation(self, site_evaluation_id: UUID4, settings: dict[str, Any]):
                     pixel_point[1] + point_radius,
                 ),
                 outline=color,
+                width=circle_line_width,
             )
 
         # Drawing labels of timestamp

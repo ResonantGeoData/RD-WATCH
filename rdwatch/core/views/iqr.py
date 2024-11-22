@@ -9,6 +9,7 @@ from ninja import Router, Schema
 
 from django.core.files.storage import default_storage
 from django.http import HttpRequest
+from django.shortcuts import get_object_or_404
 
 from rdwatch.core.models import SiteEvaluation, SiteImage, SiteObservation, lookups
 
@@ -230,3 +231,11 @@ def adjudicate(request: HttpRequest, sid: str, adjudications: IQRAdjudicationReq
         logger.error('Could not adjudicate (code: %d)', resp.status_code)
         return 400, {'success': False}
     return 200, {'success': True}
+
+@router.get('/site-image-url/{site_id}')
+def get_site_image_url(request: HttpRequest, site_id: str):
+    site = get_object_or_404(SiteEvaluation, id=site_id)
+    observations = list(SiteObservation.objects.filter(siteeval=site).order_by('timestamp'))
+    images = list(SiteImage.objects.filter(site=site).order_by('timestamp'))
+    site_image = pick_site_image(images, observations)
+    return default_storage.url(site_image.image.name) if site_image else None

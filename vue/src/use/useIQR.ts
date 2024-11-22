@@ -1,5 +1,5 @@
 import { type InjectionKey, computed, inject, reactive, readonly } from "vue";
-import { ApiService } from "../client";
+import { ApiService, CancelablePromise } from "../client";
 import { IQROrderedResultItem, IQRSessionInfo } from "../client/services/ApiService";
 
 export const IQR_KEY: InjectionKey<boolean> = Symbol('IQR_KEY');
@@ -11,10 +11,17 @@ export type Site = {
   smqtkUuid: string;
 }
 
+const internalState: {
+  siteImageUrlPromise: CancelablePromise<string | null> | null;
+} = {
+  siteImageUrlPromise: null,
+}
+
 const state = reactive<{
   sessionId: string | null;
   sessionInfo: Omit<IQRSessionInfo, 'success'> | null;
   site: Site | null;
+  siteImageUrl: string | null;
   positives: Set<string>;
   negatives: Set<string>;
   results: Array<IQROrderedResultItem>;
@@ -22,6 +29,7 @@ const state = reactive<{
   sessionId: null,
   sessionInfo: null,
   site: null,
+  siteImageUrl: null,
   positives: new Set(),
   negatives: new Set(),
   results: [],
@@ -38,6 +46,16 @@ export function useIQR() {
 
   const setPrimarySite = (site: Site | null) => {
     state.site = site;
+    internalState.siteImageUrlPromise?.cancel();
+    if (site) {
+      const promise = ApiService.iqrGetSiteImageUrl(site.id);
+      promise.then((url) => {
+        state.siteImageUrl = url;
+      });
+      internalState.siteImageUrlPromise = promise;
+    } else {
+      internalState.siteImageUrlPromise = null;
+    }
   };
 
   const refine = async () => {

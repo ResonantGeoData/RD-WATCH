@@ -619,6 +619,16 @@ export class ApiService {
     });
   }
 
+  public static iqrGetSiteImageUrl(siteId: string): CancelablePromise<string | null> {
+    return __request(OpenAPI, {
+      method: 'GET',
+      url: `${this.getApiPrefix()}/iqr/site-image-url/{siteId}`,
+      path: {
+        siteId,
+      },
+    });
+  }
+
   public static getSatelliteTimestamps(
     constellation="S2",
     spectrum="visual",

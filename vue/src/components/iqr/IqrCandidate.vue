@@ -33,7 +33,7 @@ const emit = defineEmits<{
     >
       <div class="pa-1">
         <strong>Site</strong>: {{ siteId }}<br>
-        <strong>Score</strong>: {{ confidence.toFixed(2) }}
+        <strong>Similarity</strong>: {{ Math.round(confidence*100) }}%
       </div>
       <v-item-group
         :model-value="props.status"

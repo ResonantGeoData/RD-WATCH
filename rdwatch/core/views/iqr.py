@@ -51,6 +51,7 @@ class IQROrderedResultItem(Schema):
     pk: str
     site_id: str
     image_url: str | None
+    image_bbox: tuple[float, float, float, float] | None
     smqtk_uuid: str
     confidence: float
     geom: str
@@ -188,11 +189,13 @@ def get_ordered_results(request: HttpRequest, sid: str):
     for site in site_evals:
         site_image = pick_site_image(images_by_site[site.id], observations_by_site[site.id])
         image_url = default_storage.url(site_image.image.name) if site_image else None
+        image_bbox = site_image.image_bbox.extent if site_image and site_image.image_bbox else None
         ordered_results['results'].append(
             {
                 'pk': str(site.id),
                 'site_id': str(site.site_id),
                 'image_url': image_url,
+                'image_bbox': image_bbox,
                 'smqtk_uuid': site.smqtk_uuid,
                 'confidence': confidence_by_uuid[site.smqtk_uuid],
                 'geom': str(site.geom),

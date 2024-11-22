@@ -18,6 +18,8 @@ import { isEqual, throttle } from 'lodash';
 import { updateImageMapSources } from "../mapstyle/images";
 import { FitBoundsEvent } from "../actions/map";
 import { type BoundingBox, getGeoJSONBounds } from "../utils";
+import { useIQR } from "../use/useIQR";
+import { IQROrderedResultItem } from "../client/services/ApiService";
 
 const mapContainer: ShallowRef<null | HTMLElement> = shallowRef(null);
 const map: ShallowRef<null | Map> = shallowRef(null);
@@ -27,6 +29,9 @@ const modelRunVectorLayers = reactive<Set<string>>(new Set());
 const localGeoJSONFeatures = computed(() => {
   return state.localMapFeatureIds.map((id) => state.localMapFeatureById[id]);
 });
+
+const { state: iqrState } = useIQR();
+const iqrResults = computed(() => iqrState.results as IQROrderedResultItem[]);
 
 function setFilter(layerID: string, filter: FilterSpecification) {
   map.value?.setFilter(layerID, filter, {
@@ -74,6 +79,7 @@ onMounted(() => {
           Array.from(modelRunVectorLayers),
           regionIds,
           localGeoJSONFeatures.value,
+          iqrResults.value,
         ),
         bounds: [
           [-180, -90],
@@ -106,7 +112,7 @@ const throttledSetSatelliteTimeStamp = throttle(setSatelliteTimeStamp, 300);
 watch([() => state.timestamp, () => state.filters, () => state.satellite, () => state.filters.scoringColoring,
 () => state.satellite.satelliteSources, () => state.enabledSiteImages, () => state.filters.hoverSiteId,
 () => state.modelRuns, () => state.openedModelRuns, () => state.filters.proposals, () => state.filters.randomKey, () => state.filters.editingGeoJSONSiteId,
-localGeoJSONFeatures], (newVals, oldVals) => {
+localGeoJSONFeatures, iqrResults], (newVals, oldVals) => {
 
   if (state.satellite.satelliteImagesOn) {
     throttledSetSatelliteTimeStamp(state, filteredSatelliteTimeList.value);
@@ -137,7 +143,7 @@ localGeoJSONFeatures], (newVals, oldVals) => {
     updateImageMapSources(state.timestamp, state.enabledSiteImages, state.siteOverviewSatSettings, map.value )
   }
   map.value?.setStyle(
-    style(state.timestamp, state.filters, state.satellite, state.enabledSiteImages, state.siteOverviewSatSettings, Array.from(modelRunVectorLayers), regionIds, localGeoJSONFeatures.value, state.filters.randomKey),
+    style(state.timestamp, state.filters, state.satellite, state.enabledSiteImages, state.siteOverviewSatSettings, Array.from(modelRunVectorLayers), regionIds, localGeoJSONFeatures.value, iqrResults.value, state.filters.randomKey),
   );
 
   const siteFilter = buildSiteFilter(state.timestamp, state.filters);

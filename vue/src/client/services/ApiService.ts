@@ -276,6 +276,7 @@ export interface IQROrderedResultItem {
   pk: string;
   site_id: string;
   image_url: string | null;
+  image_bbox: [number, number, number, number] | null;
   smqtk_uuid: string;
   confidence: number;
   geom: string;

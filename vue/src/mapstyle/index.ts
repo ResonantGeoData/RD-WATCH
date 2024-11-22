@@ -18,6 +18,8 @@ import type { StyleSpecification } from "maplibre-gl";
 import { EnabledSiteOverviews, type LocalGeoJSONFeature, MapFilters, SatelliteData, siteOverviewSatSettings } from "../store";
 import { buildImageLayerFilter, buildImageSourceFilter } from "./images";
 import { localGeoJSONLayers, localGeoJSONSources } from "./localgeojson";
+import { IQROrderedResultItem } from "../client/services/ApiService";
+import { buildIQRImageLayers, buildIQRImageSources } from "./iqr";
 
 const tileServerURL =
   import.meta.env.VITE_TILE_SERVER_URL || "https://basemap.kitware.watch";
@@ -30,12 +32,14 @@ export const style = (
   modelRunIds: string[],
   regionIds: number[],
   localGeoJSONFeatures: LocalGeoJSONFeature[],
+  iqrResults: IQROrderedResultItem[] | null = null,
   randomKey=''
 ): StyleSpecification => ({
   version: 8,
   sources: {
     ...naturalearthSources,
     ...buildSatelliteSourceFilter(timestamp, satellite),
+    ...(iqrResults ? buildIQRImageSources(iqrResults) : {}),
     ...buildImageSourceFilter(timestamp, enabledSiteImages, settings),
     ...buildRdwatchtilesSources(timestamp, modelRunIds, regionIds, randomKey),
     ...openmaptilesSources(filters),
@@ -52,6 +56,7 @@ export const style = (
     ...naturalearthLayers,
     ...openmaptilesLayers(filters),
     ...satelliteLayers(timestamp, satellite),
+    ...(iqrResults ? buildIQRImageLayers(iqrResults, settings) : []),
     ...buildImageLayerFilter(timestamp, enabledSiteImages, settings),
     ...rdwatchtilesLayers(timestamp, filters, modelRunIds, regionIds),
     ...localGeoJSONLayers(localGeoJSONFeatures),

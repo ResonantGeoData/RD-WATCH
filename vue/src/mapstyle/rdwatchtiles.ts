@@ -4,11 +4,13 @@
 
 import type {
   DataDrivenPropertyValueSpecification,
+  ExpressionSpecification,
   FilterSpecification,
   LayerSpecification,
   SourceSpecification,
 } from "maplibre-gl";
 import type { MapFilters } from "../store";
+import { state } from "../store";
 
 import {
   annotationColors,
@@ -140,20 +142,25 @@ export const buildSiteFilter = (
       ["literal", true],
       ]
     );
+
     // Next filter on the color_code being either simple or detailed
     const filtered = Object.values(scoringColors).filter((item) => (item.simple && filters.scoringColoring === 'simple') || (item.detailed && filters.scoringColoring === 'detailed'))
     const renderColorCodes = filtered.map((item) => item.id)
     // Now we only display items with matching colorcode;
-    filter.push(
-      [
-        "in",
-        ["get", "color_code"],
-        [
-          "literal",
-          renderColorCodes
-        ],
-      ],
-    )
+    const colorModeFilter = [];
+    colorModeFilter.push('any');
+    for (const [modelRunId, colorCodeMapping] of Object.entries(state.modelRunColorCodeMappings)) {
+      for (const [siteId, colorCode] of Object.entries(colorCodeMapping)) {
+        colorModeFilter.push([
+          'all',
+          ['==', ['get', 'base_site_id'], siteId],
+          ['==', ['get', 'configuration_id'], modelRunId],
+          ['literal', renderColorCodes.includes(colorCode)]
+        ]);
+      }
+    }
+    filter.push(colorModeFilter as ExpressionSpecification);
+
     return filter;
 
   }

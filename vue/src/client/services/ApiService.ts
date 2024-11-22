@@ -64,7 +64,6 @@ export interface SiteInfo {
     bbox: { xmin: number; ymin: number; xmax: number; ymax: number }
     status: SiteModelStatus
     timestamp: number;
-    color_code?: number;
     filename?: string | null;
     downloading: boolean;
     groundtruth?: boolean;

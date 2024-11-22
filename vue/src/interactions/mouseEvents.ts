@@ -285,7 +285,7 @@ const drawSitePopupObservation = async (e: MapLayerMouseEvent, remove=false) => 
                   }
                   const start_date = item.properties.start_date ? item.properties.start_date.substring(0, 10) : item.properties.point_date ? item.properties.point_date.substring(0, 10) : 'null';
                   const end_date = item.properties.end_date ? item.properties.end_date.substring(0, 10) : item.properties.point_date ? item.properties.point_date.substring(0, 10) : 'null';
-                  const colorCode = item.properties.color_code as scoringColorsKeys;
+                  const colorCode = state.modelRunColorCodeMappings[item.properties.configuration_id][item.properties.base_site_id] as scoringColorsKeys;
                   const scoreColor  = scoringColors[colorCode] ? scoringColors[colorCode].hex : undefined
                   const scoreLabel  = scoringColors[colorCode] ? scoringColors[colorCode].title : undefined
                   const data = {

@@ -36,7 +36,8 @@ const cardColor = computed(() => {
     <v-card-text class="d-flex flex-row">
       <div
         class="border-thin d-flex flex-row align-center"
-        style="flex-basis: 100px; min-height: 100px;"
+        style="flex-basis: 100px; min-height: 100px; cursor: pointer"
+        v-ripple
         @click="emit('image-click')"
       >
         <v-img

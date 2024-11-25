@@ -64,6 +64,7 @@ class IQRSessionInfo(Schema):
 
 class IQROrderedResultItem(Schema):
     pk: str
+    site_uid: str
     site_id: str
     image_url: str | None
     image_bbox: tuple[float, float, float, float] | None
@@ -208,6 +209,7 @@ def get_ordered_results(request: HttpRequest, sid: str):
         ordered_results['results'].append(
             {
                 'pk': str(site.id),
+                'site_uid': str(site.id),
                 'site_id': str(site.site_id),
                 'image_url': image_url,
                 'image_bbox': image_bbox,

@@ -274,6 +274,7 @@ export interface IQRSessionInfo {
 
 export interface IQROrderedResultItem {
   pk: string;
+  site_uid: string;
   site_id: string;
   image_url: string | null;
   image_bbox: [number, number, number, number] | null;

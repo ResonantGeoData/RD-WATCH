@@ -145,6 +145,7 @@ export function useIQR() {
       return state.results.map((result) => {
         return {
           pk: result.pk,
+          siteUid: result.site_uid,
           siteId: result.site_id,
           imageUrl: result.image_url,
           smqtkUuid: result.smqtk_uuid,

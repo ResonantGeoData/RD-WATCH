@@ -1,6 +1,8 @@
 <script setup lang="ts">
 import { FitBoundsEvent } from '../../actions/map';
 import { Site, useIQR } from '../../use/useIQR';
+import { state } from "../../store";
+import type { IQROrderedResultItem } from '../../client/services/ApiService';
 import IqrCandidate from './IqrCandidate.vue';
 
 const props = defineProps<{
@@ -19,12 +21,18 @@ function refine() {
   iqr.refine();
 }
 
-function focusCandidate(geomExtent: number[]) {
+function focusCandidate(candidate: (typeof iqr.queryResults)['value'][number]) {
+  // open the image browser
+  state.selectedImageSite = {
+    siteId: candidate.siteUid,
+    siteName: candidate.siteId,
+  };
+
   FitBoundsEvent.trigger({
-    xmin: geomExtent[0],
-    ymin: geomExtent[1],
-    xmax: geomExtent[2],
-    ymax: geomExtent[3],
+    xmin: candidate.geomExtent[0],
+    ymin: candidate.geomExtent[1],
+    xmax: candidate.geomExtent[2],
+    ymax: candidate.geomExtent[3],
   });
 }
 </script>
@@ -66,7 +74,7 @@ function focusCandidate(geomExtent: number[]) {
           :status="result.status"
           :confidence="result.confidence"
           @status-changed="updateCandidateStatus(result.smqtkUuid, $event)"
-          @image-click="focusCandidate(result.geomExtent)"
+          @image-click="focusCandidate(result)"
         />
       </div>
     </div>

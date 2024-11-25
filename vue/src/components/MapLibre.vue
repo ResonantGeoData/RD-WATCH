@@ -47,7 +47,7 @@ function fitBounds(bbox: BoundingBox) {
     ],
     {
       padding: 160,
-      duration: 5000,
+      duration: 4000,
     }
   );
 }

@@ -90,6 +90,7 @@ function focusCandidate(candidate: (typeof iqr.queryResults)['value'][number]) {
       <v-btn
         color="secondary"
         class="w-100 my-2"
+        :loading="iqr.state.refreshing"
         @click="refine"
       >
         Refine Query

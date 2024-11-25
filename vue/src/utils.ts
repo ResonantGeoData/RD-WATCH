@@ -101,9 +101,21 @@ const getGeoJSONBounds = (geojson: GeoJSON.GeoJSON): BoundingBox => {
   return bounds;
 }
 
+function timeoutBatch(cb: () => void, timeout: number) {
+  let t: number | null = null;
+  return function() {
+    if (t != null) return;
+    t = setTimeout(() => {
+      cb();
+      t = null;
+    }, timeout);
+  };
+}
+
 export {
     timeRangeFormat,
     downloadPresignedFile,
     createEventHook,
     getGeoJSONBounds,
+    timeoutBatch,
 }

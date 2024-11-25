@@ -17,9 +17,10 @@ import { setSatelliteTimeStamp } from "../mapstyle/satellite-image";
 import { isEqual, throttle } from 'lodash';
 import { updateImageMapSources } from "../mapstyle/images";
 import { FitBoundsEvent } from "../actions/map";
-import { type BoundingBox, getGeoJSONBounds } from "../utils";
+import { type BoundingBox, getGeoJSONBounds, timeoutBatch } from "../utils";
 import { useIQR } from "../use/useIQR";
 import { IQROrderedResultItem } from "../client/services/ApiService";
+import { useResizeObserver } from '../use/useResizeObserver';
 
 const mapContainer: ShallowRef<null | HTMLElement> = shallowRef(null);
 const map: ShallowRef<null | Map> = shallowRef(null);
@@ -28,6 +29,12 @@ const modelRunVectorLayers = reactive<Set<string>>(new Set());
 
 const localGeoJSONFeatures = computed(() => {
   return state.localMapFeatureIds.map((id) => state.localMapFeatureById[id]);
+});
+
+const batchedResize = timeoutBatch(() => { map.value?.resize(); }, 50);
+
+useResizeObserver(mapContainer, () => {
+  batchedResize();
 });
 
 const { state: iqrState } = useIQR();

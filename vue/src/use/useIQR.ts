@@ -45,6 +45,10 @@ function getUuidStatus(uuid: string): 'positive' | 'neutral' | 'negative' {
   return 'neutral';
 }
 
+function clearResults() {
+  state.results = [];
+}
+
 export function useIQR() {
   const iqrEnabled = inject(IQR_KEY, false);
 
@@ -59,6 +63,7 @@ export function useIQR() {
       internalState.siteImageUrlPromise = promise;
     } else {
       internalState.siteImageUrlPromise = null;
+      clearResults();
     }
   };
 

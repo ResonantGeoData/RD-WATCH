@@ -2,7 +2,6 @@
 import { FitBoundsEvent } from '../../actions/map';
 import { Site, useIQR } from '../../use/useIQR';
 import { state } from "../../store";
-import type { IQROrderedResultItem } from '../../client/services/ApiService';
 import IqrCandidate from './IqrCandidate.vue';
 
 const props = defineProps<{
@@ -40,8 +39,14 @@ function focusCandidate(candidate: (typeof iqr.queryResults)['value'][number]) {
 <template>
   <div class="pa-1 d-flex flex-column overflow-hidden h-100">
     <div class="overflow-auto flex-grow-1">
-      <div class="text-h6">
-        Similar Sites
+      <div class="text-h6 d-flex flex-row justify-space-between align-center pb-2 pl-2">
+        <span>Similar Sites</span>
+        <v-btn
+          icon="mdi-close"
+          variant="flat"
+          size="small"
+          @click="iqr.setPrimarySite(null)"
+        />
       </div>
       <v-card
         variant="flat"

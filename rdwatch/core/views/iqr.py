@@ -256,7 +256,7 @@ def adjudicate(request: HttpRequest, sid: str, adjudications: IQRAdjudicationReq
 def get_site_image_url(request: HttpRequest, site_id: str):
     site = get_object_or_404(SiteEvaluation, id=site_id)
     observations = list(SiteObservation.objects.filter(siteeval=site).order_by('timestamp'))
-    images = list(SiteImage.objects.filter(site=site).order_by('timestamp'))
+    images = list(SiteImage.objects.filter(site=site, source="WV").order_by('timestamp'))
     site_image = pick_site_image(images, observations)
     return default_storage.url(site_image.image.name) if site_image else None
 

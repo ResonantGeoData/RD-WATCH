@@ -25,6 +25,8 @@ const state = reactive<{
   positives: Set<string>;
   negatives: Set<string>;
   results: Array<IQROrderedResultItem>;
+  refreshing: boolean;
+  initializing: boolean;
 }>({
   sessionId: null,
   sessionInfo: null,
@@ -33,6 +35,8 @@ const state = reactive<{
   positives: new Set(),
   negatives: new Set(),
   results: [],
+  refreshing: false,
+  initializing: false,
 });
 
 function getUuidStatus(uuid: string): 'positive' | 'neutral' | 'negative' {
@@ -99,18 +103,32 @@ export function useIQR() {
   };
 
   const refineAndRefresh = async () => {
-    await refine();
-    await refreshSessionInfo();
-    await refreshResults();
+    if (state.refreshing) return;
+    try {
+      state.refreshing = true;
+      await refine();
+      await refreshSessionInfo();
+      await refreshResults();
+    } finally {
+      state.refreshing = false;
+    }
   };
 
   const initializeSession = async () => {
+    if (state.initializing) return;
     if (!state.site) throw new Error('No selected site');
-    const result = await ApiService.iqrInitialize(state.sessionId, state.site.smqtkUuid);
-    if (!result.success) throw new Error('Could not initialize IQR session');
 
-    const sid = result.sid;
-    state.sessionId = sid;
+    try {
+      state.initializing = true;
+
+      const result = await ApiService.iqrInitialize(state.sessionId, state.site.smqtkUuid);
+      if (!result.success) throw new Error('Could not initialize IQR session');
+
+      const sid = result.sid;
+      state.sessionId = sid;
+    } finally {
+      state.initializing = false;
+    }
 
     await refineAndRefresh();
   };

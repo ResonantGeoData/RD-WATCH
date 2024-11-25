@@ -31,7 +31,7 @@ function focusCandidate(geomExtent: number[]) {
 
 <template>
   <div class="pa-1 d-flex flex-column overflow-hidden h-100">
-    <div class="overflow-auto">
+    <div class="overflow-auto flex-grow-1">
       <div class="text-h6">
         Similar Sites
       </div>
@@ -46,6 +46,13 @@ function focusCandidate(geomExtent: number[]) {
           <v-img :src="iqr.state.siteImageUrl" />
         </v-card-text>
       </v-card>
+      <v-progress-linear
+        :style="{
+          visibility: iqr.state.refreshing ? 'visible' : 'hidden',
+        }"
+        class="my-2"
+        indeterminate
+      />
       <div class="mt-3">
         <iqr-candidate
           v-for="result, idx in queryResults"

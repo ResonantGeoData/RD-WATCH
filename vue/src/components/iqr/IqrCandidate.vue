@@ -1,7 +1,10 @@
 <script setup lang="ts">
+import { computed } from 'vue';
+
 
 const props = defineProps<{
   pk: string;
+  index: number;
   siteId: string;
   imageUrl: string | null;
   smqtkUuid: string;
@@ -13,72 +16,81 @@ const emit = defineEmits<{
   'status-changed': ['positive' | 'neutral' | 'negative'];
   'image-click': [];
 }>();
+
+const cardColor = computed(() => {
+  if (props.status === 'positive') return 'green-lighten-2';
+  if (props.status === 'neutral') return '';
+  if (props.status === 'negative') return 'red-lighten-2';
+  return '';
+});
 </script>
 
 <template>
-  <div class="d-flex flex-row py-1">
-    <div
-      class="border-thin"
-      style="min-width: 100px"
-      @click="emit('image-click')"
-    >
-      <v-img
-        v-if="imageUrl"
-        :src="imageUrl"
-      />
-    </div>
-    <div
-      class="d-flex flex-column justify-space-between"
-      style="white-space: nowrap; font-size: 12px;"
-    >
-      <div class="pa-1">
-        <strong>Site</strong>: {{ siteId }}<br>
-        <strong>Similarity</strong>: {{ Math.round(confidence*100) }}%
-      </div>
-      <v-item-group
-        :model-value="props.status"
-        @update:model-value="emit('status-changed', $event)"
+  <v-card
+    class="my-2"
+    :color="cardColor"
+  >
+    <v-card-title class="text-subtitle-2">
+      {{ index }}. <strong>{{ siteId }}</strong>
+    </v-card-title>
+    <v-card-text class="d-flex flex-row">
+      <div
+        class="border-thin d-flex flex-row align-center"
+        style="flex-basis: 100px; min-height: 100px;"
+        @click="emit('image-click')"
       >
-        <v-item
-          #="{ isSelected, toggle }"
-          value="positive"
+        <v-img
+          v-if="imageUrl"
+          :src="imageUrl"
+        />
+      </div>
+      <div class="d-flex flex-column flex-grow-1 ml-2 justify-space-between">
+        <v-item-group
+          class="w-100 d-flex flex-row justify-space-between"
+          :model-value="props.status"
+          @update:model-value="emit('status-changed', $event)"
         >
-          <v-btn
-            size="small"
-            variant="flat"
-            :color="isSelected ? 'primary' : ''"
-            @click="toggle"
+          <v-item
+            #="{ isSelected, toggle }"
+            value="positive"
           >
-            P
-          </v-btn>
-        </v-item>
-        <v-item
-          #="{ isSelected, toggle }"
-          value="neutral"
-        >
-          <v-btn
-            size="small"
-            variant="flat"
-            :color="isSelected ? 'primary' : ''"
-            @click="toggle"
+            <v-btn
+              size="x-small"
+              variant="flat"
+              :color="isSelected ? 'primary' : ''"
+              icon="mdi-check"
+              @click="toggle"
+            />
+          </v-item>
+          <v-item
+            #="{ isSelected, toggle }"
+            value="neutral"
           >
-            ?
-          </v-btn>
-        </v-item>
-        <v-item
-          #="{ isSelected, toggle }"
-          value="negative"
-        >
-          <v-btn
-            size="small"
-            variant="flat"
-            :color="isSelected ? 'primary' : ''"
-            @click="toggle"
+            <v-btn
+              size="x-small"
+              variant="flat"
+              :color="isSelected ? 'primary' : ''"
+              icon="mdi-help"
+              @click="toggle"
+            />
+          </v-item>
+          <v-item
+            #="{ isSelected, toggle }"
+            value="negative"
           >
-            N
-          </v-btn>
-        </v-item>
-      </v-item-group>
-    </div>
-  </div>
+            <v-btn
+              size="x-small"
+              variant="flat"
+              :color="isSelected ? 'primary' : ''"
+              icon="mdi-close"
+              @click="toggle"
+            />
+          </v-item>
+        </v-item-group>
+        <div>
+          Similarity: <strong>{{ Math.round(confidence*100) }}%</strong>
+        </div>
+      </div>
+    </v-card-text>
+  </v-card>
 </template>

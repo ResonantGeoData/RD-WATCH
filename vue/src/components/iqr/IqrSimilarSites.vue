@@ -79,7 +79,7 @@ function focusCandidate(geomExtent: number[]) {
         class="w-100 my-2"
         @click="refine"
       >
-        Refine
+        Refine Query
       </v-btn>
     </div>
   </div>

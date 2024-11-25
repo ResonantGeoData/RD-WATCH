@@ -32,6 +32,7 @@ const localGeoJSONFeatures = computed(() => {
 
 const { state: iqrState } = useIQR();
 const iqrResults = computed(() => iqrState.results as IQROrderedResultItem[]);
+const iqrSessionId = computed(() => iqrState.sessionId);
 
 function setFilter(layerID: string, filter: FilterSpecification) {
   map.value?.setFilter(layerID, filter, {
@@ -80,6 +81,7 @@ onMounted(() => {
           regionIds,
           localGeoJSONFeatures.value,
           iqrResults.value,
+          iqrSessionId.value,
         ),
         bounds: [
           [-180, -90],
@@ -112,7 +114,7 @@ const throttledSetSatelliteTimeStamp = throttle(setSatelliteTimeStamp, 300);
 watch([() => state.timestamp, () => state.filters, () => state.satellite, () => state.filters.scoringColoring,
 () => state.satellite.satelliteSources, () => state.enabledSiteImages, () => state.filters.hoverSiteId,
 () => state.modelRuns, () => state.openedModelRuns, () => state.filters.proposals, () => state.filters.randomKey, () => state.filters.editingGeoJSONSiteId,
-localGeoJSONFeatures, iqrResults], (newVals, oldVals) => {
+localGeoJSONFeatures, iqrResults, iqrSessionId], (newVals, oldVals) => {
 
   if (state.satellite.satelliteImagesOn) {
     throttledSetSatelliteTimeStamp(state, filteredSatelliteTimeList.value);
@@ -143,7 +145,7 @@ localGeoJSONFeatures, iqrResults], (newVals, oldVals) => {
     updateImageMapSources(state.timestamp, state.enabledSiteImages, state.siteOverviewSatSettings, map.value )
   }
   map.value?.setStyle(
-    style(state.timestamp, state.filters, state.satellite, state.enabledSiteImages, state.siteOverviewSatSettings, Array.from(modelRunVectorLayers), regionIds, localGeoJSONFeatures.value, iqrResults.value, state.filters.randomKey),
+    style(state.timestamp, state.filters, state.satellite, state.enabledSiteImages, state.siteOverviewSatSettings, Array.from(modelRunVectorLayers), regionIds, localGeoJSONFeatures.value, iqrResults.value, iqrSessionId.value, state.filters.randomKey),
   );
 
   const siteFilter = buildSiteFilter(state.timestamp, state.filters);

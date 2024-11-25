@@ -196,7 +196,7 @@ export const buildRegionFilter = (filters: MapFilters): FilterSpecification => {
 
 const urlRoot = `${location.protocol}//${location.host}`;
 
-const buildObservationThick = (
+export const buildObservationThick = (
   filters: MapFilters,
   siteObs: 'site' | 'observation'
 ): DataDrivenPropertyValueSpecification<number> => {
@@ -216,7 +216,7 @@ const buildObservationThick = (
   ];
 };
 
-const buildCircleRadius = (
+export const buildCircleRadius = (
   filters: MapFilters,
   siteObs: 'site' | 'observation'
 ): DataDrivenPropertyValueSpecification<number> => {
@@ -236,7 +236,7 @@ const buildCircleRadius = (
   ];
 };
 
-const buildObservationFillOpacity = (filters: MapFilters, fillProposals?: 'sites' | 'observations'): DataDrivenPropertyValueSpecification<number> | number =>  {
+export const buildObservationFillOpacity = (filters: MapFilters, fillProposals?: 'sites' | 'observations'): DataDrivenPropertyValueSpecification<number> | number =>  {
   if (filters.proposals && (filters.proposals.accepted?.length || filters.proposals.rejected?.length)) {
     const result = [];
     const idKey = fillProposals === 'sites' ? 'id' : 'siteeval_id'
@@ -268,7 +268,7 @@ const buildObservationFillOpacity = (filters: MapFilters, fillProposals?: 'sites
   return 1;
 }
 
-const buildObservationFill = (
+export const buildObservationFill = (
   timestamp: number,
   filters: MapFilters
 ): DataDrivenPropertyValueSpecification<string> => {

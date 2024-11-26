@@ -47,7 +47,12 @@ function getUuidStatus(uuid: string): 'positive' | 'neutral' | 'negative' {
   return 'neutral';
 }
 
-function clearResults() {
+function reset() {
+  state.sessionId = null;
+  state.sessionInfo = null;
+  state.site = null;
+  state.positives = new Set();
+  state.negatives = new Set();
   state.results = [];
 }
 
@@ -65,7 +70,7 @@ export function useIQR() {
       internalState.siteImageUrlPromise = promise;
     } else {
       internalState.siteImageUrlPromise = null;
-      clearResults();
+      reset();
     }
   };
 

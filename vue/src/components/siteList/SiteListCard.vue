@@ -36,7 +36,6 @@ export interface SiteDisplay {
   downloadingData?: SatelliteFetchingDownloadingInfo;
   downloadingError?: string;
   groundTruth?: boolean;
-  color_code?: number;
   originator?: string;
   proposal?: boolean;
   details?: {

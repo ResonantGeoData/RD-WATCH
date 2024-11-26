@@ -64,7 +64,6 @@ export interface SiteInfo {
     bbox: { xmin: number; ymin: number; xmax: number; ymax: number }
     status: SiteModelStatus
     timestamp: number;
-    color_code?: number;
     filename?: string | null;
     downloading: boolean;
     groundtruth?: boolean;
@@ -975,6 +974,13 @@ export class ApiService {
     return __request(OpenAPI, {
       method: 'DELETE',
       url: `${this.getApiPrefix()}/animation/modelrun/${taskId}/`,
+    })
+  }
+
+  public static getModelRunColorCodes(id: string): CancelablePromise<Record<string, number>> {
+    return __request(OpenAPI, {
+      method: 'GET',
+      url: `${this.getApiPrefix()}/model-runs/${id}/vector-tile/color-codes/`,
     })
   }
 

@@ -255,7 +255,7 @@ const cancel = debounce(() => emit("close"), 5000, { leading: true });
             <v-slider
               v-model="pointRadius"
               min="1"
-              max="20"
+              max="50"
               step="1"
               label="Point size"
               thumb-label="always"
@@ -269,7 +269,7 @@ const cancel = debounce(() => emit("close"), 5000, { leading: true });
             <v-slider
               v-model.number="lineThicknessFactor"
               min="0.1"
-              max="2"
+              max="10"
               step="0.1"
               label="Line Width Factor"
               thumb-label="always"

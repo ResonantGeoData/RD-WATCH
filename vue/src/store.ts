@@ -190,6 +190,7 @@ export const state = reactive<{
   modelRuns: KeyedModelRun[],
   totalNumModelRuns: number;
   openedModelRuns: Set<KeyedModelRun["key"]>;
+  modelRunColorCodeMappings: Record<string, Record<string, number>>;
   gifSettings: {
     fps: number;
     pointSize: number;
@@ -276,6 +277,7 @@ export const state = reactive<{
   modelRuns: [],
   totalNumModelRuns: 0,
   openedModelRuns: new Set<KeyedModelRun["key"]>(),
+  modelRunColorCodeMappings: {},
   gifSettings: { fps: 1, pointSize: 1, lineThicknessFactor: 1 },
   performerMapping: {},
   performerIds: [],

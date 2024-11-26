@@ -16,9 +16,7 @@ from django.db.models import (
     Func,
     IntegerField,
     Min,
-    OuterRef,
     Q,
-    Subquery,
     Value,
     When,
     Window,
@@ -109,7 +107,6 @@ def vector_tile_proposal(
             )
             .alias(geomfromtext=geomfromtext)
             .alias(transformedgeom=transform)
-            # .alias(base_site_id=F('site_id'))
             .filter(intersects)
             .values()
             .annotate(
@@ -220,7 +217,6 @@ def vector_tile_proposal(
                 groundtruth=Value(True),
                 site_polygon=Value(False, output_field=BooleanField()),
                 site_number=Substr(F('site_id'), 9),  # pos is 1 indexed
-                color_code=Value(None, output_field=IntegerField()),
                 proposal_status=Value(None, output_field=CharField()),
                 comments=Value(None, output_field=CharField()),
             )
@@ -509,6 +505,84 @@ def vector_tile_proposal(
     )
 
 
+@router.get(
+    '/{evaluation_run_uuid}/vector-tile/color-codes/',
+    response={200: dict[str, int | None]},
+)
+def vector_tile_color_codes(request: HttpRequest, evaluation_run_uuid: UUID4):
+    evaluation_run = get_object_or_404(EvaluationRun, pk=evaluation_run_uuid)
+
+    latest_timestamp = evaluation_run.start_datetime
+
+    cache_key = f'{evaluation_run_uuid}-color-codes-{latest_timestamp}'
+
+    site_to_color_code_mapping: dict[str, int] | None = cache.get(cache_key)
+
+    if site_to_color_code_mapping is None:
+        # Build a mapping of site_id to color code.
+        # We do this in a separate query to avoid a slow subquery in the main query,
+        # due to the EvaluationBroadAreaSearchDetection table being extremely large.
+        # The number of sites in an evaluation run is small enough that it's feasible
+        # to load the site_id->color_code mapping into memory and manually join it
+        # with the sites_list in Python.
+        site_to_color_code_mapping = {
+            obj['site_truth']: obj['color_code']
+            for obj in EvaluationBroadAreaSearchDetection.objects.filter(
+                Q(evaluation_run_uuid=evaluation_run_uuid)
+                & Q(activity_type='overall')
+                & Q(rho=0.5)
+                & Q(tau=0.2)
+                & Q(min_confidence_score=0.0)
+                & Q(
+                    Q(min_spatial_distance_threshold__isnull=True)
+                    | Q(min_spatial_distance_threshold=100.0)
+                )
+                & Q(
+                    Q(central_spatial_distance_threshold__isnull=True)
+                    | Q(central_spatial_distance_threshold=500.0)
+                )
+                & Q(max_spatial_distance_threshold__isnull=True)
+                & Q(
+                    Q(min_temporal_distance_threshold__isnull=True)
+                    | Q(min_temporal_distance_threshold=730.0)
+                )
+                & Q(central_temporal_distance_threshold__isnull=True)
+                & Q(max_temporal_distance_threshold__isnull=True)
+            ).values('site_truth', 'color_code')
+        } | {
+            obj['site_proposal']: obj['color_code']
+            for obj in EvaluationBroadAreaSearchProposal.objects.filter(
+                Q(evaluation_run_uuid=evaluation_run_uuid)
+                & Q(activity_type='overall')
+                & Q(rho=0.5)
+                & Q(tau=0.2)
+                & Q(min_confidence_score=0.0)
+                & Q(
+                    Q(min_spatial_distance_threshold__isnull=True)
+                    | Q(min_spatial_distance_threshold=100.0)
+                )
+                & Q(
+                    Q(central_spatial_distance_threshold__isnull=True)
+                    | Q(central_spatial_distance_threshold=500.0)
+                )
+                & Q(max_spatial_distance_threshold__isnull=True)
+                & Q(
+                    Q(min_temporal_distance_threshold__isnull=True)
+                    | Q(min_temporal_distance_threshold=730.0)
+                )
+                & Q(central_temporal_distance_threshold__isnull=True)
+                & Q(max_temporal_distance_threshold__isnull=True)
+            ).values('site_proposal', 'color_code')
+        }
+
+        # Cache this for 30 days
+        cache.set(
+            cache_key, site_to_color_code_mapping, timedelta(days=30).total_seconds()
+        )
+
+    return site_to_color_code_mapping
+
+
 @router.get('/{evaluation_run_uuid}/vector-tile/{z}/{x}/{y}.pbf/')
 def vector_tile(
     request: HttpRequest, evaluation_run_uuid: UUID4, z: int, x: int, y: int
@@ -559,7 +633,6 @@ def vector_tile(
             Site.objects.filter(evaluation_run_uuid=evaluation_run_uuid)
             .alias(geomfromtext=geomfromuniongeometrytext)
             .alias(transformedgeom=transform)
-            .alias(base_site_id=F('site_id'))
             .filter(intersects)
             .values()
             .annotate(
@@ -604,65 +677,8 @@ def vector_tile(
                 ),
                 site_polygon=Value(False, output_field=BooleanField()),
                 site_number=Substr(F('site_id'), 9),  # pos is 1 indexed
-                color_code=Case(
-                    When(
-                        Q(originator='te') | Q(originator='iMERIT'),
-                        then=Subquery(
-                            EvaluationBroadAreaSearchDetection.objects.filter(
-                                Q(evaluation_run_uuid=evaluation_run_uuid)
-                                & Q(activity_type='overall')
-                                & Q(rho=0.5)
-                                & Q(tau=0.2)
-                                & Q(min_confidence_score=0.0)
-                                & Q(site_truth=OuterRef('base_site_id'))
-                                & Q(
-                                    Q(min_spatial_distance_threshold__isnull=True)
-                                    | Q(min_spatial_distance_threshold=100.0)
-                                )
-                                & Q(
-                                    Q(central_spatial_distance_threshold__isnull=True)
-                                    | Q(central_spatial_distance_threshold=500.0)
-                                )
-                                & Q(max_spatial_distance_threshold__isnull=True)
-                                & Q(
-                                    Q(min_temporal_distance_threshold__isnull=True)
-                                    | Q(min_temporal_distance_threshold=730.0)
-                                )
-                                & Q(central_temporal_distance_threshold__isnull=True)
-                                & Q(max_temporal_distance_threshold__isnull=True)
-                            ).values('color_code')
-                        ),
-                    ),
-                    When(
-                        ~Q(originator='te') & ~Q(originator='iMERIT'),
-                        then=Subquery(
-                            EvaluationBroadAreaSearchProposal.objects.filter(
-                                Q(evaluation_run_uuid=evaluation_run_uuid)
-                                & Q(activity_type='overall')
-                                & Q(rho=0.5)
-                                & Q(tau=0.2)
-                                & Q(min_confidence_score=0.0)
-                                & Q(site_proposal=OuterRef('base_site_id'))
-                                & Q(
-                                    Q(min_spatial_distance_threshold__isnull=True)
-                                    | Q(min_spatial_distance_threshold=100.0)
-                                )
-                                & Q(
-                                    Q(central_spatial_distance_threshold__isnull=True)
-                                    | Q(central_spatial_distance_threshold=500.0)
-                                )
-                                & Q(max_spatial_distance_threshold__isnull=True)
-                                & Q(
-                                    Q(min_temporal_distance_threshold__isnull=True)
-                                    | Q(min_temporal_distance_threshold=730.0)
-                                )
-                                & Q(central_temporal_distance_threshold__isnull=True)
-                                & Q(max_temporal_distance_threshold__isnull=True)
-                            ).values('color_code')
-                        ),
-                    ),
-                    default=Value(None),  # Set an appropriate default value here
-                ),
+                # base_site_id is added for consistency with the sites_points queryset, see below
+                base_site_id=F('site_id'),
             )
         )
         (
@@ -681,7 +697,6 @@ def vector_tile(
                 )
             )
             .alias(transformedgeom=transform)
-            .alias(base_site_id=F('site_id'))
             .filter(intersects)
             .values()
             .annotate(
@@ -727,65 +742,9 @@ def vector_tile(
                 ),
                 site_polygon=Value(False, output_field=BooleanField()),
                 site_number=Substr(F('site_id'), 9),  # pos is 1 indexed
-                color_code=Case(
-                    When(
-                        Q(originator='te') | Q(originator='iMERIT'),
-                        then=Subquery(
-                            EvaluationBroadAreaSearchDetection.objects.filter(
-                                Q(evaluation_run_uuid=evaluation_run_uuid)
-                                & Q(activity_type='overall')
-                                & Q(rho=0.5)
-                                & Q(tau=0.2)
-                                & Q(min_confidence_score=0.0)
-                                & Q(site_truth=Substr(OuterRef('base_site_id'), 1, 12))
-                                & Q(
-                                    Q(min_spatial_distance_threshold__isnull=True)
-                                    | Q(min_spatial_distance_threshold=100.0)
-                                )
-                                & Q(
-                                    Q(central_spatial_distance_threshold__isnull=True)
-                                    | Q(central_spatial_distance_threshold=500.0)
-                                )
-                                & Q(max_spatial_distance_threshold__isnull=True)
-                                & Q(
-                                    Q(min_temporal_distance_threshold__isnull=True)
-                                    | Q(min_temporal_distance_threshold=730.0)
-                                )
-                                & Q(central_temporal_distance_threshold__isnull=True)
-                                & Q(max_temporal_distance_threshold__isnull=True)
-                            ).values('color_code')
-                        ),
-                    ),
-                    When(
-                        ~Q(originator='te') & ~Q(originator='iMERIT'),
-                        then=Subquery(
-                            EvaluationBroadAreaSearchProposal.objects.filter(
-                                Q(evaluation_run_uuid=evaluation_run_uuid)
-                                & Q(activity_type='overall')
-                                & Q(rho=0.5)
-                                & Q(tau=0.2)
-                                & Q(min_confidence_score=0.0)
-                                & Q(site_proposal=OuterRef('base_site_id'))
-                                & Q(
-                                    Q(min_spatial_distance_threshold__isnull=True)
-                                    | Q(min_spatial_distance_threshold=100.0)
-                                )
-                                & Q(
-                                    Q(central_spatial_distance_threshold__isnull=True)
-                                    | Q(central_spatial_distance_threshold=500.0)
-                                )
-                                & Q(max_spatial_distance_threshold__isnull=True)
-                                & Q(
-                                    Q(min_temporal_distance_threshold__isnull=True)
-                                    | Q(min_temporal_distance_threshold=730.0)
-                                )
-                                & Q(central_temporal_distance_threshold__isnull=True)
-                                & Q(max_temporal_distance_threshold__isnull=True)
-                            ).values('color_code')
-                        ),
-                    ),
-                    default=Value(None),  # Set an appropriate default value here
-                ),
+                # The site_id includes some additional information for points,
+                # so we need to strip out only the first 12 characters
+                base_site_id=Substr(F('site_id'), 1, 12),
             )
         )
         (

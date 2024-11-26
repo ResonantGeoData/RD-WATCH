@@ -40,7 +40,7 @@ class RDWatchConfig(AppConfig):
                 environment=settings.SENTRY_ENVIRONMENT,
                 release=settings.SENTRY_RELEASE,
                 integrations=[
-                    LoggingIntegration(level=logging.INFO, event_level=logging.WARNING),
+                    LoggingIntegration(level=logging.INFO, event_level=logging.ERROR),
                     DjangoIntegration(),
                     CeleryIntegration(),
                 ],

@@ -108,7 +108,7 @@ function timeoutBatch(cb: () => void, timeout: number) {
     t = setTimeout(() => {
       cb();
       t = null;
-    }, timeout);
+    }, timeout) as unknown as number;
   };
 }
 

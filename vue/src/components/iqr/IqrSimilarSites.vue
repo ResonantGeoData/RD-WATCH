@@ -62,7 +62,7 @@ function focusCandidate(candidate: (typeof iqr.queryResults)['value'][number]) {
           Query: {{ props.site.name }}
         </v-card-title>
         <v-card-text>
-          <v-img :src="iqr.state.siteImageUrl" />
+          <v-img :src="iqr.state.siteImageUrl ?? undefined" />
         </v-card-text>
       </v-card>
       <v-progress-linear

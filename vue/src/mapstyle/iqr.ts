@@ -1,4 +1,4 @@
-import { FilterSpecification, LayerSpecification, SourceSpecification } from "maplibre-gl";
+import { FilterExpression, FilterSpecification, LayerSpecification, SourceSpecification } from "maplibre-gl";
 import { ApiService, IQROrderedResultItem } from "../client/services/ApiService";
 import { ImageBBox, MapFilters, siteOverviewSatSettings } from "../store";
 import { annotationColors } from "./annotationStyles";
@@ -64,7 +64,7 @@ export function buildIQRImageSources(results: IQROrderedResultItem[]): Record<st
   }, {});
 
   const clusterSource = {
-    type: 'geojson',
+    type: 'geojson' as const,
     data: {
       type: 'FeatureCollection',
       features: results
@@ -191,6 +191,7 @@ export const buildIQRSiteFilter = (
 ): FilterSpecification => {
   const filter: FilterSpecification = [
     "all",
+    true,
   ];
 
   if (filters.siteTimeLimits) {

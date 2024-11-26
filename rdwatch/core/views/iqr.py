@@ -1,7 +1,7 @@
-from collections import defaultdict
+import bisect
 import json
 import logging
-import bisect
+from collections import defaultdict
 from typing import Literal
 
 import requests
@@ -9,8 +9,6 @@ from ninja import Router, Schema
 
 from django.contrib.gis.db.models.functions import Area, Transform
 from django.core.files.storage import default_storage
-from django.http import HttpRequest, HttpResponse
-from django.shortcuts import get_object_or_404
 from django.db import connection
 from django.db.models import (
     BooleanField,
@@ -24,6 +22,8 @@ from django.db.models import (
     When,
     Window,
 )
+from django.http import HttpRequest, HttpResponse
+from django.shortcuts import get_object_or_404
 
 from rdwatch.core.db.functions import ExtractEpoch, GroupExcludeRowRange
 from rdwatch.core.models import SiteEvaluation, SiteImage, SiteObservation
@@ -34,6 +34,7 @@ session = requests.Session()
 
 BASE = 'http://iqr_rest:5001'
 MAX_RESULTS = 50
+
 
 class SuccessResponse(Schema):
     success: bool
@@ -147,7 +148,9 @@ def get_session_info(request: HttpRequest, sid: str):
     return 200, resp.json()
 
 
-def pick_site_image(images: list[SiteImage], observations: list[SiteObservation]) -> SiteImage | None:
+def pick_site_image(
+    images: list[SiteImage], observations: list[SiteObservation]
+) -> SiteImage | None:
     # ignore observations with no timestamps
     observations = [o for o in observations if o.timestamp is not None]
 
@@ -187,7 +190,10 @@ def get_ordered_results(request: HttpRequest, sid: str):
         confidence_by_uuid[smqtk_uuid] = confidence
 
     site_evals = SiteEvaluation.objects.filter(smqtk_uuid__in=uuids)
-    site_evals = sorted([site for site in site_evals], key=lambda site: -confidence_by_uuid[site.smqtk_uuid])[:MAX_RESULTS]
+    site_evals = sorted(
+        [site for site in site_evals],
+        key=lambda site: -confidence_by_uuid[site.smqtk_uuid],
+    )[:MAX_RESULTS]
     site_ids = [site.id for site in site_evals]
 
     images_by_site = defaultdict(list)
@@ -195,7 +201,9 @@ def get_ordered_results(request: HttpRequest, sid: str):
         images_by_site[site_image.site.id].append(site_image)
 
     observations_by_site = defaultdict(list)
-    for obs in SiteObservation.objects.filter(siteeval__in=site_ids).order_by('timestamp'):
+    for obs in SiteObservation.objects.filter(siteeval__in=site_ids).order_by(
+        'timestamp'
+    ):
         observations_by_site[obs.siteeval.id].append(obs)
 
     ordered_results = {
@@ -204,9 +212,15 @@ def get_ordered_results(request: HttpRequest, sid: str):
         'results': [],
     }
     for site in site_evals:
-        site_image = pick_site_image(images_by_site[site.id], observations_by_site[site.id])
+        site_image = pick_site_image(
+            images_by_site[site.id], observations_by_site[site.id]
+        )
         image_url = default_storage.url(site_image.image.name) if site_image else None
-        image_bbox = site_image.image_bbox.extent if site_image and site_image.image_bbox else None
+        image_bbox = (
+            site_image.image_bbox.extent
+            if site_image and site_image.image_bbox
+            else None
+        )
         ordered_results['results'].append(
             {
                 'pk': str(site.id),
@@ -221,7 +235,9 @@ def get_ordered_results(request: HttpRequest, sid: str):
             }
         )
 
-    ordered_results['results'] = sorted(ordered_results['results'], key=lambda r: -r['confidence'])
+    ordered_results['results'] = sorted(
+        ordered_results['results'], key=lambda r: -r['confidence']
+    )
     return 200, ordered_results
 
 
@@ -253,13 +269,19 @@ def adjudicate(request: HttpRequest, sid: str, adjudications: IQRAdjudicationReq
         return 400, {'success': False}
     return 200, {'success': True}
 
+
 @router.get('/site-image-url/{site_id}')
 def get_site_image_url(request: HttpRequest, site_id: str):
     site = get_object_or_404(SiteEvaluation, id=site_id)
-    observations = list(SiteObservation.objects.filter(siteeval=site).order_by('timestamp'))
-    images = list(SiteImage.objects.filter(site=site, source="WV").order_by('timestamp'))
+    observations = list(
+        SiteObservation.objects.filter(siteeval=site).order_by('timestamp')
+    )
+    images = list(
+        SiteImage.objects.filter(site=site, source='WV').order_by('timestamp')
+    )
     site_image = pick_site_image(images, observations)
     return default_storage.url(site_image.image.name) if site_image else None
+
 
 @router.get('/{sid}/vector-tile/{z}/{x}/{y}.pbf/')
 def iqr_vector_tile(request: HttpRequest, sid: str, z: int, x: int, y: int):
@@ -313,9 +335,7 @@ def iqr_vector_tile(request: HttpRequest, sid: str, z: int, x: int, y: int):
         .alias(observation_count=Count('observations'))
         .annotate(
             id=F('pk'),
-            uuid=F(
-                'pk'
-            ),  # maintain consistency with scoring DB for clicking on items
+            uuid=F('pk'),  # maintain consistency with scoring DB for clicking on items
             mvtgeom=mvtgeom,
             configuration_id=F('configuration_id'),
             configuration_name=F('configuration__title'),
@@ -355,9 +375,7 @@ def iqr_vector_tile(request: HttpRequest, sid: str, z: int, x: int, y: int):
         .alias(observation_count=Count('observations'))
         .annotate(
             id=F('pk'),
-            uuid=F(
-                'pk'
-            ),  # maintain consistency with scoring DB for clicking on items
+            uuid=F('pk'),  # maintain consistency with scoring DB for clicking on items
             mvtgeom=mvtgeom_point,
             configuration_id=F('configuration_id'),
             configuration_name=F('configuration__title'),

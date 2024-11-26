@@ -36,8 +36,8 @@ function focusCandidate(candidate: (typeof iqr.queryResults)['value'][number]) {
     ymin: candidate.geomExtent[1],
     xmax: candidate.geomExtent[2],
     ymax: candidate.geomExtent[3],
-    padding: 320,
-    offset: [0, -150],
+    padding: 240,
+    offset: [0, -100],
   });
 }
 </script>

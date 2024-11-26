@@ -972,7 +972,7 @@ def process_model_run_upload(model_run_upload: ModelRunUpload):
             site_eval = SiteEvaluation.bulk_create_from_site_model(
                 site_model, model_run
             )
-            iqr_enabled = iqr_enabled or site_eval.smqtk_uuid != None
+            iqr_enabled = iqr_enabled or site_eval.smqtk_uuid is not None
 
         if iqr_enabled:
             region_model.region_feature.properties.iqr_enabled = iqr_enabled

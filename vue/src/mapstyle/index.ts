@@ -19,7 +19,7 @@ import { EnabledSiteOverviews, type LocalGeoJSONFeature, MapFilters, SatelliteDa
 import { buildImageLayerFilter, buildImageSourceFilter } from "./images";
 import { localGeoJSONLayers, localGeoJSONSources } from "./localgeojson";
 import { IQROrderedResultItem } from "../client/services/ApiService";
-import { buildIQRImageLayers, buildIQRImageSources, buildIQRSiteVectorLayers, buildIQRSiteVectorSources } from "./iqr";
+import { buildIQRClusterLayers, buildIQRImageLayers, buildIQRImageSources, buildIQRSiteVectorLayers, buildIQRSiteVectorSources } from "./iqr";
 
 const tileServerURL =
   import.meta.env.VITE_TILE_SERVER_URL || "https://basemap.kitware.watch";
@@ -63,5 +63,6 @@ export const style = (
     ...buildImageLayerFilter(timestamp, enabledSiteImages, settings),
     ...rdwatchtilesLayers(timestamp, filters, modelRunIds, regionIds),
     ...localGeoJSONLayers(localGeoJSONFeatures),
+    ...(iqrResults?.length ? buildIQRClusterLayers() : []),
   ],
 });

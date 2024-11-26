@@ -5,6 +5,8 @@ import { annotationColors } from "./annotationStyles";
 import { buildCircleRadius, buildObservationFill, buildObservationFillOpacity, buildObservationThick } from "./rdwatchtiles";
 
 const urlRoot = `${location.protocol}//${location.host}`;
+const CLUSTER_SOURCE_ID = 'iqrSiteImageClusterSource'
+const CLUSTER_LAYER_ID = 'iqrSiteImageClusterLayer'
 
 function unflattenXYXYBounds(arrBounds: [number, number, number, number]) {
   const [xmin, ymin, xmax, ymax] = arrBounds;
@@ -16,20 +18,74 @@ function unflattenXYXYBounds(arrBounds: [number, number, number, number]) {
   ];
 }
 
+function xyxyBoundsCenter(xyxy: [number, number, number, number]) {
+  const [xmin, ymin, xmax, ymax] = xyxy;
+  return [
+    (xmax + xmin) / 2,
+    (ymax + ymin) / 2,
+  ];
+}
+
 export function buildIQRImageSources(results: IQROrderedResultItem[]): Record<string, SourceSpecification> {
-  return results
+  const imageSources = results
     .filter((item): item is IQROrderedResultItem & { image_url: string } => !!item.image_url)
     .reduce((sources, item) => {
       const sourceId = `iqrSiteImageSource_${item.site_id}`;
+      const clusterSourceId = `iqrSiteImageClusterSource_${item.site_id}`;
+      // TODO just don't show these sources if the image bbox doesn't exist
+      const imageBbox = item.image_bbox ? unflattenXYXYBounds(item.image_bbox) : [[0,0], [0,0], [0,0], [0,0]];
+      const imageCenter = item.image_bbox ? xyxyBoundsCenter(item.image_bbox) : [0, 0];
       return {
         ...sources,
         [sourceId]: {
           type: 'image',
           url: item.image_url,
-          coordinates: (item.image_bbox ? unflattenXYXYBounds(item.image_bbox) : [[0,0], [0,0], [0,0], [0,0]]) as ImageBBox,
+          coordinates: imageBbox as ImageBBox,
+        },
+        [clusterSourceId]: {
+          type: 'geojson',
+          data: {
+            type: 'FeatureCollection',
+            features: [
+              {
+                type: 'Feature',
+                geometry: {
+                  type: 'Point',
+                  coordinates: imageCenter,
+                },
+              }
+            ],
+          },
+          cluster: true,
+          clusterMaxZoom: 14,
+          clusterRadius: 5,
         },
       };
   }, {});
+
+  const clusterSource = {
+    type: 'geojson',
+    data: {
+      type: 'FeatureCollection',
+      features: results
+        .filter((item): item is IQROrderedResultItem & { image_bbox: [number, number, number, number] } => !!item.image_bbox)
+        .map((item) => ({
+          type: 'Feature',
+          geometry: {
+            type: 'Point',
+            coordinates: xyxyBoundsCenter(item.image_bbox),
+          },
+        })),
+    },
+    cluster: true,
+    clusterMaxZoom: 11,
+    clusterRadius: 50,
+  };
+
+  return {
+    ...imageSources,
+    [CLUSTER_SOURCE_ID]: clusterSource,
+  };
 }
 
 export function buildIQRImageLayers(results: IQROrderedResultItem[], settings: siteOverviewSatSettings): LayerSpecification[] {
@@ -48,6 +104,49 @@ export function buildIQRImageLayers(results: IQROrderedResultItem[], settings: s
         },
       };
     });
+}
+
+export function buildIQRClusterLayers(): LayerSpecification[] {
+  return [
+    {
+      id: CLUSTER_LAYER_ID,
+      type: 'circle',
+      source: CLUSTER_SOURCE_ID,
+      filter: ['has', 'point_count'],
+      paint: {
+        // thresholds: 10, 50
+        'circle-color': [
+            'step',
+            ['get', 'point_count'],
+            '#51bbd6',
+            10,
+            '#f1f075',
+            50,
+            '#f28cb1'
+        ],
+        'circle-radius': [
+            'step',
+            ['get', 'point_count'],
+            20,
+            10,
+            30,
+            50,
+            40
+        ]
+      }
+    },
+    {
+      id: `${CLUSTER_LAYER_ID}_counts`,
+      type: 'symbol',
+      source: CLUSTER_SOURCE_ID,
+      filter: ['has', 'point_count'],
+      layout: {
+          'text-field': '{point_count_abbreviated}',
+          'text-font': ['Roboto Regular'],
+          'text-size': 12,
+      },
+    },
+  ];
 }
 
 const buildIQRObservationFilter = (

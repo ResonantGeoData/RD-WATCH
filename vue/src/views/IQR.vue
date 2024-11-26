@@ -6,7 +6,7 @@ import ImageViewer from "../components/imageViewer/ImageViewer.vue";
 import SiteList from "../components/siteList/SiteList.vue";
 import MapLegend from "../components/MapLegend.vue";
 import { onMounted, provide, watch } from "vue";
-import { state, updateRegionList } from "../store";
+import { loadAndToggleSatelliteImages, state, updateRegionList } from "../store";
 import AddRegion from "../components/AddRegion.vue";
 import { ApiService } from "../client";
 import { IQR_KEY, useIQR } from "../use/useIQR";
@@ -43,6 +43,19 @@ watch(() => ApiService.getApiPrefix(), async () => {
 
 provide(IQR_KEY, true);
 const iqr = useIQR();
+
+let lastSelectedSiteId = '';
+watch(() => state.selectedImageSite, (site) => {
+  if (site?.siteId) {
+    lastSelectedSiteId = site.siteId;
+  }
+});
+
+function onImageViewerClose() {
+  if (iqr.getAndUnsetHideMapImageOnImageViewerCloseFlag()) {
+    loadAndToggleSatelliteImages(lastSelectedSiteId, false);
+  }
+}
 </script>
 
 <template>
@@ -64,6 +77,7 @@ const iqr = useIQR();
       :site-evaluation-name="state.selectedImageSite.siteName"
       :date-range="state.selectedImageSite.dateRange"
       style="position: relative; top: -60vh !important; height: 60vh"
+      @close="onImageViewerClose"
     />
   </v-main>
   <span>

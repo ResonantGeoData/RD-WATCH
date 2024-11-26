@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { FitBoundsEvent } from '../../actions/map';
 import { Site, useIQR } from '../../use/useIQR';
-import { state } from "../../store";
+import { loadAndToggleSatelliteImages, state } from "../../store";
 import IqrCandidate from './IqrCandidate.vue';
 
 const props = defineProps<{
@@ -26,6 +26,10 @@ function focusCandidate(candidate: (typeof iqr.queryResults)['value'][number]) {
     siteId: candidate.siteUid,
     siteName: candidate.siteId,
   };
+
+  // show the site satellite image
+  loadAndToggleSatelliteImages(candidate.siteUid, true);
+  iqr.setHideMapImageOnImageViewerCloseFlag();
 
   FitBoundsEvent.trigger({
     xmin: candidate.geomExtent[0],

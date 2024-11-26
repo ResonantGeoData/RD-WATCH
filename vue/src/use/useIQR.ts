@@ -27,6 +27,7 @@ const state = reactive<{
   results: Array<IQROrderedResultItem>;
   refreshing: boolean;
   initializing: boolean;
+  hideMapImageOnImageViewerCloseFlag: boolean;
 }>({
   sessionId: null,
   sessionInfo: null,
@@ -37,6 +38,7 @@ const state = reactive<{
   results: [],
   refreshing: false,
   initializing: false,
+  hideMapImageOnImageViewerCloseFlag: false,
 });
 
 function getUuidStatus(uuid: string): 'positive' | 'neutral' | 'negative' {
@@ -138,6 +140,16 @@ export function useIQR() {
     await refineAndRefresh();
   };
 
+  const setHideMapImageOnImageViewerCloseFlag = () => {
+    state.hideMapImageOnImageViewerCloseFlag = true;
+  };
+
+  const getAndUnsetHideMapImageOnImageViewerCloseFlag = () => {
+    const flag = state.hideMapImageOnImageViewerCloseFlag;
+    state.hideMapImageOnImageViewerCloseFlag = false;
+    return flag;
+  };
+
   return {
     enabled: iqrEnabled,
     setPrimarySite,
@@ -145,6 +157,8 @@ export function useIQR() {
     refine: refineAndRefresh,
     refreshSessionInfo,
     adjudicate,
+    setHideMapImageOnImageViewerCloseFlag,
+    getAndUnsetHideMapImageOnImageViewerCloseFlag,
     state: readonly(state),
     queryResults: computed(() => {
       return state.results.map((result) => {

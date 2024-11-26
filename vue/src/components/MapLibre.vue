@@ -7,7 +7,7 @@ import {
 } from "../mapstyle/rdwatchtiles";
 import { filteredSatelliteTimeList, state } from "../store";
 import { computed, markRaw, onBeforeUnmount, onMounted, onUnmounted, reactive, shallowRef, watch } from "vue";
-import type { FilterSpecification } from "maplibre-gl";
+import type { FilterSpecification, FitBoundsOptions } from "maplibre-gl";
 import type { ShallowRef } from "vue";
 import { popupLogic, setPopupEvents } from "../interactions/mouseEvents";
 import useEditPolygon from "../interactions/editGeoJSON";
@@ -47,16 +47,18 @@ function setFilter(layerID: string, filter: FilterSpecification) {
   });
 }
 
-function fitBounds(bbox: BoundingBox) {
+function fitBounds(bbox: BoundingBox & FitBoundsOptions) {
+  const { xmin, ymin, xmax, ymax, ...options } = bbox;
   map.value?.fitBounds(
     [
-      [bbox.xmin, bbox.ymin],
-      [bbox.xmax, bbox.ymax],
+      [xmin, ymin],
+      [xmax, ymax],
     ],
     {
       padding: 160,
       duration: 4000,
-    }
+      ...options,
+    },
   );
 }
 

@@ -182,11 +182,12 @@ def get_ordered_results(request: HttpRequest, sid: str):
     resp_results = resp.json()
     uuids: list[str] = []
     confidence_by_uuid = {}
-    for smqtk_uuid, confidence in resp_results['results'][:MAX_RESULTS]:
+    for smqtk_uuid, confidence in resp_results['results']:
         uuids.append(smqtk_uuid)
         confidence_by_uuid[smqtk_uuid] = confidence
 
     site_evals = SiteEvaluation.objects.filter(smqtk_uuid__in=uuids)
+    site_evals = sorted([site for site in site_evals], key=lambda site: -confidence_by_uuid[site.smqtk_uuid])[:MAX_RESULTS]
     site_ids = [site.id for site in site_evals]
 
     images_by_site = defaultdict(list)

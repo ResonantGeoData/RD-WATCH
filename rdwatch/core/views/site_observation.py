@@ -1,10 +1,10 @@
 import logging
 from datetime import datetime
-from typing import Any, Literal
+from typing import Literal
 
 from celery.result import AsyncResult
 from ninja import Query, Router, Schema
-from pydantic import UUID4, root_validator
+from pydantic import UUID4, model_validator
 
 from django.contrib.gis.db.models import FloatField, PolygonField
 from django.contrib.gis.db.models.aggregates import Collect
@@ -37,23 +37,23 @@ router = Router()
 
 class SiteObservationSchema(Schema):
     id: UUID4
-    label: str | None
-    score: float | None
-    constellation: str | None
-    spectrum: str | None
-    timestamp: int | None
+    label: str | None = None
+    score: float | None = None
+    constellation: str | None = None
+    spectrum: str | None = None
+    timestamp: int | None = None
     bbox: BoundingBoxSchema
     area: float
 
 
 class SiteEvaluationImageSchema(Schema):
-    id: str
+    id: int
     timestamp: int
     image: str
     cloudcover: float
     percent_black: float
     source: str
-    observation_id: str | None
+    observation_id: str | None = None
     bbox: BoundingBoxSchema
     image_dimensions: list[int]
     uri_locations: list[str]
@@ -72,19 +72,19 @@ class SiteEvaluationListSchema(Schema):
 class JobStatusSchema(Schema):
     status: str
     error: str | None = None
-    timestamp: int
+    timestamp: float
     celery: dict  # celery information for task
 
 
 class SiteObservationsListSchema(Schema):
     count: int
-    timerange: TimeRangeSchema | None
-    timestamp: int | None
-    status: str | None
+    timerange: TimeRangeSchema | None = None
+    timestamp: int | None = None
+    status: str | None = None
     bbox: BoundingBoxSchema
     results: list[SiteObservationSchema]
     images: SiteEvaluationImageListSchema
-    job: JobStatusSchema | None
+    job: JobStatusSchema | None = None
 
 
 @router.get('/{evaluation_id}/', response={200: SiteObservationsListSchema})
@@ -216,11 +216,11 @@ class GenerateImagesSchema(Schema):
     bboxScale: None | float = 1.2
     pointArea: None | float = 200
 
-    @root_validator
-    def validate_worldview_source(cls, values: dict[str, Any]):
-        if 'WV' in values['constellation'] and values['worldviewSource'] is None:
+    @model_validator(mode='after')
+    def validate_worldview_source(self):
+        if 'WV' in self.constellation and self.worldviewSource is None:
             raise ValueError('worldviewSource is required for WV constellation')
-        return values
+        return self
 
 
 @router.post('/{evaluation_id}/generate-images/', response={202: bool, 409: str})

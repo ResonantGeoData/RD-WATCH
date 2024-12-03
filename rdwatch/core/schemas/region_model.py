@@ -4,7 +4,7 @@ from datetime import datetime
 from typing import Annotated, Any, Literal
 
 from ninja import Field, Schema
-from pydantic import confloat, constr, validator
+from pydantic import Field, StringConstraints, field_validator
 
 from django.contrib.gis.gdal import GDALException
 from django.contrib.gis.geos import GEOSGeometry, Polygon
@@ -13,18 +13,19 @@ from django.contrib.gis.geos import GEOSGeometry, Polygon
 class RegionFeature(Schema):
     type: Literal['region']
     region_id: str  # a Region isn't limited to their format for RDWATCH
-    version: str | None
+    version: str | None = None
     mgrs: str
-    model_content: Literal['empty', 'annotation', 'proposed'] | None
-    start_date: datetime | None
-    end_date: datetime | None
+    model_content: Literal['empty', 'annotation', 'proposed'] | None = None
+    start_date: datetime | None = Field(default=None, validate_default=True)
+    end_date: datetime | None = Field(default=None, validate_default=True)
     originator: str
 
     # Optional fields
-    comments: str | None
-    performer_cache: dict[Any, Any] | None
+    comments: str | None = None
+    performer_cache: dict[Any, Any] | None = None
 
-    @validator('start_date', 'end_date', pre=True)
+    @field_validator('start_date', 'end_date', mode='before')
+    @classmethod
     def parse_dates(cls, v: str | None) -> datetime | None:
         if v is None:
             return v
@@ -34,8 +35,8 @@ class RegionFeature(Schema):
 class SiteSummaryFeature(Schema):
     type: Literal['site_summary']
     # match the site_id of format KR_R001_0001 or KR_R001_9990
-    site_id: constr(regex=r'^.{1,255}_\d{4,8}$')
-    version: str | None
+    site_id: Annotated[str, StringConstraints(pattern=r'^.{1,255}_\d{4,8}$')]
+    version: str | None = None
     mgrs: str
     status: Literal[
         'positive_annotated',
@@ -52,32 +53,34 @@ class SiteSummaryFeature(Schema):
         'system_confirmed',
         'system_rejected',
     ]
-    start_date: datetime | None
-    end_date: datetime | None
-    model_content: Literal['annotation', 'proposed'] | None
+    start_date: datetime | None = Field(default=None, validate_default=True)
+    end_date: datetime | None = Field(default=None, validate_default=True)
+    model_content: Literal['annotation', 'proposed'] | None = None
     originator: str
 
     # Optional fields
-    comments: str | None
-    score: confloat(ge=0.0, le=1.0) | None
-    validated: Literal['True', 'False'] | None
-    annotation_cache: dict[Any, Any] | None
+    comments: str | None = None
+    score: Annotated[float, Field(ge=0.0, le=1.0)] | None = Field(
+        default=None, validate_default=True
+    )
+    validated: Literal['True', 'False'] | None = None
+    annotation_cache: dict[Any, Any] | None = None
 
-    @validator('start_date', 'end_date', pre=True)
+    @field_validator('start_date', 'end_date', mode='before')
+    @classmethod
     def parse_dates(cls, v: str | None) -> datetime | None:
         if v is None:
             return v
         return datetime.strptime(v, '%Y-%m-%d')
 
-    @validator('score', pre=True, always=True)
+    @field_validator('score', mode='before')
+    @classmethod
     def parse_score(cls, v: float | None) -> float:
         """
         Score is an optional field, and defaults to 1.0 if one isn't provided
         https://smartgitlab.com/TE/standards/-/wikis/Region-Model-Specification#score-float-optional
         """
-        if v is None:
-            return 1.0
-        return v
+        return v if v is not None else 1.0
 
     @property
     def site_number(self) -> int:
@@ -97,7 +100,7 @@ class Feature(Schema):
     def parsed_geometry(self) -> GEOSGeometry:
         return GEOSGeometry(json.dumps(self.geometry))
 
-    @validator('geometry', pre=True)
+    @field_validator('geometry', mode='before')
     def parse_geometry(cls, v: dict[str, Any]) -> dict[str, Any]:
         try:
             geom = GEOSGeometry(json.dumps(v))
@@ -112,7 +115,7 @@ class RegionModel(Schema):
     type: Literal['FeatureCollection']
     features: list[Feature]
 
-    @validator('features')
+    @field_validator('features')
     def ensure_one_region_feature(cls, v: list[Feature]):
         region_features = [
             feature for feature in v if isinstance(feature.properties, RegionFeature)

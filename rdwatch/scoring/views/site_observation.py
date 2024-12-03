@@ -1,9 +1,9 @@
 import logging
-from typing import Any, Literal
+from typing import Literal
 
 from celery.result import AsyncResult
 from ninja import Query, Router, Schema
-from pydantic import UUID4, root_validator
+from pydantic import UUID4, model_validator
 
 from django.contrib.gis.db.models.aggregates import Collect
 from django.contrib.gis.db.models.fields import GeometryField
@@ -45,11 +45,11 @@ class GenerateImagesSchema(Schema):
     bboxScale: None | float = 1.2
     pointArea: None | float = 200
 
-    @root_validator
-    def validate_worldview_source(cls, values: dict[str, Any]):
-        if 'WV' in values['constellation'] and values['worldviewSource'] is None:
+    @model_validator(mode='after')
+    def validate_worldview_source(self):
+        if 'WV' in self.constellation and self.worldviewSource is None:
             raise ValueError('worldviewSource is required for WV constellation')
-        return values
+        return self
 
 
 @router.get('/{evaluation_id}/', response={200: SiteObservationsListSchema})

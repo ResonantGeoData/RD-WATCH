@@ -14,13 +14,13 @@ router = Router()
 
 class SiteImageSiteDetailResponse(Schema):
     regionName: str
-    configurationId: str | int  # some values still ints in my case
-    siteNumber: str
-    version: str | None
+    configurationId: UUID4
+    siteNumber: int
+    version: str | None = None
     title: str
-    performer: str | None
-    timemin: int | None
-    timemax: int | None
+    performer: str | None = None
+    timemin: int | None = None
+    timemax: int | None = None
 
 
 def get_site_query(site_id: UUID4):

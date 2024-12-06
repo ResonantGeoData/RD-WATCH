@@ -579,6 +579,7 @@ def get_sites_query(model_run_id: UUID4):
                     filename='cache_originator_file',
                     downloading='downloading',
                     groundtruth=F('configuration__ground_truth'),
+                    smqtk_uuid='smqtk_uuid',
                 ),
                 ordering='number',
                 default=[],

@@ -124,6 +124,7 @@ const getSites = async (modelRun: string, initRun = false) => {
           downloading: item.downloading,
           details,
           proposal: !!details?.proposal,
+          smqtkUuid: item.smqtk_uuid,
         });
         modelRunTitleList.value.push(details?.title || '');
         totalCount.value += 1;

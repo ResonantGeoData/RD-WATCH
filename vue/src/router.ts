@@ -5,6 +5,7 @@ import Annotation from './views/AnnotationViewer.vue';
 import FullScreenImageViewer from './views/FullScreenImageViewer.vue';
 import SAM from './views/SAM.vue';
 import SmartFlow from "./views/SmartFlow.vue";
+import IQR from "./views/IQR.vue";
 
 const routes = [
   { path: '/imageViewer/:siteEvalId', component: FullScreenImageViewer, props:true, },
@@ -15,6 +16,7 @@ const routes = [
   { path: '/proposals/:region?/:selected?', component: Annotation, props:true, },
   { path: '/SAM/:id', component: SAM, props:true, },
   { path: '/smartflow', component: SmartFlow, },
+  { path: '/iqr/:region?/:selected?', component: IQR, },
 ]
 
 const router = createRouter({

@@ -103,6 +103,13 @@ class SiteEvaluation(models.Model):
         help_text='Hash of the file for proposals',
     )
 
+    smqtk_uuid = models.CharField(
+        max_length=256,
+        blank=True,
+        null=True,
+        help_text='SMQTK UUID',
+    )
+
     @property
     def boundingbox(self) -> tuple[float, float, float, float]:
         if self.geom:
@@ -151,6 +158,9 @@ class SiteEvaluation(models.Model):
 
             point = None
             geom = None
+            smqtk_uuid = None
+            if site_feature.properties.cache:
+                smqtk_uuid = site_feature.properties.cache.smqtk_uuid
             if isinstance(site_feature.parsed_geometry, Point):
                 point = site_feature.parsed_geometry
             else:
@@ -170,6 +180,7 @@ class SiteEvaluation(models.Model):
                 cache_originator_file=cache_originator_file,
                 cache_timestamp=cache_timestamp,
                 cache_commit_hash=cache_commit_hash,
+                smqtk_uuid=smqtk_uuid,
                 modified_timestamp=datetime.now(),
             )
             SiteObservation.bulk_create_from_site_evaluation(site_eval, site_model)

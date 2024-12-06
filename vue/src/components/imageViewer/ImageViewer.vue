@@ -325,6 +325,8 @@ const close = () => {
     clearInterval(embeddingCheckInterval.value[key]);
   });
   state.selectedImageSite = null;
+
+  emit('close');
 }
 
 

@@ -1,0 +1,36 @@
+{
+    "flask_app": {
+        "BASIC_AUTH_PASSWORD": "demo",
+        "BASIC_AUTH_USERNAME": "demo",
+        "SECRET_KEY": "MySuperUltraSecret",
+        "debug": true
+    },
+    "iqr_tabs": {
+        "GEOWATCH_DEMO": {
+            "data_set": {
+                "smqtk_dataprovider.impls.data_set.memory.DataMemorySet": {
+                    "cache_element": {
+                        "smqtk_dataprovider.impls.data_element.file.DataFileElement": {
+                            "explicit_mimetype": null,
+                            "filepath": "workdir/data.memorySet.cache",
+                            "readonly": false
+                        },
+                        "type": "smqtk_dataprovider.impls.data_element.file.DataFileElement"
+                    },
+                    "pickle_protocol": -1
+                },
+                "type": "smqtk_dataprovider.impls.data_set.memory.DataMemorySet"
+            },
+            "iqr_service_url": "iqr_rest:5001",
+            "working_directory": "workdir"
+        }
+    },
+    "mongo": {
+        "database": "smqtk",
+        "server": "smqtk_mongo:27017"
+    },
+    "server": {
+        "host": "0.0.0.0",
+        "port": 5000
+    }
+}

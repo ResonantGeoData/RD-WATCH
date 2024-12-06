@@ -449,8 +449,16 @@ export const toggleSatelliteImages = (siteOverview: SiteOverview, off= false) =>
   }
 }
 
-const loadAndToggleSatelliteImages = async (siteId: string) => {
+const loadAndToggleSatelliteImages = async (siteId: string, forceVisibility: boolean | undefined = undefined) => {
   const index = state.enabledSiteImages.findIndex((item) => item.id === siteId);
+
+  if (
+    (index !== -1 && forceVisibility) || // already visible, so don't toggle
+    (index === -1 && forceVisibility === false) // already hidden, so don't toggle
+  ) {
+    return;
+  }
+
   if (index !== -1) {
     const tempArr = [...state.enabledSiteImages];
     tempArr.splice(index, 1);

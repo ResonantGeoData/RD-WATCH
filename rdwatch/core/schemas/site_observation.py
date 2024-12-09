@@ -1,19 +1,20 @@
 from datetime import datetime
 
 from ninja import Schema
-from pydantic import validator
+from pydantic import field_validator
 
 
 class SiteObservationRequest(Schema):
-    label: str | None
+    label: str | None = None
     geom: dict | None = None  # TODO: Replace with pydantics geoJSON
-    score: float | None
+    score: float | None = None
     timestamp: datetime
     constellation: str  # WV, S8, L8, PL
-    spectrum: str | None
-    notes: str | None
+    spectrum: str | None = None
+    notes: str | None = None
 
-    @validator('timestamp', pre=True)
+    @field_validator('timestamp', mode='before')
+    @classmethod
     def parse_dates(cls, v: str | None) -> datetime | None:
         if v is None:
             return v

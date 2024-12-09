@@ -92,8 +92,11 @@ def test_site_model_ingest_malformed_geometry(
     assert res.json() == {
         'detail': [
             {
+                'ctx': {
+                    'error': 'Failed to parse geometry.',
+                },
                 'loc': ['body', 'site_model', 'features', 0, 'geometry'],
-                'msg': 'Failed to parse geometry.',
+                'msg': 'Value error, Failed to parse geometry.',
                 'type': 'value_error',
             }
         ]

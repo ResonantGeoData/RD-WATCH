@@ -2,7 +2,7 @@ import datetime
 import socket
 from typing import Any
 
-from ninja import Field, Router, Schema
+from ninja import Router, Schema
 from parver import Version
 
 from django.http import HttpRequest
@@ -18,7 +18,7 @@ class UptimeSchema(Schema):
     iso8601: str
     days: int
     seconds: int
-    useconds: int = Field(..., alias='microseconds')
+    microseconds: int
 
     @staticmethod
     def resolve_iso8601(obj: datetime.timedelta):
@@ -30,7 +30,7 @@ class ServerStatusSchema(Schema):
     hostname: str
     ip: str
     rdwatch_version: str
-    smartflow: dict[str, Any] | None
+    smartflow: dict[str, Any] | None = None
 
 
 @router.get('/', response=ServerStatusSchema)

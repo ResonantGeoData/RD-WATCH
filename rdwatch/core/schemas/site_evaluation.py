@@ -2,19 +2,20 @@ from datetime import datetime
 from typing import Literal
 
 from ninja import Schema
-from pydantic import validator
+from pydantic import field_validator
 
 
 class SiteEvaluationRequest(Schema):
-    label: str | None
+    label: str | None = None
     geom: dict | None = None
-    score: float | None
-    start_date: datetime | None
-    end_date: datetime | None
-    notes: str | None
-    status: Literal['PROPOSAL', 'APPROVED', 'REJECTED'] | None
+    score: float | None = None
+    start_date: datetime | None = None
+    end_date: datetime | None = None
+    notes: str | None = None
+    status: Literal['PROPOSAL', 'APPROVED', 'REJECTED'] | None = None
 
-    @validator('start_date', 'end_date', pre=True)
+    @field_validator('start_date', 'end_date', mode='before')
+    @classmethod
     def parse_dates(cls, v: str | None) -> datetime | None:
         if v is None:
             return v

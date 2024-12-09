@@ -11,6 +11,7 @@ import { hoveredInfo } from "../../interactions/mouseEvents";
 import ImageBrowser from './ImageBrowser.vue';
 import ImageToggle from './ImageToggle.vue';
 import AnimationDownloadDialog from "../animation/AnimationDownloadDialog.vue";
+import { useIQR } from "../../use/useIQR";
 
 
 export interface SiteDisplay {
@@ -35,7 +36,6 @@ export interface SiteDisplay {
   downloadingData?: SatelliteFetchingDownloadingInfo;
   downloadingError?: string;
   groundTruth?: boolean;
-  color_code?: number;
   originator?: string;
   proposal?: boolean;
   details?: {
@@ -45,6 +45,7 @@ export interface SiteDisplay {
     title: string;
   };
   selectedSite?: SiteOverview;
+  smqtkUuid?: string | null;
 }
 
 const props = defineProps<{
@@ -111,6 +112,18 @@ const selectingSite = async (e: boolean) => {
 
 const animationDialog = ref(false);
 
+const iqr = useIQR();
+
+const runIQR = async (site: SiteDisplay) => {
+  if (!site.smqtkUuid) return;
+  iqr.setPrimarySite({
+    name: site.name,
+    id: site.id,
+    smqtkUuid: site.smqtkUuid,
+    modelRunId: site.modelRunId,
+  });
+  await iqr.initializeSession();
+};
 </script>
 
 <template>
@@ -292,6 +305,26 @@ const animationDialog = ref(false);
           <span>
             Generate Image Animation
           </span>
+        </v-tooltip>
+        <v-tooltip
+          v-if="iqr.enabled && !ApiService.isScoring() && localSite.smqtkUuid != null && site.selected"
+          open-delay="300"
+        >
+          <template #activator="{ props }">
+            <v-btn
+              variant="tonal"
+              density="compact"
+              class="pa-0 ma-1 site-icon"
+              size="small"
+              v-bind="props"
+              @click.stop="runIQR(localSite)"
+            >
+              <v-icon size="small">
+                mdi-database-search
+              </v-icon>
+            </v-btn>
+          </template>
+          <span>IQR</span>
         </v-tooltip>
         <v-spacer />
         <v-tooltip

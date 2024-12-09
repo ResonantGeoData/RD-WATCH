@@ -20,9 +20,12 @@ CurrentPhase: TypeAlias = Literal[
 
 
 class SiteFeatureCache(Schema):
-    originator_file: str | None = None
-    timestamp: datetime | None = None
-    commit_hash: str | None = None
+    originator_file: str | None
+    timestamp: datetime | None
+    commit_hash: str | None
+    # smqtk
+    video_name: str | None = None
+    smqtk_uuid: str | None = None
 
 
 class SiteFeature(Schema):

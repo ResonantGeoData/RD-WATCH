@@ -19,6 +19,7 @@ class RegionFeature(Schema):
     start_date: datetime | None = Field(default=None, validate_default=True)
     end_date: datetime | None = Field(default=None, validate_default=True)
     originator: str
+    iqr_enabled: bool | None
 
     # Optional fields
     comments: str | None = None

@@ -117,7 +117,6 @@ const getSites = async (modelRun: string, initRun = false) => {
           WV: item.WV,
           L8: item.L8,
           PL: item.PL,
-          color_code: item.color_code,
           status: item.status,
           timestamp: item.timestamp,
           groundTruth: item.groundtruth,
@@ -125,6 +124,7 @@ const getSites = async (modelRun: string, initRun = false) => {
           downloading: item.downloading,
           details,
           proposal: !!details?.proposal,
+          smqtkUuid: item.smqtk_uuid,
         });
         modelRunTitleList.value.push(details?.title || '');
         totalCount.value += 1;
@@ -151,15 +151,13 @@ const filterGroundTruth = (list:SiteDisplay[]) => {
     } else {
       if (state.filters.scoringColoring) { // Remove items based on color codes
         returnList = list.filter((item) => {
-          if (item.color_code !== undefined) {
-            const colorKey = scoringColors[item.color_code as scoringColorsKeys];
-            if (state.filters.scoringColoring && colorKey && colorKey[state.filters.scoringColoring]) {
-              return true;
-            }
-            return false;
+          const colorKey = scoringColors[state.modelRunColorCodeMappings[item.modelRunId as string][item.name] as scoringColorsKeys];
+
+          if (state.filters.scoringColoring && colorKey && colorKey[state.filters.scoringColoring]) {
+            return true;
           }
           return false;
-        })
+        });
       } else {
         returnList = list;
       }
@@ -326,12 +324,9 @@ watch([filter, () => state.filters.drawObservations, () => state.filters.drawSit
   } else {
       if (state.filters.scoringColoring) { // Remove items based on color codes
         tempList = tempList.filter((item) => {
-          if (item.color_code !== undefined) {
-            const colorKey = scoringColors[item.color_code as scoringColorsKeys];
-            if (state.filters.scoringColoring && colorKey && colorKey[state.filters.scoringColoring]) {
-              return true;
-            }
-            return false;
+          const colorKey = scoringColors[state.modelRunColorCodeMappings[item.modelRunId as string][item.name] as scoringColorsKeys];
+          if (state.filters.scoringColoring && colorKey && colorKey[state.filters.scoringColoring]) {
+            return true;
           }
           return false;
         });

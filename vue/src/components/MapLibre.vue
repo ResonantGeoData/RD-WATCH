@@ -7,7 +7,7 @@ import {
 } from "../mapstyle/rdwatchtiles";
 import { filteredSatelliteTimeList, state } from "../store";
 import { computed, markRaw, onBeforeUnmount, onMounted, onUnmounted, reactive, shallowRef, watch } from "vue";
-import type { FilterSpecification } from "maplibre-gl";
+import type { FilterSpecification, FitBoundsOptions } from "maplibre-gl";
 import type { ShallowRef } from "vue";
 import { popupLogic, setPopupEvents } from "../interactions/mouseEvents";
 import useEditPolygon from "../interactions/editGeoJSON";
@@ -17,7 +17,10 @@ import { setSatelliteTimeStamp } from "../mapstyle/satellite-image";
 import { isEqual, throttle } from 'lodash';
 import { updateImageMapSources } from "../mapstyle/images";
 import { FitBoundsEvent } from "../actions/map";
-import { type BoundingBox, getGeoJSONBounds } from "../utils";
+import { type BoundingBox, getGeoJSONBounds, timeoutBatch } from "../utils";
+import { useIQR } from "../use/useIQR";
+import { IQROrderedResultItem } from "../client/services/ApiService";
+import { useResizeObserver } from '../use/useResizeObserver';
 
 const mapContainer: ShallowRef<null | HTMLElement> = shallowRef(null);
 const map: ShallowRef<null | Map> = shallowRef(null);
@@ -28,22 +31,34 @@ const localGeoJSONFeatures = computed(() => {
   return state.localMapFeatureIds.map((id) => state.localMapFeatureById[id]);
 });
 
+const batchedResize = timeoutBatch(() => { map.value?.resize(); }, 50);
+
+useResizeObserver(mapContainer, () => {
+  batchedResize();
+});
+
+const { state: iqrState } = useIQR();
+const iqrResults = computed(() => iqrState.results as IQROrderedResultItem[]);
+const iqrSessionId = computed(() => iqrState.sessionId);
+
 function setFilter(layerID: string, filter: FilterSpecification) {
   map.value?.setFilter(layerID, filter, {
     validate: false,
   });
 }
 
-function fitBounds(bbox: BoundingBox) {
+function fitBounds(bbox: BoundingBox & FitBoundsOptions) {
+  const { xmin, ymin, xmax, ymax, ...options } = bbox;
   map.value?.fitBounds(
     [
-      [bbox.xmin, bbox.ymin],
-      [bbox.xmax, bbox.ymax],
+      [xmin, ymin],
+      [xmax, ymax],
     ],
     {
       padding: 160,
-      duration: 5000,
-    }
+      duration: 4000,
+      ...options,
+    },
   );
 }
 
@@ -74,6 +89,8 @@ onMounted(() => {
           Array.from(modelRunVectorLayers),
           regionIds,
           localGeoJSONFeatures.value,
+          iqrResults.value,
+          iqrSessionId.value,
         ),
         bounds: [
           [-180, -90],
@@ -106,7 +123,7 @@ const throttledSetSatelliteTimeStamp = throttle(setSatelliteTimeStamp, 300);
 watch([() => state.timestamp, () => state.filters, () => state.satellite, () => state.filters.scoringColoring,
 () => state.satellite.satelliteSources, () => state.enabledSiteImages, () => state.filters.hoverSiteId,
 () => state.modelRuns, () => state.openedModelRuns, () => state.filters.proposals, () => state.filters.randomKey, () => state.filters.editingGeoJSONSiteId,
-localGeoJSONFeatures], (newVals, oldVals) => {
+localGeoJSONFeatures, iqrResults, iqrSessionId], (newVals, oldVals) => {
 
   if (state.satellite.satelliteImagesOn) {
     throttledSetSatelliteTimeStamp(state, filteredSatelliteTimeList.value);
@@ -137,7 +154,7 @@ localGeoJSONFeatures], (newVals, oldVals) => {
     updateImageMapSources(state.timestamp, state.enabledSiteImages, state.siteOverviewSatSettings, map.value )
   }
   map.value?.setStyle(
-    style(state.timestamp, state.filters, state.satellite, state.enabledSiteImages, state.siteOverviewSatSettings, Array.from(modelRunVectorLayers), regionIds, localGeoJSONFeatures.value, state.filters.randomKey),
+    style(state.timestamp, state.filters, state.satellite, state.enabledSiteImages, state.siteOverviewSatSettings, Array.from(modelRunVectorLayers), regionIds, localGeoJSONFeatures.value, iqrResults.value, iqrSessionId.value, state.filters.randomKey),
   );
 
   const siteFilter = buildSiteFilter(state.timestamp, state.filters);

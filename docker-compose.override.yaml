@@ -117,5 +117,72 @@ services:
         # Run the npm development script
         npm run dev
       "
+
+  iqr_rest:
+    image: rdwatch-smqtk-iqr
+    build:
+      dockerfile: docker/smqtk-iqr.Dockerfile
+      context: .
+    # needed for dependencies to properly install
+    platform: linux/amd64
+    command:
+      ["runApplication", "-a", "IqrService", "-c", "runApp.IqrRestService.json"]
+    ports:
+      - 5001:5001
+    working_dir: /iqr
+    volumes:
+      # where rest + search app configs are stored
+      - ./iqr:/iqr
+
+      # needed for accessing the workdir from the config
+      # EDIT THIS VOLUME MOUNT BEFORE RUNNING
+      #- /path/to/iqr-data/workdir:/iqr/workdir
+      - /Users/forrest.li/scratch/iqr/workdir:/iqr/workdir
+
+      # needed to make sure faiss_index exists, otherwise IQR initialization won't work
+      # EDIT THIS VOLUME MOUNT BEFORE RUNNING
+      #- /path/to/iqr-data/models:/iqr/models
+      - /Users/forrest.li/scratch/iqr/models:/iqr/models
+
+  # only needed for the built-in IQR interface
+  #smqtk_mongo:
+  #  image: mongo:latest
+  #  ports:
+  #    - 27017:27017
+  #  volumes:
+  #    - smqtk-mongo:/data/db
+  #iqr_web:
+  #  image: rdwatch-smqtk-iqr
+  #  # needed for dependencies to properly install
+  #  platform: linux/amd64
+  #  command:
+  #    [
+  #      "runApplication",
+  #      "-a",
+  #      "IqrSearchDispatcher",
+  #      "-c",
+  #      "runApp.IqrSearchApp.json",
+  #    ]
+  #  ports:
+  #    - 5000:5000
+  #  working_dir: /iqr
+  #  volumes:
+  #    # where rest + search app configs are stored
+  #    # - ./iqr/workdir:/iqr/workdir
+  #    - ./iqr:/iqr
+
+  #    # needed for accessing the workdir from the config
+  #    - /SMQTK-IQR/docs/tutorials/tutorial_003_geowatch_descriptors/workdir:/iqr/workdir
+
+  #    # needed to make sure faiss_index exists, otherwise IQR initialization won't work
+  #    - /SMQTK-IQR/docs/tutorials/tutorial_003_geowatch_descriptors/models:/iqr/models
+
+  #    # The workdir/processed/chips/manifest.json file stores absolute paths, so we add another bind mount to satisfy the abs paths
+  #    # from when I generated the outputs.
+  #    - /SMQTK-IQR/docs/tutorials/tutorial_003_geowatch_descriptors/workdir:/SMQTK-IQR/docs/tutorials/tutorial_003_geowatch_descriptors/workdir
+  #  depends_on:
+  #    - smqtk_mongo
+  #    - iqr_rest
+
 volumes:
   celery-SAM-model:

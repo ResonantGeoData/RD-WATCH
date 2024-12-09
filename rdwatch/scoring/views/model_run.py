@@ -44,8 +44,6 @@ from rdwatch.core.views.model_run import ModelRunDetailSchema, ModelRunPaginatio
 from rdwatch.scoring.models import (
     AnnotationProposalSet,
     AnnotationProposalSite,
-    EvaluationBroadAreaSearchDetection,
-    EvaluationBroadAreaSearchProposal,
     EvaluationRun,
     Region,
     SatelliteFetching,
@@ -764,62 +762,6 @@ def get_sites_query(model_run_id: UUID4):
                 'downloading': True,
             }
 
-    # Build a mapping of site_id to color code.
-    # We do this in a separate query to avoid a slow subquery in the main query,
-    # due to the EvaluationBroadAreaSearchDetection table being extremely large.
-    # The number of sites in an evaluation run is small enough that it's feasible
-    # to load the site_id->color_code mapping into memory and manually join it
-    # with the sites_list in Python.
-    site_to_color_code_mapping: dict[str, int] = {
-        obj['site_truth']: obj['color_code']
-        for obj in EvaluationBroadAreaSearchDetection.objects.filter(
-            Q(evaluation_run_uuid=model_run_id)
-            & Q(activity_type='overall')
-            & Q(rho=0.5)
-            & Q(tau=0.2)
-            & Q(min_confidence_score=0.0)
-            & Q(
-                Q(min_spatial_distance_threshold__isnull=True)
-                | Q(min_spatial_distance_threshold=100.0)
-            )
-            & Q(
-                Q(central_spatial_distance_threshold__isnull=True)
-                | Q(central_spatial_distance_threshold=500.0)
-            )
-            & Q(max_spatial_distance_threshold__isnull=True)
-            & Q(
-                Q(min_temporal_distance_threshold__isnull=True)
-                | Q(min_temporal_distance_threshold=730.0)
-            )
-            & Q(central_temporal_distance_threshold__isnull=True)
-            & Q(max_temporal_distance_threshold__isnull=True)
-        ).values('site_truth', 'color_code')
-    } | {
-        obj['site_proposal']: obj['color_code']
-        for obj in EvaluationBroadAreaSearchProposal.objects.filter(
-            Q(evaluation_run_uuid=model_run_id)
-            & Q(activity_type='overall')
-            & Q(rho=0.5)
-            & Q(tau=0.2)
-            & Q(min_confidence_score=0.0)
-            & Q(
-                Q(min_spatial_distance_threshold__isnull=True)
-                | Q(min_spatial_distance_threshold=100.0)
-            )
-            & Q(
-                Q(central_spatial_distance_threshold__isnull=True)
-                | Q(central_spatial_distance_threshold=500.0)
-            )
-            & Q(max_spatial_distance_threshold__isnull=True)
-            & Q(
-                Q(min_temporal_distance_threshold__isnull=True)
-                | Q(min_temporal_distance_threshold=730.0)
-            )
-            & Q(central_temporal_distance_threshold__isnull=True)
-            & Q(max_temporal_distance_threshold__isnull=True)
-        ).values('site_proposal', 'color_code')
-    }
-
     for s in site_list['sites']:
         if s['id'] in image_info.keys():
             site_image_info = image_info[s['id']]
@@ -837,8 +779,6 @@ def get_sites_query(model_run_id: UUID4):
         s['L8'] = site_image_info['L8']
         s['PL'] = site_image_info['PL']
         s['downloading'] = site_image_info['downloading']
-
-        s['color_code'] = site_to_color_code_mapping.get(s['site_id'])
 
     return site_list
 

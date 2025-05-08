@@ -47,8 +47,8 @@ export const style = (
     ...openmaptilesSources(filters),
     ...localGeoJSONSources(localGeoJSONFeatures),
   },
-  sprite: `${tileServerURL}/sprites/osm-liberty`,
-  glyphs: `${tileServerURL}/fonts/{fontstack}/{range}.pbf`,
+  sprite: 'https://maputnik.github.io/osm-liberty/sprites/osm-liberty',
+  glyphs: 'https://orangemug.github.io/font-glyphs/glyphs/{fontstack}/{range}.pbf',
   layers: [
     {
       id: "background",

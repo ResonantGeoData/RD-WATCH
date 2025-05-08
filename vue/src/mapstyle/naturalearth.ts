@@ -5,13 +5,16 @@
 import type { LayerSpecification, SourceSpecification } from "maplibre-gl";
 
 const naturalearth = "naturalearth";
-const tileServerURL =
-  import.meta.env.VITE_TILE_SERVER_URL || "https://basemap.kitware.watch";
 const source: SourceSpecification = {
   maxzoom: 6,
+  type: 'raster',
+  tiles: [
+    'https://a.tile.openstreetmap.org/{z}/{x}/{y}.png',
+    'https://b.tile.openstreetmap.org/{z}/{x}/{y}.png',
+    'https://c.tile.openstreetmap.org/{z}/{x}/{y}.png',
+  ],
   tileSize: 256,
-  tiles: [`${tileServerURL}/raster/{z}/{x}/{y}.webp`],
-  type: "raster",
+  attribution: '© OpenStreetMap contributors',
 };
 export const sources = { naturalearth: source };
 
